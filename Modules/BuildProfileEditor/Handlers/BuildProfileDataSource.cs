@@ -25,7 +25,7 @@ namespace UnityEditor.Build.Profile.Handlers
 
         static string GetDefaultNewProfilePath(GUID platformGuid)
         {
-            var platformDisplayName = BuildProfileModuleUtil.GetClassicPlatformDisplayName(platformGuid.ToString());
+            var platformDisplayName = BuildProfileModuleUtil.GetClassicPlatformDisplayName(platformGuid);
             return GetDefaultNewProfilePath(platformDisplayName);
         }
 
@@ -98,7 +98,7 @@ namespace UnityEditor.Build.Profile.Handlers
         /// Create a new custom build profile asset with the default name.
         /// Ensure that custom build profile folders is created if it doesn't already exist.
         /// </summary>
-        internal static void CreateNewAsset(string platformId, string platformDisplayName)
+        internal static void CreateNewAsset(GUID platformId, string platformDisplayName)
         {
             EnsureCustomBuildProfileFolderExists();
             BuildProfile.CreateInstance(platformId, GetDefaultNewProfilePath(platformDisplayName));
@@ -113,11 +113,11 @@ namespace UnityEditor.Build.Profile.Handlers
             if (buildProfile == null)
                 return null;
 
-            string path = isClassic ? GetDefaultNewProfilePath(new GUID(buildProfile.platformId)) : AssetDatabase.GetAssetPath(buildProfile);
+            string path = isClassic ? GetDefaultNewProfilePath(buildProfile.platformGuid) : AssetDatabase.GetAssetPath(buildProfile);
             if (string.IsNullOrEmpty(path))
                 return null;
 
-            BuildProfile duplicatedProfile = UnityEngine.Object.Instantiate(buildProfile);
+            BuildProfile duplicatedProfile = buildProfile.Duplicate();
 
             // If it's a classic profile we need to copy the scenes from the editor build settings
             // since classic profiles share scenes
@@ -128,13 +128,17 @@ namespace UnityEditor.Build.Profile.Handlers
 
             string uniqueFilePath = AssetDatabase.GenerateUniqueAssetPath(path);
             AssetDatabase.CreateAsset(duplicatedProfile, uniqueFilePath);
+
+            if (duplicatedProfile.graphicsSettings != null)
+                AssetDatabase.AddObjectToAsset(duplicatedProfile.graphicsSettings, duplicatedProfile);
+
             EditorAnalytics.SendAnalytic(new BuildProfileCreatedEvent(new BuildProfileCreatedEvent.Payload
             {
                 creationType = (isClassic)
                     ? BuildProfileCreatedEvent.CreationType.DuplicateClassic
                     : BuildProfileCreatedEvent.CreationType.DuplicateProfile,
-                platformId = duplicatedProfile.platformId,
-                platformDisplayName = BuildProfileModuleUtil.GetClassicPlatformDisplayName(duplicatedProfile.platformId),
+                platformId = duplicatedProfile.platformGuid,
+                platformDisplayName = BuildProfileModuleUtil.GetClassicPlatformDisplayName(duplicatedProfile.platformGuid),
             }));
 
             return duplicatedProfile;

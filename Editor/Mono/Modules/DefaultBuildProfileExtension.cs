@@ -89,6 +89,16 @@ namespace UnityEditor.Modules
         public virtual bool ShouldDrawExplicitDivideByZeroCheckbox() => false;
         public virtual bool ShouldDrawExplicitArrayBoundsCheckbox() => false;
 
+        protected virtual string GetPlatformProfileInfoMessage()
+        {
+            return null;
+        }
+
+        public string GetProfileInfoMessage()
+        {
+            return GetPlatformProfileInfoMessage();
+        }
+
         public VisualElement CreateSettingsGUI(
             SerializedObject serializedObject, SerializedProperty rootProperty, BuildProfileWorkflowState workflowState)
         {

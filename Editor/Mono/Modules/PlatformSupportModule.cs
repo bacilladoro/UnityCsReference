@@ -410,6 +410,15 @@ namespace UnityEditor.Modules
         /// </summary>
         void CopyPlatformSettingsFromBuildProfile(BuildProfilePlatformSettingsBase platformSettings);
 
+        /// <summary>
+        /// The info message paired with the create build profile button.
+        /// If platform does not override this message, TrText.sharedSettingsInfo will be used.
+        /// </summary>
+        /// <returns>
+        /// Message to be displayed.
+        /// </returns>
+        string GetProfileInfoMessage();
+
         void OnDisable();
     }
 
@@ -506,6 +515,9 @@ namespace UnityEditor.Modules
 
         // Returns an array of defines that should be used when compiling scripts
         IEnumerable<string> GetAdditionalDefines();
+
+        // Returns an array of defines that should be used when compiling scripts for the editor
+        IEnumerable<string> GetAdditionalEditorDefines();
 
         // Returns an array of C# source files that should be included into the assembly when compiling scripts
         IEnumerable<string> GetAdditionalSourceFiles();

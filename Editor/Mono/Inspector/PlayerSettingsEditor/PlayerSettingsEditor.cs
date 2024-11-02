@@ -169,7 +169,6 @@ namespace UnityEditor
             public static readonly GUIContent packageNameError = EditorGUIUtility.TrTextContent("The Package Name must follow the convention 'com.YourCompanyName.YourProductName' and must contain only alphanumeric and underscore characters. Each segment must start with an alphabetical character.");
             public static readonly GUIContent applicationBuildNumber = EditorGUIUtility.TrTextContent("Build");
             public static readonly GUIContent appleDeveloperTeamID = EditorGUIUtility.TrTextContent("iOS Developer Team ID", "Developers can retrieve their Team ID by visiting the Apple Developer site under Account > Membership.");
-            public static readonly GUIContent useOnDemandResources = EditorGUIUtility.TrTextContent("Use on-demand resources*");
             public static readonly GUIContent gcIncremental = EditorGUIUtility.TrTextContent("Use incremental GC", "With incremental Garbage Collection, the Garbage Collector will try to time-slice the collection task into multiple steps, to avoid long GC times preventing content from running smoothly.");
             public static readonly GUIContent accelerometerFrequency = EditorGUIUtility.TrTextContent("Accelerometer Frequency*");
             public static readonly GUIContent cameraUsageDescription = EditorGUIUtility.TrTextContent("Camera Usage Description*", "String shown to the user when requesting permission to use the device camera. Written to the NSCameraUsageDescription field in Xcode project's info.plist file");
@@ -371,7 +370,6 @@ namespace UnityEditor
         SerializedProperty m_IOSURLSchemes;
 
         SerializedProperty m_AccelerometerFrequency;
-        SerializedProperty m_useOnDemandResources;
         SerializedProperty m_MuteOtherAudioSources;
         SerializedProperty m_PrepareIOSForRecording;
         SerializedProperty m_ForceIOSSpeakersWhenRecording;
@@ -613,7 +611,6 @@ namespace UnityEditor
             if (m_ApplicationBundleVersion == null)
                 m_ApplicationBundleVersion  = FindPropertyAssert("iPhoneBundleVersion");
 
-            m_useOnDemandResources          = FindPropertyAssert("useOnDemandResources");
             m_AccelerometerFrequency        = FindPropertyAssert("accelerometerFrequency");
 
             m_MuteOtherAudioSources         = FindPropertyAssert("muteOtherAudioSources");
@@ -700,9 +697,6 @@ namespace UnityEditor
             m_RequireES31                   = FindPropertyAssert("openGLRequireES31");
             m_RequireES31AEP                = FindPropertyAssert("openGLRequireES31AEP");
             m_RequireES32                   = FindPropertyAssert("openGLRequireES32");
-
-            // WebGPU - Forcibly enable in source builds to make it easier to test.
-            m_WebGPUSupportEnabled         = FindPropertyAssert("webGLEnableWebGPU");
 
             m_LegacyClampBlendShapeWeights = FindPropertyAssert("legacyClampBlendShapeWeights");
             m_AndroidEnableTango           = FindPropertyAssert("AndroidEnableTango");
@@ -1437,14 +1431,6 @@ namespace UnityEditor
             {
                 var availableDeviceList = availableDevices.ToList();
                 availableDeviceList.Remove(GraphicsDeviceType.OpenGLCore);
-                availableDevices = availableDeviceList.ToArray();
-            }
-
-            // Gate the display of WebGPU based on the WebGL.enableWebGPU flag or if we are in a source build
-            if (!PlayerSettings.WebGL.enableWebGPU && !Unsupported.IsSourceBuild())
-            {
-                var availableDeviceList = availableDevices.ToList();
-                availableDeviceList.Remove(GraphicsDeviceType.WebGPU);
                 availableDevices = availableDeviceList.ToArray();
             }
 
@@ -2347,8 +2333,6 @@ namespace UnityEditor
                     // and if the user sets gpuSkinning mode to "enabled", we actually want to preserve "batchEnabled" if it was set for other platforms.
                     // Platforms that do not support batching but have meshDeformation == GPUBatched just silently use original non-batched code.
 
-                    // WebGPU is kept behind a settings gate for now while it's in development.
-                    if (platform.namedBuildTarget != NamedBuildTarget.WebGL || PlayerSettings.WebGL.enableWebGPU)
                     {
                         EditorGUI.BeginChangeCheck();
                         EditorGUILayout.PropertyField(m_SkinOnGPU, SettingsContent.skinOnGPU);
@@ -3260,9 +3244,6 @@ namespace UnityEditor
             // mobile-only settings
             if (showMobileSection)
             {
-                if (platform.namedBuildTarget == NamedBuildTarget.iOS || platform.namedBuildTarget == NamedBuildTarget.tvOS)
-                    EditorGUILayout.PropertyField(m_useOnDemandResources, SettingsContent.useOnDemandResources);
-
                 bool supportsAccelerometerFrequency =
                     platform.namedBuildTarget == NamedBuildTarget.iOS ||
                     platform.namedBuildTarget == NamedBuildTarget.tvOS ||
@@ -3413,8 +3394,6 @@ namespace UnityEditor
                         UpdateScriptingDefineSymbolsLists();
                     }
 
-                    lastNamedBuildTarget = platform.namedBuildTarget;
-
                     using (new EditorGUILayout.HorizontalScope())
                     {
                         GUILayout.FlexibleSpace();
@@ -3472,7 +3451,16 @@ namespace UnityEditor
 
                     using (new EditorGUI.PropertyScope(vertical.rect, GUIContent.none, m_AdditionalCompilerArguments))
                     {
-                        additionalCompilerArgumentsReorderableList.DoLayoutList();
+                        if (lastNamedBuildTarget.TargetName == platform.namedBuildTarget.TargetName)
+                        {
+                            additionalCompilerArgumentsReorderableList.DoLayoutList();
+                        }
+                        else
+                        {
+                            // If platform changes, update define symbols
+                            serializedAdditionalCompilerArguments = GetAdditionalCompilerArgumentsForGroup(platform.namedBuildTarget);
+                            UpdateAdditionalCompilerArgumentsLists();
+                        }
 
                         using (new EditorGUILayout.HorizontalScope())
                         {
@@ -3501,6 +3489,9 @@ namespace UnityEditor
                             }
                         }
                     }
+                    //We want to cache latest build target only after rendering both Scripting Defines and Additional Args
+                    //Because both elements share the same logic
+                    lastNamedBuildTarget = platform.namedBuildTarget;
                 }
             }
 
@@ -4120,7 +4111,8 @@ namespace UnityEditor
 
         void InitReorderableAdditionalCompilerArgumentsList(NamedBuildTarget namedBuildTarget)
         {
-            additionalCompilerArgumentsList = new List<string>(serializedAdditionalCompilerArguments);
+            var additionalCompilerArgumentsArray = GetAdditionalCompilerArgumentsForGroup(namedBuildTarget);
+            additionalCompilerArgumentsList = additionalCompilerArgumentsArray.ToList();
 
             additionalCompilerArgumentsReorderableList = new ReorderableList(additionalCompilerArgumentsList, typeof(string), true, true, true, true);
             additionalCompilerArgumentsReorderableList.drawElementCallback = (rect, index, isActive, isFocused) => DrawTextFieldAdditionalCompilerArguments(rect, index);
