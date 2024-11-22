@@ -134,13 +134,13 @@ namespace UnityEditor.Build.Profile
                 sharedSettingsInfoHelpBox.Hide();
                 m_ProfilePlayerSettingsEditor = BuildProfilePlayerSettingsEditor
                     .CreatePlayerSettingsUI(root, hasErrors ? null : serializedObject);
-                BuildProfileGraphicsSettingsOverridesView.CreateGUI(profile, root);
+                ShowGraphicsSettingsSection(profile, root);
             }
             else
             {
                 var button = root.Q<Button>(k_SharedSettingsInfoHelpboxButton);
                 button.text = TrText.addBuildProfile;
-                button.clicked += DuplicateSelectedClassicProfile;
+                button.clicked += () => PlatformDiscoveryWindow.ShowWindowAndSelectPlatform(profile.platformGuid);
             }
 
             if (hasErrors)
@@ -463,6 +463,18 @@ namespace UnityEditor.Build.Profile
             serializedObject.Update();
             recompileDefinesButton.SetEnabled(false);
             revertDefinesButton.SetEnabled(false);
+        }
+
+        void ShowGraphicsSettingsSection(BuildProfile profile, VisualElement root)
+        {
+            var graphicsSettingsSection = root.Q<VisualElement>("editor-graphics-settings");
+            graphicsSettingsSection.Show();
+
+            var graphicsSettingsTitle = root.Q<Label>("graphics-settings-label");
+            graphicsSettingsTitle.text = TrText.graphicsSettings;
+
+            BuildProfileGraphicsSettingsOverridesView.CreateGUI(profile, root);
+            BuildProfileQualitySettingsOverridesView.CreateGUI(profile, root);
         }
     }
 }

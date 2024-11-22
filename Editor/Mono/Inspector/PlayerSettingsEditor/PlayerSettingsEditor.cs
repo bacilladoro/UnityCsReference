@@ -86,6 +86,12 @@ namespace UnityEditor
             public static readonly GUIContent publishingSettingsTitle = EditorGUIUtility.TrTextContent("Publishing Settings");
             public static readonly GUIContent captureLogsTitle = EditorGUIUtility.TrTextContent("Capture Logs");
 
+            public static readonly GUIContent usePlayerLog = EditorGUIUtility.TrTextContent("Use Player Log");
+            public static readonly GUIContent resizableWindow = EditorGUIUtility.TrTextContent("Resizable Window");
+            public static readonly GUIContent forceSingleInstance = EditorGUIUtility.TrTextContent("Force Single Instance");
+            public static readonly GUIContent overrideDefaultApplicationIdentifier = EditorGUIUtility.TrTextContent("Override Default Bundle Identifier");
+            public static readonly GUIContent bundleIdentifier = EditorGUIUtility.TrTextContent("Bundle Identifier");
+
             public static readonly GUIContent shaderSectionTitle = EditorGUIUtility.TrTextContent("Shader Settings");
             public static readonly GUIContent shaderVariantLoadingTitle = EditorGUIUtility.TrTextContent("Shader Variant Loading Settings");
             public static readonly GUIContent defaultShaderChunkSize = EditorGUIUtility.TrTextContent("Default chunk size (MB)*", "Use this setting to control how much memory is used when loading shader variants.");
@@ -114,6 +120,7 @@ namespace UnityEditor
             public static readonly GUIContent defaultScreenHeight = EditorGUIUtility.TrTextContent("Default Screen Height");
             public static readonly GUIContent macRetinaSupport = EditorGUIUtility.TrTextContent("Mac Retina Support");
             public static readonly GUIContent runInBackground = EditorGUIUtility.TrTextContent("Run In Background*");
+            public static readonly GUIContent defaultIsNativeResolution = EditorGUIUtility.TrTextContent("Default Is Native Resolution");
             public static readonly GUIContent defaultScreenOrientation = EditorGUIUtility.TrTextContent("Default Orientation*");
             public static readonly GUIContent allowedAutoRotateToPortrait = EditorGUIUtility.TrTextContent("Portrait");
             public static readonly GUIContent allowedAutoRotateToPortraitUpsideDown = EditorGUIUtility.TrTextContent("Portrait Upside Down");
@@ -187,6 +194,12 @@ namespace UnityEditor
                 EditorGUIUtility.TrTextContent("Allowed in development builds"),
                 EditorGUIUtility.TrTextContent("Always allowed"),
             };
+
+            public static readonly GUIContent autoGraphicsAPI = EditorGUIUtility.TrTextContent("Auto Graphics API");
+            public static readonly GUIContent autoGraphicsAPIForWindows = EditorGUIUtility.TrTextContent("Auto Graphics API for Windows");
+            public static readonly GUIContent autoGraphicsAPIForMac = EditorGUIUtility.TrTextContent("Auto Graphics API for Mac");
+            public static readonly GUIContent autoGraphicsAPIForLinux = EditorGUIUtility.TrTextContent("Auto Graphics API for Linux");
+
             public static readonly GUIContent iOSURLSchemes = EditorGUIUtility.TrTextContent("Supported URL schemes*");
             public static readonly GUIContent iOSExternalAudioInputNotSupported = EditorGUIUtility.TrTextContent("Audio input from Bluetooth microphones is not supported when Mute Other Audio Sources and Prepare iOS for Recording are both off.");
             public static readonly GUIContent require31 = EditorGUIUtility.TrTextContent("Require ES3.1");
@@ -252,6 +265,7 @@ namespace UnityEditor
             public static readonly GUIContent allowHDRDisplay = EditorGUIUtility.TrTextContent("Allow HDR Display Output*", "Enable the use of HDR displays and include all the resources required for them to function correctly.");
             public static readonly GUIContent useHDRDisplay = EditorGUIUtility.TrTextContent("Use HDR Display Output*", "Checks if the main display supports HDR and if it does, switches to HDR output at the start of the application.");
             public static readonly GUIContent hdrOutputRequireHDRRenderingWarning = EditorGUIUtility.TrTextContent("The active Render Pipeline does not have HDR enabled. Enable HDR in the Render Pipeline Asset to see the changes.");
+            public static readonly GUIContent graphicsAPIDeprecationMessage = EditorGUIUtility.TrTextContent("There are select Graphics API included that are deprecated and will be removed in a future version. For more information, refer to the Graphics API documentation.");
 
             public static readonly GUIContent captureStartupLogs = EditorGUIUtility.TrTextContent("Capture Startup Logs", "Capture startup logs for later processing (e.g., by com.unity.logging");
             public static readonly string undoChangedBatchingString                 = L10n.Tr("Changed Batching Settings");
@@ -779,7 +793,8 @@ namespace UnityEditor
             string buildProfileModuleName,
             bool isServerBuildProfile,
             bool isActiveBuildProfile,
-            Action<SerializedObject> onTrackSerializedObjectChanged)
+            Action<SerializedObject> onTrackSerializedObjectChanged,
+            GUID buildTarget)
         {
             m_OnTrackSerializedObjectValueChanged = onTrackSerializedObjectChanged;
             playerSettingsType = isActiveBuildProfile ? PlayerSettingsType.ActiveBuildProfile : PlayerSettingsType.NonActiveBuildProfile;
@@ -806,7 +821,7 @@ namespace UnityEditor
 
             Array.Resize(ref validPlatforms, 1);
             m_SettingsExtensions = new ISettingEditorExtension[1];
-            m_SettingsExtensions[0] = ModuleManager.GetEditorSettingsExtension(platformModuleName);
+            m_SettingsExtensions[0] = ModuleManager.GetEditorSettingsExtension(buildTarget);
             m_SettingsExtensions[0]?.OnEnable(this);
             m_SettingsExtensions[0]?.ConfigurePlatformProfile(serializedProfile);
         }
@@ -1252,7 +1267,7 @@ namespace UnityEditor
                         bool defaultIsFullScreen = fullscreenModeNew != FullScreenMode.Windowed;
                         m_ShowDefaultIsNativeResolution.target = defaultIsFullScreen;
                         if (EditorGUILayout.BeginFadeGroup(m_ShowDefaultIsNativeResolution.faded))
-                            EditorGUILayout.PropertyField(m_DefaultIsNativeResolution);
+                            EditorGUILayout.PropertyField(m_DefaultIsNativeResolution, SettingsContent.defaultIsNativeResolution);
                         EditorGUILayout.EndFadeGroup();
 
                         m_ShowResolution.target = !(defaultIsFullScreen && m_DefaultIsNativeResolution.boolValue);
@@ -1333,15 +1348,15 @@ namespace UnityEditor
                     {
                         GUILayout.Label(SettingsContent.standalonePlayerOptionsTitle, EditorStyles.boldLabel);
 
-                        EditorGUILayout.PropertyField(m_UsePlayerLog);
+                        EditorGUILayout.PropertyField(m_UsePlayerLog, SettingsContent.usePlayerLog);
 
-                        EditorGUILayout.PropertyField(m_ResizableWindow);
+                        EditorGUILayout.PropertyField(m_ResizableWindow, SettingsContent.resizableWindow);
 
                         EditorGUILayout.PropertyField(m_VisibleInBackground, SettingsContent.visibleInBackground);
 
                         EditorGUILayout.PropertyField(m_AllowFullscreenSwitch, SettingsContent.allowFullscreenSwitch);
 
-                        EditorGUILayout.PropertyField(m_ForceSingleInstance);
+                        EditorGUILayout.PropertyField(m_ForceSingleInstance, SettingsContent.forceSingleInstance);
                         EditorGUILayout.PropertyField(m_UseFlipModelSwapchain, SettingsContent.useFlipModelSwapChain);
 
                         if (!PlayerSettings.useFlipModelSwapchain)
@@ -1372,26 +1387,51 @@ namespace UnityEditor
             EndSettingsBox();
         }
 
+        // Checks if the GraphicsDeviceType is deprecated
+        static private bool IsGraphicsDeviceTypeDeprecated(BuildTarget target, GraphicsDeviceType graphicsDeviceType)
+        {
+            switch (graphicsDeviceType)
+            {
+                case GraphicsDeviceType.PlayStation5: return true;
+                case GraphicsDeviceType.OpenGLCore: return target == BuildTarget.StandaloneWindows || target == BuildTarget.StandaloneWindows64;
+                default: return false;
+            }
+        }
+
+        static private GraphicsDeviceType RecommendedGraphicsDeviceTypeFromDeprecated(BuildTarget target, GraphicsDeviceType graphicsDeviceType)
+        {
+            switch (graphicsDeviceType)
+            {
+                case GraphicsDeviceType.PlayStation5: return GraphicsDeviceType.PlayStation5NGGC;
+                case GraphicsDeviceType.OpenGLCore: return target == BuildTarget.StandaloneWindows || target == BuildTarget.StandaloneWindows64 ?
+                        GraphicsDeviceType.Vulkan : graphicsDeviceType;
+                default: return graphicsDeviceType;
+            }
+        }
+
+        // Checks if the GraphicsDeviceType is experimental
+        static private bool IsGraphicsDeviceTypeExperimental(BuildTarget target, GraphicsDeviceType graphicsDeviceType)
+        {
+            switch (graphicsDeviceType)
+            {
+                case GraphicsDeviceType.WebGPU: return true;
+                default: return false;
+            }
+        }
+
         // Converts a GraphicsDeviceType to a string, along with visual modifiers for given target platform
         static private string GraphicsDeviceTypeToString(BuildTarget target, GraphicsDeviceType graphicsDeviceType)
         {
-
-            if (graphicsDeviceType == GraphicsDeviceType.WebGPU)
-            {
-                return "WebGPU (Experimental)";
-            }
-            else if (target == BuildTarget.WebGL)
+            if (graphicsDeviceType != GraphicsDeviceType.WebGPU && target == BuildTarget.WebGL)
             {
                 return "WebGL 2";
             }
 
-            switch (target)
+            if (IsGraphicsDeviceTypeDeprecated(target, graphicsDeviceType))
+                return graphicsDeviceType.ToString() + " (Deprecated)";
+            else if (IsGraphicsDeviceTypeExperimental(target, graphicsDeviceType))
             {
-                case BuildTarget.StandaloneWindows:
-                case BuildTarget.StandaloneWindows64:
-                    if (graphicsDeviceType == GraphicsDeviceType.OpenGLCore)
-                        return graphicsDeviceType.ToString() + " (Deprecated)";
-                    break;
+                return graphicsDeviceType.ToString() + " (Experimental)";
             }
 
             return graphicsDeviceType.ToString();
@@ -1402,7 +1442,6 @@ namespace UnityEditor
         {
             graphicsDeviceType = graphicsDeviceType.Replace(" (Deprecated)", "");
             graphicsDeviceType = graphicsDeviceType.Replace(" (Experimental)", "");
-            if (graphicsDeviceType.Contains("WebGPU")) return GraphicsDeviceType.WebGPU;
             if (graphicsDeviceType == "WebGL 2") return GraphicsDeviceType.OpenGLES3;
             return (GraphicsDeviceType)Enum.Parse(typeof(GraphicsDeviceType), graphicsDeviceType, true);
         }
@@ -1677,9 +1716,16 @@ namespace UnityEditor
                 m_CurrentTarget.SetGraphicsAPIs_Internal(targetPlatform, new GraphicsDeviceType[] { selected }, true);
                 OnTargetObjectChangedDirectly();
             }
+
+            if (IsGraphicsDeviceTypeDeprecated(targetPlatform, selected))
+            {
+                GraphicsDeviceType recommendedAPI = RecommendedGraphicsDeviceTypeFromDeprecated(targetPlatform, selected);
+                string text = $"The Graphics API has been deprecated and will be removed in a future version. Use {GraphicsDeviceTypeToString(targetPlatform, recommendedAPI)} instead.";
+                EditorGUILayout.HelpBox(L10n.Tr(text), MessageType.Info, true);
+            }
         }
 
-        void GraphicsAPIsGUIOnePlatform(BuildTargetGroup targetGroup, BuildTarget targetPlatform, string platformTitle)
+        void GraphicsAPIsGUIOnePlatform(BuildTargetGroup targetGroup, BuildTarget targetPlatform, GUIContent platformTitleContent)
         {
             if (IsPreset())
                 return;
@@ -1693,7 +1739,7 @@ namespace UnityEditor
             // toggle for automatic API selection
             EditorGUI.BeginChangeCheck();
             var automatic = m_CurrentTarget.GetUseDefaultGraphicsAPIs_Internal(targetPlatform);
-            automatic = EditorGUILayout.Toggle(string.Format(L10n.Tr("Auto Graphics API {0}"), (platformTitle ?? string.Empty)), automatic);
+            automatic = EditorGUILayout.Toggle(platformTitleContent ?? GUIContent.none, automatic);
             if (EditorGUI.EndChangeCheck())
             {
                 Undo.RecordObject(target, SettingsContent.undoChangedGraphicsAPIString);
@@ -1710,21 +1756,25 @@ namespace UnityEditor
                     EditorGUILayout.HelpBox(SettingsContent.recordingInfo.text, MessageType.Info, true);
                 }
 
-                var displayTitle = "Graphics APIs";
-                if (platformTitle != null)
-                    displayTitle += platformTitle;
+                string displayTitle = String.Empty;
+                if (platformTitleContent != null)
+                {
+                    displayTitle = platformTitleContent.text;
+                    if (displayTitle.StartsWith("Auto "))
+                        displayTitle = displayTitle.Substring(5);
+                }
 
                 if (targetPlatform == BuildTarget.PS5)
                 {
                     ExclusiveGraphicsAPIsGUI(targetPlatform, displayTitle);
                     return;
                 }
-
+                
+                GraphicsDeviceType[] devices = m_CurrentTarget.GetGraphicsAPIs_Internal(targetPlatform);
+                var devicesList = (devices != null) ? devices.ToList() : new List<GraphicsDeviceType>();
                 // create reorderable list for this target if needed
                 if (!m_GraphicsDeviceLists.ContainsKey(targetPlatform))
                 {
-                    GraphicsDeviceType[] devices = m_CurrentTarget.GetGraphicsAPIs_Internal(targetPlatform);
-                    var devicesList = (devices != null) ? devices.ToList() : new List<GraphicsDeviceType>();
                     var rlist = new ReorderableList(devicesList, typeof(GraphicsDeviceType), true, true, true, true);
                     rlist.onAddDropdownCallback = (rect, list) => AddGraphicsDeviceElement(targetPlatform, rect, list);
                     rlist.onCanRemoveCallback = CanRemoveGraphicsDeviceElement;
@@ -1741,8 +1791,12 @@ namespace UnityEditor
                 {
                     EditorGUILayout.HelpBox(SettingsContent.appleSiliconOpenGLWarning.text, MessageType.Warning, true);
                 }
-
+                
                 m_GraphicsDeviceLists[targetPlatform].DoLayoutList();
+                
+                bool containsDeprecatedAPIs = devicesList.Exists(device => IsGraphicsDeviceTypeDeprecated(targetPlatform, device));
+                if (containsDeprecatedAPIs)
+                    EditorGUILayout.HelpBox(SettingsContent.graphicsAPIDeprecationMessage.text, MessageType.Info, true);
 
                 //@TODO: undo
             }
@@ -1757,13 +1811,13 @@ namespace UnityEditor
             // split it into win/mac/linux manually
             if (targetGroup == BuildTargetGroup.Standalone)
             {
-                GraphicsAPIsGUIOnePlatform(targetGroup, BuildTarget.StandaloneWindows, " for Windows");
-                GraphicsAPIsGUIOnePlatform(targetGroup, BuildTarget.StandaloneOSX, " for Mac");
-                GraphicsAPIsGUIOnePlatform(targetGroup, BuildTarget.StandaloneLinux64, " for Linux");
+                GraphicsAPIsGUIOnePlatform(targetGroup, BuildTarget.StandaloneWindows, SettingsContent.autoGraphicsAPIForWindows);
+                GraphicsAPIsGUIOnePlatform(targetGroup, BuildTarget.StandaloneOSX, SettingsContent.autoGraphicsAPIForMac);
+                GraphicsAPIsGUIOnePlatform(targetGroup, BuildTarget.StandaloneLinux64, SettingsContent.autoGraphicsAPIForLinux);
             }
             else
             {
-                GraphicsAPIsGUIOnePlatform(targetGroup, target, null);
+                GraphicsAPIsGUIOnePlatform(targetGroup, target, SettingsContent.autoGraphicsAPI);
             }
         }
 
@@ -2648,15 +2702,20 @@ namespace UnityEditor
                     m_VirtualTexturingSupportEnabled.boolValue = EditorGUILayout.Toggle(SettingsContent.virtualTexturingSupportEnabled, m_VirtualTexturingSupportEnabled.boolValue);
                     if (EditorGUI.EndChangeCheck())
                     {
-                        if (PlayerSettings.OnVirtualTexturingChanged())
+                        if (IsActivePlayerSettingsEditor())
                         {
-                            PlayerSettings.SetVirtualTexturingSupportEnabled(m_VirtualTexturingSupportEnabled.boolValue);
-                            EditorApplication.RequestCloseAndRelaunchWithCurrentArguments();
-                            GUIUtility.ExitGUI();
-                        }
-                        else
-                        {
-                            m_VirtualTexturingSupportEnabled.boolValue = selectedValue;
+                            if (PlayerSettings.OnVirtualTexturingChanged())
+                            {
+                                PlayerSettings.SetVirtualTexturingSupportEnabled(m_VirtualTexturingSupportEnabled
+                                    .boolValue);
+                                m_VirtualTexturingSupportEnabled.serializedObject.ApplyModifiedProperties();
+                                EditorApplication.delayCall += EditorApplication.RestartEditorAndRecompileScripts;
+                                GUIUtility.ExitGUI();
+                            }
+                            else
+                            {
+                                m_VirtualTexturingSupportEnabled.boolValue = selectedValue;
+                            }
                         }
                     }
                 }
@@ -2794,7 +2853,7 @@ namespace UnityEditor
                 // TODO this should be move to an extension if we have one for MacOS or Standalone target at some point.
                 GUILayout.Label(SettingsContent.macAppStoreTitle, EditorStyles.boldLabel);
 
-                EditorGUILayout.PropertyField(m_OverrideDefaultApplicationIdentifier, EditorGUIUtility.TrTextContent("Override Default Bundle Identifier"));
+                EditorGUILayout.PropertyField(m_OverrideDefaultApplicationIdentifier, SettingsContent.overrideDefaultApplicationIdentifier);
 
                 using (var horizontal = new EditorGUILayout.HorizontalScope())
                 {
@@ -2802,7 +2861,7 @@ namespace UnityEditor
                     {
                         using (new EditorGUI.IndentLevelScope())
                         {
-                            ShowApplicationIdentifierUI(BuildTargetGroup.Standalone, "Bundle Identifier", "'CFBundleIdentifier'");
+                            ShowApplicationIdentifierUI(BuildTargetGroup.Standalone, SettingsContent.bundleIdentifier.text, "'CFBundleIdentifier'");
                         }
                     }
                 }
@@ -3210,7 +3269,7 @@ namespace UnityEditor
                         if (ShouldRestartEditorToApplySetting())
                         {
                             m_GCIncremental.serializedObject.ApplyModifiedProperties();
-                            EditorApplication.OpenProject(Environment.CurrentDirectory);
+                            EditorApplication.delayCall += EditorApplication.RestartEditorAndRecompileScripts;
                         }
                         else
                             m_GCIncremental.boolValue = oldValue;
@@ -3297,7 +3356,7 @@ namespace UnityEditor
                         if (ShouldRestartEditorToApplySetting())
                         {
                             m_ActiveInputHandler.serializedObject.ApplyModifiedProperties();
-                            EditorApplication.RestartEditorAndRecompileScripts();
+                            EditorApplication.delayCall += EditorApplication.RestartEditorAndRecompileScripts;
                         }
                         else
                             m_ActiveInputHandler.intValue = currValue;
@@ -3958,12 +4017,12 @@ namespace UnityEditor
             EditorGUILayout.Space();
         }
 
-        internal static bool BuildPathBoxButton(SerializedProperty prop, string uiString, string directory)
+        internal static void BuildPathBoxButton(SerializedProperty prop, string uiString, string directory)
         {
-            return BuildPathBoxButton(prop, uiString, directory, null);
+            BuildPathBoxButton(prop, uiString, directory, null, null);
         }
 
-        internal static bool BuildPathBoxButton(SerializedProperty prop, string uiString, string directory, Action onSelect)
+        internal static void BuildPathBoxButton(SerializedProperty prop, string uiString, string directory, Action onSelect, Action onChanged)
         {
             float h = EditorGUI.kSingleLineHeight;
             float kLabelFloatMinW = EditorGUI.kLabelW + EditorGUIUtility.fieldWidth + EditorGUI.kSpacing;
@@ -3992,19 +4051,21 @@ namespace UnityEditor
 
                 prop.serializedObject.ApplyModifiedProperties();
 
+                if (changed && onChanged != null)
+                    onChanged();
+
+                // Necessary to avoid the error "BeginLayoutGroup must be called first".
                 GUIUtility.ExitGUI();
             }
-
-            return changed;
         }
 
-        internal static bool BuildFileBoxButton(SerializedProperty prop, string uiString, string directory, string ext)
+        internal static void BuildFileBoxButton(SerializedProperty prop, string uiString, string directory, string ext)
         {
-            return BuildFileBoxButton(prop, uiString, directory, ext, null);
+            BuildFileBoxButton(prop, uiString, directory, ext, null, null);
         }
 
-        internal static bool BuildFileBoxButton(SerializedProperty prop, string uiString, string directory,
-            string ext, Action onSelect)
+        internal static void BuildFileBoxButton(SerializedProperty prop, string uiString, string directory,
+            string ext, Action onSelect, Action onChanged)
         {
             bool changed = false;
             using (var vertical = new EditorGUILayout.VerticalScope())
@@ -4036,11 +4097,13 @@ namespace UnityEditor
 
                     prop.serializedObject.ApplyModifiedProperties();
 
+                    if (changed && onChanged != null)
+                        onChanged();
+
+                    // Necessary to avoid the error "BeginLayoutGroup must be called first".
                     GUIUtility.ExitGUI();
                 }
             }
-
-            return changed;
         }
 
         public void PublishSectionGUI(BuildPlatform platform, ISettingEditorExtension settingsExtension, int sectionIndex = 5)
@@ -4071,9 +4134,15 @@ namespace UnityEditor
         [SettingsProvider]
         internal static SettingsProvider CreateProjectSettingsProvider()
         {
+            var keywordsList = new List<string>();
+
+            keywordsList.AddRange(SettingsProvider.GetSearchKeywordsFromGUIContentProperties<SettingsContent>());
+            keywordsList.AddRange(SettingsProvider.GetSearchKeywordsFromGUIContentProperties<PlayerSettingsSplashScreenEditor.Texts>());
+            keywordsList.AddRange(SettingsProvider.GetSearchKeywordsFromGUIContentProperties<PlayerSettingsIconsEditor.SettingsContent>());
+
             var provider = AssetSettingsProvider.CreateProviderFromAssetPath(
                 "Project/Player", "ProjectSettings/ProjectSettings.asset",
-                SettingsProvider.GetSearchKeywordsFromGUIContentProperties<SettingsContent>());
+                keywordsList);
             provider.activateHandler = (searchContext, rootElement) =>
             {
                 var playerSettingsProvider = provider.settingsEditor as PlayerSettingsEditor;

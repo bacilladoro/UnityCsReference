@@ -21,6 +21,7 @@ namespace UnityEditor.Build.Profile
             + "Build profiles are stored as assets you can share with your team");
         public static readonly string all = L10n.Tr("All");
         public static readonly string addBuildProfile = L10n.Tr("Add Build Profile");
+        public static readonly string addBuildProfiles = L10n.Tr("Add {0} Build Profiles");
         public static readonly string buildProfilesName = L10n.Tr("Build Profiles");
         public static readonly string platforms = L10n.Tr("Platforms");
         public static readonly string build = L10n.Tr("Build");
@@ -73,6 +74,14 @@ namespace UnityEditor.Build.Profile
         public static readonly string resetGraphicsSettingsDialogTitle = L10n.Tr("Reset Graphics Settings to Globals");
         public static readonly string resetGraphicsSettingsDialogMessage = L10n.Tr("This will reset all Graphics Settings overrides to the original globals.");
 
+        // Build Profile Quality Settings
+        public static readonly string overrideQualitySettingsToggleLabel = L10n.Tr("Override Global Quality Settings");
+        public static readonly string overrideQualitySettingsFoldoutLabel = L10n.Tr("Included Quality Levels");
+        public static readonly string removeQualitySettingsDialogTitle = L10n.Tr("Remove Quality Settings Overrides");
+        public static readonly string removeQualitySettingsDialogMessage = L10n.Tr("This will remove all Quality Settings overrides");
+        public static readonly string resetQualitySettingsDialogTitle = L10n.Tr("Reset Quality Settings to Globals");
+        public static readonly string resetQualitySettingsDialogMessage = L10n.Tr("This will reset all Quality Settings overrides to the original globals.");
+
         // Platform Discovery Window
         public static readonly string platformDiscoveryTitle = L10n.Tr("Platform Browser");
         public static readonly string noModuleFoundWarning = L10n.Tr("No module found for the selected profile.");
@@ -85,6 +94,7 @@ namespace UnityEditor.Build.Profile
         public static readonly string deselectAll = L10n.Tr("Deselect All");
         public static readonly string packagesHeader = L10n.Tr("Packages");
         public static readonly string descriptionHeader = L10n.Tr("Description");
+        public static readonly string preconfiguredSettingsHeader = L10n.Tr("Configurations");
 
         // Asset Import Overrides Window
         public static readonly string assetImportOverrideTitle = L10n.Tr("Asset Import Overrides");

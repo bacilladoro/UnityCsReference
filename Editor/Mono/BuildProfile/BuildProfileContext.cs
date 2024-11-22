@@ -280,6 +280,9 @@ namespace UnityEditor.Build.Profile
                 if (m_PlatformIdToClassicPlatformProfile.ContainsKey(key))
                     continue;
 
+                if (BuildProfileModuleUtil.IsPlatformVisibleInPlatformBrowserOnly(key))
+                    continue;
+
                 // Installed flag, as calculated by BuildPlatform
                 if (BuildProfileModuleUtil.IsModuleInstalled(key))
                     continue;
@@ -312,6 +315,17 @@ namespace UnityEditor.Build.Profile
                 return false;
 
             return activeProfile.graphicsSettings != null;
+        }
+
+        /// <summary>
+        /// Check if the active build profile has quality settings
+        /// </summary>
+        internal static bool ActiveProfileHasQualitySettings()
+        {
+            if (activeProfile == null)
+                return false;
+
+            return activeProfile.qualitySettings != null;
         }
 
         /// <summary>
@@ -614,7 +628,6 @@ namespace UnityEditor.Build.Profile
             {
                 s_Instance = CreateInstance<BuildProfileContext>();
                 s_Instance.hideFlags = HideFlags.DontSave;
-                Save();
             }
 
             System.Diagnostics.Debug.Assert(s_Instance != null);
@@ -732,6 +745,24 @@ namespace UnityEditor.Build.Profile
 
             activeProfile.graphicsSettings.preloadedShaders = collection;
             return true;
+        }
+
+        [RequiredByNativeCode, UsedImplicitly]
+        static string[] GetActiveProfileQualityLevels()
+        {
+            if (!ActiveProfileHasQualitySettings())
+                return Array.Empty<string>();
+
+            return activeProfile.qualitySettings.qualityLevels;
+        }
+
+        [RequiredByNativeCode, UsedImplicitly]
+        static string GetActiveProfileDefaultQualityLevel()
+        {
+            if (!ActiveProfileHasQualitySettings())
+                return string.Empty;
+
+            return activeProfile.qualitySettings.defaultQualityLevel;
         }
 
         [RequiredByNativeCode]
