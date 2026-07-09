@@ -713,6 +713,13 @@ namespace UnityEditor.Compilation
 
         internal static string GetAssemblyDefinitionFilePathFromAssemblyReference(EditorCompilation editorCompilation, string reference)
         {
+            // Under MSBuild the asmdef inventory is owned by MsBuildCompilation, not the legacy
+            // EditorCompilation, so route the lookup to the active pipeline.
+            if (MsBuildCompilationInterface.IsEnabled())
+            {
+                return MsBuildCompilationInterface.Instance.TryGetAssemblyDefinitionFilePathFromReference(reference);
+            }
+
             if (editorCompilation.TryFindCustomScriptAssemblyFromAssemblyReference(reference, out var customScriptAssembly))
             {
                 return customScriptAssembly.FilePath;

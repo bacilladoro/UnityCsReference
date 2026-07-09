@@ -36,14 +36,14 @@ namespace UnityEditor
 
         static class Styles
         {
-            public static GUIStyle preButton = "preButton";
-            public static GUIStyle preSlider = "preSlider";
-            public static GUIStyle preSliderThumb = "preSliderThumb";
-            public static GUIStyle preLabel = "preLabel";
-            public static GUIContent smallZoom = EditorGUIUtility.IconContent("PreTextureMipMapLow");
-            public static GUIContent largeZoom = EditorGUIUtility.IconContent("PreTextureMipMapHigh");
-            public static GUIContent alphaIcon = EditorGUIUtility.TrIconContent("PreTextureAlpha", "Displaying RGB channels. Click to show alpha channel.");
-            public static GUIContent RGBIcon = EditorGUIUtility.TrIconContent("PreTextureRGB", "Displaying alpha channel. Click to show RGB channels.");
+            public static readonly GUIStyle preButton = "preButton";
+            public static readonly GUIStyle preSlider = "preSlider";
+            public static readonly GUIStyle preSliderThumb = "preSliderThumb";
+            public static readonly GUIStyle preLabel = "preLabel";
+            public static readonly GUIContent smallZoom = EditorGUIUtility.IconContent("PreTextureMipMapLow");
+            public static readonly GUIContent largeZoom = EditorGUIUtility.IconContent("PreTextureMipMapHigh");
+            public static readonly GUIContent alphaIcon = EditorGUIUtility.TrIconContent("PreTextureAlpha", "Displaying RGB channels. Click to show alpha channel.");
+            public static readonly GUIContent RGBIcon = EditorGUIUtility.TrIconContent("PreTextureRGB", "Displaying alpha channel. Click to show RGB channels.");
         }
 
         public void OnDisable()

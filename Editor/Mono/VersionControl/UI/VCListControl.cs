@@ -6,21 +6,22 @@ using UnityEngine;
 using UnityEditor;
 using System;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor.VersionControl;
 
 // List control that manages VCAssets.  This is used in a number of places in the plugin to display and manipulate asset lists.
 namespace UnityEditorInternal.VersionControl
 {
     [System.Serializable]
-    public class ListControl
+    public partial class ListControl
     {
         internal static class Styles
         {
             public static readonly GUIStyle evenBackground = "CN EntryBackEven";
-            public static GUIStyle dragBackground = new GUIStyle("CN EntryBackEven");
-            public static GUIStyle changeset = new GUIStyle(EditorStyles.boldLabel);
-            public static GUIStyle asset = new GUIStyle(EditorStyles.label);
-            public static GUIStyle meta = new GUIStyle(EditorStyles.miniLabel);
+            public static readonly GUIStyle dragBackground = new GUIStyle("CN EntryBackEven");
+            public static readonly GUIStyle changeset = new GUIStyle(EditorStyles.boldLabel);
+            public static readonly GUIStyle asset = new GUIStyle(EditorStyles.label);
+            public static readonly GUIStyle meta = new GUIStyle(EditorStyles.miniLabel);
 
             static Styles()
             {
@@ -100,7 +101,9 @@ namespace UnityEditorInternal.VersionControl
         // would not need this.  This is not thread safe and feels like a bad workaround.
         [System.NonSerialized]
         int uniqueID = 0;
+        [NoAutoStaticsCleanup] // monotonic ID counter; resetting risks collisions
         static int s_uniqueIDCount = 1;
+        [AutoStaticsCleanupOnCodeReload]
         static Dictionary<int, ListControl> s_uniqueIDList = new Dictionary<int, ListControl>();
         static public ListControl FromID(int id) { try { return s_uniqueIDList[id]; } catch { return null; } }
 

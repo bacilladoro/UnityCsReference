@@ -57,7 +57,7 @@ namespace Unity.VectorGraphics.Editor
         private readonly GUIContent m_GradientResolutionText = new GUIContent("Gradient Resolution", "Size of each rasterized gradient in pixels. Higher values consume memory but result in more accurate gradients.");
         private readonly GUIContent m_AlignmentText = new GUIContent("Pivot", "Sprite pivot point in its local space.");
         private readonly GUIContent m_CustomPivotText = new GUIContent("Custom Pivot");
-        private readonly GUIContent m_GeneratePhysicsShapeText = new GUIContent("Generate Physics Shape");
+        private readonly GUIContent m_GeneratePhysicsShapeText = new GUIContent("Generate Physics Outline");
         private readonly GUIContent m_ViewportOptionsText = new GUIContent("Viewport Options", "Viewport options to use while importing the SVG document");
         private readonly GUIContent m_TessellationModeText = new GUIContent("Tessellation Mode");
         private readonly GUIContent m_SettingsText = new GUIContent("Tessellation Settings");

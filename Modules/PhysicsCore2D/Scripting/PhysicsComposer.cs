@@ -488,6 +488,30 @@ namespace Unity.U2D.Physics
         }
 
         /// <summary>
+        /// Add a <see cref="PhysicsShape.ShapeProxy"/> geometry layer to the Physics Composer.
+        /// Only a proxy representing <see cref="PhysicsShape.ShapeType.Circle"/>, <see cref="PhysicsShape.ShapeType.Capsule"/> or <see cref="PhysicsShape.ShapeType.Polygon"/> is used. All other types are ignored.
+        /// </summary>
+        /// <param name="proxy">The shape proxy whose geometry will be used.</param>
+        /// <param name="transform">The transform to use on the geometry.</param>
+        /// <param name="operation">The composer operation to use.</param>
+        /// <param name="order">The order to perform the composer operation.</param>
+        /// <param name="curveStride">The curve stride is used to approximate the curved geometry but is applied according to the specific geometry type. Lower values produce more vertices, larger values fewer vertices. The valid range is [<see cref="PhysicsComposer.MinCurveStride"/>, 1.0] although values over 0.3 tend to produce relatively poor results.</param>
+        /// <param name="reverseWinding">Whether the winding should be reversed. Typically winding is generated anti-clockwise, reversed winding is therefore clockwise.</param>
+        /// <returns>A handle to the new layer, or a default handle if the proxy type was ignored.</returns>
+        public readonly LayerHandle AddLayer(ShapeProxy proxy, PhysicsTransform transform, Operation operation = Operation.OR, int order = 0, float curveStride = DefaultCurveStride, bool reverseWinding = false)
+        {
+            // Dispatch on the proxy's shape type to the matching typed AddLayer.
+            // Only the filled types (Circle, Capsule, Polygon) are valid composer geometry; all other types are ignored.
+            switch (proxy.shapeType)
+            {
+                case ShapeType.Circle: return AddLayer(proxy.circleGeometry, transform, operation, order, curveStride, reverseWinding);
+                case ShapeType.Capsule: return AddLayer(proxy.capsuleGeometry, transform, operation, order, curveStride, reverseWinding);
+                case ShapeType.Polygon: return AddLayer(proxy.polygonGeometry, transform, operation, order, curveStride, reverseWinding);
+                default: return default;
+            }
+        }
+
+        /// <summary>
         /// Add a vertices layer to the Physics Composer.
         /// </summary>
         /// <param name="vertices">A span of vertices. This geometry will be copied so the geometry the span is referring to can be disposed of afterwards if required.</param>

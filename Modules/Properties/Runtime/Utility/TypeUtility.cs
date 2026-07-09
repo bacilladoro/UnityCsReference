@@ -7,6 +7,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Text;
 using UnityEngine.Scripting;
+using Unity.Scripting.LifecycleManagement;
 
 namespace Unity.Properties
 {
@@ -245,6 +246,7 @@ namespace Unity.Properties
             /// <summary>
             /// Reference to the strongly typed <see cref="ITypeConstructor{TType}"/> for this type. This allows direct access without any dictionary lookups.
             /// </summary>
+            [NoAutoStaticsCleanup]
             public static ITypeConstructor<T> TypeConstructor;
         }
 
@@ -265,13 +267,18 @@ namespace Unity.Properties
         /// <remarks>
         /// Any types in this set are also present in the <see cref="Cache{T}"/>.
         /// </remarks>
+        [NoAutoStaticsCleanup]
         static readonly ConcurrentDictionary<Type, ITypeConstructor> s_TypeConstructors = new ConcurrentDictionary<Type, ITypeConstructor>();
 
+        [NoAutoStaticsCleanup]
         static readonly System.Reflection.MethodInfo s_CreateTypeConstructor;
 
+        [NoAutoStaticsCleanup]
         static readonly ConcurrentDictionary<Type, string> s_CachedResolvedName;
 
+        [NoAutoStaticsCleanup]
         static readonly UnityEngine.Pool.ObjectPool<StringBuilder> s_Builders;
+        [NoAutoStaticsCleanup]
         private static readonly object syncedPoolObject = new object();
 
 

@@ -272,6 +272,14 @@ namespace UnityEngine.UIElements
             if (m_DragState != DragState.CanStartDrag)
                 return;
 
+            // A popup opened mid-gesture can consume the PointerUp; don't start a drag if the button is no longer held.
+            if ((evt.pressedButtons & (1 << (int)MouseButton.LeftMouse)) == 0)
+            {
+                m_DragState = DragState.None;
+                m_PendingPerformDrag = false;
+                return;
+            }
+
             var delta = m_Start - evt.position;
             if (delta.sqrMagnitude >= ScrollView.ScrollThresholdSquared || m_PendingPerformDrag)
             {

@@ -262,7 +262,8 @@ namespace UnityEngine.Rendering
                 public const int MaxNumLayers = 4;
                 public const int MaxRequestsPerFrameSupported = 0x0fff;
 
-                public int width, height;
+                public int width;
+                public int height;
                 public int maxActiveRequests;
                 public int tilesize;
                 public GraphicsFormat[] layers;
@@ -499,7 +500,8 @@ namespace UnityEngine.Rendering
             [NativeHeader("Modules/VirtualTexturing/ScriptBindings/VirtualTexturing.bindings.h")]
             public struct GPUTextureStackRequestLayerParameters
             {
-                public int destX, destY;
+                public int destX;
+                public int destY;
                 public RenderTargetIdentifier dest;
 
                 public extern int GetWidth();
@@ -541,8 +543,10 @@ namespace UnityEngine.Rendering
             public struct GPUTextureStackRequestParameters
             {
                 public int level;
-                public int x, y;
-                public int width, height;
+                public int x;
+                public int y;
+                public int width;
+                public int height;
                 public int numLayers;
 
                 GPUTextureStackRequestLayerParameters layer0;
@@ -572,8 +576,10 @@ namespace UnityEngine.Rendering
             public struct CPUTextureStackRequestParameters
             {
                 public int level;
-                public int x, y;
-                public int width, height;
+                public int x;
+                public int y;
+                public int width;
+                public int height;
                 public int numLayers;
 
                 CPUTextureStackRequestLayerParameters layer0;

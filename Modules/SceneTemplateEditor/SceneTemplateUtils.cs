@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor.PackageManager;
 using UnityEditor.SceneManagement;
 using UnityEditor.Scripting.ScriptCompilation;
@@ -39,6 +40,7 @@ namespace UnityEditor.SceneTemplate
         public const string DependencyPropertyName = nameof(DependencyInfo.dependency);
         public const string InstantiationModePropertyName = nameof(DependencyInfo.instantiationMode);
 
+        [NoAutoStaticsCleanup] // fixed built-in template catalog entry; callback targets editor code only, no user references, safe to persist
         internal static SceneTemplateInfo emptySceneTemplateInfo = new SceneTemplateInfo
         {
             name = "Empty",
@@ -48,6 +50,7 @@ namespace UnityEditor.SceneTemplate
             onCreateCallback = additive => CreateBuiltinScene(BuiltinTemplateType.Empty, additive),
             isDeprecated = false,
         };
+        [NoAutoStaticsCleanup] // fixed built-in template catalog entry; callback targets editor code only, no user references, safe to persist
         internal static SceneTemplateInfo default2DSceneTemplateInfo = new SceneTemplateInfo
         {
             name = "Basic 2D (Built-in / Deprecated)",
@@ -58,6 +61,7 @@ namespace UnityEditor.SceneTemplate
             onCreateCallback = additive => CreateBuiltinScene(BuiltinTemplateType.Default2D, additive),
             isDeprecated = true,
         };
+        [NoAutoStaticsCleanup] // fixed built-in template catalog entry; callback targets editor code only, no user references, safe to persist
         internal static SceneTemplateInfo default2DMode3DSceneTemplateInfo = new SceneTemplateInfo
         {
             name = "Basic 3D (Built-in / Deprecated)",
@@ -68,6 +72,7 @@ namespace UnityEditor.SceneTemplate
             onCreateCallback = additive => CreateBuiltinScene(BuiltinTemplateType.Default2DMode3DCamera, additive),
             isDeprecated = true,
         };
+        [NoAutoStaticsCleanup] // fixed built-in template catalog entry; callback targets editor code only, no user references, safe to persist
         internal static SceneTemplateInfo default3DSceneTemplateInfo = new SceneTemplateInfo
         {
             name = "Basic (Built-in / Deprecated)",
@@ -78,8 +83,11 @@ namespace UnityEditor.SceneTemplate
             onCreateCallback = additive => CreateBuiltinScene(BuiltinTemplateType.Default3D, additive),
             isDeprecated = true,
         };
+        [NoAutoStaticsCleanup] // fixed array over the built-in template catalog entries; no user references, safe to persist
         internal static SceneTemplateInfo[] builtinTemplateInfos = new[] { emptySceneTemplateInfo, default2DSceneTemplateInfo, default2DMode3DSceneTemplateInfo, default3DSceneTemplateInfo };
+        [NoAutoStaticsCleanup] // fixed array over the built-in template catalog entries; no user references, safe to persist
         internal static SceneTemplateInfo[] builtin2DTemplateInfos = new[] { emptySceneTemplateInfo, default2DSceneTemplateInfo, default2DMode3DSceneTemplateInfo };
+        [NoAutoStaticsCleanup] // fixed array over the built-in template catalog entries; no user references, safe to persist
         internal static SceneTemplateInfo[] builtin3DTemplateInfos = new[] { emptySceneTemplateInfo, default3DSceneTemplateInfo };
 
         internal static IEnumerable<string> GetSceneTemplatePaths()

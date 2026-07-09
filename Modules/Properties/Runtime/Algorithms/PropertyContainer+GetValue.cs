@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 
 namespace Unity.Properties
 {
@@ -10,6 +11,7 @@ namespace Unity.Properties
     {
         class GetValueVisitor<TSrcValue> : PathVisitor
         {
+            [NoAutoStaticsCleanup]
             public static readonly UnityEngine.Pool.ObjectPool<GetValueVisitor<TSrcValue>> Pool = new UnityEngine.Pool.ObjectPool<GetValueVisitor<TSrcValue>>(() => new GetValueVisitor<TSrcValue>(), null, v => v.Reset());
             public TSrcValue Value;
 

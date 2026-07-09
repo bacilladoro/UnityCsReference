@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 
 namespace Unity.Properties
 {
@@ -13,12 +14,14 @@ namespace Unity.Properties
     /// <typeparam name="TValue">The value type.</typeparam>
     public class KeyValuePairPropertyBag<TKey, TValue> : PropertyBag<KeyValuePair<TKey, TValue>>, INamedProperties<KeyValuePair<TKey, TValue>>
     {
+        [NoAutoStaticsCleanup]
         static readonly DelegateProperty<KeyValuePair<TKey, TValue>, TKey> s_KeyProperty =
             new DelegateProperty<KeyValuePair<TKey, TValue>, TKey>(
                 nameof(KeyValuePair<TKey, TValue>.Key),
                 (ref KeyValuePair<TKey, TValue> container) => container.Key,
                 null);
 
+        [NoAutoStaticsCleanup]
         static readonly DelegateProperty<KeyValuePair<TKey, TValue>, TValue> s_ValueProperty =
             new DelegateProperty<KeyValuePair<TKey, TValue>, TValue>(
                 nameof(KeyValuePair<TKey, TValue>.Value),

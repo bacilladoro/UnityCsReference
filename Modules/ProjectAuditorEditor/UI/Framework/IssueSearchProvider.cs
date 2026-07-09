@@ -68,7 +68,7 @@ namespace Unity.ProjectAuditor.Editor.UI.Framework
                 var categories = new List<IssueCategory>(categoryArray.Length);
                 foreach (var category in categoryArray)
                 {
-                    if (category < IssueCategory.FirstCustomCategory)
+                    if (!category.IsSummary() && category < IssueCategory.FirstCustomCategory)
                         categories.Add(category);
                 }
 
@@ -97,7 +97,7 @@ namespace Unity.ProjectAuditor.Editor.UI.Framework
             var report = GetCurrentReport();
             if (report != null)
             {
-                var category = IssueCategory.Metadata;
+                var category = IssueCategory.OptimizationSummary;
                 var severity = Severity.None;
                 var textQuery = context.searchQuery ?? "";
                 var includeIssues = true;
@@ -139,7 +139,7 @@ namespace Unity.ProjectAuditor.Editor.UI.Framework
                     if (!isIssue && !includeInsights)
                         continue;
 
-                    if (category != IssueCategory.Metadata && issue.Category != category)
+                    if (!category.IsSummary() && issue.Category != category)
                         continue;
                     if (severity != Severity.None && issue.Severity != severity)
                         continue;

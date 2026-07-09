@@ -64,6 +64,30 @@ namespace Unity.ProjectAuditor.Editor.Core
         // future versions in our database, then this check will return false
         public static bool HasAnyUpgradeVersions => UnityVersions.Length > 0;
 
+        // True if the issue is relevant when upgrading to the given target Unity version. Upgrade
+        // issues match only when the target falls within their [MinVersion, MaxVersion) range (an
+        // empty MaxVersion means "still applies in all later versions").
+        public static bool MatchesTargetVersion(ReportItem issue, string targetVersion)
+        {
+            if (!issue.IsUpgradeIssue || !HasAnyUpgradeVersions)
+                return true;
+
+            // The selector assigns a default version the first time it's drawn; stats can be computed
+            // before that, so fall back to the newest known version rather than parsing an empty string.
+            if (string.IsNullOrEmpty(targetVersion))
+                targetVersion = UnityVersions[^1];
+
+            var targetVersionInt = Utility.VersionToInt(targetVersion);
+
+            var since = issue.UpgradeProperties[(int)UpgradeProperties.MinVersion];
+            var until = issue.UpgradeProperties[(int)UpgradeProperties.MaxVersion];
+
+            var sinceInt = Utility.VersionToInt(since);
+            var untilInt = string.IsNullOrEmpty(until) ? int.MaxValue : Utility.VersionToInt(until);
+
+            return sinceInt <= targetVersionInt && untilInt > targetVersionInt;
+        }
+
         public static string[] UnityVersions
         {
             get

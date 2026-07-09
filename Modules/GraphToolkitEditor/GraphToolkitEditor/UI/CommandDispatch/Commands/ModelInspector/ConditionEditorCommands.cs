@@ -623,4 +623,108 @@ namespace Unity.GraphToolkit.Editor
             }
         }
     }
+
+    /// <summary>
+    /// Command to set the variable compared by a <see cref="VariableConditionModel"/>.
+    /// </summary>
+    internal class SetVariableConditionVariableCommand : ModelCommand<VariableConditionModel>
+    {
+        const string k_UndoString = "Set Condition Variable";
+
+        /// <summary>
+        /// The variable to compare, or null to clear the assignment.
+        /// </summary>
+        public VariableDeclarationModelBase Variable;
+
+        /// <summary>
+        /// Creates a new instance of <see cref="SetVariableConditionVariableCommand"/>.
+        /// </summary>
+        /// <param name="conditionModel">The target condition.</param>
+        /// <param name="variable">The variable to compare, or null to clear the assignment.</param>
+        public SetVariableConditionVariableCommand(VariableConditionModel conditionModel, VariableDeclarationModelBase variable)
+            : base(k_UndoString, k_UndoString, conditionModel != null ? new[] { conditionModel } : Array.Empty<VariableConditionModel>())
+        {
+            Variable = variable;
+        }
+
+        /// <summary>
+        /// Default command handler.
+        /// </summary>
+        /// <param name="undoState">The undo state component.</param>
+        /// <param name="graphModelState">The state of the graph model.</param>
+        /// <param name="command">The command.</param>
+        [UsedImplicitly]
+        public static void DefaultCommandHandler(UndoStateComponent undoState, GraphModelStateComponent graphModelState, SetVariableConditionVariableCommand command)
+        {
+            if (command.Models.Count == 0)
+                return;
+
+            using (var undoStateUpdater = undoState.UpdateScope)
+            {
+                undoStateUpdater.SaveState(graphModelState);
+            }
+
+            using (var updater = graphModelState.UpdateScope)
+            using (var changeScope = graphModelState.GraphModel.ChangeDescriptionScope)
+            {
+                foreach (var model in command.Models)
+                {
+                    model.SetVariable(command.Variable);
+                    updater.MarkUpdated(changeScope.ChangeDescription);
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Command to set the comparison operator of a <see cref="VariableConditionModel"/>.
+    /// </summary>
+    internal class SetVariableConditionComparisonCommand : ModelCommand<VariableConditionModel>
+    {
+        const string k_UndoString = "Set Condition Comparison";
+
+        /// <summary>
+        /// The new comparison operator to apply.
+        /// </summary>
+        public ConditionComparison Comparison;
+
+        /// <summary>
+        /// Creates a new instance of <see cref="SetVariableConditionComparisonCommand"/>.
+        /// </summary>
+        /// <param name="conditionModel">The target condition.</param>
+        /// <param name="comparison">The new comparison operator to apply.</param>
+        public SetVariableConditionComparisonCommand(VariableConditionModel conditionModel, ConditionComparison comparison)
+            : base(k_UndoString, k_UndoString, conditionModel != null ? new[] { conditionModel } : Array.Empty<VariableConditionModel>())
+        {
+            Comparison = comparison;
+        }
+
+        /// <summary>
+        /// Default command handler.
+        /// </summary>
+        /// <param name="undoState">The undo state component.</param>
+        /// <param name="graphModelState">The state of the graph model.</param>
+        /// <param name="command">The command.</param>
+        [UsedImplicitly]
+        public static void DefaultCommandHandler(UndoStateComponent undoState, GraphModelStateComponent graphModelState, SetVariableConditionComparisonCommand command)
+        {
+            if (command.Models.Count == 0)
+                return;
+
+            using (var undoStateUpdater = undoState.UpdateScope)
+            {
+                undoStateUpdater.SaveState(graphModelState);
+            }
+
+            using (var updater = graphModelState.UpdateScope)
+            using (var changeScope = graphModelState.GraphModel.ChangeDescriptionScope)
+            {
+                foreach (var model in command.Models)
+                {
+                    model.Comparison = command.Comparison;
+                    updater.MarkUpdated(changeScope.ChangeDescription);
+                }
+            }
+        }
+    }
 }

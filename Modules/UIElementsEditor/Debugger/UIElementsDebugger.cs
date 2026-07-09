@@ -327,6 +327,7 @@ namespace UnityEditor.UIElements.Debugger
         private ToolbarToggle m_BreakBatchesToggle;
         private ToolbarToggle m_ShowWireframeToggle;
         private ToolbarButton m_TextureAtlasViewerButton;
+        private ToolbarButton m_CaptureElementButton;
         private EnumField m_ShowTextMetrics;
 
         private DebuggerTreeView m_TreeViewContainer;
@@ -443,6 +444,11 @@ namespace UnityEditor.UIElements.Debugger
             m_TextureAtlasViewerButton.style.flexShrink = 0;
             m_Toolbar.Add(m_TextureAtlasViewerButton);
 
+            m_CaptureElementButton = new ToolbarButton { name = "captureElementButton", text = "Capture to PNG" };
+            m_CaptureElementButton.clicked += CaptureSelectedElement;
+            m_CaptureElementButton.style.flexShrink = 0;
+            m_Toolbar.Add(m_CaptureElementButton);
+
             var splitter = new TwoPaneSplitView(0, 300, TwoPaneSplitViewOrientation.Horizontal);
             m_Root.Add(splitter);
 
@@ -456,6 +462,7 @@ namespace UnityEditor.UIElements.Debugger
 
             m_ScrollView.Add(new TextDebugger(m_Context.selection));
             m_ScrollView.Add(new LayoutDebuggerTab(m_Context.selection));
+            m_ScrollView.Add(new LayoutDiagnosticsTab(m_Context.selection));
             m_ScrollView.Add(new RenderDataDebuggerTab(m_Context.selection));
             m_ScrollView.Add(new PanelTab(m_Context.selection, ()=>GetRepaintUpdater(context.selection.panel) ));
 
@@ -495,7 +502,11 @@ namespace UnityEditor.UIElements.Debugger
                 m_DebuggerSelection.onSelectedElementChanged += element => selectedElement = element;
                 selectedElement = m_DebuggerSelection.element;
 
-                this.RegisterValueChangedCallback( e=> RefreshIfNeeded());
+                // Only react to this foldout's own expansion. ChangeEvent<bool> bubbles, so a
+                // nested Toggle/Foldout in the content (e.g. the group/details foldouts built by
+                // LayoutDiagnosticsTab) would otherwise reach this callback, trigger a full Refresh()
+                // that rebuilds the content, and immediately collapse the child the user just clicked.
+                this.RegisterValueChangedCallback(e => { if (e.target == this) RefreshIfNeeded(); });
                 this.value = false;
                 UpdateVisiblity();
             }
@@ -1506,6 +1517,23 @@ namespace UnityEditor.UIElements.Debugger
                 m_Context.selection.element = ve;
                 m_Context.selectedElementIndex = panel.FindVisualElementIndex(ve);
             }
+        }
+
+        private void CaptureSelectedElement()
+        {
+            var element = m_Context.selectedElement;
+            if (element == null)
+            {
+                EditorUtility.DisplayDialog("Capture to PNG", "Select an element in the hierarchy to capture.", "OK");
+                return;
+            }
+
+            var defaultName = string.IsNullOrEmpty(element.name) ? element.GetType().Name : element.name;
+            var path = EditorUtility.SaveFilePanel("Capture VisualElement to PNG", "", defaultName, "png");
+            if (string.IsNullOrEmpty(path))
+                return;
+
+            element.CaptureToPNG(path);
         }
 
         private Camera[] m_AllCameras = Array.Empty<Camera>();

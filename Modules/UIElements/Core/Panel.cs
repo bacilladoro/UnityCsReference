@@ -668,7 +668,7 @@ namespace UnityEngine.UIElements
 
             // The VersionChangeType.Layout does nothing on the nodes because they don't have measure, but might be needed by something else.
             // The stylesheet change force the stylesheet re-evaluation so that scaling-dependent values are resolved.
-            visualTree.IncrementVersion(VersionChangeType.StyleSheet | VersionChangeType.Layout); 
+            visualTree.IncrementVersion(VersionChangeType.StyleSheet | VersionChangeType.Layout);
         }
 
         public float scaledPixelsPerPoint
@@ -749,6 +749,8 @@ namespace UnityEngine.UIElements
         [VisibleToOtherModules("UnityEditor.UIToolkitAuthoringModule")]
         internal void SendEvent(EventBase e, DispatchMode dispatchMode = DispatchMode.Queued)
         {
+            if (UnloadingUtility.LogErrorIfShutdown())
+                return;
             using var scope = new IMGUIContainer.UITKScope();
             Debug.Assert(dispatcher != null, "dispatcher != null");
             e.AssignTimeStamp(TimeSinceStartupMs());
@@ -999,6 +1001,39 @@ namespace UnityEngine.UIElements
         }
 
         public virtual void Render() => panelRenderer.Render();
+
+        // Renders the whole panel into 'target' (expected to be sized to the panel's pixel bounds),
+        // preserving the active render state. Goes through the virtual Render() so it works for both
+        // editor panels (which wrap an IMGUI scope) and runtime panels. Returns false when the panel
+        // cannot be rendered to a texture, e.g. a runtime panel that draws directly into cameras.
+        internal bool TryRenderIntoTexture(RenderTexture target)
+        {
+            // BaseRuntimePanel.Render() refuses to render panels that draw in cameras.
+            if (drawsInCameras)
+                return false;
+
+            var oldCamera = Camera.current;
+            var oldActive = RenderTexture.active;
+            try
+            {
+                // Runtime panels derive their viewport from the active render texture; editor panels
+                // do not set a viewport themselves, so we set it here for both.
+                Camera.SetupCurrent(null);
+                RenderTexture.active = target;
+                GL.Viewport(new Rect(0, 0, target.width, target.height));
+                // Panels don't clear their own background, and UI clipping/masking relies on a
+                // clean stencil buffer, so clear color and depth/stencil to transparent first.
+                GL.Clear(true, true, Color.clear);
+                Render();
+            }
+            finally
+            {
+                // Always restore the global render state, even if rendering throws.
+                Camera.SetupCurrent(oldCamera);
+                RenderTexture.active = oldActive;
+            }
+            return true;
+        }
 
         [VisibleToOtherModules("UnityEditor.UIToolkitAuthoringModule")]
         internal Func<AbstractGenericMenu> CreateMenuFunctor;
@@ -1572,6 +1607,8 @@ namespace UnityEngine.UIElements
 
         public override void ValidateLayout()
         {
+            if (UnloadingUtility.LogErrorIfShutdown())
+                return;
             using var scope = new IMGUIContainer.UITKScope();
             // Reentrancy proofing: ValidateLayout() could be in the code path of updaters.
             // Actual case: TransformClip update phase recomputes elements under mouse, which does a pick, which validates layout.
@@ -1609,6 +1646,8 @@ namespace UnityEngine.UIElements
 
         public override void TickSchedulingUpdaters()
         {
+            if (UnloadingUtility.LogErrorIfShutdown())
+                return;
             beforeTickingAnyScheduledPanel?.Invoke(this);
             using var scope = new IMGUIContainer.UITKScope();
             using var _ = m_MarkerTickScheduledActions.Auto();
@@ -1723,6 +1762,8 @@ namespace UnityEngine.UIElements
 
         public override void Repaint()
         {
+            if (UnloadingUtility.LogErrorIfShutdown())
+                return;
             using var scope = new IMGUIContainer.UITKScope();
             if (ProfilerUIToolkit.ShouldCapturePanel(contextType == ContextType.Editor))
                 m_PendingRepaintVersionChanges += version - m_RepaintVersion;
@@ -1744,6 +1785,8 @@ namespace UnityEngine.UIElements
 
         public override void Render()
         {
+            if (UnloadingUtility.LogErrorIfShutdown())
+                return;
             using var scope = new IMGUIContainer.UITKScope();
             using (m_MarkerRender.Auto())
             {
@@ -1921,6 +1964,8 @@ namespace UnityEngine.UIElements
 
         public override void Render()
         {
+            if (UnloadingUtility.LogErrorIfShutdown())
+                return;
             if (drawsInCameras)
             {
                 Debug.LogError("Panel.Render() must not be called on a panel that draws in cameras.");

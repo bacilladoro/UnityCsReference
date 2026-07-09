@@ -171,7 +171,8 @@ namespace Unity.ProjectAuditor.Editor.Modules
                 mesh.name,
                 context.GameObject.name
             )
-            .WithLocation(AssetDatabase.GetAssetPath(mesh));
+            .WithLocation(AssetDatabase.GetAssetPath(mesh))
+            .WithUpgradeProperties("6000.5", null, null);
         }
     }
 }

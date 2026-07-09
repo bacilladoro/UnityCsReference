@@ -21,6 +21,7 @@ internal abstract class DesktopStandaloneBuildWindowExtension : DefaultBuildWind
     protected bool m_HasCoreCLRPlayers;
     protected bool m_HasServerMonoPlayers;
     protected bool m_HasServerIl2CppPlayers;
+    protected bool m_HasServerCoreCLRPlayers;
     protected bool m_IsRunningOnHostPlatform;
 
     public bool MonoPlayersInstalled(NamedBuildTarget namedBuildTarget)
@@ -33,12 +34,17 @@ internal abstract class DesktopStandaloneBuildWindowExtension : DefaultBuildWind
         return namedBuildTarget == NamedBuildTarget.Server ? m_HasServerIl2CppPlayers : m_HasIl2CppPlayers;
     }
 
+    public bool CoreCLRPlayersInstalled(NamedBuildTarget namedBuildTarget)
+    {
+        return namedBuildTarget == NamedBuildTarget.Server ? m_HasServerCoreCLRPlayers : m_HasCoreCLRPlayers;
+    }
+
     public static void SetArchitectureForPlatform(BuildTarget buildTarget, OSArchitecture architecture)
     {
         EditorUserBuildSettings.SetPlatformSettings(BuildPipeline.GetBuildTargetName(buildTarget), EditorUserBuildSettings.kSettingArchitecture, architecture.ToString().ToLower());
     }
 
-    public DesktopStandaloneBuildWindowExtension(bool hasMonoPlayers, bool hasIl2CppPlayers, bool hasCoreCLRPlayers, bool hasServerMonoPlayers, bool hasServerIl2CppPlayers)
+    public DesktopStandaloneBuildWindowExtension(bool hasMonoPlayers, bool hasIl2CppPlayers, bool hasCoreCLRPlayers, bool hasServerMonoPlayers, bool hasServerIl2CppPlayers, bool hasServerCoreCLRPlayers)
     {
         SetupStandaloneSubtargets();
 
@@ -48,6 +54,7 @@ internal abstract class DesktopStandaloneBuildWindowExtension : DefaultBuildWind
         m_HasMonoPlayers = hasMonoPlayers;
         m_HasServerMonoPlayers = hasServerMonoPlayers;
         m_HasServerIl2CppPlayers = hasServerIl2CppPlayers;
+        m_HasServerCoreCLRPlayers = hasServerCoreCLRPlayers;
     }
 
     private void SetupStandaloneSubtargets()
@@ -221,6 +228,9 @@ internal abstract class DesktopStandaloneBuildWindowExtension : DefaultBuildWind
             if (scriptingBackend == ScriptingImplementation.IL2CPP && !m_HasServerIl2CppPlayers)
                 return $"Dedicated Server support (IL2CPP) for {GetHostPlatformName()} is not installed.";
 
+            if (scriptingBackend == ScriptingImplementation.CoreCLR && !m_HasServerCoreCLRPlayers)
+                return $"Dedicated Server support (CoreCLR) for {GetHostPlatformName()} is not installed.";
+
             return null;
         }
 
@@ -232,11 +242,10 @@ internal abstract class DesktopStandaloneBuildWindowExtension : DefaultBuildWind
                     return "Currently selected scripting backend (Mono) is not installed.";
                 break;
             }
-            #pragma warning disable 618
             case ScriptingImplementation.CoreCLR:
             {
                 if (!m_HasCoreCLRPlayers)
-                    return $"Currently selected scripting backend (CoreCLR) is not {(Unsupported.IsSourceBuild() ? "installed" : "supported")}."; // CORECLR_FIXME remove sourcebuild
+                    return "Currently selected scripting backend (CoreCLR) is not installed.";
                 break;
             }
             case ScriptingImplementation.IL2CPP:

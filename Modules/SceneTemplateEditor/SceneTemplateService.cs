@@ -10,6 +10,7 @@ using System.IO;
 using System.Linq;
 using UnityEditor.SceneManagement;
 using UnityEngine.SceneManagement;
+using Unity.Scripting.LifecycleManagement;
 using Object = UnityEngine.Object;
 
 
@@ -36,6 +37,7 @@ namespace UnityEditor.SceneTemplate
         public bool hasSubScene;
         public string dependencyFolderName;
 
+        [NoAutoStaticsCleanup] // empty-state sentinel for a value-type struct (strings + bools); holds no references, safe to persist
         public static InMemorySceneState None = new InMemorySceneState();
 
         public bool valid => !string.IsNullOrEmpty(guid);
@@ -71,12 +73,14 @@ namespace UnityEditor.SceneTemplate
         }
     }
 
-    public static class SceneTemplateService
+    public static partial class SceneTemplateService
     {
         public delegate void NewTemplateInstantiating(SceneTemplateAsset sceneTemplateAsset, string newSceneOutputPath, bool additiveLoad);
         public delegate void NewTemplateInstantiated(SceneTemplateAsset sceneTemplateAsset, Scene scene, SceneAsset sceneAsset, bool additiveLoad);
 
+        [AutoStaticsCleanupOnCodeReload]
         public static event NewTemplateInstantiating newSceneTemplateInstantiating;
+        [AutoStaticsCleanupOnCodeReload]
         public static event NewTemplateInstantiated newSceneTemplateInstantiated;
 
         const string k_SceneTemplateServiceBaseSessionKey = "SceneTemplateServiceSession";
@@ -84,13 +88,16 @@ namespace UnityEditor.SceneTemplate
         static readonly string k_RegisteredTempFolderSessionKey = $"{k_SceneTemplateServiceBaseSessionKey}_RegisteredTempFolder";
         static readonly string k_InMemorySceneStateSessionKey = $"{k_SceneTemplateServiceBaseSessionKey}_InMemorySceneState";
 
+        [AutoStaticsCleanupOnCodeReload]
         static string s_TempFolderBase;
         const string k_MountPoint = "SceneTemplates";
         const string k_InMemoryTempFolder = "InMemory";
         static readonly string k_InMemoryTempFolderGuid = Hash128.Compute("SceneTemplates/InMemory").ToString();
+        [NoAutoStaticsCleanup] // value-type struct (strings + bools), no references to pin; round-tripped through SessionState across reload, safe to persist
         static InMemorySceneState s_CurrentInMemorySceneState = InMemorySceneState.None;
 
         // For testing
+        [AutoStaticsCleanupOnCodeReload]
         internal static bool registeredTempFolder { get; private set; }
         internal static InMemorySceneState currentInMemorySceneState => s_CurrentInMemorySceneState;
 

@@ -14,9 +14,15 @@ namespace Unity.ProjectAuditor.Editor
     public enum IssueCategory
     {
         /// <summary>
+        /// Category for the summary of issues relating to optimizing the project
+        /// </summary>
+        OptimizationSummary = 0,
+
+        /// <summary>
         /// Category for General statistics about the analysis process and its results.
         /// </summary>
-        Metadata,
+        [System.Obsolete("Use OptimizationSummary instead (UnityUpgradable) -> OptimizationSummary", true)]
+        Metadata = 0,
 
         /// <summary>
         /// Issues relating to asset data or asset import settings
@@ -154,8 +160,18 @@ namespace Unity.ProjectAuditor.Editor
         MeshCollider,
 
         /// <summary>
+        /// Category for the summary of issues relating to upgrading the project
+        /// </summary>
+        UpgradeSummary,
+
+        /// <summary>
         /// Enum value indicating the first available custom category
         /// </summary>
         FirstCustomCategory
+    }
+
+    internal static class IssueCategoryExtensions
+    {
+        public static bool IsSummary(this IssueCategory category) => category == IssueCategory.OptimizationSummary || category == IssueCategory.UpgradeSummary;
     }
 }

@@ -11,24 +11,34 @@ using UnityEditor.AnimatedValues;
 using UnityEditorInternal;
 using UnityEngine;
 using UnityEngine.Pool;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
-    [InitializeOnLoad]
-    static class RectTransformEditorUtility
+    static partial class RectTransformEditorUtility
     {
         const string k_RectTransformWirePrefix = "Scene/RectTransform Wire";
         internal static readonly PrefColor rectTransformWire = new PrefColor(k_RectTransformWirePrefix, 1f, 1f, 1f, 1);
 
+        [NoAutoStaticsCleanup] // Color value-type; recomputed by UpdateColors() in [OnCodeLoaded] Initialize on every code reload.
         internal static Color rectInParentSpaceColor { get; private set; }
+        [NoAutoStaticsCleanup] // Color value-type; recomputed by UpdateColors() in [OnCodeLoaded] Initialize on every code reload.
         internal static Color parentColor { get; private set; }
+        [NoAutoStaticsCleanup] // Color value-type; recomputed by UpdateColors() in [OnCodeLoaded] Initialize on every code reload.
         internal static Color siblingColor { get; private set; }
+        [NoAutoStaticsCleanup] // Color value-type; recomputed by UpdateColors() in [OnCodeLoaded] Initialize on every code reload.
         internal static Color anchorColor { get; private set; }
+        [NoAutoStaticsCleanup] // Color value-type; recomputed by UpdateColors() in [OnCodeLoaded] Initialize on every code reload.
         internal static Color anchorLineColor { get; private set; }
 
-        static RectTransformEditorUtility()
+        [OnCodeLoaded]
+        static void Initialize()
         {
             UpdateColors();
+            // [OnCodeLoaded] re-runs on every code reload and PrefSettings.settingChanged
+            // (a plain static Action in another area) persists across reload, so unsubscribe
+            // first to avoid accumulating duplicate handlers.
+            PrefSettings.settingChanged -= OnSettingChanged;
             PrefSettings.settingChanged += OnSettingChanged;
         }
 
@@ -59,12 +69,12 @@ namespace UnityEditor
         private const string kLockRectPrefName = "RectTransformEditor.lockRect";
         private const float kMaxCameraDistance = 200000f;
 
-        private static Vector2 kShadowOffset = new Vector2(1, -1);
-        private static Color kShadowColor = new Color(0, 0, 0, 0.5f);
+        private static readonly Vector2 kShadowOffset = new Vector2(1, -1);
+        private static readonly Color kShadowColor = new Color(0, 0, 0, 0.5f);
         private const float kDottedLineSize = 5f;
-        private static float kDropdownSize = 49;
+        private const float kDropdownSize = 49;
 
-        private static Vector3[] s_Corners = new Vector3[4];
+        private static readonly Vector3[] s_Corners = new Vector3[4];
 
 
         // Statics
@@ -87,21 +97,26 @@ namespace UnityEditor
                 blueprintContent = EditorGUIUtility.IconContent(@"RectTransformBlueprint", "|Blueprint mode. Edit RectTransforms as if they were not rotated and scaled. This enables snapping too.");
             }
         }
+        [NoAutoStaticsCleanup] // Lazy GUIStyle/GUIContent holder; survives reload, re-created on first access if null.
         static Styles s_Styles;
         static Styles styles { get { if (s_Styles == null) { s_Styles = new Styles(); } return s_Styles; } }
 
-        private static int s_FoldoutHash = "Foldout".GetHashCode();
-        private static int s_FloatFieldHash = "EditorTextField".GetHashCode();
-        private static int s_ParentRectPreviewHandlesHash = "ParentRectPreviewDragHandles".GetHashCode();
-        private static GUIContent[] s_XYLabels = {new GUIContent("X"), new GUIContent("Y")};
-        private static GUIContent[] s_XYZLabels = {new GUIContent("X"), new GUIContent("Y"), new GUIContent("Z")};
-        private static bool[] s_ScaleDisabledMask = new bool[3];
+        private static readonly int s_FoldoutHash = "Foldout".GetHashCode();
+        private static readonly int s_FloatFieldHash = "EditorTextField".GetHashCode();
+        private static readonly int s_ParentRectPreviewHandlesHash = "ParentRectPreviewDragHandles".GetHashCode();
+        private static readonly GUIContent[] s_XYLabels = {new GUIContent("X"), new GUIContent("Y")};
+        private static readonly GUIContent[] s_XYZLabels = {new GUIContent("X"), new GUIContent("Y"), new GUIContent("Z")};
+        private static readonly bool[] s_ScaleDisabledMask = new bool[3];
 
+        [NoAutoStaticsCleanup] // Transient drag-interaction state; written at drag start, value-type, safe to persist.
         private static bool s_DragAnchorsTogether;
+        [NoAutoStaticsCleanup] // Transient drag-interaction state; written at drag start, value-type, safe to persist.
         private static Vector2 s_StartDragAnchorMin;
+        [NoAutoStaticsCleanup] // Transient drag-interaction state; written at drag start, value-type, safe to persist.
         private static Vector2 s_StartDragAnchorMax;
 
         enum AnchorFusedState { None, All, Horizontal, Vertical }
+        [NoAutoStaticsCleanup] // Transient drag-interaction state; enum value-type, safe to persist.
         private static AnchorFusedState s_AnchorFusedState = AnchorFusedState.None;
 
         // Instance members
@@ -887,10 +902,15 @@ namespace UnityEditor
             }
         }
 
+        [NoAutoStaticsCleanup] // Transient parent-drag preview state; value-type, reset when the drag ends.
         private static float s_ParentDragTime = 0;
+        [NoAutoStaticsCleanup] // Transient parent-drag preview state; value-type, reset when the drag ends.
         private static float s_ParentDragId = 0;
+        [NoAutoStaticsCleanup] // Transient parent-drag preview state; value-type, reset when the drag ends.
         private static Rect s_ParentDragOrigRect = new Rect();
+        [NoAutoStaticsCleanup] // Transient parent-drag preview state; value-type, reset when the drag ends.
         private static Rect s_ParentDragPreviewRect = new Rect();
+        [NoAutoStaticsCleanup] // Transient parent-drag preview state; nulled when the drag ends, built-in RectTransform (not user code).
         private static RectTransform s_ParentDragRectTransform = null;
         void SetTemporaryRect(RectTransform rectTransform, Rect rect, int id)
         {

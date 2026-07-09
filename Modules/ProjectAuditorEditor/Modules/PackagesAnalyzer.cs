@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using Unity.ProjectAuditor.Editor.Core;
 using Unity.ProjectAuditor.Editor.Utils;
+using UnityEditorInternal;
 
 namespace Unity.ProjectAuditor.Editor.Modules
 {
@@ -74,15 +75,20 @@ namespace Unity.ProjectAuditor.Editor.Modules
                 {
                     if (!recommendedVersionString.Equals(package.version))
                     {
+                        var version = InternalEditorUtility.GetUnityVersion();
+                        var versionString = $"{version.Major}.{version.Minor}";
+
                         if (PackageUtils.CompareVersions(package.version, recommendedVersionString) < 0)
                         {
                             yield return context.CreateIssue(IssueCategory.ProjectSetting, k_RecommendPackageUpgrade.Id, package.name, package.version, recommendedVersionString)
-                                .WithLocation(package.assetPath);
+                                .WithLocation(package.assetPath)
+                                .WithUpgradeProperties(versionString, null, null);
                         }
                         else
                         {
                             yield return context.CreateIssue(IssueCategory.ProjectSetting, k_RecommendPackageDowngrade.Id, package.name, package.version, recommendedVersionString)
-                                .WithLocation(package.assetPath);
+                                .WithLocation(package.assetPath)
+                                .WithUpgradeProperties(versionString, null, null);
                         }
                     }
                 }

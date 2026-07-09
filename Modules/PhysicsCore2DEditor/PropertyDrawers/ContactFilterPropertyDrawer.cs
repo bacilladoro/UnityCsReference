@@ -12,17 +12,21 @@ using UnityEditor;
 
 namespace Unity.U2D.Physics.Editor
 {
-    [CustomPropertyDrawer(typeof(PhysicsShape.ContactFilter))]
-    sealed class ContactFilterPropertyDrawer : PropertyDrawer
+    /// <summary>
+    /// Builds the UI Toolkit fields for a <see cref="PhysicsShape.ContactFilter"/> serialized property.
+    /// The categories and contacts use 64-bit or 32-bit mask fields depending on the project's layer configuration.
+    /// Add the returned element directly to embed the fields inline, or wrap it in a <see cref="Foldout"/> for a collapsible section.
+    /// </summary>
+    public static class ContactFilterInspector
     {
-        #region UITK
-
-        public override VisualElement CreatePropertyGUI(SerializedProperty property)
+        /// <summary>
+        /// Create the editable fields for a <see cref="PhysicsShape.ContactFilter"/> property, with no wrapping foldout.
+        /// </summary>
+        /// <param name="property">The serialized <see cref="PhysicsShape.ContactFilter"/> property to build the fields for.</param>
+        /// <returns>A container with the categories, contacts, and group index fields.</returns>
+        public static VisualElement CreateFields(SerializedProperty property)
         {
-            var root = new VisualElement();
-
-            var foldout = new Foldout { text = property.displayName, value = false, viewDataKey = typeof(ContactFilterPropertyDrawer).ToString() };
-            root.Add(foldout);
+            var body = new VisualElement();
 
             const string categoriesTypeName = nameof(PhysicsShape.ContactFilter.m_Categories);
             const string contactsTypeName = nameof(PhysicsShape.ContactFilter.m_Contacts);
@@ -62,7 +66,7 @@ namespace Unity.U2D.Physics.Editor
                     choicesMasks = layerMasks
                 };
                 categories.AddToClassList(Mask64Field.alignedFieldUssClassName);
-                foldout.Add(categories);
+                body.Add(categories);
 
                 var contacts = new Mask64Field(contactsProperty.displayName, layerNames, PhysicsMask.All)
                 {
@@ -70,29 +74,38 @@ namespace Unity.U2D.Physics.Editor
                     choicesMasks = layerMasks
                 };
                 contacts.AddToClassList(Mask64Field.alignedFieldUssClassName);
-                foldout.Add(contacts);
-
-                var groupIndex = new PropertyField(groupIndexProperty);
-                foldout.Add(groupIndex);
-
-                return root;
+                body.Add(contacts);
             }
-
-            // 32-bit mask.
+            else
             {
+                // 32-bit mask.
                 var categories = new LayerMaskField(categoriesProperty.displayName) { bindingPath = categoriesBindingPath };
                 var contacts = new LayerMaskField(contactsProperty.displayName) { bindingPath = contactsBindingPath };
-                var groupIndex = new PropertyField(groupIndexProperty);
 
                 categories.AddToClassList(LayerMaskField.alignedFieldUssClassName);
                 contacts.AddToClassList(LayerMaskField.alignedFieldUssClassName);
 
-                foldout.Add(categories);
-                foldout.Add(contacts);
-                foldout.Add(groupIndex);
-
-                return root;
+                body.Add(categories);
+                body.Add(contacts);
             }
+
+            body.Add(new PropertyField(groupIndexProperty));
+            return body;
+        }
+    }
+
+    [CustomPropertyDrawer(typeof(PhysicsShape.ContactFilter))]
+    sealed class ContactFilterPropertyDrawer : PropertyDrawer
+    {
+        #region UITK
+
+        public override VisualElement CreatePropertyGUI(SerializedProperty property)
+        {
+            var root = new VisualElement();
+            var foldout = new Foldout { text = property.displayName, value = false, viewDataKey = typeof(ContactFilterPropertyDrawer).ToString() };
+            root.Add(foldout);
+            foldout.Add(ContactFilterInspector.CreateFields(property));
+            return root;
         }
 
         #endregion

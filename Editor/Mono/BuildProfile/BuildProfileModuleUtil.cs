@@ -677,19 +677,11 @@ namespace UnityEditor.Build.Profile
         }
 
         /// <summary>
-        /// Serialize build profile player settings
-        /// </summary>
-        public static void SerializePlayerSettings(BuildProfile buildProfile)
-        {
-            buildProfile.SerializePlayerSettings();
-        }
-
-        /// <summary>
-        /// Remove build profile player settings object and clear player settings yaml
+        /// Remove build profile player settings override (subasset, wrapper, and legacy yaml)
         /// </summary>
         public static void RemovePlayerSettings(BuildProfile buildProfile)
         {
-            buildProfile.RemovePlayerSettings(clearYaml: true);
+            buildProfile.RemoveBuildProfilePlayerSettings();
         }
 
         /// <summary>
@@ -765,14 +757,6 @@ namespace UnityEditor.Build.Profile
         public static void CreatePlayerSettingsFromGlobal(BuildProfile buildProfile)
         {
             buildProfile.CreatePlayerSettingsFromGlobal();
-        }
-
-        /// <summary>
-        /// Checks if player settings values are the same as project settings values
-        /// </summary>
-        public static bool IsDataEqualToProjectSettings(PlayerSettings playerSettings)
-        {
-            return BuildProfile.IsDataEqualToProjectSettings(playerSettings);
         }
 
         /// Retrieve string of filename invalid characters
@@ -1308,6 +1292,102 @@ namespace UnityEditor.Build.Profile
             // Converts to string and back to array to normalize, remove duplicates and empty entries.
             return ScriptingDefinesHelper.ConvertScriptingDefineStringToArray(
               ScriptingDefinesHelper.ConvertScriptingDefineArrayToString(defines));
+        }
+
+        /// <summary>
+        /// Helper function to copyserialized properties for foldouts.
+        /// </summary>
+        public static void CopySerializedPropertyFromBuildProfile(BuildProfile profile, string serializedPropertyName)
+        {
+            using var serializedObject = new SerializedObject(profile);
+            SerializedProperty property = serializedObject.FindProperty(serializedPropertyName);
+
+            if (property != null)
+                Clipboard.SetSerializedProperty(property);
+        }
+
+        /// <summary>
+        /// Helper function to paste serialized properties for foldouts.
+        /// </summary>
+        public static void PasteSerializedPropertyToBuildProfile(BuildProfile profile, string serializedPropertyName)
+        {
+            using var serializedObject = new SerializedObject(profile);
+            SerializedProperty property = serializedObject.FindProperty(serializedPropertyName);
+
+            if (property != null)
+            {
+                Clipboard.GetSerializedProperty(property);
+                serializedObject.ApplyModifiedProperties();
+            }
+        }
+
+        /// <summary>
+        /// Helper function to copy values of the build profile settings.
+        /// </summary>
+        public static void CopyBuildProfileSettings(BuildProfilePlatformSettingsBase targetSo)
+        {
+            if (targetSo == null)
+                return;
+
+            var json = EditorJsonUtility.ToJson(targetSo);
+            GUIUtility.systemCopyBuffer = json;
+        }
+
+        /// <summary>
+        /// Helper function to paste values of the build profile settings.
+        /// </summary>
+        public static void PasteBuildProfileSettings(BuildProfilePlatformSettingsBase targetSo)
+        {
+            if (targetSo == null)
+                return;
+
+            string json = GUIUtility.systemCopyBuffer;
+            if (string.IsNullOrEmpty(json)) return;
+
+            try
+            {
+                EditorJsonUtility.FromJsonOverwrite(json, targetSo);
+            }
+            catch (ArgumentException)
+            {
+                Debug.LogWarning("Clipboard does not contain valid data for pasting.");
+            }
+        }
+
+        /// <summary>
+        /// Helper function to copy values of an object.
+        /// </summary>
+        public static void CopySubAssetValues(UnityEngine.Object targetSo)
+        {
+            if (targetSo == null)
+                return;
+
+            var json = EditorJsonUtility.ToJson(targetSo);
+            GUIUtility.systemCopyBuffer = json;
+        }
+
+        /// <summary>
+        /// Helper function to paste values of an object.
+        /// </summary>
+        public static void PasteSubAssetValues(UnityEngine.Object targetSo)
+        {
+            if (targetSo == null)
+                return;
+
+            string json = GUIUtility.systemCopyBuffer;
+            if (string.IsNullOrEmpty(json)) return;
+
+            try
+            {
+                Undo.RecordObject(targetSo, "Paste Sub-Asset Values");
+                EditorJsonUtility.FromJsonOverwrite(json, targetSo);
+                EditorUtility.SetDirty(targetSo);
+                AssetDatabase.SaveAssetIfDirty(targetSo);
+            }
+            catch (ArgumentException)
+            {
+                Debug.LogWarning("Clipboard does not contain valid data for pasting.");
+            }
         }
 
         /*

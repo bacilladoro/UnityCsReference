@@ -592,7 +592,7 @@ namespace UnityEngine.UIElements
             set => edition.autoCorrection = value;
         }
 
-        private const string ZeroWidthSpace = "\u200B";
+        internal const string ZeroWidthSpace = "\u200B";
         private string m_RenderedText;
 
         internal RenderedText renderedText

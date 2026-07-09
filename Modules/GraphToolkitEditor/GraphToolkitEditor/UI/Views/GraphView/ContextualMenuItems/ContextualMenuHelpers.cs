@@ -128,7 +128,6 @@ namespace Unity.GraphToolkit.Editor.ContextualMenuItems
         internal static ContextualMenuItem createLocalTransitionMenuItem = new(ContextualMenuCategory.FunctionalElements, "Create Local Transition");
         internal static ContextualMenuItem createOnEnterTransitionMenuItem = new(ContextualMenuCategory.FunctionalElements, "Create OnEnter Transition");
         internal static ContextualMenuItem createSelfTransitionMenuItem = new(ContextualMenuCategory.FunctionalElements, "Create Self Transition");
-        internal static ContextualMenuItem setAsDefaultStateMenuItem = new(ContextualMenuCategory.Modifications, "Set Default State");
 
         // Subgraph menu items:
         internal static ContextualMenuItem extractContentsToPlacematItem = new(ContextualMenuCategory.Conversions, "Extract Contents to Placemat");

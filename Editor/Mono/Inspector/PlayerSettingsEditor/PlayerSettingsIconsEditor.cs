@@ -253,6 +253,11 @@ namespace UnityEditor
             platformIcon.SetPreviewTextures(previewTextures);
         }
 
+        internal PlatformIcon[] GetPlatformIcons(BuildTargetGroup platform, PlatformIconKind kind)
+        {
+            return GetPlatformIcons(platform, kind, ref m_AllIcons);
+        }
+
         internal PlatformIcon[] GetPlatformIcons(BuildTargetGroup platform, PlatformIconKind kind, ref BuildTargetIcons[] allIcons)
         {
             var namedBuildTarget = NamedBuildTarget.FromBuildTargetGroup(platform);
@@ -544,12 +549,12 @@ namespace UnityEditor
 
                     if (foldByKind)
                     {
-                        GUIContent kindName = new GUIContent(
-                            string.Format("{0} icons ({1}/{2})", key.m_Label, kindGroup.Key.m_SetIconSlots, kindGroup.Key.m_IconSlotCount),
+                        var kindName = new GUIContent(
+                            string.Format("{0} Icons ({1}/{2})", key.m_Label, kindGroup.Key.m_SetIconSlots, kindGroup.Key.m_IconSlotCount),
                             key.m_KindDescription
                         );
 
-                        Rect rectKindLabel = GUILayoutUtility.GetRect(kSlotSize, labelHeight);
+                        var rectKindLabel = GUILayoutUtility.GetRect(kSlotSize, labelHeight);
                         rectKindLabel.x += 2;
                         key.m_State = EditorGUI.Foldout(rectKindLabel, key.m_State, kindName, true, EditorStyles.foldout);
                     }
@@ -570,7 +575,7 @@ namespace UnityEditor
 
                             if (foldBySubkind)
                             {
-                                string subKindName = string.Format("{0} icons ({1}/{2})", subKindGroup.Key.m_Label, subKindGroup.Key.m_SetIconSlots, subKindGroup.Value.Length);
+                                string subKindName = string.Format("{0} Icons ({1}/{2})", subKindGroup.Key.m_Label, subKindGroup.Key.m_SetIconSlots, subKindGroup.Value.Length);
                                 Rect rectSubKindLabel = GUILayoutUtility.GetRect(kSlotSize, labelHeight);
                                 rectSubKindLabel.x += 8;
 
@@ -586,6 +591,65 @@ namespace UnityEditor
                                     SetPreviewTextures(iconField.platformIcon);
                                     iconField.DrawAt();
                                 }
+                            }
+                        }
+                    }
+
+                    if (EditorGUI.EndChangeCheck())
+                        SetPlatformIcons(iconFieldGroup.targetGroup, key.m_Kind, iconFieldGroup.m_PlatformIconsByKind[key.m_Kind], ref m_AllIcons);
+                }
+            }
+        }
+
+        internal void ShowPlatformIconsByKind(PlatformIconFieldGroup iconFieldGroup, PlatformIconKind kind, bool foldByKind, bool showValidationHelpBox = true)
+        {
+            using (var vertical = new EditorGUILayout.VerticalScope())
+            using (new EditorGUI.PropertyScope(vertical.rect, GUIContent.none, m_PlatformIcons))
+            {
+                int labelHeight = 20;
+
+                var icons = GetPlatformIcons(iconFieldGroup.targetGroup, kind, ref m_AllIcons);
+                if (icons.Length == 0)
+                    return;
+
+                iconFieldGroup.SetPlatformIcons(icons, kind);
+
+                foreach (var kindGroup in iconFieldGroup.m_IconsFields)
+                {
+                    var key = kindGroup.Key;
+                    if (key.m_Kind != kind)
+                        continue;
+
+                    EditorGUI.BeginChangeCheck();
+
+                    if (foldByKind)
+                    {
+                        var kindName = new GUIContent(
+                            string.Format("{0} Icons ({1}/{2})", key.m_Label, kindGroup.Key.m_SetIconSlots, kindGroup.Key.m_IconSlotCount),
+                            key.m_KindDescription
+                        );
+
+                        var rectKindLabel = GUILayoutUtility.GetRect(kSlotSize, labelHeight);
+                        rectKindLabel.x += 2;
+                        key.m_State = EditorGUI.Foldout(rectKindLabel, key.m_State, kindName, true, EditorStyles.foldout);
+                    }
+                    else
+                        key.m_State = true;
+
+                    if (key.m_State)
+                    {
+                        kindGroup.Key.m_SetIconSlots = 0;
+                        foreach (var subKindGroup in kindGroup.Value)
+                        {
+                            var platformIcons = Array.ConvertAll(subKindGroup.Value, x => x.platformIcon);
+                            subKindGroup.Key.m_SetIconSlots = PlayerSettings.GetNonEmptyPlatformIconCount(platformIcons);
+                            kindGroup.Key.m_SetIconSlots += subKindGroup.Key.m_SetIconSlots;
+                            subKindGroup.Key.m_State = true;
+
+                            foreach (var iconField in subKindGroup.Value)
+                            {
+                                SetPreviewTextures(iconField.platformIcon);
+                                iconField.DrawAt(showValidationHelpBox);
                             }
                         }
                     }

@@ -4,10 +4,12 @@
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Runtime.InteropServices;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine.Bindings;
+using UnityEngine.Internal;
 using UnityEngine.Scripting;
 
 namespace UnityEngine.U2D
@@ -246,7 +248,12 @@ namespace UnityEngine
             get;
         }
 
-        public extern int GetPhysicsShapeCount();
+        public extern int GetPhysicsOutlineCount();
+
+        [ExcludeFromDocs]
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        [Obsolete("Sprite.GetPhysicsShapeCount is deprecated. Use Sprite.GetPhysicsOutlineCount instead (UnityUpgradable) -> GetPhysicsOutlineCount()", false)]
+        public int GetPhysicsShapeCount() => GetPhysicsOutlineCount();
 
         public extern uint GetScriptableObjectsCount();
         [FreeFunction("SpritesBindings::GetScriptableObjects", HasExplicitThis = true)]
@@ -255,71 +262,91 @@ namespace UnityEngine
         public extern bool RemoveScriptableObjectAt(uint i);
         public extern bool SetScriptableObjectAt([NotNull]ScriptableObject obj, uint i);
 
-        public int GetPhysicsShapePointCount(int shapeIdx)
+        public int GetPhysicsOutlinePointCount(int outlineIndex)
         {
-            int physicsShapeCount = GetPhysicsShapeCount();
-            if (shapeIdx < 0 || shapeIdx >= physicsShapeCount)
-                throw new IndexOutOfRangeException(String.Format("Index({0}) is out of bounds(0 - {1})", shapeIdx, physicsShapeCount - 1));
+            int physicsOutlineCount = GetPhysicsOutlineCount();
+            if (outlineIndex < 0 || outlineIndex >= physicsOutlineCount)
+                throw new IndexOutOfRangeException(String.Format("Index({0}) is out of bounds(0 - {1})", outlineIndex, physicsOutlineCount - 1));
 
-            return Internal_GetPhysicsShapePointCount(shapeIdx);
+            return Internal_GetPhysicsOutlinePointCount(outlineIndex);
         }
 
-        [NativeMethod("GetPhysicsShapePointCount")]
-        private extern int Internal_GetPhysicsShapePointCount(int shapeIdx);
+        [NativeMethod("GetPhysicsOutlinePointCount")]
+        private extern int Internal_GetPhysicsOutlinePointCount(int outlineIndex);
 
-        public int GetPhysicsShape(int shapeIdx, List<Vector2> physicsShape)
+        [ExcludeFromDocs]
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        [Obsolete("Sprite.GetPhysicsShapePointCount is deprecated. Use Sprite.GetPhysicsOutlinePointCount instead (UnityUpgradable) -> GetPhysicsOutlinePointCount(*)", false)]
+        public int GetPhysicsShapePointCount(int shapeIndex) => GetPhysicsOutlinePointCount(shapeIndex);
+
+        public int GetPhysicsOutline(int outlineIndex, List<Vector2> physicsOutline)
         {
-            int physicsShapeCount = GetPhysicsShapeCount();
-            if (shapeIdx < 0 || shapeIdx >= physicsShapeCount)
-                throw new IndexOutOfRangeException(String.Format("Index({0}) is out of bounds(0 - {1})", shapeIdx, physicsShapeCount - 1));
+            int physicsOutlineCount = GetPhysicsOutlineCount();
+            if (outlineIndex < 0 || outlineIndex >= physicsOutlineCount)
+                throw new IndexOutOfRangeException(String.Format("Index({0}) is out of bounds(0 - {1})", outlineIndex, physicsOutlineCount - 1));
 
-            GetPhysicsShapeImpl(this, shapeIdx, physicsShape);
-            return physicsShape.Count;
+            GetPhysicsOutlineImpl(this, outlineIndex, physicsOutline);
+            return physicsOutline.Count;
         }
 
-        public ReadOnlySpan<Vector2> GetPhysicsShape(int shapeIdx)
+        public ReadOnlySpan<Vector2> GetPhysicsOutline(int outlineIndex)
         {
-            int physicsShapeCount = GetPhysicsShapeCount();
-            if (shapeIdx < 0 || shapeIdx >= physicsShapeCount)
-                throw new IndexOutOfRangeException(String.Format("Index({0}) is out of bounds(0 - {1})", shapeIdx, physicsShapeCount - 1));
+            int physicsOutlineCount = GetPhysicsOutlineCount();
+            if (outlineIndex < 0 || outlineIndex >= physicsOutlineCount)
+                throw new IndexOutOfRangeException(String.Format("Index({0}) is out of bounds(0 - {1})", outlineIndex, physicsOutlineCount - 1));
 
-            return GetPhysicsShapeSpanImpl(this, shapeIdx);
+            return GetPhysicsOutlineSpanImpl(this, outlineIndex);
         }
 
-        [FreeFunction("SpritesBindings::GetPhysicsShape", ThrowsException = true)]
-        private extern static void GetPhysicsShapeImpl(Sprite sprite, int shapeIdx, [NotNull] List<Vector2> physicsShape);
+        [ExcludeFromDocs]
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        [Obsolete("Sprite.GetPhysicsShape is deprecated. Use Sprite.GetPhysicsOutline instead (UnityUpgradable) -> GetPhysicsOutline(*)", false)]
+        public int GetPhysicsShape(int shapeIndex, List<Vector2> physicsShape) => GetPhysicsOutline(shapeIndex, physicsShape);
 
-        [FreeFunction("SpritesBindings::GetPhysicsShape", ThrowsException = true)]
-        private extern static ReadOnlySpan<Vector2> GetPhysicsShapeSpanImpl(Sprite sprite, int shapeIdx);
+        [ExcludeFromDocs]
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        [Obsolete("Sprite.GetPhysicsShape is deprecated. Use Sprite.GetPhysicsOutline instead (UnityUpgradable) -> GetPhysicsOutline(*)", false)]
+        public ReadOnlySpan<Vector2> GetPhysicsShape(int shapeIndex) => GetPhysicsOutline(shapeIndex);
 
-        public void OverridePhysicsShape(IList<Vector2[]> physicsShapes)
+        [FreeFunction("SpritesBindings::GetPhysicsOutline", ThrowsException = true)]
+        private extern static void GetPhysicsOutlineImpl(Sprite sprite, int outlineIndex, [NotNull] List<Vector2> physicsOutline);
+
+        [FreeFunction("SpritesBindings::GetPhysicsOutline", ThrowsException = true)]
+        private extern static ReadOnlySpan<Vector2> GetPhysicsOutlineSpanImpl(Sprite sprite, int outlineIndex);
+
+        public void OverridePhysicsOutline(IList<Vector2[]> physicsOutlines)
         {
-            if (physicsShapes == null)
-                throw new ArgumentNullException(nameof(physicsShapes));
+            if (physicsOutlines == null)
+                throw new ArgumentNullException(nameof(physicsOutlines));
 
-            for (int i = 0; i < physicsShapes.Count; ++i)
+            for (int i = 0; i < physicsOutlines.Count; ++i)
             {
-                var physicsShape = physicsShapes[i];
-                if (physicsShape == null)
+                var physicsOutline = physicsOutlines[i];
+                if (physicsOutline == null)
                 {
-                    throw new ArgumentNullException(nameof(physicsShape), String.Format("Physics Shape at {0} is null.", i));
+                    throw new ArgumentNullException(nameof(physicsOutline), String.Format("Physics Outline at {0} is null.", i));
                 }
-                if (physicsShape.Length < 3)
+                if (physicsOutline.Length < 3)
                 {
-                    throw new ArgumentException(String.Format("Physics Shape at {0} has less than 3 vertices ({1}).", i, physicsShape.Length));
+                    throw new ArgumentException(String.Format("Physics Outline at {0} has less than 3 vertices ({1}).", i, physicsOutline.Length));
                 }
             }
 
-            OverridePhysicsShapeCount(this, physicsShapes.Count);
-            for (int idx = 0; idx < physicsShapes.Count; ++idx)
-                OverridePhysicsShape(this, physicsShapes[idx], idx);
+            OverridePhysicsOutlineCount(this, physicsOutlines.Count);
+            for (int index = 0; index < physicsOutlines.Count; ++index)
+                OverridePhysicsOutline(this, physicsOutlines[index], index);
         }
 
-        [FreeFunction("SpritesBindings::OverridePhysicsShapeCount")]
-        private extern static void OverridePhysicsShapeCount(Sprite sprite, int physicsShapeCount);
+        [ExcludeFromDocs]
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        [Obsolete("Sprite.OverridePhysicsShape is deprecated. Use Sprite.OverridePhysicsOutline instead (UnityUpgradable) -> OverridePhysicsOutline(*)", false)]
+        public void OverridePhysicsShape(IList<Vector2[]> physicsShapes) => OverridePhysicsOutline(physicsShapes);
 
-        [FreeFunction("SpritesBindings::OverridePhysicsShape", ThrowsException = true)]
-        private extern static void OverridePhysicsShape(Sprite sprite, [NotNull] Vector2[] physicsShape, int idx);
+        [FreeFunction("SpritesBindings::OverridePhysicsOutlineCount")]
+        private extern static void OverridePhysicsOutlineCount(Sprite sprite, int physicsOutlineCount);
+
+        [FreeFunction("SpritesBindings::OverridePhysicsOutline", ThrowsException = true)]
+        private extern static void OverridePhysicsOutline(Sprite sprite, [NotNull] Vector2[] physicsOutline, int index);
 
         [FreeFunction("SpritesBindings::OverrideGeometry", HasExplicitThis = true)]
         public extern void OverrideGeometry([NotNull] Vector2[] vertices, [NotNull] UInt16[] triangles);

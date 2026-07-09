@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor.Search;
 using UnityEditor.UIElements;
 using UnityEngine;
@@ -54,6 +55,7 @@ namespace UnityEditor.SceneTemplate
                 return 0;
             }
 
+            [NoAutoStaticsCleanup] // immutable value-type comparer (bool + enum); holds no references, safe to persist across code reload
             public static DependencyComparer Default = new DependencyComparer(DependencySortMode.Type, true);
         }
 

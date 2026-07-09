@@ -72,7 +72,7 @@ namespace Unity.VectorGraphics.Editor
                 importer.CustomPivot = customPivot;
 
             if (TryExtractInt(metaContents, "generatePhysicsShape", out int generatePhysics))
-                importer.GeneratePhysicsShape = generatePhysics != 0;
+                importer.GeneratePhysicsOutline = generatePhysics != 0;
 
             if (TryExtractInt(metaContents, "viewportOptions", out int viewportOptions))
                 importer.ViewportOptions = (ViewportOptions)viewportOptions;

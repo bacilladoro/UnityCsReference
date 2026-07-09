@@ -121,6 +121,7 @@ using UnityEngine;
 [assembly: InternalsVisibleTo("Unity.RuntimeTests.Framework")]
 [assembly: InternalsVisibleTo("Assembly-CSharp-Editor-firstpass-testable")]
 [assembly: InternalsVisibleTo("Assembly-CSharp-Editor-testable")]
+[assembly: InternalsVisibleTo("Unity.Modules.Tilemap.Tests.Editor")]
 [assembly: InternalsVisibleTo("BuildPipelineTestUtilities")]
 [assembly: InternalsVisibleTo("Unity.CrossModule.PlayMode.Tests.Editor")]
 [assembly: InternalsVisibleTo("Unity.Module.AssetDatabase.DanglingComponents.Tests.Editor")]
@@ -221,6 +222,7 @@ using UnityEngine;
 [assembly:InternalsVisibleTo("Unity.AI.Navigation.Editor")]
 
 [assembly: InternalsVisibleTo("Unity.Scenes")]
+[assembly: InternalsVisibleTo("Unity.Scenes.Editor.Tests")]
 
 
 [assembly: InternalsVisibleTo("UnityEditor.Switch.Tests")]
@@ -250,8 +252,11 @@ using UnityEngine;
 [assembly: InternalsVisibleTo("Unity.Modules.Licensing.Tests.Editor")]
 [assembly: InternalsVisibleTo("Unity.Modules.PlatformIcons.Tests.Editor")]
 [assembly: InternalsVisibleTo("Unity.Modules.BuildProfileEditor.Tests.Editor")]
+[assembly: InternalsVisibleTo("Unity.Modules.BuildProfileEditor.BuildPlayerWindow.Tests.Editor")]
+[assembly: InternalsVisibleTo("Unity.Modules.DeviceSimulator.Tests.Editor")]
 [assembly: InternalsVisibleTo("Unity.Modules.UI.Tests.Editor")]
 [assembly: InternalsVisibleTo("Unity.Modules.Multiplayer.Server.Tests.Editor")]
+[assembly: InternalsVisibleTo("Unity.Modules.Multiplayer.PlayMode.Tests.Editor")]
 [assembly: InternalsVisibleTo("Unity.Modules.AssetDatabase.AssetPostProcessor.Tests.Editor")]
 [assembly: InternalsVisibleTo("Unity.Modules.AssetPackage.Tests.Editor")]
 // This should move with the AnimationWindow to a module at some point
@@ -259,9 +264,11 @@ using UnityEngine;
 [assembly: InternalsVisibleTo("Unity.Modules.Physics.Tests.Editor")]
 [assembly: InternalsVisibleTo("Unity.Modules.GI.EditorBake.Tests.Editor")]
 [assembly: InternalsVisibleTo("Unity.Modules.GI.LightProbes.Tests.Editor")]
+[assembly: InternalsVisibleTo("Unity.Modules.GI.BakedGI.SceneVisibility.Tests.Editor")]
 [assembly: InternalsVisibleTo("Unity.Modules.GI.UVUnwrap.Tests.Editor")]
 [assembly: InternalsVisibleTo("Unity.Modules.GI.BakedGI.ColorSpace.Tests.Editor")]
 [assembly: InternalsVisibleTo("Unity.Modules.GI.LightingInspectorMeshRenderer.Tests.Editor")]
+[assembly: InternalsVisibleTo("Unity.Modules.GI.TextureEncoding.Tests.Editor")]
 [assembly: InternalsVisibleTo("Unity.Modules.Physics2D.Tests.Editor")]
 [assembly: InternalsVisibleTo("Unity.Modules.U2D.NineSlice.Tests.Editor")]
 [assembly: InternalsVisibleTo("Unity.Modules.GI.Prefabs.Tests.Editor")]
@@ -301,6 +308,8 @@ using UnityEngine;
 [assembly: InternalsVisibleTo("Unity.ProjectAuditor.Editor")]
 [assembly: InternalsVisibleTo("Unity.ProjectAuditor.EditorTests")]
 [assembly: InternalsVisibleTo("Unity.Modules.GI.Analytics.Tests.Editor")]
+[assembly: InternalsVisibleTo("Unity.Modules.GI.API.EditorBakeWithAdditiveScene.Tests.Editor")]
+[assembly: InternalsVisibleTo("Unity.Modules.GI.SceneView.Tests.Editor")]
 [assembly: InternalsVisibleTo("Unity.CrossModule.AssetLoading.Tests.Editor")]
 [assembly: InternalsVisibleTo("Unity.Modules.SceneTemplateEditor.Tests.Editor")]
 [assembly: InternalsVisibleTo("Unity.Modules.Core.InspectorWindow.Tests.Editor")]

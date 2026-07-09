@@ -100,7 +100,6 @@ internal abstract class DesktopStandalonePostProcessor : BeeBuildPostprocessor
                 if (isServer && !m_HasServerIl2CppPlayers)
                     return $"Dedicated Server support for {GetPlatformNameForBuildProgram(default)} is not installed.";
                 break;
-            #pragma warning disable 618
             case ScriptingImplementation.CoreCLR:
                 if (!isServer && !m_HasCoreCLRPlayers)
                     return "Currently selected scripting backend (CoreCLR) is not installed.";

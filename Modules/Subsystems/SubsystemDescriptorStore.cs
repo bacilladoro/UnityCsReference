@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEngine.SubsystemsImplementation
 {
@@ -71,9 +72,12 @@ namespace UnityEngine.SubsystemsImplementation
             storeInList.Add(descriptor);
         }
 
+        [NoAutoStaticsCleanup] // cleared manually by ClearManagedDescriptors; must not auto-clear before native ptrs are invalidated
         static List<IntegratedSubsystemDescriptor> s_IntegratedDescriptors = new List<IntegratedSubsystemDescriptor>();
+        [AutoStaticsCleanupOnCodeReload]
         static List<SubsystemDescriptorWithProvider> s_StandaloneDescriptors = new List<SubsystemDescriptorWithProvider>();
 #pragma warning disable CS0618
+        [AutoStaticsCleanupOnCodeReload]
         static List<SubsystemDescriptor> s_DeprecatedDescriptors = new List<SubsystemDescriptor>();
 #pragma warning restore CS0618
     }

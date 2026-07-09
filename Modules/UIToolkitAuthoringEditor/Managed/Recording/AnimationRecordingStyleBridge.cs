@@ -1229,5 +1229,72 @@ namespace Unity.UIToolkit.Editor
                 ? baseName
                 : baseName + channelSuffix;
         }
+
+        // Enumerates the fully-qualified keys a driven property registers, one per channel suffix
+        // (Top.value/.unit, Translate.x.value/.../.z, Color.r/.g/.b/.a). A bare base-name probe would
+        // only match empty-suffix properties (Opacity, Rotate), so callers must probe every channel key.
+        // A struct enumerator so foreach stays allocation-free on the affordance hot path (the only
+        // allocation is each key string, which AnimationMode.IsProperty* requires anyway).
+        internal static ChannelKeyEnumerable EnumerateChannelKeys(StylePropertyId stylePropertyId, string elementPath, string propName)
+        {
+            return new ChannelKeyEnumerable(stylePropertyId, elementPath, propName);
+        }
+
+        internal readonly struct ChannelKeyEnumerable
+        {
+            readonly StylePropertyId m_StylePropertyId;
+            readonly string m_ElementPath;
+            readonly string m_PropName;
+
+            public ChannelKeyEnumerable(StylePropertyId stylePropertyId, string elementPath, string propName)
+            {
+                m_StylePropertyId = stylePropertyId;
+                m_ElementPath = elementPath;
+                m_PropName = propName;
+            }
+
+            public Enumerator GetEnumerator() => new Enumerator(m_StylePropertyId, m_ElementPath, m_PropName);
+
+            public struct Enumerator
+            {
+                readonly IReadOnlyList<string> m_Suffixes;
+                readonly int m_Count;
+                readonly string m_ElementPath;
+                readonly string m_PropName;
+                int m_Index;
+                string m_Current;
+
+                public Enumerator(StylePropertyId stylePropertyId, string elementPath, string propName)
+                {
+                    m_Suffixes = UIAnimationBinder.GetChannelSuffixes(stylePropertyId);
+                    m_Count = m_Suffixes?.Count ?? 0;
+                    m_ElementPath = elementPath;
+                    m_PropName = propName;
+                    m_Index = -1;
+                    m_Current = null;
+                }
+
+                public string Current => m_Current;
+
+                public bool MoveNext()
+                {
+                    m_Index++;
+
+                    // Zero-channel props have no suffix row; yield the bare base key once.
+                    if (m_Count == 0)
+                    {
+                        if (m_Index > 0)
+                            return false;
+                        m_Current = BuildStyleKeyPropertyName(m_ElementPath, m_PropName, null);
+                        return true;
+                    }
+
+                    if (m_Index >= m_Count)
+                        return false;
+                    m_Current = BuildStyleKeyPropertyName(m_ElementPath, m_PropName, m_Suffixes[m_Index]);
+                    return true;
+                }
+            }
+        }
     }
 }

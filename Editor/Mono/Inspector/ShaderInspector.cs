@@ -9,6 +9,8 @@ using System.Globalization;
 using UnityEditor.Rendering;
 using Object = UnityEngine.Object;
 using UnityEngine.Rendering;
+using Unity.CodeEditor;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -39,34 +41,38 @@ namespace UnityEditor
         const float kValueFieldWidth = 200.0f;
         const float kArrayValuePopupBtnWidth = 25.0f;
 
-        private static bool s_KeywordsUnfolded = false;
-        private static bool s_PropertiesUnfolded = true;
+        [NoAutoStaticsCleanup]
+        private static bool s_KeywordsUnfolded = false; // session UI foldout state; safe to persist across reload
+        [NoAutoStaticsCleanup]
+        private static bool s_PropertiesUnfolded = true; // session UI foldout state; safe to persist across reload
 
         internal class Styles
         {
-            public static Texture2D errorIcon = EditorGUIUtility.LoadIcon("console.erroricon.sml");
-            public static Texture2D warningIcon = EditorGUIUtility.LoadIcon("console.warnicon.sml");
+            public static readonly Texture2D errorIcon = EditorGUIUtility.LoadIcon("console.erroricon.sml");
+            public static readonly Texture2D warningIcon = EditorGUIUtility.LoadIcon("console.warnicon.sml");
 
-            public static GUIContent togglePreprocess = EditorGUIUtility.TrTextContent("Preprocess only", "Show preprocessor output instead of compiled shader code");
-            public static GUIContent toggleStripLineDirective = EditorGUIUtility.TrTextContent("Strip #line directives", "Strip #line directives from preprocessor output");
-            public static GUIContent showSurface = EditorGUIUtility.TrTextContent("Show generated code", "Show generated code of a surface shader");
-            public static GUIContent showFF = EditorGUIUtility.TrTextContent("Show generated code", "Show generated code of a fixed function shader");
-            public static GUIContent showCurrent = EditorGUIUtility.TrTextContent("Compile and show code \u007C \u25BE");  // vertical bar & dropdow arrow - due to lacking editor style of "mini button with a dropdown"
-            public static GUIContent overridableKeywords = EditorGUIUtility.TrTextContent("Overridable", "Shader keywords overridable by global shader keyword state");
-            public static GUIContent notOverridableKeywords = EditorGUIUtility.TrTextContent("Not overridable", "Shader keywords not overridable by global shader keyword state");
+            public static readonly GUIContent togglePreprocess = EditorGUIUtility.TrTextContent("Preprocess only", "Show preprocessor output instead of compiled shader code");
+            public static readonly GUIContent toggleStripLineDirective = EditorGUIUtility.TrTextContent("Strip #line directives", "Strip #line directives from preprocessor output");
+            public static readonly GUIContent showSurface = EditorGUIUtility.TrTextContent("Show generated code", "Show generated code of a surface shader");
+            public static readonly GUIContent showFF = EditorGUIUtility.TrTextContent("Show generated code", "Show generated code of a fixed function shader");
+            public static readonly GUIContent showCurrent = EditorGUIUtility.TrTextContent("Compile and show code \u007C \u25BE");  // vertical bar & dropdow arrow - due to lacking editor style of "mini button with a dropdown"
+            public static readonly GUIContent overridableKeywords = EditorGUIUtility.TrTextContent("Overridable", "Shader keywords overridable by global shader keyword state");
+            public static readonly GUIContent notOverridableKeywords = EditorGUIUtility.TrTextContent("Not overridable", "Shader keywords not overridable by global shader keyword state");
 
-            public static GUIStyle messageStyle = "CN StatusInfo";
-            public static GUIStyle evenBackground = "CN EntryBackEven";
+            public static readonly GUIStyle messageStyle = "CN StatusInfo";
+            public static readonly GUIStyle evenBackground = "CN EntryBackEven";
 
-            public static GUIContent no = EditorGUIUtility.TrTextContent("no");
-            public static GUIContent builtinShader = EditorGUIUtility.TrTextContent("Built-in shader");
+            public static readonly GUIContent no = EditorGUIUtility.TrTextContent("no");
+            public static readonly GUIContent builtinShader = EditorGUIUtility.TrTextContent("Built-in shader");
 
             public static readonly GUIContent arrayValuePopupButton = EditorGUIUtility.TrTextContent("...");
         }
         static readonly int kErrorViewHash = "ShaderErrorView".GetHashCode();
 
-        private static bool s_PreprocessOnly = false;
-        private static bool s_StripLineDirectives = true;
+        [NoAutoStaticsCleanup]
+        private static bool s_PreprocessOnly = false; // session UI toggle state; safe to persist across reload
+        [NoAutoStaticsCleanup]
+        private static bool s_StripLineDirectives = true; // session UI toggle state; safe to persist across reload
 
         Vector2 m_ScrollPosition = Vector2.zero;
         private Material m_SrpCompatibilityCheckMaterial = null;
@@ -201,8 +207,35 @@ namespace UnityEditor
         {
             ShowSurfaceShaderButton(s);
             ShowFixedFunctionShaderButton(s);
+            ShowSplicedCodeButton(s);
             ShowCompiledCodeButton(s);
             ShowShaderErrors(s);
+        }
+
+        private void ShowSplicedCodeButton(Shader s)
+        {
+            TextAsset splicedTextObject = null;
+            foreach (Object assetObject in AssetDatabase.LoadAllAssetsAtPath(AssetDatabase.GetAssetPath(s)))
+            {
+                if (assetObject is TextAsset textAssetObject && textAssetObject.name == "SplicedText")
+                {
+                    splicedTextObject = textAssetObject;
+                    break;
+                }
+            }
+
+            if (splicedTextObject == null)
+                return;
+
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.PrefixLabel("Shader interface", EditorStyles.miniButton);
+            if (GUILayout.Button("Show generated ShaderLab", EditorStyles.miniButton, GUILayout.ExpandWidth(false)))
+            {
+                string tempFilePath = $"Temp/{s.name}.gen.shader";
+                System.IO.File.WriteAllText(tempFilePath, splicedTextObject.text);
+                CodeEditor.CurrentEditor?.OpenProject(tempFilePath);
+            }
+            EditorGUILayout.EndHorizontal();
         }
 
         private static void ShowShaderProperties(Shader s)
@@ -512,8 +545,10 @@ namespace UnityEditor
             "Custom:"
         };
 
-        private static string[] s_ShaderPlatformNames;
-        private static int[] s_ShaderPlatformIndices;
+        [NoAutoStaticsCleanup]
+        private static string[] s_ShaderPlatformNames; // string[] cache rebuilt lazily by InitializeShaderPlatforms; safe to persist across reload
+        [NoAutoStaticsCleanup]
+        private static int[] s_ShaderPlatformIndices; // int[] cache rebuilt lazily by InitializeShaderPlatforms; safe to persist across reload
 
         private const ulong kVariantCountUninitialized = 0;
         private const ulong kVariantCountCancelled = ulong.MaxValue;
@@ -541,7 +576,8 @@ namespace UnityEditor
                 EditorPrefs.SetInt("ShaderInspectorPlatformMode", value);
             }
         }
-        static int s_CurrentMode = -1;
+        [NoAutoStaticsCleanup]
+        static int s_CurrentMode = -1; // EditorPrefs-backed UI selection; safe to persist across reload
 
         public static int currentPlatformMask
         {
@@ -560,7 +596,8 @@ namespace UnityEditor
                 EditorPrefs.SetInt("ShaderInspectorPlatformMask", value);
             }
         }
-        static int s_CurrentPlatformMask = -1;
+        [NoAutoStaticsCleanup]
+        static int s_CurrentPlatformMask = -1; // EditorPrefs-backed UI selection; safe to persist across reload
 
         public static int currentVariantStripping
         {
@@ -576,7 +613,8 @@ namespace UnityEditor
                 EditorPrefs.SetInt("ShaderInspectorVariantStripping", value);
             }
         }
-        static int s_CurrentVariantStripping = -1;
+        [NoAutoStaticsCleanup]
+        static int s_CurrentVariantStripping = -1; // EditorPrefs-backed UI selection; safe to persist across reload
 
 
         public ShaderInspectorPlatformsPopup(Shader shader)

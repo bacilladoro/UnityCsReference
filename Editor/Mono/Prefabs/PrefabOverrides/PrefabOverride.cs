@@ -79,7 +79,12 @@ namespace UnityEditor.SceneManagement
                     GameObject rootObject = PrefabUtility.GetRootGameObject(sourceObject);
                     bool isPersistent = EditorUtility.IsPersistent(instanceOrAssetObject);
 
-                    if (!PrefabUtility.IsPartOfPrefabThatCanBeAppliedTo(rootObject) || (!isPersistent && !PrefabUtility.HasApplicableObjectOverridesForTarget(instanceOrAssetObject, sourceObject, false)))
+                    // An AddedGameObject that is itself an instance of the target prefab cannot be applied
+                    // to that prefab (it would nest the prefab inside itself). Disable rather than throw.
+                    bool wouldRecurse = this is AddedGameObject addedGameObject
+                        && PrefabUtility.WouldApplyingAddedGameObjectRecurse(addedGameObject.instanceGameObject, sourceObject);
+
+                    if (!PrefabUtility.IsPartOfPrefabThatCanBeAppliedTo(rootObject) || wouldRecurse || (!isPersistent && !PrefabUtility.HasApplicableObjectOverridesForTarget(instanceOrAssetObject, sourceObject, false)))
                         menu.AddDisabledItem(menuItemContent);
                     else
                         menu.AddItem(menuItemContent, false, applyAction, prefabAssetPath);

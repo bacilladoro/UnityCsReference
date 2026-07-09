@@ -36,5 +36,15 @@ namespace UnityEngine.Diagnostics
 
         [FreeFunction("ValidateHeap")]
         extern public static void ValidateHeap();
+
+        // Pauses (pause=true) or resumes (pause=false) CoreCLR's GC stress mode, which forces
+        // frequent collections to surface GC-correctness bugs. CoreCLR-only; on other runtimes
+        // this is a no-op.
+        // This requires that GC stress has been initialized and enabled at startup: the
+        // "System.GC.Stress" knob (or the DOTNET_GCStress env var fallback) must be set to
+        // a non-zero level. Otherwise this call has no effect.
+        [FreeFunction("DiagnosticsUtils_Bindings::SetGCStressPaused")]
+        [NativeHeader("Modules/Scripting/Include/Scripting/ScriptingBackend/ScriptingApi.h")]
+        extern internal static void SetGCStressPaused(bool pause);
     }
 }

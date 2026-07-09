@@ -188,6 +188,10 @@ namespace UnityEditor
 
         RectOffset IEditorWindowModel.viewMargins => GetBorderSize();
 
+        string IEditorWindowModel.rootViewClassName => rootViewClassName;
+
+        private protected virtual string rootViewClassName => "unity-hostview";
+
         Action IEditorWindowModel.onSplitterGUIHandler { get; set; }
 
         protected void UpdateViewMargins(EditorWindow view)
@@ -306,22 +310,18 @@ namespace UnityEditor
             if (actualView)
                 GUI.color = actualView.rootVisualElement.playModeTintColor;
 
-            using (new GUILayout.VerticalScope(Styles.background))
+            if (actualView)
+                actualView.m_Pos = screenPosition;
+
+            try
             {
-                if (actualView)
-                    actualView.m_Pos = screenPosition;
-
-                try
-                {
-                    HandleSplitView();
-                    m_OnGUI?.Invoke();
-                }
-                finally
-                {
-                    CheckNotificationStatus();
-
-                    EditorGUI.ShowRepaints();
-                }
+                HandleSplitView();
+                m_OnGUI?.Invoke();
+            }
+            finally
+            {
+                CheckNotificationStatus();
+                EditorGUI.ShowRepaints();
             }
         }
 

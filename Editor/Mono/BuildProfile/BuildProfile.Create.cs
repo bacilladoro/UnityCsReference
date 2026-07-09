@@ -172,7 +172,7 @@ namespace UnityEditor.Build.Profile
             buildProfile.OnEnable();
 
             if (BuildTargetDiscovery.TryGetSDKPlatformExtension(platformId, out var sdkExtension))
-                sdkExtension.OnMultiTargetBuildProfileCreated(buildProfile);
+                sdkExtension.OnMultiTargetBuildProfileCreated(buildProfile, preconfiguredSettingsVariant);
 
             // Notify the UI of creation so that the new build profile can be selected
             onBuildProfileCreated?.Invoke(buildProfile);
@@ -214,7 +214,6 @@ namespace UnityEditor.Build.Profile
             if (buildProfileExtension != null)
             {
                 buildProfileExtension.OnBuildProfileCreated(this, preconfiguredSettingsVariant);
-                SerializePlayerSettings();
                 AssetDatabase.SaveAssetIfDirty(this);
             }
         }

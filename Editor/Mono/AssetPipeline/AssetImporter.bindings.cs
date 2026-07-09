@@ -10,6 +10,7 @@ using Object = UnityEngine.Object;
 using UnityEngine.Bindings;
 using UnityEngine.Scripting;
 using UnityEditor.AssetImporters;
+using UnityEditor.Experimental;
 
 namespace UnityEditor
 {
@@ -99,6 +100,9 @@ namespace UnityEditor
 
         [FreeFunction("AssetImporter::GetImportLog")]
         internal static extern ImportLog GetImportLog(GUID guid);
+
+        [FreeFunction("AssetImporter::GetImportLogForImporter")]
+        internal static extern ImportLog GetImportLogForImporter(GUID guid, ImporterID importerId);
 
         [FreeFunction("AssetImporter::GetImportLogEntriesCount")]
         internal static extern bool GetImportLogEntriesCount(GUID guid, out int nbErrors, out int nbWarnings);

@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Bindings;
 using UnityEngine.Scripting;
 
@@ -46,6 +47,9 @@ namespace UnityEngine
         [RequiredByNativeCode]
         static void ClearSubsystems()
         {
+            if (s_IntegratedSubsystems == null)
+                return;
+
             foreach (var subsystem in s_IntegratedSubsystems)
                 subsystem.m_Ptr = IntPtr.Zero;
 
@@ -54,6 +58,8 @@ namespace UnityEngine
             s_DeprecatedSubsystems.Clear();
         }
 
+        // We want to construct the map after new code has been loaded.
+        [OnCodeLoaded]
         static extern void StaticConstructScriptingClassMap();
         internal static extern void ReportSingleSubsystemAnalytics(string id);
     }

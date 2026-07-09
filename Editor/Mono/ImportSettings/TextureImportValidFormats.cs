@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 
@@ -52,7 +53,9 @@ namespace UnityEditor
             }
         }
 
+        [NoAutoStaticsCleanup] // value-type format lookup cache (no user refs); rebuilt lazily, safe to persist across reload
         private static Dictionary<TextureTypeAndBuildTarget, Value> s_ValidTextureFormats;
+        [NoAutoStaticsCleanup] // value-type format lookup cache (no user refs); rebuilt lazily, safe to persist across reload
         private static Dictionary<TextureImporterType, Value> s_ValidDefaultTextureFormats;
 
         private static string[] BuildTextureStrings(int[] texFormatValues)

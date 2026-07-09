@@ -6,6 +6,7 @@ using System;
 using System.IO;
 using System.Runtime.CompilerServices;
 using UnityEngine;
+using Unity.Scripting.LifecycleManagement;
 using ATarget = System.AttributeTargets;
 
 namespace UnityEditor.ShaderKeywordFilter
@@ -153,7 +154,8 @@ namespace UnityEditor.ShaderKeywordFilter
             return match;
         }
 
-        static private bool m_DoDebugLogging = false;
+        [NoAutoStaticsCleanup]
+        static private bool m_DoDebugLogging = false; // plain bool debug-logging flag, no managed refs; safe to persist across code reload
         private FilterAction m_Action;
         private Precedence m_Precedence;
         private EvaluationMode m_EvaluationMode;

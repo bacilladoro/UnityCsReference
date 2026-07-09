@@ -3,9 +3,11 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using System.ComponentModel;
 using System.Runtime.InteropServices;
 using UnityEngine;
 using UnityEngine.Bindings;
+using UnityEngine.Internal;
 using UnityEngine.Serialization;
 
 namespace UnityEditor
@@ -494,10 +496,19 @@ namespace UnityEditor
             set { m_SpriteBorder = value; }
         }
 
-        public bool spriteGenerateFallbackPhysicsShape
+        public bool spriteGenerateFallbackPhysicsOutline
         {
             get {return m_SpriteGenerateFallbackPhysicsShape != 0; }
             set { m_SpriteGenerateFallbackPhysicsShape = value ? 1 : 0; }
+        }
+
+        [ExcludeFromDocs]
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        [Obsolete("TextureImporterSettings.spriteGenerateFallbackPhysicsShape is deprecated. Use TextureImporterSettings.spriteGenerateFallbackPhysicsOutline instead (UnityUpgradable) -> spriteGenerateFallbackPhysicsOutline", false)]
+        public bool spriteGenerateFallbackPhysicsShape
+        {
+            get => spriteGenerateFallbackPhysicsOutline;
+            set => spriteGenerateFallbackPhysicsOutline = value;
         }
 
         [FreeFunction("TextureImporterBindings::Equal")]

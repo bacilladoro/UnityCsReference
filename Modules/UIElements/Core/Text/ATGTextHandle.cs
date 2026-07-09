@@ -22,26 +22,36 @@ namespace UnityEngine.UIElements
 
         internal unsafe bool TryGetSourceTextPointer(out IntPtr ptr, out int length)
         {
-            if (m_TextElement.showPlaceholderText
-                || m_TextElement.edition.isPassword
-                || (m_TextElement.isElided && !TextLibraryCanElide()))
-            {
-                ptr = IntPtr.Zero;
-                length = 0;
-                return false;
-            }
+              if (m_TextElement.showPlaceholderText
+                  || m_TextElement.edition.isPassword
+                  || (m_TextElement.isElided && !TextLibraryCanElide()))
+              {
+                  ptr = IntPtr.Zero;
+                  length = 0;
+                  return false;
+              }
 
-            ref var buffer = ref m_TextElement.textBuffer;
-            if (!buffer.isCreated || buffer.length == 0)
-            {
-                ptr = IntPtr.Zero;
-                length = 0;
-                return true;
-            }
+              ref var buffer = ref m_TextElement.textBuffer;
+              if (!buffer.isCreated || buffer.length == 0)
+              {
+                  ptr = IntPtr.Zero;
+                  length = 0;
+                  return true;
+              }
 
-            ptr = (IntPtr)NativeArrayUnsafeUtility.GetUnsafeReadOnlyPtr(buffer.buffer);
-            length = buffer.length;
-            return true;
+              ptr = (IntPtr)NativeArrayUnsafeUtility.GetUnsafeReadOnlyPtr(buffer.buffer);
+              length = buffer.length;
+              return true;
+        }
+
+        // UUM-90538: empty input fields need a zero-width space so they get a non-zero line height
+        void EnsureNonEmptyBufferForInputField()
+        {
+            if (nativeSettings.textBufferLength == 0 && m_TextElement.isInputField)
+            {
+                m_ProcessedTextBuffer.CopyFrom(TextElement.ZeroWidthSpace);
+                nativeSettings.SetTextBuffer(m_ProcessedTextBuffer.buffer, m_ProcessedTextBuffer.length);
+            }
         }
 
         void ComputeNativeTextSize(in string textToMeasure, float width, VisualElement.MeasureMode widthMode, float height, VisualElement.MeasureMode heightMode, float? fontsize = null)
@@ -49,12 +59,7 @@ namespace UnityEngine.UIElements
             if (!ConvertUssToNativeTextGenerationSettings(textToMeasure, fontsize))
                 return;
 
-            // Insert zero width space to avoid TextField from collapsing when empty. UUM-90538
-            if (nativeSettings.textBufferLength == 0 && m_TextElement.isInputField)
-            {
-                m_ProcessedTextBuffer.CopyFrom("\u200B");
-                nativeSettings.SetTextBuffer(m_ProcessedTextBuffer.buffer, m_ProcessedTextBuffer.length);
-            }
+            EnsureNonEmptyBufferForInputField();
 
             if (widthMode == VisualElement.MeasureMode.Undefined || float.IsNaN(width) || float.IsNegative(width))
                 nativeSettings.screenWidth = TextLib.k_unconstrainedScreenSize;
@@ -116,6 +121,8 @@ namespace UnityEngine.UIElements
         {
             if (!ConvertUssToNativeTextGenerationSettings())
                 return;
+
+            EnsureNonEmptyBufferForInputField();
 
             if (textGenerationInfo == IntPtr.Zero)
             {
@@ -207,6 +214,10 @@ namespace UnityEngine.UIElements
             if (m_TextElement.showPlaceholderText)
                 preAllocLength = Math.Max(preAllocLength, m_TextElement.edition.placeholder?.Length ?? 0);
 
+            // Empty input fields get a ZWS injected during ShapeText; ensure capacity for it.
+            if (preAllocLength == 0 && m_TextElement.isInputField)
+                preAllocLength = 1;
+
             // When the backing NativeArray is not created (element attached with empty
             // text, or buffer disposed during a lifecycle transition) the direct-buffer
             // path in ConvertUssToNativeTextGenerationSettings falls through and copies
@@ -269,6 +280,17 @@ namespace UnityEngine.UIElements
 
             // The screenRect in TextCore is not properly implemented with regards to the offset part, so zero it out for now and we will add it ourselves later
             var size = m_TextElement.contentRect.size;
+
+            if (textGenerationInfo != IntPtr.Zero)
+            {
+                LayoutTextMeasureNative.GetTGIMeasuredWidths(textGenerationInfo, out var tgiMeasuredWidth, out var tgiRoundedWidth, out var tgiPixelsPerPoint);
+                if (tgiRoundedWidth != 0 && tgiPixelsPerPoint == scale)
+                {
+                    ATGMeasuredWidth = tgiMeasuredWidth;
+                    ATGRoundedWidth = tgiRoundedWidth;
+                    LastPixelPerPoint = scale;
+                }
+            }
 
             // If the size is the last rounded size, we use the cached size before the rounding that was calculated
             if (ATGMeasuredWidth.HasValue && Mathf.Abs(size.x - ATGRoundedWidth) < 0.01f && LastPixelPerPoint == scale)

@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Scripting;
 using UnityEngine.Scripting.APIUpdating;
 
@@ -19,9 +20,13 @@ namespace UnityEngine.XR
             TrackingLost
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<XRNodeState> trackingAcquired = null;
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<XRNodeState> trackingLost = null;
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<XRNodeState> nodeAdded = null;
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<XRNodeState> nodeRemoved = null;
 
         [RequiredByNativeCode]

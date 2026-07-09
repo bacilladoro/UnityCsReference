@@ -202,16 +202,11 @@ namespace UnityEditor.Build.Profile
                 var internalPackages = BuildProfileModuleUtil.BuildPlatformInternalPackages(platformId);
                 var partnerPackages = BuildProfileModuleUtil.BuildPlatformPartnerPackages(platformId);
 
-                var buildProfileExtension = BuildProfileModuleUtil.GetBuildProfileExtension(platformId);
-                var preconfiguredSettingsVariants = Array.Empty<PreconfiguredSettingsVariant>();
-                if (buildProfileExtension != null)
-                {
-                    var variants = buildProfileExtension.GetPreconfiguredSettingsVariants();
-                    if (variants != null)
-                    {
-                        preconfiguredSettingsVariants = variants;
-                    }
-                }
+                var sdkPlatformExtension = BuildProfileModuleUtil.GetSDKPlatformExtension(platformId);
+                var preconfiguredSettingsVariants = (sdkPlatformExtension != null
+                    ? sdkPlatformExtension.preconfiguredSettingsVariants
+                    : BuildProfileModuleUtil.GetBuildProfileExtension(platformId)?.GetPreconfiguredSettingsVariants())
+                    ?? Array.Empty<PreconfiguredSettingsVariant>();
 
                 cards.Add(new BuildProfileCard()
                 {

@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.TextCore.Text;
 
@@ -32,6 +33,7 @@ namespace UnityEditor
                 this.boldItalicStyle = boldItalicStyle;
             }
 
+            [NoAutoStaticsCleanup] // immutable config created once with constant data
             public static readonly FontFamilyConfig k_SystemFontConfig = new FontFamilyConfig(
                 SystemFontName,
                 "Regular",
@@ -40,6 +42,7 @@ namespace UnityEditor
                 "Bold Italic"
             );
 
+            [NoAutoStaticsCleanup] // immutable config created once with constant data
             public static readonly FontFamilyConfig k_InterFontConfig = new FontFamilyConfig(
                 "Inter",
                 "Regular",
@@ -48,6 +51,7 @@ namespace UnityEditor
                 "Semi Bold Italic"
             );
 
+            [NoAutoStaticsCleanup] // immutable config created once with constant data
             public static readonly FontFamilyConfig k_RobotoMonoFontConfig = new FontFamilyConfig(
                 "Roboto Mono",
                 "Regular",

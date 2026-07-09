@@ -47,6 +47,10 @@ namespace UnityEditor.Build.Profile
         const string k_PlatformSelectionDeprecationHelpBox = "platform-selection-deprecation-help-box";
         const string k_PlatformSelectionDropdown = "platform-selection-dropdown";
         const string k_SwitchProfilePlatformButton = "switch-profile-platform-button";
+
+        static readonly GUIContent s_Copy = EditorGUIUtility.TrTextContent("Copy");
+        static readonly GUIContent s_Paste = EditorGUIUtility.TrTextContent("Paste");
+
         bool isClassic = false;
         BuildProfileSceneList m_SceneList;
         HelpBox m_CompilingWarningHelpBox;
@@ -142,6 +146,7 @@ namespace UnityEditor.Build.Profile
             m_AddSettingsButton = root.Q<Button>(k_AddSettingsButton);
             m_AddSettingsButton.text = TrText.addSettings;
             m_AddSettingsButton.clicked += ShowAddSettingsDropdown;
+            buildSettingsFoldout.RegisterCallback<ContextClickEvent>(_ => FoldoutContextMenu());
 
             m_VirtualTexturingHelpBox.text = TrText.invalidVirtualTexturingSettingMessage;
             m_CompilingWarningHelpBox.text = TrText.compilingMessage;
@@ -606,6 +611,30 @@ namespace UnityEditor.Build.Profile
         void ShowAddSettingsDropdown()
         {
             AddSettingsDropdownWindow.Show(m_AddSettingsButton.worldBound, OnAddSettingsClicked, m_AddSettingsDataSource);
+        }
+
+        internal void FoldoutContextMenu()
+        {
+            var menu = new GenericMenu();
+
+            menu.AddItem(s_Copy, false, () => { OnCopyPlatformSettings(); });
+            menu.AddItem(s_Paste, false, () => { OnPastePlatformSettings(); });
+
+            menu.ShowAsContext();
+        }
+
+        void OnCopyPlatformSettings()
+        {
+            BuildProfileModuleUtil.CopyBuildProfileSettings(m_Profile.platformBuildProfile);
+        }
+
+        void OnPastePlatformSettings()
+        {
+            Undo.RecordObject(m_Profile, "Paste Sub-Asset Values");
+            BuildProfileModuleUtil.PasteBuildProfileSettings(m_Profile.platformBuildProfile);
+            EditorUtility.SetDirty(m_Profile);
+
+            BuildProfileModuleUtil.UpdateActiveEditors(m_Profile);
         }
     }
 }

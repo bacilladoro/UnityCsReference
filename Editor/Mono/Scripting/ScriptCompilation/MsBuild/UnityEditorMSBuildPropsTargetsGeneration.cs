@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
+using Unity.AsmDefToCSProj;
 using UnityEditor.Build.Player;
 using UnityEditor.Compilation;
 using UnityEditor.MSBuild;
@@ -28,7 +29,6 @@ class UnityEditorMSBuildPropsTargetsGeneration
         public HashSet<string> AllPlugins { get; set; }
         public string[] EditorModulePaths { get; set; }
         public string[] PlayerModulePaths { get; set; }
-        public string[] RoslynAnalyzerPaths { get; set; }
     }
 
     private static PrecompiledAssemblyProviderCache GetOrCreateCache(BuildTarget buildTarget)
@@ -65,9 +65,6 @@ class UnityEditorMSBuildPropsTargetsGeneration
             cache.EditorModulePaths = GetModulesAssemblyPaths(true, buildTarget);
             cache.PlayerModulePaths = GetModulesAssemblyPaths(false, buildTarget);
 
-            // Cache Roslyn analyzer paths (built-in + user-labeled, unified by the native side).
-            cache.RoslynAnalyzerPaths = new PrecompiledAssemblyProvider().GetRoslynAnalyzerPaths();
-
             s_assemblyProviderCache = cache;
             s_cachedBuildTarget = buildTarget;
             return cache;
@@ -82,7 +79,7 @@ class UnityEditorMSBuildPropsTargetsGeneration
         }
     }
 
-    public static void UpdateGeneratedMSBuildFileIfNeeded(BuildTarget buildTarget, MSBuildCompilationOptions compilationOptions)
+    public static void UpdateGeneratedMSBuildFileIfNeeded(BuildTarget buildTarget, MSBuildCompilationOptions compilationOptions, string[] globalAnalyzers)
     {
         ProjectGenerator.Instance.GenerateEntryPointProjectIfMissing("Main");
         var unityNugetLocalFeed = Path.Combine(EditorApplication.applicationScriptingPath, "MSBuild/sdk-nugets");
@@ -94,16 +91,39 @@ class UnityEditorMSBuildPropsTargetsGeneration
         UpdateReferencesProps(buildTarget);
         UpdatePluginsProps(buildTarget);
         UpdateSystemSearchPaths(buildTarget);
-        UpdateRoslynAnalyzersProps();
+        UpdateRoslynAnalyzersProps(globalAnalyzers);
 
         PropsGenerator.Instance.UpdateUnityContentLocation(EditorApplication.applicationScriptingPath);
         PropsGenerator.Instance.UpdateBuildConfigurationProperties(buildTarget.ToString(), CompilationPipeline.codeOptimization == CodeOptimization.Release);
     }
 
-    private static void UpdateRoslynAnalyzersProps()
+    private static void UpdateRoslynAnalyzersProps(string[] globalAnalyzers)
     {
-        var analyzerPaths = new PrecompiledAssemblyProvider().GetRoslynAnalyzerPaths();
-        PropsGenerator.Instance.UpdateRoslynAnalyzersProps(analyzerPaths);
+        PropsGenerator.Instance.UpdateRoslynAnalyzersProps(globalAnalyzers);
+    }
+
+    private static string[] s_builtinAnalyzerPaths;
+
+    // Editor-shipped built-in analyzers/generators live under the editor install, outside the project, so
+    // the converter can't discover them; read them from the native registry (cheap, not the asmdef graph)
+    // and isolate the editor-shipped ones by their install location. They are fixed for the editor session,
+    // so resolve once and cache.
+    public static string[] GetBuiltinRoslynAnalyzerPaths()
+    {
+        if (s_builtinAnalyzerPaths != null)
+            return s_builtinAnalyzerPaths;
+
+        var contentsPath = Path.GetFullPath(EditorApplication.applicationContentsPath);
+        var all = new PrecompiledAssemblyProvider().GetRoslynAnalyzerPaths();
+        var builtins = new List<string>();
+        foreach (var path in all)
+        {
+            if (string.IsNullOrEmpty(path))
+                continue;
+            if (Path.GetFullPath(path).StartsWith(contentsPath, StringComparison.OrdinalIgnoreCase))
+                builtins.Add(path);
+        }
+        return s_builtinAnalyzerPaths = builtins.ToArray();
     }
 
     /// <summary>
@@ -129,7 +149,7 @@ class UnityEditorMSBuildPropsTargetsGeneration
     /// Updates deferrable props (defines, references, plugins, search paths) in parallel.
     /// Uses cached PrecompiledAssemblyProvider results to avoid repeated queries.
     /// </summary>
-    public static void UpdateDeferrablePropsInParallel(BuildTarget buildTarget, MSBuildCompilationOptions compilationOptions)
+    public static void UpdateDeferrablePropsInParallel(BuildTarget buildTarget, MSBuildCompilationOptions compilationOptions, string[] globalAnalyzers)
     {
         var cache = GetOrCreateCache(buildTarget);
 
@@ -151,6 +171,7 @@ class UnityEditorMSBuildPropsTargetsGeneration
         // Get search paths
         var searchPaths = BuildPlayerDataGenerator.GetStaticSearchPaths(buildTarget);
 
+        // `globalAnalyzers` was already resolved by the converter during SetAllScripts; nothing to do here.
         PropsGenerator.Instance.UpdateDeferrablePropsInParallel(
             editorOnlyCompatibleDefines,
             playerAssembliesDefines,
@@ -160,7 +181,7 @@ class UnityEditorMSBuildPropsTargetsGeneration
             cache.PlayerPluginPaths,
             cache.AllPlugins,
             searchPaths,
-            cache.RoslynAnalyzerPaths,
+            globalAnalyzers,
             buildTarget.ToString(),
             CompilationPipeline.codeOptimization == CodeOptimization.Release);
     }
@@ -381,7 +402,18 @@ class UnityEditorMSBuildPropsTargetsGeneration
         var modulePaths = new List<string>();
         foreach (var assembly in precompiledAssemblyProvider.GetUnityAssemblies(isEditor, buildTarget))
         {
-            if ((assembly.Flags & AssemblyFlags.UnityModule) == AssemblyFlags.UnityModule && !string.IsNullOrEmpty(assembly.Path))
+            if (string.IsNullOrEmpty(assembly.Path))
+                continue;
+
+            // For editor builds, include every Unity assembly (modules plus the base
+            // UnityEngine.dll / UnityEditor.dll). The base UnityEditor.dll is required
+            // for editor packages that use types like UnityEditor.Editor or types in
+            // UnityEditor.Web (e.g. com.unity.analytics' editor scripts) — these are
+            // type-forwarded from UnityEditor.dll, so the C# compiler emits CS0012 if
+            // the forwarder assembly isn't referenced even when the forwardee module
+            // is. Player builds keep the legacy module-only filter to avoid pulling
+            // editor-only assemblies into player compilation. See MSBU-698.
+            if (isEditor || (assembly.Flags & AssemblyFlags.UnityModule) == AssemblyFlags.UnityModule)
             {
                 modulePaths.Add(assembly.Path);
             }

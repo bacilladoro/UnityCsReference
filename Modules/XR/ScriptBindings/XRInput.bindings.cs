@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.Bindings;
 using UnityEngine.Scripting;
@@ -273,89 +274,149 @@ namespace UnityEngine.XR
 
     public static class CommonUsages
     {
+        [NoAutoStaticsCleanup]
         public static InputFeatureUsage<bool> isTracked = new InputFeatureUsage<bool>("IsTracked");
+        [NoAutoStaticsCleanup]
         public static InputFeatureUsage<bool> primaryButton = new InputFeatureUsage<bool>("PrimaryButton");
+        [NoAutoStaticsCleanup]
         public static InputFeatureUsage<bool> primaryTouch = new InputFeatureUsage<bool>("PrimaryTouch");
+        [NoAutoStaticsCleanup]
         public static InputFeatureUsage<bool> secondaryButton = new InputFeatureUsage<bool>("SecondaryButton");
+        [NoAutoStaticsCleanup]
         public static InputFeatureUsage<bool> secondaryTouch = new InputFeatureUsage<bool>("SecondaryTouch");
+        [NoAutoStaticsCleanup]
         public static InputFeatureUsage<bool> gripButton = new InputFeatureUsage<bool>("GripButton");
+        [NoAutoStaticsCleanup]
         public static InputFeatureUsage<bool> triggerButton = new InputFeatureUsage<bool>("TriggerButton");
+        [NoAutoStaticsCleanup]
         public static InputFeatureUsage<bool> menuButton = new InputFeatureUsage<bool>("MenuButton");
+        [NoAutoStaticsCleanup]
         public static InputFeatureUsage<bool> primary2DAxisClick = new InputFeatureUsage<bool>("Primary2DAxisClick");
+        [NoAutoStaticsCleanup]
         public static InputFeatureUsage<bool> primary2DAxisTouch = new InputFeatureUsage<bool>("Primary2DAxisTouch");
+        [NoAutoStaticsCleanup]
         public static InputFeatureUsage<bool> secondary2DAxisClick = new InputFeatureUsage<bool>("Secondary2DAxisClick");
+        [NoAutoStaticsCleanup]
         public static InputFeatureUsage<bool> secondary2DAxisTouch = new InputFeatureUsage<bool>("Secondary2DAxisTouch");
+        [NoAutoStaticsCleanup]
         public static InputFeatureUsage<bool> userPresence = new InputFeatureUsage<bool>("UserPresence");
 
+        [NoAutoStaticsCleanup]
         public static InputFeatureUsage<InputTrackingState> trackingState = new InputFeatureUsage<InputTrackingState>("TrackingState");
 
+        [NoAutoStaticsCleanup]
         public static InputFeatureUsage<float> batteryLevel = new InputFeatureUsage<float>("BatteryLevel");
+        [NoAutoStaticsCleanup]
         public static InputFeatureUsage<float> trigger = new InputFeatureUsage<float>("Trigger");
+        [NoAutoStaticsCleanup]
         public static InputFeatureUsage<float> grip = new InputFeatureUsage<float>("Grip");
 
+        [NoAutoStaticsCleanup]
         public static InputFeatureUsage<Vector2> primary2DAxis = new InputFeatureUsage<Vector2>("Primary2DAxis");
+        [NoAutoStaticsCleanup]
         public static InputFeatureUsage<Vector2> secondary2DAxis = new InputFeatureUsage<Vector2>("Secondary2DAxis");
 
+        [NoAutoStaticsCleanup]
         public static InputFeatureUsage<Vector3> devicePosition = new InputFeatureUsage<Vector3>("DevicePosition");
+        [NoAutoStaticsCleanup]
         public static InputFeatureUsage<Vector3> leftEyePosition = new InputFeatureUsage<Vector3>("LeftEyePosition");
+        [NoAutoStaticsCleanup]
         public static InputFeatureUsage<Vector3> rightEyePosition = new InputFeatureUsage<Vector3>("RightEyePosition");
+        [NoAutoStaticsCleanup]
         public static InputFeatureUsage<Vector3> centerEyePosition = new InputFeatureUsage<Vector3>("CenterEyePosition");
+        [NoAutoStaticsCleanup]
         public static InputFeatureUsage<Vector3> colorCameraPosition = new InputFeatureUsage<Vector3>("CameraPosition");
+        [NoAutoStaticsCleanup]
         public static InputFeatureUsage<Vector3> deviceVelocity = new InputFeatureUsage<Vector3>("DeviceVelocity");
+        [NoAutoStaticsCleanup]
         public static InputFeatureUsage<Vector3> deviceAngularVelocity = new InputFeatureUsage<Vector3>("DeviceAngularVelocity");
+        [NoAutoStaticsCleanup]
         public static InputFeatureUsage<Vector3> leftEyeVelocity = new InputFeatureUsage<Vector3>("LeftEyeVelocity");
+        [NoAutoStaticsCleanup]
         public static InputFeatureUsage<Vector3> leftEyeAngularVelocity = new InputFeatureUsage<Vector3>("LeftEyeAngularVelocity");
+        [NoAutoStaticsCleanup]
         public static InputFeatureUsage<Vector3> rightEyeVelocity = new InputFeatureUsage<Vector3>("RightEyeVelocity");
+        [NoAutoStaticsCleanup]
         public static InputFeatureUsage<Vector3> rightEyeAngularVelocity = new InputFeatureUsage<Vector3>("RightEyeAngularVelocity");
+        [NoAutoStaticsCleanup]
         public static InputFeatureUsage<Vector3> centerEyeVelocity = new InputFeatureUsage<Vector3>("CenterEyeVelocity");
+        [NoAutoStaticsCleanup]
         public static InputFeatureUsage<Vector3> centerEyeAngularVelocity = new InputFeatureUsage<Vector3>("CenterEyeAngularVelocity");
+        [NoAutoStaticsCleanup]
         public static InputFeatureUsage<Vector3> colorCameraVelocity = new InputFeatureUsage<Vector3>("CameraVelocity");
+        [NoAutoStaticsCleanup]
         public static InputFeatureUsage<Vector3> colorCameraAngularVelocity = new InputFeatureUsage<Vector3>("CameraAngularVelocity");
+        [NoAutoStaticsCleanup]
         public static InputFeatureUsage<Vector3> deviceAcceleration = new InputFeatureUsage<Vector3>("DeviceAcceleration");
+        [NoAutoStaticsCleanup]
         public static InputFeatureUsage<Vector3> deviceAngularAcceleration = new InputFeatureUsage<Vector3>("DeviceAngularAcceleration");
+        [NoAutoStaticsCleanup]
         public static InputFeatureUsage<Vector3> leftEyeAcceleration = new InputFeatureUsage<Vector3>("LeftEyeAcceleration");
+        [NoAutoStaticsCleanup]
         public static InputFeatureUsage<Vector3> leftEyeAngularAcceleration = new InputFeatureUsage<Vector3>("LeftEyeAngularAcceleration");
+        [NoAutoStaticsCleanup]
         public static InputFeatureUsage<Vector3> rightEyeAcceleration = new InputFeatureUsage<Vector3>("RightEyeAcceleration");
+        [NoAutoStaticsCleanup]
         public static InputFeatureUsage<Vector3> rightEyeAngularAcceleration = new InputFeatureUsage<Vector3>("RightEyeAngularAcceleration");
+        [NoAutoStaticsCleanup]
         public static InputFeatureUsage<Vector3> centerEyeAcceleration = new InputFeatureUsage<Vector3>("CenterEyeAcceleration");
+        [NoAutoStaticsCleanup]
         public static InputFeatureUsage<Vector3> centerEyeAngularAcceleration = new InputFeatureUsage<Vector3>("CenterEyeAngularAcceleration");
+        [NoAutoStaticsCleanup]
         public static InputFeatureUsage<Vector3> colorCameraAcceleration = new InputFeatureUsage<Vector3>("CameraAcceleration");
+        [NoAutoStaticsCleanup]
         public static InputFeatureUsage<Vector3> colorCameraAngularAcceleration = new InputFeatureUsage<Vector3>("CameraAngularAcceleration");
 
+        [NoAutoStaticsCleanup]
         public static InputFeatureUsage<Quaternion> deviceRotation = new InputFeatureUsage<Quaternion>("DeviceRotation");
+        [NoAutoStaticsCleanup]
         public static InputFeatureUsage<Quaternion> leftEyeRotation = new InputFeatureUsage<Quaternion>("LeftEyeRotation");
+        [NoAutoStaticsCleanup]
         public static InputFeatureUsage<Quaternion> rightEyeRotation = new InputFeatureUsage<Quaternion>("RightEyeRotation");
+        [NoAutoStaticsCleanup]
         public static InputFeatureUsage<Quaternion> centerEyeRotation = new InputFeatureUsage<Quaternion>("CenterEyeRotation");
+        [NoAutoStaticsCleanup]
         public static InputFeatureUsage<Quaternion> colorCameraRotation = new InputFeatureUsage<Quaternion>("CameraRotation");
 
+        [NoAutoStaticsCleanup]
         public static InputFeatureUsage<Hand> handData = new InputFeatureUsage<Hand>("HandData");
+        [NoAutoStaticsCleanup]
         public static InputFeatureUsage<Eyes> eyesData = new InputFeatureUsage<Eyes>("EyesData");
 
         [Obsolete("CommonUsages.dPad is not used by any XR platform and will be removed.")]
+        [NoAutoStaticsCleanup]
         public static InputFeatureUsage<Vector2> dPad = new InputFeatureUsage<Vector2>("DPad");
         [Obsolete("CommonUsages.indexFinger is not used by any XR platform and will be removed.")]
+        [NoAutoStaticsCleanup]
         public static InputFeatureUsage<float> indexFinger = new InputFeatureUsage<float>("IndexFinger");
         [Obsolete("CommonUsages.MiddleFinger is not used by any XR platform and will be removed.")]
+        [NoAutoStaticsCleanup]
         public static InputFeatureUsage<float> middleFinger = new InputFeatureUsage<float>("MiddleFinger");
         [Obsolete("CommonUsages.RingFinger is not used by any XR platform and will be removed.")]
+        [NoAutoStaticsCleanup]
         public static InputFeatureUsage<float> ringFinger = new InputFeatureUsage<float>("RingFinger");
         [Obsolete("CommonUsages.PinkyFinger is not used by any XR platform and will be removed.")]
+        [NoAutoStaticsCleanup]
         public static InputFeatureUsage<float> pinkyFinger = new InputFeatureUsage<float>("PinkyFinger");
 
         // These should go to Oculus SDK
         [Obsolete("CommonUsages.thumbrest is Oculus only, and is being moved to their package. Please use OculusUsages.thumbrest. These will still function until removed.")]
+        [NoAutoStaticsCleanup]
         public static InputFeatureUsage<bool> thumbrest = new InputFeatureUsage<bool>("Thumbrest");
         [Obsolete("CommonUsages.indexTouch is Oculus only, and is being moved to their package.  Please use OculusUsages.indexTouch. These will still function until removed.")]
+        [NoAutoStaticsCleanup]
         public static InputFeatureUsage<float> indexTouch = new InputFeatureUsage<float>("IndexTouch");
         [Obsolete("CommonUsages.thumbTouch is Oculus only, and is being moved to their package.  Please use OculusUsages.thumbTouch. These will still function until removed.")]
+        [NoAutoStaticsCleanup]
         public static InputFeatureUsage<float> thumbTouch = new InputFeatureUsage<float>("ThumbTouch");
     }
 
     [UsedByNativeCode]
     [StructLayout(LayoutKind.Sequential)]
     [NativeConditional("ENABLE_VR")]
-    public struct InputDevice : IEquatable<InputDevice>
+    public partial struct InputDevice : IEquatable<InputDevice>
     {
+        [AutoStaticsCleanupOnCodeReload] // cleared on code reload to drop stale subsystem refs
         private static List<XRInputSubsystem> s_InputSubsystemCache;
 
         private UInt64 m_DeviceId;
@@ -930,6 +991,7 @@ namespace UnityEngine.XR
         }
 
         /// Used to avoid creating garbage when getting all devices from native.  Do not use without first calling GetDevices_Internal in order to keep it up to date.
+        [AutoStaticsCleanupOnCodeReload] // re-created lazily after reload
         static List<InputDevice> s_InputDeviceList;
         public static void GetDevicesWithCharacteristics(InputDeviceCharacteristics desiredCharacteristics, List<InputDevice> inputDevices)
         {
@@ -946,8 +1008,11 @@ namespace UnityEngine.XR
                     inputDevices.Add(device);
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<InputDevice> deviceConnected;
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<InputDevice> deviceDisconnected;
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<InputDevice> deviceConfigChanged;
 
         [RequiredByNativeCode]

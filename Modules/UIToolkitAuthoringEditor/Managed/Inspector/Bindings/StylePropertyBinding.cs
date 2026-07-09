@@ -977,15 +977,10 @@ sealed partial class StylePropertyBinding : CustomBinding, ITrackablePropertyPro
         {
             UpdateAffordanceElement(affordanceElement, targetElement, authoringContext, value, null, id, ref animationSubState, ref targetEnabled);
         }
-        // Tint the value field's input exactly like the standard Inspector tints animated properties:
+        // Tint the value field's input(s) exactly like the standard Inspector tints animated properties:
         // reuse the shared unity-binding--animation-* classes so the global driven-property USS applies.
-        var animatedInput = affordanceField?.valueInputElement;
-        if (animatedInput != null)
-        {
-            animatedInput.EnableInClassList(BindingExtensions.animationAnimatedUssClassName, animationSubState == FieldAffordanceSourceInfoType.AnimationAnimated);
-            animatedInput.EnableInClassList(BindingExtensions.animationRecordedUssClassName, animationSubState == FieldAffordanceSourceInfoType.AnimationRecording);
-            animatedInput.EnableInClassList(BindingExtensions.animationCandidateUssClassName, animationSubState == FieldAffordanceSourceInfoType.AnimationCandidate);
-        }
+        if (affordanceField != null)
+            ApplyAnimationDrivenTint(targetElement, animationSubState);
 
         targetElement.EnableInClassList(k_AnimationDrivenFieldUssClassName, animationSubState.IsAnimationDriven());
 
@@ -1034,6 +1029,40 @@ sealed partial class StylePropertyBinding : CustomBinding, ITrackablePropertyPro
         UpdateSetAlphaIfTransparentWhenPicked(targetElement, !value.uxmlValue.isInlined || value.uxmlValue.requireVariableResolve);
 
         return default;
+    }
+
+    // Tag every leaf input the driven-tint USS keys off (text/popup/slider/toggle/object/radio), so each
+    // control type colours. Querying the whole field rather than valueInputElement covers composite fields
+    // whose inputs live below the field root, including template-cloned ones like BackgroundSize.
+    static void ApplyAnimationDrivenTint(VisualElement field, FieldAffordanceSourceInfoType animationSubState)
+    {
+        if (field == null)
+            return;
+
+        foreach (var input in field.Query(className: BaseField<int>.inputUssClassName).Build())
+        {
+            if (!IsInsideUnitDropdown(input, field))
+                SetAnimationTintClasses(input, animationSubState);
+        }
+    }
+
+    // A value field tints its number, not its unit dropdown (px/deg/s stays neutral). The walk is bounded
+    // to the field root, within which the dropdown always sits.
+    static bool IsInsideUnitDropdown(VisualElement input, VisualElement field)
+    {
+        for (var e = input; e != null && e != field; e = e.hierarchy.parent)
+        {
+            if (e.ClassListContains(LengthField.unitDropdownUssClass))
+                return true;
+        }
+        return false;
+    }
+
+    static void SetAnimationTintClasses(VisualElement input, FieldAffordanceSourceInfoType animationSubState)
+    {
+        input.EnableInClassList(BindingExtensions.animationAnimatedUssClassName, animationSubState == FieldAffordanceSourceInfoType.AnimationAnimated);
+        input.EnableInClassList(BindingExtensions.animationRecordedUssClassName, animationSubState == FieldAffordanceSourceInfoType.AnimationRecording);
+        input.EnableInClassList(BindingExtensions.animationCandidateUssClassName, animationSubState == FieldAffordanceSourceInfoType.AnimationCandidate);
     }
 
 

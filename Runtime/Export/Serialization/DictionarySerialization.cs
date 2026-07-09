@@ -10,12 +10,13 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using UnityEngine.Assertions;
 using UnityEngine.Bindings;
+using Unity.Scripting.LifecycleManagement;
 
 using RequiredByNativeCodeAttribute = UnityEngine.Scripting.RequiredByNativeCodeAttribute;
 
 namespace UnityEngine
 {
-    internal static class DictionarySerialization
+    internal static partial class DictionarySerialization
     {
         /// <summary>
         /// One serialized entry for a <c>Dictionary&lt;TKey, TValue&gt;</c>: the key/value pair as stored in the
@@ -50,6 +51,7 @@ namespace UnityEngine
         /// which provides the happens-before relationship relied on by readers. Duplicate-entry callbacks may read this property
         /// from worker threads during serialization; no explicit memory barrier is required for those reads.
         /// </remarks>
+        [AutoStaticsCleanupOnCodeReload]
         internal static IDuplicateEntriesForDictionaries s_DuplicateEntriesForDictionaries { get; set; }
 
         [FreeFunction("DictionaryFieldUniqueIdentifierBindings::FormatDictionaryFieldUniqueIdentifierForActiveContext", IsThreadSafe = true)]
@@ -87,11 +89,15 @@ namespace UnityEngine
         }
 
         private delegate bool SetEntriesTypedDelegate(EntityId hostingEntityId, object dictionary, Array array, string dictionaryIdentifier, out bool hadDuplicates);
+        [NoAutoStaticsCleanup] // reflection handle to a method of this CoreModule type, stable across code reload
         private static readonly MethodInfo s_SetEntriesTypedInfo = typeof(DictionarySerialization).GetMethod(nameof(SetEntriesTyped), BindingFlags.NonPublic | BindingFlags.Static);
+        [AutoStaticsCleanupOnCodeReload] // keyed by (possibly user) Type, values close over user generic args — clear so old-ALC types are not pinned
         private static readonly ConcurrentDictionary<Type, SetEntriesTypedDelegate> s_SetEntriesTypedCache = new ConcurrentDictionary<Type, SetEntriesTypedDelegate>();
 
         private delegate Array GetEntriesTypedDelegate(EntityId hostingEntityId, object dictionary, IntPtr dictionaryIdentifierTemplateUtf8);
+        [NoAutoStaticsCleanup] // reflection handle to a method of this CoreModule type, stable across code reload
         private static readonly MethodInfo s_GetEntriesTypedInfo = typeof(DictionarySerialization).GetMethod(nameof(GetEntriesTyped), BindingFlags.NonPublic | BindingFlags.Static);
+        [AutoStaticsCleanupOnCodeReload] // keyed by (possibly user) Type, values close over user generic args — clear so old-ALC types are not pinned
         private static readonly ConcurrentDictionary<Type, GetEntriesTypedDelegate> s_GetEntriesTypedCache = new ConcurrentDictionary<Type, GetEntriesTypedDelegate>();
 
         private static bool SetEntriesTyped<TKey, TValue>(EntityId hostingEntityId, object dictionary, Array array, string dictionaryIdentifier, out bool hadDuplicates)
@@ -311,6 +317,7 @@ namespace UnityEngine
         // Reflection handle for the open-generic empty-dictionary factory. The
         // dispatcher closes it over (TKey, TValue) at build time when interning the
         // factory into SerializationCommandObjectTable; see InternDictionaryDefaultAllocateFactory below.
+        [NoAutoStaticsCleanup] // reflection handle to a method of this CoreModule type, stable across code reload
         private static readonly MethodInfo s_CreateEmptyDictionaryTypedInfo =
             typeof(DictionarySerialization).GetMethod(nameof(CreateEmptyDictionaryTyped),
                 BindingFlags.NonPublic | BindingFlags.Static);

@@ -9,6 +9,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using Unity.Collections;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEditor.Callbacks;
 using UnityEditorInternal;
@@ -18,7 +19,7 @@ using static UnityEditor.TypeCache;
 
 namespace Unity.CodeEditor
 {
-    public class CodeEditor
+    public partial class CodeEditor
     {
         public struct Installation
         {
@@ -67,7 +68,8 @@ namespace Unity.CodeEditor
         public static string CurrentEditorPath => EditorPrefs.GetString("kScriptsDefaultApp", "");
         private static bool IsCurrentEditorPathExplicitlySet => EditorPrefs.HasKey("kScriptsDefaultApp");
 
-        public static CodeEditor Editor { get; } = new CodeEditor();
+        [AutoStaticsCleanupOnCodeReload]
+        public static CodeEditor Editor { get; private set; } = new CodeEditor();
 
         public CodeEditor()
         {

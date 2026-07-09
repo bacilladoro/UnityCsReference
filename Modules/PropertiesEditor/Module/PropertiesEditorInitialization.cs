@@ -4,12 +4,15 @@
 
 using Unity.Jobs;
 using UnityEngine.Scripting;
+using Unity.Scripting.LifecycleManagement;
 
 namespace Unity.Properties.Internal
 {
-    static class PropertiesEditorInitialization
+    static partial class PropertiesEditorInitialization
     {
+        [AutoStaticsCleanupOnCodeReload]
         private static bool s_Initialized;
+        [AutoStaticsCleanupOnCodeReload]
         static JobHandle s_InitializeJobHandle;
 
         public static JobHandle GetInitializationJobHandle()

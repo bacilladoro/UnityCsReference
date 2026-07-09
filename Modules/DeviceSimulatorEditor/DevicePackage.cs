@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.Collections;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor.PackageManager;
 using UnityEditor.PackageManager.Requests;
 using UnityEngine;
@@ -14,14 +15,19 @@ namespace UnityEditor.DeviceSimulation
 {
     internal enum DevicePackageStatus { Available, Unavailable, Outdated, Adding, Updating, Unknown, Error }
 
-    internal static class DevicePackage
+    internal static partial class DevicePackage
     {
+        [AutoStaticsCleanupOnCodeReload]
         private static bool s_Initialized;
+        [AutoStaticsCleanupOnCodeReload]
         private static DevicePackageStatus s_CurrentStatus = DevicePackageStatus.Unknown;
 
+        [AutoStaticsCleanupOnCodeReload]
         private static ListRequest s_ListRequest;
+        [AutoStaticsCleanupOnCodeReload]
         private static AddRequest s_AddRequest;
 
+        [AutoStaticsCleanupOnCodeReload]
         private static Action<DevicePackageStatus> m_OnPackageStatus;
         public static event Action<DevicePackageStatus> OnPackageStatus
         {

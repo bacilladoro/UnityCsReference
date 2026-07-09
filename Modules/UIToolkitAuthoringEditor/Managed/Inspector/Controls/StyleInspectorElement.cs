@@ -240,6 +240,7 @@ internal sealed partial class StyleInspectorElement : VisualElement, IVisualElem
                 };
                 m_VariableEditingContext = new AuthoringVariableEditingContext(this);
                 dataSource = m_Context;
+                UIAnimationBinder.boundElementsStyleVersionChanged += OnBoundElementsStyleVersionChanged;
                 if (Target.Element != null)
                     AcquireSelection(Target.Element);
                 else
@@ -251,6 +252,8 @@ internal sealed partial class StyleInspectorElement : VisualElement, IVisualElem
             {
                 if (detachFromPanelEvent.originPanel == null)
                     return;
+                UIAnimationBinder.boundElementsStyleVersionChanged -= OnBoundElementsStyleVersionChanged;
+                m_DrivenAffordanceRefreshPending = false;
                 if (Target.Element != null)
                     ReleaseSelection(Target.Element);
                 dataSource = null;
@@ -265,6 +268,7 @@ internal sealed partial class StyleInspectorElement : VisualElement, IVisualElem
 
     private void ReleaseSelection(VisualElement element)
     {
+        m_DrivenAffordanceRefreshPending = false;
         if (element?.panel is Panel targetPanel)
             targetPanel.UnregisterChangeProcessor(this);
     }
@@ -285,12 +289,30 @@ internal sealed partial class StyleInspectorElement : VisualElement, IVisualElem
 
     public void ProcessChanges(BaseVisualElementPanel targetPanel, AuthoringChanges changes)
     {
-        if (changes.styleChanged.Contains(Target.Element) ||
-            changes.bindingContextChanged.Contains(Target.Element) ||
-            changes.stylingContextChanged.Contains(Target.Element))
+        if (!changes.styleChanged.Contains(Target.Element) &&
+            !changes.stylingContextChanged.Contains(Target.Element) &&
+            !changes.bindingContextChanged.Contains(Target.Element))
+            return;
+
+        Refresh();
+
+        // A change to the target's bound-property set (e.g. an Animation Window curve add/remove) leaves
+        // resolved values unchanged, so the value-diff Refresh above won't re-notify the affected fields
+        // and a stale driven indicator would linger until the next selection change. Force a full
+        // affordance refresh when boundElementsStyleVersionChanged flagged our target.
+        if (m_DrivenAffordanceRefreshPending)
         {
-            Refresh();
+            m_DrivenAffordanceRefreshPending = false;
+            m_Context?.RefreshAllProperties();
         }
+    }
+
+    bool m_DrivenAffordanceRefreshPending;
+
+    void OnBoundElementsStyleVersionChanged(VisualElement element)
+    {
+        if (m_Target.Type == StyleDiff.ContextType.VisualElement && ReferenceEquals(element, m_Target.Element))
+            m_DrivenAffordanceRefreshPending = true;
     }
 
     public void EndProcessing(BaseVisualElementPanel targetPanel)

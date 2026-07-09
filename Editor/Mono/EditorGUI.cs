@@ -118,6 +118,9 @@ namespace UnityEditor
         private static double s_DragStartValue = 0;
         private static long s_DragStartIntValue = 0;
         private static double s_DragSensitivity = 0;
+        private static double s_LogarithmicDragAccum = 0;
+        // Exponent change per accumulated nice-mouse-delta unit when scrubbing a logarithmic slider's label.
+        private const double kLogarithmicDragSensitivity = 0.02;
         private static readonly GUIContent s_LargerChar = EditorGUIUtility.TextContent("W");
         // kMiniLabelW is used for all the PrefixLabelWidths irrsepective of the character,to fix the case 1297283
         internal static float kMiniLabelW => EditorGUI.CalcPrefixLabelWidth(s_LargerChar);
@@ -2417,6 +2420,88 @@ namespace UnityEditor
             }
         }
 
+        // Logarithmic sliders snap their value (e.g. to a power of two) on every apply, which would wipe out the
+        // incremental linear scrub used by DragNumberValue. Scrub the exponent instead and compute the value
+        // absolutely from the drag-start snapshot so it survives the per-frame snapping.
+        internal static float DragLogarithmicValue(Rect dragHotZone, int id, float value, double logbase, float minValue, float maxValue)
+        {
+            Event evt = Event.current;
+
+            switch (evt.GetTypeForControl(id))
+            {
+                case EventType.MouseDown:
+                    if (GUIUtility.HitTest(dragHotZone, evt) && evt.button == 0)
+                    {
+                        EditorGUIUtility.editingTextField = false;
+
+                        GUIUtility.hotControl = id;
+
+                        activeEditor?.EndEditing();
+                        GUIUtility.keyboardControl = id;
+
+                        s_DragCandidateState = DragCandidateState.InitiatedDragging;
+                        s_DragStartValue = value;
+                        s_DragStartPos = evt.mousePosition;
+                        s_LogarithmicDragAccum = 0;
+
+                        evt.Use();
+                        EditorGUIUtility.SetWantsMouseJumping(1);
+                    }
+                    break;
+                case EventType.MouseUp:
+                    if (GUIUtility.hotControl == id && s_DragCandidateState != DragCandidateState.NotDragging)
+                    {
+                        GUIUtility.hotControl = 0;
+                        s_DragCandidateState = DragCandidateState.NotDragging;
+                        evt.Use();
+                        EditorGUIUtility.SetWantsMouseJumping(0);
+                    }
+                    break;
+                case EventType.MouseDrag:
+                    if (GUIUtility.hotControl == id)
+                    {
+                        switch (s_DragCandidateState)
+                        {
+                            case DragCandidateState.InitiatedDragging:
+                                if ((Event.current.mousePosition - s_DragStartPos).sqrMagnitude > kDragDeadzone)
+                                {
+                                    s_DragCandidateState = DragCandidateState.CurrentlyDragging;
+                                    GUIUtility.keyboardControl = id;
+                                }
+                                evt.Use();
+                                break;
+                            case DragCandidateState.CurrentlyDragging:
+                                s_LogarithmicDragAccum += HandleUtility.niceMouseDelta;
+                                double startValue = Mathf.Clamp((float)s_DragStartValue, Mathf.Min(minValue, maxValue), Mathf.Max(minValue, maxValue));
+                                double startExponent = Math.Log(Math.Max(1e-5, startValue), logbase);
+                                double exponent = startExponent + s_LogarithmicDragAccum * kLogarithmicDragSensitivity;
+                                double dragged = Math.Pow(logbase, exponent);
+                                value = Mathf.Clamp((float)dragged, Mathf.Min(minValue, maxValue), Mathf.Max(minValue, maxValue));
+                                GUI.changed = true;
+                                evt.Use();
+                                break;
+                        }
+                    }
+                    break;
+                case EventType.KeyDown:
+                    if (GUIUtility.hotControl == id && evt.keyCode == KeyCode.Escape && s_DragCandidateState != DragCandidateState.NotDragging)
+                    {
+                        value = (float)s_DragStartValue;
+                        GUI.changed = true;
+                        GUIUtility.hotControl = 0;
+                        s_DragCandidateState = DragCandidateState.NotDragging;
+                        EditorGUIUtility.SetWantsMouseJumping(0);
+                        evt.Use();
+                    }
+                    break;
+                case EventType.Repaint:
+                    EditorGUIUtility.AddCursorRect(dragHotZone, MouseCursor.SlideArrow);
+                    break;
+            }
+
+            return value;
+        }
+
         internal static float DoFloatField(RecycledTextEditor editor, Rect position, Rect dragHotZone, int id, float value, string formatString, GUIStyle style, bool draggable)
         {
             return DoFloatField(editor, position, dragHotZone, id, value, formatString, style, draggable, float.NaN);
@@ -3789,6 +3874,15 @@ namespace UnityEditor
                     }
                 }
 
+                bool logarithmic = logbase != 1f;
+                if (logarithmic && GUI.enabled)
+                {
+                    BeginChangeCheck();
+                    float draggedValue = DragLogarithmicValue(dragZonePosition, id, value, logbase, textFieldMin, textFieldMax);
+                    if (EndChangeCheck())
+                        value = Mathf.Clamp(draggedValue, Mathf.Min(textFieldMin, textFieldMax), Mathf.Max(textFieldMin, textFieldMax));
+                }
+
                 BeginChangeCheck();
                 var style = textfieldStyle ?? EditorStyles.numberField;
                 position.x += sWidth + kSpacing;
@@ -3800,7 +3894,7 @@ namespace UnityEditor
                     position.y += (position.height - style.fixedHeight) / 2;
                 }
                 var newTextFieldValue = DoFloatField(s_RecycledEditor, position,
-                    dragZonePosition, id, value, formatString, style, true);
+                    dragZonePosition, id, value, formatString, style, !logarithmic);
                 if (EndChangeCheck())
                 {
                     value = Mathf.Clamp(newTextFieldValue, Mathf.Min(textFieldMin, textFieldMax), Mathf.Max(textFieldMin, textFieldMax));
@@ -3808,6 +3902,15 @@ namespace UnityEditor
             }
             else
             {
+                bool logarithmic = logbase != 1f;
+                if (logarithmic && GUI.enabled)
+                {
+                    BeginChangeCheck();
+                    float draggedValue = DragLogarithmicValue(dragZonePosition, id, value, logbase, textFieldMin, textFieldMax);
+                    if (EndChangeCheck())
+                        value = Mathf.Clamp(draggedValue, Mathf.Min(textFieldMin, textFieldMax), Mathf.Max(textFieldMin, textFieldMax));
+                }
+
                 var style = textfieldStyle ?? EditorStyles.numberField;
                 w = Mathf.Min(EditorGUIUtility.fieldWidth, w);
                 position.x = position.xMax - w;
@@ -3818,7 +3921,7 @@ namespace UnityEditor
                 {
                     position.y += (position.height - style.fixedHeight) / 2;
                 }
-                value = DoFloatField(s_RecycledEditor, position, dragZonePosition, id, value, formatString, style, true);
+                value = DoFloatField(s_RecycledEditor, position, dragZonePosition, id, value, formatString, style, !logarithmic);
                 value = Mathf.Clamp(value, Mathf.Min(textFieldMin, textFieldMax), Mathf.Max(textFieldMin, textFieldMax));
             }
             return value;
@@ -6191,6 +6294,9 @@ namespace UnityEditor
         // Make an inspector-window-like titlebar.
         internal static void DoInspectorTitlebar(Rect position, int id, bool foldout, Object[] targetObjs, SerializedProperty enabledProperty, GUIStyle baseStyle)
         {
+            if (targetObjs[0] == null)
+                return;
+
             GUIStyle textStyle = EditorStyles.inspectorTitlebarText;
             GUIStyle iconButtonStyle = EditorStyles.iconButton;
             Event evt = Event.current;

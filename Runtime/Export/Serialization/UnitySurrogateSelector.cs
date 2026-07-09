@@ -6,6 +6,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.Serialization;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEngine.Serialization
 {
@@ -53,6 +54,7 @@ namespace UnityEngine.Serialization
     /// </summary>
     class ListSerializationSurrogate : ISerializationSurrogate
     {
+        [NoAutoStaticsCleanup] // stateless singleton surrogate, holds no user references, safe to persist
         public static readonly ISerializationSurrogate Default = new ListSerializationSurrogate();
 
         public void GetObjectData(object obj, SerializationInfo info, StreamingContext context)

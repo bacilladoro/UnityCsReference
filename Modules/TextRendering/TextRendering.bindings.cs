@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Bindings;
 using UnityEngine.Internal;
 using UnityEngine.Scripting;
@@ -280,6 +281,7 @@ namespace UnityEngine
         private static readonly Color32 s_DefaultColor = new Color32(255, 255, 255, 255);
         private static readonly Vector4 s_DefaultTangent = new Vector4(1.0f, 0.0f, 0.0f, -1.0f);
 
+        [NoAutoStaticsCleanup] // mutable public API default; cannot be made readonly
         public static UIVertex simpleVert = new UIVertex
         {
             position = Vector3.zero,
@@ -298,8 +300,9 @@ namespace UnityEngine
      NativeHeader("Modules/TextRendering/Public/Font.h"),
      NativeHeader("Modules/TextRendering/Public/FontImpl.h"),
      StaticAccessor("TextRenderingPrivate", StaticAccessorType.DoubleColon)]
-    public sealed class Font : Object
+    public sealed partial class Font : Object
     {
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<Font> textureRebuilt;
 
         private event FontTextureRebuildCallback m_FontTextureRebuildCallback;
@@ -423,9 +426,11 @@ namespace UnityEngine
         private bool m_CachedCharacters;
         private bool m_CachedLines;
 
+        [NoAutoStaticsCleanup] // monotonic counter; no user refs
         private static int s_NextId = 0;
         private readonly int m_Id;
-        private static readonly Dictionary<int, WeakReference> s_Instances = new Dictionary<int, WeakReference>();
+        [AutoStaticsCleanupOnCodeReload]
+        private static Dictionary<int, WeakReference> s_Instances = new Dictionary<int, WeakReference>();
 
         public extern Rect rectExtents { get; }
         public extern int vertexCount { get; }

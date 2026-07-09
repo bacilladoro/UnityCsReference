@@ -16,13 +16,18 @@ using UnityEngine;
 
 namespace UnityEditor.Scripting.ScriptCompilation.MsBuild;
 
+// Must be kept in sync (same order/values) with the native CompileTarget enum in
+// Editor/Src/ScriptCompilation/ScriptCompilationPipeline.h — it is marshalled by (int).
 enum CompileTarget
 {
     // Maps to the Debug configuration used by the Editor
     EditorDebug,
     // Maps to the Release configuration used by the Editor
     EditorRelease,
+    // Player configurations mirror PlayerSettings.ManagedCodeVariant (Debug/Checked/Instrumented/Release).
     PlayerDebug,
+    PlayerChecked,
+    PlayerInstrumented,
     PlayerRelease,
     PlayerWithTests
 }
@@ -37,6 +42,11 @@ partial class MsBuildCompilation
     private bool _requestedBuild = false;
 
     private bool _editorAssembliesMightBeDirty = false;
+
+    // Computed by the converter during SetAllScripts; written into the shared analyzers props at build start.
+    private string[] _globalAnalyzers = Array.Empty<string>();
+
+    private readonly IncrementalAsmDefConverter _converter = new IncrementalAsmDefConverter();
 
     private static readonly TimeSpan _connectionTimeout = TimeSpan.FromMinutes(10);
     static ICompilerClient CompilerClient => _compilerClient.Value;
@@ -133,8 +143,13 @@ partial class MsBuildCompilation
 
             Console.WriteLine($"Beginning build. Restoring: {_shouldRestore}");
 
-            // Update deferrable props in parallel before build (defines, references, plugins, search paths)
-            UnityEditorMSBuildPropsTargetsGeneration.UpdateDeferrablePropsInParallel(buildTarget, compilationOptions);
+            // Update deferrable props in parallel before build (defines, references, plugins, search paths, analyzers).
+            // If a Build runs before any SetAllScripts populated _globalAnalyzers, fall back to the built-in
+            // set so the shared analyzers props isn't written with the built-ins missing.
+            var globalAnalyzers = _globalAnalyzers.Length > 0
+                ? _globalAnalyzers
+                : UnityEditorMSBuildPropsTargetsGeneration.GetBuiltinRoslynAnalyzerPaths();
+            UnityEditorMSBuildPropsTargetsGeneration.UpdateDeferrablePropsInParallel(buildTarget, compilationOptions, globalAnalyzers);
 
             var generateBinLog = (bool)UnityEngine.Debug.GetDiagnosticSwitch("ScriptCompilationMsBuildBinlog").value || Application.HasARGV("generate-binlog");
             var disableNugetRestore = Application.HasARGV("disable-nuget-restore");
@@ -183,6 +198,12 @@ partial class MsBuildCompilation
             _currentBuildTask = null;
 
             UnityMSBuildLogger.LogCompilerMessages(buildResult, IsEditorTarget(target));
+            var generateBinLog = (bool)UnityEngine.Debug.GetDiagnosticSwitch("ScriptCompilationMsBuildBinlog").value || Application.HasARGV("generate-binlog");
+            if (generateBinLog)
+            {
+                UnityMSBuildLogger.LogProjectBuildManagerMessages(buildResult);
+            }
+
             ReportBuildFinished(target, buildResult);
             _editorAssembliesMightBeDirty = true;
             return GetCompileStatus(buildResult);
@@ -249,6 +270,10 @@ partial class MsBuildCompilation
                 return "Release";
             case CompileTarget.PlayerDebug:
                 return $"{buildTarget}+Debug";
+            case CompileTarget.PlayerChecked:
+                return $"{buildTarget}+Checked";
+            case CompileTarget.PlayerInstrumented:
+                return $"{buildTarget}+Instrumented";
             case CompileTarget.PlayerRelease:
                 return $"{buildTarget}+Release";
             case CompileTarget.PlayerWithTests:
@@ -297,6 +322,7 @@ partial class MsBuildCompilation
         }
 
         GetUserPrecompiledAssembliesForConverter(out var precompiledPaths, out var precompiledExplicitlyReferenced);
+
         var context = new ConversionContext()
         {
             RootFolder = ".",
@@ -310,9 +336,16 @@ partial class MsBuildCompilation
             precompiledAssemblyExplicitlyReferenced = precompiledExplicitlyReferenced,
             errors = new List<string>(),
             warnings = new List<string>(),
-            predefinedAssembliesAllowUnsafeCode = PlayerSettings.allowUnsafeCode
+            predefinedAssembliesAllowUnsafeCode = PlayerSettings.allowUnsafeCode,
+            // Built-ins live outside the project, so the converter can't discover them; supply them here.
+            builtinAnalyzerPaths = UnityEditorMSBuildPropsTargetsGeneration.GetBuiltinRoslynAnalyzerPaths(),
+            // The editor's analyzer registry: lets the converter classify analyzer DLLs without reading
+            // .meta files, and invalidates its incremental cache when analyzers/labels change.
+            roslynAnalyzerPaths = new PrecompiledAssemblyProvider().GetRoslynAnalyzerPaths(),
         };
-        AsmDefConverter.Convert(context);
+
+        var conversionResult = _converter.Convert(context);
+        _globalAnalyzers = conversionResult.GlobalAnalyzers;
 
         foreach (var error in context.errors)
         {
@@ -352,5 +385,88 @@ partial class MsBuildCompilation
         }
         paths = pathList.ToArray();
         explicitlyReferenced = explicitList.ToArray();
+    }
+
+    private AssetPathMetaData[] m_AssetPathsMetaData;
+    private Dictionary<string, VersionMetaData> m_VersionMetaDatas;
+
+    public void SetAssetPathsMetaData(AssetPathMetaData[] assetPathMetaDatas)
+    {
+        m_AssetPathsMetaData = assetPathMetaDatas;
+
+        if (assetPathMetaDatas == null)
+        {
+            m_VersionMetaDatas = null;
+            return;
+        }
+
+        var versionMetaDataComparer = new VersionMetaDataComparer();
+        var seen = new HashSet<VersionMetaData>(versionMetaDataComparer);
+        var versionMetaDatas = new Dictionary<string, VersionMetaData>(assetPathMetaDatas.Length);
+        foreach (var assetPathMetaData in assetPathMetaDatas)
+        {
+            var versionMetaData = assetPathMetaData.VersionMetaData;
+            if (versionMetaData == null)
+                continue;
+            if (!seen.Add(versionMetaData))
+                continue;
+            versionMetaDatas.Add(versionMetaData.Name, versionMetaData);
+        }
+        m_VersionMetaDatas = versionMetaDatas;
+    }
+
+    public void SetAdditionalVersionMetaDatas(VersionMetaData[] versionMetaDatas)
+    {
+        UnityEngine.Assertions.Assert.IsTrue(m_VersionMetaDatas != null, "MsBuildCompilation.SetAssetPathsMetaData() must be called before MsBuildCompilation.SetAdditionalVersionMetaDatas()");
+        foreach (var versionMetaData in versionMetaDatas)
+        {
+            m_VersionMetaDatas[versionMetaData.Name] = versionMetaData;
+        }
+    }
+
+    public AssetPathMetaData[] GetAssetPathsMetaData() => m_AssetPathsMetaData;
+    public Dictionary<string, VersionMetaData> GetVersionMetaDatas() => m_VersionMetaDatas;
+
+    // Mirror of EditorCompilation.TryFindCustomScriptAssemblyFromAssemblyReference for the MSBuild
+    // pipeline. The MSBuild side doesn't parse asmdef JSON into CustomScriptAssembly objects; the
+    // raw JSON is stashed for the SDK converter, so we resolve over those arrays directly.
+    public string TryGetAssemblyDefinitionFilePathFromReference(string reference)
+    {
+        if (string.IsNullOrEmpty(reference)
+            || m_AllAssemblyJsonPaths == null
+            || m_AllAssemblyJsonContents == null)
+            return null;
+
+        if (GUIDReference.IsGUIDReference(reference))
+        {
+            if (m_AllAssemblyJsonGuids == null)
+                return null;
+
+            var guid = GUIDReference.GUIDReferenceToGUID(reference);
+            var count = Math.Min(m_AllAssemblyJsonGuids.Length, m_AllAssemblyJsonPaths.Length);
+            for (int i = 0; i < count; i++)
+            {
+                if (string.Equals(m_AllAssemblyJsonGuids[i], guid, StringComparison.OrdinalIgnoreCase))
+                    return m_AllAssemblyJsonPaths[i];
+            }
+            return null;
+        }
+
+        var len = Math.Min(m_AllAssemblyJsonContents.Length, m_AllAssemblyJsonPaths.Length);
+        for (int i = 0; i < len; i++)
+        {
+            CustomScriptAssemblyData data;
+            try
+            {
+                data = CustomScriptAssemblyData.FromJsonNoFieldValidation(m_AllAssemblyJsonContents[i]);
+            }
+            catch
+            {
+                continue;
+            }
+            if (data != null && string.Equals(data.name, reference, StringComparison.Ordinal))
+                return m_AllAssemblyJsonPaths[i];
+        }
+        return null;
     }
 }

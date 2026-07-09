@@ -11,6 +11,7 @@ using UnityEngine;
 using UnityEngine.Bindings;
 using UnityEngine.Rendering;
 using UnityEngine.Scripting;
+using Unity.Scripting.LifecycleManagement;
 
 [assembly: InternalsVisibleTo("Assembly-CSharp-Editor-testable")]
 
@@ -95,7 +96,7 @@ namespace UnityEditor.ShaderKeywordFilter
 
     // This is the main class for shader keyword filtering C++/C# interop
     [RequiredByNativeCode]
-    internal static class ShaderKeywordFilterUtil
+    internal static partial class ShaderKeywordFilterUtil
     {
         internal struct CachedFilterData
         {
@@ -105,6 +106,7 @@ namespace UnityEditor.ShaderKeywordFilter
 
         // In memory cache for filter data per renderpipeline asset.
         // This is to avoid redundant attribute search for each shader/pass/stage.
+        [AutoStaticsCleanupOnCodeReload]
         internal static Dictionary<string, CachedFilterData> PerAssetFilterDataCache = new Dictionary<string, CachedFilterData>();
 
         internal static SettingsNode GetFilterDataCached(string nodeName, UnityEngine.Object containerObject)

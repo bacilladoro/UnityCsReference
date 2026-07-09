@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEditor;
 using UnityEngine.Rendering;
@@ -1132,8 +1133,10 @@ namespace UnityEditor
 
 class PreviewGUI
 {
-    static int sliderHash = "Slider".GetHashCode();
+    static readonly int sliderHash = "Slider".GetHashCode();
+    [NoAutoStaticsCleanup] // transient IMGUI scroll-view state set per BeginScrollView call; value type, safe to persist
     static Rect s_ViewRect, s_Position;
+    [NoAutoStaticsCleanup] // transient IMGUI scroll position; value type, safe to persist
     static Vector2 s_ScrollPos;
 
     internal static void BeginScrollView(Rect position, Vector2 scrollPosition, Rect viewRect, GUIStyle horizontalScrollbar, GUIStyle verticalScrollbar)
@@ -1146,6 +1149,7 @@ class PreviewGUI
 
     internal class Styles
     {
+        [NoAutoStaticsCleanup] // lazy GUIStyle initialized on first use via Init(); safe to persist across reload
         public static GUIStyle preButton;
         public static void Init()
         {

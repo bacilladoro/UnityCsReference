@@ -109,6 +109,7 @@ namespace UnityEditor.PackageManager.UI.Internal
             m_PageRefreshHandler.onRefreshOperationFinish += OnRefreshOperationStartOrFinish;
 
             m_PageManager.onActivePageChanged += OnActivePageChanged;
+            m_PageManager.onTrimmedSearchTextChanged += OnTrimmedSearchTextChanged;
             m_PageManager.onVisualStateChange += OnVisualStateChange;
             m_PageManager.onListRebuild += OnListRebuild;
             m_PageManager.onListUpdate += OnListUpdate;
@@ -136,6 +137,7 @@ namespace UnityEditor.PackageManager.UI.Internal
             m_PageRefreshHandler.onRefreshOperationFinish -= OnRefreshOperationStartOrFinish;
 
             m_PageManager.onActivePageChanged -= OnActivePageChanged;
+            m_PageManager.onTrimmedSearchTextChanged -= OnTrimmedSearchTextChanged;
             m_PageManager.onVisualStateChange -= OnVisualStateChange;
             m_PageManager.onListRebuild -= OnListRebuild;
             m_PageManager.onListUpdate -= OnListUpdate;
@@ -149,6 +151,12 @@ namespace UnityEditor.PackageManager.UI.Internal
         private void OnActivePageChanged(IPage page)
         {
             OnListRebuild(page);
+        }
+
+        private void OnTrimmedSearchTextChanged(IPage page)
+        {
+            if (page.isActive)
+                UpdateListVisibility();
         }
 
         private void OnSelectionChanged(PageSelectionChangeArgs args)

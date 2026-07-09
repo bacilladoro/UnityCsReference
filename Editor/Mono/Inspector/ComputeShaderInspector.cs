@@ -6,6 +6,7 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using System.Collections.Generic;
 using System.Globalization;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -15,8 +16,10 @@ namespace UnityEditor
         private const float kSpace = 5f;
         Vector2 m_ScrollPosition = Vector2.zero;
 
-        private static bool s_PreprocessOnly = false;
-        private static bool s_StripLineDirectives = true;
+        [NoAutoStaticsCleanup]
+        private static bool s_PreprocessOnly = false; // session-persistent inspector toggle (value-type bool), safe to keep across reload
+        [NoAutoStaticsCleanup]
+        private static bool s_StripLineDirectives = true; // session-persistent inspector toggle (value-type bool), safe to keep across reload
 
         // Compute kernel information is stored split by platform, then by kernels;
         // but for the inspector we want to show kernels, then platforms they are in.
@@ -28,10 +31,10 @@ namespace UnityEditor
 
         internal class Styles
         {
-            public static GUIContent togglePreprocess = EditorGUIUtility.TrTextContent("Preprocess only", "Show preprocessor output instead of compiled shader code");
-            public static GUIContent toggleStripLineDirective = EditorGUIUtility.TrTextContent("Strip #line directives", "Strip #line directives from preprocessor output");
-            public static GUIContent showCompiled = EditorGUIUtility.TrTextContent("Show compiled code");
-            public static GUIContent kernelsHeading = EditorGUIUtility.TrTextContent("Kernels:");
+            public static readonly GUIContent togglePreprocess = EditorGUIUtility.TrTextContent("Preprocess only", "Show preprocessor output instead of compiled shader code");
+            public static readonly GUIContent toggleStripLineDirective = EditorGUIUtility.TrTextContent("Strip #line directives", "Strip #line directives from preprocessor output");
+            public static readonly GUIContent showCompiled = EditorGUIUtility.TrTextContent("Show compiled code");
+            public static readonly GUIContent kernelsHeading = EditorGUIUtility.TrTextContent("Kernels:");
         }
 
         static List<KernelInfo> GetKernelDisplayInfo(ComputeShader cs)

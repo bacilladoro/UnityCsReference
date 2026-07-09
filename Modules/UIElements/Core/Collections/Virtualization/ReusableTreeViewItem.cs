@@ -54,7 +54,7 @@ namespace UnityEngine.UIElements
             m_IndentElement = new VisualElement()
             {
                 name = BaseTreeView.itemIndentUssClassName,
-                style = { flexDirection = FlexDirection.Row },
+                style = { flexDirection = FlexDirection.Row, flexShrink = 0 },
             };
             m_Container.hierarchy.Add(m_IndentElement);
 

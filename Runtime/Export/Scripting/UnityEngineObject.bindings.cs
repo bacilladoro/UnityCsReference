@@ -161,7 +161,15 @@ namespace UnityEngine
 
         public override int GetHashCode()
         {
-            return (int)(uint)m_rawData;
+            // Mirrors native EntityId::CalculateHash (Fibonacci hash, 2^64 / phi multiplier,
+            // with a high-to-low fold so callers that mask off only the low bits of the
+            // hash still see the full avalanche from Version bits).
+            unchecked // No-op under the assembly's default /checked- build; documents that the multiply is meant to wrap.
+            {
+                const ulong kKnuth64 = 0x9E3779B97F4A7C15UL;
+                uint hash = (uint)((m_rawData * kKnuth64) >> 32);
+                return (int)(hash ^ (hash >> 16));
+            }
         }
 
         public bool IsValid()
@@ -192,8 +200,12 @@ namespace UnityEngine
         public string ToString(string format, IFormatProvider formatProvider) => $"{((int)(m_rawData & 0xFFFFFFFF)).ToString(format, formatProvider)}:{((int)(m_rawData >> 32)).ToString(format, formatProvider)}";
 
 
-        [FreeFunction("AllocateEntityId")]
-        internal static extern EntityId AllocateEntityId();
+        internal static unsafe EntityId AllocateEntityId()
+        {
+            EntityId id;
+            EntityIdStore.AllocateEntityIds(&id, 1);
+            return id;
+        }
 
         [VisibleToOtherModules("UnityEngine.UIElementsModule")]
         internal static EntityId Parse(string input)
@@ -263,6 +275,15 @@ namespace UnityEngine
             //doing this in the editor, so people notice this problem early. even though technically in the editor,
             //it is a threadsafe operation.
             EnsureRunningOnMainThread();
+            return m_EntityId;
+        }
+
+        // Skips the editor main-thread guard (itself a per-call icall): all callers are on the
+        // PackEntityIdInLSOI arm (clone/Instantiate), which always runs on the main thread.
+        // If a caller on a non-main-thread path is added, restore the guard here.
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal unsafe EntityId GetEntityIdForSerializationUnchecked()
+        {
             return m_EntityId;
         }
 

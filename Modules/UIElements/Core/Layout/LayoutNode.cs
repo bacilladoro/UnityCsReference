@@ -106,6 +106,12 @@ partial struct LayoutNode : IEquatable<LayoutNode>
     /// </summary>
     public ref int LineIndex => ref m_Access.GetNodeData(m_Handle).LineIndex;
 
+    internal IntPtr TextGenerationInfoPtr
+    {
+        get => m_Access.GetNodeData(m_Handle).TextGenerationInfoPtr;
+        set => m_Access.GetNodeData(m_Handle).TextGenerationInfoPtr = value;
+    }
+
     /// <summary>
     /// Gets or sets the shared configuration object for this node.
     /// </summary>

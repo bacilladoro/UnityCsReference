@@ -3,10 +3,12 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using System.ComponentModel;
 using System.IO;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
+using UnityEngine.Internal;
 using UnityEditor;
 using UnityEditor.U2D;
 using UnityEditor.AssetImporters;
@@ -116,10 +118,18 @@ namespace Unity.VectorGraphics.Editor
         }
         [SerializeField] private Vector2 m_CustomPivot;
 
-        /// <summary>Automaticallly generates a physics shape.</summary>
-        public bool GeneratePhysicsShape {
+        /// <summary>Automatically generates a physics outline.</summary>
+        public bool GeneratePhysicsOutline {
             get { return m_GeneratePhysicsShape; }
             set { m_GeneratePhysicsShape = value; }
+        }
+        /// <summary>Automatically generates a physics outline.</summary>
+        [ExcludeFromDocs]
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        [Obsolete("SVGImporter.GeneratePhysicsShape is deprecated. Use SVGImporter.GeneratePhysicsOutline instead (UnityUpgradable) -> GeneratePhysicsOutline", false)]
+        public bool GeneratePhysicsShape {
+            get { return GeneratePhysicsOutline; }
+            set { GeneratePhysicsOutline = value; }
         }
         [SerializeField] private bool m_GeneratePhysicsShape;
 
@@ -672,7 +682,7 @@ namespace Unity.VectorGraphics.Editor
 
             if (outlines.Count == 0)
             {
-                if (!GeneratePhysicsShape)
+                if (!GeneratePhysicsOutline)
                     return;
 
                 var tex = GetReadableTexture2D(out bool shouldDestroyTextureAfterUse);
@@ -716,7 +726,7 @@ namespace Unity.VectorGraphics.Editor
                     validOutlines.Add(vertices);
             }
 
-            sprite.OverridePhysicsShape(validOutlines);
+            sprite.OverridePhysicsOutline(validOutlines);
         }
 
         // Used by the package ISpriteEditorDataProvider implementation to get the material for the Sprite Editor preview

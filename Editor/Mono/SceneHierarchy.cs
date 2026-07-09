@@ -35,15 +35,15 @@ namespace UnityEditor
             const string kWarningSymbol = "console.warnicon.sml";
             const string kWarningMessage = "The current sorting method is taking a lot of time. Consider using 'Transform Sort' in playmode for better performance.";
 
-            public static GUIContent defaultSortingContent = EditorGUIUtility.TrIconContent(kCustomSorting);
-            public static GUIContent createContent = EditorGUIUtility.TrIconContent("Toolbar Plus More", "Create new GameObject");
-            public static GUIContent fetchWarning = new GUIContent("", EditorGUIUtility.FindTexture(kWarningSymbol), kWarningMessage);
+            public static readonly GUIContent defaultSortingContent = EditorGUIUtility.TrIconContent(kCustomSorting);
+            public static readonly GUIContent createContent = EditorGUIUtility.TrIconContent("Toolbar Plus More", "Create new GameObject");
+            public static readonly GUIContent fetchWarning = new GUIContent("", EditorGUIUtility.FindTexture(kWarningSymbol), kWarningMessage);
 
-            public static GUIStyle lockButton = "IN LockButton";
+            public static readonly GUIStyle lockButton = "IN LockButton";
 
-            public static GUIContent renamingEnabledContent = EditorGUIUtility.TrTextContent("Rename New Objects");
-            public static GUIContent setOriginLabel = new GUIContent("Set as Default Parent");
-            public static GUIContent clearOriginLabel = new GUIContent("Clear Default Parent");
+            public static readonly GUIContent renamingEnabledContent = EditorGUIUtility.TrTextContent("Rename New Objects");
+            public static readonly GUIContent setOriginLabel = new GUIContent("Set as Default Parent");
+            public static readonly GUIContent clearOriginLabel = new GUIContent("Clear Default Parent");
         }
 
         EditorWindow m_EditorWindow;

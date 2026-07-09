@@ -18,11 +18,12 @@ class ConfigurableSDKPlatformExtension : ISDKPlatformExtension
     public bool shouldShowBuildActions => sdkPlatformProvider.shouldShowBuildActions;
     public Type[] requiredComponents => sdkPlatformProvider.requiredComponents;
     public Type[] customFooterActions => sdkPlatformProvider.customFooterActions;
+    public PreconfiguredSettingsVariant[] preconfiguredSettingsVariants => sdkPlatformProvider.preconfiguredSettingsVariants;
 
-    public void OnMultiTargetBuildProfileCreated(BuildProfile buildProfile)
+    public void OnMultiTargetBuildProfileCreated(BuildProfile buildProfile, int preconfiguredSettingsVariant)
     {
         if (sdkPlatformProvider.platformType == SDKPlatformType.MultiTarget)
-            sdkPlatformProvider.onMultiTargetPlatformBuildProfileCreated?.Invoke(buildProfile);
+            sdkPlatformProvider.onMultiTargetPlatformBuildProfileCreated?.Invoke(buildProfile, preconfiguredSettingsVariant);
     }
 
     public ConfigurableSDKPlatformExtension(SDKPlatformProvider provider, ConfigurableBuildTarget buildTarget)

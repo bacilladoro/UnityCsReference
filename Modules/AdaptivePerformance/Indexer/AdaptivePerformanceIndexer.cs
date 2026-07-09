@@ -165,6 +165,56 @@ namespace UnityEngine.AdaptivePerformance
     }
 
     /// <summary>
+    /// System used for tracking normalized CPU or GPU utilization and translating it into a <see cref="StateAction"/>.
+    /// A single instance tracks one Utilization dimension. Instantiate once for CPU and once for GPU.
+    /// </summary>
+    internal class UtilizationStateTracker
+    {
+        private readonly System.Func<float> m_ReadUtilization;
+
+        /// <summary>
+        /// Utilization level at which quality should begin to decrease.
+        /// </summary>
+        public float DecreaseThreshold { get; set; } = 0.70f;
+
+        /// <summary>
+        /// Utilization level at which quality must decrease as fast as possible.
+        /// </summary>
+        public float FastDecreaseThreshold { get; set; } = 0.90f;
+
+        /// <summary>
+        /// Utilization level below which quality may be increased.
+        /// </summary>
+        public float IncreaseThreshold { get; set; } = 0.40f;
+
+        /// <param name="readUtilization">
+        /// Delegate that returns the current normalized Utilization value in [0,1], or -1 when not available.
+        /// </param>
+        public UtilizationStateTracker(System.Func<float> readUtilization)
+        {
+            m_ReadUtilization = readUtilization;
+        }
+
+        public StateAction Update()
+        {
+            var utilization = m_ReadUtilization();
+            if (utilization < 0f)
+                return StateAction.Stale;
+
+            if (utilization >= FastDecreaseThreshold)
+                return StateAction.FastDecrease;
+
+            if (utilization >= DecreaseThreshold)
+                return StateAction.Decrease;
+
+            if (utilization < IncreaseThreshold)
+                return StateAction.Increase;
+
+            return StateAction.Stale;
+        }
+     }
+
+    /// <summary>
     /// System used for tracking impact of scaler on CPU and GPU counters.
     /// </summary>
     internal class AdaptivePerformanceScalerEfficiencyTracker
@@ -220,6 +270,8 @@ namespace UnityEngine.AdaptivePerformance
         private List<AdaptivePerformanceScaler> m_DisabledScalers;
         private ThermalStateTracker m_ThermalStateTracker;
         private PerformanceStateTracker m_PerformanceStateTracker;
+        private UtilizationStateTracker m_CpuUtilizationTracker;
+        private UtilizationStateTracker m_GpuUtilizationTracker;
         private AdaptivePerformanceScalerEfficiencyTracker m_ScalerEfficiencyTracker;
         private IAdaptivePerformanceSettings m_Settings;
         const string m_FeatureName = "Indexer";
@@ -240,6 +292,18 @@ namespace UnityEngine.AdaptivePerformance
         /// Action <see cref="StateAction.Increase"/> will be ignored if <see cref="ThermalAction"/> is decreasing.
         /// </summary>
         public StateAction PerformanceAction { get; private set; }
+
+        /// <summary>
+        /// Current determined action needed based on normalized CPU utilization.
+        /// Derived from frame timing, bottleneck, and thermal data when no provider supplies the value directly.
+        /// </summary>
+        public StateAction CpuUtilizationAction { get; private set; }
+
+        /// <summary>
+        /// Current determined action needed based on normalized GPU utilization.
+        /// Derived from frame timing, bottleneck, and thermal data when no provider supplies the value directly.
+        /// </summary>
+        public StateAction GpuUtilizationAction { get; private set; }
 
         /// <summary>
         /// Returns all currently applied scalers.
@@ -345,12 +409,42 @@ namespace UnityEngine.AdaptivePerformance
             TimeUntilNextAction = m_Settings.indexerSettings.thermalActionDelay;
             m_ThermalStateTracker = new ThermalStateTracker();
             m_PerformanceStateTracker = tracker;
+            m_CpuUtilizationTracker = new UtilizationStateTracker(
+                () => Holder.Instance?.PerformanceStatus.PerformanceMetrics.CpuUtilization ?? -1f);
+            m_GpuUtilizationTracker = new UtilizationStateTracker(
+                 () => Holder.Instance?.PerformanceStatus.PerformanceMetrics.GpuUtilization ?? -1f);
             m_UnappliedScalers = new List<AdaptivePerformanceScaler>();
             m_AppliedScalers = new List<AdaptivePerformanceScaler>();
             m_DisabledScalers = new List<AdaptivePerformanceScaler>();
             m_ScalerEfficiencyTracker = new AdaptivePerformanceScalerEfficiencyTracker();
 
             AdaptivePerformanceAnalytics.RegisterFeature(m_FeatureName, m_Settings.indexerSettings.active);
+        }
+
+        internal StateAction MostPressingAction(StateAction action1, StateAction action2, StateAction action3)
+        {
+            if (action1 == StateAction.FastDecrease ||
+                action2 == StateAction.FastDecrease ||
+                action3 == StateAction.FastDecrease)
+            {
+                return StateAction.FastDecrease;
+            }
+
+            if (action1 == StateAction.Decrease ||
+                action2 == StateAction.Decrease ||
+                action3 == StateAction.Decrease)
+            {
+                return StateAction.Decrease;
+            }
+
+            if (action1 == StateAction.Increase ||
+                action2 == StateAction.Increase ||
+                action3 == StateAction.Increase)
+            {
+                return StateAction.Increase;
+            }
+
+            return StateAction.Stale;
         }
 
         internal void Update()
@@ -363,9 +457,14 @@ namespace UnityEngine.AdaptivePerformance
 
             var thermalAction = m_ThermalStateTracker.Update();
             var performanceAction = m_PerformanceStateTracker.Update();
+            var cpuUtilizationAction = m_CpuUtilizationTracker.Update();
+            var gpuUtilizationAction = m_GpuUtilizationTracker.Update();
 
             ThermalAction = thermalAction;
             PerformanceAction = performanceAction;
+            CpuUtilizationAction = cpuUtilizationAction;
+            GpuUtilizationAction = gpuUtilizationAction;
+            StateAction combinedPerformanceAction = MostPressingAction(PerformanceAction, CpuUtilizationAction, GpuUtilizationAction);
 
             if (Profiler.enabled)
                 CollectProfilerStats();
@@ -378,42 +477,37 @@ namespace UnityEngine.AdaptivePerformance
             if (m_ScalerEfficiencyTracker.IsRunning)
                 m_ScalerEfficiencyTracker.Stop();
 
-            if (thermalAction == StateAction.Increase && performanceAction == StateAction.Stale)
-            {
-                UnapplyHighestCostScaler();
-                TimeUntilNextAction = m_Settings.indexerSettings.thermalActionDelay;
-                return;
-            }
-            if (thermalAction == StateAction.Stale && performanceAction == StateAction.Stale)
-            {
-                UnapplyHighestCostScaler();
-                TimeUntilNextAction = m_Settings.indexerSettings.thermalActionDelay;
-                return;
-            }
-            if (thermalAction == StateAction.Decrease)
-            {
-                ApplyLowestCostScaler();
-                TimeUntilNextAction = m_Settings.indexerSettings.thermalActionDelay;
-                return;
-            }
-            if (performanceAction == StateAction.Decrease)
-            {
-                ApplyLowestCostScaler();
-                TimeUntilNextAction = m_Settings.indexerSettings.performanceActionDelay;
-                return;
-            }
+            // FastDecrease: thermal is highest urgency
             if (thermalAction == StateAction.FastDecrease)
             {
                 ApplyLowestCostScaler();
                 TimeUntilNextAction = m_Settings.indexerSettings.thermalActionDelay / 2;
                 return;
             }
-            if (performanceAction == StateAction.FastDecrease)
+            // FastDecrease: performance or Utilization signals
+            if (combinedPerformanceAction == StateAction.FastDecrease)
             {
                 ApplyLowestCostScaler();
                 TimeUntilNextAction = m_Settings.indexerSettings.performanceActionDelay / 2;
                 return;
             }
+            // Decrease: thermal
+            if (thermalAction == StateAction.Decrease)
+            {
+                ApplyLowestCostScaler();
+                TimeUntilNextAction = m_Settings.indexerSettings.thermalActionDelay;
+                return;
+            }
+            // Decrease: performance or Utilization signals
+            if (combinedPerformanceAction == StateAction.Decrease)
+            {
+                ApplyLowestCostScaler();
+                TimeUntilNextAction = m_Settings.indexerSettings.performanceActionDelay;
+                return;
+            }
+            // No signal is requesting quality reduction - try to restore quality
+            UnapplyHighestCostScaler();
+            TimeUntilNextAction = m_Settings.indexerSettings.thermalActionDelay;
         }
         /// <summary>
         /// Returns <see cref="Time.deltaTime"/> only and is primarily encapsulated for tests.

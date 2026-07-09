@@ -234,7 +234,8 @@ namespace Unity.ProjectAuditor.Editor.Modules
                 context.GameObject.name
             )
             .WithSeverity(Severity.Major)
-            .WithLocation(AssetDatabase.GetAssetPath(mesh));
+            .WithLocation(AssetDatabase.GetAssetPath(mesh))
+            .WithUpgradeProperties("6000.5", null, null);
         }
 
         ReportItemBuilder CreateSceneMeshIssue(Mesh mesh, GameObjectAnalysisContext context)

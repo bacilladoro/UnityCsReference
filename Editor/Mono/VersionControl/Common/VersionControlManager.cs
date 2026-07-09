@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.Scripting;
 using Unity.Collections;
@@ -14,6 +15,7 @@ namespace UnityEditor.VersionControl
 {
     public static partial class VersionControlManager
     {
+        [AutoStaticsCleanupOnCodeReload]
         static VersionControlDescriptor[] s_Descriptors;
 
         public static VersionControlDescriptor[] versionControlDescriptors => s_Descriptors ?? (s_Descriptors = GetDescriptors());
@@ -30,7 +32,8 @@ namespace UnityEditor.VersionControl
             get => activeVersionControlObject?.isConnected ?? false;
         }
 
-        static VersionControlManager()
+        [OnCodeLoaded]
+        static void Initialize()
         {
             if (Provider.enabled)
                 return;

@@ -164,7 +164,7 @@ namespace UnityEditor.PlatformSupport
             return r;
         }
 
-        internal abstract void DrawAt();
+        internal abstract void DrawAt(bool showValidationHelpBox = true);
     }
 
     class PlatformIconFieldSingleLayer : PlatformIconField
@@ -202,7 +202,7 @@ namespace UnityEditor.PlatformSupport
         void DrawElement(Rect elementRect)
         {
             int slotWidth = kMaxPreviewSize;
-            int slotHeight = (int)((float)platformIcon.height / platformIcon.height * slotWidth);  // take into account the aspect ratio
+            int slotHeight = (int)((float)platformIcon.height / platformIcon.width * slotWidth);  // take into account the aspect ratio
             int previewWidth = Mathf.Min(slotWidth, platformIcon.width);
             int previewHeight = (int)((float)platformIcon.height * previewWidth / platformIcon.width);  // take into account the aspect ratio
 
@@ -239,7 +239,7 @@ namespace UnityEditor.PlatformSupport
             }
         }
 
-        internal override void DrawAt()
+        internal override void DrawAt(bool showValidationHelpBox = true)
         {
             Rect rect = GUILayoutUtility.GetRect(0, kMaxElementHeight + kIconSpacing, GUILayout.ExpandWidth(true));
 
@@ -275,7 +275,7 @@ namespace UnityEditor.PlatformSupport
                 m_IconLayers.SetElementLabels(platformIcon.kind.customLayerLabels);
 
             int slotWidth = kMaxPreviewSize;
-            int slotHeight = (int)((float)platformIcon.height / platformIcon.height * slotWidth);
+            int slotHeight = (int)((float)platformIcon.height / platformIcon.width * slotWidth);
             m_IconLayers.SetImageSize(slotWidth, slotHeight);
 
 #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
@@ -284,7 +284,7 @@ namespace UnityEditor.PlatformSupport
             EnsureMinimumNumberOfTextures();
         }
 
-        internal override void DrawAt()
+        internal override void DrawAt(bool showValidationHelpBox = true)
         {
 #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
             m_IconLayers.textures = platformIcon.GetTextures().ToList();
@@ -297,21 +297,23 @@ namespace UnityEditor.PlatformSupport
             m_IconLayers.DoLayoutList();
             EditorGUILayout.Space();
 
-            var validLayerCount = this.platformIcon.GetValidLayerCount();
-
-            // Don't show warning if no layers are set in that case the default placeholder icon will be used.
-            if (validLayerCount > 0 && validLayerCount < this.platformIcon.minLayerCount)
+            // Don't show warning if no layers are set. In that case, the default placeholder icon will be used.
+            if (showValidationHelpBox)
             {
-                var errorMsg = string.Format("{0} icons require at least {1} layers to be set with valid textures, however currently only {2} {3} set.",
-                    this.platformIcon.kind.ToString(),
-                    this.platformIcon.minLayerCount,
-                    validLayerCount,
-                    validLayerCount == 1 ? "layer is" : "layers are"
-                );
+                var validLayerCount = this.platformIcon.GetValidLayerCount();
+                if (validLayerCount > 0 && validLayerCount < this.platformIcon.minLayerCount)
+                {
+                    var errorMsg = string.Format("{0} icons require at least {1} layers to be set with valid textures, however currently only {2} {3} set.",
+                        this.platformIcon.kind.ToString(),
+                        this.platformIcon.minLayerCount,
+                        validLayerCount,
+                        validLayerCount == 1 ? "layer is" : "layers are"
+                    );
 
-                EditorGUILayout.Space();
-                EditorGUILayout.HelpBox(errorMsg, MessageType.Error);
-                EditorGUILayout.Space();
+                    EditorGUILayout.Space();
+                    EditorGUILayout.HelpBox(errorMsg, MessageType.Error);
+                    EditorGUILayout.Space();
+                }
             }
 
             platformIcon.SetTextures(m_IconLayers.textures.ToArray());

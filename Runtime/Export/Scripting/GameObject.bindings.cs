@@ -42,7 +42,6 @@ namespace UnityEngine
         public extern Component GetComponent(Type type);
 
         [FreeFunction(Name = "GameObjectBindings::GetComponentFastPath", HasExplicitThis = true, ThrowsException = true)]
-        [return: UnityMarshalAs(NativeType.ScriptingObjectPtr)]
         internal extern Component GetComponentFastPath(Type type);
 
         [FreeFunction(Name = "Scripting::GetScriptingWrapperOfComponentOfGameObject", HasExplicitThis = true)]
@@ -213,7 +212,6 @@ namespace UnityEngine
         internal extern Component TryGetComponentInternal(Type type);
 
         [FreeFunction(Name = "GameObjectBindings::TryGetComponentFastPath", HasExplicitThis = true, ThrowsException = true)]
-        [return: UnityMarshalAs(NativeType.ScriptingObjectPtr)]
         internal extern Component TryGetComponentFastPath(Type type);
 
         public static GameObject FindWithTag(string tag)

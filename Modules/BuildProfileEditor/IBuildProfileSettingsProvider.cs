@@ -67,6 +67,16 @@ namespace UnityEditor.Build.Profile
         public void OnRemove(BuildProfile profile);
 
         /// <summary>
+        /// Invoked on copy clicked in UI. Returns null if copy is not supported.
+        /// </summary>
+        public Action<BuildProfile> OnCopy() => null;
+
+        /// <summary>
+        /// Invoked on paste clicked in UI. Returns null if paste is not supported.
+        /// </summary>
+        public Action<BuildProfile> OnPaste() => null;
+
+        /// <summary>
         /// Optional reset action invoked when the user clicks the reset button.
         /// </summary>
         public Action<BuildProfile> GetResetAction();

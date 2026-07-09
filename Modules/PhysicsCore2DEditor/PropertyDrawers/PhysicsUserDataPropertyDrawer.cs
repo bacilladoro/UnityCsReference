@@ -10,53 +10,71 @@ using static Unity.U2D.Physics.Scripting2D;
 
 namespace Unity.U2D.Physics.Editor
 {
+    /// <summary>
+    /// Builds the UI Toolkit fields for a <see cref="PhysicsUserData"/> serialized property.
+    /// The entity id is presented as the object it references, alongside the mask, float, int, long, and bool slots.
+    /// Add the returned element directly to embed the fields inline, or wrap it in a <see cref="Foldout"/> for a collapsible section.
+    /// </summary>
+    public static class PhysicsUserDataInspector
+    {
+        /// <summary>
+        /// Create the editable fields for a <see cref="PhysicsUserData"/> property, with no wrapping foldout.
+        /// </summary>
+        /// <param name="property">The serialized <see cref="PhysicsUserData"/> property to build the fields for.</param>
+        /// <returns>A container with the referenced object field and the mask, float, int, long, and bool fields.</returns>
+        public static VisualElement CreateFields(SerializedProperty property)
+        {
+            var body = new VisualElement();
+
+            // The entity id is presented as the object it references.
+            var entityIdProperty = property.FindPropertyRelative(nameof(PhysicsUserData.m_EntityId));
+
+            var objectField = new ObjectField("Object") { value = PhysicsGlobal_GetObject(entityIdProperty.entityIdValue) };
+            objectField.tooltip = GetEntityTooltip(entityIdProperty.entityIdValue);
+            objectField.AddToClassList(ObjectField.alignedFieldUssClassName);
+            objectField.RegisterValueChangedCallback(evt =>
+            {
+                entityIdProperty.entityIdValue = evt.newValue != null ? evt.newValue.GetEntityId() : EntityId.None;
+                entityIdProperty.serializedObject.ApplyModifiedProperties();
+
+                // Update the tooltip.
+                objectField.tooltip = GetEntityTooltip(entityIdProperty.entityIdValue);
+            });
+            body.Add(objectField);
+
+            body.Add(new PropertyField(property.FindPropertyRelative(nameof(PhysicsUserData.m_PhysicsMask))));
+            body.Add(new PropertyField(property.FindPropertyRelative(nameof(PhysicsUserData.m_Float))));
+            body.Add(new PropertyField(property.FindPropertyRelative(nameof(PhysicsUserData.m_Int))));
+            body.Add(new PropertyField(property.FindPropertyRelative(nameof(PhysicsUserData.m_Int64))));
+            body.Add(new PropertyField(property.FindPropertyRelative(nameof(PhysicsUserData.m_Bool))));
+
+            return body;
+        }
+
+        static string GetEntityTooltip(EntityId entityId)
+        {
+            if (entityId == EntityId.None)
+                return "None";
+
+            var obj = PhysicsGlobal_GetObject(entityId);
+            if (obj == null)
+                return "Invalid EntityId";
+
+            return $"EntityId: {entityId.ToString()} - \"{obj.name}\" ({obj.GetType()})";
+        }
+    }
+
     [CustomPropertyDrawer(typeof(PhysicsUserData))]
     sealed class PhysicsUserDataPropertyDrawer : PropertyDrawer
     {
-        SerializedProperty m_EntityIdProperty;
-
         #region UITK
 
         public override VisualElement CreatePropertyGUI(SerializedProperty property)
         {
             var root = new VisualElement();
-
             var foldout = new Foldout { text = property.displayName, value = false, viewDataKey = typeof(PhysicsUserDataPropertyDrawer).ToString() };
             root.Add(foldout);
-
-            // Special handling for Entity Id.
-            {
-                m_EntityIdProperty = property.FindPropertyRelative(nameof(PhysicsUserData.m_EntityId));
-
-                var objectField = new ObjectField("Object") { value = PhysicsGlobal_GetObject(m_EntityIdProperty.entityIdValue) };
-                objectField.tooltip = GetEntityTooltip(m_EntityIdProperty.entityIdValue);
-                objectField.AddToClassList(ObjectField.alignedFieldUssClassName);
-                objectField.RegisterValueChangedCallback(evt =>
-                {
-                    m_EntityIdProperty.entityIdValue = evt.newValue != null ? evt.newValue.GetEntityId() : EntityId.None;
-                    m_EntityIdProperty.serializedObject.ApplyModifiedProperties();
-
-                    // Update the tooltip.
-                    objectField.tooltip = GetEntityTooltip(m_EntityIdProperty.entityIdValue);
-                });
-                foldout.Add(objectField);
-            }
-
-            // Remaining properties.
-            {
-                var physicsMaskProperty = property.FindPropertyRelative(nameof(PhysicsUserData.m_PhysicsMask));
-                var floatProperty = property.FindPropertyRelative(nameof(PhysicsUserData.m_Float));
-                var intProperty = property.FindPropertyRelative(nameof(PhysicsUserData.m_Int));
-                var int64Property = property.FindPropertyRelative(nameof(PhysicsUserData.m_Int64));
-                var boolProperty = property.FindPropertyRelative(nameof(PhysicsUserData.m_Bool));
-
-                foldout.Add(new PropertyField(physicsMaskProperty));
-                foldout.Add(new PropertyField(floatProperty));
-                foldout.Add(new PropertyField(intProperty));
-                foldout.Add(new PropertyField(int64Property));
-                foldout.Add(new PropertyField(boolProperty));
-            }
-
+            foldout.Add(PhysicsUserDataInspector.CreateFields(property));
             return root;
         }
 
@@ -123,17 +141,5 @@ namespace Unity.U2D.Physics.Editor
         }
 
         #endregion
-
-        private string GetEntityTooltip(EntityId entityID)
-        {
-            if (entityID == EntityId.None)
-                return "None";
-
-            var obj = PhysicsGlobal_GetObject(m_EntityIdProperty.entityIdValue);
-            if (obj == null)
-                return "Invalid EntityId";
-
-            return $"EntityId: {m_EntityIdProperty.entityIdValue.ToString()} - \"{obj.name}\" ({obj.GetType()})";
-        }
     }
 }

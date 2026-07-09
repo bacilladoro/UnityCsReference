@@ -99,6 +99,18 @@ namespace UnityEditor.Scripting.ScriptCompilation.MsBuild
         }
 
         [RequiredByNativeCode]
+        public static void SetAssetPathsMetaDataMsBuild(AssetPathMetaData[] assetPathMetaDatas)
+        {
+            Instance.SetAssetPathsMetaData(assetPathMetaDatas);
+        }
+
+        [RequiredByNativeCode]
+        public static void SetAdditionalVersionMetaDatasMsBuild(VersionMetaData[] versionMetaDatas)
+        {
+            Instance.SetAdditionalVersionMetaDatas(versionMetaDatas);
+        }
+
+        [RequiredByNativeCode]
         public static void SetAllScriptsMsBuild(string[] allScripts)
         {
             Instance.SetAllScripts(allScripts);

@@ -342,6 +342,12 @@ namespace UnityEditor.Build.Profile
         internal BuildProfileQualitySettings qualitySettings;
 
         /// <summary>
+        /// Player settings overrides in build profile, stored as a subasset
+        /// </summary>
+        [VisibleToOtherModules]
+        internal BuildProfilePlayerSettings buildProfilePlayerSettings;
+
+        /// <summary>
         /// Required components to appear in the build profile.
         /// </summary>
         [VisibleToOtherModules]
@@ -472,8 +478,7 @@ namespace UnityEditor.Build.Profile
                 TryCreateAdditionalPlatformSettings();
 
             onBuildProfileEnable?.Invoke(this);
-            LoadPlayerSettings();
-
+            TryLoadBuildProfilePlayerSettings();
             TryLoadGraphicsSettings();
             TryLoadQualitySettings();
 
@@ -525,6 +530,67 @@ namespace UnityEditor.Build.Profile
             qualitySettings = data;
         }
 
+        internal void AttachBuildProfilePlayerSettingsSubasset()
+        {
+            if (this == null || buildProfilePlayerSettings == null)
+                return;
+            if (!EditorUtility.IsPersistent(this) || AssetDatabase.Contains(buildProfilePlayerSettings))
+                return;
+
+            AssetDatabase.AddObjectToAsset(buildProfilePlayerSettings, this);
+            m_PlayerSettingsYaml.Clear();
+            EditorUtility.SetDirty(this);
+        }
+
+        void TryLoadBuildProfilePlayerSettings()
+        {
+            TryLoadProjectSettingsAssetPlayerSettings();
+
+            // For persistent profiles, the on-disk subasset is the source of truth.
+            // Always prefer it over any in-memory reference that may be stale.
+            if (EditorUtility.IsPersistent(this))
+            {
+                var path = AssetDatabase.GetAssetPath(this);
+                var objects = AssetDatabase.LoadAllAssetsAtPath(path);
+                var data = Array.Find(objects, obj => obj is BuildProfilePlayerSettings) as BuildProfilePlayerSettings;
+                if (data != null)
+                {
+                    buildProfilePlayerSettings = data;
+                }
+                else if (buildProfilePlayerSettings != null)
+                {
+                    // Profile has just become persistent (e.g. CreateAsset was called after CreatePlayerSettingsFromGlobal).
+                    // The in-memory subasset needs to be attached. Defer to avoid mutating AssetDatabase from OnEnable.
+                    EditorApplication.delayCall += AttachBuildProfilePlayerSettingsSubasset;
+                }
+                // No subasset on disk: migrate from legacy YAML if available.
+                else if (m_PlayerSettingsYaml.HasSettings())
+                {
+                    buildProfilePlayerSettings = PlayerSettings.DeserializeBuildProfilePlayerSettingsFromYAMLString(m_PlayerSettingsYaml.GetYamlString());
+                    buildProfilePlayerSettings.name = "Player Settings";
+                    buildProfilePlayerSettings.hideFlags = HideFlags.HideInHierarchy | HideFlags.HideInInspector;
+                    // Defer the AssetDatabase mutation to avoid issues if OnEnable runs inside
+                    // an AssetDatabase refresh, domain reload, or serialization callback.
+                    EditorApplication.delayCall += AttachBuildProfilePlayerSettingsSubasset;
+                }
+            }
+
+            // Create the runtime PlayerSettings wrapper linked to the subasset.
+            // The wrapper's PPtr survives asset reimport via the persistent subasset
+            // identifier, so it doesn't need re-linking on subsequent OnEnable calls.
+            if (buildProfilePlayerSettings != null)
+            {
+                if (m_PlayerSettings == null)
+                {
+                    m_PlayerSettings = PlayerSettings.CreateAsBuildProfileOverride(buildProfilePlayerSettings);
+                    s_LoadedPlayerSettings.Add(m_PlayerSettings);
+                }
+
+                PlayerSettings.EnsureUnityConnectSettingsEqual(m_PlayerSettings, s_GlobalPlayerSettings);
+                UpdateGlobalManagerPlayerSettings();
+            }
+        }
+
         void OnDisable()
         {
             if (IsActiveBuildProfileOrPlatform())
@@ -537,17 +603,15 @@ namespace UnityEditor.Build.Profile
                     EditorUserBuildSettings.SetCachedActiveProfileScenes(scenes);
             }
 
-            var playerSettingsDirty = EditorUtility.IsDirty(m_PlayerSettings);
-            if (playerSettingsDirty)
-            {
-                BuildProfileModuleUtil.SerializePlayerSettings(this);
-                EditorUtility.SetDirty(this);
-            }
-
             // OnDisable is called when entering play mode, during domain reloads, or when the object is destroyed.
             // Avoid removing player settings for the first two cases to prevent slow syncs (e.g., color space) caused by global manager updates.
             if (!EditorApplication.isUpdating)
             {
+                // Attach the in-memory subasset synchronously here — OnDisable runs in narrower contexts than
+                // OnEnable (object destroy, play mode entry, domain reload), and a deferred call would be lost
+                // across domain reload or editor quit. The helper is idempotent and self-guards.
+                AttachBuildProfilePlayerSettingsSubasset();
+
                 RemovePlayerSettings();
             }
         }
@@ -692,4 +756,5 @@ namespace UnityEditor.Build.Profile
             }
         }
     }
+
 }

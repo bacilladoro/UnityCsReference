@@ -29,6 +29,12 @@ namespace UnityEngine.Rendering
     internal class SplashScreenPreview
     {
         [FreeFunction("BeginSplashScreenPreview_Binding")]
-        extern public static void Begin(UnityEditor.PlayerSettings playerSettings);
+        extern public static void Begin();
+
+        [FreeFunction("BeginSplashScreenPreviewWithPlayerSettings_Binding")]
+        extern public static void BeginWithPlayerSettings(UnityEditor.PlayerSettings playerSettings);
+
+        [FreeFunction("BeginSplashScreenPreviewWithBuildProfilePlayerSettings_Binding")]
+        extern public static void BeginWithBuildProfilePlayerSettings(UnityEditor.Build.Profile.BuildProfilePlayerSettings playerSettings);
     }
 }

@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 
 namespace Unity.Properties
 {
@@ -10,6 +11,7 @@ namespace Unity.Properties
     {
         class GetPropertyVisitor : PathVisitor
         {
+            [NoAutoStaticsCleanup]
             public static readonly UnityEngine.Pool.ObjectPool<GetPropertyVisitor> Pool = new UnityEngine.Pool.ObjectPool<GetPropertyVisitor>(() => new GetPropertyVisitor(), null, v => v.Reset());
 
             public IProperty Property;

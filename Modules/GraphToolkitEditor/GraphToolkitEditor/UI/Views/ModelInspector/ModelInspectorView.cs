@@ -155,6 +155,8 @@ namespace Unity.GraphToolkit.Editor
             registrar.RegisterDefaultCommandHandler<DuplicateConditionsCommand>();
             registrar.RegisterDefaultCommandHandler<MoveConditionCommand>();
             registrar.RegisterDefaultCommandHandler<SetGroupConditionOperationCommand>();
+            registrar.RegisterDefaultCommandHandler<SetVariableConditionVariableCommand>();
+            registrar.RegisterDefaultCommandHandler<SetVariableConditionComparisonCommand>();
 
             // The DeleteElementsCommand require the SelectionState from the GraphView.
             registrar.AddStateComponent(((GraphViewEditorWindow)Window).GraphView.GraphViewModel.SelectionState);

@@ -37,8 +37,6 @@ namespace UnityEditor
         Mono2x = 0,
         IL2CPP = 1,
         WinRTDotNET = 2,
-        [Obsolete("CoreCLR support is still a work in progress and is disabled for now.")] // Hide from intellisense while CORECLR_FIXME
-        [EditorBrowsable(EditorBrowsableState.Never)]
         CoreCLR = 3,
     }
 
@@ -197,7 +195,7 @@ namespace UnityEditor
         // .NET Framework 8 + .NET Standard 2.1 APIs
         NET_Unity_4_8 = NET_4_6,
 
-        [Obsolete("CoreCLR support is still a work in progress and is disabled for now.")] // Hide from intellisense
+        [Obsolete("The .NET (net10) API compatibility level is still a work in progress and is disabled for now.")] // Hide from intellisense
         [EditorBrowsable(EditorBrowsableState.Never)]
         NET = 7
     }
@@ -581,6 +579,14 @@ namespace UnityEditor
         }
 
         internal static extern void SetDirty();
+
+        internal static extern void CopySettingsToBuildProfilePlayerSettings(BuildProfilePlayerSettings buildProfilePlayerSettings);
+
+        [StaticAccessor("PlayerSettings", StaticAccessorType.DoubleColon)]
+        internal static extern BuildProfilePlayerSettings DeserializeBuildProfilePlayerSettingsFromYAMLString(string yamlSettings);
+
+        [StaticAccessor("PlayerSettings", StaticAccessorType.DoubleColon)]
+        internal static extern PlayerSettings CreateAsBuildProfileOverride(BuildProfilePlayerSettings buildProfilePlayerSettings);
 
         // The name of your company.
         public static extern string companyName { get; set; }
@@ -1858,9 +1864,6 @@ namespace UnityEditor
         [StaticAccessor("PlayerSettings", StaticAccessorType.DoubleColon)]
         internal static extern PlayerSettings DeserializeFromYAMLString(string yamlSettings);
 
-        [StaticAccessor("PlayerSettings", StaticAccessorType.DoubleColon)]
-        internal static extern void UpdatePlayerSettingsObjectFromYAML(PlayerSettings playerSettings, string yamlSettings);
-
         internal static extern bool platformRequiresReadableAssets { get; set; }
 
         /*
@@ -1878,64 +1881,164 @@ namespace UnityEditor
         [StaticAccessor("PlayerSettingsBindings", StaticAccessorType.DoubleColon)]
         internal static extern void GetBatchingForPlatform_Internal(PlayerSettings instance, BuildTarget platform, out int staticBatching, out int dynamicBatching);
 
+        internal void GetBatchingForPlatform_Internal(BuildTarget platform, out int staticBatching, out int dynamicBatching)
+        {
+            GetBatchingForPlatform_Internal(this, platform, out staticBatching, out dynamicBatching);
+        }
+
         // Deprecated: 'dynamicBatching' parameter is retained for serialized data compatibility and will be removed in a future release.
         [StaticAccessor("PlayerSettingsBindings", StaticAccessorType.DoubleColon)]
         internal static extern void SetBatchingForPlatform_Internal(PlayerSettings instance, BuildTarget platform, int staticBatching, int dynamicBatching);
 
+        internal void SetBatchingForPlatform_Internal(BuildTarget platform, int staticBatching, int dynamicBatching)
+        {
+            SetBatchingForPlatform_Internal(this, platform, staticBatching, dynamicBatching);
+        }
+
         [StaticAccessor("PlayerSettingsBindings", StaticAccessorType.DoubleColon)]
         internal static extern int GetDefaultShaderChunkSizeInMB_Internal(PlayerSettings instance);
+
+        internal int GetDefaultShaderChunkSizeInMB_Internal()
+        {
+            return GetDefaultShaderChunkSizeInMB_Internal(this);
+        }
 
         [StaticAccessor("PlayerSettingsBindings", StaticAccessorType.DoubleColon)]
         internal static extern void SetDefaultShaderChunkSizeInMB_Internal(PlayerSettings instance, int sizeInMegabytes);
 
+        internal void SetDefaultShaderChunkSizeInMB_Internal(int sizeInMegabytes)
+        {
+            SetDefaultShaderChunkSizeInMB_Internal(this, sizeInMegabytes);
+        }
+
         [StaticAccessor("PlayerSettingsBindings", StaticAccessorType.DoubleColon)]
         internal static extern int GetDefaultShaderChunkCount_Internal(PlayerSettings instance);
+
+        internal int GetDefaultShaderChunkCount_Internal()
+        {
+            return GetDefaultShaderChunkCount_Internal(this);
+        }
 
         [StaticAccessor("PlayerSettingsBindings", StaticAccessorType.DoubleColon)]
         internal static extern void SetDefaultShaderChunkCount_Internal(PlayerSettings instance, int chunkCount);
 
+        internal void SetDefaultShaderChunkCount_Internal(int chunkCount)
+        {
+            SetDefaultShaderChunkCount_Internal(this, chunkCount);
+        }
+
         [StaticAccessor("PlayerSettingsBindings", StaticAccessorType.DoubleColon)]
         internal static extern bool GetOverrideShaderChunkSettingsForPlatform_Internal(PlayerSettings instance, BuildTarget buildTarget);
+
+        internal bool GetOverrideShaderChunkSettingsForPlatform_Internal(BuildTarget buildTarget)
+        {
+            return GetOverrideShaderChunkSettingsForPlatform_Internal(this, buildTarget);
+        }
 
         [StaticAccessor("PlayerSettingsBindings", StaticAccessorType.DoubleColon)]
         internal static extern void SetOverrideShaderChunkSettingsForPlatform_Internal(PlayerSettings instance, BuildTarget buildTarget, bool value);
 
+        internal void SetOverrideShaderChunkSettingsForPlatform_Internal(BuildTarget buildTarget, bool value)
+        {
+            SetOverrideShaderChunkSettingsForPlatform_Internal(this, buildTarget, value);
+        }
+
         [StaticAccessor("PlayerSettingsBindings", StaticAccessorType.DoubleColon)]
         internal static extern int GetShaderChunkSizeInMBForPlatform_Internal(PlayerSettings instance, BuildTarget buildTarget);
+
+        internal int GetShaderChunkSizeInMBForPlatform_Internal(BuildTarget buildTarget)
+        {
+            return GetShaderChunkSizeInMBForPlatform_Internal(this, buildTarget);
+        }
 
         [StaticAccessor("PlayerSettingsBindings", StaticAccessorType.DoubleColon)]
         internal static extern void SetShaderChunkSizeInMBForPlatform_Internal(PlayerSettings instance, BuildTarget buildTarget, int sizeInMegabytes);
 
+        internal void SetShaderChunkSizeInMBForPlatform_Internal(BuildTarget buildTarget, int sizeInMegabytes)
+        {
+            SetShaderChunkSizeInMBForPlatform_Internal(this, buildTarget, sizeInMegabytes);
+        }
+
         [StaticAccessor("PlayerSettingsBindings", StaticAccessorType.DoubleColon)]
         internal static extern int GetShaderChunkCountForPlatform_Internal(PlayerSettings instance, BuildTarget buildTarget);
+
+        internal int GetShaderChunkCountForPlatform_Internal(BuildTarget buildTarget)
+        {
+            return GetShaderChunkCountForPlatform_Internal(this, buildTarget);
+        }
 
         // --- Graphics Job
         [StaticAccessor("PlayerSettingsBindings", StaticAccessorType.DoubleColon)]
         internal static extern bool GetGraphicsJobsForPlatform_Internal(PlayerSettings instance, BuildTarget platform);
 
+        internal bool GetGraphicsJobsForPlatform_Internal(BuildTarget platform)
+        {
+            return GetGraphicsJobsForPlatform_Internal(this, platform);
+        }
+
         [StaticAccessor("PlayerSettingsBindings", StaticAccessorType.DoubleColon)]
         internal static extern void SetGraphicsJobsForPlatform_Internal(PlayerSettings instance, BuildTarget platform, bool graphicsJobs);
+
+        internal void SetGraphicsJobsForPlatform_Internal(BuildTarget platform, bool graphicsJobs)
+        {
+            SetGraphicsJobsForPlatform_Internal(this, platform, graphicsJobs);
+        }
 
         [StaticAccessor("PlayerSettingsBindings", StaticAccessorType.DoubleColon)]
         internal static extern GraphicsJobMode GetGraphicsJobModeForPlatform_Internal(PlayerSettings instance, BuildTarget platform);
 
+        internal GraphicsJobMode GetGraphicsJobModeForPlatform_Internal(BuildTarget platform)
+        {
+            return GetGraphicsJobModeForPlatform_Internal(this, platform);
+        }
+
         [StaticAccessor("PlayerSettingsBindings", StaticAccessorType.DoubleColon)]
         internal static extern void SetGraphicsJobModeForPlatform_Internal(PlayerSettings instance, BuildTarget platform, GraphicsJobMode gfxJobMode);
+
+        internal void SetGraphicsJobModeForPlatform_Internal(BuildTarget platform, GraphicsJobMode gfxJobMode)
+        {
+            SetGraphicsJobModeForPlatform_Internal(this, platform, gfxJobMode);
+        }
 
         [StaticAccessor("PlayerSettingsBindings", StaticAccessorType.DoubleColon)]
         internal static extern void SetGraphicsThreadingModeForPlatform_Internal(PlayerSettings instance, BuildTarget platform, GfxThreadingMode gfxJobMode);
 
+        internal void SetGraphicsThreadingModeForPlatform_Internal(BuildTarget platform, GfxThreadingMode gfxJobMode)
+        {
+            SetGraphicsThreadingModeForPlatform_Internal(this, platform, gfxJobMode);
+        }
+
         [StaticAccessor("PlayerSettingsBindings", StaticAccessorType.DoubleColon)]
         internal static extern void SetShaderChunkCountForPlatform_Internal(PlayerSettings instance, BuildTarget buildTarget, int chunkCount);
+
+        internal void SetShaderChunkCountForPlatform_Internal(BuildTarget buildTarget, int chunkCount)
+        {
+            SetShaderChunkCountForPlatform_Internal(this, buildTarget, chunkCount);
+        }
 
         [StaticAccessor("PlayerSettingsBindings", StaticAccessorType.DoubleColon)]
         internal static extern NormalMapEncoding GetNormalMapEncoding_Internal(PlayerSettings instance, string platform);
 
+        internal NormalMapEncoding GetNormalMapEncoding_Internal(string platform)
+        {
+            return GetNormalMapEncoding_Internal(this, platform);
+        }
+
         [StaticAccessor("PlayerSettingsBindings", StaticAccessorType.DoubleColon)]
         internal static extern void SetNormalMapEncoding_Internal(PlayerSettings instance, string platform, NormalMapEncoding encoding);
 
+        internal void SetNormalMapEncoding_Internal(string platform, NormalMapEncoding encoding)
+        {
+            SetNormalMapEncoding_Internal(this, platform, encoding);
+        }
+
         [StaticAccessor("PlayerSettingsBindings", StaticAccessorType.DoubleColon)]
         internal static extern ScriptingImplementation GetScriptingBackend_Internal(PlayerSettings playerSettings, string buildTargetGroupName);
+
+        internal ScriptingImplementation GetScriptingBackend_Internal(string buildTargetGroupName)
+        {
+            return GetScriptingBackend_Internal(this, buildTargetGroupName);
+        }
 
         [StaticAccessor("PlayerSettingsBindings", StaticAccessorType.DoubleColon)]
         internal static extern bool ShouldSyncShaderPrecisionModel(PlayerSettings prev, PlayerSettings next);

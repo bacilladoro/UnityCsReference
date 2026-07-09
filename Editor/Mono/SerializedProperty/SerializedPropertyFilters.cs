@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using UnityEngine;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -72,6 +73,7 @@ namespace UnityEditor
             public string SerializeState() { return null; }
             public void DeserializeState(string state) {}
         }
+        [NoAutoStaticsCleanup] // stateless singleton filter, holds no user references, safe to persist
         internal static readonly None s_FilterNone = new None();
     }
 }

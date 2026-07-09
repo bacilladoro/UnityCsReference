@@ -5,6 +5,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 
 namespace Unity.Properties
 {
@@ -163,6 +164,7 @@ namespace Unity.Properties
         /// <summary>
         /// Returns an empty collection of properties.
         /// </summary>
+        [NoAutoStaticsCleanup]
         public static PropertyCollection<TContainer> Empty { get; } = new PropertyCollection<TContainer>();
 
         /// <summary>

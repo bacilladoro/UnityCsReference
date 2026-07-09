@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace UnityEditor.Build.Profile.Elements
@@ -31,6 +32,14 @@ namespace UnityEditor.Build.Profile.Elements
         }
 
         public Action<BuildProfile> GetResetAction() => OnReset;
+
+        public Action<BuildProfile> OnCopy() => OnCopy;
+
+        public Action<BuildProfile> OnPaste() => OnPaste;
+
+        void OnCopy(BuildProfile profile) => BuildProfileModuleUtil.CopySubAssetValues(profile.qualitySettings);
+
+        void OnPaste(BuildProfile profile) => BuildProfileModuleUtil.PasteSubAssetValues(profile.qualitySettings);
 
         public VisualElement CreateInspectorGUI(BuildProfile profile, SerializedObject serializedObject)
         {

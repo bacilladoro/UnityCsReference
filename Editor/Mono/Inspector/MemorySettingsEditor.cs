@@ -77,6 +77,10 @@ namespace UnityEditor
             public static readonly GUIContent kProfilerBucketAllocatorBlockSize = EditorGUIUtility.TrTextContent("Bucket Allocator Block Size", "Bucket allocator block size");
             public static readonly GUIContent kProfilerBucketAllocatorBlockCount = EditorGUIUtility.TrTextContent("Bucket Allocator Block Count", "Bucket allocator block count");
 
+            public static readonly GUIContent kEntitiesAllocatorTitle = EditorGUIUtility.TrTextContent("Entities Allocators", "Memory allocators used by the Unity.Entities package");
+            public static readonly GUIContent kEntitiesArchetypeAllocatorBudget = EditorGUIUtility.TrTextContent("Archetype Allocator Budget", "Memory budget for Entity archetype metadata. Default is 16 MB.");
+            public static readonly GUIContent kEntitiesQueryAllocatorBudget = EditorGUIUtility.TrTextContent("Query Allocator Budget", "Memory budget for EntityQuery data. Default is 16 MB.");
+
             public static readonly GUIContent kEditorLabel = EditorGUIUtility.TrTextContent("Editor", "Editor settings");
             public static readonly GUIContent kPlayerLabel = EditorGUIUtility.TrTextContent("Players", "player settings");
         }
@@ -95,6 +99,7 @@ namespace UnityEditor
 
         const string kWarningDialogSessionKey = "MemorySettingsWarning";
         const string kMainAllocatorMimallocEnabledPropertyName = "m_MainAllocatorMimallocEnabled";
+        const string kEntitiesPackageName = "com.unity.entities";
 
         SerializedProperty m_PlatformMemorySettingsProperty;
         SerializedProperty m_EditorMemorySettingsProperty;
@@ -304,7 +309,7 @@ namespace UnityEditor
             EditorGUI.indentLevel = indentLevel;
         }
 
-        private void OptionalVariableField(SerializedProperty settings, string variablename, GUIContent label, bool useBytes = true)
+        private void OptionalVariableField(SerializedProperty settings, string variablename, GUIContent label, bool useBytes = true, int minValue = 0, int maxValue = int.MaxValue)
         {
             const int k_FieldSpacing = 2;
             if (s_Styles == null)
@@ -427,7 +432,7 @@ namespace UnityEditor
                         }
                     }
                 }
-                prop.intValue = newIntValue;
+                prop.intValue = Mathf.Clamp(newIntValue, minValue, maxValue);
             }
 
             EditorGUI.indentLevel = indent;
@@ -482,6 +487,12 @@ namespace UnityEditor
 
             var previousMimallocEnabled = GetEffectiveMimallocEnabled(currentSettings);
             var buildTarget = m_EditorSelected ? "Editor" : m_ValidPlatforms[m_SelectedPlatform].defaultTarget.ToString();
+            // iOS/tvOS/visionOS never use mimalloc (the engine always selects the system allocator there),
+            // so the setting is shown disabled/off and emits no analytics.
+            bool isAppleNonDesktop = !m_EditorSelected &&
+                (m_ValidPlatforms[m_SelectedPlatform].defaultTarget == BuildTarget.iOS
+                || m_ValidPlatforms[m_SelectedPlatform].defaultTarget == BuildTarget.tvOS
+                || m_ValidPlatforms[m_SelectedPlatform].defaultTarget == BuildTarget.VisionOS);
 
             if (BeginGroup(0, Content.kMainAllocatorsTitle))
             {
@@ -496,7 +507,20 @@ namespace UnityEditor
                         OptionalVariableField(currentSettings, "m_ThreadAllocatorBlockSize", Content.kThreadAllocatorBlockSize);
                     }
 
-                    OptionalBooleanField(currentSettings, kMainAllocatorMimallocEnabledPropertyName, Content.kMainAllocatorMimallocEnabled);
+                    if (isAppleNonDesktop)
+                    {
+                        // Not supported on iOS/tvOS/visionOS: show disabled + off, and clear any stored override.
+                        var mimallocProp = currentSettings.FindPropertyRelative(kMainAllocatorMimallocEnabledPropertyName);
+                        if (mimallocProp.intValue != -1)
+                            mimallocProp.intValue = -1;
+                        using (new EditorGUI.DisabledScope(true))
+                            EditorGUILayout.Toggle(Content.kMainAllocatorMimallocEnabled, false);
+                        EditorGUILayout.HelpBox("Mimalloc is not supported on iOS, tvOS and visionOS. These platforms always use the system allocator.", MessageType.Info);
+                    }
+                    else
+                    {
+                        OptionalBooleanField(currentSettings, kMainAllocatorMimallocEnabledPropertyName, Content.kMainAllocatorMimallocEnabled);
+                    }
                 }
                 EndGroup();
                 if (BeginGroup(2, Content.kGfxAllocatorTitle))
@@ -560,6 +584,17 @@ namespace UnityEditor
             }
             EndGroup();
 
+            if (PackageManager.PackageInfo.IsPackageRegistered(kEntitiesPackageName))
+            {
+                if (BeginGroup(9, Content.kEntitiesAllocatorTitle))
+                {
+                    const int kMinBudget = 1024 * 1024; // 1 MB minimum
+                    OptionalVariableField(currentSettings, "m_EntitiesArchetypeAllocatorBudget", Content.kEntitiesArchetypeAllocatorBudget, true, kMinBudget);
+                    OptionalVariableField(currentSettings, "m_EntitiesQueryAllocatorBudget", Content.kEntitiesQueryAllocatorBudget, true, kMinBudget);
+                }
+                EndGroup();
+            }
+
             if (m_EditorSelected)
             {
                 if (EditorGUI.EndChangeCheck())
@@ -571,7 +606,10 @@ namespace UnityEditor
             else
             {
                 EditorGUILayout.EndPlatformGrouping();
-                ApplyChangesAndSendMimallocAnalytics(currentSettings, previousMimallocEnabled, buildTarget);
+                if (isAppleNonDesktop)
+                    serializedObject.ApplyModifiedProperties(); // persist the cleared override, but emit no analytics (mimalloc isn't a user choice here)
+                else
+                    ApplyChangesAndSendMimallocAnalytics(currentSettings, previousMimallocEnabled, buildTarget);
             }
 
             EditorGUILayout.EndVertical();

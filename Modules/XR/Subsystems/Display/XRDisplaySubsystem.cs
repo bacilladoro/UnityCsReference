@@ -2,9 +2,10 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
-using UnityEngine.SubsystemsImplementation;
 using System.Collections.Generic;
 using System.ComponentModel;
+using Unity.Scripting.LifecycleManagement;
+using UnityEngine.SubsystemsImplementation;
 
 namespace UnityEngine.XR
 {
@@ -14,7 +15,9 @@ namespace UnityEngine.XR
 
     public partial class XRDisplaySubsystem
     {
+        [NoAutoStaticsCleanup] // infrastructure cache; no user refs
         private static readonly List<XRDisplaySubsystem> s_DisplaySubsystems = new List<XRDisplaySubsystem>();
+        [NoAutoStaticsCleanup] // infrastructure cache; no user refs
         private static readonly XRDisplaySubsystemDefault s_Default = XRDisplaySubsystemDefault.instance;
 
         public static XRDisplaySubsystem activeSubsystem

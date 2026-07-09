@@ -8,6 +8,7 @@ using UnityEngine;
 using UnityEditor.IMGUI.Controls;
 using UnityEngine.Profiling;
 using Unity.Collections;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -274,12 +275,14 @@ namespace UnityEditor
 
         internal class DefaultDelegates
         {
+            [NoAutoStaticsCleanup] // static lambda bound to engine code, no user references, safe to persist
             public static readonly Column.DrawEntry DrawDefault = (Rect r, SerializedProperty prop, SerializedProperty[] dependencies) =>
             {
                 Profiler.BeginSample("PropDrawDefault");
                 EditorGUI.PropertyField(r, prop, GUIContent.none);
                 Profiler.EndSample();
             };
+            [NoAutoStaticsCleanup] // static lambda bound to engine code, no user references, safe to persist
             public static readonly Column.DrawEntry DrawCheckbox = (Rect r, SerializedProperty prop, SerializedProperty[] dependencies) =>
             {
                 Profiler.BeginSample("PropDrawCheckbox");
@@ -289,24 +292,30 @@ namespace UnityEditor
                 EditorGUI.PropertyField(r, prop, GUIContent.none);
                 Profiler.EndSample();
             };
+            [NoAutoStaticsCleanup] // static lambda bound to engine code, no user references, safe to persist
             public static readonly Column.DrawEntry DrawName = (Rect r, SerializedProperty prop, SerializedProperty[] dependencies) => {};
 
+            [NoAutoStaticsCleanup] // static lambda bound to engine code, no user references, safe to persist
             public static readonly Column.CompareEntry CompareFloat = (SerializedProperty lhs, SerializedProperty rhs) =>
             {
                 return lhs.floatValue.CompareTo(rhs.floatValue);
             };
+            [NoAutoStaticsCleanup] // static lambda bound to engine code, no user references, safe to persist
             public static readonly Column.CompareEntry CompareCheckbox = (SerializedProperty lhs, SerializedProperty rhs) =>
             {
                 return lhs.boolValue.CompareTo(rhs.boolValue);
             };
+            [NoAutoStaticsCleanup] // static lambda bound to engine code, no user references, safe to persist
             public static readonly Column.CompareEntry CompareEnum = (SerializedProperty lhs, SerializedProperty rhs) =>
             {
                 return lhs.enumValueIndex.CompareTo(rhs.enumValueIndex);
             };
+            [NoAutoStaticsCleanup] // static lambda bound to engine code, no user references, safe to persist
             public static readonly Column.CompareEntry CompareInt = (SerializedProperty lhs, SerializedProperty rhs) =>
             {
                 return lhs.intValue.CompareTo(rhs.intValue);
             };
+            [NoAutoStaticsCleanup] // static lambda bound to engine code, no user references, safe to persist
             public static readonly Column.CompareEntry CompareColor = (SerializedProperty lhs, SerializedProperty rhs) =>
             {
                 float lh, ls, lv, rh, rs, rv;
@@ -314,10 +323,12 @@ namespace UnityEditor
                 Color.RGBToHSV(rhs.colorValue, out rh, out rs, out rv);
                 return lh.CompareTo(rh);
             };
+            [NoAutoStaticsCleanup] // static lambda bound to engine code, no user references, safe to persist
             public static readonly Column.CompareEntry CompareName = (SerializedProperty lhs, SerializedProperty rhs) =>
             {
                 return 0;
             };
+            [NoAutoStaticsCleanup] // static lambda bound to engine code, no user references, safe to persist
             public static readonly Column.CopyDelegate CopyDefault = (SerializedProperty target, SerializedProperty source) =>
             {
                 target.serializedObject.CopyFromSerializedProperty(source);

@@ -43,7 +43,7 @@ namespace Unity.ProjectAuditor.Editor.InstructionAnalyzers
             "Code will become Obsolete",
             Areas.CPU | Areas.Upgrade,
             "This code will become obsolete in a future version of Unity. Unity can automatically upgrade this code in the new version for you.",
-            "Upgrade the code now, if the suggested replacement exists in your current version. Otherwise, Unity will update your code when you upgrade."
+            "Unity can update the code automatically after upgrading."
             )
         {
             DefaultSeverity = Severity.Minor
@@ -55,7 +55,7 @@ namespace Unity.ProjectAuditor.Editor.InstructionAnalyzers
             "Code will become Obsolete",
             Areas.CPU | Areas.Upgrade,
             "This code will become obsolete in a future version of Unity. This issue is a warning, and will not prevent compilation in the new version.",
-            "Upgrade the code now, if the suggested replacement exists in your current version. Otherwise, you can fix your code after upgrading."
+            "Fix the code after upgrading."
             )
         {
             DefaultSeverity = Severity.Moderate
@@ -66,8 +66,8 @@ namespace Unity.ProjectAuditor.Editor.InstructionAnalyzers
             PAC0197,
             "Code will become Obsolete",
             Areas.CPU | Areas.Upgrade,
-            "This code will become obsolete in a future version of Unity. This issue is an error, and will prevent compilation in the new version.",
-            "Upgrade the code now, if the suggested replacement exists in your current version. Otherwise, you must fix your code after upgrading."
+            "This code will become obsolete in a future version of Unity. This issue will produce a compiler error in the new version.",
+            "Fix the code after upgrading."
             )
         {
             DefaultSeverity = Severity.Major
@@ -78,8 +78,8 @@ namespace Unity.ProjectAuditor.Editor.InstructionAnalyzers
             PAC0198,
             "Code will be removed",
             Areas.CPU | Areas.Upgrade,
-            "This code has been removed in a future version of Unity. This issue is an error, and will prevent compilation in the new version.",
-            "Upgrade the code now, if the suggested replacement exists in your current version. Otherwise, you must fix your code after upgrading."
+            "This code has been removed in a future version of Unity. This issue will prevent compilation in the new version.",
+            "Fix the code after upgrading."
             )
         {
             DefaultSeverity = Severity.Major
@@ -172,7 +172,7 @@ namespace Unity.ProjectAuditor.Editor.InstructionAnalyzers
                         yield return context.CreateIssue(IssueCategory.Code, k_ObsoleteAttributeIssueDescriptor.Id)
                             .WithSeverity(error ? Severity.Error : Severity.Warning)
                             .WithDescription(msg)
-                            .WithUpgradeProperties([Application.unityVersion, null, recommendation]);
+                            .WithUpgradeProperties(Application.unityVersion, null, recommendation);
                     }
                 }
 
@@ -200,7 +200,7 @@ namespace Unity.ProjectAuditor.Editor.InstructionAnalyzers
                                 if (Utility.VersionToInt(obsoleteSince) > currentVersion)
                                 {
                                     yield return new ReportItemBuilder(IssueCategory.Code, k_ObsoleteAutoUpgradeIssueDescriptor.Id, $"'{reportItem.Description}' will be automatically upgraded", reportItem)
-                                        .WithUpgradeProperties([obsoleteSince, removedIn, recommendation]);
+                                        .WithUpgradeProperties(obsoleteSince, removedIn, recommendation);
                                 }
                             }
                             else
@@ -211,20 +211,20 @@ namespace Unity.ProjectAuditor.Editor.InstructionAnalyzers
                                 if (!string.IsNullOrEmpty(warningSince) && Utility.VersionToInt(warningSince) > currentVersion)
                                 {
                                     yield return new ReportItemBuilder(IssueCategory.Code, k_ObsoleteWarningUpgradeIssueDescriptor.Id, $"'{reportItem.Description}' obsoletion warning in {warningSince}", reportItem)
-                                        .WithUpgradeProperties([warningSince, errorSince ?? removedIn, recommendation]);
+                                        .WithUpgradeProperties(warningSince, errorSince ?? removedIn, recommendation);
                                 }
 
                                 if (!string.IsNullOrEmpty(errorSince) && Utility.VersionToInt(errorSince) > currentVersion)
                                 {
                                     yield return new ReportItemBuilder(IssueCategory.Code, k_ObsoleteErrorUpgradeIssueDescriptor.Id, $"'{reportItem.Description}' obsoletion error in {errorSince}", reportItem)
-                                        .WithUpgradeProperties([errorSince, removedIn, recommendation]);
+                                        .WithUpgradeProperties(errorSince, removedIn, recommendation);
                                 }
                             }
 
                             if (!string.IsNullOrEmpty(removedIn) && Utility.VersionToInt(removedIn) > currentVersion)
                             {
                                 yield return new ReportItemBuilder(IssueCategory.Code, k_ObsoleteRemovedUpgradeIssueDescriptor.Id, $"'{reportItem.Description}' will be removed in {removedIn}", reportItem)
-                                    .WithUpgradeProperties([removedIn, null, recommendation]);
+                                    .WithUpgradeProperties(removedIn, null, recommendation);
                             }
                         }
                     }

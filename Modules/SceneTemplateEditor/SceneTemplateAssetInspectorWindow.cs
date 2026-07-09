@@ -12,14 +12,16 @@ using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.UIElements;
 using Unity.Collections;
+using Unity.Scripting.LifecycleManagement;
 using Object = UnityEngine.Object;
 
 namespace UnityEditor.SceneTemplate
 {
     [UsedImplicitly, CustomEditor(typeof(SceneTemplateAsset))]
-    internal class SceneTemplateAssetInspectorWindow : Editor
+    internal partial class SceneTemplateAssetInspectorWindow : Editor
     {
         public delegate void SceneTemplateAssetModified(SceneTemplateAsset asset);
+        [AutoStaticsCleanupOnCodeReload]
         public static event SceneTemplateAssetModified sceneTemplateAssetModified;
 
         private const string k_ThumbnailAreaName = "scene-template-asset-inspector-thumbnail-area";

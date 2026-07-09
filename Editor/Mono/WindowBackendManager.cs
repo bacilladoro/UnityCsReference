@@ -33,6 +33,8 @@ namespace UnityEditor
         RectOffset viewMargins { get; }
         bool notificationVisible { get; }
 
+        string rootViewClassName { get; }
+
         Action onSplitterGUIHandler { get; set; }
 
         IEditorWindowBackend editorWindowBackend { get; set; }

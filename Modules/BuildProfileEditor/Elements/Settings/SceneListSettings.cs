@@ -3,12 +3,26 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace UnityEditor.Build.Profile.Elements
 {
     internal class SceneListProvider : IBuildProfileSettingsProvider
     {
+
+        /// <summary>
+        /// Wrapper used to serialize the scene list to JSON. <see cref="EditorBuildSettingsScene"/>
+        /// holds a GUID that the generic serialized property clipboard cannot round-trip, and
+        /// <see cref="EditorJsonUtility"/> cannot serialize a top-level array, so the scenes are
+        /// nested in this wrapper.
+        /// </summary>
+        [Serializable]
+        class SceneListClipboard
+        {
+            public EditorBuildSettingsScene[] scenes = Array.Empty<EditorBuildSettingsScene>();
+        }
+
         /// <summary>
         /// Scene list settings displays a list of <see cref="EditorBuildSettingsScene"/> stored
         /// directly in the build profile under <see cref="BuildProfile.scenes"/>. The flag
@@ -71,6 +85,38 @@ namespace UnityEditor.Build.Profile.Elements
         public void OnRemove(BuildProfile profile)
         {
             profile.overrideGlobalScenes = false;
+            EditorUtility.SetDirty(profile);
+        }
+
+        public Action<BuildProfile> OnCopy() => OnCopy;
+
+        public Action<BuildProfile> OnPaste() => OnPaste;
+
+        void OnCopy(BuildProfile profile)
+        {
+            var clipboard = new SceneListClipboard { scenes = profile.scenes };
+            GUIUtility.systemCopyBuffer = EditorJsonUtility.ToJson(clipboard);
+        }
+
+        void OnPaste(BuildProfile profile)
+        {
+            string systemBuffer = GUIUtility.systemCopyBuffer;
+            if (string.IsNullOrEmpty(systemBuffer))
+                return;
+
+            var clipboard = new SceneListClipboard();
+            try
+            {
+                Undo.RecordObject(profile, "Paste Sub-Asset Values");
+                EditorJsonUtility.FromJsonOverwrite(systemBuffer, clipboard);
+            }
+            catch (ArgumentException)
+            {
+                Debug.LogWarning("Clipboard does not contain valid scene list data for pasting.");
+                return;
+            }
+
+            profile.scenes = clipboard.scenes ?? Array.Empty<EditorBuildSettingsScene>();
             EditorUtility.SetDirty(profile);
         }
 

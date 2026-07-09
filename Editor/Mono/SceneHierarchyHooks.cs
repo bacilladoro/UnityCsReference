@@ -8,10 +8,11 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using UnityEngine.Pool;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.SceneManagement
 {
-    public static class SceneHierarchyHooks
+    public static partial class SceneHierarchyHooks
     {
         [StructLayout(LayoutKind.Sequential)]
         [UnityEngine.Bindings.NativeType(IntermediateScriptingStructName = "SceneHierarchyHooks_SubSceneInfo")]
@@ -29,11 +30,17 @@ namespace UnityEditor.SceneManagement
             }
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         public static Func<SubSceneInfo[]> provideSubScenes;
+        [AutoStaticsCleanupOnCodeReload]
         public static Func<SubSceneInfo, string> provideSubSceneName;
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<GenericMenu, GameObject> addItemsToGameObjectContextMenu;
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<GenericMenu, Scene> addItemsToSceneHeaderContextMenu;
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<GenericMenu, SubSceneInfo> addItemsToSubSceneHeaderContextMenu;
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<GenericMenu> addItemsToCreateMenu;
 
         public static void ReloadAllSceneHierarchies()

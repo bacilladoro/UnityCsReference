@@ -363,6 +363,9 @@ namespace UnityEditor
 #pragma warning restore CS0618 // Type or member is obsolete
         }
 
+        // Matches the toolbar content's app-toolbar color so the panel root doesn't show the lighter hostview fill.
+        private protected override string rootViewClassName => "unity-app-toolbar";
+
         protected override void OnEnable()
         {
             base.OnEnable();

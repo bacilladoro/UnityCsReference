@@ -93,8 +93,7 @@ internal static class FieldAffordanceController
         if (PerElementAnimationContext.TryResolveForElementForProbe(element, out var uiClip, out var perElementBinder, out var perElementPath)
             && uiClip != null)
         {
-            var perElementKey = AnimationRecordingStyleBridge.BuildStyleKeyPropertyName(perElementPath, propName, null);
-            if (TryClassify(uiClip, perElementKey, perElementBinder, perElementPath, (int)stylePropertyId, out subState))
+            if (TryClassify(uiClip, perElementPath, propName, stylePropertyId, perElementBinder, out subState))
                 return true;
         }
 
@@ -111,22 +110,29 @@ internal static class FieldAffordanceController
         if (!recordability.CanRecord)
             return false;
         var panelPath = recordability.Path ?? string.Empty;
-        var panelKey = AnimationRecordingStyleBridge.BuildStyleKeyPropertyName(panelPath, propName, null);
 
         var panelBinder = panelRenderer.GetAnimationBinder();
         if (panelBinder != null)
             panelBinder.UpdateElementNamesIfNeeded();
-        return TryClassify(panelRenderer, panelKey, panelBinder, panelPath, (int)stylePropertyId, out subState);
+        return TryClassify(panelRenderer, panelPath, propName, stylePropertyId, panelBinder, out subState);
     }
 
-    static bool TryClassify(UnityEngine.Object target, string key, UIAnimationBinder binder, string elementPath, int propertyId, out FieldAffordanceSourceInfoType subState)
+    static bool TryClassify(UnityEngine.Object target, string elementPath, string propName, StylePropertyId stylePropertyId, UIAnimationBinder binder, out FieldAffordanceSourceInfoType subState)
     {
         subState = default;
 
-        bool animated = AnimationMode.IsPropertyAnimated(target, key);
-        bool candidate = AnimationMode.IsPropertyCandidate(target, key);
+        // Driven props register one entry per suffixed channel, so probe every channel key rather than
+        // the bare base name (which would only match Opacity/Rotate). One pass, stopping once both known.
+        bool animated = false, candidate = false;
+        foreach (var key in AnimationRecordingStyleBridge.EnumerateChannelKeys(stylePropertyId, elementPath, propName))
+        {
+            if (!animated) animated = AnimationMode.IsPropertyAnimated(target, key);
+            if (!candidate) candidate = AnimationMode.IsPropertyCandidate(target, key);
+            if (animated && candidate)
+                break;
+        }
 
-        bool runtimeBound = binder != null && elementPath != null && binder.IsBound(elementPath, propertyId);
+        bool runtimeBound = binder != null && elementPath != null && binder.IsBound(elementPath, (int)stylePropertyId);
 
         if (!animated && !candidate && !runtimeBound)
             return false;

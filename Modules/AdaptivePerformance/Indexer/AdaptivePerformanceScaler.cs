@@ -253,6 +253,25 @@ namespace UnityEngine.AdaptivePerformance
             if (bottleneck == PerformanceBottleneck.TargetFrameRate && (Target & ScalerTarget.FillRate) == 0)
                 cost = 6;
 
+            // When the bottleneck is unknown, use utilization to bias toward the more-loaded side
+            if (bottleneck == PerformanceBottleneck.Unknown)
+            {
+                var metrics = Holder.Instance.PerformanceStatus.PerformanceMetrics;
+                var cpuUtilization = metrics.CpuUtilization;
+                var gpuUtilization = metrics.GpuUtilization;
+
+                if (cpuUtilization >= 0f && gpuUtilization >= 0f)
+                {
+                    const float k_UtilizationDifferenceThreshold = 0.15f;
+                    const int k_UtilizationPenalty = 3;
+
+                    if (cpuUtilization - gpuUtilization > k_UtilizationDifferenceThreshold && (Target & ScalerTarget.CPU) == 0)
+                        cost += k_UtilizationPenalty;
+                    else if (gpuUtilization - cpuUtilization > k_UtilizationDifferenceThreshold && (Target & ScalerTarget.GPU) == 0)
+                        cost += k_UtilizationPenalty;
+                }
+            }
+
             return cost;
         }
 

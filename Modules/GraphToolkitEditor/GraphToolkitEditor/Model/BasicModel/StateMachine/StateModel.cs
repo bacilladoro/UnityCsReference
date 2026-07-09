@@ -79,11 +79,6 @@ namespace Unity.GraphToolkit.Editor
         public override IReadOnlyList<PortModel> GetPorts() => [ GetOutPort(), GetInPort() ];
 
         /// <summary>
-        /// Whether this state is the default entry state of the graph.
-        /// </summary>
-        public bool IsEntryPoint => this == GraphModel?.EntryPoint;
-
-        /// <summary>
         /// Initializes a new instance of the <see cref="StateModel"/> class.
         /// </summary>
         public StateModel()
@@ -219,7 +214,6 @@ namespace Unity.GraphToolkit.Editor
             ContextualMenuHelpers.duplicateItem,
             ContextualMenuHelpers.deleteItem,
 
-            ContextualMenuHelpers.setAsDefaultStateMenuItem,
             ContextualMenuHelpers.colorItem
         };
     }

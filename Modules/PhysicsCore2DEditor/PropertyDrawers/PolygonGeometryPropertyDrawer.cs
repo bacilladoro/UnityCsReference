@@ -9,6 +9,36 @@ using UnityEngine.UIElements;
 
 namespace Unity.U2D.Physics.Editor
 {
+    /// <summary>
+    /// Builds the UI Toolkit fields for a <see cref="PolygonGeometry"/> serialized property.
+    /// The computed normals and centroid are shown read-only because they are derived from the vertices.
+    /// Add the returned element directly to embed the fields inline, or wrap it in a <see cref="Foldout"/> for a collapsible section.
+    /// </summary>
+    public static class PolygonGeometryInspector
+    {
+        /// <summary>
+        /// Create the editable fields for a <see cref="PolygonGeometry"/> property, with no wrapping foldout.
+        /// </summary>
+        /// <param name="property">The serialized <see cref="PolygonGeometry"/> property to build the fields for.</param>
+        /// <returns>A container with the polygon fields; the derived normals and centroid are shown read-only.</returns>
+        public static VisualElement CreateFields(SerializedProperty property)
+        {
+            var body = new VisualElement();
+
+            body.Add(new PropertyField(property.FindPropertyRelative(nameof(PolygonGeometry.vertices))));
+            body.Add(new PropertyField(property.FindPropertyRelative(nameof(PolygonGeometry.m_Count))));
+            body.Add(new PropertyField(property.FindPropertyRelative(nameof(PolygonGeometry.m_Radius))));
+
+            // The normals and centroid are computed from the vertices, so they are shown but never editable.
+            var readonlyElement = new VisualElement { enabledSelf = false };
+            readonlyElement.Add(new PropertyField(property.FindPropertyRelative(nameof(PolygonGeometry.normals))));
+            readonlyElement.Add(new PropertyField(property.FindPropertyRelative(nameof(PolygonGeometry.m_Centroid))));
+            body.Add(readonlyElement);
+
+            return body;
+        }
+    }
+
     [CustomPropertyDrawer(typeof(PolygonGeometry))]
     sealed class PolygonGeometryPropertyDrawer : PropertyDrawer
     {
@@ -19,16 +49,7 @@ namespace Unity.U2D.Physics.Editor
             var root = new VisualElement();
             var foldout = new Foldout { text = property.displayName, value = false, viewDataKey = typeof(PolygonGeometryPropertyDrawer).ToString() };
             root.Add(foldout);
-
-            foldout.Add(new PropertyField(property.FindPropertyRelative(nameof(PolygonGeometry.vertices))));
-            foldout.Add(new PropertyField(property.FindPropertyRelative(nameof(PolygonGeometry.m_Count))));
-            foldout.Add(new PropertyField(property.FindPropertyRelative(nameof(PolygonGeometry.m_Radius))));
-
-            var readonlyElement = new VisualElement { enabledSelf = false, viewDataKey = typeof(PolygonGeometryPropertyDrawer).ToString() + "_hidden1" };
-            foldout.Add(readonlyElement);
-            readonlyElement.Add(new PropertyField(property.FindPropertyRelative(nameof(PolygonGeometry.normals))));
-            readonlyElement.Add(new PropertyField(property.FindPropertyRelative(nameof(PolygonGeometry.m_Centroid))));
-
+            foldout.Add(PolygonGeometryInspector.CreateFields(property));
             return root;
         }
 

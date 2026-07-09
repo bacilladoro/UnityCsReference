@@ -255,7 +255,7 @@ namespace UnityEditor
             public static readonly GUIContent[] il2CppLTOModeNoneOption = SettingsContentNonSearchable.il2CppLTOModeNoneOption;
             public static readonly GUIContent scriptingMono2x = EditorGUIUtility.TrTextContent("Mono");
             public static readonly GUIContent scriptingIL2CPP = EditorGUIUtility.TrTextContent("IL2CPP");
-            public static readonly GUIContent scriptingCoreCLR = EditorGUIUtility.TrTextContent("CoreCLR (Internal only)");
+            public static readonly GUIContent scriptingCoreCLR = EditorGUIUtility.TrTextContent("CoreCLR (Experimental)");
             public static readonly GUIContent apiCompatibilityLevel = EditorGUIUtility.TrTextContent("Api Compatibility Level*");
             public static readonly GUIContent apiCompatibilityLevel_NET_4_6 = EditorGUIUtility.TrTextContent(".NET 4.x");
             public static readonly GUIContent apiCompatibilityLevel_NET_Standard_2_0 = EditorGUIUtility.TrTextContent(".NET Standard 2.0");
@@ -327,7 +327,7 @@ namespace UnityEditor
         }
 
         PlayerSettingsIconsEditor m_IconsEditor;
-        PlayerSettingsIconsEditor iconsEditor
+        internal PlayerSettingsIconsEditor iconsEditor
         {
             get
             {
@@ -595,10 +595,332 @@ namespace UnityEditor
 
         const string kSelectedPlatform = "PlayerSettings.SelectedPlatform";
 
+        internal interface IPlayerSettingsAccessor
+        {
+            GraphicsDeviceType[] GetGraphicsAPIs_Internal(BuildTarget platform);
+            void SetGraphicsAPIs_Internal(BuildTarget platform, GraphicsDeviceType[] apis, bool shouldSync);
+            bool GetUseDefaultGraphicsAPIs_Internal(BuildTarget platform);
+            void SetUseDefaultGraphicsAPIs_Internal(BuildTarget platform, bool automatic);
+            ColorGamut[] GetColorGamuts_Internal();
+            void SetColorGamuts_Internal(ColorGamut[] colorSpaces);
+            int GetDefaultShaderChunkSizeInMB_Internal();
+            void SetDefaultShaderChunkSizeInMB_Internal(int sizeInMegabytes);
+            int GetDefaultShaderChunkCount_Internal();
+            void SetDefaultShaderChunkCount_Internal(int chunkCount);
+            bool GetOverrideShaderChunkSettingsForPlatform_Internal(BuildTarget buildTarget);
+            void SetOverrideShaderChunkSettingsForPlatform_Internal(BuildTarget buildTarget, bool value);
+            int GetShaderChunkSizeInMBForPlatform_Internal(BuildTarget buildTarget);
+            void SetShaderChunkSizeInMBForPlatform_Internal(BuildTarget buildTarget, int sizeInMegabytes);
+            int GetShaderChunkCountForPlatform_Internal(BuildTarget buildTarget);
+            void SetShaderChunkCountForPlatform_Internal(BuildTarget buildTarget, int chunkCount);
+            void GetBatchingForPlatform_Internal(BuildTarget platform, out int staticBatching, out int dynamicBatching);
+            void SetBatchingForPlatform_Internal(BuildTarget platform, int staticBatching, int dynamicBatching);
+            bool GetGraphicsJobsForPlatform_Internal(BuildTarget platform);
+            void SetGraphicsJobsForPlatform_Internal(BuildTarget platform, bool graphicsJobs);
+            GraphicsJobMode GetGraphicsJobModeForPlatform_Internal(BuildTarget platform);
+            void SetGraphicsJobModeForPlatform_Internal(BuildTarget platform, GraphicsJobMode gfxJobMode);
+            void SetGraphicsThreadingModeForPlatform_Internal(BuildTarget platform, GfxThreadingMode gfxJobMode);
+            NormalMapEncoding GetNormalMapEncoding_Internal(string platform);
+            void SetNormalMapEncoding_Internal(string platform, NormalMapEncoding encoding);
+            bool GetLightmapStreamingEnabledForPlatformGroup_Internal(BuildTargetGroup platformGroup);
+            void SetLightmapStreamingEnabledForPlatformGroup_Internal(BuildTargetGroup platformGroup, bool lightmapStreamingEnabled);
+            int GetLightmapStreamingPriorityForPlatformGroup_Internal(BuildTargetGroup platformGroup);
+            void SetLightmapStreamingPriorityForPlatformGroup_Internal(BuildTargetGroup platformGroup, int lightmapStreamingPriority);
+            LightmapEncodingQuality GetLightmapEncodingQualityForPlatform_Internal(BuildTarget platform);
+            void SetLightmapEncodingQualityForPlatform_Internal(BuildTarget platform, LightmapEncodingQuality encodingQuality);
+            HDRCubemapEncodingQuality GetHDRCubemapEncodingQualityForPlatform_Internal(BuildTarget platform);
+            void SetHDRCubemapEncodingQualityForPlatform_Internal(BuildTarget platform, HDRCubemapEncodingQuality encodingQuality);
+            bool GetLoadStoreDebugModeEnabledForPlatformGroup_Internal(BuildTargetGroup platformGroup);
+            void SetLoadStoreDebugModeEnabledForPlatformGroup_Internal(BuildTargetGroup platformGroup, bool loadStoreDebugModeEnabled);
+            bool GetLoadStoreDebugModeEditorOnlyForPlatformGroup_Internal(BuildTargetGroup platformGroup);
+            void SetLoadStoreDebugModeEditorOnlyForPlatformGroup_Internal(BuildTargetGroup platformGroup, bool loadStoreDebugModeEnabled);
+            bool HasAnyNetFXCompatibilityLevel();
+            ScriptingImplementation GetScriptingBackend_Internal(string buildTargetGroupName);
+            string GetTemplateCustomValue_Internal(string name);
+            void SetTemplateCustomValue_Internal(string name, string value);
+            void SetTemplateCustomKeys_Internal(string[] templateCustomKeys);
+
+            bool GetMobileMTRenderingInternal_Instance(string buildTargetName);
+            void SetMobileMTRenderingInternal_Instance(string buildTargetName, bool enable);
+
+            GraphicsDeviceType[] GetPlatformAutomaticGraphicsAPIsList(BuildTarget platform);
+
+            // iOS-specific settings, grouped to mirror the PlayerSettings.iOS.* API shape.
+            IPlayerSettingsiOSAccessor iOS { get; }
+        }
+
+        // iOS facet of IPlayerSettingsAccessor. Same methods as PlayerSettings.iOS.*_Internal,
+        // but with the settings instance implied by the accessor: instance.iOS.Foo_Internal(args)
+        // instead of PlayerSettings.iOS.Foo_Internal(instance, args).
+        internal interface IPlayerSettingsiOSAccessor
+        {
+            string[] GetAssetBundleVariantsWithDeviceRequirements_Internal();
+            iOSDeviceRequirementGroup GetDeviceRequirementsForAssetBundleVariant_Internal(string name);
+            iOSDeviceRequirementGroup AddDeviceRequirementsForAssetBundleVariant_Internal(string name);
+        }
+
+        private class PlayerSettingsAccessor : IPlayerSettingsAccessor, IPlayerSettingsiOSAccessor
+        {
+            PlayerSettings m_PlayerSettings;
+
+            public PlayerSettingsAccessor(PlayerSettings playerSettings)
+            {
+                m_PlayerSettings = playerSettings;
+            }
+
+            public GraphicsDeviceType[] GetGraphicsAPIs_Internal(BuildTarget platform)
+            {
+                return m_PlayerSettings.GetGraphicsAPIs_Internal(platform);
+            }
+            public void SetGraphicsAPIs_Internal(BuildTarget platform, GraphicsDeviceType[] apis, bool shouldSync)
+            {
+                m_PlayerSettings.SetGraphicsAPIs_Internal(platform, apis, shouldSync);
+            }
+
+            public bool GetUseDefaultGraphicsAPIs_Internal(BuildTarget platform)
+            {
+                return m_PlayerSettings.GetUseDefaultGraphicsAPIs_Internal(platform);
+            }
+
+            public void SetUseDefaultGraphicsAPIs_Internal(BuildTarget platform, bool automatic)
+            {
+                m_PlayerSettings.SetUseDefaultGraphicsAPIs_Internal(platform, automatic);
+            }
+
+            public ColorGamut[] GetColorGamuts_Internal()
+            {
+                return m_PlayerSettings.GetColorGamuts_Internal();
+            }
+
+            public void SetColorGamuts_Internal(ColorGamut[] colorSpaces)
+            {
+                m_PlayerSettings.SetColorGamuts_Internal(colorSpaces);
+            }
+
+            public int GetDefaultShaderChunkSizeInMB_Internal()
+            {
+                return m_PlayerSettings.GetDefaultShaderChunkSizeInMB_Internal();
+            }
+
+            public void SetDefaultShaderChunkSizeInMB_Internal(int sizeInMegabytes)
+            {
+                m_PlayerSettings.SetDefaultShaderChunkSizeInMB_Internal(sizeInMegabytes);
+            }
+
+            public int GetDefaultShaderChunkCount_Internal()
+            {
+                return m_PlayerSettings.GetDefaultShaderChunkCount_Internal();
+            }
+
+            public void SetDefaultShaderChunkCount_Internal(int chunkCount)
+            {
+                m_PlayerSettings.SetDefaultShaderChunkCount_Internal(chunkCount);
+            }
+
+            public bool GetOverrideShaderChunkSettingsForPlatform_Internal(BuildTarget buildTarget)
+            {
+                return m_PlayerSettings.GetOverrideShaderChunkSettingsForPlatform_Internal(buildTarget);
+            }
+
+            public void SetOverrideShaderChunkSettingsForPlatform_Internal(BuildTarget buildTarget, bool value)
+            {
+                m_PlayerSettings.SetOverrideShaderChunkSettingsForPlatform_Internal(buildTarget, value);
+            }
+
+            public int GetShaderChunkSizeInMBForPlatform_Internal(BuildTarget buildTarget)
+            {
+                return m_PlayerSettings.GetShaderChunkSizeInMBForPlatform_Internal(buildTarget);
+            }
+
+            public void SetShaderChunkSizeInMBForPlatform_Internal(BuildTarget buildTarget, int sizeInMegabytes)
+            {
+                m_PlayerSettings.SetShaderChunkSizeInMBForPlatform_Internal(buildTarget, sizeInMegabytes);
+            }
+
+            public int GetShaderChunkCountForPlatform_Internal(BuildTarget buildTarget)
+            {
+                return m_PlayerSettings.GetShaderChunkCountForPlatform_Internal(buildTarget);
+            }
+
+            public void SetShaderChunkCountForPlatform_Internal(BuildTarget buildTarget, int chunkCount)
+            {
+                m_PlayerSettings.SetShaderChunkCountForPlatform_Internal(buildTarget, chunkCount);
+            }
+
+            public void GetBatchingForPlatform_Internal(BuildTarget platform, out int staticBatching, out int dynamicBatching)
+            {
+                m_PlayerSettings.GetBatchingForPlatform_Internal(platform, out staticBatching, out dynamicBatching);
+            }
+
+            public void SetBatchingForPlatform_Internal(BuildTarget platform, int staticBatching, int dynamicBatching)
+            {
+                m_PlayerSettings.SetBatchingForPlatform_Internal(platform, staticBatching, dynamicBatching);
+            }
+
+            public bool GetGraphicsJobsForPlatform_Internal(BuildTarget platform)
+            {
+                return m_PlayerSettings.GetGraphicsJobsForPlatform_Internal(platform);
+            }
+
+            public void SetGraphicsJobsForPlatform_Internal(BuildTarget platform, bool graphicsJobs)
+            {
+                m_PlayerSettings.SetGraphicsJobsForPlatform_Internal(platform, graphicsJobs);
+            }
+
+            public GraphicsJobMode GetGraphicsJobModeForPlatform_Internal(BuildTarget platform)
+            {
+                return m_PlayerSettings.GetGraphicsJobModeForPlatform_Internal(platform);
+            }
+
+            public void SetGraphicsJobModeForPlatform_Internal(BuildTarget platform, GraphicsJobMode gfxJobMode)
+            {
+                m_PlayerSettings.SetGraphicsJobModeForPlatform_Internal(platform, gfxJobMode);
+            }
+
+            public void SetGraphicsThreadingModeForPlatform_Internal(BuildTarget platform, GfxThreadingMode gfxJobMode)
+            {
+                m_PlayerSettings.SetGraphicsThreadingModeForPlatform_Internal(platform, gfxJobMode);
+            }
+
+            public NormalMapEncoding GetNormalMapEncoding_Internal(string platform)
+            {
+                return m_PlayerSettings.GetNormalMapEncoding_Internal(platform);
+            }
+
+            public void SetNormalMapEncoding_Internal(string platform, NormalMapEncoding encoding)
+            {
+                m_PlayerSettings.SetNormalMapEncoding_Internal(platform, encoding);
+            }
+
+            public bool GetLightmapStreamingEnabledForPlatformGroup_Internal(BuildTargetGroup platformGroup)
+            {
+                return m_PlayerSettings.GetLightmapStreamingEnabledForPlatformGroup_Internal(platformGroup);
+            }
+
+            public void SetLightmapStreamingEnabledForPlatformGroup_Internal(BuildTargetGroup platformGroup, bool lightmapStreamingEnabled)
+            {
+                m_PlayerSettings.SetLightmapStreamingEnabledForPlatformGroup_Internal(platformGroup, lightmapStreamingEnabled);
+            }
+
+            public int GetLightmapStreamingPriorityForPlatformGroup_Internal(BuildTargetGroup platformGroup)
+            {
+                return m_PlayerSettings.GetLightmapStreamingPriorityForPlatformGroup_Internal(platformGroup);
+            }
+
+            public void SetLightmapStreamingPriorityForPlatformGroup_Internal(BuildTargetGroup platformGroup, int lightmapStreamingPriority)
+            {
+                m_PlayerSettings.SetLightmapStreamingPriorityForPlatformGroup_Internal(platformGroup, lightmapStreamingPriority);
+            }
+
+            public LightmapEncodingQuality GetLightmapEncodingQualityForPlatform_Internal(BuildTarget platform)
+            {
+                return m_PlayerSettings.GetLightmapEncodingQualityForPlatform_Internal(platform);
+            }
+
+            public void SetLightmapEncodingQualityForPlatform_Internal(BuildTarget platform, LightmapEncodingQuality encodingQuality)
+            {
+                m_PlayerSettings.SetLightmapEncodingQualityForPlatform_Internal(platform, encodingQuality);
+            }
+
+            public HDRCubemapEncodingQuality GetHDRCubemapEncodingQualityForPlatform_Internal(BuildTarget platform)
+            {
+                return m_PlayerSettings.GetHDRCubemapEncodingQualityForPlatform_Internal(platform);
+            }
+
+            public void SetHDRCubemapEncodingQualityForPlatform_Internal(BuildTarget platform, HDRCubemapEncodingQuality encodingQuality)
+            {
+                m_PlayerSettings.SetHDRCubemapEncodingQualityForPlatform_Internal(platform, encodingQuality);
+            }
+
+            public bool GetLoadStoreDebugModeEnabledForPlatformGroup_Internal(BuildTargetGroup platformGroup)
+            {
+                return m_PlayerSettings.GetLoadStoreDebugModeEnabledForPlatformGroup_Internal(platformGroup);
+            }
+
+            public void SetLoadStoreDebugModeEnabledForPlatformGroup_Internal(BuildTargetGroup platformGroup, bool loadStoreDebugModeEnabled)
+            {
+                m_PlayerSettings.SetLoadStoreDebugModeEnabledForPlatformGroup_Internal(platformGroup, loadStoreDebugModeEnabled);
+            }
+
+            public bool GetLoadStoreDebugModeEditorOnlyForPlatformGroup_Internal(BuildTargetGroup platformGroup)
+            {
+                return m_PlayerSettings.GetLoadStoreDebugModeEditorOnlyForPlatformGroup_Internal(platformGroup);
+            }
+
+            public void SetLoadStoreDebugModeEditorOnlyForPlatformGroup_Internal(BuildTargetGroup platformGroup, bool loadStoreDebugModeEnabled)
+            {
+                m_PlayerSettings.SetLoadStoreDebugModeEditorOnlyForPlatformGroup_Internal(platformGroup, loadStoreDebugModeEnabled);
+            }
+
+            public bool HasAnyNetFXCompatibilityLevel()
+            {
+                return m_PlayerSettings.HasAnyNetFXCompatibilityLevel();
+            }
+
+            public ScriptingImplementation GetScriptingBackend_Internal(string buildTargetGroupName)
+            {
+                return m_PlayerSettings.GetScriptingBackend_Internal(buildTargetGroupName);
+            }
+
+            public string GetTemplateCustomValue_Internal(string name)
+            {
+                return m_PlayerSettings.GetTemplateCustomValue_Internal(name);
+            }
+
+            public void SetTemplateCustomValue_Internal(string name, string value)
+            {
+                m_PlayerSettings.SetTemplateCustomValue_Internal(name, value);
+            }
+
+            public void SetTemplateCustomKeys_Internal(string[] templateCustomKeys)
+            {
+                m_PlayerSettings.SetTemplateCustomKeys_Internal(templateCustomKeys);
+            }
+
+            public bool GetMobileMTRenderingInternal_Instance(string buildTargetName)
+            {
+                return m_PlayerSettings.GetMobileMTRenderingInternal_Instance(buildTargetName);
+            }
+
+            public void SetMobileMTRenderingInternal_Instance(string buildTargetName, bool enable)
+            {
+                m_PlayerSettings.SetMobileMTRenderingInternal_Instance(buildTargetName, enable);
+            }
+
+            public GraphicsDeviceType[] GetPlatformAutomaticGraphicsAPIsList(BuildTarget platform)
+            {
+                return m_PlayerSettings.GetPlatformAutomaticGraphicsAPIsList(platform);
+            }
+
+            public IPlayerSettingsiOSAccessor iOS => this;
+
+            string[] IPlayerSettingsiOSAccessor.GetAssetBundleVariantsWithDeviceRequirements_Internal()
+            {
+                return PlayerSettings.iOS.GetAssetBundleVariantsWithDeviceRequirements_Internal(m_PlayerSettings);
+            }
+
+            iOSDeviceRequirementGroup IPlayerSettingsiOSAccessor.GetDeviceRequirementsForAssetBundleVariant_Internal(string name)
+            {
+                return PlayerSettings.iOS.GetDeviceRequirementsForAssetBundleVariant_Internal(m_PlayerSettings, name);
+            }
+
+            iOSDeviceRequirementGroup IPlayerSettingsiOSAccessor.AddDeviceRequirementsForAssetBundleVariant_Internal(string name)
+            {
+                return PlayerSettings.iOS.AddDeviceRequirementsForAssetBundleVariant_Internal(m_PlayerSettings, name);
+            }
+        }
+
+        protected virtual IPlayerSettingsAccessor CreateAccessor(UnityEngine.Object target)
+        {
+            return new PlayerSettingsAccessor(target as PlayerSettings);
+        }
+
         /// <summary>
         /// Current serialized object target as <see cref="PlayerSettings"/>.
         /// </summary>
-        PlayerSettings m_CurrentTarget;
+        IPlayerSettingsAccessor m_CurrentTarget;
+
+        internal IPlayerSettingsAccessor settingsAccessor => m_CurrentTarget;
 
         public SerializedProperty FindPropertyAssert(string name)
         {
@@ -616,7 +938,7 @@ namespace UnityEditor
             if (Preset.IsEditorTargetAPreset(target))
                 playerSettingsType = PlayerSettingsType.Preset;
             validPlatforms = BuildPlatforms.instance.GetValidPlatforms(true).ToArray();
-            m_CurrentTarget = target as PlayerSettings;
+            m_CurrentTarget = CreateAccessor(target);
 
             m_StripEngineCode               = FindPropertyAssert("stripEngineCode");
 
@@ -2390,51 +2712,51 @@ namespace UnityEditor
             GUILayout.Label(SettingsContent.shaderVariantLoadingTitle, EditorStyles.boldLabel);
 
             EditorGUI.BeginChangeCheck();
-            int defaultChunkSize = PlayerSettings.GetDefaultShaderChunkSizeInMB_Internal(m_CurrentTarget);
+            int defaultChunkSize = m_CurrentTarget.GetDefaultShaderChunkSizeInMB_Internal();
             int newDefaultChunkSize = EditorGUILayout.IntField(SettingsContent.defaultShaderChunkSize, defaultChunkSize);
             if (EditorGUI.EndChangeCheck() && newDefaultChunkSize > 0 && newDefaultChunkSize != defaultChunkSize)
             {
                 Undo.RecordObject(target, SettingsContent.undoChangedDefaultShaderChunkSizeString);
-                PlayerSettings.SetDefaultShaderChunkSizeInMB_Internal(m_CurrentTarget, newDefaultChunkSize);
+                m_CurrentTarget.SetDefaultShaderChunkSizeInMB_Internal(newDefaultChunkSize);
                 m_OnTrackSerializedObjectValueChanged?.Invoke(serializedObject);
             }
 
             EditorGUI.BeginChangeCheck();
-            int defaultChunkCount = PlayerSettings.GetDefaultShaderChunkCount_Internal(m_CurrentTarget);
+            int defaultChunkCount = m_CurrentTarget.GetDefaultShaderChunkCount_Internal();
             int newDefaultChunkCount = EditorGUILayout.IntField(SettingsContent.defaultShaderChunkCount, defaultChunkCount);
             if (EditorGUI.EndChangeCheck() && newDefaultChunkCount >= 0 && newDefaultChunkCount != defaultChunkCount)
             {
                 Undo.RecordObject(target, SettingsContent.undoChangedDefaultShaderChunkCountString);
-                PlayerSettings.SetDefaultShaderChunkCount_Internal(m_CurrentTarget, newDefaultChunkCount);
+                m_CurrentTarget.SetDefaultShaderChunkCount_Internal(newDefaultChunkCount);
                 m_OnTrackSerializedObjectValueChanged?.Invoke(serializedObject);
             }
 
-            bool oldOverride = PlayerSettings.GetOverrideShaderChunkSettingsForPlatform_Internal(m_CurrentTarget, platform.defaultTarget);
+            bool oldOverride = m_CurrentTarget.GetOverrideShaderChunkSettingsForPlatform_Internal(platform.defaultTarget);
             bool newOverride = EditorGUILayout.Toggle(SettingsContentNonSearchable.overrideDefaultChunkSettings, oldOverride);
             if (oldOverride != newOverride)
             {
-                PlayerSettings.SetOverrideShaderChunkSettingsForPlatform_Internal(m_CurrentTarget, platform.defaultTarget, newOverride);
+                m_CurrentTarget.SetOverrideShaderChunkSettingsForPlatform_Internal(platform.defaultTarget, newOverride);
                 m_OnTrackSerializedObjectValueChanged?.Invoke(serializedObject);
             }
 
             if (newOverride)
             {
-                int currentChunkSize = PlayerSettings.GetShaderChunkSizeInMBForPlatform_Internal(m_CurrentTarget, platform.defaultTarget);
+                int currentChunkSize = m_CurrentTarget.GetShaderChunkSizeInMBForPlatform_Internal(platform.defaultTarget);
                 int newChunkSize = EditorGUILayout.IntField(SettingsContent.platformShaderChunkSize, currentChunkSize);
                 if (EditorGUI.EndChangeCheck() && newChunkSize > 0 && newChunkSize != currentChunkSize)
                 {
                     Undo.RecordObject(target, SettingsContent.undoChangedPlatformShaderChunkSizeString);
-                    PlayerSettings.SetShaderChunkSizeInMBForPlatform_Internal(m_CurrentTarget, platform.defaultTarget, newChunkSize);
+                    m_CurrentTarget.SetShaderChunkSizeInMBForPlatform_Internal(platform.defaultTarget, newChunkSize);
                     m_OnTrackSerializedObjectValueChanged?.Invoke(serializedObject);
                 }
 
                 EditorGUI.BeginChangeCheck();
-                int currentChunkCount = PlayerSettings.GetShaderChunkCountForPlatform_Internal(m_CurrentTarget, platform.defaultTarget);
+                int currentChunkCount = m_CurrentTarget.GetShaderChunkCountForPlatform_Internal(platform.defaultTarget);
                 int newChunkCount = EditorGUILayout.IntField(SettingsContent.platformShaderChunkCount, currentChunkCount);
                 if (EditorGUI.EndChangeCheck() && newChunkCount >= 0 && newChunkCount != currentChunkCount)
                 {
                     Undo.RecordObject(target, SettingsContent.undoChangedPlatformShaderChunkCountString);
-                    PlayerSettings.SetShaderChunkCountForPlatform_Internal(m_CurrentTarget, platform.defaultTarget, newChunkCount);
+                    m_CurrentTarget.SetShaderChunkCountForPlatform_Internal(platform.defaultTarget, newChunkCount);
                     m_OnTrackSerializedObjectValueChanged?.Invoke(serializedObject);
                 }
             }
@@ -2457,6 +2779,15 @@ namespace UnityEditor
                     if (m_ActiveColorSpace.enumValueIndex != selectedValue && EditorUtility.DisplayDialog("Changing Color Space", SettingsContentNonSearchable.changeColorSpaceString, $"Change to {(ColorSpace)m_ActiveColorSpace.enumValueIndex}", "Cancel"))
                     {
                         serializedObject.ApplyModifiedProperties();
+                        // Drive the color space switch synchronously on the global manager, mirroring how
+                        // virtual texturing applies its change on GetPlayerSettings(). For the global player
+                        // settings the edit target IS the global manager, so ApplyModifiedProperties already
+                        // switched it and this is a no-op. For an active build profile override the edit target
+                        // is the BuildProfilePlayerSettings subasset, so without this the switch would be deferred
+                        // to the AssetDatabase postprocess on the profile reimport, leaving the editor rendering
+                        // in the wrong color space until it repaints (a transient flicker, or a stuck dark editor
+                        // depending on platform).
+                        PlayerSettings.colorSpace = (ColorSpace)m_ActiveColorSpace.enumValueIndex;
                     }
                     else m_ActiveColorSpace.enumValueIndex = selectedValue;
                     GUIUtility.ExitGUI(); // Fixes case 690421
@@ -2518,12 +2849,12 @@ namespace UnityEditor
                     {
                         staticBatchingSupported = settingsExtension.SupportsStaticBatching();
                     }
-                    PlayerSettings.GetBatchingForPlatform_Internal(m_CurrentTarget, platform.defaultTarget, out staticBatching, out dynamicBatching);
+                    m_CurrentTarget.GetBatchingForPlatform_Internal(platform.defaultTarget, out staticBatching, out dynamicBatching);
 
                     if (staticBatchingSupported == false && staticBatching == 1)
                     {
                         staticBatching = 0;
-                        PlayerSettings.SetBatchingForPlatform_Internal(m_CurrentTarget, platform.defaultTarget, staticBatching, dynamicBatching);
+                        m_CurrentTarget.SetBatchingForPlatform_Internal(platform.defaultTarget, staticBatching, dynamicBatching);
                         m_OnTrackSerializedObjectValueChanged?.Invoke(serializedObject);
                     }
 
@@ -2548,7 +2879,7 @@ namespace UnityEditor
                     if (EditorGUI.EndChangeCheck())
                     {
                         Undo.RecordObject(target, SettingsContent.undoChangedBatchingString);
-                        PlayerSettings.SetBatchingForPlatform_Internal(m_CurrentTarget, platform.defaultTarget, staticBatching, dynamicBatching);
+                        m_CurrentTarget.SetBatchingForPlatform_Internal(platform.defaultTarget, staticBatching, dynamicBatching);
                         m_OnTrackSerializedObjectValueChanged?.Invoke(serializedObject);
                     }
                 }
@@ -2657,7 +2988,7 @@ namespace UnityEditor
             }
 
             bool graphicsJobsOptionEnabled = true;
-            bool graphicsJobs = PlayerSettings.GetGraphicsJobsForPlatform_Internal(m_CurrentTarget,
+            bool graphicsJobs = m_CurrentTarget.GetGraphicsJobsForPlatform_Internal(
                 platform.namedBuildTarget.ToBuildTargetGroup() == BuildTargetGroup.Standalone ? EditorUserBuildSettings.selectedStandaloneTarget : platform.defaultTarget);
             bool newGraphicsJobs = graphicsJobs;
 
@@ -2676,13 +3007,13 @@ namespace UnityEditor
                     newGfxJobMode = GraphicsJobMode.Split;
                     if (graphicsJobs == false)
                     {
-                        PlayerSettings.SetGraphicsJobsForPlatform_Internal(m_CurrentTarget, platform.defaultTarget, true);
+                        m_CurrentTarget.SetGraphicsJobsForPlatform_Internal(platform.defaultTarget, true);
                         graphicsJobs = true;
                         newGraphicsJobs = true;
                     }
                 }
-                PlayerSettings.SetGraphicsJobModeForPlatform_Internal(m_CurrentTarget, platform.defaultTarget, newGfxJobMode);
-                PlayerSettings.SetGraphicsThreadingModeForPlatform_Internal(m_CurrentTarget, platform.defaultTarget, GfxThreadingMode.SplitJobs);
+                m_CurrentTarget.SetGraphicsJobModeForPlatform_Internal(platform.defaultTarget, newGfxJobMode);
+                m_CurrentTarget.SetGraphicsThreadingModeForPlatform_Internal(platform.defaultTarget, GfxThreadingMode.SplitJobs);
                 OnTargetObjectChangedDirectly();
             }
             else if (platform.namedBuildTarget == NamedBuildTarget.PS5)
@@ -2694,7 +3025,7 @@ namespace UnityEditor
                     graphicsJobsOptionEnabled = false;
                     if (graphicsJobs == false)
                     {
-                        PlayerSettings.SetGraphicsJobsForPlatform_Internal(m_CurrentTarget, platform.defaultTarget, true);
+                        m_CurrentTarget.SetGraphicsJobsForPlatform_Internal(platform.defaultTarget, true);
                         OnTargetObjectChangedDirectly();
                         graphicsJobs = true;
                         newGraphicsJobs = true;
@@ -2743,7 +3074,7 @@ namespace UnityEditor
                     if (newGraphicsJobs != graphicsJobs)
                     {
                         Undo.RecordObject(target, SettingsContent.undoChangedGraphicsJobsString);
-                        PlayerSettings.SetGraphicsJobsForPlatform_Internal(m_CurrentTarget,
+                        m_CurrentTarget.SetGraphicsJobsForPlatform_Internal(
                             platform.namedBuildTarget.ToBuildTargetGroup() == BuildTargetGroup.Standalone ? EditorUserBuildSettings.selectedStandaloneTarget : platform.defaultTarget, newGraphicsJobs);
 
                         OnTargetObjectChangedDirectly();
@@ -2768,7 +3099,7 @@ namespace UnityEditor
                 var checkGfxJobModeSupport = (Enum value) => { return settingsExtension != null ? settingsExtension.AdjustGfxJobMode((GraphicsJobMode)value) == (GraphicsJobMode)value : true; };
 
                 EditorGUI.BeginChangeCheck();
-                GraphicsJobMode currGfxJobMode = PlayerSettings.GetGraphicsJobModeForPlatform_Internal(m_CurrentTarget, platform.defaultTarget);
+                GraphicsJobMode currGfxJobMode = m_CurrentTarget.GetGraphicsJobModeForPlatform_Internal(platform.defaultTarget);
                 GraphicsJobMode newGfxJobMode = (GraphicsJobMode)EditorGUILayout.EnumPopup(SettingsContent.graphicsJobsMode, currGfxJobMode, checkGfxJobModeSupport, false);
 
                 if (EditorGUI.EndChangeCheck() && (newGfxJobMode != currGfxJobMode))
@@ -2786,14 +3117,14 @@ namespace UnityEditor
                 // Finally we apply the change of gfx job mode
                 if (newGfxJobMode != currGfxJobMode)
                 {
-                    PlayerSettings.SetGraphicsJobModeForPlatform_Internal(m_CurrentTarget, platform.defaultTarget, newGfxJobMode);
+                    m_CurrentTarget.SetGraphicsJobModeForPlatform_Internal(platform.defaultTarget, newGfxJobMode);
 
                     if(newGfxJobMode == GraphicsJobMode.Native)
-                        PlayerSettings.SetGraphicsThreadingModeForPlatform_Internal(m_CurrentTarget, platform.defaultTarget, GfxThreadingMode.ClientWorkerNativeJobs);
+                        m_CurrentTarget.SetGraphicsThreadingModeForPlatform_Internal(platform.defaultTarget, GfxThreadingMode.ClientWorkerNativeJobs);
                     else if (newGfxJobMode == GraphicsJobMode.Legacy)
-                        PlayerSettings.SetGraphicsThreadingModeForPlatform_Internal(m_CurrentTarget, platform.defaultTarget, GfxThreadingMode.ClientWorkerJobs);
+                        m_CurrentTarget.SetGraphicsThreadingModeForPlatform_Internal(platform.defaultTarget, GfxThreadingMode.ClientWorkerJobs);
                     else if (newGfxJobMode == GraphicsJobMode.Split)
-                        PlayerSettings.SetGraphicsThreadingModeForPlatform_Internal(m_CurrentTarget, platform.defaultTarget, GfxThreadingMode.SplitJobs);
+                        m_CurrentTarget.SetGraphicsThreadingModeForPlatform_Internal(platform.defaultTarget, GfxThreadingMode.SplitJobs);
 
                     OnTargetObjectChangedDirectly();
                     if (IsActivePlayerSettingsEditor() && CheckApplyGraphicsJobsModeChange(platform.defaultTarget))
@@ -2817,12 +3148,12 @@ namespace UnityEditor
                 using (new EditorGUI.DisabledScope(EditorApplication.isPlaying || Lightmapping.isRunning))
                 {
                     EditorGUI.BeginChangeCheck();
-                    var oldEncoding = PlayerSettings.GetNormalMapEncoding_Internal(m_CurrentTarget, platform.name);
+                    var oldEncoding = m_CurrentTarget.GetNormalMapEncoding_Internal(platform.name);
                     NormalMapEncoding[] encodingValues = { NormalMapEncoding.XYZ, NormalMapEncoding.DXT5nm };
                     var newEncoding = BuildEnumPopup(SettingsContent.normalMapEncodingLabel, oldEncoding, encodingValues, SettingsContent.normalMapEncodingNames);
                     if (EditorGUI.EndChangeCheck() && newEncoding != oldEncoding)
                     {
-                        PlayerSettings.SetNormalMapEncoding_Internal(m_CurrentTarget, platform.name, newEncoding);
+                        m_CurrentTarget.SetNormalMapEncoding_Internal(platform.name, newEncoding);
                         m_OnTrackSerializedObjectValueChanged?.Invoke(serializedObject);
                         GUIUtility.ExitGUI();
                     }
@@ -3510,9 +3841,7 @@ namespace UnityEditor
                         {
                             var currentAPICompatibilityLevel = GetApiCompatibilityLevelForTarget(platform.namedBuildTarget);
                             ApiCompatibilityLevel[] availableCompatibilityLevels;
-#pragma warning disable CS0618
                             if (currentBackend == ScriptingImplementation.CoreCLR)
-#pragma warning restore CS0618
                             {
                                 // CORECLR_FIXME - Add NET_10 when we are ready to let code compiled against net10
                                 availableCompatibilityLevels = [ApiCompatibilityLevel.NET_Standard /*, ApiCompatibilityLevel.NET_10 */];
@@ -4404,7 +4733,6 @@ namespace UnityEditor
                     return SettingsContent.scriptingMono2x;
                 case ScriptingImplementation.IL2CPP:
                     return SettingsContent.scriptingIL2CPP;
-#pragma warning disable 618
                 case ScriptingImplementation.CoreCLR:
                     return SettingsContent.scriptingCoreCLR;
                 default:
@@ -4420,7 +4748,10 @@ namespace UnityEditor
                 {
                     { ApiCompatibilityLevel.NET_Unity_4_8, SettingsContent.apiCompatibilityLevel_NET_FW_Unity },
                     { ApiCompatibilityLevel.NET_Standard, SettingsContent.apiCompatibilityLevel_NET_Standard },
+                    // ApiCompatibilityLevel.NET is intentionally Obsolete/hidden for now, but still needs a display name here.
+#pragma warning disable 618
                     { ApiCompatibilityLevel.NET, SettingsContent.apiCompatibilityLevel_NET_10 },
+#pragma warning restore 618
                 };
             }
 

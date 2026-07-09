@@ -7,6 +7,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine.Bindings;
+using Unity.Scripting.LifecycleManagement;
 
 namespace Unity.Properties.Internal
 {
@@ -21,6 +22,7 @@ namespace Unity.Properties.Internal
     [VisibleToOtherModules("UnityEngine.UIElementsModule")]
     static class PropertyBagLazyInitialization
     {
+        [NoAutoStaticsCleanup]
         static readonly Dictionary<Type, Func<IPropertyBag>> s_LazyPropertyBagRegistrations = new Dictionary<Type, Func<IPropertyBag>>(84);
 
         public static void AddLazyRegistration(Type type, Func<IPropertyBag> registration)
@@ -50,19 +52,23 @@ namespace Unity.Properties.Internal
     /// <remarks>
     /// This storage is used to resolve <see cref="IPropertyBag{TContainer}"/> types by internal properties algorithms.
     /// </remarks>
-    static class PropertyBagStore
+    static partial class PropertyBagStore
     {
-        internal struct TypedStore<TContainer>
+        internal partial struct TypedStore<TContainer>
         {
+            [AutoStaticsCleanupOnCodeReload]
             public static IPropertyBag<TContainer> PropertyBag;
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         static readonly ConcurrentDictionary<Type, IPropertyBag> s_PropertyBags = new ConcurrentDictionary<Type, IPropertyBag>();
+        [AutoStaticsCleanupOnCodeReload]
         static readonly List<Type> s_RegisteredTypes = new List<Type>();
 
         /// <summary>
         /// Instance of the dynamic property bag provider. This is used to allow an external assembly to generate property bags for us.
         /// </summary>
+        [NoAutoStaticsCleanup]
         static ReflectedPropertyBagProvider s_PropertyBagProvider = null;
 
         // The reflected property bag provider is created inside of a job to lessen the impact on domain reload.

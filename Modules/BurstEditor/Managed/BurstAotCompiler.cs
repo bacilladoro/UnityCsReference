@@ -180,10 +180,14 @@ namespace Unity.Burst.Editor
             {
                 settings.targetPlatform = BurstAotCompiler.GetTargetPlatformAndDefaultCpu(settings.summary.platform,
                     out settings.targetCpus, settings.aotSettingsForTarget);
-                settings.scriptingBackend = PlayerSettings.GetScriptingBackend(NamedBuildTarget.FromBuildTargetGroup(BuildPipeline.GetBuildTargetGroup(settings.summary.platform)));
+
+                var buildTarget = NamedBuildTarget.FromBuildTargetGroup(BuildPipeline.GetBuildTargetGroup(settings.summary.platform));
+                settings.scriptingBackend = PlayerSettings.GetScriptingBackend(buildTarget);
+                settings.apiCompatibilityLevel = PlayerSettings.GetApiCompatibilityLevel(buildTarget);
+
                 settings.combinations =
                     BurstAotCompiler.CollectCombinations(settings.targetPlatform, settings.targetCpus,
-                        settings.summary, settings.scriptingBackend);
+                        settings.summary, settings.scriptingBackend, settings.apiCompatibilityLevel);
                 if (settings.targetPlatform == TargetPlatform.iOS || settings.targetPlatform == TargetPlatform.iOSSimulator)
                 {
                     settings.extraOptions = new List<string>();
@@ -298,6 +302,7 @@ namespace Unity.Burst.Editor
             public TargetCpus targetCpus;
             public List<BurstAotCompiler.BurstOutputCombination> combinations;
             public ScriptingImplementation scriptingBackend;
+            public ApiCompatibilityLevel apiCompatibilityLevel;
             public string productName;
             public bool isSupported;
             public List<string> extraOptions;
@@ -344,6 +349,7 @@ namespace Unity.Burst.Editor
                 hc.Append(symbolDefinesHash.u64_1);
 
                 hc.Append((int)scriptingBackend);
+                hc.Append((int)apiCompatibilityLevel);
                 hc.Append(productName);
 
                 return hc;
@@ -963,16 +969,17 @@ static void BurstSetup()
         /// <param name="targetCpus">The target CPUs (e.g X64_SSE4)</param>
         /// <param name="report">Error reporting</param>
         /// <returns>The list of CPU combinations</returns>
-        internal static List<BurstOutputCombination> CollectCombinations(TargetPlatform targetPlatform, TargetCpus targetCpus, BuildSummary summary, ScriptingImplementation scriptingImplementation)
+        internal static List<BurstOutputCombination> CollectCombinations(TargetPlatform targetPlatform, TargetCpus targetCpus, BuildSummary summary, ScriptingImplementation scriptingImplementation, ApiCompatibilityLevel apiCompatibilityLevel)
         {
             var combinations = new List<BurstOutputCombination>();
 
-#pragma warning disable CS0618 // Type or member is obsolete
-            if (scriptingImplementation == ScriptingImplementation.CoreCLR)
+#pragma warning disable CS0618
+            if (scriptingImplementation == ScriptingImplementation.CoreCLR
+                || (scriptingImplementation == ScriptingImplementation.IL2CPP && apiCompatibilityLevel == ApiCompatibilityLevel.NET))
+#pragma warning restore CS0618
             {
                 return combinations;
             }
-#pragma warning restore CS0618 // Type or member is obsolete
 
             if (targetPlatform == TargetPlatform.macOS)
             {
@@ -1541,46 +1548,49 @@ static void BurstSetup()
             return "x64";
         }
 
-        private static string GetEmbeddedLinuxTargetArchitecture()
+        private static string MapEmbeddedArchitectureToString(int value)
         {
-            var flags = System.Reflection.BindingFlags.Public |
-                        System.Reflection.BindingFlags.Static |
-                        System.Reflection.BindingFlags.FlattenHierarchy;
-            var property = typeof(EditorUserBuildSettings).GetProperty("selectedEmbeddedLinuxArchitecture", flags);
-            if (null == property)
-            {
-                return "NOT_FOUND";
-            }
-            var value = (int)property.GetValue(null, null);
             switch (value)
             {
-                case /*UnityEditor.EmbeddedLinuxArchitecture.Arm64*/ 0: return "Arm64";
-                case /*UnityEditor.EmbeddedLinuxArchitecture.Arm32*/ 1: return "Arm32";
-                case /*UnityEditor.EmbeddedLinuxArchitecture.X64*/   2: return "X64";
-                case /*UnityEditor.EmbeddedLinuxArchitecture.X86*/   3: return "X86";
+                case /*UnityEditor.EmbeddedArchitecture.Arm64*/ 0: return "Arm64";
+                case /*UnityEditor.EmbeddedArchitecture.Arm32*/ 1: return "Arm32";
+                case /*UnityEditor.EmbeddedArchitecture.X64*/   2: return "X64";
+                case /*UnityEditor.EmbeddedArchitecture.X86*/   3: return "X86";
                 default: return $"UNKNOWN_{value}";
             }
         }
 
-        private static string GetQNXTargetArchitecture()
+        private static string GetArchitectureFromPlatformSettings(string assemblyName, string settingsTypeFullName)
         {
             var flags = System.Reflection.BindingFlags.Public |
                         System.Reflection.BindingFlags.Static |
                         System.Reflection.BindingFlags.FlattenHierarchy;
-            var property = typeof(EditorUserBuildSettings).GetProperty("selectedQnxArchitecture", flags);
-            if (null == property)
+#pragma warning disable UA2001
+            var assm = UnityEngine.Assemblies.CurrentAssemblies.GetLoadedAssemblies()
+                .SingleOrDefault(assembly => assembly.GetName().Name == assemblyName);
+#pragma warning restore UA2001
+            var settingsType = assm?.GetType(settingsTypeFullName);
+            var property = settingsType?.GetProperty("architecture", flags);
+            if (property == null)
             {
                 return "NOT_FOUND";
             }
             var value = (int)property.GetValue(null, null);
-            switch (value)
-            {
-                case /*UnityEditor.QNXArchitecture.Arm64*/ 0: return "Arm64";
-                case /*UnityEditor.QNXArchitecture.Arm32*/ 1: return "Arm32";
-                case /*UnityEditor.QNXArchitecture.X64*/   2: return "X64";
-                case /*UnityEditor.QNXArchitecture.X86*/   3: return "X86";
-                default: return $"UNKNOWN_{value}";
-            }
+            return MapEmbeddedArchitectureToString(value);
+        }
+
+        private static string GetEmbeddedLinuxTargetArchitecture()
+        {
+            return GetArchitectureFromPlatformSettings(
+                "UnityEditor.EmbeddedLinux.Extensions",
+                "UnityEditor.EmbeddedLinux.Settings");
+        }
+
+        private static string GetQNXTargetArchitecture()
+        {
+            return GetArchitectureFromPlatformSettings(
+                "UnityEditor.QNX.Extensions",
+                "UnityEditor.QNX.Settings");
         }
 
         private static int GetVisionSdkVersion()

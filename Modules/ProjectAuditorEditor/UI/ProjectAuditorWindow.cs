@@ -82,18 +82,27 @@ namespace Unity.ProjectAuditor.Editor.UI
 
         static readonly string k_ReportAutoSaveFilename = "projectauditor-report-autosave.projectauditor";
 
-        [SerializeField] private Tab[] m_Tabs = GetDefaultTabs();
+        // The navigation tree shown in the view selection tree view.
+        // Rebuilt from code in OnEnable, so it doesn't need to be serialized.
+        private Page[] m_Pages = GetDefaultPages();
 
         AnalysisView activeView => m_ViewManager.GetActiveView();
-
-        [SerializeField] int m_ActiveTabIndex = 0;
 
         [SerializeField] TreeViewState m_ViewSelectionTreeState;
         ViewSelectionTreeView m_ViewSelectionTreeView;
 
         [SerializeField] bool m_IsNonAnalyzedViewSelected;
         [SerializeField] bool m_IsPendingAnalysisViewSelected;
-        [SerializeField] Tab m_SelectedNonAnalyzedTab;
+        [SerializeField] PageId m_SelectedNonAnalyzedPageId;
+
+        // True when the Home page (preferences / Start Analysis) is shown; otherwise the normal
+        // analysis panels are shown. Defaults to Home on open.
+        [SerializeField] bool m_ShowHomePage = true;
+
+        // The page currently shown, and the extra issue filter it applies to the active view. Both are
+        // derived from the page tree (built in code), so they're not serialized.
+        Page m_CurrentPage;
+        Func<ReportItem, bool> m_CurrentPageIssueFilter;
 
         Vector2 m_PreviousWindowSize;
 
@@ -139,68 +148,191 @@ namespace Unity.ProjectAuditor.Editor.UI
             }
         }
 
-        private static Tab[] GetDefaultTabs()
+        private static Page[] GetDefaultPages()
         {
-            Tab[] tabs = {
-                new Tab
-                {
-                    id = TabId.Summary, name = "Summary", categories = [IssueCategory.Metadata]
-                },
-                new Tab
-                {
-                    id = TabId.Code, name = "Code",
-                    categories =
-                    [
-                        IssueCategory.Code, IssueCategory.Assembly, IssueCategory.PrecompiledAssembly,
-                        IssueCategory.CodeCompilerMessage, IssueCategory.DomainReload, IssueCategory.ObsoleteAPI
-                    ]
-                },
-                new Tab
-                {
-                    id = TabId.Assets, name = "Assets",
-                    categories =
-                    [
-                        IssueCategory.AssetIssue, IssueCategory.Texture, IssueCategory.SpriteAtlas, IssueCategory.Mesh,
-                        IssueCategory.AudioClip, IssueCategory.AnimatorController, IssueCategory.AnimationClip,
-                        IssueCategory.Avatar, IssueCategory.AvatarMask
-                    ]
-                },
-                new Tab
-                {
-                    id = TabId.Shaders, name = "Shaders",
-                    categories =
-                    [
-                        IssueCategory.Shader, IssueCategory.ShaderVariant, /*IssueCategory.ComputeShaderVariant,*/
-                        IssueCategory.ShaderCompilerMessage, IssueCategory.Material
-                    ]
-                },
-                new Tab
-                {
-                    id = TabId.GameObjects, name = "Game Objects",
-                    categories = [IssueCategory.GameObject, IssueCategory.MeshCollider]
-                },
-                new Tab
-                {
-                    id = TabId.Settings, name = "Project",
-                    categories = [IssueCategory.ProjectSetting, IssueCategory.Package]
-                },
-                new Tab
-                {
-                    id = TabId.Build, name = "Build",
-                    categories = [IssueCategory.BuildFile, IssueCategory.BuildStep]
-                },
-            };
+            // A category-backed leaf page. Its display name matches the registered view's DisplayName.
+            Page Leaf(string name, IssueCategory category) =>
+                new Page { name = name, category = category };
 
-            return tabs;
+            Page[] pages =
+            [
+                new Page
+                {
+                    id = PageId.Home,
+                    name = "Home",
+                    isHome = true
+                },
+                new Page
+                {
+                    id = PageId.Optimization,
+                    name = "Optimization",
+                    category = IssueCategory.OptimizationSummary,
+                    children =
+                    [
+                        new Page
+                        {
+                            id = PageId.Code,
+                            name = "Code",
+                            category = IssueCategory.Code,
+                            children =
+                            [
+                                Leaf("Assemblies", IssueCategory.Assembly),
+                                Leaf("Precompiled Assemblies", IssueCategory.PrecompiledAssembly),
+                                Leaf("Compiler Messages", IssueCategory.CodeCompilerMessage),
+                                Leaf("Domain Reload", IssueCategory.DomainReload),
+                                Leaf("Obsolete API", IssueCategory.ObsoleteAPI),
+                            ]
+                        },
+                        new Page
+                        {
+                            id = PageId.Assets,
+                            name = "Assets",
+                            category = IssueCategory.AssetIssue,
+                            children =
+                            [
+                                Leaf("Textures", IssueCategory.Texture),
+                                Leaf("Sprite Atlases", IssueCategory.SpriteAtlas),
+                                Leaf("Meshes", IssueCategory.Mesh),
+                                Leaf("Audio Clips", IssueCategory.AudioClip),
+                                Leaf("Animator Controllers", IssueCategory.AnimatorController),
+                                Leaf("Animation Clips", IssueCategory.AnimationClip),
+                                Leaf("Avatars", IssueCategory.Avatar),
+                                Leaf("Avatar Masks", IssueCategory.AvatarMask),
+                            ]
+                        },
+                        new Page
+                        {
+                            id = PageId.Shaders,
+                            name = "Shaders",
+                            category = IssueCategory.Shader,
+                            children =
+                            [
+                                Leaf("Shader Variants", IssueCategory.ShaderVariant),
+                                /*Leaf("Compute Shader Variants", IssueCategory.ComputeShaderVariant),*/
+                                Leaf("Compiler Messages", IssueCategory.ShaderCompilerMessage),
+                                Leaf("Materials", IssueCategory.Material),
+                            ]
+                        },
+                        new Page
+                        {
+                            id = PageId.GameObjects,
+                            name = "Game Objects",
+                            category = IssueCategory.GameObject,
+                            children =
+                            [
+                                Leaf("Mesh Colliders", IssueCategory.MeshCollider),
+                            ]
+                        },
+                        new Page
+                        {
+                            id = PageId.ProjectSettings,
+                            name = "Project Settings",
+                            category = IssueCategory.ProjectSetting,
+                            children = [Leaf("Packages", IssueCategory.Package)]
+                        },
+                        new Page
+                        {
+                            id = PageId.Build,
+                            name = "Build",
+                            category = IssueCategory.BuildFile,
+                            children =
+                            [
+                                Leaf("Build Steps", IssueCategory.BuildStep),
+                            ]
+                        },
+                    ]
+                },
+                new Page
+                {
+                    id = PageId.Upgrade, name = "Upgrade",
+                    category = IssueCategory.UpgradeSummary,
+                    children =
+                    [
+                        new Page
+                        {
+                            id = PageId.Code,
+                            name = "Code",
+                            category = IssueCategory.Code
+                        },
+                        new Page
+                        {
+                            id = PageId.Assets,
+                            name = "Assets",
+                            category = IssueCategory.AssetIssue
+                        },
+                        new Page
+                        {
+                            id = PageId.GameObjects,
+                            name = "Game Objects",
+                            category = IssueCategory.GameObject
+                        },
+                        new Page
+                        {
+                            id = PageId.ProjectSettings,
+                            name = "Project Settings",
+                            category = IssueCategory.ProjectSetting
+                        },
+                    ]
+                },
+            ];
+
+            // Pages under Optimization show non-Upgrade issues; pages under Upgrade show only
+            // Upgrade-area issues. Applied to each group's whole subtree.
+            ApplyGroupFilter(pages, PageId.Optimization, issue => !HasUpgradeArea(issue));
+            ApplyGroupFilter(pages, PageId.Upgrade, HasUpgradeArea);
+
+            // Upgrade pages additionally offer a target-version selector in the Filters panel.
+            ApplyGroupDrawFilters(pages, PageId.Upgrade, DiagnosticView.DrawUpgradeTargetVersionFilter);
+
+            return pages;
+        }
+
+        // Sets issueFilter on the page with the given id and all of its descendants.
+        static void ApplyGroupFilter(Page[] pages, PageId groupId, Func<ReportItem, bool> filter)
+        {
+            var group = FindPage(pages, p => p.id == groupId);
+            if (group != null)
+                ForEachInSubtree(group, page => page.issueFilter = filter);
+        }
+
+        // Sets drawFilters on the page with the given id and all of its descendants.
+        static void ApplyGroupDrawFilters(Page[] pages, PageId groupId, Action<ViewStates> drawFilters)
+        {
+            var group = FindPage(pages, p => p.id == groupId);
+            if (group != null)
+                ForEachInSubtree(group, page => page.drawFilters = drawFilters);
+        }
+
+        static void ForEachInSubtree(Page page, Action<Page> action)
+        {
+            action(page);
+
+            if (page.children != null)
+            {
+                foreach (var child in page.children)
+                    ForEachInSubtree(child, action);
+            }
+        }
+
+        // True if the issue is flagged with the Upgrade area.
+        static bool HasUpgradeArea(ReportItem issue)
+        {
+            return issue.Id.IsValid() && (issue.Id.GetDescriptor().Areas & Areas.Upgrade) != 0;
         }
 
         public bool Match(ReportItem issue)
         {
             // return false if the issue does not match one of these criteria:
+            // - the current page's filter (e.g. the Optimization/Upgrade area split)
             // - assembly name, if applicable
             // - area
             // - is not muted, if enabled
             // - critical context, if enabled/applicable
+
+            // The selected page can restrict which of its category's issues are shown, letting the same
+            // view appear under more than one page with a different subset each.
+            if (m_CurrentPageIssueFilter != null && !m_CurrentPageIssueFilter(issue))
+                return false;
 
             var viewDesc = activeView.Desc;
             var matchAssembly = !viewDesc.ShowAssemblySelection ||
@@ -242,6 +374,11 @@ namespace Unity.ProjectAuditor.Editor.UI
             if (m_ProjectAuditor == null)
                 m_ProjectAuditor = new ProjectAuditor();
 
+            // Throw away old version, if restored from serialized window state (these code paths skip the version checking we get during Report.Load)
+            // e.g. after a domain reload, or from a previous editor session via the window layout.
+            if (m_Report != null && m_Report.ReportVersion != Report.k_CurrentVersion)
+                m_Report = null;
+
             if (m_Report != null && !m_Report.IsValid())
             {
                 IssueCategory[] categories = (IssueCategory[])Enum.GetValues(typeof(IssueCategory));
@@ -253,7 +390,7 @@ namespace Unity.ProjectAuditor.Editor.UI
 
             var currentState = m_AnalysisState;
             m_AnalysisState = AnalysisState.Initializing;
-            m_Tabs = GetDefaultTabs();
+            m_Pages = GetDefaultPages();
 
             AnalyticsReporter.EnableAnalytics();
 
@@ -275,7 +412,6 @@ namespace Unity.ProjectAuditor.Editor.UI
                 if (m_tryingFallback == false)
                 {
                     m_tryingFallback = true;
-                    m_ActiveTabIndex = 0;
                     m_AnalysisState = AnalysisState.Initialized;
 
                     TryLoadAutosavedReport();
@@ -297,25 +433,23 @@ namespace Unity.ProjectAuditor.Editor.UI
 
             if (initialize)
             {
-                // Get all supported categories
-                List<IssueCategory> supportedCategories = new List<IssueCategory>();
-                foreach (var tab in m_Tabs)
+                // Every category that has a page in the navigation tree needs a view. Collected in
+                // page-tree (display) order; the ViewManager keeps that order, so the first category
+                // (the Optimization summary) is the default active view. A category can appear under
+                // more than one page (e.g. Code under both Optimization and Upgrade), so deduplicate
+                // to avoid creating redundant view instances for the same category.
+                var supportedCategories = new List<IssueCategory>();
+                var seenCategories = new HashSet<IssueCategory>();
+                foreach (var page in m_Pages)
                 {
-                    supportedCategories.AddRange(GetTabCategories(tab));
+                    foreach (var category in page.AllCategories)
+                    {
+                        if (seenCategories.Add(category))
+                            supportedCategories.Add(category);
+                    }
                 }
 
-                var categories = new HashSet<IssueCategory>(supportedCategories);
-
-                // Get all the ViewDescriptors that match the supported categories, and sort them by MenuOrder
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
-                var viewDescriptors = ViewDescriptor.GetAll()
-                    .Where(descriptor => categories.Contains(descriptor.Category)).ToArray();
-#pragma warning restore UA2001
-                Array.Sort(viewDescriptors, (a, b) => a.MenuOrder.CompareTo(b.MenuOrder));
-
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
-                m_ViewManager = new ViewManager(viewDescriptors.Select(d => d.Category)); // view manager needs sorted categories
-#pragma warning restore UA2001
+                m_ViewManager = new ViewManager(supportedCategories);
             }
 
             m_ViewManager.OnActiveViewChanged += i =>
@@ -325,13 +459,13 @@ namespace Unity.ProjectAuditor.Editor.UI
                     (AnalyticsReporter.UIButton)viewDesc.AnalyticsEventId,
                     AnalyticsReporter.BeginAnalytic());
 
-                SyncTabOnViewChange(viewDesc.Category);
-
+                // Selecting any real analysis view means we are showing the normal panels, not the
+                // Home page.
+                m_ShowHomePage = false;
                 m_IsNonAnalyzedViewSelected = false;
                 m_IsPendingAnalysisViewSelected = false;
 
-                m_ViewSelectionTreeView.SelectItemByCategory(viewDesc.Category);
-
+                m_ViewSelectionTreeView?.SelectItemByCategory(viewDesc.Category);
                 m_ViewManager.GetView(i)?.MarkDirty();
 
                 Repaint();
@@ -356,12 +490,8 @@ namespace Unity.ProjectAuditor.Editor.UI
                 AnalyticsReporter.SendEventWithSelectionSummary(AnalyticsReporter.UIButton.Mute,
                     analytic, issues);
 
-                m_ViewManager.GetView(IssueCategory.Metadata)?.MarkDirty();
+                MarkSummaryViewsDirty();
                 m_Report.NeedsSaving = true;
-
-                var summary = m_ViewManager.GetView(IssueCategory.Metadata);
-                if (summary is SummaryView summaryView)
-                    summaryView.MarkDirty();
             };
 
             m_ViewManager.OnSelectedIssuesDisplayRequested = issues =>
@@ -371,19 +501,21 @@ namespace Unity.ProjectAuditor.Editor.UI
                 AnalyticsReporter.SendEventWithSelectionSummary(
                     AnalyticsReporter.UIButton.Unmute, analytic, issues);
 
-                m_ViewManager.GetView(IssueCategory.Metadata)?.MarkDirty();
+                MarkSummaryViewsDirty();
                 m_Report.NeedsSaving = true;
             };
 
             m_ViewManager.OnSelectedIssuesQuickFixRequested = issues =>
             {
-                m_ViewManager.GetView(IssueCategory.Metadata)?.MarkDirty();
+                MarkSummaryViewsDirty();
             };
 
             m_ViewManager.OnAnalysisRequested += category =>
             {
                 AuditCategories(ProjectAreaFlags.None, [category]);
-                OnSelectedNonAnalyzedTab(m_Tabs[m_ActiveTabIndex], false);
+                var page = FindPageForCategory(category);
+                if (page != null)
+                    OnSelectedNonAnalyzedPage(page, false);
                 GUIUtility.ExitGUI();
             };
 
@@ -395,54 +527,116 @@ namespace Unity.ProjectAuditor.Editor.UI
 
             m_ViewManager.Create(rules, m_ViewStates, null, this);
 
-            InitializeTabs(!initialize);
-
             InitializeViewSelection(!initialize);
         }
 
-        void InitializeTabs(bool reload)
+        // Finds the page with the given stable id anywhere in the navigation tree.
+        Page FindPage(PageId id)
         {
-            if (!reload)
-                m_ActiveTabIndex = 0;
-
-            foreach (var tab in m_Tabs)
-            {
-                RefreshTabCategories(tab, reload);
-            }
+            return FindPage(m_Pages, p => p.id == id);
         }
 
-        void RefreshTabCategories(Tab tab, bool reload)
+        // Finds the "tab" page (a direct child of a top-level page) whose subtree contains the category.
+        Page FindPageForCategory(IssueCategory category)
         {
-            if (!reload)
-                tab.currentCategoryIndex = 0;
-        }
-
-        void SyncTabOnViewChange(IssueCategory newCategory)
-        {
-            for (int tabIndex = 0; tabIndex < m_Tabs.Length; ++tabIndex)
+            foreach (var topLevel in m_Pages)
             {
-                for (int categoryIndex = 0; categoryIndex < m_Tabs[tabIndex].categories.Length; ++categoryIndex)
+                if (topLevel.children == null)
+                    continue;
+                foreach (var tab in topLevel.children)
                 {
-                    if (m_Tabs[tabIndex].categories[categoryIndex] == newCategory)
+                    foreach (var cat in tab.AllCategories)
                     {
-                        m_ActiveTabIndex = tabIndex;
-                        m_Tabs[m_ActiveTabIndex].currentCategoryIndex = categoryIndex;
-                        return;
+                        if (cat == category)
+                            return tab;
                     }
                 }
             }
+
+            return null;
         }
 
-        internal void GotoNonAnalyzedCategory(IssueCategory category)
+        static Page FindPage(Page[] pages, Func<Page, bool> predicate)
         {
-            m_ViewSelectionTreeView.SelectNonAnalyzedCategory(category);
+            foreach (var page in pages)
+            {
+                if (predicate(page))
+                    return page;
+
+                if (page.children != null)
+                {
+                    var found = FindPage(page.children, predicate);
+                    if (found != null)
+                        return found;
+                }
+            }
+
+            return null;
         }
 
-        public void OnSelectedNonAnalyzedTab(Tab selectedTab, bool changeView)
+        // The category a page activates when selected: its own, or its first descendant's.
+        static IssueCategory GetPrimaryCategory(Page page)
+        {
+            return page.AllCategories[0];
+        }
+
+        // Marks every summary page's view dirty so its stats refresh (e.g. after muting/fixing issues).
+        void MarkSummaryViewsDirty()
+        {
+            for (int i = 0; i < m_ViewManager.NumViews; i++)
+            {
+                if (m_ViewManager.GetView(i) is SummaryView summaryView)
+                    summaryView.MarkDirty();
+            }
+        }
+
+        // Navigate to the page for a category, preferring one in the same top-level group as the
+        // currently shown page (so e.g. the Upgrade summary's "Go to Code" lands on Upgrade > Code).
+        internal void GotoCategory(IssueCategory category)
+        {
+            var page = FindCategoryPageInCurrentGroup(category)
+                ?? FindPage(m_Pages, p => !p.isHome && p.category == category);
+            if (page == null)
+                return;
+
+            ShowPage(page);
+
+            if (GetPageProjectArea(page.id) != ProjectAreaFlags.None)
+                OnSelectedNonAnalyzedPage(page, false);
+
+            m_ViewSelectionTreeView?.SelectPage(page);
+        }
+
+        Page FindCategoryPageInCurrentGroup(IssueCategory category)
+        {
+            var top = GetTopLevelPage(m_CurrentPage);
+            if (top == null)
+                return null;
+
+            return FindPage(new[] { top }, p => !p.isHome && p.category == category);
+        }
+
+        // The top-level page (Home / Optimization / Upgrade) whose subtree contains the given page.
+        Page GetTopLevelPage(Page page)
+        {
+            if (page == null)
+                return null;
+
+            foreach (var top in m_Pages)
+            {
+                if (FindPage(new[] { top }, p => ReferenceEquals(p, page)) != null)
+                    return top;
+            }
+
+            return null;
+        }
+
+        // Shows the analyze prompt for a page if none of its categories have been analyzed yet.
+        void OnSelectedNonAnalyzedPage(Page selectedPage, bool changeView)
         {
             bool hasAnyAnalyzedCategory = false;
             bool hasAnyPendingCategory = false;
-            foreach (var cat in selectedTab.categories)
+            foreach (var cat in selectedPage.AllCategories)
             {
                 if (m_ViewManager.HasPendingCategory(cat))
                     hasAnyPendingCategory = true;
@@ -453,14 +647,44 @@ namespace Unity.ProjectAuditor.Editor.UI
             if (!hasAnyAnalyzedCategory)
             {
                 // Change view anyway, even if overridden, to get into a proper view state, not the previous view
-                if (changeView) // If reanalyzing the same view, don't change the sub-tab we are viewing
-                    m_ViewManager.ChangeView(selectedTab.categories[0]);
+                if (changeView) // If reanalyzing the same view, don't change the sub-view we are viewing
+                    m_ViewManager.ChangeView(GetPrimaryCategory(selectedPage));
 
                 // Override view to show info and analyze button
                 m_IsNonAnalyzedViewSelected = true;
                 m_IsPendingAnalysisViewSelected = hasAnyPendingCategory;
-                m_SelectedNonAnalyzedTab = selectedTab;
+                m_SelectedNonAnalyzedPageId = selectedPage.id;
             }
+        }
+
+        // Called when the user selects a page node in the view selection tree.
+        void OnSelectedPage(Page page)
+        {
+            if (page.isHome)
+            {
+                m_ShowHomePage = true;
+                m_CurrentPage = page;
+                return;
+            }
+
+            ShowPage(page);
+
+            // Per-area pages (the analyze units) offer an analyze prompt when not yet analyzed.
+            if (GetPageProjectArea(page.id) != ProjectAreaFlags.None)
+                OnSelectedNonAnalyzedPage(page, false);
+        }
+
+        // Activates a page's view, applying that page's issue filter. The view instance is shared
+        // between pages of the same category, so it is marked dirty to re-filter for this page even
+        // when the category didn't change.
+        void ShowPage(Page page)
+        {
+            m_ShowHomePage = false;
+            m_CurrentPage = page;
+            m_CurrentPageIssueFilter = page.issueFilter;
+
+            m_ViewManager.ChangeView(page.category);
+            m_ViewManager.GetView(page.category)?.MarkDirty();
         }
 
         void OnDisable()
@@ -492,14 +716,14 @@ namespace Unity.ProjectAuditor.Editor.UI
             {
                 DrawToolbar();
 
-                if (m_AnalysisState != AnalysisState.Initializing && m_AnalysisState != AnalysisState.Initialized)
-                {
-                }
-
                 using (new EditorGUILayout.HorizontalScope())
                 {
                     DrawViewSelection();
-                    if (IsAnalysisValid())
+                    if (m_ShowHomePage || !IsAnalysisValid())
+                    {
+                        DrawHome();
+                    }
+                    else
                     {
                         if (!m_IsNonAnalyzedViewSelected)
                         {
@@ -507,7 +731,9 @@ namespace Unity.ProjectAuditor.Editor.UI
                             {
                                 DrawPanels();
 
-                                if (m_ViewManager.GetActiveView().Desc.Category != IssueCategory.Metadata)
+                                // Summary pages (Optimization, Upgrade) have no table, so skip the
+                                // selection/status bar.
+                                if (!(m_ViewManager.GetActiveView() is SummaryView))
                                 {
                                     DrawStatusBar();
                                 }
@@ -518,20 +744,18 @@ namespace Unity.ProjectAuditor.Editor.UI
                             DrawAnalysisPanel(m_IsPendingAnalysisViewSelected);
                         }
                     }
-                    else
-                    {
-                        DrawHome();
-                    }
                 }
             }
         }
 
-        // Draw the panel that appears when you click on a tab that has not yet been analyzed.
+        // Draw the panel that appears when you select a page that has not yet been analyzed.
         void DrawAnalysisPanel(bool analysisPending)
         {
+            var selectedPage = FindPage(m_SelectedNonAnalyzedPageId);
+
             using (new EditorGUILayout.VerticalScope(GUI.skin.box, GUILayout.ExpandHeight(true)))
             {
-                var tabName = m_SelectedNonAnalyzedTab.name;
+                var tabName = selectedPage.name;
 
                 using (new EditorGUILayout.HorizontalScope())
                 {
@@ -554,15 +778,14 @@ namespace Unity.ProjectAuditor.Editor.UI
                         if (GUILayout.Button(string.Format(Contents.AnalyzeButtonText, tabName), GUILayout.Width(200)))
                         {
                             bool validPreferences = true;
-                            if (m_SelectedNonAnalyzedTab.id == TabId.Code)
+                            if (selectedPage.id == PageId.Code)
                                 validPreferences = ValidateCodeAnalysisWithPopup();
 
                             if (validPreferences)
                             {
-                                var area = GetTabProjectArea(m_SelectedNonAnalyzedTab.id);
-                                var categories = GetTabCategories(m_SelectedNonAnalyzedTab);
-                                AuditCategories(area, categories);
-                                OnSelectedNonAnalyzedTab(m_SelectedNonAnalyzedTab, false);
+                                var area = GetPageProjectArea(selectedPage.id);
+                                AuditCategories(area, selectedPage.AllCategories);
+                                OnSelectedNonAnalyzedPage(selectedPage, false);
                             }
 						}
 						
@@ -570,7 +793,7 @@ namespace Unity.ProjectAuditor.Editor.UI
                         GUILayout.FlexibleSpace();
                     }
 
-                    if (m_SelectedNonAnalyzedTab.id == TabId.Code)
+                    if (selectedPage.id == PageId.Code)
                     {
                         const int k_SpacingHeight = 12;
 
@@ -598,14 +821,62 @@ namespace Unity.ProjectAuditor.Editor.UI
             m_ViewSelectionTreeView = null;
             m_IsNonAnalyzedViewSelected = false;
             m_IsPendingAnalysisViewSelected = false;
+        }
 
-            if (m_ActiveTabIndex != 0)
-                OnSelectedNonAnalyzedTab(m_Tabs[m_ActiveTabIndex], false);
+        // Selects the tree node that matches the current page state, so the highlight stays
+        // consistent with the panel being shown (e.g. after the tree is rebuilt).
+        void SyncTreeSelection()
+        {
+            if (m_ViewSelectionTreeView == null)
+                return;
+
+            if (m_ShowHomePage)
+            {
+                m_ViewSelectionTreeView.SelectPage(FindPage(PageId.Home));
+                return;
+            }
+
+            // Restore the exact page that was selected and re-show it, so the active view's per-page issue filter is reapplied.
+            if (m_CurrentPage != null)
+            {
+                m_ViewSelectionTreeView.SelectPage(m_CurrentPage);
+                return;
+            }
+
+            // After a domain reload m_CurrentPage is lost (not serialized) but the selected tree node
+            // id survives in m_ViewSelectionTreeState. Restore the exact page that was selected and
+            // re-show it, so the active view's per-page issue filter is reapplied.
+            var restored = ResolveSelectedPage();
+            if (restored != null)
+            {
+                OnSelectedPage(restored);
+                m_ViewSelectionTreeView.SelectPage(restored);
+                return;
+            }
+
+            // Fallback: sync to the tree node mapped to the active view's category.
+            m_ViewSelectionTreeView.SelectItemByCategory(m_ViewManager.GetActiveView().Desc.Category);
+        }
+
+        // Resolves the page referenced by the serialized tree selection, or null if none.
+        Page ResolveSelectedPage()
+        {
+            var selectedIds = m_ViewSelectionTreeState?.selectedIDs;
+            if (selectedIds == null)
+                return null;
+
+            foreach (var id in selectedIds)
+            {
+                if (m_ViewSelectionTreeView.TryGetPage(id, out var page))
+                    return page;
+            }
+
+            return null;
         }
 
         void DrawViewSelection()
         {
-            using (new EditorGUI.DisabledScope(m_AnalysisState == AnalysisState.Initialized))
+            using (new EditorGUI.DisabledScope(m_AnalysisState == AnalysisState.Initializing))
             {
                 using (new EditorGUILayout.VerticalScope())
                 {
@@ -616,37 +887,39 @@ namespace Unity.ProjectAuditor.Editor.UI
 
                     if (m_ViewSelectionTreeView == null)
                     {
-                        m_ViewSelectionTreeView = new ViewSelectionTreeView(m_ViewSelectionTreeState, m_Tabs, m_ViewManager);
-                        m_ViewSelectionTreeView.OnSelectedNonAnalyzedTab += OnSelectedNonAnalyzedTab;
+                        m_ViewSelectionTreeView = new ViewSelectionTreeView(m_ViewSelectionTreeState, m_Pages, m_ViewManager);
+                        m_ViewSelectionTreeView.OnSelectedPage += OnSelectedPage;
+
+                        // Keep the tree highlight in sync with the current page/view after a rebuild.
+                        SyncTreeSelection();
                     }
 
-                    var rect = EditorGUILayout.GetControlRect(GUILayout.Width(180), GUILayout.ExpandHeight(true));
-
+                    var rect = EditorGUILayout.GetControlRect(GUILayout.Width(190), GUILayout.ExpandHeight(true));
                     m_ViewSelectionTreeView.OnGUI(rect);
                 }
             }
         }
-
 
         [InitializeOnLoadMethod]
         static void OnLoad()
         {
             ViewDescriptor.Register(new ViewDescriptor
             {
-                Category = IssueCategory.Metadata,
-                DisplayName = "Summary",
-                MenuOrder = -1,
-                Type = typeof(SummaryView),
-                ShowAssemblySelection = true,
-                GetAssemblyName = issue => issue.GetCustomProperty(CodeProperty.Assembly),
+                Category = IssueCategory.OptimizationSummary,
+                DisplayName = "Optimization",
+                Type = typeof(OptimizationSummaryView),
                 AnalyticsEventId = (int)AnalyticsReporter.UIButton.Summary
+            });
+            ViewDescriptor.Register(new ViewDescriptor
+            {
+                Category = IssueCategory.UpgradeSummary,
+                DisplayName = "Upgrade",
+                Type = typeof(UpgradeSummaryView),
             });
             ViewDescriptor.Register(new ViewDescriptor
             {
                 Category = IssueCategory.AssetIssue,
                 DisplayName = "Asset Issues",
-                MenuLabel = "Assets/Issues",
-                MenuOrder = 1,
                 DescriptionWithIcon = true,
                 ShowDependencyView = true,
                 ShowFilters = true,
@@ -661,8 +934,6 @@ namespace Unity.ProjectAuditor.Editor.UI
             {
                 Category = IssueCategory.Shader,
                 DisplayName = "Shaders",
-                MenuOrder = 1,
-                MenuLabel = "Assets/Shaders/Shaders",
                 DescriptionWithIcon = true,
                 ShowDependencyView = true,
                 ShowFilters = true,
@@ -682,8 +953,6 @@ namespace Unity.ProjectAuditor.Editor.UI
             {
                 Category = IssueCategory.Material,
                 DisplayName = "Materials",
-                MenuLabel = "Assets/Shaders/Materials",
-                MenuOrder = 2,
                 ShowFilters = true,
                 OnOpenIssue = EditorInterop.FocusOnAssetInProjectWindow,
                 AnalyticsEventId = (int)AnalyticsReporter.UIButton.Materials
@@ -693,8 +962,6 @@ namespace Unity.ProjectAuditor.Editor.UI
             {
                 Category = IssueCategory.ShaderCompilerMessage,
                 DisplayName = "Compiler Messages",
-                MenuLabel = "Assets/Shaders/Compiler Messages",
-                MenuOrder = 4,
                 DescriptionWithIcon = true,
                 ShowDetails = true,
                 OnOpenIssue = EditorInterop.OpenTextFile<Shader>,
@@ -706,8 +973,6 @@ namespace Unity.ProjectAuditor.Editor.UI
             {
                 Category = IssueCategory.ShaderVariant,
                 DisplayName = "Shader Variants",
-                MenuOrder = 3,
-                MenuLabel = "Assets/Shaders/Variants",
                 ShowFilters = true,
                 ShowInfoPanel = true,
                 ShowDetails = true,
@@ -732,8 +997,6 @@ namespace Unity.ProjectAuditor.Editor.UI
             {
                 Category = IssueCategory.ComputeShaderVariant,
                 DisplayName = "Compute Shader Variants",
-                MenuOrder = 3,
-                MenuLabel = "Assets/Shaders/Compute Variants",
                 ShowFilters = true,
                 ShowInfoPanel = true,
                 ShowDetails = true,
@@ -755,8 +1018,6 @@ namespace Unity.ProjectAuditor.Editor.UI
             {
                 Category = IssueCategory.Package,
                 DisplayName = "Packages",
-                MenuLabel = "Project/Packages/Installed",
-                MenuOrder = 105,
                 OnOpenIssue = EditorInterop.OpenPackage,
                 ShowDependencyView = true,
                 DependencyViewGuiContent = new GUIContent("Package Dependencies"),
@@ -767,8 +1028,6 @@ namespace Unity.ProjectAuditor.Editor.UI
             {
                 Category = IssueCategory.AudioClip,
                 DisplayName = "Audio Clips",
-                MenuLabel = "Assets/Audio Clips",
-                MenuOrder = 107,
                 DescriptionWithIcon = true,
                 ShowFilters = true,
                 OnOpenIssue = EditorInterop.FocusOnAssetInProjectWindow,
@@ -779,8 +1038,6 @@ namespace Unity.ProjectAuditor.Editor.UI
             {
                 Category = IssueCategory.Mesh,
                 DisplayName = "Meshes",
-                MenuLabel = "Assets/Meshes/Meshes",
-                MenuOrder = 7,
                 DescriptionWithIcon = true,
                 ShowFilters = true,
                 OnOpenIssue = EditorInterop.FocusOnAssetInProjectWindow,
@@ -791,8 +1048,6 @@ namespace Unity.ProjectAuditor.Editor.UI
             {
                 Category = IssueCategory.Texture,
                 DisplayName = "Textures",
-                MenuLabel = "Assets/Textures/Textures",
-                MenuOrder = 6,
                 DescriptionWithIcon = true,
                 ShowDependencyView = true,
                 ShowFilters = true,
@@ -804,8 +1059,6 @@ namespace Unity.ProjectAuditor.Editor.UI
             {
                 Category = IssueCategory.SpriteAtlas,
                 DisplayName = "Sprite Atlases",
-                MenuLabel = "Assets/Sprite Atlases/Sprite Atlases",
-                MenuOrder = 12,
                 DescriptionWithIcon = true,
                 ShowFilters = true,
                 OnOpenIssue = EditorInterop.FocusOnAssetInProjectWindow,
@@ -816,8 +1069,6 @@ namespace Unity.ProjectAuditor.Editor.UI
             {
                 Category = IssueCategory.AnimatorController,
                 DisplayName = "Animator Controllers",
-                MenuLabel = "Assets/Animation/Animator Controllers",
-                MenuOrder = 8,
                 DescriptionWithIcon = true,
                 ShowFilters = true,
                 OnOpenIssue = EditorInterop.FocusOnAssetInProjectWindow,
@@ -828,8 +1079,6 @@ namespace Unity.ProjectAuditor.Editor.UI
             {
                 Category = IssueCategory.AnimationClip,
                 DisplayName = "Animation Clips",
-                MenuLabel = "Assets/Animation/Animation Clips",
-                MenuOrder = 9,
                 DescriptionWithIcon = true,
                 ShowFilters = true,
                 OnOpenIssue = EditorInterop.FocusOnAssetInProjectWindow,
@@ -840,8 +1089,6 @@ namespace Unity.ProjectAuditor.Editor.UI
             {
                 Category = IssueCategory.Avatar,
                 DisplayName = "Avatars",
-                MenuLabel = "Assets/Animation/Avatars",
-                MenuOrder = 10,
                 DescriptionWithIcon = true,
                 ShowFilters = true,
                 OnOpenIssue = EditorInterop.FocusOnAssetInProjectWindow,
@@ -852,8 +1099,6 @@ namespace Unity.ProjectAuditor.Editor.UI
             {
                 Category = IssueCategory.AvatarMask,
                 DisplayName = "Avatar Masks",
-                MenuLabel = "Assets/Animation/Avatar Masks",
-                MenuOrder = 11,
                 DescriptionWithIcon = true,
                 ShowFilters = true,
                 OnOpenIssue = EditorInterop.FocusOnAssetInProjectWindow,
@@ -864,8 +1109,6 @@ namespace Unity.ProjectAuditor.Editor.UI
             {
                 Category = IssueCategory.PrecompiledAssembly,
                 DisplayName = "Precompiled Assemblies",
-                MenuLabel = "Experimental/Precompiled Assemblies",
-                MenuOrder = 91,
                 ShowFilters = true,
                 OnOpenIssue = EditorInterop.FocusOnAssetInProjectWindow,
                 AnalyticsEventId = (int)AnalyticsReporter.UIButton.PrecompiledAssemblies
@@ -875,20 +1118,15 @@ namespace Unity.ProjectAuditor.Editor.UI
             {
                 Category = IssueCategory.Assembly,
                 DisplayName = "Assemblies",
-                MenuLabel = "Code/Assemblies",
-                MenuOrder = 98,
                 ShowFilters = true,
                 ShowDependencyView = true,
                 OnOpenIssue = EditorInterop.FocusOnAssetInProjectWindow,
                 AnalyticsEventId = (int)AnalyticsReporter.UIButton.Assemblies
             });
-            int assemblyProperty = Convert.ToInt32(CodeProperty.Assembly);
             ViewDescriptor.Register(new ViewDescriptor
             {
                 Category = IssueCategory.Code,
                 DisplayName = "Code Issues",
-                MenuLabel = "Code/Issues",
-                MenuOrder = 0,
                 ShowAssemblySelection = true,
                 ShowDependencyView = true,
                 ShowFilters = true,
@@ -897,7 +1135,7 @@ namespace Unity.ProjectAuditor.Editor.UI
                 ShowQuickFixes = false, // Remove this if we add support for quick-fixing code issues
                 ShowPerformanceCritical = true,
                 DependencyViewGuiContent = new GUIContent("Inverted Call Hierarchy", "Expand the tree to see all of the methods which lead to the call site of a selected issue."),
-                GetAssemblyName = issue => issue.GetCustomProperty(assemblyProperty),
+                GetAssemblyName = issue => issue.GetCustomProperty(CodeProperty.Assembly),
                 OnOpenIssue = EditorInterop.OpenTextFile<TextAsset>,
                 OnOpenManual = EditorInterop.OpenCodeDescriptor,
                 Type = typeof(CodeDiagnosticView),
@@ -907,8 +1145,6 @@ namespace Unity.ProjectAuditor.Editor.UI
             {
                 Category = IssueCategory.CodeCompilerMessage,
                 DisplayName = "Compiler Messages",
-                MenuOrder = 98,
-                MenuLabel = "Code/C# Compiler Messages",
                 ShowFilters = true,
                 ShowInfoPanel = true,
                 ShowDetails = true,
@@ -920,9 +1156,7 @@ namespace Unity.ProjectAuditor.Editor.UI
             ViewDescriptor.Register(new ViewDescriptor
             {
                 Category = IssueCategory.ProjectSetting,
-                DisplayName = "Project Settings",
-                MenuLabel = "Project/Settings/Issues",
-                MenuOrder = 1,
+                DisplayName = "Project Settings Issues",
                 ShowFilters = true,
                 ShowInfoPanel = true,
                 ShowDetails = true,
@@ -950,8 +1184,6 @@ namespace Unity.ProjectAuditor.Editor.UI
             {
                 Category = IssueCategory.BuildStep,
                 DisplayName = "Build Steps",
-                MenuLabel = "Build Report/Steps",
-                MenuOrder = 100,
                 ShowFilters = true,
                 ShowInfoPanel = true,
                 ShowDetails = true,
@@ -962,8 +1194,6 @@ namespace Unity.ProjectAuditor.Editor.UI
             {
                 Category = IssueCategory.BuildFile,
                 DisplayName = "Build Size",
-                MenuLabel = "Build Report/Size",
-                MenuOrder = 101,
                 DescriptionWithIcon = true,
                 ShowFilters = true,
                 ShowInfoPanel = true,
@@ -973,18 +1203,15 @@ namespace Unity.ProjectAuditor.Editor.UI
                 Type = typeof(BuildSizeView),
                 AnalyticsEventId = (int)AnalyticsReporter.UIButton.BuildFiles
             });
-            int domainReloadAssemblyProperty = Convert.ToInt32(CompilerMessageProperty.Assembly);
             ViewDescriptor.Register(new ViewDescriptor
             {
                 Category = IssueCategory.DomainReload,
                 DisplayName = "Domain Reload",
-                MenuLabel = "Code/Domain Reload",
-                MenuOrder = 50,
                 ShowAssemblySelection = true,
                 ShowFilters = true,
                 ShowInfoPanel = true,
                 ShowDetails = true,
-                GetAssemblyName = issue => issue.GetCustomProperty(domainReloadAssemblyProperty),
+                GetAssemblyName = issue => issue.GetCustomProperty(CompilerMessageProperty.Assembly),
                 OnOpenIssue = EditorInterop.OpenTextFile<TextAsset>,
                 OnOpenManual = EditorInterop.OpenCodeDescriptor,
                 Type = typeof(CodeDomainReloadView),
@@ -994,8 +1221,6 @@ namespace Unity.ProjectAuditor.Editor.UI
             {
                 Category = IssueCategory.ObsoleteAPI,
                 DisplayName = "Obsolete API Database",
-                MenuLabel = "Code/Obsolete API Database",
-                MenuOrder = 51,
                 ShowFilters = true,
                 ShowInfoPanel = true,
                 ShowDetails = true,
@@ -1005,8 +1230,6 @@ namespace Unity.ProjectAuditor.Editor.UI
             {
                 Category = IssueCategory.GameObject,
                 DisplayName = "Game Object Issues",
-                MenuLabel = "Game Objects/Issues",
-                MenuOrder = 12,
                 ShowFilters = true,
                 ShowInfoPanel = true,
                 ShowDetails = true,
@@ -1018,8 +1241,6 @@ namespace Unity.ProjectAuditor.Editor.UI
             {
                 Category = IssueCategory.MeshCollider,
                 DisplayName = "Mesh Colliders",
-                MenuLabel = "Game Objects/Mesh Colliders",
-                MenuOrder = 13,
                 DescriptionWithIcon = true,
                 ShowFilters = true,
                 OnOpenIssue = EditorInterop.FocusOnAssetInProjectWindow,
@@ -1077,8 +1298,7 @@ namespace Unity.ProjectAuditor.Editor.UI
 #pragma warning restore UA2001
                     m_ViewManager.PendingCategories = remainingCategories;
 
-                    var summaryView = m_ViewManager.GetView(IssueCategory.Metadata);
-                    summaryView?.MarkDirty();
+                    MarkSummaryViewsDirty();
                 },
                 OnCompleted = report =>
                 {
@@ -1105,6 +1325,9 @@ namespace Unity.ProjectAuditor.Editor.UI
 
             InitializeViews(analysisParams.Rules, false);
 
+            // Leave the Home page and show the Summary (Optimization) while analysis runs.
+            ShowPage(FindPage(PageId.Optimization));
+
             m_Progress = new ProgressBar();
             m_ProjectAuditor.AuditAsync(analysisParams, m_Progress);
         }
@@ -1117,7 +1340,7 @@ namespace Unity.ProjectAuditor.Editor.UI
                 Repaint();
         }
 
-        internal void AuditCategories(ProjectAreaFlags areas, IssueCategory[] categories)
+        internal void AuditCategories(ProjectAreaFlags areas, IReadOnlyList<IssueCategory> categories)
         {
             if (m_ProjectAuditor == null)
                 m_ProjectAuditor = new ProjectAuditor();
@@ -1169,8 +1392,7 @@ namespace Unity.ProjectAuditor.Editor.UI
 #pragma warning restore UA2001
                     m_ViewManager.PendingCategories = remainingCategories;
 
-                    var summaryView = m_ViewManager.GetView(IssueCategory.Metadata);
-                    summaryView?.MarkDirty();
+                    MarkSummaryViewsDirty();
                 },
                 OnCompleted = report =>
                 {
@@ -1199,8 +1421,9 @@ namespace Unity.ProjectAuditor.Editor.UI
 
         public void AnalyzeShaderVariants()
         {
-            AuditCategories(GetTabProjectArea(TabId.Shaders), GetTabCategories(TabId.Shaders));
-            OnSelectedNonAnalyzedTab(m_Tabs[m_ActiveTabIndex], false);
+            var shadersPage = FindPage(PageId.Shaders);
+            AuditCategories(GetPageProjectArea(PageId.Shaders), shadersPage.AllCategories);
+            OnSelectedNonAnalyzedPage(shadersPage, false);
             GUIUtility.ExitGUI();
         }
 
@@ -1276,46 +1499,35 @@ namespace Unity.ProjectAuditor.Editor.UI
         IssueCategory[] GetSelectedCategories()
         {
             var selectedCategories = UserPreferences.ProjectAreasToAnalyze;
-            var requestedCategories = new List<IssueCategory>([IssueCategory.Metadata]);
+            var requestedCategories = new List<IssueCategory>();
             ProjectAreaFlags categories = selectedCategories;
 
             if (categories.HasFlag(ProjectAreaFlags.Code))
-                requestedCategories.AddRange(GetTabCategories(TabId.Code));
+                requestedCategories.AddRange(FindPage(PageId.Code).AllCategories);
             if (categories.HasFlag(ProjectAreaFlags.ProjectSettings))
-                requestedCategories.AddRange(GetTabCategories(TabId.Settings));
+                requestedCategories.AddRange(FindPage(PageId.ProjectSettings).AllCategories);
             if (categories.HasFlag(ProjectAreaFlags.Assets))
-                requestedCategories.AddRange(GetTabCategories(TabId.Assets));
+                requestedCategories.AddRange(FindPage(PageId.Assets).AllCategories);
             if (categories.HasFlag(ProjectAreaFlags.GameObjects))
-                requestedCategories.AddRange(GetTabCategories(TabId.GameObjects));
+                requestedCategories.AddRange(FindPage(PageId.GameObjects).AllCategories);
             if (categories.HasFlag(ProjectAreaFlags.Shaders))
-                requestedCategories.AddRange(GetTabCategories(TabId.Shaders));
+                requestedCategories.AddRange(FindPage(PageId.Shaders).AllCategories);
             if (categories.HasFlag(ProjectAreaFlags.Build))
-                requestedCategories.AddRange(GetTabCategories(TabId.Build));
+                requestedCategories.AddRange(FindPage(PageId.Build).AllCategories);
 
             return requestedCategories.ToArray();
         }
 
-        IssueCategory[] GetTabCategories(TabId tabId)
+        ProjectAreaFlags GetPageProjectArea(PageId id)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
-            return GetTabCategories(m_Tabs.First(t => t.id == tabId));
-#pragma warning restore UA2001
-        }
-
-        IssueCategory[] GetTabCategories(Tab tab)
-        {
-            return tab.categories.ToValuesArray();
-        }
-
-        ProjectAreaFlags GetTabProjectArea(TabId tabId)
-        {
-            switch (tabId)
+            switch (id)
             {
-                case TabId.Code: return ProjectAreaFlags.Code;
-                case TabId.Assets: return ProjectAreaFlags.Assets;
-                case TabId.Shaders: return ProjectAreaFlags.Shaders;
-                case TabId.Settings: return ProjectAreaFlags.ProjectSettings;
-                case TabId.Build: return ProjectAreaFlags.Build;
+                case PageId.Code: return ProjectAreaFlags.Code;
+                case PageId.Assets: return ProjectAreaFlags.Assets;
+                case PageId.Shaders: return ProjectAreaFlags.Shaders;
+                case PageId.GameObjects: return ProjectAreaFlags.GameObjects;
+                case PageId.ProjectSettings: return ProjectAreaFlags.ProjectSettings;
+                case PageId.Build: return ProjectAreaFlags.Build;
                 default:
                     return ProjectAreaFlags.None;
             }
@@ -1464,11 +1676,25 @@ namespace Unity.ProjectAuditor.Editor.UI
 
                     activeView.DrawFilters();
 
+                    // The selected page may contribute its own filter controls (e.g. the Upgrade
+                    // pages' target-version selector). Changing them re-filters the active view.
+                    if (m_CurrentPage?.drawFilters != null)
+                    {
+                        EditorGUI.BeginChangeCheck();
+                        m_CurrentPage.drawFilters(m_ViewStates);
+                        if (EditorGUI.EndChangeCheck())
+                        {
+                            activeView.MarkDirty();
+                            activeView.ClearSelection();
+                        }
+                    }
+
                     EditorGUI.indentLevel--;
                 }
             }
         }
 
+        // Draws the Home page: preferences, rules install and the Start Analysis button.
         void DrawHome()
         {
 
@@ -1527,27 +1753,51 @@ namespace Unity.ProjectAuditor.Editor.UI
                                 var content = ProjectAuditorRulesPackage.IsInstalled ? Contents.AnalyzeButton : Contents.AnalyzeButtonDisabled;
                                 if (GUILayout.Button(content, GUILayout.Width(k_ButtonWidth), GUILayout.Height(30)))
                                 {
-                                    bool validPreferences = true;
-                                    var projectAreas = UserPreferences.ProjectAreasToAnalyze;
+                                    bool canAnalyze = true;
 
-                                    if (projectAreas == ProjectAreaFlags.None)
+                                    // m_Report can be null here (e.g. after cancelling an analysis)
+                                    // In this case, there is nothing to save/discard.
+                                    if (m_Report != null && m_Report.NeedsSaving)
                                     {
-                                        validPreferences = false;
-                                        if (EditorUtility.DisplayDialog(k_EnableAreas, k_EnableAreasQuestion, "Ok", "Cancel"))
+                                        DialogResult response = DialogResult.DefaultAction;
+                                        if (m_AnalysisState == AnalysisState.Valid)
+                                            response = EditorDialog.DisplayComplexDecisionDialog(k_Discard, k_DiscardQuestion, "Discard", "Save", "Cancel");
+                                        else
+                                            response = EditorUtility.DisplayDialog(k_Discard, k_DiscardQuestion, "Discard", "Cancel") ? DialogResult.DefaultAction : DialogResult.Cancel;
+
+                                        if (response == DialogResult.AlternateAction)
                                         {
-                                            UserPreferences.ProjectAreasToAnalyze.Set(ProjectAreaFlags.All);
-                                            projectAreas.Set(ProjectAreaFlags.All);
-                                            validPreferences = true;
+                                            if (!SaveReport(out var _))
+                                                canAnalyze = false;
+                                        }
+                                        else if (response == DialogResult.Cancel)
+                                        {
+                                            canAnalyze = false;
                                         }
                                     }
 
-                                    if ((projectAreas & ProjectAreaFlags.Code) != 0)
+                                    if (canAnalyze)
                                     {
-                                        if (validPreferences)
-                                            validPreferences = ValidateCodeAnalysisWithPopup();
+                                        var projectAreas = UserPreferences.ProjectAreasToAnalyze;
+                                        if (projectAreas == ProjectAreaFlags.None)
+                                        {
+                                            canAnalyze = false;
+                                            if (EditorUtility.DisplayDialog(k_EnableAreas, k_EnableAreasQuestion, "Ok", "Cancel"))
+                                            {
+                                                UserPreferences.ProjectAreasToAnalyze.Set(ProjectAreaFlags.All);
+                                                projectAreas.Set(ProjectAreaFlags.All);
+                                                canAnalyze = true;
+                                            }
+                                        }
+
+                                        if ((projectAreas & ProjectAreaFlags.Code) != 0)
+                                        {
+                                            if (canAnalyze)
+                                                canAnalyze = ValidateCodeAnalysisWithPopup();
+                                        }
                                     }
 
-                                    if (validPreferences)
+                                    if (canAnalyze)
                                     {
                                         Analyze();
                                         GUIUtility.ExitGUI();
@@ -1697,7 +1947,6 @@ namespace Unity.ProjectAuditor.Editor.UI
             }
         }
 
-
         void DrawReport()
         {
             GUILayout.Space(2);
@@ -1710,7 +1959,7 @@ namespace Unity.ProjectAuditor.Editor.UI
 
                     GUILayout.Label(activeView.Desc.DisplayName, SharedStyles.MediumTitleLabel);
 
-                    if (activeView != null && activeView.Desc.Category == IssueCategory.Metadata && m_Report != null)
+                    if (activeView is SummaryView && m_Report != null)
                     {
                         GUILayout.Label(" | ", SharedStyles.MediumTitleLabel);
 
@@ -1730,10 +1979,7 @@ namespace Unity.ProjectAuditor.Editor.UI
                 using (new GUILayout.HorizontalScope())
                 {
                     GUILayout.Space(4);
-
                     GUILayout.Label(activeView.Description, GUILayout.MinWidth(360), GUILayout.ExpandWidth(true));
-
-
                     GUILayout.FlexibleSpace();
                 }
             }
@@ -1852,7 +2098,7 @@ namespace Unity.ProjectAuditor.Editor.UI
                 }
             }
 
-            if (m_Report.IsForCurrentProject())
+            if (m_Report != null && m_Report.IsForCurrentProject())
             {
                 if (forceRefresh || m_AssemblySelection.selection.Count == 0)
                 {
@@ -1917,11 +2163,10 @@ namespace Unity.ProjectAuditor.Editor.UI
                         if (GUILayout.Button(Contents.CancelButton, EditorStyles.toolbarButton, GUILayout.Width(discardButtonWidth)))
                             m_Progress.Cancel();
                     }
-                    else if (GUILayout.Button(Contents.DiscardButton, EditorStyles.toolbarButton, GUILayout.Width(discardButtonWidth)))
+                    else if (GUILayout.Button(Contents.NewAnalysisButton, EditorStyles.toolbarButton, GUILayout.Width(discardButtonWidth)))
                     {
-                        // Defer native dialogs past the current IMGUI frame: on macOS they drive the Cocoa event loop,
-                        // causing a re-entrant IMGUI frame that corrupts the layout group stack (UUM-139712).
-                        EditorApplication.delayCall += StartNewAnalysisWithConfirmation;
+                        m_ShowHomePage = true;
+                        m_ViewSelectionTreeView?.SelectPage(FindPage(PageId.Home), true);
                         GUIUtility.ExitGUI();
                     }
                 }
@@ -1931,7 +2176,8 @@ namespace Unity.ProjectAuditor.Editor.UI
                     var loadContent = ProjectAuditorRulesPackage.IsInstalled ? Contents.LoadButton : Contents.LoadButtonDisabled;
                     if (GUILayout.Button(loadContent, EditorStyles.toolbarButton, GUILayout.Width(loadSaveButtonWidth)))
                     {
-                        // See comment above on DiscardButton for why delayCall + ExitGUI are used here (UUM-139712).
+                        // Defer native dialogs past the current IMGUI frame: on macOS they drive the Cocoa event loop,
+                        // causing a re-entrant IMGUI frame that corrupts the layout group stack (UUM-139712).
                         EditorApplication.delayCall += LoadReport;
                         GUIUtility.ExitGUI();
                     }
@@ -1951,7 +2197,6 @@ namespace Unity.ProjectAuditor.Editor.UI
                 Utility.DrawHelpButton(Contents.HelpButton, Documentation.GetPageUrl("index"));
             }
         }
-
 
         bool SaveReport(out string path)
         {
@@ -1980,40 +2225,6 @@ namespace Unity.ProjectAuditor.Editor.UI
             return false;
         }
 
-        void StartNewAnalysisWithConfirmation()
-        {
-            DialogResult response = DialogResult.DefaultAction;
-            if (m_Report.NeedsSaving)
-            {
-                if (m_AnalysisState == AnalysisState.Valid)
-                    response = EditorDialog.DisplayComplexDecisionDialog(k_Discard, k_DiscardQuestion, "Discard", "Save", "Cancel");
-                else
-                    response = EditorUtility.DisplayDialog(k_Discard, k_DiscardQuestion, "Discard", "Cancel") ? DialogResult.DefaultAction : DialogResult.Cancel;
-            }
-
-            if (response == DialogResult.AlternateAction)
-            {
-                if (!SaveReport(out var _))
-                    return;
-            }
-
-            if (response != DialogResult.Cancel)
-            {
-                m_ActiveTabIndex = 0;
-                m_AnalysisState = AnalysisState.Initialized;
-                // Reset the auditor so that the module analysers can be reinitialised for a new analysis.
-                // The list of Descriptors in DescriptorLibrary gets overwritten when loading in a saved
-                // analysis; not a problem for the loaded analysis, but new analyses will be generated with data
-                // missing, since not all of the DescriptorLibrary is written out to json (DescriptorJsonConverter).
-                // Plus, we might update its content in future versions and we don't want to mix that with
-                // data from an old capture. COPT-3262
-                // TODO: Does DescriptorLibrary need to get written out at all? Seems like all the relevant info is stored in the issues list...
-                m_ProjectAuditor = null;
-
-                DeleteAutosave();
-            }
-        }
-
         void SaveCurrentReport()
         {
             if (SaveReport(out var path))
@@ -2040,18 +2251,28 @@ namespace Unity.ProjectAuditor.Editor.UI
             if (newReport == null)
             {
                 if (fileWasManuallySaved)
+                {
                     EditorUtility.DisplayDialog(k_LoadFromFile, k_LoadingFailedVersion + "\n" + errorMessage, "Ok");
+                }
                 else
+                {
                     Debug.LogWarning(k_LoadingAutosaveFailedVersion + "\n" + errorMessage);
+                    DeleteAutosave();
+                }
                 return;
             }
 
             if (newReport.NumTotalIssues == 0)
             {
                 if (fileWasManuallySaved)
+                {
                     EditorUtility.DisplayDialog(k_LoadFromFile, k_LoadingFailed, "Ok");
+                }
                 else
+                {
                     Debug.LogWarning(k_LoadingAutosaveFailed);
+                    DeleteAutosave();
+                }
                 return;
             }
 
@@ -2081,7 +2302,7 @@ namespace Unity.ProjectAuditor.Editor.UI
             m_ViewManager.MarkViewColumnWidthsAsDirty();
 
             // switch to summary view after loading
-            m_ViewManager.ChangeView(IssueCategory.Metadata);
+            ShowPage(FindPage(PageId.Optimization));
             m_ViewManager.GetActiveView().SetSearch("");
         }
 
@@ -2198,25 +2419,17 @@ namespace Unity.ProjectAuditor.Editor.UI
             public static readonly GUIContent SaveButton = Utility.GetIcon(Utility.IconType.Save, "Save current report to projectauditor file");
             public static readonly GUIContent LoadButton = Utility.GetIcon(Utility.IconType.Load, "Load report from projectauditor file");
             public static readonly GUIContent LoadButtonDisabled = Utility.GetIcon(Utility.IconType.Load, $"Please install the rules package to load reports ({ProjectAuditorRulesPackage.Name}).");
-            public static readonly GUIContent DiscardButton = EditorGUIUtility.TrTextContentWithIcon("New Analysis", "Discard the current report and return to the Welcome view.", "Refresh");
+            public static readonly GUIContent NewAnalysisButton = EditorGUIUtility.TrTextContentWithIcon("New Analysis", "Return to the Home page to start a new analysis. If you start a new analysis, the current report will be discarded.", "Refresh");
             public static readonly GUIContent CancelButton = EditorGUIUtility.TrTextContentWithIcon("Cancel Analysis", "Cancel the in-progress analysis", "Clear");
 
             public static readonly GUIContent HelpButton = Utility.GetIcon(Utility.IconType.Help, "Open Manual (in a web browser)");
             public static readonly GUIContent PreferencesMenuItem = EditorGUIUtility.TrTextContent("Preferences", $"Open User Preferences for {ProjectAuditor.DisplayName}");
 
-            public static readonly GUIContent AssemblyFilter =
-                new GUIContent("Assembly: ", "Select assemblies to examine");
-
-            public static readonly GUIContent AssemblyFilterSelect =
-                new GUIContent("Select", "Select assemblies to examine");
-
-            public static readonly GUIContent AreaFilter =
-                new GUIContent("Areas: ", "Select performance areas to display");
-
-            public static readonly GUIContent AreaFilterSelect =
-                new GUIContent("Select", "Select performance areas to display");
-
-            public static readonly GUIContent FiltersFoldout = new GUIContent("Filters", "Filtering Criteria");
+            public static readonly GUIContent AssemblyFilter = EditorGUIUtility.TrTextContent("Assembly:", "Select assemblies to examine");
+            public static readonly GUIContent AssemblyFilterSelect = EditorGUIUtility.TrTextContent("Select", "Select assemblies to examine");
+            public static readonly GUIContent AreaFilter = EditorGUIUtility.TrTextContent("Areas:", "Select performance areas to display");
+            public static readonly GUIContent AreaFilterSelect = EditorGUIUtility.TrTextContent("Select", "Select performance areas to display");
+            public static readonly GUIContent FiltersFoldout = EditorGUIUtility.TrTextContent("Filters", "Filtering Criteria");
 
 
             public static readonly GUIContent WelcomeTextTitle = new GUIContent($"Welcome to {ProjectAuditor.DisplayName}");

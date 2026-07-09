@@ -4,24 +4,18 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEditor;
-using UnityEngine;
 using Unity.Scripting.LifecycleManagement;
 
 namespace Unity.ProjectAuditor.Editor.Core
 {
-    [Serializable]
-    partial class DescriptorLibrary : ISerializationCallbackReceiver
+    static class DescriptorLibrary
     {
         [AutoStaticsCleanupOnCodeReload] // Lazy-initialized descriptor registry; must be reset on code reload so descriptors are re-registered
         static Dictionary<int, Descriptor> s_Descriptors;
 
         [NoAutoStaticsCleanup] // Lazy-initialized cache of area strings; data is still valid after code reload
         static Dictionary<Areas, string> s_DescriptorAreaStrings;
-
-        [SerializeField]
-        internal List<Descriptor> m_SerializedDescriptors;
 
         public static bool RegisterDescriptor(string id, Descriptor descriptor)
         {
@@ -58,32 +52,42 @@ namespace Unity.ProjectAuditor.Editor.Core
             return desc;
         }
 
-        public void OnBeforeSerialize()
+        // Builds the list of Descriptors to serialize into a Report. Serialization is needed to survive domain
+        // reload and when writing a Report out to file; in both cases the list only needs the Descriptors a report
+        // actually references via its issues, so the caller passes the set of referenced ids. A null set means
+        // "no scope": serialize the whole registry (larger, but still correct).
+        internal static List<Descriptor> CollectForSerialization(HashSet<int> referencedIds)
         {
-            // update list from dictionary
+            if (s_Descriptors == null)
+                return new List<Descriptor>();
 
-            // TODO: Serialization is needed to survive domain reload, and when writing a Report out to file.
-            // In both cases the list only really needs to contain the Descriptors that correspond to ProjectIssues
-            // actually found in the report, so if we had the report object we could potentially do some filtering here.
-            if (s_Descriptors != null)
-                m_SerializedDescriptors = new List<Descriptor>(s_Descriptors.Values);
+            if (referencedIds == null)
+                return new List<Descriptor>(s_Descriptors.Values);
+
+            var result = new List<Descriptor>(referencedIds.Count);
+            foreach (var id in referencedIds)
+            {
+                if (s_Descriptors.TryGetValue(id, out var descriptor))
+                    result.Add(descriptor);
+            }
+            return result;
         }
 
-        public void OnAfterDeserialize()
+        // Merges Descriptors deserialized from a Report back into the registry. Only adds ids that don't already
+        // exist, otherwise we lose all the non-serialized data on the live descriptor, eg Fixer.
+        internal static void RegisterDeserialized(List<Descriptor> descriptors)
         {
-            // update dictionary from list
-            if (m_SerializedDescriptors != null)
+            if (descriptors == null)
+                return;
+
+            if (s_Descriptors == null)
+                s_Descriptors = new Dictionary<int, Descriptor>();
+
+            foreach (var descriptor in descriptors)
             {
-                if (s_Descriptors == null)
-                    s_Descriptors = new Dictionary<int, Descriptor>();
-
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
-                var deserializedDescriptors = m_SerializedDescriptors.ToDictionary(m => new DescriptorId(m.Id).AsInt(), m => m);
-#pragma warning restore UA2001
-                foreach (var deserializedDescriptor in deserializedDescriptors)
-                    s_Descriptors.TryAdd(deserializedDescriptor.Key, deserializedDescriptor.Value); // Only add items that don't exist, otherwise we lose all the non-serialized data, eg Fixer
-
-                m_SerializedDescriptors = null;
+                if (descriptor == null || string.IsNullOrEmpty(descriptor.Id))
+                    continue;
+                s_Descriptors.TryAdd(new DescriptorId(descriptor.Id).AsInt(), descriptor);
             }
         }
 

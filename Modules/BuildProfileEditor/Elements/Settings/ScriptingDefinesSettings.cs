@@ -226,6 +226,14 @@ namespace UnityEditor.Build.Profile.Elements
 
         public Action<BuildProfile> GetResetAction() => null;
 
+        public Action<BuildProfile> OnCopy() => OnCopy;
+
+        public Action<BuildProfile> OnPaste() => OnPaste;
+
+        void OnCopy(BuildProfile profile) => BuildProfileModuleUtil.CopySerializedPropertyFromBuildProfile(profile, "m_ScriptingDefines");
+
+        void OnPaste(BuildProfile profile) => BuildProfileModuleUtil.PasteSerializedPropertyToBuildProfile(profile, "m_ScriptingDefines");
+
         public VisualElement CreateInspectorGUI(BuildProfile profile, SerializedObject serializedObject)
         {
             return new ScriptingDefinesVisualElement(profile, serializedObject);

@@ -14,6 +14,7 @@ using UnityEngine.Bindings;
 
 using UnityEngine;
 using UnityEditor.Build;
+using UnityEditor.Build.Profile;
 
 namespace UnityEditor
 {
@@ -210,46 +211,62 @@ namespace UnityEditor
     [NativeHeader("Editor/Src/PlayerSettingsIOS.bindings.h")]
     internal partial class iOSDeviceRequirementGroup
     {
-        private PlayerSettings m_PlayerSettings;
+        private readonly IBackend m_Backend;
         private string m_VariantName;
 
         [FreeFunction("PlayerSettingsIOSBindings::SetOrAddDeviceRequirementForVariantNameImpl")]
         extern private static void SetOrAddDeviceRequirementForVariantNameImpl(PlayerSettings playerSettings, string name, int index, [UnityMarshalAs(NativeType.ScriptingObjectPtr)] string[] keys, [UnityMarshalAs(NativeType.ScriptingObjectPtr)] string[] values);
 
+        [FreeFunction("PlayerSettingsIOSBindings::SetOrAddDeviceRequirementForVariantNameForBuildProfileImpl")]
+        extern private static void SetOrAddDeviceRequirementForVariantNameForBuildProfileImpl(BuildProfilePlayerSettings playerSettings, string name, int index, [UnityMarshalAs(NativeType.ScriptingObjectPtr)] string[] keys, [UnityMarshalAs(NativeType.ScriptingObjectPtr)] string[] values);
+
         [FreeFunction("PlayerSettingsIOSBindings::RemoveIOSDeviceRequirementForVariantNameImpl")]
         extern private static void RemoveIOSDeviceRequirementForVariantNameImpl(PlayerSettings playerSettings, string name, int index);
 
+        [FreeFunction("PlayerSettingsIOSBindings::RemoveIOSDeviceRequirementForVariantNameForBuildProfileImpl")]
+        extern private static void RemoveIOSDeviceRequirementForVariantNameForBuildProfileImpl(BuildProfilePlayerSettings playerSettings, string name, int index);
+
         internal iOSDeviceRequirementGroup(string variantName)
-            : this(null, variantName)
+            : this((PlayerSettings)null, variantName)
         {}
 
         internal iOSDeviceRequirementGroup(PlayerSettings playerSettings, string variantName)
         {
-            m_PlayerSettings = playerSettings;
+            m_Backend = new PlayerSettingsBackend(playerSettings);
+            m_VariantName = variantName;
+        }
+
+        internal iOSDeviceRequirementGroup(BuildProfilePlayerSettings playerSettings, string variantName)
+        {
+            m_Backend = new BuildProfileBackend(playerSettings);
             m_VariantName = variantName;
         }
 
         [FreeFunction("PlayerSettingsIOSBindings::GetDeviceRequirementForVariantNameImpl")]
         extern private static void GetDeviceRequirementForVariantNameImplInternal(PlayerSettings playerSettings, string name, int index, [Out] string[] keys, [Out] string[] values);
 
+        [FreeFunction("PlayerSettingsIOSBindings::GetDeviceRequirementForVariantNameForBuildProfileImpl")]
+        extern private static void GetDeviceRequirementForVariantNameForBuildProfileImplInternal(BuildProfilePlayerSettings playerSettings, string name, int index, [Out] string[] keys, [Out] string[] values);
+
         [FreeFunction("PlayerSettingsIOSBindings::GetDeviceRequirementForVariantCount")]
         extern private static int GetDeviceRequirementForVariantCount(PlayerSettings playerSettings, string name, int index);
 
-        private static void GetDeviceRequirementForVariantNameImpl(PlayerSettings playerSettings, string name, int index, out string[] keys, out string[] values)
+        [FreeFunction("PlayerSettingsIOSBindings::GetDeviceRequirementForVariantCountForBuildProfile")]
+        extern private static int GetDeviceRequirementForVariantCountForBuildProfile(BuildProfilePlayerSettings playerSettings, string name, int index);
+
+        private static void GetDeviceRequirementForVariantNameImpl(IBackend backend, string name, int index, out string[] keys, out string[] values)
         {
-            int requirementCount = GetDeviceRequirementForVariantCount(playerSettings, name, index);
+            int requirementCount = backend.RequirementKeyCount(name, index);
             keys = new string[requirementCount];
             values = new string[requirementCount];
-            GetDeviceRequirementForVariantNameImplInternal(playerSettings, name, index, keys, values);
+            backend.GetRequirement(name, index, keys, values);
         }
 
         public int count
         {
             get
             {
-                return (m_PlayerSettings != null)
-                    ? PlayerSettings.iOS.GetIOSDeviceRequirementCountForVariantName_Internal(m_PlayerSettings, m_VariantName)
-                    : PlayerSettings.iOS.GetIOSDeviceRequirementCountForVariantName(m_VariantName);
+                return m_Backend.VariantRequirementCount(m_VariantName);
             }
         }
 
@@ -259,7 +276,7 @@ namespace UnityEditor
             {
                 string[] keys;
                 string[] values;
-                GetDeviceRequirementForVariantNameImpl(m_PlayerSettings, m_VariantName, index, out keys, out values);
+                GetDeviceRequirementForVariantNameImpl(m_Backend, m_VariantName, index, out keys, out values);
                 var result = new iOSDeviceRequirement();
                 for (int i = 0; i < keys.Length; ++i)
                 {
@@ -270,7 +287,7 @@ namespace UnityEditor
             set
             {
 #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
-                SetOrAddDeviceRequirementForVariantNameImpl(m_PlayerSettings, m_VariantName, index, value.values.Keys.ToArray(),
+                m_Backend.SetOrAddRequirement(m_VariantName, index, value.values.Keys.ToArray(),
 #pragma warning restore UA2001
 #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
                     value.values.Values.ToArray());
@@ -280,17 +297,65 @@ namespace UnityEditor
 
         public void RemoveAt(int index)
         {
-            RemoveIOSDeviceRequirementForVariantNameImpl(m_PlayerSettings, m_VariantName, index);
+            m_Backend.RemoveRequirement(m_VariantName, index);
         }
 
         public void Add(iOSDeviceRequirement requirement)
         {
 #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
-            SetOrAddDeviceRequirementForVariantNameImpl(m_PlayerSettings, m_VariantName, -1, requirement.values.Keys.ToArray(),
+            m_Backend.SetOrAddRequirement(m_VariantName, -1, requirement.values.Keys.ToArray(),
 #pragma warning restore UA2001
 #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
                 requirement.values.Values.ToArray());
 #pragma warning restore UA2001
+        }
+
+        // Per-settings-type dispatch over the bindings above; keeps the group body free of any
+        // PlayerSettings-vs-BuildProfilePlayerSettings branching.
+        private interface IBackend
+        {
+            int VariantRequirementCount(string variant);
+            int RequirementKeyCount(string variant, int index);
+            void GetRequirement(string variant, int index, string[] keys, string[] values);
+            void SetOrAddRequirement(string variant, int index, string[] keys, string[] values);
+            void RemoveRequirement(string variant, int index);
+        }
+
+        private sealed class PlayerSettingsBackend : IBackend
+        {
+            // null targets the global PlayerSettings (native side falls back to GetPlayerSettings()).
+            private readonly PlayerSettings m_PlayerSettings;
+            public PlayerSettingsBackend(PlayerSettings playerSettings) { m_PlayerSettings = playerSettings; }
+
+            public int VariantRequirementCount(string variant)
+                => (m_PlayerSettings != null)
+                    ? PlayerSettings.iOS.GetIOSDeviceRequirementCountForVariantName_Internal(m_PlayerSettings, variant)
+                    : PlayerSettings.iOS.GetIOSDeviceRequirementCountForVariantName(variant);
+            public int RequirementKeyCount(string variant, int index)
+                => GetDeviceRequirementForVariantCount(m_PlayerSettings, variant, index);
+            public void GetRequirement(string variant, int index, string[] keys, string[] values)
+                => GetDeviceRequirementForVariantNameImplInternal(m_PlayerSettings, variant, index, keys, values);
+            public void SetOrAddRequirement(string variant, int index, string[] keys, string[] values)
+                => SetOrAddDeviceRequirementForVariantNameImpl(m_PlayerSettings, variant, index, keys, values);
+            public void RemoveRequirement(string variant, int index)
+                => RemoveIOSDeviceRequirementForVariantNameImpl(m_PlayerSettings, variant, index);
+        }
+
+        private sealed class BuildProfileBackend : IBackend
+        {
+            private readonly BuildProfilePlayerSettings m_PlayerSettings;
+            public BuildProfileBackend(BuildProfilePlayerSettings playerSettings) { m_PlayerSettings = playerSettings; }
+
+            public int VariantRequirementCount(string variant)
+                => PlayerSettings.iOS.GetIOSDeviceRequirementCountForVariantName_Internal(m_PlayerSettings, variant);
+            public int RequirementKeyCount(string variant, int index)
+                => GetDeviceRequirementForVariantCountForBuildProfile(m_PlayerSettings, variant, index);
+            public void GetRequirement(string variant, int index, string[] keys, string[] values)
+                => GetDeviceRequirementForVariantNameForBuildProfileImplInternal(m_PlayerSettings, variant, index, keys, values);
+            public void SetOrAddRequirement(string variant, int index, string[] keys, string[] values)
+                => SetOrAddDeviceRequirementForVariantNameForBuildProfileImpl(m_PlayerSettings, variant, index, keys, values);
+            public void RemoveRequirement(string variant, int index)
+                => RemoveIOSDeviceRequirementForVariantNameForBuildProfileImpl(m_PlayerSettings, variant, index);
         }
     }
 
@@ -674,14 +739,35 @@ namespace UnityEditor
             [StaticAccessor("PlayerSettings", StaticAccessorType.DoubleColon)]
             extern internal static string[] GetAssetBundleVariantsWithDeviceRequirements_Internal(PlayerSettings instance);
 
+            // The bindings generator names native glue by C# method name only, so the
+            // BuildProfilePlayerSettings externs need distinct names; the non-extern overloads
+            // below restore the convenient overloaded API used by callers.
+            [FreeFunction("PlayerSettingsIOSBindings::GetIOSVariantsWithDeviceRequirementsForBuildProfile")]
+            extern private static string[] GetAssetBundleVariantsWithDeviceRequirementsForBuildProfile_Internal(BuildProfilePlayerSettings instance);
+            internal static string[] GetAssetBundleVariantsWithDeviceRequirements_Internal(BuildProfilePlayerSettings instance)
+            {
+                return GetAssetBundleVariantsWithDeviceRequirementsForBuildProfile_Internal(instance);
+            }
+
             internal static extern int GetIOSDeviceRequirementCountForVariantName(string name);
             internal static extern int GetIOSDeviceRequirementCountForVariantName_Internal(PlayerSettings instance, string name);
+
+            [FreeFunction("PlayerSettingsIOSBindings::GetIOSDeviceRequirementCountForVariantNameForBuildProfile")]
+            extern private static int GetIOSDeviceRequirementCountForVariantNameForBuildProfile_Internal(BuildProfilePlayerSettings instance, string name);
+            internal static int GetIOSDeviceRequirementCountForVariantName_Internal(BuildProfilePlayerSettings instance, string name)
+            {
+                return GetIOSDeviceRequirementCountForVariantNameForBuildProfile_Internal(instance, name);
+            }
 
             private static bool CheckAssetBundleVariantHasDeviceRequirements(string name)
             {
                 return GetIOSDeviceRequirementCountForVariantName(name) > 0;
             }
             private static bool CheckAssetBundleVariantHasDeviceRequirements_Internal(PlayerSettings instance, string name)
+            {
+                return GetIOSDeviceRequirementCountForVariantName_Internal(instance, name) > 0;
+            }
+            private static bool CheckAssetBundleVariantHasDeviceRequirements_Internal(BuildProfilePlayerSettings instance, string name)
             {
                 return GetIOSDeviceRequirementCountForVariantName_Internal(instance, name) > 0;
             }
@@ -733,6 +819,12 @@ namespace UnityEditor
                     return null;
                 return new iOSDeviceRequirementGroup(instance, name);
             }
+            internal static iOSDeviceRequirementGroup GetDeviceRequirementsForAssetBundleVariant_Internal(BuildProfilePlayerSettings instance, string name)
+            {
+                if (!CheckAssetBundleVariantHasDeviceRequirements_Internal(instance, name))
+                    return null;
+                return new iOSDeviceRequirementGroup(instance, name);
+            }
 
             // will be public
             internal static void RemoveDeviceRequirementsForAssetBundleVariant(string name)
@@ -748,6 +840,10 @@ namespace UnityEditor
                 return new iOSDeviceRequirementGroup(name);
             }
             internal static iOSDeviceRequirementGroup AddDeviceRequirementsForAssetBundleVariant_Internal(PlayerSettings instance, string name)
+            {
+                return new iOSDeviceRequirementGroup(instance, name);
+            }
+            internal static iOSDeviceRequirementGroup AddDeviceRequirementsForAssetBundleVariant_Internal(BuildProfilePlayerSettings instance, string name)
             {
                 return new iOSDeviceRequirementGroup(instance, name);
             }

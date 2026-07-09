@@ -131,7 +131,7 @@ namespace Unity.U2D.Physics
         public readonly PhysicsHandle physicsHandle => m_PhysicsHandle;
 
         /// <undoc/>
-        public override readonly string ToString() => isValid ? $"type={jointType}, {m_PhysicsHandle}" : "<INVALID>";
+        public override readonly string ToString() => m_PhysicsHandle.ToString();
 
         #endregion
 

@@ -216,8 +216,8 @@ namespace UnityEngine.Android
         /// <para>The actual process name it was running with.</para>
         /// <seealso href="https://developer.android.com/reference/android/app/ApplicationExitInfo#getProcessName()">developer.android.com</seealso>
         /// </summary>
-        /// <returns>String</returns>
-        String processName { get; }
+        /// <returns>string</returns>
+        string processName { get; }
 
         /// <summary>
         /// <para>Return the state data set by calling ApplicationExitInfoProvider.setProcessStateSummary(byte[]) from the process before its death.</para>
@@ -279,7 +279,7 @@ namespace UnityEngine.Android
         /// <para>Return the trace data in string format</para>
         /// </summary>
         /// <returns>string</returns>
-        public String traceAsString { get; }
+        public string traceAsString { get; }
     }
 
 

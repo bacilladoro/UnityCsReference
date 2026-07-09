@@ -95,7 +95,7 @@ namespace Unity.ProjectAuditor.Editor.InstructionAnalyzers
                         if (!IsPassedToDebugLog(context.Instruction))
                         {
                             yield return context.CreateIssue(IssueCategory.Code, k_ToStringDescriptor.Id, "EntityId.ToString")
-                                .WithUpgradeProperties(["6000.4", null, null]);
+                                .WithUpgradeProperties("6000.4", null, null);
                         }
                         break;
 
@@ -105,7 +105,7 @@ namespace Unity.ProjectAuditor.Editor.InstructionAnalyzers
                     case "op_LessThanOrEqual":
                     case "op_GreaterThanOrEqual":
                         yield return context.CreateIssue(IssueCategory.Code, k_SortDescriptor.Id, methodName)
-                            .WithUpgradeProperties(["6000.4", null, null]);
+                            .WithUpgradeProperties("6000.4", null, null);
                         break;
                 }
             }
@@ -129,7 +129,7 @@ namespace Unity.ProjectAuditor.Editor.InstructionAnalyzers
                     if (isOrInheritedFrom)
                     {
                         yield return context.CreateIssue(IssueCategory.Code, k_GetHashCodeDescriptor.Id, receiverType.Name)
-                            .WithUpgradeProperties(["6000.4", null, null]);
+                            .WithUpgradeProperties("6000.4", null, null);
                     }
                 }
             }

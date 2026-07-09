@@ -15,8 +15,8 @@ namespace UnityEditor
     {
         static class Styles
         {
-            public static GUIStyle stageHeaderBg;
-            public static GUIStyle leftArrow = "ArrowNavigationLeft";
+            public static readonly GUIStyle stageHeaderBg;
+            public static readonly GUIStyle leftArrow = "ArrowNavigationLeft";
 
             static Styles()
             {

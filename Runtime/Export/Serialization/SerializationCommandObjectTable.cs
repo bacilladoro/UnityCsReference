@@ -4,6 +4,7 @@
 
 using System.Collections.Generic;
 using System.Threading;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEngine
 {
@@ -26,13 +27,21 @@ namespace UnityEngine
     /// requested, since the old array remains alive while any reader holds it)
     /// or the post-resize array (also valid).
     /// </remarks>
-    internal static class SerializationCommandObjectTable
+    internal static partial class SerializationCommandObjectTable
     {
         private const int InitialCapacity = 64;
 
+        // The four fields below are released as a unit by Clear(), which runs under s_GrowLock on
+        // [OnCodeUnloading] (see below). Field-level auto-cleanup is unsuitable here: it cannot take the
+        // grow lock (racing concurrent Get/Intern) and resetting the backing array to null would NRE the
+        // next Intern/Get. So each field opts out and defers to the lock-safe Clear() hook.
+        [NoAutoStaticsCleanup] // interned user delegates/Types released by [OnCodeUnloading] Clear(); array allocation persists
         private static object[] s_Objects = new object[InitialCapacity];
+        [NoAutoStaticsCleanup] // reset to 0 by [OnCodeUnloading] Clear()
         private static int s_Count;
+        [NoAutoStaticsCleanup] // interned user object keys released by [OnCodeUnloading] Clear()
         private static readonly Dictionary<object, int> s_Dedup = new Dictionary<object, int>(InitialCapacity);
+        [NoAutoStaticsCleanup] // lock object, holds no references, safe to persist
         private static readonly object s_GrowLock = new object();
 
         /// <summary>
@@ -75,7 +84,10 @@ namespace UnityEngine
         /// <summary>
         /// Empties the table and the dedup map. Called from the same site that
         /// invalidates the SerializationCache — typically on domain reload.
+        /// Also runs on [OnCodeUnloading] so interned old-ALC delegates/Types are
+        /// released before the reloadable assemblies unload.
         /// </summary>
+        [OnCodeUnloading]
         internal static void Clear()
         {
             lock (s_GrowLock)

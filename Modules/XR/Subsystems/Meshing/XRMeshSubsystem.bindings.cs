@@ -6,6 +6,7 @@ using System;
 using System.Runtime.InteropServices;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Bindings;
 using UnityEngine.Scripting;
 using System.Collections.Generic;
@@ -15,7 +16,7 @@ namespace UnityEngine.XR
     [NativeHeader("Modules/XR/Subsystems/Meshing/XRMeshBindings.h")]
     [UsedByNativeCode]
     [StructLayout(LayoutKind.Sequential)]
-    public struct MeshId : IEquatable<MeshId>
+    public partial struct MeshId : IEquatable<MeshId>
     {
         public override string ToString()
         {
@@ -53,6 +54,7 @@ namespace UnityEngine.XR
                 (id1.m_SubId2 != id2.m_SubId2);
         }
 
+        [NoAutoStaticsCleanup] // default value type; no user refs
         private static MeshId s_InvalidId = new MeshId();
         public static MeshId InvalidId { get { return s_InvalidId; } }
 

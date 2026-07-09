@@ -356,6 +356,7 @@ namespace UnityEngine.Rendering
             var lightmapIndex = NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<short>(nativeData->lightmapIndex, nativeData->rendererCount, Allocator.Invalid);
             var rendererSettings = NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<InternalMeshRendererSettings>(nativeData->rendererSettings, nativeData->rendererCount, Allocator.Invalid);
             var rendererUserValues = NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<uint>(nativeData->rendererUserValues, nativeData->rendererCount, Allocator.Invalid);
+            var lightProbeUsages = NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<byte>(nativeData->lightProbeUsages, nativeData->rendererCount, Allocator.Invalid);
             var rendererPriority = NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<int>(nativeData->rendererPriority, nativeData->rendererCount, Allocator.Invalid);
             var localToWorldMatrix = NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<Matrix4x4>(nativeData->localToWorldMatrix, nativeData->rendererCount, Allocator.Invalid);
             var prevLocalToWorldMatrix = NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<Matrix4x4>(nativeData->prevLocalToWorldMatrix, nativeData->rendererCount, Allocator.Invalid);
@@ -376,6 +377,7 @@ namespace UnityEngine.Rendering
             NativeArrayUnsafeUtility.SetAtomicSafetyHandle(ref lightmapIndex, AtomicSafetyHandle.Create());
             NativeArrayUnsafeUtility.SetAtomicSafetyHandle(ref rendererSettings, AtomicSafetyHandle.Create());
             NativeArrayUnsafeUtility.SetAtomicSafetyHandle(ref rendererUserValues, AtomicSafetyHandle.Create());
+            NativeArrayUnsafeUtility.SetAtomicSafetyHandle(ref lightProbeUsages, AtomicSafetyHandle.Create());
             NativeArrayUnsafeUtility.SetAtomicSafetyHandle(ref rendererPriority, AtomicSafetyHandle.Create());
             NativeArrayUnsafeUtility.SetAtomicSafetyHandle(ref localToWorldMatrix, AtomicSafetyHandle.Create());
             NativeArrayUnsafeUtility.SetAtomicSafetyHandle(ref prevLocalToWorldMatrix, AtomicSafetyHandle.Create());
@@ -397,6 +399,7 @@ namespace UnityEngine.Rendering
                 lightmapIndex = lightmapIndex,
                 rendererSettings = rendererSettings,
                 rendererUserValues = rendererUserValues,
+                lightProbeUsages = lightProbeUsages,
                 rendererPriority = rendererPriority,
                 localToWorldMatrix = localToWorldMatrix,
                 prevLocalToWorldMatrix = prevLocalToWorldMatrix,
@@ -427,6 +430,7 @@ namespace UnityEngine.Rendering
             AtomicSafetyHandle.Release(NativeArrayUnsafeUtility.GetAtomicSafetyHandle(lightmapIndex));
             AtomicSafetyHandle.Release(NativeArrayUnsafeUtility.GetAtomicSafetyHandle(rendererSettings));
             AtomicSafetyHandle.Release(NativeArrayUnsafeUtility.GetAtomicSafetyHandle(rendererUserValues));
+            AtomicSafetyHandle.Release(NativeArrayUnsafeUtility.GetAtomicSafetyHandle(lightProbeUsages));
             AtomicSafetyHandle.Release(NativeArrayUnsafeUtility.GetAtomicSafetyHandle(rendererPriority));
             AtomicSafetyHandle.Release(NativeArrayUnsafeUtility.GetAtomicSafetyHandle(localToWorldMatrix));
             AtomicSafetyHandle.Release(NativeArrayUnsafeUtility.GetAtomicSafetyHandle(prevLocalToWorldMatrix));
@@ -565,6 +569,7 @@ namespace UnityEngine.Rendering
         public ushort* subMeshStartIndex;
         public RangeInt* subMaterialRange;
         public uint* rendererUserValues;
+        public byte* lightProbeUsages;
         public ulong* sceneCullingMask;
         public int rendererCount;
 
@@ -704,6 +709,7 @@ namespace UnityEngine.Rendering
         public NativeArray<ushort> subMeshStartIndex;
         public NativeArray<RangeInt> subMaterialRange;
         public NativeArray<uint> rendererUserValues;
+        public NativeArray<byte> lightProbeUsages;
         public NativeArray<ulong> sceneCullingMask;
 
         /// <summary>

@@ -5,6 +5,7 @@
 using UnityEngine;
 using UnityEngine.Rendering;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -34,7 +35,8 @@ namespace UnityEditor
             }
         }
 
-        static Styles styles;
+        [NoAutoStaticsCleanup]
+        static Styles styles; // lazy GUIStyle/GUIContent Styles cache, recreated on first OnInspectorGUI access; safe to persist
 
         static List<string> GetPlatformList(RayTracingShader rs)
         {

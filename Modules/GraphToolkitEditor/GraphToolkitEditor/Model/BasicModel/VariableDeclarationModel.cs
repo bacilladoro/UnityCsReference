@@ -141,6 +141,8 @@ namespace Unity.GraphToolkit.Editor
                     {
                         usage.UpdateTypeFromDeclaration();
                     }
+
+                    GraphModel.ReconcileVariableConditions(this);
                 }
             }
         }

@@ -1070,7 +1070,7 @@ namespace Unity.ProjectAuditor.Editor.UI.Framework
             public static readonly GUIContent SearchJumpButton = EditorGUIUtility.TrIconContent("SearchJump Icon", "Open in Search");
         }
 
-        protected static void ApplyQuickFixes(IReadOnlyList<ReportItem> issues, AnalysisParams analysisParams)
+        protected void ApplyQuickFixes(IReadOnlyList<ReportItem> issues)
         {
             var showProgress = issues.Count > 1;
             try
@@ -1087,7 +1087,7 @@ namespace Unity.ProjectAuditor.Editor.UI.Framework
                         }
 
                         var issue = issues[i];
-                        issue.Id.GetDescriptor().Fix(issue, analysisParams);
+                        issue.Id.GetDescriptor().Fix(issue, m_ViewManager.Report.SessionInfo);
                     }
                 }
             }
@@ -1096,6 +1096,8 @@ namespace Unity.ProjectAuditor.Editor.UI.Framework
                 if (showProgress)
                     EditorUtility.ClearProgressBar();
             }
+
+            m_ViewManager.OnSelectedIssuesQuickFixRequested?.Invoke(issues);
         }
 
         protected static class SharedContents

@@ -102,29 +102,28 @@ namespace UnityEditor.UIElements.StyleSheets
         void AddStyleSheets(StringBuilder stringBuilder, IEnumerable<StyleSheet> styleSheets)
         {
             var targetPath = AssetDatabase.GetAssetPath(target);
-            var targetDirectory = Path.GetDirectoryName(targetPath);
-            targetDirectory = targetDirectory.Replace('\\', '/') + "/";
 
             foreach (var styleSheet in styleSheets)
             {
-                var styleSheetPath = AssetDatabase.GetAssetPath(styleSheet);
-
-                if (string.IsNullOrEmpty(styleSheetPath))
+                var url = BuildImportUrl(styleSheet, targetPath);
+                if (string.IsNullOrEmpty(url))
                     continue;
-
-                string url;
-
-                if (styleSheetPath == targetPath && AssetDatabase.IsSubAsset(styleSheet))
-                {
-                    url = $"{ThemeRegistry.kThemeScheme}://{styleSheet.name}";
-                }
-                else if (styleSheetPath.StartsWith(targetDirectory))
-                    url = styleSheetPath.Remove(0, targetDirectory.Length);
-                else
-                    url = $"/{styleSheetPath}";
 
                 stringBuilder.AppendLine($"@import url(\"{url}\");");
             }
+        }
+
+        internal static string BuildImportUrl(StyleSheet styleSheet, string targetPath)
+        {
+            var styleSheetPath = AssetDatabase.GetAssetPath(styleSheet);
+            if (string.IsNullOrEmpty(styleSheetPath))
+                return null;
+
+            // Built-in themes are cloned as sub-assets of this TSS with no independent GUID; keep the theme scheme.
+            if (styleSheetPath == targetPath && AssetDatabase.IsSubAsset(styleSheet))
+                return $"{ThemeRegistry.kThemeScheme}://{styleSheet.name}";
+
+            return URIHelpers.MakeAssetUri(styleSheet);
         }
 
         public override void OnInspectorGUI()

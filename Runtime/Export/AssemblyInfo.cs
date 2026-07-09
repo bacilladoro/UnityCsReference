@@ -43,6 +43,7 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("Unity.Modules.Core.ObjectManagement.Tests.Editor")]
 [assembly: InternalsVisibleTo("Unity.Modules.Core.TagManager.Tests.Editor")]
 [assembly: InternalsVisibleTo("Assembly-CSharp-Editor-testable")]
+[assembly: InternalsVisibleTo("Unity.Modules.Tilemap.Tests.Editor")]
 [assembly: InternalsVisibleTo("Assembly-CSharp-Editor-firstpass-testable")]
 [assembly: InternalsVisibleTo("Unity.Modules.CoreEditor.ObjectNames.Tests.Editor")]
 [assembly: InternalsVisibleTo("Unity.Modules.CoreEditor.TreeViewExamples.Tests.Editor")]
@@ -82,6 +83,7 @@ using System.Runtime.CompilerServices;
 
 [assembly: InternalsVisibleTo("Unity.Modules.SpriteAPI.Tests.Editor")]
 [assembly: InternalsVisibleTo("Unity.Modules.SpriteDeform.Tests.Editor")]
+[assembly: InternalsVisibleTo("Unity.Modules.SpriteMask.Tests.Editor")]
 [assembly: InternalsVisibleTo("Unity.Modules.SpriteShape.Tests.Editor")]
 [assembly: InternalsVisibleTo("Unity.Modules.DrivenProperties.Tests.Editor")]
 [assembly: InternalsVisibleTo("Unity.Modules.CoreEditor.SceneHierarchy.Tests.Editor")]
@@ -101,6 +103,8 @@ using System.Runtime.CompilerServices;
 
 [assembly: InternalsVisibleTo("Unity.Modules.Core.TextureMipLimit.Tests.Editor")]
 [assembly: InternalsVisibleTo("Unity.Modules.Core.TextureStreaming.Tests.Editor")]
+[assembly: InternalsVisibleTo("Unity.Modules.Core.StaticShim.Tests.Editor")]
+[assembly: InternalsVisibleTo("Unity.Modules.DeviceSimulator.Tests.Editor")]
 [assembly: InternalsVisibleTo("Unity.Modules.CoreEditor.TextureGenerator.Tests.Editor")]
 [assembly: InternalsVisibleTo("Unity.Modules.Streaming.Tests.Editor")]
 [assembly: InternalsVisibleTo("Unity.Modules.PackageManagerUI.Tests.Editor")]
@@ -108,6 +112,8 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("Unity.Modules.ShaderCompilationEditor.ShaderUtil.Tests.Editor")]
 
 
+// PlayMode test assembly that runs on players too, so its IVT must be outside the editor-only block above.
+[assembly: InternalsVisibleTo("Unity.Modules.Core.AsyncReadManager.Tests.Playmode")]
 [assembly: InternalsVisibleTo("UnityEngine.Networking")]
 [assembly: InternalsVisibleTo("UnityEngine.Cloud")]
 [assembly: InternalsVisibleTo("UnityEngine.Cloud.Service")]
@@ -276,7 +282,9 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("Unity.Modules.PlayableGraph.Tests.Editor")]
 [assembly: InternalsVisibleTo("Unity.Modules.PlayableGraph.Tests")]
 [assembly: InternalsVisibleTo("Unity.Modules.GI.RealTimeGI.Tests.Editor")]
+[assembly: InternalsVisibleTo("Unity.Modules.GI.API.EditorBakeWithAdditiveScene.Tests.Editor")]
 [assembly: InternalsVisibleTo("Unity.Modules.GI.RealTimeGI.Tests.Runtime")]
+[assembly: InternalsVisibleTo("Unity.Modules.GI.SceneView.Tests.Editor")]
 [assembly: InternalsVisibleTo("Unity.Modules.GI.LightingDataAsset.Tests.Editor")]
 [assembly: InternalsVisibleTo("Unity.Transform.Tests.Runtime")]
 [assembly: InternalsVisibleTo("Unity.Transform.Tests.Editor")]

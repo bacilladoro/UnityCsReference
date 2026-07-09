@@ -101,31 +101,28 @@ namespace UnityEditor.Build.Profile
 
         static readonly List<PlayerSettings> s_LoadedPlayerSettings = new();
 
-        internal void LoadPlayerSettings()
-        {
-            TryLoadProjectSettingsAssetPlayerSettings();
-            DeserializePlayerSettings();
-        }
-
-        internal void UpdatePlayerSettingsObjectFromYAML()
-        {
-            if (!HasSerializedPlayerSettings())
-                return;
-
-            PlayerSettings.UpdatePlayerSettingsObjectFromYAML(playerSettings, m_PlayerSettingsYaml.GetYamlString());
-            BuildProfileModuleUtil.UpdateActiveEditors(this);
-        }
-
         internal void CreatePlayerSettingsFromGlobal()
         {
             if (m_PlayerSettings != null || BuildProfileContext.IsClassicPlatformProfile(this))
                 return;
 
-            var newPlayerSettings = Instantiate(s_GlobalPlayerSettings);
+            // Create BuildProfilePlayerSettings subasset with a copy of global settings
+            if (buildProfilePlayerSettings == null)
+            {
+                buildProfilePlayerSettings = new BuildProfilePlayerSettings();
+                buildProfilePlayerSettings.name = "Player Settings";
+                buildProfilePlayerSettings.hideFlags = HideFlags.HideInHierarchy | HideFlags.HideInInspector;
+                PlayerSettings.CopySettingsToBuildProfilePlayerSettings(buildProfilePlayerSettings);
 
-            var yamlStr = PlayerSettings.SerializeAsYAMLString(newPlayerSettings);
-            m_PlayerSettingsYaml.SetSettingsFromYaml(yamlStr);
-            m_PlayerSettings = newPlayerSettings;
+                if (EditorUtility.IsPersistent(this))
+                {
+                    AssetDatabase.AddObjectToAsset(buildProfilePlayerSettings, this);
+                    EditorUtility.SetDirty(this);
+                }
+            }
+
+            // Create PlayerSettings wrapper that proxies to the subasset
+            m_PlayerSettings = PlayerSettings.CreateAsBuildProfileOverride(buildProfilePlayerSettings);
             s_LoadedPlayerSettings.Add(m_PlayerSettings);
 
             // Mark the profile dirty so the serialized YAML is persisted to disk.
@@ -150,17 +147,26 @@ namespace UnityEditor.Build.Profile
 
                 m_PlayerSettings = null;
 
-                BuildProfileModuleUtil.UpdateActiveEditors(this);
-
                 DestroyImmediate(toDestroy, true);
                 s_LoadedPlayerSettings.Remove(toDestroy);
 
                 if (clearYaml)
                     m_PlayerSettingsYaml.Clear();
             }
-            else
+
+            BuildProfileModuleUtil.UpdateActiveEditors(this);
+        }
+
+        internal void RemoveBuildProfilePlayerSettings()
+        {
+            RemovePlayerSettings(clearYaml: true);
+
+            if (buildProfilePlayerSettings != null)
             {
-                BuildProfileModuleUtil.UpdateActiveEditors(this);
+                if (AssetDatabase.Contains(buildProfilePlayerSettings))
+                    AssetDatabase.RemoveObjectFromAsset(buildProfilePlayerSettings);
+                UnityEngine.Object.DestroyImmediate(buildProfilePlayerSettings, true);
+                buildProfilePlayerSettings = null;
             }
         }
 
@@ -195,39 +201,9 @@ namespace UnityEditor.Build.Profile
             }
         }
 
-        internal void SerializePlayerSettings()
-        {
-            if (m_PlayerSettings == null)
-                return;
-
-            PlayerSettings.EnsureUnityConnectSettingsEqual(m_PlayerSettings, s_GlobalPlayerSettings);
-
-            var yamlStr = PlayerSettings.SerializeAsYAMLString(m_PlayerSettings);
-            m_PlayerSettingsYaml.SetSettingsFromYaml(yamlStr);
-        }
-
-        internal void DeserializePlayerSettings()
-        {
-            if (!HasSerializedPlayerSettings())
-                return;
-
-            var isDirtyBeforeDeserialize = EditorUtility.IsDirty(m_PlayerSettings);
-            if (m_PlayerSettings == null)
-                m_PlayerSettings = PlayerSettings.DeserializeFromYAMLString(m_PlayerSettingsYaml.GetYamlString());
-            else
-                UpdatePlayerSettingsObjectFromYAML();
-            s_LoadedPlayerSettings.Add(m_PlayerSettings);
-
-            if (!isDirtyBeforeDeserialize)
-                EditorUtility.ClearDirty(m_PlayerSettings);
-
-            PlayerSettings.EnsureUnityConnectSettingsEqual(m_PlayerSettings, s_GlobalPlayerSettings);
-            UpdateGlobalManagerPlayerSettings();
-        }
-
         internal bool HasSerializedPlayerSettings()
         {
-            return m_PlayerSettingsYaml.HasSettings();
+            return buildProfilePlayerSettings != null || m_PlayerSettingsYaml.HasSettings();
         }
 
         internal void UpdateGlobalManagerPlayerSettings(bool activeWillBeRemoved = false)
@@ -254,13 +230,6 @@ namespace UnityEditor.Build.Profile
             TryLoadProjectSettingsAssetPlayerSettings();
             if (!PlayerSettings.IsGlobalManagerPlayerSettings(s_GlobalPlayerSettings))
                 PlayerSettings.SetOverridePlayerSettingsInternal(s_GlobalPlayerSettings);
-        }
-
-        internal static bool IsDataEqualToProjectSettings(PlayerSettings targetPlayerSettings)
-        {
-            var projectSettingsYaml = PlayerSettings.SerializeAsYAMLString(s_GlobalPlayerSettings);
-            var targetSettingsYaml = PlayerSettings.SerializeAsYAMLString(targetPlayerSettings);
-            return projectSettingsYaml == targetSettingsYaml;
         }
 
         static void TryLoadProjectSettingsAssetPlayerSettings()

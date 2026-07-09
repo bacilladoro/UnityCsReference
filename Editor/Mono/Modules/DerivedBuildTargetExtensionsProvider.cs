@@ -141,8 +141,19 @@ namespace UnityEditor.Modules
                 if (!BuildTargetDiscovery.TryCreateIPlatformProvider(type, out var provider))
                     continue;
 
-                var sdkPlatformProvider = SDKPlatformProvider.TryCreateDerivedPlatformProvider(provider);
-                if (sdkPlatformProvider == null)
+                if (!SDKPlatformProvider.TryGetProviderGuid(provider, out var providerGuid))
+                    continue;
+
+                if (!BuildTargetDiscovery.TryGetPlatformInfo(providerGuid, out _))
+                {
+                    Debug.LogError(string.Format(BuildTargetDiscovery.k_SDKProviderMissingPlatformInfoError, type.FullName));
+                    continue;
+                }
+
+                if (!BuildTargetDiscovery.BuildPlatformIsDerivedPlatform(providerGuid))
+                    continue;
+
+                if (!SDKPlatformProvider.TryCreatePlatformProvider(provider, SDKPlatformType.Derived, out var sdkPlatformProvider))
                     continue;
 
                 LoadSDKDerivedPlatformExtension(sdkPlatformProvider, baseIBuildTarget, createBaseBuildProfileExtensionFunction);
@@ -152,16 +163,7 @@ namespace UnityEditor.Modules
         void LoadSDKDerivedPlatformExtension(SDKPlatformProvider sdkPlatformProvider, IBuildTarget baseIBuildTarget, CreateBuildProfileExtensionFunction createBaseBuildProfileExtensionFunction)
         {
             if (!BuildTargetDiscovery.TryGetPlatformInfo(sdkPlatformProvider.guid, out var platformInfo))
-            {
-                Debug.LogError(string.Format(BuildTargetDiscovery.k_SDKProviderMissingPlatformInfoError, sdkPlatformProvider.providerType.FullName));
                 return;
-            }
-
-            if (!BuildTargetDiscovery.BuildPlatformIsDerivedPlatform(sdkPlatformProvider.guid))
-            {
-                Debug.LogError(string.Format(BuildTargetDiscovery.k_SDKProviderNotDerivedTargetError, sdkPlatformProvider.providerType.FullName, sdkPlatformProvider.guid));
-                return;
-            }
 
             if (platformInfo.buildTarget != m_BuildTarget)
                 return;

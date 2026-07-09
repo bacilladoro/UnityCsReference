@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using Object = UnityEngine.Object;
 using ShaderPropertyType = UnityEngine.Rendering.ShaderPropertyType;
@@ -239,12 +240,12 @@ namespace UnityEditor
 
         private static class Styles
         {
-            public static string revertMultiText = L10n.Tr("Revert on {0} Material(s)");
-            public static string applyToMaterialText = L10n.Tr("Apply to Material '{0}'");
-            public static string applyToVariantText = L10n.Tr("Apply as Override in Variant '{0}'");
+            public static readonly string revertMultiText = L10n.Tr("Revert on {0} Material(s)");
+            public static readonly string applyToMaterialText = L10n.Tr("Apply to Material '{0}'");
+            public static readonly string applyToVariantText = L10n.Tr("Apply as Override in Variant '{0}'");
 
-            static Color overrideLineColor_l = new Color32(0x09, 0x09, 0x09, 0xFF);
-            static Color overrideLineColor_d = new Color32(0xC4, 0xC4, 0xC4, 0xFF);
+            static readonly Color overrideLineColor_l = new Color32(0x09, 0x09, 0x09, 0xFF);
+            static readonly Color overrideLineColor_d = new Color32(0xC4, 0xC4, 0xC4, 0xFF);
             public static Color overrideLineColor { get { return EditorGUIUtility.isProSkin ? overrideLineColor_d : overrideLineColor_l; } }
 
             public static readonly GUIContent revertContent = EditorGUIUtility.TrTextContent("Revert");
@@ -256,16 +257,18 @@ namespace UnityEditor
             public static readonly GUIContent copyContent = EditorGUIUtility.TrTextContent("Copy");
             public static readonly GUIContent pasteContent = EditorGUIUtility.TrTextContent("Paste");
 
+            [NoAutoStaticsCleanup] // capture-less editor icon loaded by fixed name; survives reload
             static readonly Texture lockInChildrenIcon = EditorGUIUtility.IconContent("HierarchyLock").image;
             public static readonly GUIContent lockInChildrenContent = EditorGUIUtility.TrTextContent(string.Empty, "Locked properties cannot be overriden by a child.", lockInChildrenIcon);
 
+            [NoAutoStaticsCleanup] // capture-less editor icon loaded by fixed name; survives reload
             static readonly Texture lockedByAncestorIcon = EditorGUIUtility.IconContent("IN LockButton on").image;
             public static readonly GUIContent lockedByAncestorContent = EditorGUIUtility.TrTextContent(string.Empty, "This property is set and locked by an ancestor.", lockedByAncestorIcon);
 
             public static readonly GUIStyle centered = new GUIStyle(EditorStyles.label) { alignment = TextAnchor.MiddleLeft };
         }
 
-        struct PropertyData
+        partial struct PropertyData
         {
             public MaterialProperty property;
             public MaterialSerializedProperty serializedProperty;
@@ -278,7 +281,9 @@ namespace UnityEditor
             public float startY;
             public Rect position;
 
+            [AutoStaticsCleanupOnCodeReload]
             private static List<MaterialProperty> capturedProperties = new List<MaterialProperty>();
+            [AutoStaticsCleanupOnCodeReload]
             private static List<MaterialSerializedProperty> capturedSerializedProperties = new List<MaterialSerializedProperty>();
 
             private bool HasMixedValues<T>(Func<Material, T> getter)
@@ -675,7 +680,9 @@ namespace UnityEditor
                 }
             }
         }
+        [AutoStaticsCleanupOnCodeReload]
         static List<PropertyData> s_PropertyStack = new List<PropertyData>();
+        [AutoStaticsCleanupOnCodeReload]
         static MaterialProperty s_CopyPasteCache = null;
         internal static void ClearStack() => s_PropertyStack.Clear();
 

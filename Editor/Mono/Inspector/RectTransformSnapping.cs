@@ -2,8 +2,10 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+using System;
 using UnityEngine;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -103,11 +105,14 @@ namespace UnityEditor
         }
     }
 
-    internal class RectTransformSnapping
+    internal partial class RectTransformSnapping
     {
         internal const float kSnapThreshold = 0.05f;
+        [AutoStaticsCleanupOnCodeReload]
         private static SnapGuideCollection[] s_SnapGuides = new SnapGuideCollection[] { new SnapGuideCollection(), new SnapGuideCollection() };
-        private static float[] kSidesAndMiddle = new float[] { 0, 0.5f, 1 };
+        // Constant set of snap fractions (0, 0.5, 1); baked into read-only data, no static state to clean up.
+        private static ReadOnlySpan<float> kSidesAndMiddle => [0, 0.5f, 1];
+        [NoAutoStaticsCleanup] // Reusable Vector3[4] scratch buffer overwritten on every use; value-type data, safe to persist.
         private static Vector3[] s_Corners = new Vector3[4];
 
         internal static void OnGUI()

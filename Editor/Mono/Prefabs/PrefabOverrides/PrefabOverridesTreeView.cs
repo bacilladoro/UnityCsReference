@@ -864,13 +864,28 @@ namespace UnityEditor
             static void DrawObjectHeader(Editor editor, EditorGUIUtility.ComparisonViewMode viewMode)
             {
                 if (editor == null) return;
-                if (editor.target is GameObject)
-                    editor.DrawHeader();
-                else
+
+                // The comparison view mode must be set while the header draws (not just the body) so that the
+                // GameObject inspector header suppresses its prefab toolbar (Overrides/Select/Open). Otherwise the
+                // embedded inspector would expose an "Overrides" dropdown that re-opens this whole window, allowing
+                // the comparison popup to be stacked recursively. (UUM-111882)
+                var originalComparisonMode = EditorGUIUtility.comparisonViewMode;
+                var originalHierarchyMode = EditorGUIUtility.hierarchyMode;
+                EditorGUIUtility.comparisonViewMode = viewMode;
+                try
                 {
-                    EditorGUIUtility.comparisonViewMode = viewMode;
-                    EditorGUIUtility.hierarchyMode = true;
-                    EditorGUILayout.InspectorTitlebar(true, editor);
+                    if (editor.target is GameObject)
+                        editor.DrawHeader();
+                    else
+                    {
+                        EditorGUIUtility.hierarchyMode = true;
+                        EditorGUILayout.InspectorTitlebar(true, editor);
+                    }
+                }
+                finally
+                {
+                    EditorGUIUtility.comparisonViewMode = originalComparisonMode;
+                    EditorGUIUtility.hierarchyMode = originalHierarchyMode;
                 }
             }
         }

@@ -110,6 +110,11 @@ namespace UnityEditor.Build.Profile
                     return;
                 }
 
+                // Ensure connect settings (cloudProjectId, organizationId) always
+                // match project settings, even when re-activating the same profile.
+                if (value.playerSettings != null)
+                    PlayerSettings.EnsureUnityConnectSettingsEqual(value.playerSettings, BuildProfile.GetGlobalPlayerSettings());
+
                 // Only compare prev with value after the null check, as
                 // EditorUserBuildSettings.activeBuildProfile will return null
                 // if the build profile has been destroyed but on native side
@@ -946,24 +951,6 @@ namespace UnityEditor.Build.Profile
             return false;
         }
 
-        [RequiredByNativeCode]
-        static void UpdateActiveProfilePlayerSettingsObjectFromYAML()
-        {
-            activeProfile?.UpdatePlayerSettingsObjectFromYAML();
-        }
-
-        [RequiredByNativeCode]
-        static void SerializeActiveProfilePlayerSettings()
-        {
-            var profile = EditorUserBuildSettings.activeBuildProfile;
-            if (profile == null)
-                return;
-
-            if (!EditorUtility.IsDirty(profile.playerSettings))
-                return;
-
-            profile.SerializePlayerSettings();
-        }
 
         [RequiredByNativeCode]
         [VisibleToOtherModules]
@@ -1025,7 +1012,6 @@ namespace UnityEditor.Build.Profile
                 return;
 
             PlayerSettings.SetScriptingDefineSymbols_Internal(profile.playerSettings, buildTarget.TargetName, defines);
-            profile.SerializePlayerSettings();
             EditorUtility.SetDirty(profile);
             AssetDatabase.SaveAssetIfDirty(profile);
         }

@@ -15,6 +15,8 @@ namespace Unity.Hierarchy
     /// <summary>
     /// A hierarchy view model is a read-only filtering view of a <see cref="HierarchyFlattened"/>.
     /// </summary>
+    /// <seealso cref="Hierarchy"/>
+    /// <seealso cref="HierarchyNode"/>
     [NativeHeader("Modules/HierarchyCore/Public/HierarchyViewModel.h")]
     [NativeHeader("Modules/HierarchyCore/HierarchyViewModelBindings.h")]
     [RequiredByNativeCode, StructLayout(LayoutKind.Sequential)]
@@ -36,12 +38,16 @@ namespace Unity.Hierarchy
         /// <summary>
         /// Delegate that is invoked when flags on hierarchy nodes are changed.
         /// </summary>
-        /// <param name="flags"></param>
+        /// <param name="flags">The flags that were changed on hierarchy nodes.</param>
+        /// <seealso cref="FlagsChanged"/>
         public delegate void FlagsChangedEventHandler(HierarchyNodeFlags flags);
 
         /// <summary>
         /// Event that is invoked when flags on hierarchy nodes are changed.
         /// </summary>
+        /// <seealso cref="FlagsChangedEventHandler"/>
+        /// <seealso cref="BeginFlagsChange"/>
+        /// <seealso cref="EndFlagsChange"/>
         public event FlagsChangedEventHandler FlagsChanged;
 
         /// <summary>
@@ -50,7 +56,7 @@ namespace Unity.Hierarchy
         public bool IsCreated => m_Ptr != IntPtr.Zero;
 
         /// <summary>
-        /// The total number of nodes.
+        /// The total number of hierarchy nodes in the hierarchy view model.
         /// </summary>
         /// <remarks>
         /// The total does not include the <see cref="Hierarchy.Root"/> node.
@@ -80,6 +86,15 @@ namespace Unity.Hierarchy
         /// This happens when there is a non empty <see cref="HierarchySearchQueryDescriptor"/> set.
         /// </remarks>
         public extern bool Filtering { [NativeMethod("Filtering", IsThreadSafe = true)] get; }
+
+        /// <summary>
+        /// The number of nodes that directly matched the search query.
+        /// </summary>
+        /// <remarks>
+        /// This count excludes container nodes (such as scenes) that are visible only because they contain matching descendants.
+        /// The count is computed during filtering and is available after the view model finishes updating.
+        /// </remarks>
+        internal extern int SearchMatchCount { [NativeMethod("GetSearchMatchCount")] get; }
 
         internal ReadOnlyNativeVector<HierarchyFlattenedNode> FlattenedNodes
         {
@@ -208,17 +223,17 @@ namespace Unity.Hierarchy
         }
 
         /// <summary>
-        /// Gets the zero-based index of a specified node.
+        /// Gets the index of a specified node.
         /// </summary>
-        /// <param name="node">The hierarchy node.</param>
-        /// <returns>A zero-based index of the node if found, -1 otherwise.</returns>
+        /// <param name="node">The hierarchy node to find the index of in the view model.</param>
+        /// <returns>An index of the node if found, -1 otherwise.</returns>
         [NativeMethod(IsThreadSafe = true, ThrowsException = true)]
         public extern int IndexOf(in HierarchyNode node);
 
         /// <summary>
         /// Determines if a specified node is in the hierarchy view model.
         /// </summary>
-        /// <param name="node">The hierarchy node.</param>
+        /// <param name="node">The hierarchy node to search for in the view model.</param>
         /// <returns><see langword="true"/> if the node is found, <see langword="false"/> otherwise.</returns>
         [NativeMethod(IsThreadSafe = true, ThrowsException = true)]
         public extern bool Contains(in HierarchyNode node);
@@ -229,45 +244,45 @@ namespace Unity.Hierarchy
         /// <remarks>
         /// This is purely visual and does not affect the underlying hierarchy data.
         /// </remarks>
-        /// <param name="node">The hierarchy node.</param>
+        /// <param name="node">The hierarchy node to use as the visual root of the view model.</param>
         [NativeMethod(IsThreadSafe = true, ThrowsException = true)]
         public extern void SetRoot(in HierarchyNode node);
 
         /// <summary>
         /// Gets the root node of the hierarchy view model.
         /// </summary>
-        /// <returns>A hierarchy node.</returns>
+        /// <returns>The root <see cref="HierarchyNode"/> of the hierarchy view model.</returns>
         [NativeMethod(IsThreadSafe = true)]
         public extern HierarchyNode GetRoot();
 
         /// <summary>
         /// Gets the parent of a hierarchy node.
         /// </summary>
-        /// <param name="node">The hierarchy node.</param>
-        /// <returns>A hierarchy node.</returns>
+        /// <param name="node">The hierarchy node to get the parent for.</param>
+        /// <returns>The parent <see cref="HierarchyNode"/> of the specified node.</returns>
         [NativeMethod(IsThreadSafe = true, ThrowsException = true)]
         public extern HierarchyNode GetParent(in HierarchyNode node);
 
         /// <summary>
-        /// Gets the next sibling of a node.
+        /// Gets the next sibling of a hierarchy node in the view model.
         /// </summary>
-        /// <param name="node">The hierarchy node.</param>
-        /// <returns>A hierarchy node.</returns>
+        /// <param name="node">The hierarchy node to get the next sibling for.</param>
+        /// <returns>The next sibling <see cref="HierarchyNode"/>.</returns>
         [NativeMethod(IsThreadSafe = true, ThrowsException = true)]
         public extern HierarchyNode GetNextSibling(in HierarchyNode node);
 
         /// <summary>
         /// Gets the number of child nodes that a hierarchy node has.
         /// </summary>
-        /// <param name="node">The hierarchy node.</param>
-        /// <returns>The number of children.</returns>
+        /// <param name="node">The hierarchy node to count children for.</param>
+        /// <returns>The number of direct child nodes of the specified hierarchy node.</returns>
         [NativeMethod(IsThreadSafe = true, ThrowsException = true)]
         public extern int GetChildrenCount(in HierarchyNode node);
 
         /// <summary>
         /// Determines whether a hierarchy node has any visible direct children (children without the Hidden flag).
         /// </summary>
-        /// <param name="node">The hierarchy node.</param>
+        /// <param name="node">The hierarchy node to check for visible children.</param>
         /// <returns><see langword="true"/> if the node has at least one visible direct child, <see langword="false"/> otherwise.</returns>
         [NativeMethod(IsThreadSafe = true, ThrowsException = true)]
         public extern bool HasVisibleChildren(in HierarchyNode node);
@@ -275,7 +290,7 @@ namespace Unity.Hierarchy
         /// <summary>
         /// Gets the number of child nodes that a hierarchy node has, including children of children.
         /// </summary>
-        /// <param name="node">The hierarchy node.</param>
+        /// <param name="node">The hierarchy node to count descendants for.</param>
         /// <returns>The number of child nodes, including children of children.</returns>
         [NativeMethod(IsThreadSafe = true, ThrowsException = true)]
         public extern int GetChildrenCountRecursive(in HierarchyNode node);
@@ -283,25 +298,25 @@ namespace Unity.Hierarchy
         /// <summary>
         /// Gets the child node at the specified index of a hierarchy node.
         /// </summary>
-        /// <param name="node">The hierarchy node.</param>
-        /// <param name="index">The child index.</param>
-        /// <returns>A hierarchy node.</returns>
+        /// <param name="node">The hierarchy node to get the child from.</param>
+        /// <param name="index">The index of the child to retrieve.</param>
+        /// <returns>The child <see cref="HierarchyNode"/> at the specified index.</returns>
         [NativeMethod(IsThreadSafe = true, ThrowsException = true)]
         public extern HierarchyNode GetChild(in HierarchyNode node, int index);
 
         /// <summary>
         /// Gets the index of a hierarchy node in its parent's children list.
         /// </summary>
-        /// <param name="node">The hierarchy node.</param>
-        /// <returns>The node index, or -1 if invalid.</returns>
+        /// <param name="node">The hierarchy node to get the child index for.</param>
+        /// <returns>The index of the node within its parent's children list, or -1 if the node is invalid.</returns>
         [NativeMethod(IsThreadSafe = true, ThrowsException = true)]
         public extern int GetChildIndex(in HierarchyNode node);
 
         /// <summary>
-        /// Determines the depth of a node.
+        /// Determines the depth level of a hierarchy node within the view model.
         /// </summary>
-        /// <param name="node">The hierarchy node.</param>
-        /// <returns>The depth of the hierarchy node.</returns>
+        /// <param name="node">The <see cref="HierarchyNode"/> to get the depth for.</param>
+        /// <returns>The depth level of the <see cref="HierarchyNode"/>.</returns>
         [NativeMethod(IsThreadSafe = true, ThrowsException = true)]
         public extern int GetDepth(in HierarchyNode node);
 
@@ -312,17 +327,17 @@ namespace Unity.Hierarchy
         public HierarchyNodeTypeHandlerBase GetNodeTypeHandlerBase(in HierarchyNode node) => HierarchyNodeTypeHandlerBase.FromIntPtr(GetNodeTypeHandlerFromNode(in node));
 
         /// <summary>
-        /// Retrieve the hierarchy node type for the specified node.
+        /// Gets the hierarchy node type for the specified node.
         /// </summary>
-        /// <param name="node">The hierarchy node.</param>
-        /// <returns>The hierarchy node type.</returns>
+        /// <param name="node">The hierarchy node to get the type for.</param>
+        /// <returns>The <see cref="HierarchyNodeType"/> assigned to the specified hierarchy node.</returns>
         [NativeMethod(IsThreadSafe = true, ThrowsException = true)]
         public extern HierarchyNodeType GetNodeType(in HierarchyNode node);
 
         /// <summary>
         /// Gets all the flags set on a given hierarchy node.
         /// </summary>
-        /// <param name="node">The hierarchy node.</param>
+        /// <param name="node">The hierarchy node to retrieve the flags from.</param>
         /// <returns>The flags set on the hierarchy node.</returns>
         [NativeMethod(IsThreadSafe = true, ThrowsException = true)]
         public extern HierarchyNodeFlags GetFlags(in HierarchyNode node);
@@ -330,14 +345,14 @@ namespace Unity.Hierarchy
         /// <summary>
         /// Sets the specified flags on all hierarchy nodes.
         /// </summary>
-        /// <param name="flags">The hierarchy node flags.</param>
+        /// <param name="flags">The flags to set on all hierarchy nodes in the view model.</param>
         public void SetFlags(HierarchyNodeFlags flags) => SetFlagsAll(flags);
 
         /// <summary>
         /// Sets the specified flags on the hierarchy node.
         /// </summary>
-        /// <param name="node">The hierarchy node.</param>
-        /// <param name="flags">The hierarchy node flags.</param>
+        /// <param name="node">The hierarchy node to set the flags on.</param>
+        /// <param name="flags">The flags to set on the hierarchy node.</param>
         public void SetFlags(in HierarchyNode node, HierarchyNodeFlags flags) => SetFlagsNode(in node, flags);
 
         /// <summary>
@@ -346,8 +361,8 @@ namespace Unity.Hierarchy
         /// <remarks>
         /// Null or invalid nodes are ignored.
         /// </remarks>
-        /// <param name="nodes">The hierarchy nodes.</param>
-        /// <param name="flags">The hierarchy node flags.</param>
+        /// <param name="nodes">The hierarchy nodes to set the flags on.</param>
+        /// <param name="flags">The flags to set on the specified hierarchy nodes.</param>
         /// <returns>The number of nodes that had their flags set.</returns>
         public int SetFlags(ReadOnlySpan<HierarchyNode> nodes, HierarchyNodeFlags flags) => SetFlagsNodes(nodes, flags);
 
@@ -357,46 +372,46 @@ namespace Unity.Hierarchy
         /// <remarks>
         /// Invalid node indices are ignored.
         /// </remarks>
-        /// <param name="indices">The hierarchy node indices.</param>
-        /// <param name="flags">The hierarchy node flags.</param>
+        /// <param name="indices">The hierarchy node indices to set the flags on.</param>
+        /// <param name="flags">The flags to set on the hierarchy nodes at the specified indices.</param>
         /// <returns>The number of nodes that had their flags set.</returns>
         public int SetFlags(ReadOnlySpan<int> indices, HierarchyNodeFlags flags) => SetFlagsIndices(indices, flags);
 
         /// <summary>
         /// Sets the specified flags recursively on the hierarchy node.
         /// </summary>
-        /// <param name="node">The hierarchy node.</param>
-        /// <param name="flags">The hierarchy node flags.</param>
+        /// <param name="node">The root hierarchy node to set flags on recursively.</param>
+        /// <param name="flags">The flags to set on the hierarchy node and its descendants.</param>
         /// <param name="direction">The direction of the recursion operation.</param>
         public void SetFlagsRecursive(in HierarchyNode node, HierarchyNodeFlags flags, HierarchyTraversalDirection direction) => SetFlagsRecursiveNode(in node, flags, direction);
 
         /// <summary>
         /// Sets the specified flags recursively on the hierarchy nodes.
         /// </summary>
-        /// <param name="nodes">The hierarchy nodes.</param>
-        /// <param name="flags">The hierarchy node flags.</param>
+        /// <param name="nodes">The hierarchy nodes to set flags on recursively.</param>
+        /// <param name="flags">The flags to set on the hierarchy nodes and their descendants.</param>
         /// <param name="direction">The direction of the recursion operation.</param>
         public void SetFlagsRecursive(ReadOnlySpan<HierarchyNode> nodes, HierarchyNodeFlags flags, HierarchyTraversalDirection direction) => SetFlagsRecursiveNodes(nodes, flags, direction);
 
         /// <summary>
         /// Gets whether or not all of the specified flags are set on any hierarchy node.
         /// </summary>
-        /// <param name="flags">The hierarchy node flags.</param>
+        /// <param name="flags">The flags to check across all hierarchy nodes.</param>
         /// <returns><see langword="true"/> if any node has all of the flags set, <see langword="false"/> otherwise.</returns>
         public bool HasFlags(HierarchyNodeFlags flags) => HasFlagsAny(flags);
 
         /// <summary>
         /// Gets whether or not all of the specified flags are set on the hierarchy node.
         /// </summary>
-        /// <param name="node">The hierarchy node.</param>
-        /// <param name="flags">The hierarchy node flags.</param>
+        /// <param name="node">The hierarchy node to check for the specified flags.</param>
+        /// <param name="flags">The flags to check on the hierarchy node.</param>
         /// <returns><see langword="true"/> if all of the flags are set, <see langword="false"/> otherwise.</returns>
         public bool HasFlags(in HierarchyNode node, HierarchyNodeFlags flags) => HasFlagsNode(in node, flags);
 
         /// <summary>
         /// Gets the number of nodes that have all of the specified flags set.
         /// </summary>
-        /// <param name="flags">The hierarchy node flags.</param>
+        /// <param name="flags">The flags to count matching hierarchy nodes for.</param>
         /// <returns>The number of nodes that have all of the flags set.</returns>
         [NativeMethod(IsThreadSafe = true, ThrowsException = true)]
         public extern int HasFlagsCount(HierarchyNodeFlags flags);
@@ -404,22 +419,22 @@ namespace Unity.Hierarchy
         /// <summary>
         /// Gets whether or not all of the specified flags are not set on any hierarchy node.
         /// </summary>
-        /// <param name="flags">The hierarchy node flags.</param>
+        /// <param name="flags">The flags to check across all hierarchy nodes.</param>
         /// <returns><see langword="true"/> if none of the nodes have all of the flags set, <see langword="false"/> otherwise.</returns>
         public bool DoesNotHaveFlags(HierarchyNodeFlags flags) => DoesNotHaveFlagsAny(flags);
 
         /// <summary>
         /// Gets whether or not all of the specified flags are not set on the hierarchy node.
         /// </summary>
-        /// <param name="node">The hierarchy node.</param>
-        /// <param name="flags">The hierarchy node flags.</param>
+        /// <param name="node">The hierarchy node to check for the absence of the specified flags.</param>
+        /// <param name="flags">The flags to verify are absent on the hierarchy node.</param>
         /// <returns><see langword="true"/> if all of the flags are not set, <see langword="false"/> otherwise.</returns>
         public bool DoesNotHaveFlags(in HierarchyNode node, HierarchyNodeFlags flags) => DoesNotHaveFlagsNode(in node, flags);
 
         /// <summary>
         /// Gets the number of nodes that do not have all of the specified flags set.
         /// </summary>
-        /// <param name="flags">The hierarchy node flags.</param>
+        /// <param name="flags">The flags to count non-matching hierarchy nodes for.</param>
         /// <returns>The number of nodes that do not have all of the flags set.</returns>
         [NativeMethod(IsThreadSafe = true, ThrowsException = true)]
         public extern int DoesNotHaveFlagsCount(HierarchyNodeFlags flags);
@@ -445,14 +460,14 @@ namespace Unity.Hierarchy
         /// <summary>
         /// Clears the specified flags on all hierarchy nodes.
         /// </summary>
-        /// <param name="flags">The hierarchy node flags.</param>
+        /// <param name="flags">The flags to clear on all hierarchy nodes in the view model.</param>
         public void ClearFlags(HierarchyNodeFlags flags) => ClearFlagsAll(flags);
 
         /// <summary>
         /// Clears the specified flags on the hierarchy node.
         /// </summary>
-        /// <param name="node">The hierarchy node.</param>
-        /// <param name="flags">The hierarchy node flags.</param>
+        /// <param name="node">The hierarchy node to clear the flags on.</param>
+        /// <param name="flags">The flags to clear on the hierarchy node.</param>
         public void ClearFlags(in HierarchyNode node, HierarchyNodeFlags flags) => ClearFlagsNode(in node, flags);
 
         /// <summary>
@@ -461,8 +476,8 @@ namespace Unity.Hierarchy
         /// <remarks>
         /// Null or invalid nodes are ignored.
         /// </remarks>
-        /// <param name="nodes">The hierarchy nodes.</param>
-        /// <param name="flags">The hierarchy node flags.</param>
+        /// <param name="nodes">The hierarchy nodes to clear the flags on.</param>
+        /// <param name="flags">The flags to clear on the specified hierarchy nodes.</param>
         /// <returns>The number of nodes that had their flags cleared.</returns>
         public int ClearFlags(ReadOnlySpan<HierarchyNode> nodes, HierarchyNodeFlags flags) => ClearFlagsNodes(nodes, flags);
 
@@ -472,38 +487,38 @@ namespace Unity.Hierarchy
         /// <remarks>
         /// Invalid node indices are ignored.
         /// </remarks>
-        /// <param name="indices">The hierarchy node indices.</param>
-        /// <param name="flags">The hierarchy node flags.</param>
+        /// <param name="indices">The hierarchy node indices to clear the flags on.</param>
+        /// <param name="flags">The flags to clear on the hierarchy nodes at the specified indices.</param>
         /// <returns>The number of nodes that had their flags cleared.</returns>
         public int ClearFlags(ReadOnlySpan<int> indices, HierarchyNodeFlags flags) => ClearFlagsIndices(indices, flags);
 
         /// <summary>
         /// Clears the specified flags recursively on the hierarchy node.
         /// </summary>
-        /// <param name="node">The hierarchy node.</param>
-        /// <param name="flags">The hierarchy node flags.</param>
+        /// <param name="node">The root hierarchy node to clear flags on recursively.</param>
+        /// <param name="flags">The flags to clear on the hierarchy node and its descendants.</param>
         /// <param name="direction">The direction of the recursion operation.</param>
         public void ClearFlagsRecursive(in HierarchyNode node, HierarchyNodeFlags flags, HierarchyTraversalDirection direction) => ClearFlagsRecursiveNode(in node, flags, direction);
 
         /// <summary>
         /// Clears the specified flags recursively on the hierarchy nodes.
         /// </summary>
-        /// <param name="nodes">The hierarchy nodes.</param>
-        /// <param name="flags">The hierarchy node flags.</param>
+        /// <param name="nodes">The hierarchy nodes to clear flags on recursively.</param>
+        /// <param name="flags">The flags to clear on the hierarchy nodes and their descendants.</param>
         /// <param name="direction">The direction of the recursion operation.</param>
         public void ClearFlagsRecursive(ReadOnlySpan<HierarchyNode> nodes, HierarchyNodeFlags flags, HierarchyTraversalDirection direction) => ClearFlagsRecursiveNodes(nodes, flags, direction);
 
         /// <summary>
         /// Toggles the specified flags on all hierarchy nodes.
         /// </summary>
-        /// <param name="flags">The hierarchy node flags.</param>
+        /// <param name="flags">The flags to toggle on all hierarchy nodes in the view model.</param>
         public void ToggleFlags(HierarchyNodeFlags flags) => ToggleFlagsAll(flags);
 
         /// <summary>
         /// Toggles the specified flags on the hierarchy node.
         /// </summary>
-        /// <param name="node">The hierarchy node.</param>
-        /// <param name="flags">The hierarchy node flags.</param>
+        /// <param name="node">The hierarchy node to toggle the flags on.</param>
+        /// <param name="flags">The flags to toggle on the hierarchy node.</param>
         public void ToggleFlags(in HierarchyNode node, HierarchyNodeFlags flags) => ToggleFlagsNode(in node, flags);
 
         /// <summary>
@@ -512,8 +527,8 @@ namespace Unity.Hierarchy
         /// <remarks>
         /// Null or invalid nodes are ignored.
         /// </remarks>
-        /// <param name="nodes">The hierarchy nodes.</param>
-        /// <param name="flags">The hierarchy node flags.</param>
+        /// <param name="nodes">The hierarchy nodes to toggle the flags on.</param>
+        /// <param name="flags">The flags to toggle on the specified hierarchy nodes.</param>
         /// <returns>The number of nodes that had their flags toggled.</returns>
         public int ToggleFlags(ReadOnlySpan<HierarchyNode> nodes, HierarchyNodeFlags flags) => ToggleFlagsNodes(nodes, flags);
 
@@ -523,24 +538,24 @@ namespace Unity.Hierarchy
         /// <remarks>
         /// Invalid node indices are ignored.
         /// </remarks>
-        /// <param name="indices">The hierarchy node indices.</param>
-        /// <param name="flags">The hierarchy node flags.</param>
+        /// <param name="indices">The hierarchy node indices to toggle the flags on.</param>
+        /// <param name="flags">The flags to toggle on the hierarchy nodes at the specified indices.</param>
         /// <returns>The number of nodes that had their flags toggled.</returns>
         public int ToggleFlags(ReadOnlySpan<int> indices, HierarchyNodeFlags flags) => ToggleFlagsIndices(indices, flags);
 
         /// <summary>
         /// Toggles the specified flags recursively on the hierarchy node.
         /// </summary>
-        /// <param name="node">The hierarchy node.</param>
-        /// <param name="flags">The hierarchy node flags.</param>
+        /// <param name="node">The root hierarchy node to toggle flags on recursively.</param>
+        /// <param name="flags">The flags to toggle on the hierarchy node and its descendants.</param>
         /// <param name="direction">The direction of the recursion operation.</param>
         public void ToggleFlagsRecursive(in HierarchyNode node, HierarchyNodeFlags flags, HierarchyTraversalDirection direction) => ToggleFlagsRecursiveNode(in node, flags, direction);
 
         /// <summary>
         /// Toggles the specified flags recursively on the hierarchy nodes.
         /// </summary>
-        /// <param name="nodes">The hierarchy nodes.</param>
-        /// <param name="flags">The hierarchy node flags.</param>
+        /// <param name="nodes">The hierarchy nodes to toggle flags on recursively.</param>
+        /// <param name="flags">The flags to toggle on the hierarchy nodes and their descendants.</param>
         /// <param name="direction">The direction of the recursion operation.</param>
         public void ToggleFlagsRecursive(ReadOnlySpan<HierarchyNode> nodes, HierarchyNodeFlags flags, HierarchyTraversalDirection direction) => ToggleFlagsRecursiveNodes(nodes, flags, direction);
 
@@ -565,16 +580,16 @@ namespace Unity.Hierarchy
         /// <summary>
         /// Gets all hierarchy nodes that have all of the specified flags set.
         /// </summary>
-        /// <param name="flags">The hierarchy node flags.</param>
-        /// <param name="outNodes">The hierarchy nodes.</param>
+        /// <param name="flags">The flags to match against hierarchy nodes.</param>
+        /// <param name="outNodes">The output span to write matching hierarchy nodes into.</param>
         /// <returns>The number of nodes written in the <paramref name="outNodes"/> span.</returns>
         public int GetNodesWithFlags(HierarchyNodeFlags flags, Span<HierarchyNode> outNodes) => GetNodesWithFlagsSpan(flags, outNodes);
 
         /// <summary>
         /// Gets all hierarchy nodes that have all of the specified flags set.
         /// </summary>
-        /// <param name="flags">The hierarchy node flags.</param>
-        /// <returns>The hierarchy nodes.</returns>
+        /// <param name="flags">The flags to match against hierarchy nodes.</param>
+        /// <returns>An array containing all hierarchy nodes that have all of the specified flags set.</returns>
         public HierarchyNode[] GetNodesWithFlags(HierarchyNodeFlags flags)
         {
             var count = HasFlagsCount(flags);
@@ -589,23 +604,23 @@ namespace Unity.Hierarchy
         /// <summary>
         /// Gets an enumerable of all hierarchy nodes that have all of the specified flags set.
         /// </summary>
-        /// <param name="flags">The hierarchy node flags.</param>
-        /// <returns>An enumerable of hierarchy node.</returns>
+        /// <param name="flags">The flags to match when enumerating hierarchy nodes.</param>
+        /// <returns>An enumerable that iterates over all nodes with all of the specified flags set.</returns>
         public HierarchyViewModelNodesEnumerable EnumerateNodesWithFlags(HierarchyNodeFlags flags) => new HierarchyViewModelNodesEnumerable(this, flags, HasFlagsNode);
 
         /// <summary>
         /// Gets the indices for all hierarchy nodes that have all of the specified flags set.
         /// </summary>
-        /// <param name="flags">The hierarchy node flags.</param>
-        /// <param name="outIndices">The hierarchy node indices.</param>
+        /// <param name="flags">The flags to match against hierarchy nodes.</param>
+        /// <param name="outIndices">The output span to write matching hierarchy node indices into.</param>
         /// <returns>The number of indices written in the <paramref name="outIndices"/> span.</returns>
         public int GetIndicesWithFlags(HierarchyNodeFlags flags, Span<int> outIndices) => GetIndicesWithFlagsSpan(flags, outIndices);
 
         /// <summary>
         /// Gets the indices for all hierarchy nodes that have all of the specified flags set.
         /// </summary>
-        /// <param name="flags">The hierarchy node flags.</param>
-        /// <returns>The hierarchy node indices.</returns>
+        /// <param name="flags">The flags to match against hierarchy nodes.</param>
+        /// <returns>An array that contains the indices of all hierarchy nodes that have all of the specified flags set.</returns>
         public int[] GetIndicesWithFlags(HierarchyNodeFlags flags)
         {
             var count = HasFlagsCount(flags);
@@ -620,16 +635,16 @@ namespace Unity.Hierarchy
         /// <summary>
         /// Gets all hierarchy nodes that do not have all of the specified flags set.
         /// </summary>
-        /// <param name="flags">The hierarchy node flags.</param>
-        /// <param name="outNodes">The hierarchy nodes.</param>
+        /// <param name="flags">The flags to exclude when matching hierarchy nodes.</param>
+        /// <param name="outNodes">The output span to write matching hierarchy nodes into.</param>
         /// <returns>The number of nodes written in the <paramref name="outNodes"/> span.</returns>
         public int GetNodesWithoutFlags(HierarchyNodeFlags flags, Span<HierarchyNode> outNodes) => GetNodesWithoutFlagsSpan(flags, outNodes);
 
         /// <summary>
         /// Gets all hierarchy nodes that do not have all of the specified flags set.
         /// </summary>
-        /// <param name="flags">The hierarchy node flags.</param>
-        /// <returns>The hierarchy nodes.</returns>
+        /// <param name="flags">The flags to exclude when matching hierarchy nodes.</param>
+        /// <returns>An array that contains all hierarchy nodes that do not have all of the specified flags set.</returns>
         public HierarchyNode[] GetNodesWithoutFlags(HierarchyNodeFlags flags)
         {
             var count = DoesNotHaveFlagsCount(flags);
@@ -644,23 +659,23 @@ namespace Unity.Hierarchy
         /// <summary>
         /// Gets an enumerable of all hierarchy nodes that do not have all of the specified flags set.
         /// </summary>
-        /// <param name="flags">The hierarchy node flags.</param>
-        /// <returns>An enumerable of hierarchy node.</returns>
+        /// <param name="flags">The flags to exclude when enumerating hierarchy nodes.</param>
+        /// <returns>An enumerable that iterates over all nodes that do not have all of the specified flags set.</returns>
         public HierarchyViewModelNodesEnumerable EnumerateNodesWithoutFlags(HierarchyNodeFlags flags) => new HierarchyViewModelNodesEnumerable(this, flags, DoesNotHaveFlagsNode);
 
         /// <summary>
         /// Gets the indices of all hierarchy nodes that do not have all of the specified flags set.
         /// </summary>
-        /// <param name="flags">The hierarchy node flags.</param>
-        /// <param name="outIndices">The hierarchy node indices.</param>
+        /// <param name="flags">The flags to exclude when matching hierarchy nodes.</param>
+        /// <param name="outIndices">The output span to write matching hierarchy node indices into.</param>
         /// <returns>The number of indices written in the <paramref name="outIndices"/> span.</returns>
         public int GetIndicesWithoutFlags(HierarchyNodeFlags flags, Span<int> outIndices) => GetIndicesWithoutFlagsSpan(flags, outIndices);
 
         /// <summary>
         /// Gets the indices of all hierarchy nodes that do not have all of the specified flags set.
         /// </summary>
-        /// <param name="flags">The hierarchy node flags.</param>
-        /// <returns>The hierarchy node indices.</returns>
+        /// <param name="flags">The flags to exclude when matching hierarchy nodes.</param>
+        /// <returns>An array that contains the indices of all hierarchy nodes that do not have all of the specified flags set.</returns>
         public int[] GetIndicesWithoutFlags(HierarchyNodeFlags flags)
         {
             var count = DoesNotHaveFlagsCount(flags);
@@ -673,9 +688,9 @@ namespace Unity.Hierarchy
         }
 
         /// <summary>
-        /// Sets the search query.
+        /// Sets the search query to filter the hierarchy nodes displayed in the view model.
         /// </summary>
-        /// <param name="query">The search query.</param>
+        /// <param name="query">The search query string used to filter hierarchy nodes.</param>
         public void SetQuery(string query)
         {
             var newQuery = QueryParser.ParseQuery(query);
@@ -700,7 +715,7 @@ namespace Unity.Hierarchy
         /// <summary>
         /// Updates the hierarchy view model incrementally until a time limit is reached.
         /// </summary>
-        /// <param name="milliseconds">The time period in milliseconds.</param>
+        /// <param name="milliseconds">The maximum duration in milliseconds to spend updating the hierarchy view model.</param>
         /// <returns><see langword="true"/> if additional invocations are needed to complete the update, <see langword="false"/> otherwise.</returns>
         [NativeMethod(IsThreadSafe = true)]
         public extern bool UpdateIncrementalTimed(double milliseconds);
@@ -708,12 +723,13 @@ namespace Unity.Hierarchy
         /// <summary>
         /// Gets the <see cref="HierarchyNode"/> enumerator.
         /// </summary>
-        /// <returns>An enumerator.</returns>
+        /// <returns>An enumerator for iterating over all hierarchy nodes in the view model.</returns>
         public Enumerator GetEnumerator() => new Enumerator(this);
 
         /// <summary>
         /// An enumerator of <see cref="HierarchyNode"/>. Enumerates and filters items at the same time.
         /// </summary>
+        /// <seealso cref="HierarchyViewModel.GetEnumerator"/>
         public struct Enumerator
         {
             readonly HierarchyViewModel m_ViewModel;

@@ -2,9 +2,11 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+using System.Collections.Generic;
 using UnityEditor.EditorTools;
 using UnityEditor.IMGUI.Controls;
 using UnityEngine;
+using UnityObject = UnityEngine.Object;
 
 namespace UnityEditor
 {
@@ -29,6 +31,75 @@ namespace UnityEditor
         }
     }
 
+    static class BoxColliderFitUtility
+    {
+        public static void FitTargets(IEnumerable<UnityObject> targets, bool fitToChildren)
+        {
+            foreach (var t in targets)
+            {
+                if (t is not BoxCollider collider)
+                    continue;
+
+                if (fitToChildren)
+                    FitToChildren(collider);
+                else
+                    FitToSelf(collider);
+            }
+        }
+
+        public static bool HasAnyTargetWithChildren(IEnumerable<UnityObject> targets)
+        {
+            foreach (var t in targets)
+            {
+                if (t is BoxCollider collider && collider != null && collider.transform.childCount > 0)
+                    return true;
+            }
+            return false;
+        }
+
+        public static bool HasAnyTargetWithRenderer(IEnumerable<UnityObject> targets)
+        {
+            foreach (var t in targets)
+            {
+                if (t is BoxCollider collider && collider != null
+                    && collider.TryGetComponent(out Renderer renderer)
+                    && renderer.localBounds.extents != Vector3.zero)
+                    return true;
+            }
+            return false;
+        }
+
+        public static void FitToSelf(BoxCollider collider)
+        {
+            if (collider == null)
+                return;
+
+            Bounds bounds = new Bounds();
+            if (AABBUtility.CalculateLocalAABBFromGameObject(collider.gameObject, ref bounds))
+            {
+                Undo.RecordObject(collider, "Fit Box Collider to Self");
+                collider.center = bounds.center;
+                collider.size = bounds.size;
+                EditorUtility.SetDirty(collider);
+            }
+        }
+
+        public static void FitToChildren(BoxCollider collider)
+        {
+            if (collider == null)
+                return;
+
+            Bounds bounds = new Bounds();
+            if (AABBUtility.CalculateCombinedAABBFromHierarchy(collider.gameObject, ref bounds, includeRoot: true))
+            {
+                Undo.RecordObject(collider, "Fit Box Collider to Children");
+                collider.center = bounds.center;
+                collider.size = bounds.size;
+                EditorUtility.SetDirty(collider);
+            }
+        }
+    }
+
     [CustomEditor(typeof(BoxCollider))]
     [CanEditMultipleObjects]
     class BoxColliderEditor : Collider3DEditorBase
@@ -39,6 +110,10 @@ namespace UnityEditor
         private static class Styles
         {
             public static readonly GUIContent sizeContent = EditorGUIUtility.TrTextContent("Size", "The size of the Collider in the X, Y, Z directions.");
+            public static readonly GUIContent fitToSelfContent = EditorGUIUtility.TrTextContent("Fit to Self", "Resize the collider to match this GameObject's renderer bounds.");
+            public static readonly GUIContent fitToSelfDisabledContent = EditorGUIUtility.TrTextContent("Fit to Self", "No renderer to fit to.");
+            public static readonly GUIContent fitToChildrenContent = EditorGUIUtility.TrTextContent("Fit to Children", "Resize the collider to match the combined renderer bounds of this GameObject and its children.");
+            public static readonly GUIContent fitToChildrenDisabledContent = EditorGUIUtility.TrTextContent("Fit to Children", "No children to fit to.");
         }
 
         public override void OnEnable()
@@ -60,9 +135,42 @@ namespace UnityEditor
             EditorGUILayout.PropertyField(m_Material, BaseStyles.materialContent);
             EditorGUILayout.PropertyField(m_Center, BaseStyles.centerContent);
             EditorGUILayout.PropertyField(m_Size, Styles.sizeContent);
+            DrawFitButtons();
 
             ShowLayerOverridesProperties();
             serializedObject.ApplyModifiedProperties();
+        }
+
+        void DrawFitButtons()
+        {
+            const float spacing = 2f;
+
+            Rect fieldRect = EditorGUILayout.GetControlRect();
+            fieldRect.xMin += EditorGUIUtility.labelWidth;
+
+            float buttonWidth = (fieldRect.width - spacing) * 0.5f;
+            Rect selfRect = new Rect(fieldRect.x, fieldRect.y, buttonWidth, fieldRect.height);
+            Rect childrenRect = new Rect(selfRect.xMax + spacing, fieldRect.y, buttonWidth, fieldRect.height);
+
+            bool canFitSelf = BoxColliderFitUtility.HasAnyTargetWithRenderer(targets);
+            using (new EditorGUI.DisabledScope(!canFitSelf))
+            {
+                if (GUI.Button(selfRect, canFitSelf ? Styles.fitToSelfContent : Styles.fitToSelfDisabledContent))
+                {
+                    BoxColliderFitUtility.FitTargets(targets, fitToChildren: false);
+                    serializedObject.Update();
+                }
+            }
+
+            bool canFitChildren = BoxColliderFitUtility.HasAnyTargetWithChildren(targets);
+            using (new EditorGUI.DisabledScope(!canFitChildren))
+            {
+                if (GUI.Button(childrenRect, canFitChildren ? Styles.fitToChildrenContent : Styles.fitToChildrenDisabledContent))
+                {
+                    BoxColliderFitUtility.FitTargets(targets, fitToChildren: true);
+                    serializedObject.Update();
+                }
+            }
         }
     }
 }

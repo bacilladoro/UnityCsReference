@@ -39,6 +39,14 @@ namespace UnityEditor.Build.Profile.Elements
 
         public Action<BuildProfile> GetResetAction() => OnReset;
 
+        public Action<BuildProfile> OnCopy() => OnCopy;
+
+        public Action<BuildProfile> OnPaste() => OnPaste;
+
+        void OnCopy(BuildProfile profile) => BuildProfileModuleUtil.CopySubAssetValues(profile.graphicsSettings);
+
+        void OnPaste(BuildProfile profile) => BuildProfileModuleUtil.PasteSubAssetValues(profile.graphicsSettings);
+
         public VisualElement CreateInspectorGUI(BuildProfile profile, SerializedObject serializedObject)
         {
             return new EditorAsVisualElement(profile.graphicsSettings, true);

@@ -56,6 +56,26 @@ namespace UnityEngine.AdaptivePerformance
 
         public float MaxTemperatureLevel { get; set; }
 
+        /// <summary>
+        /// CPU utilization level above which the controller will not raise the CPU performance level.
+        /// </summary>
+        public float MinCpuUtilizationLevel { get; set; }
+
+        /// <summary>
+        /// GPU utilization level above which the controller will not raise the GPU performance level.
+        /// </summary>
+        public float MinGpuUtilizationLevel { get; set; }
+
+        /// <summary>
+        /// CPU utilization level above which the bounce-avoidance timer is bypassed to allow immediate level reduction.
+        /// </summary>
+        public float FastLowerCpuUtilizationLevel { get; set; }
+
+        /// <summary>
+        /// GPU utilization level above which the bounce-avoidance timer is bypassed to allow immediate level reduction.
+        /// </summary>
+        public float FastLowerGpuUtilizationLevel { get; set; }
+
         public AutoPerformanceLevelController(IDevicePerformanceControl perfControl, IPerformanceStatus perfStat, IThermalStatus thermalStat)
         {
             UpdateInterval = 5.0f;
@@ -66,6 +86,10 @@ namespace UnityEngine.AdaptivePerformance
             CpuLevelBounceAvoidanceThreshold = 10.0f;
             MinTargetFrameRateHitTime = 10.0f;
             MaxTemperatureLevel = 0.9f;
+            MinCpuUtilizationLevel = 0.15f;
+            MinGpuUtilizationLevel = 0.15f;
+            FastLowerCpuUtilizationLevel = 0.9f;
+            FastLowerGpuUtilizationLevel = 0.9f;
 
             m_PerfStats = perfStat;
             m_PerfControl = perfControl;
@@ -199,6 +223,14 @@ namespace UnityEngine.AdaptivePerformance
 
         private bool AllowLowerCpuLevel(float timestamp)
         {
+            if (m_PerfControl.CpuLevel <= 0)
+                return false;
+
+            // Bypass bounce-avoidance if CPU utilization is critically high
+            var cpuUtilization = m_PerfStats.PerformanceMetrics.CpuUtilization;
+            if (cpuUtilization >= FastLowerCpuUtilizationLevel)
+                return true;
+
             if (m_PerfControl.CpuLevel > 0 && timestamp - m_LastCpuLevelRaiseTimeStamp > CpuLevelBounceAvoidanceThreshold)
             {
                 if (TargetFrameTime <= 0.0f)
@@ -217,6 +249,14 @@ namespace UnityEngine.AdaptivePerformance
 
         private bool AllowLowerGpuLevel(float timestamp)
         {
+            if (m_PerfControl.GpuLevel <= 0)
+                return false;
+
+            // Bypass bounce-avoidance if GPU utilization is critically high
+            var gpuUtilization = m_PerfStats.PerformanceMetrics.GpuUtilization;
+            if (gpuUtilization >= FastLowerGpuUtilizationLevel)
+                 return true;
+
             if (m_PerfControl.GpuLevel > 0 && timestamp - m_LastGpuLevelRaiseTimeStamp > GpuLevelBounceAvoidanceThreshold)
             {
                 if (TargetFrameTime <= 0.0f)
@@ -254,6 +294,13 @@ namespace UnityEngine.AdaptivePerformance
                 return false;
             }
 
+            var cpuUtilization = m_PerfStats.PerformanceMetrics.CpuUtilization;
+            if (cpuUtilization >= 0f && cpuUtilization <= MinCpuUtilizationLevel)
+            {
+                APLog.Debug("Auto Perf Level: cannot raise CPU level, current CPU utilization ({0}) is below {1}", cpuUtilization, MinCpuUtilizationLevel);
+                return false;
+            }
+
             return AllowRaiseLevels();
         }
 
@@ -261,6 +308,13 @@ namespace UnityEngine.AdaptivePerformance
         {
             if (m_PerfControl.GpuLevel >= m_PerfControl.MaxGpuPerformanceLevel)
             {
+                return false;
+            }
+
+            var gpuUtilization = m_PerfStats.PerformanceMetrics.GpuUtilization;
+            if (gpuUtilization >= 0f && gpuUtilization <= MinGpuUtilizationLevel)
+            {
+                APLog.Debug("Auto Perf Level: cannot raise GPU level, current GPU utilization ({0}) is below {1}", gpuUtilization, MinGpuUtilizationLevel);
                 return false;
             }
 

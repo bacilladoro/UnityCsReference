@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEditor;
 
@@ -12,10 +13,15 @@ namespace UnityEditorInternal.VersionControl
 {
     public class Overlay
     {
+        [NoAutoStaticsCleanup] // lazy-loaded overlay icon
         private static Texture2D s_BlueLeftParan;
+        [NoAutoStaticsCleanup] // lazy-loaded overlay icon
         private static Texture2D s_BlueRightParan;
+        [NoAutoStaticsCleanup] // lazy-loaded overlay icon
         private static Texture2D s_RedLeftParan;
+        [NoAutoStaticsCleanup] // lazy-loaded overlay icon
         private static Texture2D s_RedRightParan;
+        [NoAutoStaticsCleanup] // lazy-loaded overlay icon
         private static Texture2D s_DisconnectedIcon;
 
         public static Rect GetOverlayRect(Rect itemRect)

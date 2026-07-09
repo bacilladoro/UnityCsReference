@@ -310,6 +310,7 @@ namespace UnityEngine.UIElements
                     finally
                     {
                         panel.duringLayoutPhase = false;
+                        m_TextJobSystem.SyncAndClearNativeMeasurePointers();
                     }
 
                     using (k_UpdateSubTreeMarker.Auto())

@@ -547,10 +547,8 @@ namespace UnityEditor.Modules
                 case ScriptingImplementation.IL2CPP:
                     return ScriptingBackend.IL2CPP;
 
-#pragma warning disable 618
                 case ScriptingImplementation.CoreCLR:
                     return ScriptingBackend.CoreCLR;
-#pragma warning restore 618
 
                 default:
                     throw new NotSupportedException("Unknown scripting backend:" + scriptingBackend);

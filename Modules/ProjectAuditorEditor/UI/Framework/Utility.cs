@@ -3,11 +3,11 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.ProjectAuditor.Editor.Core;
 using Unity.ProjectAuditor.Editor.Utils;
 using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEditor.Experimental;
-using UnityEditor.PackageManager;
 using UnityEditorInternal;
 using UnityEngine;
 
@@ -98,11 +98,11 @@ namespace Unity.ProjectAuditor.Editor.UI.Framework
         [AutoStaticsCleanupOnCodeReload]
         static GUIContent[] s_StatusWheel;
 
-        [AutoStaticsCleanupOnCodeReload]
+        [NoAutoStaticsCleanup]
         static byte[] s_LetterWidths;
-        [AutoStaticsCleanupOnCodeReload]
+        [NoAutoStaticsCleanup]
         static GUIStyle s_Style;
-        [AutoStaticsCleanupOnCodeReload]
+        [NoAutoStaticsCleanup]
         static GUIContent s_TempContent;
 
         public static readonly GUIContent ClearSelection = new GUIContent("Clear Selection");
@@ -186,7 +186,7 @@ namespace Unity.ProjectAuditor.Editor.UI.Framework
             var treeViewSelectionStyle = SharedStyles.TextBoxBackground;
             var textStyle = SharedStyles.IconLabel;
 
-            var content = GetTempContent(text);
+            var content = TempContent(text);
             var size = textStyle.CalcSize(content);
             var rect = EditorGUILayout.GetControlRect(GUILayout.MaxWidth(size.x + kBorder), GUILayout.Height(size.y + kBorder));
 
@@ -519,12 +519,12 @@ namespace Unity.ProjectAuditor.Editor.UI.Framework
                 s_Style = EditorStyles.label;
             s_Style.fontSize = fontSize;
 
-            var content = GetTempContent(text);
+            var content = TempContent(text);
             var width = s_Style.CalcSize(content).x;
             return width;
         }
 
-        private static GUIContent GetTempContent(string text)
+        internal static GUIContent TempContent(string text)
         {
             if (s_TempContent == null)
                 s_TempContent = new GUIContent();
@@ -559,6 +559,19 @@ namespace Unity.ProjectAuditor.Editor.UI.Framework
         {
             var parts = version.Split('.');
             return int.Parse(parts[0]) * 100 + int.Parse(parts[1]); // Just any integer that can be used for comparison
+        }
+
+        public static void DrawUpgradePopup(ViewStates viewStates)
+        {
+            int selectedIndex = Array.IndexOf(ObsoleteLibrary.UnityVersions, viewStates.upgradeTargetVersion);
+            if (selectedIndex == -1)
+            {
+                viewStates.upgradeTargetVersion = ObsoleteLibrary.UnityVersions[^1];
+                selectedIndex = ObsoleteLibrary.UnityVersions.Length - 1;
+            }
+
+            selectedIndex = EditorGUILayout.Popup(selectedIndex, ObsoleteLibrary.UnityVersions, GUILayout.Width(100));
+            viewStates.upgradeTargetVersion = ObsoleteLibrary.UnityVersions[selectedIndex];
         }
     }
 }

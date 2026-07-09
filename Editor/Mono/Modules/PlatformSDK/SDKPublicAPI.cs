@@ -14,3 +14,22 @@ public interface IPlatformProvider
     /// </summary>
     int version { get; }
 }
+
+/// <summary>
+/// Class representing a preconfigured settings variant for a Derived platform SDK platform.
+/// </summary>
+public class SDKPreconfiguredSettingsVariant
+{
+    public string displayName { get; }
+    public string description { get; }
+    public string tooltip { get; }
+    public bool selectedInitially { get; }
+
+    public SDKPreconfiguredSettingsVariant(string displayName, string description, string tooltip, bool selectedInitially = false)
+    {
+        this.displayName = displayName;
+        this.description = description;
+        this.tooltip = tooltip;
+        this.selectedInitially = selectedInitially;
+    }
+}

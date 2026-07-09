@@ -4,6 +4,7 @@
 
 using System;
 using System.Linq;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor.Rendering;
 using UnityEngine;
 using UnityEngine.Assertions;
@@ -41,10 +42,12 @@ namespace UnityEditor
 
             public int LevelOfDetail => ShaderUtil.GetSubshaderLOD(m_Data.SourceShader, m_SubshaderIndex);
 
-            private static Func<Shader, int, ShaderTagId, ShaderTagId> s_SerializedFindTagValue = (Shader sourceShader, int subshaderIndex, ShaderTagId tag) =>
+            [NoAutoStaticsCleanup] // the lambda is capture-less
+            private static readonly Func<Shader, int, ShaderTagId, ShaderTagId> s_SerializedFindTagValue = (Shader sourceShader, int subshaderIndex, ShaderTagId tag) =>
                 new ShaderTagId { id = ShaderUtil.FindSerializedSubShaderTagValue(sourceShader, subshaderIndex, tag.id) };
 
-            private static Func<Shader, int, ShaderTagId, ShaderTagId> s_RuntimeFindTagValue = (Shader sourceShader, int subshaderIndex, ShaderTagId tag) =>
+            [NoAutoStaticsCleanup] // the lambda is capture-less
+            private static readonly Func<Shader, int, ShaderTagId, ShaderTagId> s_RuntimeFindTagValue = (Shader sourceShader, int subshaderIndex, ShaderTagId tag) =>
             {
                 if (subshaderIndex < 0 || subshaderIndex >= sourceShader.subshaderCount)
                 {
@@ -98,7 +101,7 @@ namespace UnityEditor
                 return ShaderUtil.PassHasShaderStage(SourceShader, SubshaderIndex, m_PassIndex, shaderType);
             }
 
-            internal static GraphicsTier kNoGraphicsTier = (GraphicsTier)(-1);
+            internal const GraphicsTier kNoGraphicsTier = (GraphicsTier)(-1);
 
             public VariantCompileInfo CompileVariant(ShaderType shaderType, string[] keywords,
                 ShaderCompilerPlatform shaderCompilerPlatform, BuildTarget buildTarget)
@@ -241,6 +244,7 @@ namespace UnityEditor
             public ConstantBufferInfo[] ConstantBuffers { get; }
             public TextureBindingInfo[] TextureBindings { get; }
             public ResourceBindingInfo[] ResourceBindings { get; }
+            public SpecializationConstantInfo[] SpecializationConstants { get; }
         }
 
         [DebuggerDisplay("cbuffer {Name} ({Size} bytes)")]
@@ -278,6 +282,12 @@ namespace UnityEditor
             public bool Multisampled { get; }
             public int ArraySize { get; }
             public TextureDimension Dim { get; }
+        }
+
+        public struct SpecializationConstantInfo
+        {
+            public string Name { get; }
+            public uint Slot { get; }
         }
 
         public enum ResourceKind

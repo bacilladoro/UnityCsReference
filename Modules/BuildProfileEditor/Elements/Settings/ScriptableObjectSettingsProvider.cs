@@ -5,6 +5,7 @@
 
 using System;
 using UnityEngine;
+using UnityEditor;
 using UnityEngine.UIElements;
 using System.Collections.Generic;
 
@@ -85,6 +86,18 @@ namespace UnityEditor.Build.Profile.Elements
             ScriptableObject.DestroyImmediate(instance);
         }
 
+        public Action<BuildProfile> OnCopy() => OnCopy;
+
+        public Action<BuildProfile> OnPaste() => OnPaste;
+
+        void OnCopy(BuildProfile profile)
+        {
+            var target = profile.GetComponent<T>();
+            BuildProfileModuleUtil.CopySubAssetValues(target);
+        }
+
+        void OnPaste(BuildProfile profile) => BuildProfileModuleUtil.PasteSubAssetValues(profile.GetComponent<T>());
+
         public VisualElement CreateInspectorGUI(BuildProfile profile, SerializedObject serializedObject)
         {
             var target = profile.GetComponent<T>();
@@ -99,7 +112,7 @@ namespace UnityEditor.Build.Profile.Elements
                 Debug.LogWarning(profile.name + " does not have a component of type " + typeof(T).Name);
                 return;
             }
-            
+
             Unsupported.SmartReset(so);
         }
     }

@@ -8,6 +8,7 @@ using UnityEditor.Build;
 using System.Collections.Generic;
 using System;
 using UnityEditor.AssetImporters;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Experimental.Rendering;
 using Object = UnityEngine.Object;
 using VirtualTexturing = UnityEngine.Rendering.VirtualTexturing;
@@ -38,6 +39,7 @@ namespace UnityEditor
     [CanEditMultipleObjects]
     internal class TextureImporterInspector : AssetImporterEditor
     {
+        [NoAutoStaticsCleanup] // cached platform-name string; safe to persist across reload
         public static string s_DefaultPlatformName = "DefaultTexturePlatform";
 
         [Flags]
@@ -342,9 +344,9 @@ namespace UnityEditor
 
             public readonly GUIContent spritePixelsPerUnit = EditorGUIUtility.TrTextContent("Pixels Per Unit", "How many pixels in the sprite correspond to one unit in the world.");
             public readonly GUIContent spriteExtrude = EditorGUIUtility.TrTextContent("Extrude Edges", "How much empty area to leave around the sprite in the generated mesh.");
-            public readonly GUIContent spriteTriangulation = EditorGUIUtility.TrTextContent("Sprite Mesh Triangulation Method", "Use Legacy for old method. And UTess for Delaunary with Subdivision");
-            public readonly GUIContent spriteOutline = EditorGUIUtility.TrTextContent("Sprite Outline Detail", "Sprite Outline Detail.");
-            public readonly GUIContent spriteSubdivision = EditorGUIUtility.TrTextContent("Sprite Mesh Subdivision", "Refine triangulation.");
+            public readonly GUIContent spriteTriangulation = EditorGUIUtility.TrTextContent("Mesh Triangulation Method", "Use Legacy for old method. And UTess for Delaunary with Subdivision");
+            public readonly GUIContent spriteOutline = EditorGUIUtility.TrTextContent("Outline Detail", "Sprite Outline Detail.");
+            public readonly GUIContent spriteSubdivision = EditorGUIUtility.TrTextContent("Mesh Subdivision", "Refine triangulation.");
             public readonly GUIContent spriteMeshType = EditorGUIUtility.TrTextContent("Mesh Type", "Type of sprite mesh to generate.");
             public readonly GUIContent spriteAlignment = EditorGUIUtility.TrTextContent("Pivot", "Sprite pivot point in its localspace. May be used for syncing animation frames of different sizes.");
             public readonly GUIContent[] spriteAlignmentOptions =
@@ -360,7 +362,7 @@ namespace UnityEditor
                 EditorGUIUtility.TrTextContent("Bottom Right"),
                 EditorGUIUtility.TrTextContent("Custom"),
             };
-            public readonly GUIContent spriteGenerateFallbackPhysicsShape = EditorGUIUtility.TrTextContent("Generate Physics Shape", "Generates a default physics shape from the outline of the Sprite/s when a physics shape has not been set in the Sprite Editor.");
+            public readonly GUIContent spriteGenerateFallbackPhysicsOutline = EditorGUIUtility.TrTextContent("Generate Physics Outline", "Generates a default physics outline from the shape of the Sprite(s) when a physics outline has not been set in the Sprite Editor.");
             public readonly GUIContent applyAndContinueToSpriteEditor = EditorGUIUtility.TrTextContent("Unapplied import settings for \'{0}\'.\n Apply changes and continue to Sprite Editor Window?");
             public readonly GUIContent unappliedImportSettings = EditorGUIUtility.TrTextContent("Unapplied import settings");
             public readonly GUIContent yes = EditorGUIUtility.TrTextContent("Yes");
@@ -402,6 +404,7 @@ namespace UnityEditor
             }
         }
 
+        [NoAutoStaticsCleanup] // lazy GUIContent/GUIStyle styles holder; safe to persist across reload
         internal static Styles s_Styles;
 
         TextureInspectorTypeGUIProperties[] m_TextureTypeGUIElements = new TextureInspectorTypeGUIProperties[Enum.GetValues(typeof(TextureImporterType)).Length];
@@ -748,7 +751,7 @@ namespace UnityEditor
             m_SpriteGeometrySubdivision.floatValue = settings.spriteGeometrySubdivision;
             m_SpriteMeshType.intValue = (int)settings.spriteMeshType;
             m_Alignment.intValue = settings.spriteAlignment;
-            m_SpriteGenerateFallbackPhysicsShape.intValue = settings.spriteGenerateFallbackPhysicsShape ? 1 : 0;
+            m_SpriteGenerateFallbackPhysicsShape.intValue = settings.spriteGenerateFallbackPhysicsOutline ? 1 : 0;
 
             m_WrapU.intValue = (int)settings.wrapMode;
             m_WrapV.intValue = (int)settings.wrapMode;
@@ -870,7 +873,7 @@ namespace UnityEditor
                 settings.spritePivot = m_SpritePivot.vector2Value;
 
             if (!m_SpriteGenerateFallbackPhysicsShape.hasMultipleDifferentValues)
-                settings.spriteGenerateFallbackPhysicsShape = m_SpriteGenerateFallbackPhysicsShape.intValue > 0;
+                settings.spriteGenerateFallbackPhysicsOutline = m_SpriteGenerateFallbackPhysicsShape.intValue > 0;
 
             if (!m_WrapU.hasMultipleDifferentValues)
                 settings.wrapModeU = (TextureWrapMode)m_WrapU.intValue;
@@ -1269,13 +1272,15 @@ namespace UnityEditor
                         m_SpriteTessellationMethod.intValue = (int)spriteTessellationMethod;
                     if (SpriteTessellationMethod.DelaunaySubdivision == spriteTessellationMethod)
                     {
+                        EditorGUI.indentLevel++;
                         m_SpriteTessellationDetail.floatValue = EditorGUILayout.Slider(s_Styles.spriteOutline, m_SpriteTessellationDetail.floatValue, 0, 1.0f);
                         m_SpriteGeometrySubdivision.floatValue = EditorGUILayout.Slider(s_Styles.spriteSubdivision, m_SpriteGeometrySubdivision.floatValue, 0, 1.0f);
+                        EditorGUI.indentLevel--;
                     }
                 }
 
                 if (m_SpriteMode.intValue != (int)SpriteImportMode.Polygon)
-                    ToggleFromInt(m_SpriteGenerateFallbackPhysicsShape, s_Styles.spriteGenerateFallbackPhysicsShape);
+                    ToggleFromInt(m_SpriteGenerateFallbackPhysicsShape, s_Styles.spriteGenerateFallbackPhysicsOutline);
 
                 EditorGUI.indentLevel--;
                 if (SpriteUtilityWindow.DoOpenSpriteEditorWindowUI(targets.Length == 1))

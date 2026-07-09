@@ -28,4 +28,9 @@ internal class TextJobSystem
         m_ATGTextJobSystem ??= new ATGTextJobSystem();
         m_ATGTextJobSystem.PrepareShapingBeforeLayout(panel);
     }
+
+    internal void SyncAndClearNativeMeasurePointers()
+    {
+        m_ATGTextJobSystem?.SyncAndClearNativeMeasurePointers();
+    }
 }

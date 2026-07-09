@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using UnityEditor;
 
 namespace Unity.ProjectAuditor.Editor.Core
@@ -19,16 +20,9 @@ namespace Unity.ProjectAuditor.Editor.Core
 
         protected T[] GetCompatibleAnalyzers(AnalysisParams analysisParams)
         {
-            var analyzers = new List<T>();
             foreach (var analyzer in m_Analyzers)
-            {
-                if (CoreUtils.SupportsPlatform(analyzer.GetType(), analysisParams.Platform))
-                {
-                    analyzer.CacheParameters(analysisParams.DiagnosticParams);
-                    analyzers.Add(analyzer);
-                }
-            }
-            return analyzers.ToArray();
+                analyzer.CacheParameters(analysisParams.DiagnosticParams);
+            return m_Analyzers;
         }
 
         public override void Initialize()
@@ -41,6 +35,12 @@ namespace Unity.ProjectAuditor.Editor.Core
             {
                 if (type.IsAbstract)
                     continue;
+
+                // Skip analyzers that have been migrated to the rules package, once an installed package version provides them
+                var migratedAttribute = type.GetCustomAttribute<MigratedToRulesPackageAttribute>();
+                if (migratedAttribute != null && migratedAttribute.IsProvidedByInstalledPackage())
+                    continue;
+
                 var moduleAnalyzer = (ModuleAnalyzer)Activator.CreateInstance(type);
                 moduleAnalyzer.Initialize(RegisterDescriptor);
                 analyzers.Add((T)moduleAnalyzer);

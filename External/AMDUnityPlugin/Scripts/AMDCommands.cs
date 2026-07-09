@@ -14,14 +14,14 @@ namespace UnityEngine.AMD
     [Flags]
     public enum FfxFsr2InitializationFlags
     {
-        EnableHighDynamicRange                  = (1<<0),   ///< A bit indicating if the input color data provided is using a high-dynamic range.
-        EnableDisplayResolutionMotionVectors    = (1<<1),   ///< A bit indicating if the motion vectors are rendered at display resolution.
-        EnableMotionVectorsJitterCancellation   = (1<<2),   ///< A bit indicating that the motion vectors have the jittering pattern applied to them.
-        DepthInverted                           = (1<<3),   ///< A bit indicating that the input depth buffer data provided is inverted [1..0].
-        EnableDepthInfinite                     = (1<<4),   ///< A bit indicating that the input depth buffer data provided is using an infinite far plane.
-        EnableAutoExposure                      = (1<<5),   ///< A bit indicating if automatic exposure should be applied to input color data.
-        EnableDynamicResolution                 = (1<<6),   ///< A bit indicating that the application uses dynamic resolution scaling.
-        EnableTexture1DUsage                    = (1<<7)    ///< A bit indicating that the backend should use 1D textures.
+        EnableHighDynamicRange                  = (1<<0),   // A bit indicating if the input color data provided is using a high-dynamic range.
+        EnableDisplayResolutionMotionVectors    = (1<<1),   // A bit indicating if the motion vectors are rendered at display resolution.
+        EnableMotionVectorsJitterCancellation   = (1<<2),   // A bit indicating that the motion vectors have the jittering pattern applied to them.
+        DepthInverted                           = (1<<3),   // A bit indicating that the input depth buffer data provided is inverted [1..0].
+        EnableDepthInfinite                     = (1<<4),   // A bit indicating that the input depth buffer data provided is using an infinite far plane.
+        EnableAutoExposure                      = (1<<5),   // A bit indicating if automatic exposure should be applied to input color data.
+        EnableDynamicResolution                 = (1<<6),   // A bit indicating that the application uses dynamic resolution scaling.
+        EnableTexture1DUsage                    = (1<<7)    // A bit indicating that the backend should use 1D textures.
     }
 
     //Quality mode verbatim from AMDCommands.h

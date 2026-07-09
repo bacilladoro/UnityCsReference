@@ -3,12 +3,14 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Rendering;
 
 namespace UnityEngine.XR
 {
     internal class XRDisplaySubsystemDefault : XRDisplaySubsystem
     {
+        [NoAutoStaticsCleanup] // singleton; survives code reload by design
         private static XRDisplaySubsystemDefault s_Instance = null;
 
         // Singleton instance

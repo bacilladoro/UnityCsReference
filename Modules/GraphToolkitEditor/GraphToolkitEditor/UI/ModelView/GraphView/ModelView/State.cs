@@ -26,11 +26,6 @@ namespace Unity.GraphToolkit.Editor
         /// </summary>
         public new static readonly string ussClassName = "ge-state";
 
-        /// <summary>
-        /// The USS class name added to the state that is the default entry point.
-        /// </summary>
-        public static readonly string defaultEnterUssClassName = ussClassName.WithUssModifier("entry-point");
-
         TransitionConnector m_TransitionConnector;
 
         /// <summary>
@@ -132,14 +127,6 @@ namespace Unity.GraphToolkit.Editor
                 Border.RemoveFromHierarchy();
                 hierarchy.Insert(0, Border);
             }
-        }
-
-        /// <inheritdoc />
-        public override void UpdateUIFromModel(UpdateFromModelVisitor visitor)
-        {
-            base.UpdateUIFromModel(visitor);
-
-            EnableInClassList(defaultEnterUssClassName, StateModel?.IsEntryPoint ?? false);
         }
 
         internal bool PasteAsNew()

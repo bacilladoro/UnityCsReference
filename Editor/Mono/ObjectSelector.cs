@@ -108,6 +108,11 @@ namespace UnityEditor
                 os?.GrabKeyboardFocus();
             }
 
+            public static bool IsSelectionFramed(ObjectSelector os)
+            {
+                return os?.m_ListArea?.IsSelectionFramed() ?? false;
+            }
+
             public static void NotifySelectionChanged(ObjectSelector os, UnityObject selectedObject, bool exitGUI)
             {
                 os?.NotifySelectionChanged(selectedObject, exitGUI);
@@ -405,7 +410,14 @@ namespace UnityEditor
             }
             else
             {
-                NotifySelectionChanged(true);
+                // Do not pass exitGUI:true here. The notification may queue a UI Toolkit event
+                // (e.g. assigning a UITK ObjectField value queues a ChangeEvent) that opens a
+                // native modal dialog. Exiting the GUI throws an ExitGUIException that flushes
+                // that queued event during its unwind, which wedges the selector because of the
+                // native modal dialog. Letting the GUI complete normally flushes the queued event
+                // through the regular dispatcher path instead. (Same as the engine-override path,
+                // which also notifies with exitGUI: false.)
+                NotifySelectionChanged(false);
             }
         }
 
@@ -825,7 +837,8 @@ namespace UnityEditor
         void TreeViewSelection(TreeViewItem<EntityId> item)
         {
             SetSelectedInstanceID(GetInternalSelectedInstanceID());
-            NotifySelectionChanged(true);
+            // See ListAreaItemSelectedCallback for why we notify with exitGUI: false.
+            NotifySelectionChanged(false);
         }
 
         // Grid Section
@@ -1115,6 +1128,14 @@ namespace UnityEditor
 
         void OnGUIHandler()
         {
+            // Must run before the list area consumes the event, otherwise its type is already EventType.Used.
+            if (m_FrameInitialSelection)
+            {
+                var type = Event.current.type;
+                if (type == EventType.MouseDown || type == EventType.MouseDrag || type == EventType.ScrollWheel || type == EventType.KeyDown)
+                    m_FrameInitialSelection = false;
+            }
+
             HandleKeyboard();
 
             m_Position = m_ImGUIContainer.worldBound;
@@ -1324,10 +1345,7 @@ namespace UnityEditor
             GUI.EndGroup();
 
             if (m_FrameInitialSelection && Event.current.type == EventType.Layout && m_Position.height > 0)
-            {
-                m_FrameInitialSelection = false;
-                Frame();
-            }
+                m_ListArea.KeepSelectionFramed();
 
             // overlay preview resize widget
             GUI.Label(new Rect(m_Position.width * .5f - 16, m_Position.height - m_PreviewSize + 2, 32, Styles.bottomResize.fixedHeight), GUIContent.none, Styles.bottomResize);

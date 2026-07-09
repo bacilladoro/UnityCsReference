@@ -12,17 +12,21 @@ using UnityEngine.UIElements;
 
 namespace Unity.U2D.Physics.Editor
 {
-    [CustomPropertyDrawer(typeof(PhysicsQuery.QueryFilter))]
-    sealed class QueryFilterPropertyDrawer : PropertyDrawer
+    /// <summary>
+    /// Builds the UI Toolkit fields for a <see cref="PhysicsQuery.QueryFilter"/> serialized property.
+    /// The categories and hit categories use 64-bit or 32-bit mask fields depending on the project's layer configuration.
+    /// Add the returned element directly to embed the fields inline, or wrap it in a <see cref="Foldout"/> for a collapsible section.
+    /// </summary>
+    public static class QueryFilterInspector
     {
-        #region UITK
-
-        public override VisualElement CreatePropertyGUI(SerializedProperty property)
+        /// <summary>
+        /// Create the editable fields for a <see cref="PhysicsQuery.QueryFilter"/> property, with no wrapping foldout.
+        /// </summary>
+        /// <param name="property">The serialized <see cref="PhysicsQuery.QueryFilter"/> property to build the fields for.</param>
+        /// <returns>A container with the categories, hit categories, and ignore filter fields.</returns>
+        public static VisualElement CreateFields(SerializedProperty property)
         {
-            var root = new VisualElement();
-
-            var foldout = new Foldout { text = property.displayName, value = false, viewDataKey = typeof(QueryFilterPropertyDrawer).ToString() };
-            root.Add(foldout);
+            var body = new VisualElement();
 
             const string categoriesTypeName = nameof(PhysicsQuery.QueryFilter.m_Categories);
             const string hitCategoriesTypeName = nameof(PhysicsQuery.QueryFilter.m_HitCategories);
@@ -62,7 +66,7 @@ namespace Unity.U2D.Physics.Editor
                     choicesMasks = layerMasks
                 };
                 categories.AddToClassList(Mask64Field.alignedFieldUssClassName);
-                foldout.Add(categories);
+                body.Add(categories);
 
                 var hitCategories = new Mask64Field(hitCategoriesProperty.displayName, layerNames, PhysicsMask.All)
                 {
@@ -70,7 +74,7 @@ namespace Unity.U2D.Physics.Editor
                     choicesMasks = layerMasks
                 };
                 hitCategories.AddToClassList(Mask64Field.alignedFieldUssClassName);
-                foldout.Add(hitCategories);
+                body.Add(hitCategories);
             }
             else
             {
@@ -81,13 +85,26 @@ namespace Unity.U2D.Physics.Editor
                 categories.AddToClassList(LayerMaskField.alignedFieldUssClassName);
                 hitCategories.AddToClassList(LayerMaskField.alignedFieldUssClassName);
 
-                foldout.Add(categories);
-                foldout.Add(hitCategories);
+                body.Add(categories);
+                body.Add(hitCategories);
             }
 
-            var ignoreFilter = new PropertyField(ignoreFilterProperty);
-            foldout.Add(ignoreFilter);
+            body.Add(new PropertyField(ignoreFilterProperty));
+            return body;
+        }
+    }
 
+    [CustomPropertyDrawer(typeof(PhysicsQuery.QueryFilter))]
+    sealed class QueryFilterPropertyDrawer : PropertyDrawer
+    {
+        #region UITK
+
+        public override VisualElement CreatePropertyGUI(SerializedProperty property)
+        {
+            var root = new VisualElement();
+            var foldout = new Foldout { text = property.displayName, value = false, viewDataKey = typeof(QueryFilterPropertyDrawer).ToString() };
+            root.Add(foldout);
+            foldout.Add(QueryFilterInspector.CreateFields(property));
             return root;
         }
 

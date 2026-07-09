@@ -287,7 +287,7 @@ namespace UnityEngine.UIElements
             switch (dragPosition.dropPosition)
             {
                 case DragAndDropPosition.OverItem:
-                    dragPosition.recycledItem.rootElement.AddToClassList(BaseVerticalCollectionView.itemDragHoverUssClassNameUnique);
+                    dragPosition.recycledItem?.rootElement?.AddToClassList(BaseVerticalCollectionView.itemDragHoverUssClassNameUnique);
                     break;
                 case DragAndDropPosition.BetweenItems:
                     if (dragPosition.insertAtIndex == 0)

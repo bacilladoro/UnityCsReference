@@ -18,6 +18,8 @@ namespace UnityEditor.Build.Profile.Elements
         const string k_FoldoutOptions = "bp-settings-foldout-options";
         static readonly GUIContent s_ResetContent = EditorGUIUtility.TrTextContent("Reset");
         static readonly GUIContent s_RemoveContent = EditorGUIUtility.TrTextContent("Remove");
+        static readonly GUIContent s_Copy = EditorGUIUtility.TrTextContent("Copy");
+        static readonly GUIContent s_Paste = EditorGUIUtility.TrTextContent("Paste");
 
         readonly string m_Tooltip;
         Vector2 m_TooltipPosVector;
@@ -27,6 +29,8 @@ namespace UnityEditor.Build.Profile.Elements
         BuildProfile m_BuildProfile;
         Foldout m_Root;
         Action<BuildProfile> m_OnReset;
+        Action<BuildProfile> m_OnCopy;
+        Action<BuildProfile> m_OnPaste;
 
         public BuildProfileSettingsFoldout(
             SerializedObject serializedObject,
@@ -36,6 +40,8 @@ namespace UnityEditor.Build.Profile.Elements
             m_BuildProfile = profile;
             m_Provider = provider;
             m_OnReset = provider.GetResetAction();
+            m_OnCopy = provider.OnCopy();
+            m_OnPaste = provider.OnPaste();
             m_DataKey = "bp-settings-foldout-" + provider.GetType().Name;
 
             var uxml = EditorGUIUtility.LoadRequired(k_Uxml) as VisualTreeAsset;
@@ -60,6 +66,9 @@ namespace UnityEditor.Build.Profile.Elements
 
             var options = this.Q<Button>(k_FoldoutOptions);
             options.clicked += OptionsClicked;
+
+            var foldoutHeader = m_Root.Q<Toggle>();
+            foldoutHeader.RegisterCallback<ContextClickEvent>(_ => FoldoutContextMenu());
         }
 
         /// <summary>
@@ -87,7 +96,12 @@ namespace UnityEditor.Build.Profile.Elements
             if (m_OnReset != null)
                 menu.AddItem(s_ResetContent, false, OnReset);
             if (!m_Provider.GetIsRequired())
-                menu.AddItem(s_RemoveContent, false, OnRemove);
+            {
+                if (EditorApplication.isPlayingOrWillChangePlaymode)
+                    menu.AddDisabledItem(s_RemoveContent);
+                else
+                    menu.AddItem(s_RemoveContent, false, OnRemove);
+            }
             menu.ShowAsContext();
         }
 
@@ -107,6 +121,9 @@ namespace UnityEditor.Build.Profile.Elements
 
         void OnRemove()
         {
+            if (EditorApplication.isPlayingOrWillChangePlaymode)
+                return;
+
             if (!EditorUtility.DisplayDialog(
                     TrText.removeSettings,
                     TrText.removeMessage,
@@ -116,6 +133,29 @@ namespace UnityEditor.Build.Profile.Elements
             }
 
             m_Provider.OnRemove(m_BuildProfile);
+            BuildProfileModuleUtil.UpdateActiveEditors(m_BuildProfile);
+        }
+
+        void FoldoutContextMenu()
+        {
+            var menu = new GenericMenu();
+
+            if(m_OnCopy is not null)
+                menu.AddItem(s_Copy, false, OnCopy);
+            if(m_OnPaste is not null)
+                menu.AddItem(s_Paste, false, OnPaste);
+
+            menu.ShowAsContext();
+        }
+
+        void OnCopy()
+        {
+            m_OnCopy?.Invoke(m_BuildProfile);
+        }
+
+        void OnPaste()
+        {
+            m_OnPaste?.Invoke(m_BuildProfile);
             BuildProfileModuleUtil.UpdateActiveEditors(m_BuildProfile);
         }
     }

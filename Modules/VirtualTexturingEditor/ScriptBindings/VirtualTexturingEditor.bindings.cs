@@ -13,6 +13,7 @@ using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine.Experimental.Rendering;
 using UnityEditor;
 using System.Runtime.CompilerServices;
+using Unity.Scripting.LifecycleManagement;
 
 [assembly: InternalsVisibleTo("Unity.VT.Subscenes.Editor")]
 
@@ -34,8 +35,9 @@ namespace UnityEngine.Rendering
             }
         }
 
-        internal static class StackBuildingFeedbackInterfaces
+        internal static partial class StackBuildingFeedbackInterfaces
         {
+            [AutoStaticsCleanupOnCodeReload]
             static List<Building.IBuildStacks> stackBuildingFeedbackCallbacks;
 
             [RequiredByNativeCode]

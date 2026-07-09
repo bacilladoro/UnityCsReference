@@ -59,16 +59,16 @@ namespace UnityEditor
 
         public static class Colors
         {
-            static Color header_l = new Color32(0xDF, 0xDF, 0xDF, 0xFF);
-            static Color header_d = new Color(0.5f, 0.5f, 0.5f, 0.2f);
+            static readonly Color header_l = new Color32(0xDF, 0xDF, 0xDF, 0xFF);
+            static readonly Color header_d = new Color(0.5f, 0.5f, 0.5f, 0.2f);
 
-            static Color[] rows_l = new Color[2]
+            static readonly Color[] rows_l = new Color[2]
             {
                 new Color32(0xC8, 0xC8, 0xC8, 0xFF),
                 new Color32(0xCE, 0xCE, 0xCE, 0xFF)
             };
 
-            static Color[] rows_d = new Color[2]
+            static readonly Color[] rows_d = new Color[2]
             {
                 new Color32(0x38, 0x38, 0x38, 0xFF),
                 new Color32(0x3E, 0x3E, 0x3E, 0xFF)

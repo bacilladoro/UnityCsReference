@@ -6,13 +6,14 @@ using System;
 using System.Collections.Generic;
 using UnityEngine.Bindings;
 using UnityEngine.Scripting;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEngine
 {
     [NativeClass("UI::CanvasRenderer"),
      NativeHeader("Modules/UI/CanvasRenderer.h")]
     [UIModuleHelpURL("class-CanvasRenderer")]
-    public sealed class CanvasRenderer : Component
+    public sealed partial class CanvasRenderer : Component
     {
         public extern bool hasPopInstruction { get; set; }
         public extern int materialCount { get; set; }
@@ -203,6 +204,7 @@ namespace UnityEngine
             ReadOnlySpan<Vector4> uv3S, ReadOnlySpan<Vector3> normals, ReadOnlySpan<Vector4> tangents, ReadOnlySpan<Vector4> prevPositions, ReadOnlySpan<int> indices);
 
         public delegate void OnRequestRebuild();
+        [AutoStaticsCleanupOnCodeReload]
         public static event OnRequestRebuild onRequestRebuild;
 
         [RequiredByNativeCode]

@@ -2,12 +2,15 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+using Unity.Scripting.LifecycleManagement;
+
 namespace Unity.Properties
 {
     public static partial class PropertyContainer
     {
         class ValueAtPathVisitor : PathVisitor
         {
+            [NoAutoStaticsCleanup]
             public static readonly UnityEngine.Pool.ObjectPool<ValueAtPathVisitor> Pool = new UnityEngine.Pool.ObjectPool<ValueAtPathVisitor>(() => new ValueAtPathVisitor(), null, v => v.Reset());
             public IPropertyVisitor Visitor;
 
@@ -27,6 +30,7 @@ namespace Unity.Properties
 
         class ExistsAtPathVisitor : PathVisitor
         {
+            [NoAutoStaticsCleanup]
             public static readonly UnityEngine.Pool.ObjectPool<ExistsAtPathVisitor> Pool = new UnityEngine.Pool.ObjectPool<ExistsAtPathVisitor>(() => new ExistsAtPathVisitor(), null, v => v.Reset());
             public bool Exists;
 

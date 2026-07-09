@@ -9,6 +9,7 @@ using System.Linq;
 using UnityEditor.Compilation;
 using UnityEditor.AssetImporters;
 using UnityEditor.Scripting.ScriptCompilation;
+using UnityEditor.Scripting.ScriptCompilation.MsBuild;
 using UnityEditorInternal;
 using UnityEngine;
 using AssemblyFlags = UnityEditor.Scripting.ScriptCompilation.AssemblyFlags;
@@ -561,7 +562,9 @@ namespace UnityEditor
         private List<VersionMetaData> BuildListOfVersionDefineResourceOptions(string preselectedResourceName)
         {
 #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
-            var versionDefineResourceOptions = EditorCompilationInterface.Instance.GetVersionMetaDatas().Values.ToList();
+            var versionDefineResourceOptions = (MsBuildCompilationInterface.IsEnabled()
+                ? MsBuildCompilationInterface.Instance.GetVersionMetaDatas()
+                : EditorCompilationInterface.Instance.GetVersionMetaDatas()).Values.ToList();
 #pragma warning restore UA2001
 
             if (!string.IsNullOrEmpty(preselectedResourceName) && !versionDefineResourceOptions.Exists(x => x.Name == preselectedResourceName))

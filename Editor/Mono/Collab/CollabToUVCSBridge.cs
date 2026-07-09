@@ -9,6 +9,7 @@ using System;
 using System.Diagnostics;
 using System.Collections.Generic;
 
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor.Connect;
 using UnityEditor.PackageManager;
 using UnityEngine;
@@ -17,11 +18,20 @@ using UnityEngine;
 #pragma warning disable 0618
 namespace UnityEditor.Collaboration
 {
-    internal static class LogObsolete
+    internal static partial class LogObsolete
     {
+        [AutoStaticsCleanupOnCodeReload]
         static bool s_Initialized;
+        [AutoStaticsCleanupOnCodeReload]
         static bool s_NeedsLogging;
+        [AutoStaticsCleanupOnCodeReload]
         static Stopwatch s_Stopwatch = Stopwatch.StartNew();
+
+        [OnCodeLoaded]
+        static void Initialize()
+        {
+            s_Stopwatch = Stopwatch.StartNew();
+        }
 
         internal static void Log()
         {
@@ -65,8 +75,9 @@ namespace UnityEditor.Collaboration
         }
     }
 
-    internal class Collab
+    internal partial class Collab
     {
+        [NoAutoStaticsCleanup] // singleton; survives code reload by design
         static Collab s_instance = null;
         public static Collab instance {
             get
@@ -156,13 +167,18 @@ namespace UnityEditor.Collaboration
         public static int GetSingleRevisionData(bool withChanges, string id){ return 0; }
         public static RevisionsData PopulateRevisionsData(IntPtr nativeData){ return new RevisionsData(); }
         public static Revision PopulateSingleRevisionData(IntPtr nativeData){ return new Revision(); }
+        [AutoStaticsCleanupOnCodeReload]
         public static ShowToolbarAtPositionDelegate ShowToolbarAtPosition = null;
+        [AutoStaticsCleanupOnCodeReload]
         public static IsToolbarVisibleDelegate IsToolbarVisible = null;
+        [AutoStaticsCleanupOnCodeReload]
         public static CloseToolbarDelegate CloseToolbar = null;
+        [AutoStaticsCleanupOnCodeReload]
         public static ShowHistoryWindowDelegate ShowHistoryWindow = null;
+        [AutoStaticsCleanupOnCodeReload]
         public static ShowChangesWindowDelegate ShowChangesWindow = null;
-        public static string[] clientType = Array.Empty<string>();
-        internal static string editorPrefCollabClientType = string.Empty;
+        public static readonly string[] clientType = Array.Empty<string>();
+        internal static readonly string editorPrefCollabClientType = string.Empty;
         public static string GetProjectClientType() { return string.Empty; }
         public static void SetVersionControl(IVersionControl instance){}
         internal static bool HasVersionControl(){ return false; }
@@ -260,12 +276,17 @@ namespace UnityEditor.Collaboration
         Available = 1
     }
 
-    internal class CollabSettingsManager
+    internal partial class CollabSettingsManager
     {
         public delegate void SettingStatusChanged(CollabSettingType type, CollabSettingStatus status);
+        [AutoStaticsCleanupOnCodeReload]
         public static Dictionary<CollabSettingType, SettingStatusChanged> statusNotifier = new Dictionary<CollabSettingType, SettingStatusChanged>();
 
-        static CollabSettingsManager(){}
+        [OnCodeLoaded]
+        static void Initialize()
+        {
+            statusNotifier = new Dictionary<CollabSettingType, SettingStatusChanged>();
+        }
 
         public static bool IsAvailable(CollabSettingType type)
         {

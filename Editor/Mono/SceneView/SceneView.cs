@@ -1657,6 +1657,7 @@ namespace UnityEditor
                     };
                     UIElementsEditorUtility.AddDefaultEditorStyleSheets(m_PrefabToolbar);
                     m_PrefabToolbar.style.overflow = UnityEngine.UIElements.Overflow.Hidden;
+                    m_PrefabToolbar.style.flexShrink = 0;
                 }
 
                 return m_PrefabToolbar;

@@ -80,13 +80,17 @@ namespace UnityEditor.Search
         }
 
         public static readonly string pressToFilterTooltip = L10n.Tr("Press Tab \u21B9 to filter");
+        static readonly string k_SingleResult = L10n.Tr("1 result");
+        static readonly string k_MultipleResults = L10n.Tr("{0} results");
 
         protected INotifyValueChanged<string> m_SearchTextInput;
         private readonly UndoManager m_UndoManager;
         private readonly Label m_SearchPlaceholder;
         private readonly Label m_PressTabPlaceholder;
+        private readonly Label m_ResultsLabel;
         private readonly SearchQueryBuilderViewFlags m_BuilderViewFlags;
         private Button m_CancelButton;
+        private int? m_ResultsCount;
 
         const float k_PlaceholdersTouchThreshold = 2f;
 
@@ -138,7 +142,21 @@ namespace UnityEditor.Search
 
         public static readonly string searchFieldClassName = "search-field";
         public static readonly string searchFieldPlaceholderClassName = "search-field-placeholder";
+        public static readonly string searchFieldResultsLabelClassName = "search-field-results-label";
         public static readonly string searchFieldMultilineClassName = "search-field-multiline";
+
+        /// <summary>
+        /// Sets the results count displayed in the search field. Set to null to hide.
+        /// </summary>
+        public int? ResultsCount
+        {
+            get => m_ResultsCount;
+            set
+            {
+                m_ResultsCount = value;
+                UpdateResultsLabel();
+            }
+        }
 
         public SearchFieldElement(string name, ISearchView viewModel, SearchQueryBuilderViewFlags builderViewFlags)
             : base(name, viewModel)
@@ -161,6 +179,12 @@ namespace UnityEditor.Search
                 m_PressTabPlaceholder.style.right = 12f;
             else
                 m_PressTabPlaceholder.style.right = 2f;
+
+            m_ResultsLabel = new Label();
+            m_ResultsLabel.AddToClassList(searchFieldResultsLabelClassName);
+            m_ResultsLabel.focusable = false;
+            m_ResultsLabel.pickingMode = PickingMode.Ignore;
+            m_ResultsLabel.style.display = DisplayStyle.None;
 
             // Search field
             CreateSearchField(this);
@@ -215,6 +239,8 @@ namespace UnityEditor.Search
             searchField.RegisterCallback<DetachFromPanelEvent>(OnSearchFieldDetachFromPanel);
             searchFieldContainer.Add(searchField);
 
+            searchField.Add(m_ResultsLabel);
+
             if (textElement != null && textElement.isSelectable)
             {
                 textElement.selection.OnCursorIndexChange += OnCursorChanged;
@@ -265,6 +291,13 @@ namespace UnityEditor.Search
 
         private void UpdatePlaceholders()
         {
+            if (m_ResultsLabel.style.display == DisplayStyle.Flex)
+            {
+                m_SearchPlaceholder.style.visibility = Visibility.Hidden;
+                m_PressTabPlaceholder.style.visibility = Visibility.Hidden;
+                return;
+            }
+
             m_SearchPlaceholder.style.visibility = !context.empty ? Visibility.Hidden : Visibility.Visible;
             if (m_SearchPlaceholder.worldBound.xMax + k_PlaceholdersTouchThreshold >= searchField.worldBound.xMax)
                 m_SearchPlaceholder.style.visibility = Visibility.Hidden;
@@ -697,6 +730,20 @@ namespace UnityEditor.Search
             }
             m_CancelButton.EnableInClassList(SearchFieldBase<TextField, string>.cancelButtonOffVariantUssClassName, hideCancelBtn);
             m_CancelButton.style.display = hideCancelBtn ? DisplayStyle.None : DisplayStyle.Flex;
+        }
+
+        void UpdateResultsLabel()
+        {
+            if (m_ResultsCount is not { } count || count <= 0)
+            {
+                m_ResultsLabel.style.display = DisplayStyle.None;
+                UpdatePlaceholders();
+                return;
+            }
+
+            m_ResultsLabel.text = count == 1 ? k_SingleResult : string.Format(k_MultipleResults, count);
+            m_ResultsLabel.style.display = DisplayStyle.Flex;
+            UpdatePlaceholders();
         }
 
         internal void UpdateInternalTextData()

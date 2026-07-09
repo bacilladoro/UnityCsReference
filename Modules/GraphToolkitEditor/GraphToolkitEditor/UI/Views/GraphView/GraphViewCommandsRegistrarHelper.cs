@@ -115,7 +115,6 @@ namespace Unity.GraphToolkit.Editor
             registrar.RegisterDefaultCommandHandler<CreateTransitionSupportCommand>();
             registrar.RegisterDefaultCommandHandler<CreateSingleStateTransitionSupportCommand>();
             registrar.RegisterDefaultCommandHandler<MoveTransitionSupportCommand>();
-            registrar.RegisterDefaultCommandHandler<SetEntryPointCommand>();
             registrar.RegisterDefaultCommandHandler<CreateStateFromTransitionCommand>();
             registrar.RegisterDefaultCommandHandler<PasteSingleStateTransitionSupportsCommand>();
             registrar.RegisterDefaultCommandHandler<PasteTransitionSupportsCommand>();

@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditorInternal;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
@@ -21,6 +22,7 @@ namespace UnityEditor
 
         internal static class Materials
         {
+            [NoAutoStaticsCleanup] // lazily re-created via null-check from a loaded material asset; safe to persist across reload
             static Material s_SDF;
             public static Material SDF
             {
@@ -32,6 +34,7 @@ namespace UnityEditor
                 }
             }
 
+            [NoAutoStaticsCleanup] // lazily re-created via null-check from a loaded material asset; safe to persist across reload
             static Material s_Slice;
             public static Material Slice
             {
@@ -43,6 +46,7 @@ namespace UnityEditor
                 }
             }
 
+            [NoAutoStaticsCleanup] // lazily re-created via null-check from a loaded material asset; safe to persist across reload
             static Material s_Volume;
             public static Material Volume
             {
@@ -148,6 +152,7 @@ namespace UnityEditor
                 Vector4.Dot(v4, kBlueVec4) + Vector2.Dot(v2, kBlueVec2));
         }
 
+        [NoAutoStaticsCleanup] // lazily re-created via null-check on first access after reload; safe to persist
         static Texture2D s_TurboColorRamp;
         static Texture2D TurboColorRamp
         {

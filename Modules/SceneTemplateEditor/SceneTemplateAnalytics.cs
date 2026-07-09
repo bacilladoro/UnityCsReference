@@ -187,8 +187,6 @@ namespace UnityEditor.SceneTemplate
             private SceneTemplateCreationEvent m_data = null;
         }
 
-        internal static string Version;
-  
         static SceneTemplateAnalytics()
         {
         }

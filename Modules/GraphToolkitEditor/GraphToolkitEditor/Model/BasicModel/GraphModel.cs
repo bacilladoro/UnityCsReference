@@ -217,11 +217,6 @@ namespace Unity.GraphToolkit.Editor
         [HideInInspector]
         List<GraphElementMetaData> m_GraphElementMetaData;
 
-        [FormerlySerializedAs("m_DefaultEnterState")]
-        [SerializeReference]
-        [HideInInspector]
-        AbstractNodeModel m_EntryPoint;
-
         SerializedValueDictionary<Hash128, PlaceholderData> m_PlaceholderData;
 
         /// <summary>
@@ -341,25 +336,6 @@ namespace Unity.GraphToolkit.Editor
                 }
 
                 return allModels;
-            }
-        }
-
-        /// <summary>
-        /// The node used as the graph entry point, if there is one.
-        /// </summary>
-        public virtual AbstractNodeModel EntryPoint
-        {
-            get => m_EntryPoint;
-            set
-            {
-                if (m_EntryPoint == value)
-                    return;
-
-                if (m_EntryPoint != null)
-                    CurrentGraphChangeDescription.AddChangedModel(m_EntryPoint, ChangeHint.Data);
-                m_EntryPoint = value;
-                if (m_EntryPoint != null)
-                    CurrentGraphChangeDescription.AddChangedModel(m_EntryPoint, ChangeHint.Data);
             }
         }
 
@@ -1186,8 +1162,6 @@ namespace Unity.GraphToolkit.Editor
             AddMetaData(nodeModel, m_GraphNodeModels.Count);
             m_GraphNodeModels.Add(nodeModel);
 
-            EntryPoint ??= nodeModel;
-
             CurrentGraphChangeDescription.AddNewModel(nodeModel);
         }
 
@@ -1225,11 +1199,6 @@ namespace Unity.GraphToolkit.Editor
             m_GraphElementMetaData[indexInMetadata] = new GraphElementMetaData(nodeModel, index);
             m_GraphNodeModels[index] = nodeModel;
 
-            if (m_EntryPoint == oldModel)
-            {
-                m_EntryPoint = nodeModel;
-            }
-
             CurrentGraphChangeDescription.AddNewModel(nodeModel)?.AddDeletedModel(oldModel);
         }
 
@@ -1261,11 +1230,6 @@ namespace Unity.GraphToolkit.Editor
                 RemoveFromMetadata(indexToRemove, PlaceholderModelHelper.ModelToMissingTypeCategory(nodeModel));
                 m_GraphNodeModels.RemoveAt(indexToRemove);
                 InsertNullReferencesWhileHasMissingTypes(ManagedMissingTypeModelCategory.Node, indexToRemove);
-
-                if (m_EntryPoint == nodeModel)
-                {
-                    EntryPoint = NodeModels.Count > 0 ? NodeModels[0] : null;
-                }
 
                 CurrentGraphChangeDescription.AddDeletedModel(nodeModel);
             }
@@ -4297,10 +4261,6 @@ namespace Unity.GraphToolkit.Editor
             {
                 var pastedNode = DuplicateNode(sourceNode, Vector2.zero);
                 nodeMapping[sourceNode] = pastedNode;
-
-                if (sourceGraphModel.EntryPoint == sourceNode)
-                    EntryPoint = pastedNode;
-
 
                 if (sourceNode is ContextNodeModel sourceContextNode && pastedNode is ContextNodeModel pastedContextNode)
                 {

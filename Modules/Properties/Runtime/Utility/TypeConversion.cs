@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine.Bindings;
+using Unity.Scripting.LifecycleManagement;
 
 namespace Unity.Properties
 {
@@ -26,6 +27,7 @@ namespace Unity.Properties
     [VisibleToOtherModules("UnityEngine.UIElementsModule")]
     sealed class ConverterKeyComparer : IEqualityComparer<ConverterKey>
     {
+        [NoAutoStaticsCleanup]
         public static readonly ConverterKeyComparer Instance = new ();
 
         public bool Equals(ConverterKey x, ConverterKey y)
@@ -61,6 +63,12 @@ namespace Unity.Properties
         public static ConversionRegistry Create()
         {
             return new ConversionRegistry(new Dictionary<ConverterKey, Delegate>(256, ConverterKeyComparer.Instance));
+        }
+
+        public void Clear()
+        {
+            m_Converters?.Clear();
+            m_LazyConverters?.Clear();
         }
 
         public void Register(Type source, Type destination, Delegate converter)
@@ -165,7 +173,7 @@ namespace Unity.Properties
     /// <summary>
     /// Helper class to handle type conversion during properties API calls.
     /// </summary>
-    public static class TypeConversion
+    public static partial class TypeConversion
     {
         [VisibleToOtherModules("UnityEngine.UIElementsModule")]
         internal struct Unsafe
@@ -181,11 +189,20 @@ namespace Unity.Properties
             }
         }
 
-        static readonly ConversionRegistry s_GlobalConverters = ConversionRegistry.Create();
+        [NoAutoStaticsCleanup]
+        static ConversionRegistry s_GlobalConverters;
 
-        static TypeConversion()
+        [OnCodeLoaded]
+        static void Setup()
         {
+            s_GlobalConverters = ConversionRegistry.Create();
             PrimitiveConverters.Register();
+        }
+
+        [OnCodeUnloading]
+        static void Clear()
+        {
+            s_GlobalConverters.Clear();
         }
 
         /// <summary>

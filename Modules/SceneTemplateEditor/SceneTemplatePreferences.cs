@@ -4,11 +4,12 @@
 
 using System.Collections.Generic;
 using JetBrains.Annotations;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 
 namespace UnityEditor.SceneTemplate
 {
-    class SceneTemplatePreferences
+    partial class SceneTemplatePreferences
     {
         const string k_PreferencesPath = "Preferences/SceneTemplates";
         const string k_PreferencesKeyPrefix = "SceneTemplatePreferences.";
@@ -22,6 +23,7 @@ namespace UnityEditor.SceneTemplate
 
         public NewDefaultSceneOverride newDefaultSceneOverride;
 
+        [AutoStaticsCleanupOnCodeReload]
         static SceneTemplatePreferences s_Instance;
 
         [UsedImplicitly, SettingsProvider]

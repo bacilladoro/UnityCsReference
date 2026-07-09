@@ -1095,11 +1095,10 @@ namespace Unity.GraphToolkit.Editor
             // TODO: Implement the Bypass functionality.
 
             // State nodes menu items:
+            menuActionMap.Add(ContextualMenuHelpers.createTransitionMenuItem.Name, () => AppendStartTransitionCreationMenuItem(evt, selection));
             menuActionMap.Add(ContextualMenuHelpers.createLocalTransitionMenuItem.Name, () => AppendCreateTransitionMenuItem(evt, selection, TransitionSupportKind.Local));
             menuActionMap.Add(ContextualMenuHelpers.createOnEnterTransitionMenuItem.Name, () => AppendCreateTransitionMenuItem(evt, selection, TransitionSupportKind.OnEnter));
             menuActionMap.Add(ContextualMenuHelpers.createSelfTransitionMenuItem.Name, () => AppendCreateTransitionMenuItem(evt, selection, TransitionSupportKind.Self));
-            menuActionMap.Add(ContextualMenuHelpers.setAsDefaultStateMenuItem.Name, () => AppendSetAsDefaultStateMenuItem(evt, selection));
-            // TODO (GTF-2242): Implement the Create Transition functionality.
 
             // Subgraph nodes menu items:
             menuActionMap.Add(ContextualMenuHelpers.extractContentsToPlacematItem.Name, () => AppendExtractContentsToPlacematMenuItem(evt, selection));
@@ -1547,15 +1546,18 @@ namespace Unity.GraphToolkit.Editor
             }, connectedNodes.Count == 0 ? DropdownMenuAction.Status.Disabled : DropdownMenuAction.Status.Normal);
         }
 
-        void AppendSetAsDefaultStateMenuItem(ContextualMenuPopulateEvent evt, List<GraphElementModel> selection)
+        void AppendStartTransitionCreationMenuItem(ContextualMenuPopulateEvent evt, List<GraphElementModel> selection)
         {
-            if (!GraphModel.IsStateMachineGraph || selection.Count > 1 || selection[0] is not StateModel stateModel)
+            // Only for a single selected state in a state machine graph.
+            if (!GraphModel.IsStateMachineGraph || selection.Count != 1 || selection[0] is not StateModel stateModel)
                 return;
 
-            evt.menu.AppendAction(L10n.Tr("Set as Default State"), _ =>
+            evt.menu.AppendAction(L10n.Tr("Create Transition"), menuAction =>
             {
-                Dispatch(new SetEntryPointCommand(GraphModel, stateModel, !stateModel.IsEntryPoint));
-            }, stateModel.IsEntryPoint ? DropdownMenuAction.Status.Checked : DropdownMenuAction.Status.Normal);
+                var stateView = stateModel.GetView<State>(this);
+                var mousePosition = menuAction?.eventInfo?.mousePosition ?? Event.current.mousePosition;
+                stateView?.TransitionConnector.CreateFromMenu(mousePosition);
+            });
         }
 
         void AppendCreateTransitionMenuItem(ContextualMenuPopulateEvent evt, List<GraphElementModel> selection, TransitionSupportKind transitionSupportKind)
@@ -4837,8 +4839,8 @@ namespace Unity.GraphToolkit.Editor
             public void AppendAlignAndDistributeElementsMenuItems(ContextualMenuPopulateEvent evt, List<GraphElementModel> selection) => m_GraphView.AppendAlignAndDistributeElementsMenuItems(evt, selection);
             public void AppendCreateEmptyLocalSubgraph(ContextualMenuPopulateEvent evt) => m_GraphView.AppendCreateEmptyLocalSubgraph(evt);
             public void AppendToggleCollapseMenuItem(ContextualMenuPopulateEvent evt, List<GraphElementModel> selection) => m_GraphView.AppendToggleCollapseMenuItem(evt, selection);
-            public void AppendSetAsDefaultStateMenuItem(ContextualMenuPopulateEvent evt, List<GraphElementModel> selection) => m_GraphView.AppendSetAsDefaultStateMenuItem(evt, selection);
             public void AppendCreateTransitionMenuItem(ContextualMenuPopulateEvent evt, List<GraphElementModel> selection, TransitionSupportKind transitionKind) => m_GraphView.AppendCreateTransitionMenuItem(evt, selection, transitionKind);
+            public void AppendStartTransitionCreationMenuItem(ContextualMenuPopulateEvent evt, List<GraphElementModel> selection) => m_GraphView.AppendStartTransitionCreationMenuItem(evt, selection);
             public void AppendCreateLocalSubgraphFromSelectionMenuItem(ContextualMenuPopulateEvent evt) => m_GraphView.AppendCreateLocalSubgraphFromSelectionMenuItem(evt);
             public void AppendExtractContentsToPlacematMenuItem(ContextualMenuPopulateEvent evt, List<GraphElementModel> selection) => m_GraphView.AppendExtractContentsToPlacematMenuItem(evt, selection);
             public void AppendOpenSubgraphMenuItem(ContextualMenuPopulateEvent evt, List<GraphElementModel> selection) => m_GraphView.AppendOpenSubgraphMenuItem(evt, selection);

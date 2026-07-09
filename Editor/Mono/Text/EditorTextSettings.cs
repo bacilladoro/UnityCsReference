@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using Unity.Jobs.LowLevel.Unsafe;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.TextCore.Text;
 using UnityEditor.Experimental;
@@ -20,9 +21,11 @@ namespace UnityEditor
     /// Represents text rendering settings for the editor
     /// </summary>
     [InitializeOnLoad]
-    internal class EditorTextSettings : TextSettings
+    internal partial class EditorTextSettings : TextSettings
     {
+        [AutoStaticsCleanupOnCodeReload]
         static EditorTextSettings s_DefaultTextSettings;
+        [NoAutoStaticsCleanup] // cached EditorPrefs value (value type); persists across reload, kept in sync via SetCurrentEditorSharpness
         static float? s_CurrentEditorSharpness;
 
         const string k_DefaultEmojisFallback = "UIPackageResources/FontAssets/Emojis/";
@@ -32,11 +35,15 @@ namespace UnityEditor
         [SerializeField]
         public BlurryTextCaching blurryTextCaching;
 
+        [NoAutoStaticsCleanup] // cached EditorPrefs value (value type); persists across reload, kept in sync via SetEditorTextRenderingMode
         static EditorTextRenderingMode? currentEditorTextRenderingMode;
+        [NoAutoStaticsCleanup] // cached EditorPrefs value (value type); persists across reload, kept in sync via SetEditorTextGeneratorType
         static TextGeneratorType? currentEditorTextGeneratorType = null;
+        [NoAutoStaticsCleanup] // derived from currentEditorTextRenderingMode (value type); recomputed by SetEditorTextRenderingMode
         static bool isEditorTextRenderingModeRaster;
 
-        static EditorTextSettings()
+        [OnCodeLoaded]
+        static void Initialize()
         {
             TextGenerationSettings.IsEditorTextRenderingModeBitmap = () => GetEditorTextRenderingMode() == EditorTextRenderingMode.Bitmap;
             TextGenerationSettings.IsEditorTextRenderingModeRaster = () => isEditorTextRenderingModeRaster;

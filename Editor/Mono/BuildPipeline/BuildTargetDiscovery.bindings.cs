@@ -83,12 +83,11 @@ namespace UnityEditor
         static readonly string k_SDKPlatformGuidAlreadyUsedError = L10n.Tr("SDK platform guid '{0}' is already used by another platform.");
         static readonly string k_SDKPlatformMissingBaseGuidError = L10n.Tr("SDK platform '{0}' is a derived platform but is missing a valid base platform guid.");
         static readonly string k_SDKPlatformNoSupportedGuidsError = L10n.Tr("SDK platform '{0}' is a multi-target platform but has no supported platform guids.");
+        static readonly string k_SDKPlatformInvalidPlatformTypeError = L10n.Tr("SDK platform '{0}' has an invalid platform type.");
         static readonly string k_SDKPlatformMissingDisplayNameWarning = L10n.Tr("SDK platform '{0}' is missing a display name.");
         static readonly string k_SDKPlatformMissingPlatformGroupWarning = L10n.Tr("SDK platform '{0}' does not reference any platform group. The platform was registered but will not appear in any group.");
         static readonly string k_SDKPlatformUnknownPlatformGroupWarning = L10n.Tr("SDK platform '{0}' references unknown platform group '{1}'. The platform was registered but will not appear in any group.");
         internal static readonly string k_SDKProviderMissingPlatformInfoError = L10n.Tr("The SDK platform provider '{0}' does not reference a valid platform.");
-        static readonly string k_SDKProviderNotMultiTargetError = L10n.Tr("The SDK platform provider '{0}' with guid '{1}' references a platform that is not marked as a multi-target platform.");
-        internal static readonly string k_SDKProviderNotDerivedTargetError = L10n.Tr("The SDK platform provider '{0}' with guid '{1}' references a platform that is not marked as a derived platform.");
         static readonly string k_CreateIPlatformProviderFailedError = L10n.Tr("Failed to create IPlatformProvider instance for type '{0}'.");
         static readonly string k_PlatformDeprecatedDefaultWithDisplayName = L10n.Tr("The {0} platform is deprecated.");
         static readonly string k_DerivedPlatformUsesDeprecatedBase = L10n.Tr("This platform is based on {0}, which is deprecated.");
@@ -1148,6 +1147,9 @@ namespace UnityEditor
                             continue;
                         }
                         break;
+                    default:
+                        Debug.LogError(string.Format(k_SDKPlatformInvalidPlatformTypeError, sdkPlatformGuid));
+                        continue;
                 }
 
                 var displayName = sdkPlatformInfo.displayName ?? string.Empty;
@@ -1266,21 +1268,20 @@ namespace UnityEditor
                 if (!TryCreateIPlatformProvider(type, out var provider))
                     continue;
 
-                var sdkPlatformProvider = SDKPlatformProvider.TryCreateMultiTargetPlatformProvider(provider);
-                if (sdkPlatformProvider == null)
+                if (!SDKPlatformProvider.TryGetProviderGuid(provider, out var providerGuid))
                     continue;
 
-                if (!allPlatforms.TryGetValue(sdkPlatformProvider.guid, out PlatformInfo platformInfo))
+                if (!allPlatforms.TryGetValue(providerGuid, out PlatformInfo platformInfo))
                 {
-                    Debug.LogError(string.Format(k_SDKProviderMissingPlatformInfoError, sdkPlatformProvider.providerType.FullName));
+                    Debug.LogError(string.Format(k_SDKProviderMissingPlatformInfoError, type.FullName));
                     continue;
                 }
 
                 if (!platformInfo.HasFlag(PlatformAttributes.IsMultiTargetPlatform))
-                {
-                    Debug.LogError(string.Format(k_SDKProviderNotMultiTargetError, sdkPlatformProvider.providerType.FullName, sdkPlatformProvider.guid));
                     continue;
-                }
+
+                if (!SDKPlatformProvider.TryCreatePlatformProvider(provider, SDKPlatformType.MultiTarget, out var sdkPlatformProvider))
+                    continue;
 
                 var supportedBuildTargets = new List<IBuildTarget>();
                 foreach (var supportedGuid in platformInfo.supportedPlatformGuids)

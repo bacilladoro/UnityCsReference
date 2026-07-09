@@ -30,8 +30,8 @@ namespace Unity.ProjectAuditor.Editor.Core
         /// <returns>The IssueLayout for the specified category</returns>
         public static IssueLayout GetLayout(IssueCategory category)
         {
-            if (category == IssueCategory.Metadata)
-                return new IssueLayout {Category = IssueCategory.Metadata, Properties = Array.Empty<PropertyDefinition>() };
+            if (category.IsSummary())
+                return new IssueLayout {Category = category, Properties = Array.Empty<PropertyDefinition>() };
 
             foreach (var type in TypeCache.GetTypesDerivedFrom(typeof(Module)))
             {

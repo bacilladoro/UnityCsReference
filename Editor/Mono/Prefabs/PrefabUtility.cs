@@ -443,13 +443,31 @@ namespace UnityEditor
                 var go = selectedGOs[0];
                 // Handle added GameObject or prefab.
                 Transform parentTransform = go.transform.parent;
+
+                // The set of prefab asset handles the selected added GameObjects are instances of. Resolved
+                // once here (O(M)) rather than per apply target inside the callback below, which runs once per
+                // nested level; a target whose handle is in this set would nest a prefab inside itself.
+                var selectedRecursionHandles = new HashSet<Object>();
+                foreach (var selectedGo in selectedGOs)
+                {
+                    var handle = GetAddedGameObjectRecursionHandle(selectedGo);
+                    if (handle != null)
+                        selectedRecursionHandles.Add(handle);
+                }
+
                 HandleApplyRevertMenuItems(
                     (selectedGOs.Length > 1) ? "Added GameObjects" : "Added GameObject",
                     parentTransform.gameObject,
                     (menuItemContent, sourceGo, _) =>
                     {
                         GameObject rootGo = GetRootGameObject(sourceGo);
-                        if (!IsPartOfPrefabThatCanBeAppliedTo(rootGo) || EditorUtility.IsPersistent(parentTransform) || !HasSameParent(selectedGOs))
+
+                        // Disable when any selected added GameObject is itself an instance of the target
+                        // prefab: applying would nest the prefab inside itself and the native apply (which
+                        // processes the selection atomically) would throw "GameObject is already part of target prefab".
+                        bool anyWouldRecurse = sourceGo != null && selectedRecursionHandles.Contains(GetPrefabAssetHandle(sourceGo));
+
+                        if (!IsPartOfPrefabThatCanBeAppliedTo(rootGo) || anyWouldRecurse || EditorUtility.IsPersistent(parentTransform) || !HasSameParent(selectedGOs))
                             menu.AddDisabledItem(menuItemContent);
                         else
                         {
@@ -3156,6 +3174,30 @@ namespace UnityEditor
             }
 
             return applyTargets;
+        }
+
+        // Returns the prefab asset handle that 'addedGo' belongs to as a non-asset instance, or null when
+        // 'addedGo' is not a prefab instance (and so can never cause recursive nesting when applied). The
+        // handle is invariant across apply targets, so callers that test many targets can resolve it once.
+        internal static Object GetAddedGameObjectRecursionHandle(GameObject addedGo)
+        {
+            if (addedGo == null || !IsPartOfNonAssetPrefabInstance(addedGo))
+                return null;
+            var corresponding = GetCorrespondingObjectFromSource(addedGo);
+            return corresponding == null ? null : GetPrefabAssetHandle(corresponding);
+        }
+
+        // True when applying 'addedGo' (an AddedGameObject override) to the prefab that 'targetPrefabSource'
+        // belongs to would nest the prefab inside itself. This mirrors the precondition that the native
+        // AddGameObjectsToPrefabAndConnect enforces by throwing "GameObject is already part of target prefab"
+        // (see PrefabUtility.bindings.cs). Used by the override apply menus to disable such targets up front
+        // instead of letting the apply throw an ArgumentException into the Console.
+        internal static bool WouldApplyingAddedGameObjectRecurse(GameObject addedGo, Object targetPrefabSource)
+        {
+            if (targetPrefabSource == null)
+                return false;
+            var handle = GetAddedGameObjectRecursionHandle(addedGo);
+            return handle != null && handle == GetPrefabAssetHandle(targetPrefabSource);
         }
 
         internal enum OverrideOperation

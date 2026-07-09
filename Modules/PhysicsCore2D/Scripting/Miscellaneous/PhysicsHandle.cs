@@ -28,17 +28,9 @@ namespace Unity.U2D.Physics
     /// You can destroy a handle with <see cref="PhysicsHandle.Destroy"/> or <see cref="PhysicsHandle.DestroyBatch(ReadOnlySpan{PhysicsHandle})"/>.
     /// 
     /// You can also get a handle from one of the following physics objects:
-    /// <see cref="PhysicsBody.physicsHandle"/>
-    /// <see cref="PhysicsShape.physicsHandle"/>
-    /// <see cref="PhysicsChain.physicsHandle"/>
-    /// <see cref="PhysicsJoint.physicsHandle"/>
-    /// <see cref="PhysicsDistanceJoint.physicsHandle"/>
-    /// <see cref="PhysicsFixedJoint.physicsHandle"/>
-    /// <see cref="PhysicsHingeJoint.physicsHandle"/>
-    /// <see cref="PhysicsIgnoreJoint.physicsHandle"/>
-    /// <see cref="PhysicsRelativeJoint.physicsHandle"/>
-    /// <see cref="PhysicsSliderJoint.physicsHandle"/>
-    /// <see cref="PhysicsWheelJoint.physicsHandle"/>
+    /// <see cref="PhysicsBody.physicsHandle"/>, <see cref="PhysicsShape.physicsHandle"/>, <see cref="PhysicsChain.physicsHandle"/>,
+    /// <see cref="PhysicsJoint.physicsHandle"/>, <see cref="PhysicsDistanceJoint.physicsHandle"/>, <see cref="PhysicsFixedJoint.physicsHandle"/>, <see cref="PhysicsHingeJoint.physicsHandle"/>,
+    /// <see cref="PhysicsIgnoreJoint.physicsHandle"/>, <see cref="PhysicsRelativeJoint.physicsHandle"/>, <see cref="PhysicsSliderJoint.physicsHandle"/> and <see cref="PhysicsWheelJoint.physicsHandle"/>.
     ///
     /// NOTE: When retrieving the handle from another physics object, the object type is not encoded so that must be handled separately.
     /// Because of this, it's entirely possible for two handles to be equal, differing only by the type they came from so care must be taken or the object type explicitly stored against handles.
@@ -75,6 +67,19 @@ namespace Unity.U2D.Physics
         public override int GetHashCode() { return HashCode.Combine(m_Index1, m_World0, m_Generation); }
 
         #endregion
+
+        /// <summary>
+        /// Create a <see cref="PhysicsHandle"/> from its constituent parts.
+        /// </summary>
+        /// <param name="index">The handle index.</param>
+        /// <param name="world">The world the handle refers to.</param>
+        /// <param name="generation">The handle generation.</param>
+        PhysicsHandle(Int32 index, UInt16 world, UInt16 generation)
+        {
+            m_Index1 = index;
+            m_World0 = world;
+            m_Generation = generation;
+        }
 
         /// <summary>
         /// Create a <see cref="PhysicsHandle"/>.
@@ -128,5 +133,19 @@ namespace Unity.U2D.Physics
         /// Get the handle generation.
         /// </summary>
         public readonly UInt16 generation => m_Generation;
+
+        /// <summary>
+        /// Get the handle world index.
+        /// </summary>
+        public readonly UInt16 world => m_World0;
+
+        /// <summary>
+        /// Get a copy of this handle that refers to the specified <see cref="PhysicsWorld"/>.
+        /// The index and generation are preserved and only the world is changed, so the result refers to the same object slot in the specified world.
+        /// This is useful when one world shares an identical handle layout with another, such as a world created from a snapshot of, or a clone of, the original.
+        /// </summary>
+        /// <param name="world">The world the returned handle should refer to.</param>
+        /// <returns>A handle referring to the same slot and generation in the specified world.</returns>
+        public readonly PhysicsHandle AsWorld(PhysicsWorld world) => new(m_Index1, (UInt16)(world.index - 1), m_Generation);
     }
 }

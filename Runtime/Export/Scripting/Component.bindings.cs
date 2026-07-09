@@ -44,7 +44,6 @@ namespace UnityEngine
         }
 
         [FreeFunction(HasExplicitThis = true, ThrowsException = true)]
-        [return: UnityMarshalAs(NativeType.ScriptingObjectPtr)]
         internal extern Component GetComponentFastPath(System.Type type);
 
         [System.Security.SecuritySafeCritical]

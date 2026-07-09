@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEngine
 {
@@ -36,9 +37,11 @@ namespace UnityEngine
 // event never invoked warning (invoked indirectly from native code)
 #pragma warning disable CS0067
         [Obsolete("Use beforeReloadSubsystems instead. (UnityUpgradable) -> beforeReloadSubsystems", false)]
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action reloadSubsytemsStarted;
 
         [Obsolete("Use afterReloadSubsystems instead. (UnityUpgradable) -> afterReloadSubsystems", false)]
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action reloadSubsytemsCompleted;
 #pragma warning restore CS0067
     }

@@ -10,12 +10,14 @@ using UnityEngine;
 using System.Linq;
 using UnityEditor.UIElements;
 using UnityEngine.UIElements;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.DeviceSimulation
 {
     [EditorWindowTitle(title = "Simulator", useTypeNameAsIconName = true)]
-    internal class SimulatorWindow : PlayModeView, IHasCustomMenu
+    internal partial class SimulatorWindow : PlayModeView, IHasCustomMenu
     {
+        [AutoStaticsCleanupOnCodeReload]
         private static List<SimulatorWindow> s_SimulatorInstances = new List<SimulatorWindow>();
         private bool m_DeviceListDirty;
 

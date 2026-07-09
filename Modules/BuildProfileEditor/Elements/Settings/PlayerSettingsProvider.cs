@@ -84,13 +84,43 @@ namespace UnityEditor.Build.Profile.Elements
             }
 
             BuildProfileModuleUtil.RemovePlayerSettings(profile);
-            BuildProfileModuleUtil.SerializePlayerSettings(profile);
             EditorUtility.SetDirty(profile);
 
             CheckPropertiesThatRequireRecompilation(profile, targetName, customScriptingDefines, customAdditionalCompilerArguments);
         }
 
         public Action<BuildProfile> GetResetAction() => OnReset;
+
+        public Action<BuildProfile> OnCopy() => OnCopy;
+
+        public Action<BuildProfile> OnPaste() => OnPaste;
+
+        void OnCopy(BuildProfile profile) => BuildProfileModuleUtil.CopySubAssetValues(profile.buildProfilePlayerSettings);
+
+        void OnPaste(BuildProfile profile)
+        {
+            var targetName = NamedBuildTarget.FromBuildTargetGroup(BuildPipeline.GetBuildTargetGroup(profile.buildTarget));
+            var customScriptingDefines = PlayerSettings.GetScriptingDefineSymbols(targetName);
+            var customAdditionalCompilerArguments = PlayerSettings.GetAdditionalCompilerArguments(targetName);
+
+            if (profile == BuildProfileContext.activeProfile)
+            {
+                // we should check if the player setting overrides we're updating differ from the project settings
+                // in that case we should check for any setting that requires an editor restart to take effect
+                // if it does, we should a restart prompt. if the user cancels, we cancel the resetting action
+                var isSuccess = BuildProfileModuleUtil.HandlePlayerSettingsChanged(profile, null);
+                if (!isSuccess)
+                {
+                    return;
+                }
+            }
+
+            Undo.RecordObject(profile, "Paste Player Settings");
+            BuildProfileModuleUtil.PasteSubAssetValues(profile.buildProfilePlayerSettings);
+            EditorUtility.SetDirty(profile);
+
+            CheckPropertiesThatRequireRecompilation(profile, targetName, customScriptingDefines, customAdditionalCompilerArguments);
+        }
 
         public VisualElement CreateInspectorGUI(BuildProfile profile, SerializedObject serializedObject)
         {

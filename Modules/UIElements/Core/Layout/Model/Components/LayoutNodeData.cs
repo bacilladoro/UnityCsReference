@@ -64,6 +64,8 @@ unsafe struct LayoutNodeData
     float TargetSize;
     public int LineIndex;
 
+    public IntPtr TextGenerationInfoPtr;
+
     public bool HasNewLayout
     {
         get => (Status & FlexStatus.HasNewLayout) == FlexStatus.HasNewLayout;

@@ -10,6 +10,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using UnityEngine.Bindings;
 using UnityEngine.Scripting;
+using Unity.Scripting.LifecycleManagement;
 // EntityId lives in namespace UnityEngine (UnityEngineObject.bindings.cs:141). The
 // test-resources compile context (UNITY_NATIVE_TEST_RESOURCES) provides a stub in the
 // same namespace via Runtime/Testing/ScriptWithManagedRefTestFixture.Resources_cs, so
@@ -106,6 +107,12 @@ internal enum RttiDataType : byte
     // command-group shape as UnityObject.
     ManagedReference        = 34,
 
+    // Write-only: one crossing per array instead of the generic Array/List + per-element body.
+    UnityObjectArray        = 35,
+
+    // EntityId counterpart of UnityObjectArray. Runs on every runtime — stores values, not managed references.
+    EntityIdArray           = 36,
+
     Unknown                 = 0xFF,
 }
 
@@ -166,9 +173,7 @@ internal struct UnityObjectReadEntry
     public IntPtr klass;
 }
 
-// EntityId group entries (LazyLoadReference<T>), mirroring ManagedCommandEntityIdEntry:
-// {fieldOffset, destOffset}, 12-byte LSOI on the wire. The id is the field value,
-// so there's no klass or field-table; read and write entries are identical.
+// No klass or field-table — the id is the field value; read and write entries are identical.
 internal struct EntityIdWriteEntry // 8 bytes
 {
     public uint fieldOffset;
@@ -320,6 +325,56 @@ internal static class LinearCollectionKind
 {
     public const byte Array = 0;
     public const byte List  = 1;
+}
+
+// Write-only — read layout has additional fields (UnityObjectArrayReadHeader).
+internal struct UnityObjectArrayHeader
+{
+    public RttiDataType opCode;        // = RttiDataType.UnityObjectArray
+    public byte         kind;          // 0 = Array, 1 = List
+    public byte         reserved0;
+    public byte         reserved1;
+    public uint         fieldOffset;   // post-header offset of the collection reference on the parent
+    public uint         elementStride; // bytes between elements in the managed backing array
+}
+
+// Uniform fake-null context (klass/field/fieldParent) covers every element. 48 bytes on 64-bit.
+internal struct UnityObjectArrayReadHeader
+{
+    public RttiDataType opCode;            // = RttiDataType.UnityObjectArray
+    public byte         kind;              // 0 = Array, 1 = List
+    public byte         reserved0;
+    public byte         reserved1;
+    public uint         fieldOffset;       // post-header offset of the collection reference on the parent
+    public uint         elementStride;     // bytes between elements in the managed backing array
+    public uint         reserved2;         // pad to align the pointer-sized members
+    public IntPtr       elementTypeHandle; // RuntimeTypeHandle.Value for Array.CreateInstance
+    public IntPtr       klass;             // native element class (resolve + editor fake-null type)
+    public IntPtr       field;             // array field backend ptr (editor fake-null)
+    public IntPtr       fieldParent;       // array field's declaring class backend ptr (editor fake-null)
+}
+
+internal struct EntityIdArrayHeader
+{
+    public RttiDataType opCode;        // = RttiDataType.EntityIdArray
+    public byte         kind;          // 0 = Array, 1 = List
+    public byte         reserved0;
+    public byte         reserved1;
+    public uint         fieldOffset;   // post-header offset of the collection reference on the parent
+    public uint         elementStride; // bytes between elements in the managed backing array
+}
+
+// No klass/field/fieldParent — EntityId decodes to a value, no fake-null context. 24 bytes on 64-bit.
+internal struct EntityIdArrayReadHeader
+{
+    public RttiDataType opCode;            // = RttiDataType.EntityIdArray
+    public byte         kind;              // 0 = Array, 1 = List
+    public byte         reserved0;
+    public byte         reserved1;
+    public uint         fieldOffset;       // post-header offset of the collection reference on the parent
+    public uint         elementStride;     // bytes between elements in the managed backing array
+    public uint         reserved2;         // pad to align elementTypeHandle on an 8-byte boundary
+    public IntPtr       elementTypeHandle; // RuntimeTypeHandle.Value for Array.CreateInstance
 }
 
 // Mirrors ManagedCommandFixedBuffer in SerializationCommands.h — see that
@@ -620,7 +675,8 @@ internal unsafe struct NativeReadBufferContext
 [NativeHeader("Runtime/Mono/SerializationBackend_DirectMemoryAccess/ReadManagedReferenceFromBuffer.h")]
 [NativeHeader("Runtime/Mono/SerializationBackend_DirectMemoryAccess/GatherDictionaryEntries.h")]
 [NativeHeader("Runtime/Mono/SerializationBackend_DirectMemoryAccess/DictionaryFieldUniqueIdentifierStack.h")]
-internal static unsafe class SerializationBackendManagedCommands
+[Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
+internal static unsafe partial class SerializationBackendManagedCommands
 {
     // IsThreadSafe disables the default serialization-thread guard (the icall
     // is safe — _NoThreadCheck lookup on the native side).
@@ -637,13 +693,14 @@ internal static unsafe class SerializationBackendManagedCommands
     // pointer) when passed through an `object` icall parameter. IntPtr
     // preserves the bits verbatim. The native side reconstructs the
     // ScriptingObjectPtr — see WriteUnityObjectToBuffer.cpp.
+    // calli in real builds — shim keeps the call site identical in the native-test image.
     [MethodImpl(MethodImplOptions.InternalCall)]
     [NativeMethod(IsFreeFunction = true, IsThreadSafe = true)]
-    private static extern void WriteUnityObjectToBuffer(
-        IntPtr fieldValueRaw,
-        IntPtr resolverHandle,
-        IntPtr outputPtr,
-        int flags);
+    private static extern IntPtr GetWriteUnityObjectToBufferFunctionPointer();
+    private static readonly delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr, int, void> s_writeUnityObjectToBuffer =
+        (delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr, int, void>)(void*)GetWriteUnityObjectToBufferFunctionPointer();
+    private static void WriteUnityObjectToBuffer(IntPtr fieldValueRaw, IntPtr resolverHandle, IntPtr outputPtr, int flags) =>
+        s_writeUnityObjectToBuffer(fieldValueRaw, resolverHandle, outputPtr, flags);
 
     // Write-side icall for the RttiDataType.ManagedReference opcode
     // ([SerializeReference] inline RefId). Pops the next inline RefId from the
@@ -723,6 +780,59 @@ internal static unsafe class SerializationBackendManagedCommands
     [NativeMethod(IsFreeFunction = true, IsThreadSafe = true)]
     private static extern IntPtr GetReadEntityIdFromBufferFunctionPointer();
 
+    // Real builds only — the native-test image keeps the per-field path.
+    [MethodImpl(MethodImplOptions.InternalCall)]
+    [NativeMethod(IsFreeFunction = true, IsThreadSafe = true)]
+    private static extern IntPtr GetWriteUnityObjectsToBufferFunctionPointer();
+    private static readonly delegate* unmanaged[Cdecl]<IntPtr, int, IntPtr, IntPtr, IntPtr, int, void> s_writeUnityObjectsToBuffer =
+        (delegate* unmanaged[Cdecl]<IntPtr, int, IntPtr, IntPtr, IntPtr, int, void>)(void*)GetWriteUnityObjectsToBufferFunctionPointer();
+
+    [MethodImpl(MethodImplOptions.InternalCall)]
+    [NativeMethod(IsFreeFunction = true, IsThreadSafe = true)]
+    private static extern IntPtr GetWriteUnityObjectsArrayToBufferFunctionPointer();
+    private static readonly delegate* unmanaged[Cdecl]<IntPtr, int, IntPtr, int, long, IntPtr, void> s_writeUnityObjectsArrayToBuffer =
+        (delegate* unmanaged[Cdecl]<IntPtr, int, IntPtr, int, long, IntPtr, void>)(void*)GetWriteUnityObjectsArrayToBufferFunctionPointer();
+
+    [MethodImpl(MethodImplOptions.InternalCall)]
+    [NativeMethod(IsFreeFunction = true, IsThreadSafe = true)]
+    private static extern IntPtr GetWriteEntityIdsArrayToBufferFunctionPointer();
+    private static readonly delegate* unmanaged[Cdecl]<IntPtr, int, IntPtr, int, long, IntPtr, void> s_writeEntityIdsArrayToBuffer =
+        (delegate* unmanaged[Cdecl]<IntPtr, int, IntPtr, int, long, IntPtr, void>)(void*)GetWriteEntityIdsArrayToBufferFunctionPointer();
+
+    [MethodImpl(MethodImplOptions.InternalCall)]
+    [NativeMethod(IsFreeFunction = true, IsThreadSafe = true)]
+    private static extern IntPtr GetWriteEntityIdsToBufferFunctionPointer();
+    private static readonly delegate* unmanaged[Cdecl]<IntPtr, int, IntPtr, IntPtr, IntPtr, int, void> s_writeEntityIdsToBuffer =
+        (delegate* unmanaged[Cdecl]<IntPtr, int, IntPtr, IntPtr, IntPtr, int, void>)(void*)GetWriteEntityIdsToBufferFunctionPointer();
+
+    // Mono/IL2CPP only — CoreCLR's moving GC and non-crossable managed-object return force the per-field path there.
+    [MethodImpl(MethodImplOptions.InternalCall)]
+    [NativeMethod(IsFreeFunction = true, IsThreadSafe = true)]
+    private static extern IntPtr GetReadUnityObjectsIntoFieldsFunctionPointer();
+    private static readonly delegate* unmanaged[Cdecl]<IntPtr, int, IntPtr, IntPtr, IntPtr, IntPtr, int, void> s_readUnityObjectsIntoFields =
+        (delegate* unmanaged[Cdecl]<IntPtr, int, IntPtr, IntPtr, IntPtr, IntPtr, int, void>)(void*)GetReadUnityObjectsIntoFieldsFunctionPointer();
+
+    // Fake-null context is uniform across the array: one header triple covers every element.
+    [MethodImpl(MethodImplOptions.InternalCall)]
+    [NativeMethod(IsFreeFunction = true, IsThreadSafe = true)]
+    private static extern IntPtr GetReadUnityObjectsArrayIntoElementsFunctionPointer();
+    private static readonly delegate* unmanaged[Cdecl]<IntPtr, int, IntPtr, int, long, IntPtr, IntPtr, IntPtr, IntPtr, void> s_readUnityObjectsArrayIntoElements =
+        (delegate* unmanaged[Cdecl]<IntPtr, int, IntPtr, int, long, IntPtr, IntPtr, IntPtr, IntPtr, void>)(void*)GetReadUnityObjectsArrayIntoElementsFunctionPointer();
+
+    // EntityId stores values — no write barrier, safe on all runtimes including CoreCLR.
+    [MethodImpl(MethodImplOptions.InternalCall)]
+    [NativeMethod(IsFreeFunction = true, IsThreadSafe = true)]
+    private static extern IntPtr GetReadEntityIdsArrayIntoElementsFunctionPointer();
+    private static readonly delegate* unmanaged[Cdecl]<IntPtr, int, IntPtr, int, long, IntPtr, void> s_readEntityIdsArrayIntoElements =
+        (delegate* unmanaged[Cdecl]<IntPtr, int, IntPtr, int, long, IntPtr, void>)(void*)GetReadEntityIdsArrayIntoElementsFunctionPointer();
+
+    // EntityId stores values: safe on all runtimes, no field table needed.
+    [MethodImpl(MethodImplOptions.InternalCall)]
+    [NativeMethod(IsFreeFunction = true, IsThreadSafe = true)]
+    private static extern IntPtr GetReadEntityIdsIntoFieldsFunctionPointer();
+    private static readonly delegate* unmanaged[Cdecl]<IntPtr, int, IntPtr, IntPtr, IntPtr, int, void> s_readEntityIdsIntoFields =
+        (delegate* unmanaged[Cdecl]<IntPtr, int, IntPtr, IntPtr, IntPtr, int, void>)(void*)GetReadEntityIdsIntoFieldsFunctionPointer();
+
     // FieldUniqueIdentifierContext stack bracketing for dictionary entries.
     // ConsumeDictionary brackets the per-entry walk with these so descendant
     // commands (and the GetDictionaryEntriesForSerialization helper itself,
@@ -783,6 +893,7 @@ internal static unsafe class SerializationBackendManagedCommands
     // that need more than one buffer flush. Strings that fit the current buffer
     // tail in one shot bypass the encoder entirely (see ConsumeString).
     [ThreadStatic]
+    [NoAutoStaticsCleanup] // [ThreadStatic] reusable UTF8 encoder, holds no user references, safe to persist
     private static Encoder s_Utf8Encoder;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -854,12 +965,11 @@ internal static unsafe class SerializationBackendManagedCommands
     // Mono's RuntimeTypeHandle is a single-IntPtr struct, so the reinterpret
     // is correct there with no BCL help.
     //
-    // Lazy resolve (vs. static ctor) keeps this class beforefieldinit and
-    // sidesteps the need for [NoAutoStaticsCleanup] (also an
-    // UnityEngine.Bindings-adjacent attribute that the test resource compile
-    // may not see). If the cached delegate is cleared by an auto-cleanup pass,
-    // the next call falls through to ResolveRuntimeTypeHandleFromIntPtr and
-    // re-binds against the same BCL method — idempotent.
+    // Lazy resolve (vs. static ctor) keeps this class beforefieldinit. The cache
+    // field is covered by the class-level [NoAutoStaticsCleanup]; if it is cleared
+    // by an auto-cleanup pass anyway, the next call falls through to
+    // ResolveRuntimeTypeHandleFromIntPtr and re-binds against the same BCL method
+    // — idempotent.
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static Type UnmarshalSystemType(IntPtr handlePtr)
@@ -929,7 +1039,7 @@ internal static unsafe class SerializationBackendManagedCommands
         // every closed-but-uncommitted segment from the entire stream.
         int   pendingAdvance = 0;
         ExecuteWriteCommands(ctx, pinnedBase, entriesPtr, entryBufferSize, transfer,
-            ref output, ref dstSize, ref pendingAdvance);
+            ref output, ref dstSize, ref pendingAdvance, repeatCount: 1, repeatStride: 0);
 
         // Single trailing commit. pendingAdvance is the common case; dstSize > 0
         // only fires if the build side ever omits the closing FBP(0) — keep the
@@ -962,14 +1072,22 @@ internal static unsafe class SerializationBackendManagedCommands
         IntPtr transfer,
         ref byte* output,
         ref int   dstSize,
-        ref int   pendingAdvance)
+        ref int   pendingAdvance,
+        int  repeatCount,
+        long repeatStride)
     {
-        ref byte baseAddr = ref Unsafe.AsRef<byte>((void*)pinnedBase);
-        byte* pos = (byte*)entriesPtr;
-        byte* endPos = pos + entryBufferSize;
+        byte* basePtr      = (byte*)pinnedBase;
+        byte* entriesStart = (byte*)entriesPtr;
+        byte* endPos       = entriesStart + entryBufferSize;
 
-        while (pos < endPos)
+        // repeatCount==1, repeatStride==0 (single-instance callers) folds away under the JIT.
+        for (int elem = 0; elem < repeatCount; ++elem)
         {
+            ref byte baseAddr = ref Unsafe.AsRef<byte>(basePtr + (long)elem * repeatStride);
+            byte* pos = entriesStart;
+
+            while (pos < endPos)
+            {
             var opCode = (RttiDataType)pos[0];
 
             // Aligned DC2/DC4/DC8 variants store offset / N; the execution side multiplies by N
@@ -1202,11 +1320,34 @@ internal static unsafe class SerializationBackendManagedCommands
                 case RttiDataType.UnityObject:
                 {
                     var entry = ConsumeDirectCopyGroup<UnityObjectWriteEntry>(ref pos, out var end);
+                    // Pack arm: inline managed read is safe — the marshalling hazard is icall-only.
+                    // Game release must go through WriteUnityObjectToBuffer so the UUM-143556 type-
+                    // mismatch drop is applied; the inline writer can't consult the native discriminator.
+                    if ((ctx->flags & UnityObjectTransferFlags.PackEntityIdInLSOI) != 0
+                        && (ctx->flags & UnityObjectTransferFlags.SerializeForGameRelease) == 0)
+                    {
+                        do
+                        {
+                            object slot = Unsafe.As<byte, object>(ref Unsafe.AddByteOffset(ref baseAddr, (nint)entry->fieldOffset));
+                            WriteUnityObjectRecordInline(slot, output + entry->destOffset);
+                            entry++;
+                        }
+                        while (entry < end);
+                        break;
+                    }
+                    // Remap arm: ≥2 fields in one crossing; count==1 takes the per-field codec (lighter, measurably on IL2CPP).
+                    if (end - entry > 1)
+                    {
+                        s_writeUnityObjectsToBuffer(
+                            ctx->resolverHandle, ctx->flags,
+                            (IntPtr)Unsafe.AsPointer(ref baseAddr),
+                            (IntPtr)entry, (IntPtr)output, (int)(end - entry));
+                        break;
+                    }
+                    // Per-field: count==1 fast path and the native-test image.
                     do
                     {
-                        // Read the field as a raw pointer rather than going through
-                        // `object`. See the WriteUnityObjectToBuffer declaration above
-                        // for why `object` marshalling is unsafe here on Linux Mono.
+                        // Raw-pointer read, not `object` — see WriteUnityObjectToBuffer's marshalling note.
                         ref byte fieldByteRef = ref Unsafe.AddByteOffset(ref baseAddr, (nint)entry->fieldOffset);
                         IntPtr fieldValueRaw = Unsafe.ReadUnaligned<IntPtr>(ref fieldByteRef);
                         byte* dst = output + entry->destOffset;
@@ -1223,6 +1364,92 @@ internal static unsafe class SerializationBackendManagedCommands
                         entry++;
                     }
                     while (entry < end);
+                    break;
+                }
+
+                case RttiDataType.UnityObjectArray:
+                {
+                    var hdr = (UnityObjectArrayHeader*)pos;
+                    pos += sizeof(UnityObjectArrayHeader);
+
+                    // Commit deferred bytes before the collection's writes land at writerPtr,
+                    // as the Array/List case does.
+                    if (pendingAdvance > 0)
+                    {
+                        InvokeFlushBuffer(ctx, ctx->writerPtr, pendingAdvance);
+                        pendingAdvance = 0;
+                    }
+
+                    byte[] dataAsBytes;
+                    int    count;
+                    if (hdr->kind == LinearCollectionKind.Array)
+                    {
+                        Array arr = Unsafe.As<byte, Array>(
+                            ref Unsafe.AddByteOffset(ref baseAddr, (nint)hdr->fieldOffset));
+                        if (arr == null)
+                        {
+                            WriteFramedInt32(ctx, 0);
+                            break;
+                        }
+                        dataAsBytes = Unsafe.As<Array, byte[]>(ref arr);
+                        count       = arr.Length;
+                    }
+                    else
+                    {
+                        ListLayout list = Unsafe.As<byte, ListLayout>(
+                            ref Unsafe.AddByteOffset(ref baseAddr, (nint)hdr->fieldOffset));
+                        if (list == null || list._items == null)
+                        {
+                            WriteFramedInt32(ctx, 0);
+                            break;
+                        }
+                        dataAsBytes = list._items;
+                        count       = list._size;
+                    }
+
+                    ConsumeLinearCollectionUnityObjectArray(ctx, dataAsBytes, count, hdr->elementStride);
+                    break;
+                }
+
+                case RttiDataType.EntityIdArray:
+                {
+                    var hdr = (EntityIdArrayHeader*)pos;
+                    pos += sizeof(EntityIdArrayHeader);
+
+                    if (pendingAdvance > 0)
+                    {
+                        InvokeFlushBuffer(ctx, ctx->writerPtr, pendingAdvance);
+                        pendingAdvance = 0;
+                    }
+
+                    byte[] dataAsBytes;
+                    int    count;
+                    if (hdr->kind == LinearCollectionKind.Array)
+                    {
+                        Array arr = Unsafe.As<byte, Array>(
+                            ref Unsafe.AddByteOffset(ref baseAddr, (nint)hdr->fieldOffset));
+                        if (arr == null)
+                        {
+                            WriteFramedInt32(ctx, 0);
+                            break;
+                        }
+                        dataAsBytes = Unsafe.As<Array, byte[]>(ref arr);
+                        count       = arr.Length;
+                    }
+                    else
+                    {
+                        ListLayout list = Unsafe.As<byte, ListLayout>(
+                            ref Unsafe.AddByteOffset(ref baseAddr, (nint)hdr->fieldOffset));
+                        if (list == null || list._items == null)
+                        {
+                            WriteFramedInt32(ctx, 0);
+                            break;
+                        }
+                        dataAsBytes = list._items;
+                        count       = list._size;
+                    }
+
+                    ConsumeLinearCollectionEntityIdArray(ctx, dataAsBytes, count, hdr->elementStride);
                     break;
                 }
 
@@ -1255,6 +1482,15 @@ internal static unsafe class SerializationBackendManagedCommands
                     // serialized-file transfers map it through the native resolver, which
                     // also records the dependency (WriteEntityIdToBuffer).
                     bool packInLSOI = (ctx->flags & UnityObjectTransferFlags.PackEntityIdInLSOI) != 0;
+                    // Remap arm: ≥2 fields in one crossing; count==1 takes the per-field codec. Bytes match.
+                    if (!packInLSOI && end - entry > 1)
+                    {
+                        s_writeEntityIdsToBuffer(
+                            ctx->resolverHandle, ctx->flags,
+                            (IntPtr)Unsafe.AsPointer(ref baseAddr),
+                            (IntPtr)entry, (IntPtr)output, (int)(end - entry));
+                        break;
+                    }
                     do
                     {
                         ref byte fieldByteRef = ref Unsafe.AddByteOffset(ref baseAddr, (nint)entry->fieldOffset);
@@ -1448,20 +1684,18 @@ internal static unsafe class SerializationBackendManagedCommands
                     throw new NotSupportedException($"OpCode {(RttiDataType)pos[0]} not supported");
             }
 
-            // Re-align pos to a 4-byte offset relative to entriesPtr before reading the
+            // Re-align pos to a 4-byte offset relative to entriesStart before reading the
             // next header. Only compact groups with an odd entry count need this
             // (2-byte skip); large groups are already a multiple of 4.
-            long entryOffset = pos - (byte*)entriesPtr;
+            long entryOffset = pos - entriesStart;
             long aligned = (entryOffset + 3) & ~3L;
-            pos = (byte*)entriesPtr + aligned;
+            pos = entriesStart + aligned;
+        }
         }
 
-        // No trailing flush here. pendingAdvance is owned by the outermost caller
-        // (ObjectToSerializationBuffer), which commits it once after its top-level
-        // ExecuteWriteCommands returns. Inner recursive callers (ConsumeValueReference,
-        // ConsumeLinearCollection's per-element loop) intentionally inherit any
-        // accumulated bytes so consecutive elements / nested instances coalesce
-        // into the same flush.
+        // No trailing flush: pendingAdvance is owned by the outermost caller
+        // (ObjectToSerializationBuffer). Inner callers and collection batches inherit
+        // accumulated bytes so consecutive elements / nested instances coalesce.
     }
 
     // Writes a string (length prefix + UTF-8 body + 4-byte alignment pad) into the
@@ -1838,6 +2072,10 @@ internal static unsafe class SerializationBackendManagedCommands
         if (nestedBytes == 0)
         {
             pos = nestedStart;
+            // A class with no serialized leaves must still be materialized (null ->
+            // default-constructed) to match native null-slot population; structs need nothing.
+            if (header->runtimeTypeHandle != IntPtr.Zero)
+                GetOrCreateVrtInstance(ref baseAddr, header->fieldOffset, header->runtimeTypeHandle, header->ctorFunctionPtr);
             return;
         }
 
@@ -1851,7 +2089,7 @@ internal static unsafe class SerializationBackendManagedCommands
             ExecuteWriteCommands(ctx,
                 (IntPtr)Unsafe.AsPointer(ref nestedBase),
                 (IntPtr)nestedStart, nestedBytes, transfer,
-                ref output, ref dstSize, ref pendingAdvance);
+                ref output, ref dstSize, ref pendingAdvance, repeatCount: 1, repeatStride: 0);
         }
         else
         {
@@ -1860,7 +2098,7 @@ internal static unsafe class SerializationBackendManagedCommands
             fixed (byte* nestedBase = &Unsafe.As<ObjectWrapper>(obj).Data)
             {
                 ExecuteWriteCommands(ctx, (IntPtr)nestedBase,
-                    (IntPtr)nestedStart, nestedBytes, transfer, ref output, ref dstSize, ref pendingAdvance);
+                    (IntPtr)nestedStart, nestedBytes, transfer, ref output, ref dstSize, ref pendingAdvance, repeatCount: 1, repeatStride: 0);
             }
         }
 
@@ -2759,11 +2997,9 @@ internal static unsafe class SerializationBackendManagedCommands
             return;
         }
 
-        // Per-element recursion path: write SInt32 length prefix, then loop
-        // count times calling ExecuteWriteCommands with each element pinned.
-        // The body is the element class's command stream (FBP-bracketed
-        // DC + String entries). Each iteration's trailing FBP(0) ensures
-        // dstSize == 0 between elements, matching the executor invariant.
+        // Per-element fallback (bodies not eligible for ShufflePath or TriviallyCopyable):
+        // each element's trailing FBP(0) keeps dstSize == 0 between elements, matching
+        // the executor invariant.
         WriteFramedInt32(ctx, count);
 
         if (count > 0)
@@ -2771,18 +3007,12 @@ internal static unsafe class SerializationBackendManagedCommands
             fixed (byte* dataPtr = dataAsBytes)
             {
                 long stride = (long)header->elementStride;
-                for (int i = 0; i < count; ++i)
-                {
-                    byte* elementPtr = dataPtr + i * stride;
-                    // Threading pendingAdvance by ref is the whole point of the
-                    // per-element loop fix: each element's FBP(N) opens its
-                    // segment at writerPtr + pendingAdvance and only flushes
-                    // when the combined region wouldn't fit, so an N-element
-                    // array of small structs coalesces into ceil(N*body/cap)
-                    // flushes instead of N.
-                    ExecuteWriteCommands(ctx, (IntPtr)elementPtr,
-                        (IntPtr)nestedStart, nestedBytes, transfer, ref output, ref dstSize, ref pendingAdvance);
-                }
+                // pendingAdvance threaded by ref so an N-element array of small structs
+                // coalesces into ceil(N*body/cap) flushes instead of N.
+                ExecuteWriteCommands(ctx, (IntPtr)dataPtr,
+                    (IntPtr)nestedStart, nestedBytes, transfer,
+                    ref output, ref dstSize, ref pendingAdvance,
+                    repeatCount: count, repeatStride: stride);
             }
         }
 
@@ -2814,6 +3044,118 @@ internal static unsafe class SerializationBackendManagedCommands
         }
 
         pos = nestedStart + nestedBytes;
+    }
+
+    // EntityId high word is always 0, so three aligned *(int*) stores suffice. dst is 4-byte aligned.
+    // PackEntityIdInLSOI arm only; the remap arm uses the icall.
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static unsafe void WriteUnityObjectRecordInline(object wrapper, byte* dst)
+    {
+        if (wrapper == null)
+        {
+            *(int*)dst       = 0;
+            *(int*)(dst + 4) = 0;
+            *(int*)(dst + 8) = 0;
+        }
+        else
+        {
+            ulong raw = EntityId.ToULong(
+                Unsafe.As<object, UnityEngine.Object>(ref wrapper).GetEntityIdForSerializationUnchecked());
+            *(int*)dst       = (int)raw;
+            *(int*)(dst + 4) = (int)(raw >> 32);
+            *(int*)(dst + 8) = 0;
+        }
+    }
+
+    // No per-element interpreter frame; bytes match the generic path.
+    private static unsafe void ConsumeLinearCollectionUnityObjectArray(
+        NativeBufferContext* ctx, byte[] dataAsBytes, int count, long stride)
+    {
+        WriteFramedInt32(ctx, count);
+        if (count == 0)
+            return;
+
+        const int wire = 12;
+
+        fixed (byte* dataPtr = dataAsBytes)
+        {
+            byte* srcCur = dataPtr;
+            int   left   = count;
+            while (left > 0)
+            {
+                int batch = ctx->writerAvailable / wire;
+                if (batch > left)
+                    batch = left;
+
+                byte* dst = ctx->writerPtr;
+                // Pack arm: read each EntityId inline (no icall). The branch is per batch, not per element.
+                // Game release falls to the icall arm so the UUM-143556 drop runs (see the scalar case).
+                if ((ctx->flags & UnityObjectTransferFlags.PackEntityIdInLSOI) != 0
+                    && (ctx->flags & UnityObjectTransferFlags.SerializeForGameRelease) == 0)
+                {
+                    for (int i = 0; i < batch; ++i)
+                    {
+                        object slot = Unsafe.As<byte, object>(ref Unsafe.AsRef<byte>(srcCur + (long)i * stride));
+                        WriteUnityObjectRecordInline(slot, dst + i * wire);
+                    }
+                }
+                else
+                {
+                    // Remap arm: whole batch in one crossing (vs per-element icall); bytes match
+                    // via the shared leaf. srcCur is pinned for the call.
+                    s_writeUnityObjectsArrayToBuffer(
+                        ctx->resolverHandle, ctx->flags, (IntPtr)srcCur, batch, stride, (IntPtr)dst);
+                }
+
+                InvokeFlushBuffer(ctx, ctx->writerPtr, batch * wire);
+                srcCur += (long)batch * stride;
+                left   -= batch;
+            }
+        }
+    }
+
+    // EntityId counterpart; bytes match the per-element path. id==0 → zeroed LSOI (no resolver call).
+    private static unsafe void ConsumeLinearCollectionEntityIdArray(
+        NativeBufferContext* ctx, byte[] dataAsBytes, int count, long stride)
+    {
+        WriteFramedInt32(ctx, count);
+        if (count == 0)
+            return;
+
+        const int wire = 12;
+
+        fixed (byte* dataPtr = dataAsBytes)
+        {
+            byte* srcCur = dataPtr;
+            int   left   = count;
+            while (left > 0)
+            {
+                int batch = ctx->writerAvailable / wire;
+                if (batch > left)
+                    batch = left;
+
+                byte* dst = ctx->writerPtr;
+                // Pack arm: encode each id inline (no icall). The branch is per batch, not per element.
+                if ((ctx->flags & UnityObjectTransferFlags.PackEntityIdInLSOI) != 0)
+                {
+                    for (int i = 0; i < batch; ++i)
+                    {
+                        ulong id = Unsafe.ReadUnaligned<ulong>(srcCur + (long)i * stride);
+                        PackEntityIdIntoLsoi(dst + i * wire, id);
+                    }
+                }
+                else
+                {
+                    // Remap arm: whole batch in one crossing. The leaf zeroes id==0 (no resolver).
+                    s_writeEntityIdsArrayToBuffer(
+                        ctx->resolverHandle, ctx->flags, (IntPtr)srcCur, batch, stride, (IntPtr)dst);
+                }
+
+                InvokeFlushBuffer(ctx, ctx->writerPtr, batch * wire);
+                srcCur += (long)batch * stride;
+                left   -= batch;
+            }
+        }
     }
 
     // Consumes one ManagedCommandDictionary entry. Bridges the live
@@ -2868,20 +3210,15 @@ internal static unsafe class SerializationBackendManagedCommands
 
             if (count > 0)
             {
-                // Pin the entry array as bytes and walk per-entry via
-                // ExecuteWriteCommands — same shape as ConsumeLinearCollection's
-                // per-element-recursion arm.
+                // Same shape as ConsumeLinearCollection's per-element arm.
                 byte[] dataAsBytes = Unsafe.As<byte[]>(entries);
                 fixed (byte* dataPtr = dataAsBytes)
                 {
                     long stride = (long)header->entryStride;
-                    for (int i = 0; i < count; ++i)
-                    {
-                        byte* entryPtr = dataPtr + i * stride;
-                        ExecuteWriteCommands(ctx, (IntPtr)entryPtr,
-                            (IntPtr)nestedStart, nestedBytes, transfer,
-                            ref output, ref dstSize, ref pendingAdvance);
-                    }
+                    ExecuteWriteCommands(ctx, (IntPtr)dataPtr,
+                        (IntPtr)nestedStart, nestedBytes, transfer,
+                        ref output, ref dstSize, ref pendingAdvance,
+                        repeatCount: count, repeatStride: stride);
                 }
             }
 
@@ -3742,18 +4079,15 @@ internal static unsafe class SerializationBackendManagedCommands
                 // elementWireSize, stepping naturally to the next element.
                 fixed (byte* dataPtr = dataAsBytes)
                 {
-                    long stride = (long)header->elementStride;
+                    long stride  = (long)header->elementStride;
                     int  segSize = 0;
-                    for (int i = 0; i < count; ++i)
-                    {
-                        byte* elemBase = dataPtr + (long)i * stride;
-                        ExecuteReadCommands(
-                            ctx,
-                            ref Unsafe.AsRef<byte>(elemBase),
-                            nestedStart, nestedBytes,
-                            transfer,
-                            ref segSize);
-                    }
+                    ExecuteReadCommands(
+                        ctx,
+                        ref Unsafe.AsRef<byte>(dataPtr),
+                        nestedStart, nestedBytes,
+                        transfer,
+                        ref segSize,
+                        repeatCount: count, repeatStride: stride);
                 }
 
                 // Skip the 0..3-byte tail pad the write side emitted after
@@ -3783,16 +4117,195 @@ internal static unsafe class SerializationBackendManagedCommands
         }
         else
         {
-            Type listType = typeof(List<>).MakeGenericType(elementType);
-            object listObj = RuntimeHelpers.GetUninitializedObject(listType);
+            // Refill the field's existing List in place (allocate only when null) to
+            // preserve List instance identity across a read, matching native
+            // LinearCollectionField::SetArray.
+            ref byte fieldSlot = ref Unsafe.AddByteOffset(ref baseAddr, (nint)header->fieldOffset);
+            ListLayout layout = Unsafe.As<byte, ListLayout>(ref fieldSlot);
+            if (layout == null)
+            {
+                layout = Unsafe.As<ListLayout>(RuntimeHelpers.GetUninitializedObject(GetCachedListType(elementType)));
+                Unsafe.As<byte, ListLayout>(ref fieldSlot) = layout;
+            }
+            layout._items = dataAsBytes;
+            layout._size  = count;
+        }
+
+        pos = nestedStart + nestedBytes;
+    }
+
+    // Cache elementType -> List<elementType> so the expensive MakeGenericType runs once
+    // per element type, not on every null-List allocation during read.
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<Type, Type>
+        s_ListTypeCache = new System.Collections.Concurrent.ConcurrentDictionary<Type, Type>();
+
+    private static Type GetCachedListType(Type elementType) =>
+        s_ListTypeCache.GetOrAdd(elementType, t => typeof(List<>).MakeGenericType(t));
+
+    // Allocate or reuse same-length backing; returns Array + reinterpreted byte[] for pinning.
+    private static unsafe Array AllocateOrReuseArrayBacking(
+        ref byte baseAddr, byte kind, uint fieldOffset, Type elementType, int count, out byte[] dataAsBytes)
+    {
+        Array arr;
+        if (kind == LinearCollectionKind.Array)
+        {
+            Array existingArr = Unsafe.As<byte, Array>(
+                ref Unsafe.AddByteOffset(ref baseAddr, (nint)fieldOffset));
+            arr = (existingArr != null && existingArr.Length == count)
+                ? existingArr
+                : Array.CreateInstance(elementType, count);
+        }
+        else
+        {
+            ListLayout existingList = Unsafe.As<byte, ListLayout>(
+                ref Unsafe.AddByteOffset(ref baseAddr, (nint)fieldOffset));
+            arr = (existingList != null
+                && existingList._size == count
+                && existingList._items != null
+                && existingList._items.Length >= count)
+                ? Unsafe.As<byte[], Array>(ref existingList._items)
+                : Array.CreateInstance(elementType, count);
+        }
+        dataAsBytes = Unsafe.As<Array, byte[]>(ref arr);
+        return arr;
+    }
+
+    private static unsafe void AssignArrayBacking(
+        ref byte baseAddr, byte kind, uint fieldOffset, Array arr, byte[] dataAsBytes, int count, Type elementType)
+    {
+        if (kind == LinearCollectionKind.Array)
+        {
+            Unsafe.As<byte, Array>(
+                ref Unsafe.AddByteOffset(ref baseAddr, (nint)fieldOffset)) = arr;
+        }
+        else
+        {
+            object listObj = RuntimeHelpers.GetUninitializedObject(GetCachedListType(elementType));
             ListLayout layout = Unsafe.As<ListLayout>(listObj);
             layout._items = dataAsBytes;
             layout._size  = count;
             Unsafe.As<byte, ListLayout>(
-                ref Unsafe.AddByteOffset(ref baseAddr, (nint)header->fieldOffset)) = layout;
+                ref Unsafe.AddByteOffset(ref baseAddr, (nint)fieldOffset)) = layout;
+        }
+    }
+
+    // Gated on ENABLE_CORECLR (matching the emitter) so the native-test image still receives the opcode and uses the per-element fallback.
+    private static unsafe void ConsumeLinearCollectionUnityObjectArrayRead(
+        NativeReadBufferContext* ctx,
+        ref byte baseAddr,
+        ref byte* pos)
+    {
+        var header = (UnityObjectArrayReadHeader*)pos;
+        pos += sizeof(UnityObjectArrayReadHeader);
+
+        // Count prefix (4 bytes, always present even for a null/empty source — see ConsumeLinearCollectionRead).
+        if (ctx->readerAvailable < 4)
+            InvokeEnsureReadable(ctx, 4);
+        int count = Unsafe.ReadUnaligned<int>(ctx->readerPtr);
+        ctx->readerPtr      += 4;
+        ctx->readerAvailable -= 4;
+
+        // Allocate/assign even when count == 0 (the null/empty contract).
+        Type elementType = UnmarshalSystemType(header->elementTypeHandle);
+        Array arr = AllocateOrReuseArrayBacking(
+            ref baseAddr, header->kind, header->fieldOffset, elementType, count, out byte[] dataAsBytes);
+
+        if (count > 0)
+        {
+            const int wire = 12;
+            fixed (byte* dataPtr = dataAsBytes)
+            {
+                long stride    = (long)header->elementStride;
+                int  processed = 0;
+                while (processed < count)
+                {
+                    // Resolve as many contiguous LSOIs as the reader holds per pass, then refill;
+                    // EnsureReadable guarantees >=1 record so the loop advances.
+                    if (ctx->readerAvailable < wire)
+                        InvokeEnsureReadable(ctx, wire);
+                    int batch = ctx->readerAvailable / wire;
+                    int remaining = count - processed;
+                    if (batch > remaining)
+                        batch = remaining;
+
+                    s_readUnityObjectsArrayIntoElements(
+                        ctx->resolverHandle, ctx->flags,
+                        (IntPtr)(dataPtr + (long)processed * stride), batch, stride,
+                        header->klass, header->field, header->fieldParent,
+                        (IntPtr)ctx->readerPtr);
+
+                    ctx->readerPtr      += batch * wire;
+                    ctx->readerAvailable -= batch * wire;
+                    processed           += batch;
+                }
+            }
         }
 
-        pos = nestedStart + nestedBytes;
+        AssignArrayBacking(ref baseAddr, header->kind, header->fieldOffset, arr, dataAsBytes, count, elementType);
+    }
+
+    // EntityId stores values — safe on all runtimes, not gated on ENABLE_CORECLR.
+    private static unsafe void ConsumeLinearCollectionEntityIdArrayRead(
+        NativeReadBufferContext* ctx,
+        ref byte baseAddr,
+        ref byte* pos)
+    {
+        var header = (EntityIdArrayReadHeader*)pos;
+        pos += sizeof(EntityIdArrayReadHeader);
+
+        if (ctx->readerAvailable < 4)
+            InvokeEnsureReadable(ctx, 4);
+        int count = Unsafe.ReadUnaligned<int>(ctx->readerPtr);
+        ctx->readerPtr      += 4;
+        ctx->readerAvailable -= 4;
+
+        Type elementType = UnmarshalSystemType(header->elementTypeHandle);
+        Array arr = AllocateOrReuseArrayBacking(
+            ref baseAddr, header->kind, header->fieldOffset, elementType, count, out byte[] dataAsBytes);
+
+        if (count > 0)
+        {
+            const int wire = 12;
+            bool packInLSOI = (ctx->flags & UnityObjectTransferFlags.PackEntityIdInLSOI) != 0;
+            fixed (byte* dataPtr = dataAsBytes)
+            {
+                long stride    = (long)header->elementStride;
+                int  processed = 0;
+                while (processed < count)
+                {
+                    if (ctx->readerAvailable < wire)
+                        InvokeEnsureReadable(ctx, wire);
+                    int batch = ctx->readerAvailable / wire;
+                    int remaining = count - processed;
+                    if (batch > remaining)
+                        batch = remaining;
+
+                    if (packInLSOI)
+                    {
+                        // Clone arm: unpack each id inline (no crossing).
+                        for (int i = 0; i < batch; ++i)
+                        {
+                            ulong id = UnpackEntityIdFromLsoi(ctx->readerPtr + i * wire);
+                            Unsafe.WriteUnaligned<ulong>(dataPtr + (long)(processed + i) * stride, id);
+                        }
+                    }
+                    else
+                    {
+                        // Remap arm: whole batch in one crossing, storing values into the pinned backing.
+                        s_readEntityIdsArrayIntoElements(
+                            ctx->resolverHandle, ctx->flags,
+                            (IntPtr)(dataPtr + (long)processed * stride), batch, stride,
+                            (IntPtr)ctx->readerPtr);
+                    }
+
+                    ctx->readerPtr      += batch * wire;
+                    ctx->readerAvailable -= batch * wire;
+                    processed           += batch;
+                }
+            }
+        }
+
+        AssignArrayBacking(ref baseAddr, header->kind, header->fieldOffset, arr, dataAsBytes, count, elementType);
     }
 
     // Read-path mirror of ConsumeDictionary. Reads the count prefix and per-entry
@@ -3850,16 +4363,13 @@ internal static unsafe class SerializationBackendManagedCommands
                 {
                     long stride  = (long)header->entryStride;
                     int  segSize = 0;
-                    for (int i = 0; i < count; ++i)
-                    {
-                        byte* entryBase = dataPtr + (long)i * stride;
-                        ExecuteReadCommands(
-                            ctx,
-                            ref Unsafe.AsRef<byte>(entryBase),
-                            nestedStart, nestedBytes,
-                            transfer,
-                            ref segSize);
-                    }
+                    ExecuteReadCommands(
+                        ctx,
+                        ref Unsafe.AsRef<byte>(dataPtr),
+                        nestedStart, nestedBytes,
+                        transfer,
+                        ref segSize,
+                        repeatCount: count, repeatStride: stride);
                 }
 
                 // Skip the 0..3-byte tail pad written by the per-entry write
@@ -3903,6 +4413,8 @@ internal static unsafe class SerializationBackendManagedCommands
                 // Resolve the dict's canonical identifier so SetEntriesFromSerializedData
                 // can key the duplicate-row cache by it. Empty when no FUID context or
                 // no template — duplicate-row tracking simply doesn't apply in those cases.
+                // [FreeFunction] unavailable in UNITY_NATIVE_TEST_RESOURCES; the
+                // diagnostic is non-essential, so it stays empty there.
                 string dictionaryIdentifier = string.Empty;
                 if (ctx->hostingEntityId != EntityId.None
                     && header->fieldUniqueIdentifierTemplate != IntPtr.Zero)
@@ -3925,7 +4437,9 @@ internal static unsafe class SerializationBackendManagedCommands
                 // path: only fires for serialized-file loads + Object.Instantiate clones
                 // (ctx->warnOnDuplicates set by the native dispatcher), and only when
                 // we actually have a formatted identifier — without one we can't tell
-                // the user which dictionary field is affected.
+                // the user which dictionary field is affected. LogDictionaryDuplicateKeyWarning
+                // is a [FreeFunction] unavailable in UNITY_NATIVE_TEST_RESOURCES, so it's
+                // compiled out there.
                 if (ctx->warnOnDuplicates && hadDuplicates && !string.IsNullOrEmpty(dictionaryIdentifier))
                 {
                     string message =
@@ -4287,6 +4801,10 @@ internal static unsafe class SerializationBackendManagedCommands
         if (nestedBytes == 0)
         {
             pos = nestedStart;
+            // A class with no serialized leaves must still be materialized (null ->
+            // default-constructed) to match native null-slot population; structs need nothing.
+            if (header->runtimeTypeHandle != IntPtr.Zero)
+                GetOrCreateVrtInstance(ref baseAddr, header->fieldOffset, header->runtimeTypeHandle, header->ctorFunctionPtr);
             return;
         }
 
@@ -4300,7 +4818,8 @@ internal static unsafe class SerializationBackendManagedCommands
                 ref nestedBase,
                 nestedStart, nestedBytes,
                 transfer,
-                ref innerSegmentSize);
+                ref innerSegmentSize,
+                repeatCount: 1, repeatStride: 0);
         }
         else
         {
@@ -4314,7 +4833,8 @@ internal static unsafe class SerializationBackendManagedCommands
                     ref Unsafe.AsRef<byte>(nestedBase),
                     nestedStart, nestedBytes,
                     transfer,
-                    ref innerSegmentSize);
+                    ref innerSegmentSize,
+                    repeatCount: 1, repeatStride: 0);
             }
         }
 
@@ -4342,7 +4862,8 @@ internal static unsafe class SerializationBackendManagedCommands
             ref baseAddr,
             (byte*)entriesPtr, entryBufferSize,
             transfer,
-            ref currentSegmentSize);
+            ref currentSegmentSize,
+            repeatCount: 1, repeatStride: 0);
     }
 
     // Inner loop shared by SerializationBufferToObject (top-level) and
@@ -4357,16 +4878,23 @@ internal static unsafe class SerializationBackendManagedCommands
     // segment size and doesn't drop or double-advance the read cursor.
     private static unsafe void ExecuteReadCommands(
         NativeReadBufferContext* ctx,
-        ref byte baseAddr,
+        ref byte baseAddrParam,
         byte* entryBase, int entryBufSize,
         IntPtr transfer,
-        ref int currentSegmentSize)
+        ref int currentSegmentSize,
+        int   repeatCount,
+        long  repeatStride)
     {
-        byte* pos    = entryBase;
         byte* endPos = entryBase + entryBufSize;
 
-        while (pos < endPos)
+        // repeatCount==1, repeatStride==0 (single-instance callers) folds away under the JIT.
+        for (int elem = 0; elem < repeatCount; ++elem)
         {
+            ref byte baseAddr = ref Unsafe.AddByteOffset(ref baseAddrParam, (nint)((long)elem * repeatStride));
+            byte* pos = entryBase;
+
+            while (pos < endPos)
+            {
             // Refresh segment-local read cursor each iteration. ctx->readerPtr is
             // stable within a segment (no ensureReadable calls between FBP(N>0)
             // and FBP(0)), but FBP(0), variable-sized entries (LinearCollection,
@@ -4602,6 +5130,17 @@ internal static unsafe class SerializationBackendManagedCommands
                     byte* fieldTableBase = pos;
                     pos += count * 2 * sizeof(IntPtr);
 
+                    // ≥2 fields: one crossing. count==1 per-field is lighter when there's nothing to amortize.
+                    if (count > 1)
+                    {
+                        s_readUnityObjectsIntoFields(
+                            ctx->resolverHandle, ctx->flags,
+                            (IntPtr)Unsafe.AsPointer(ref baseAddr),
+                            (IntPtr)entry, (IntPtr)fieldTableBase, (IntPtr)input, count);
+                        break;
+                    }
+                    // Per-field: count==1 fast path; also CoreCLR (moving GC + Object return can't cross calli)
+                    // and the native-test image.
                     int i = 0;
                     do
                     {
@@ -4653,6 +5192,16 @@ internal static unsafe class SerializationBackendManagedCommands
                 {
                     var entry = ConsumeDirectCopyGroup<EntityIdReadEntry>(ref pos, out var end);
                     bool packInLSOI = (ctx->flags & UnityObjectTransferFlags.PackEntityIdInLSOI) != 0;
+                    // Remap arm: ≥2 fields in one crossing on all runtimes (value store, no write barrier).
+                    int count = (int)(end - entry);
+                    if (!packInLSOI && count > 1)
+                    {
+                        s_readEntityIdsIntoFields(
+                            ctx->resolverHandle, ctx->flags,
+                            (IntPtr)Unsafe.AsPointer(ref baseAddr),
+                            (IntPtr)entry, (IntPtr)input, count);
+                        break;
+                    }
                     do
                     {
                         byte* src = input + entry->destOffset;
@@ -4664,6 +5213,20 @@ internal static unsafe class SerializationBackendManagedCommands
                         entry++;
                     }
                     while (entry < end);
+                    break;
+                }
+
+                // Gated on ENABLE_CORECLR alone (matching the emitter): native-test image uses the per-element fallback inside.
+                case RttiDataType.UnityObjectArray:
+                {
+                    ConsumeLinearCollectionUnityObjectArrayRead(ctx, ref baseAddr, ref pos);
+                    break;
+                }
+
+                // EntityId array: value stores, safe on all runtimes, not CoreCLR-gated.
+                case RttiDataType.EntityIdArray:
+                {
+                    ConsumeLinearCollectionEntityIdArrayRead(ctx, ref baseAddr, ref pos);
                     break;
                 }
 
@@ -4798,5 +5361,7 @@ internal static unsafe class SerializationBackendManagedCommands
             long aligned = (entryOffset + 3) & ~3L;
             pos = entryBase + aligned;
         }
+        }
     }
 }
+

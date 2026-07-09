@@ -9,7 +9,8 @@ using UnityEngine.UIElements;
 namespace UnityEditor.Build.Profile.Elements
 {
     /// <summary>
-    /// Player Settings Editor created for the <see cref="BuildProfile.playerSettings"/> object.
+    /// Player Settings Editor created for the persistent <see cref="BuildProfile.buildProfilePlayerSettings"/>
+    /// subasset, which activates the <see cref="BuildProfilePlayerSettingsEditor"/> custom editor.
     /// An InspectorElement displays the underlying editor, both of which are recreated on
     /// AttachToPanelEvent/DetachFromPanelEvent events.
     /// </summary>
@@ -44,9 +45,9 @@ namespace UnityEditor.Build.Profile.Elements
 
         void OnAttachToPanel(AttachToPanelEvent evt)
         {
-            // Verify player settings object is valid. Remove player settings
+            // Verify the BPS subasset is valid. Remove player settings
             // may destroy the object before the asset is updated on disk.
-            if (m_Profile.playerSettings == null)
+            if (m_Profile.buildProfilePlayerSettings == null)
                 return;
 
             if (m_PlayerSettingsEditor == null)
@@ -99,7 +100,7 @@ namespace UnityEditor.Build.Profile.Elements
         void ShowEditor()
         {
             bool isActiveProfile = BuildProfile.GetActiveBuildProfile() == m_Profile;
-            m_PlayerSettingsEditor = Editor.CreateEditor(m_Profile.playerSettings) as PlayerSettingsEditor;
+            m_PlayerSettingsEditor = Editor.CreateEditor(m_Profile.buildProfilePlayerSettings) as PlayerSettingsEditor;
             m_PlayerSettingsEditor.ConfigurePlayerSettingsForBuildProfile(
                 m_ProfileSerializedObject,
                 m_Profile.platformGuid,
@@ -116,9 +117,7 @@ namespace UnityEditor.Build.Profile.Elements
         void OnPlayerSettingsEditorChanged(SerializedObject playerSettingsSerializedObject)
         {
             playerSettingsSerializedObject.ApplyModifiedProperties();
-            BuildProfileModuleUtil.SerializePlayerSettings(m_Profile);
             m_ProfileSerializedObject.ApplyModifiedProperties();
-            EditorUtility.SetDirty(m_Profile);
         }
     }
 }

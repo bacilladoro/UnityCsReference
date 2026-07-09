@@ -130,6 +130,10 @@ internal class ATGTextJobSystem
             var managedJobDatas = (List<TextElement>)managedJobDataHandle.Target;
             TextElement textElement = managedJobDatas[index];
             textElement.uitkTextHandle.ShapeText();
+
+            var tgiPtr = textElement.uitkTextHandle.textGenerationInfo;
+            if (tgiPtr != IntPtr.Zero && textElement.layoutNode.UsesMeasure)
+                textElement.layoutNode.TextGenerationInfoPtr = tgiPtr;
         }
     }
 
@@ -170,6 +174,8 @@ internal class ATGTextJobSystem
         }
         if (m_PrepareShapingDataList.Count > 0)
         {
+            FontAsset.CreateHbFaceIfNeeded();
+
             var handle = GCHandle.Alloc(m_PrepareShapingDataList);
 
             var job = new PrepareShapingJob
@@ -180,8 +186,16 @@ internal class ATGTextJobSystem
             var jobHandle = job.ScheduleParallelByRef(m_PrepareShapingDataList.Count, 1, default);
             jobHandle.Complete();
             handle.Free();
-            m_PrepareShapingDataList.Clear();
         }
+    }
+
+    internal void SyncAndClearNativeMeasurePointers()
+    {
+
+        foreach (var textElement in m_PrepareShapingDataList)
+            textElement.layoutNode.TextGenerationInfoPtr = IntPtr.Zero;
+
+        m_PrepareShapingDataList.Clear();
     }
 
     public void GenerateText(MeshGenerationContext mgc, TextElement textElement)

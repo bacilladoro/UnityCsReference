@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Bindings;
 using UnityEngine.SubsystemsImplementation;
 
@@ -11,7 +12,6 @@ namespace UnityEngine
 {
     public static partial class SubsystemManager
     {
-        static SubsystemManager() => StaticConstructScriptingClassMap();
 
         public static void GetAllSubsystemDescriptors(List<ISubsystemDescriptor> descriptors)
         {
@@ -46,7 +46,9 @@ namespace UnityEngine
 
 // event never invoked warning (invoked indirectly from native code)
 #pragma warning disable CS0067
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action beforeReloadSubsystems;
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action afterReloadSubsystems;
 #pragma warning restore CS0067
 
@@ -96,9 +98,12 @@ namespace UnityEngine
             return null;
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         static List<IntegratedSubsystem> s_IntegratedSubsystems = new List<IntegratedSubsystem>();
+        [AutoStaticsCleanupOnCodeReload]
         static List<SubsystemWithProvider> s_StandaloneSubsystems = new List<SubsystemWithProvider>();
 #pragma warning disable CS0618
+        [AutoStaticsCleanupOnCodeReload]
         static List<Subsystem> s_DeprecatedSubsystems = new List<Subsystem>();
 #pragma warning restore CS0618
     }

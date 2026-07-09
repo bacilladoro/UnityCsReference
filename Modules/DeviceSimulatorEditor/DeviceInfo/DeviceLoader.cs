@@ -11,7 +11,7 @@ namespace UnityEditor.DeviceSimulation
 {
     internal static class DeviceLoader
     {
-        public static string[] s_BuiltInDevices =
+        public static readonly string[] s_BuiltInDevices =
         {
             "Tablet Small (1536x2048).device",
             "Tablet Large (2048x2732).device",

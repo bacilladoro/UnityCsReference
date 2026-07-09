@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEditor;
 
@@ -31,6 +32,7 @@ namespace UnityEditorInternal.VersionControl
         string[] m_Actions;
         int m_Identifier;
 
+        [NoAutoStaticsCleanup] // lazy-loaded default icon; no user refs
         static Texture2D s_DefaultIcon = null;
 
         public ListItem()

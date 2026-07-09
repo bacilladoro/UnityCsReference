@@ -6,6 +6,7 @@ using System;
 using UnityEngine.Bindings;
 using UnityEngine.Scripting;
 using Unity.Profiling;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEngine
 {
@@ -73,15 +74,10 @@ namespace UnityEngine
         internal static extern int Internal_GetBatchingInterval();
 
         public delegate void WillRenderCanvases();
+        [AutoStaticsCleanupOnCodeReload]
         public static event WillRenderCanvases preWillRenderCanvases;
+        [AutoStaticsCleanupOnCodeReload]
         public static event WillRenderCanvases willRenderCanvases;
-
-        [OnEnteringPlayMode]
-        static void ResetStaticsOnPlayModeEnter()
-        {
-            preWillRenderCanvases = null;
-            willRenderCanvases = null;
-        }
 
         public extern RenderMode renderMode { get; set; }
         public extern bool isRootCanvas { get; }
@@ -106,18 +102,21 @@ namespace UnityEngine
         public extern Vector2 renderingDisplaySize { get; }
         public extern StandaloneRenderResize updateRectTransformForStandalone { get; set; }
 
+        [AutoStaticsCleanupOnCodeReload]
         internal static Action<int> externBeginRenderOverlays
         {
             get;
             [VisibleToOtherModules("UnityEngine.UIElementsModule")]
             set;
         }
+        [AutoStaticsCleanupOnCodeReload]
         internal static Action<int, int> externRenderOverlaysBefore
         {
             get;
             [VisibleToOtherModules("UnityEngine.UIElementsModule")]
             set;
         }
+        [AutoStaticsCleanupOnCodeReload]
         internal static Action<int> externEndRenderOverlays
         {
             get;

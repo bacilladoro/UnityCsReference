@@ -356,6 +356,8 @@ namespace UnityEditor
         bool isTop => windowPosition.yMin <= 0;
         protected bool isTopRightPane => windowPosition.xMax >= Mathf.FloorToInt(window.position.width) && isTop;
 
+        private protected override string rootViewClassName => "unity-dockarea";
+
         protected override void OldOnGUI()
         {
             EditorGUIUtility.ResetGUIState();
@@ -380,8 +382,6 @@ namespace UnityEditor
             float scale = GetBackingScaleFactor();
             containerWindowPosition.width = GUIUtility.RoundToPixelGrid(containerWindowPosition.width, scale);
             containerWindowPosition.height = GUIUtility.RoundToPixelGrid(containerWindowPosition.height, scale);
-
-            DrawDockAreaBackground(dockAreaRect);
 
             var viewRect = UpdateViewRect(dockAreaRect);
             var titleBarRect = new Rect(viewRect.x, dockAreaRect.y, viewRect.width, borderSize.top);
@@ -455,16 +455,6 @@ namespace UnityEditor
                 m_Panes[selected].m_Pos = new Rect(GUIUtility.GUIToScreenPoint(Vector2.zero), viewRect.size);
 
             return viewRect;
-        }
-
-        private void DrawDockAreaBackground(Rect dockAreaRect)
-        {
-            if (Event.current.type == EventType.Repaint)
-            {
-                var backgroundRect = dockAreaRect;
-                backgroundRect.y = 0;
-                Styles.background.Draw(backgroundRect, GUIContent.none, 0);
-            }
         }
 
         private void DrawDockTitleBarBackground(Rect titleBarRect)
@@ -1326,6 +1316,8 @@ namespace UnityEditor
             public static SVC<float> genericMenuTopOffset = new SVC<float>("--window-generic-menu-top-offset", 20f);
         }
 
+        private protected override string rootViewClassName => "unity-dockarea";
+
         protected override void OldOnGUI()
         {
             EditorGUIUtility.ResetGUIState();
@@ -1345,7 +1337,6 @@ namespace UnityEditor
 
             if (Event.current.type == EventType.Repaint)
             {
-                Styles.background.Draw(maximizedViewRect, GUIContent.none, false, false, false, false);
                 Styles.titleBackground.Draw(backRect, false, false, true, hasFocus);
 
                 var title = GetTitleContent(actualView.titleContent, actualView.hasUnsavedChanges);

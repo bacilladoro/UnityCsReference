@@ -5,10 +5,11 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
-    internal class SceneHierarchySortingWindow : EditorWindow
+    internal partial class SceneHierarchySortingWindow : EditorWindow
     {
         public delegate void OnSelectCallback(InputData element);
 
@@ -25,8 +26,11 @@ namespace UnityEditor
             public bool m_Selected;
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         private static SceneHierarchySortingWindow s_SceneHierarchySortingWindow;
+        [NoAutoStaticsCleanup] // monotonic close timestamp (value type); safe to persist across code reload
         private static long s_LastClosedTime;
+        [NoAutoStaticsCleanup] // lazy GUIStyle cache of built-in named styles; survives domain reload
         private static Styles s_Styles;
 
         private List<InputData> m_Data;

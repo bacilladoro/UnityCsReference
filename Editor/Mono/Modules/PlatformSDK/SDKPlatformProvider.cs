@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using System.Collections.Generic;
 using UnityEditor.Build.Profile;
 using UnityEngine;
 
@@ -29,8 +30,9 @@ class SDKPlatformProvider
     public bool shouldShowBuildActions { get; private set; } = true;
     public Type[] requiredComponents { get; private set; } = [];
     public Type[] customFooterActions { get; private set; } = [];
+    public PreconfiguredSettingsVariant[] preconfiguredSettingsVariants { get; private set; } = [];
 
-    public Action<BuildProfile> onMultiTargetPlatformBuildProfileCreated { get; private set; }
+    public Action<BuildProfile, int> onMultiTargetPlatformBuildProfileCreated { get; private set; }
     public Action<BuildProfile, int, Action<BuildProfile, int>> onDerivedPlatformBuildProfileCreated { get; private set; }
 
     const string k_Guid = "guid";
@@ -42,33 +44,31 @@ class SDKPlatformProvider
     const string k_ShouldShowBuildActions = "shouldShowBuildActions";
     const string k_RequiredComponents = "requiredComponents";
     const string k_FooterActions = "customFooterActions";
+    const string k_PreconfiguredSettingsVariants = "preconfiguredSettingsVariants";
     const string k_OnMultiTargetPlatformBuildProfileCreated = "OnMultiTargetPlatformBuildProfileCreated";
     const string k_OnDerivedPlatformBuildProfileCreated = "OnDerivedPlatformBuildProfileCreated";
 
+    static readonly string k_CompatibilityError = L10n.Tr("{0} is not a compatible platform provider: {1}");
+    static readonly string k_InvalidPlatformTypeError = L10n.Tr("{0} has an invalid platform type: {1}");
     static readonly string k_MultiTargetPlatformCompatibilityError = L10n.Tr("{0} is not compatible as a multi-target platform provider: {1}");
     static readonly string k_DerivedPlatformCompatibilityError = L10n.Tr("{0} is not compatible as a derived platform provider: {1}");
     static readonly string k_UnrecognizedVersionError = L10n.Tr("unrecognized version {0}.");
     static readonly string k_RequiredPropertyError = L10n.Tr("required property '{0}' is missing.");
     static readonly string k_PropertyTypeError = L10n.Tr("property '{0}' must be of type {1}.");
-    static readonly string k_RequiredMethodError = L10n.Tr("required method '{0}' is missing or has an incorrect signature.");
-    static readonly string k_MethodReturnTypeError = L10n.Tr("method '{0}' must return {1}.");
 
     SDKPlatformProvider(IPlatformProvider provider, SDKPlatformType platformType)
     {
         this.platformType = platformType;
         FetchProviderProperties(provider);
 
-        if (platformType == SDKPlatformType.MultiTarget)
+        switch (platformType)
         {
-            onMultiTargetPlatformBuildProfileCreated = (Action<BuildProfile>)providerType
-                .GetMethod(k_OnMultiTargetPlatformBuildProfileCreated, new[] { typeof(BuildProfile) })
-                .CreateDelegate(typeof(Action<BuildProfile>), provider);
-        }
-        else if (platformType == SDKPlatformType.Derived)
-        {
-            onDerivedPlatformBuildProfileCreated = (Action<BuildProfile, int, Action<BuildProfile, int>>)providerType
-                .GetMethod(k_OnDerivedPlatformBuildProfileCreated, new[] { typeof(BuildProfile), typeof(int), typeof(Action<BuildProfile, int>) })
-                .CreateDelegate(typeof(Action<BuildProfile, int, Action<BuildProfile, int>>), provider);
+            case SDKPlatformType.MultiTarget:
+                FetchMultiTargetOptionals(provider);
+                break;
+            case SDKPlatformType.Derived:
+                FetchDerivedOptionals(provider);
+                break;
         }
     }
 
@@ -88,6 +88,17 @@ class SDKPlatformProvider
         requiredComponents = GetProp(k_RequiredComponents, Array.Empty<Type>());
         customFooterActions = GetProp(k_FooterActions, Array.Empty<Type>());
 
+        var extractedVariants = GetProp(k_PreconfiguredSettingsVariants, Array.Empty<SDKPreconfiguredSettingsVariant>());
+        var variantList = new List<PreconfiguredSettingsVariant>();
+        foreach (var variant in extractedVariants)
+        {
+            if (variant == null)
+                continue;
+            var newVariant = new PreconfiguredSettingsVariant(variant.displayName, variant.selectedInitially, variant.description, variant.tooltip);
+            variantList.Add(newVariant);
+        }
+        preconfiguredSettingsVariants = variantList.ToArray();
+
         T GetProp<T>(string propName, T defaultValue)
         {
             var prop = providerType.GetProperty(propName);
@@ -98,32 +109,86 @@ class SDKPlatformProvider
         }
     }
 
-    public static SDKPlatformProvider TryCreateMultiTargetPlatformProvider(IPlatformProvider provider)
+    void FetchMultiTargetOptionals(IPlatformProvider provider)
     {
-        if (!IsMultiTargetPlatformCompatible(provider, out var error))
+        var methodWithVariant = providerType.GetMethod(k_OnMultiTargetPlatformBuildProfileCreated, new[] { typeof(BuildProfile), typeof(int) });
+        if (methodWithVariant != null && methodWithVariant.ReturnType == typeof(void))
         {
-            if (IsDerivedPlatformCompatible(provider, out _))
-                return null;
-            
-            Debug.LogError(string.Format(k_MultiTargetPlatformCompatibilityError, provider.GetType().FullName, error));
-            return null;
+            onMultiTargetPlatformBuildProfileCreated = (Action<BuildProfile, int>)methodWithVariant
+                .CreateDelegate(typeof(Action<BuildProfile, int>), provider);
         }
-
-        return new SDKPlatformProvider(provider, SDKPlatformType.MultiTarget);
+        else
+        {
+            var methodWithoutVariant = providerType.GetMethod(k_OnMultiTargetPlatformBuildProfileCreated, new[] { typeof(BuildProfile) });
+            if (methodWithoutVariant != null && methodWithoutVariant.ReturnType == typeof(void))
+            {
+                var noVariantAction = (Action<BuildProfile>)methodWithoutVariant
+                    .CreateDelegate(typeof(Action<BuildProfile>), provider);
+                onMultiTargetPlatformBuildProfileCreated = (profile, _) => noVariantAction(profile);
+            }
+        }
     }
 
-    public static SDKPlatformProvider TryCreateDerivedPlatformProvider(IPlatformProvider provider)
+    void FetchDerivedOptionals(IPlatformProvider provider)
     {
-        if (!IsDerivedPlatformCompatible(provider, out var error))
+        var method = providerType.GetMethod(k_OnDerivedPlatformBuildProfileCreated, new[] { typeof(BuildProfile), typeof(int), typeof(Action<BuildProfile, int>) });
+        if (method != null && method.ReturnType == typeof(void))
+            onDerivedPlatformBuildProfileCreated = (Action<BuildProfile, int, Action<BuildProfile, int>>)method
+                .CreateDelegate(typeof(Action<BuildProfile, int, Action<BuildProfile, int>>), provider);
+    }
+
+    public static bool TryGetProviderGuid(IPlatformProvider provider, out GUID guid)
+    {
+        var type = provider.GetType();
+
+        if (!HasRequiredProperty(type, k_Guid, typeof(GUID), out var error))
         {
-            if (IsMultiTargetPlatformCompatible(provider, out _))
-                return null;
-
-            Debug.LogError(string.Format(k_DerivedPlatformCompatibilityError, provider.GetType().FullName, error));
-            return null;
+            Debug.LogError(string.Format(k_CompatibilityError, type.FullName, error));
+            guid = default;
+            return false;
         }
+        
+        var prop = type.GetProperty(k_Guid);
+        guid = (GUID)prop.GetValue(provider);
+        return true;
+    }
 
-        return new SDKPlatformProvider(provider, SDKPlatformType.Derived);
+    public static bool TryCreatePlatformProvider(IPlatformProvider provider, SDKPlatformType platformType, out SDKPlatformProvider sdkPlatformProvider)
+    {
+        sdkPlatformProvider = null;
+
+        if (!IsProviderCompatible(provider, platformType))
+            return false;
+
+        sdkPlatformProvider = new SDKPlatformProvider(provider, platformType);
+        return true;
+    }
+
+    static bool IsProviderCompatible(IPlatformProvider provider, SDKPlatformType platformType)
+    {
+        var providerTypeName = provider.GetType().FullName;
+        switch (platformType)
+        {
+            case SDKPlatformType.MultiTarget:
+            {
+                if (IsMultiTargetPlatformCompatible(provider, out var error))
+                    return true;
+
+                Debug.LogError(string.Format(k_MultiTargetPlatformCompatibilityError, providerTypeName, error));
+                return false;
+            }
+            case SDKPlatformType.Derived:
+            {
+                if (IsDerivedPlatformCompatible(provider, out var error))
+                    return true;
+
+                Debug.LogError(string.Format(k_DerivedPlatformCompatibilityError, providerTypeName, error));
+                return false;
+            }
+            default:
+                Debug.LogError(string.Format(k_InvalidPlatformTypeError, providerTypeName, platformType.ToString()));
+                return false;
+        }
     }
 
     static bool IsMultiTargetPlatformCompatible(IPlatformProvider provider, out string error)
@@ -131,7 +196,7 @@ class SDKPlatformProvider
         switch (provider.version)
         {
             case 1:
-                return IsMultiTargetPlatformCompatibleV1(provider, out error);
+                return HasRequiredCoreProperties(provider.GetType(), out error);
             default:
                 error = FormatUnrecognizedVersionError(provider.version);
                 return false;
@@ -143,54 +208,21 @@ class SDKPlatformProvider
         switch (provider.version)
         {
             case 1:
-                return IsDerivedPlatformCompatibleV1(provider, out error);
+                return HasRequiredCoreProperties(provider.GetType(), out error);
             default:
                 error = FormatUnrecognizedVersionError(provider.version);
                 return false;
         }
     }
 
-    static bool IsMultiTargetPlatformCompatibleV1(IPlatformProvider provider, out string error)
+    // guid is excluded here as it is validated separately in TryGetProviderGuid
+    static bool HasRequiredCoreProperties(Type providerType, out string error)
     {
-        var type = provider.GetType();
-
-        if (!HasRequiredProperty(type, k_Guid, typeof(GUID), out error))
+        if (!HasRequiredProperty(providerType, k_TargetName, typeof(string), out error))
             return false;
 
-        if (!HasRequiredProperty(type, k_TargetName, typeof(string), out error))
+        if (!HasRequiredProperty(providerType, k_PlatformDefine, typeof(string), out error))
             return false;
-
-        if (!HasRequiredProperty(type, k_PlatformDefine, typeof(string), out error))
-            return false;
-
-        if (!HasRequiredMethod(type, k_OnMultiTargetPlatformBuildProfileCreated,
-            new[] { typeof(BuildProfile) }, typeof(void), out error))
-        {
-            return false;
-        }
-
-        return true;
-    }
-
-    static bool IsDerivedPlatformCompatibleV1(IPlatformProvider provider, out string error)
-    {
-        var type = provider.GetType();
-
-        if (!HasRequiredProperty(type, k_Guid, typeof(GUID), out error))
-            return false;
-
-        if (!HasRequiredProperty(type, k_TargetName, typeof(string), out error))
-            return false;
-
-        if (!HasRequiredProperty(type, k_PlatformDefine, typeof(string), out error))
-            return false;
-
-        if (!HasRequiredMethod(type, k_OnDerivedPlatformBuildProfileCreated,
-            new[] { typeof(BuildProfile), typeof(int), typeof(Action<BuildProfile, int>) },
-            typeof(void), out error))
-        {
-            return false;
-        }
 
         return true;
     }
@@ -214,25 +246,6 @@ class SDKPlatformProvider
         return true;
     }
 
-    static bool HasRequiredMethod(Type type, string methodName, Type[] paramTypes, Type returnType, out string error)
-    {
-        var method = type.GetMethod(methodName, paramTypes);
-        if (method == null)
-        {
-            error = FormatRequiredMethodError(methodName);
-            return false;
-        }
-
-        if (method.ReturnType != returnType)
-        {
-            error = FormatMethodReturnTypeError(methodName, returnType);
-            return false;
-        }
-
-        error = null;
-        return true;
-    }
-
     static string FormatUnrecognizedVersionError(int version)
     {
         return string.Format(k_UnrecognizedVersionError, version);
@@ -246,15 +259,5 @@ class SDKPlatformProvider
     static string FormatPropertyTypeError(string propertyName, Type expectedType)
     {
         return string.Format(k_PropertyTypeError, propertyName, expectedType.FullName);
-    }
-
-    static string FormatRequiredMethodError(string methodName)
-    {
-        return string.Format(k_RequiredMethodError, methodName);
-    }
-
-    static string FormatMethodReturnTypeError(string methodName, Type expectedType)
-    {
-        return string.Format(k_MethodReturnTypeError, methodName, expectedType.FullName);
     }
 }

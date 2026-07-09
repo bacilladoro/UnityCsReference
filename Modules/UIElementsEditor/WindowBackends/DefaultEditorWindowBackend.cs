@@ -55,6 +55,13 @@ namespace UnityEditor.UIElements
             {
                 base.OnCreate(model);
 
+                var rootViewClass = editorWindowModel?.rootViewClassName;
+                if (!string.IsNullOrEmpty(rootViewClass))
+                {
+                    m_Panel.visualTree.AddToClassList(rootViewClass);
+                    m_Panel.visualTree.usageHints |= UsageHints.LargePixelCoverage;
+                }
+
                 m_LiveReloadVisualTreeAssetTracker = new EditorWindowVisualTreeAssetTracker(this);
                 m_PlayModeDarkenColor = UIElementsUtility.editorPlayModeTintColor = EditorUtility.activePlayModeTint;
 

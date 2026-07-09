@@ -92,9 +92,9 @@ namespace Unity.ProjectAuditor.Editor
     /// Report contains a list of all issues found by ProjectAuditor.
     /// </summary>
     [Serializable]
-    public sealed class Report
+    public sealed class Report : ISerializationCallbackReceiver
     {
-        internal const string k_CurrentVersion = "1.3";
+        internal const string k_CurrentVersion = "1.4";
         internal const string k_SaveFileHeader = "PROJECT_AUDITOR_REPORT";
 
         [SerializeField]
@@ -148,7 +148,7 @@ namespace Unity.ProjectAuditor.Editor
         List<ModuleInfo> moduleMetadata = new List<ModuleInfo>();
 
         [SerializeField]
-        DescriptorLibrary m_DescriptorLibrary = new DescriptorLibrary();
+        List<Descriptor> m_SerializedDescriptors = new List<Descriptor>();
 
         [SerializeField]
         List<ReportItem> m_Issues = new List<ReportItem>();
@@ -175,7 +175,33 @@ namespace Unity.ProjectAuditor.Editor
             }
         }
 
-        internal List<Descriptor> Descriptors => m_DescriptorLibrary.m_SerializedDescriptors;
+        internal List<Descriptor> Descriptors => m_SerializedDescriptors;
+
+        // Unity calls this automatically before serialization. Explicit implementation keeps it private.
+        void ISerializationCallbackReceiver.OnBeforeSerialize()
+        {
+            // Serialize only the descriptors in the current report.
+            var referencedIds = new HashSet<int>(m_Issues.Count);
+            if (m_Issues != null)
+            {
+                foreach (var issue in m_Issues)
+                {
+                    if (issue != null && issue.Id.IsValid())
+                        referencedIds.Add(issue.Id.AsInt());
+                }
+            }
+
+            m_SerializedDescriptors = DescriptorLibrary.CollectForSerialization(referencedIds);
+        }
+
+        // Unity calls this automatically after deserialization. Explicit implementation keeps it private.
+        void ISerializationCallbackReceiver.OnAfterDeserialize()
+        {
+            // Merge the report's descriptors back into the global registry so they can be resolved by id, then
+            // drop our copy: all lookups go through DescriptorLibrary, nothing reads this list after load.
+            DescriptorLibrary.RegisterDeserialized(m_SerializedDescriptors);
+            m_SerializedDescriptors = null;
+        }
 
         /// <summary>
         /// The total number of ProjectIssues included in this report.
@@ -216,7 +242,8 @@ namespace Unity.ProjectAuditor.Editor
         /// <returns>True if ProjectAuditor ran one or more Modules that reports issues of the specified IssueCategory. Otherwise, returns false.</returns>
         public bool HasCategory(IssueCategory category)
         {
-            if (category == IssueCategory.Metadata)
+            // Synthetic summary categories aren't produced by any module, but are always available.
+            if (category.IsSummary())
                 return true;
 
             foreach (ModuleInfo moduleInfo in moduleMetadata)
@@ -354,7 +381,7 @@ namespace Unity.ProjectAuditor.Editor
 
             foreach (IssueCategory ic in Enum.GetValues(typeof(IssueCategory)))
             {
-                if (ic == IssueCategory.Metadata || ic == IssueCategory.SpriteAtlas)
+                if (ic.IsSummary() || ic == IssueCategory.SpriteAtlas)
                     continue;
 
                 if (ic >= IssueCategory.FirstCustomCategory)

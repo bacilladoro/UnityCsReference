@@ -38,6 +38,13 @@ namespace UnityEngine.UIElements
             return m_PropertyTypeMapping[(int)id];
         }
 
+        // Raised when an element's set of animation-bound properties changes (clip/curve add/remove,
+        // preview stop), but never on per-frame samples. Since this doesn't alter resolved values, the
+        // inspector's value-diff can't detect it; the authoring inspector listens here to refresh its
+        // driven-state affordances.
+        [VisibleToOtherModules("UnityEditor.UIToolkitAuthoringModule")]
+        internal static event Action<VisualElement> boundElementsStyleVersionChanged;
+
         [VisibleToOtherModules("UnityEditor.UIToolkitAuthoringModule")]
         internal void IncrementBoundElementsStyleVersion()
         {
@@ -55,6 +62,7 @@ namespace UnityEngine.UIElements
 
                 element.computedStyle.InvalidateMatchingRulesCache();
                 element.IncrementVersion(VersionChangeType.StyleSheet | VersionChangeType.Styles);
+                boundElementsStyleVersionChanged?.Invoke(element);
             }
         }
 

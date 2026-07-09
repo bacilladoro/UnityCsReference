@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using JetBrains.Annotations;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor.Search;
 using UnityEngine;
 using Debug = UnityEngine.Debug;
@@ -96,21 +97,24 @@ namespace UnityEditor.SceneTemplate
     }
 
     [Serializable]
-    class SceneTemplateProjectSettings
+    partial class SceneTemplateProjectSettings
     {
+        [AutoStaticsCleanupOnCodeReload]
         static SceneTemplateProjectSettings m_Instance;
+        [AutoStaticsCleanupOnCodeReload]
         static List<SearchProposition> m_AllTypesPropositions;
+        [AutoStaticsCleanupOnCodeReload]
         static float m_MaxLabelWidth;
         const float kMaxLabelWidth = 450f;
 
         static class Styles
         {
-            public static Vector2 typeSelectorWindowSize = new Vector2(350, 200);
-            public static GUIContent addTypeContent = L10n.TextContent("Add type...");
-            public static float buttonWidth = 65;
-            public static float addTypeButtonWidth = 70;
-            public static float verticalSpace = 10;
-            public static float labelWidth = 300;
+            public static readonly Vector2 typeSelectorWindowSize = new Vector2(350, 200);
+            public static readonly GUIContent addTypeContent = L10n.TextContent("Add type...");
+            public static readonly float buttonWidth = 65;
+            public static readonly float addTypeButtonWidth = 70;
+            public static readonly float verticalSpace = 10;
+            public static readonly float labelWidth = 300;
         }
 
         internal enum NewSceneOverride
@@ -124,6 +128,7 @@ namespace UnityEditor.SceneTemplate
         public const string k_Path = "ProjectSettings/SceneTemplateSettings.json";
 
         public List<PinState> templatePinStates = new List<PinState>();
+        [AutoStaticsCleanupOnCodeReload]
         public static List<DependencyTypeInfo> defaultDependencyTypeInfos = new List<DependencyTypeInfo>();
         public List<DependencyTypeInfo> dependencyTypeInfos = new List<DependencyTypeInfo>();
         public DependencyTypeInfo defaultDependencyTypeInfo;

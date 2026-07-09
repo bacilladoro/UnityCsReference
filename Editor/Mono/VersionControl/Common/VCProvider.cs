@@ -4,6 +4,7 @@
 
 using System.Collections.Generic;
 using System.Linq;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditorInternal;
 using UnityEngine;
 using UnityEngine.Internal;
@@ -614,8 +615,10 @@ namespace UnityEditor.VersionControl
         }
 
         public delegate bool PreSubmitCallback(AssetList list, ref string changesetID, ref string changesetDescription);
-        static public PreSubmitCallback preSubmitCallback;
+        [AutoStaticsCleanupOnCodeReload]
+        public static PreSubmitCallback preSubmitCallback;
         public delegate bool PreCheckoutCallback(AssetList list, ref string changesetID, ref string changesetDescription);
-        static public PreCheckoutCallback preCheckoutCallback;
+        [AutoStaticsCleanupOnCodeReload]
+        public static PreCheckoutCallback preCheckoutCallback;
     }
 }

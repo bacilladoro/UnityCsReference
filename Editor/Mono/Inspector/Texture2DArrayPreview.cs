@@ -27,11 +27,11 @@ namespace UnityEditor
 
         static class Styles
         {
-            public static GUIContent smallZoom = EditorGUIUtility.IconContent("PreTextureMipMapLow");
-            public static GUIContent largeZoom = EditorGUIUtility.IconContent("PreTextureMipMapHigh");
-            public static GUIContent alphaIcon = EditorGUIUtility.IconContent("PreTextureAlpha");
-            public static GUIContent RGBIcon = EditorGUIUtility.IconContent("PreTextureRGB");
-            public static GUIContent arrayIcon = EditorGUIUtility.IconContent("Texture2DArray");
+            public static readonly GUIContent smallZoom = EditorGUIUtility.IconContent("PreTextureMipMapLow");
+            public static readonly GUIContent largeZoom = EditorGUIUtility.IconContent("PreTextureMipMapHigh");
+            public static readonly GUIContent alphaIcon = EditorGUIUtility.IconContent("PreTextureAlpha");
+            public static readonly GUIContent RGBIcon = EditorGUIUtility.IconContent("PreTextureRGB");
+            public static readonly GUIContent arrayIcon = EditorGUIUtility.IconContent("Texture2DArray");
         }
 
         public float GetMipLevelForRendering(Texture texture, float mipLevel)

@@ -366,39 +366,19 @@ namespace UnityEngine
         public class Android
         {
 
-            [Obsolete("TouchScreenKeyboard.Android.closeKeyboardOnOutsideTap is obsolete. Use TouchScreenKeyboard.Android.consumesOutsideTouches instead (UnityUpgradable) -> UnityEngine.TouchScreenKeyboard/Android.consumesOutsideTouches")]
+            [Obsolete("TouchScreenKeyboard.Android.closeKeyboardOnOutsideTap is no longer supported", true)]
             public static bool closeKeyboardOnOutsideTap
             {
-                get
-                {
-                    return TouchScreenKeyboard.Android.consumesOutsideTouches;
-                }
-
-                set
-                {
-                    TouchScreenKeyboard.Android.consumesOutsideTouches = value;
-                }
+                get { throw new NotSupportedException("closeKeyboardOnOutsideTap"); }
+                set { throw new NotSupportedException("closeKeyboardOnOutsideTap"); }
             }
-            [Obsolete("consumesOutsideTouches is deprecated and will be removed in a future version where Unity will always process touch input outside of the on-screen keyboard (consumesOutsideTouches = false)")]
+
+            [Obsolete("TouchScreenKeyboard.Android.consumesOutsideTouches is no longer supported", true)]
             public static bool consumesOutsideTouches
             {
-                set
-                {
-                    TouchScreenKeyboard_SetAndroidKeyboardConsumesOutsideTouches(value);
-                }
-                get
-                {
-                    return TouchScreenKeyboard_GetAndroidKeyboardConsumesOutsideTouches();
-                }
+                get { throw new NotSupportedException("consumesOutsideTouches"); }
+                set { throw new NotSupportedException("consumesOutsideTouches"); }
             }
-
-            [NativeConditional("PLATFORM_ANDROID")]
-            [FreeFunction("TouchScreenKeyboard_SetAndroidKeyboardConsumesOutsideTouches")]
-            private static extern void TouchScreenKeyboard_SetAndroidKeyboardConsumesOutsideTouches(bool enable);
-
-            [NativeConditional("PLATFORM_ANDROID")]
-            [FreeFunction("TouchScreenKeyboard_GetAndroidKeyboardConsumesOutsideTouches")]
-            private static extern bool TouchScreenKeyboard_GetAndroidKeyboardConsumesOutsideTouches();
         }
 
         internal static class BindingsMarshaller

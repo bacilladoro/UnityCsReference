@@ -23,6 +23,7 @@ namespace Unity.GraphToolkit.Editor
 
         bool m_Active;
         bool m_IsMovingFromConnector;
+        bool m_MenuInitiated;
         Vector2 m_MouseDownPosition;
 
         /// <summary>
@@ -137,22 +138,8 @@ namespace Unity.GraphToolkit.Editor
                     return false;
                 }
 
-                m_IsMovingFromConnector = false;
-                m_AnchorStateModel = OwnerModel;
                 anchorStateUI = OwnerElement;
-                m_ManipulatedTransition = m_TransitionCandidate;
-
-                TransitionCandidateModel.FromWorldPoint = snappedPoint;
-                TransitionCandidateModel.FromPort = OwnerModel.GetOutPort();
-                TransitionCandidateModel.FromNodeAnchorSide = anchorStateSide;
-                TransitionCandidateModel.FromNodeAnchorOffset = anchorStateOffset;
-
-                TransitionCandidateModel.ToWorldPoint = evt.mousePosition;
-                TransitionCandidateModel.ToPort = null;
-                TransitionCandidateModel.ToNodeAnchorSide = AnchorSide.None;
-                TransitionCandidateModel.ToNodeAnchorOffset = 0;
-
-                m_ConnectionTargetState = null;
+                InitOutgoingCandidateFromOwner(snappedPoint, anchorStateSide, anchorStateOffset, evt.mousePosition);
             }
             else
             {
@@ -214,6 +201,47 @@ namespace Unity.GraphToolkit.Editor
             return true;
         }
 
+        /// <summary>
+        /// Starts a transition from the "Create Transition" menu item. Like dragging from a
+        /// state's edge, anchored where the menu was opened (snapped to the border) and finalized
+        /// by a click.
+        /// </summary>
+        /// <param name="worldPosition">The world position where the menu was opened on the state.</param>
+        internal void CreateFromMenu(Vector2 worldPosition)
+        {
+            if (m_Active || OwnerElement == null || OwnerModel == null)
+                return;
+
+            CreateTransitionCandidate();
+            if (m_TransitionCandidate == null)
+                return;
+
+            var (anchorPoint, anchorSide, anchorOffset) = SnapToOwnerBorder(worldPosition);
+
+            InitOutgoingCandidateFromOwner(anchorPoint, anchorSide, anchorOffset, anchorPoint);
+            ShowNodeConnector(OwnerElement);
+            m_TransitionCandidate.DoCompleteUpdate();
+
+            m_MenuInitiated = true;
+            m_Active = true;
+            target.CaptureMouse();
+        }
+
+        // Snaps a world position to the owner state's border, falling back to the bottom-center.
+        (Vector2 point, AnchorSide side, float offset) SnapToOwnerBorder(Vector2 worldPosition)
+        {
+            if (OwnerElement.Border is StateBorder stateBorder)
+            {
+                var (snapped, side, offset) = stateBorder.SnapPointToBorder(stateBorder.WorldToLocal(worldPosition), false);
+                if (side != AnchorSide.None)
+                    return (stateBorder.LocalToWorld(snapped), side, offset);
+            }
+
+            const float centerRatio = 0.5f;
+            var bottomOffset = OwnerElement.localBound.width * centerRatio;
+            return (OwnerElement.GetPositionFromAnchorAndOffset(AnchorSide.Bottom, bottomOffset, GraphView.Zoom), AnchorSide.Bottom, bottomOffset);
+        }
+
         void OnMouseMove(MouseMoveEvent e)
         {
             if (!m_Active) return;
@@ -267,7 +295,8 @@ namespace Unity.GraphToolkit.Editor
 
             try
             {
-                var canConnect = Vector2.Distance(m_MouseDownPosition, e.localMousePosition) > k_WireCreationDistanceThreshold;
+                // The menu flow has no initial press, so the click always finalizes.
+                var canConnect = m_MenuInitiated || Vector2.Distance(m_MouseDownPosition, e.localMousePosition) > k_WireCreationDistanceThreshold;
                 if (canConnect)
                     HandleMouseUp(e);
                 else
@@ -275,6 +304,7 @@ namespace Unity.GraphToolkit.Editor
             }
             finally
             {
+                m_MenuInitiated = false;
                 m_Active = false;
                 target.ReleaseMouse();
                 e.StopPropagation();
@@ -385,6 +415,26 @@ namespace Unity.GraphToolkit.Editor
                 Reset(false);
         }
 
+        // Sets up the candidate as an outgoing transition anchored on the owner state.
+        void InitOutgoingCandidateFromOwner(Vector2 fromWorldPoint, AnchorSide fromSide, float fromOffset, Vector2 toWorldPoint)
+        {
+            m_IsMovingFromConnector = false;
+            m_AnchorStateModel = OwnerModel;
+            m_ManipulatedTransition = m_TransitionCandidate;
+
+            TransitionCandidateModel.FromWorldPoint = fromWorldPoint;
+            TransitionCandidateModel.FromPort = OwnerModel.GetOutPort();
+            TransitionCandidateModel.FromNodeAnchorSide = fromSide;
+            TransitionCandidateModel.FromNodeAnchorOffset = fromOffset;
+
+            TransitionCandidateModel.ToWorldPoint = toWorldPoint;
+            TransitionCandidateModel.ToPort = null;
+            TransitionCandidateModel.ToNodeAnchorSide = AnchorSide.None;
+            TransitionCandidateModel.ToNodeAnchorOffset = 0;
+
+            m_ConnectionTargetState = null;
+        }
+
         void CreateTransitionCandidate()
         {
             var model = GhostTransitionModelCreator != null ? GhostTransitionModelCreator.Invoke(GraphView.GraphModel) : new GhostTransitionSupportModel { GraphModel = GraphView.GraphModel };
@@ -419,6 +469,7 @@ namespace Unity.GraphToolkit.Editor
 
             m_ConnectionTargetState = null;
             m_AnchorStateModel = null;
+            m_MenuInitiated = false;
         }
 
         void ShowNodeConnector(GraphElement node)

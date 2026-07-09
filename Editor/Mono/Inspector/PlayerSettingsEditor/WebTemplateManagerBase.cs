@@ -169,7 +169,7 @@ namespace UnityEditor
             return templates;
         }
 
-        public void SelectionUI(SerializedProperty templateProp, PlayerSettings playerSettings)
+        public void SelectionUI(SerializedProperty templateProp, PlayerSettingsEditor.IPlayerSettingsAccessor playerSettings)
         {
             if (s_Styles == null)
                 s_Styles = new Styles();

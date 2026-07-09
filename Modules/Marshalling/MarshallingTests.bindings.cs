@@ -1160,6 +1160,11 @@ namespace UnityEngine
         public static extern SomeEnum TestInvokeEnum(SomeEnum arg);
         public static extern System.Object TestInvokeObject(System.Object arg);
         public static extern System.Object TestInvokeObjectAsGcHandle(System.Object arg);
+        public static extern System.Object TestInvokeObjectScriptingInvocation(System.Object arg);
+        public static extern System.Object TestInvokeObjectAsGcHandleScriptingInvocation(System.Object arg);
+        // performance tests
+        public static extern void TestInvokeObjectNoReturn(int iterations, System.Object arg);
+        public static extern void TestInvokeObjectNoReturnAsGcHandle(int iterations, IntPtr handle);
 
         [RequiredMember, RequiredByNativeCode(Optional = true)]
         static bool InvokeBool(bool arg) { return arg; }
@@ -1201,6 +1206,10 @@ namespace UnityEngine
         {
             Debug.Log($"InvokeObject called with argument: {obj}");
             return obj;
+        }
+        [RequiredMember, RequiredByNativeCode(Optional = true)]
+        static void InvokeObjectNoReturn(System.Object obj)
+        {
         }
     }
 

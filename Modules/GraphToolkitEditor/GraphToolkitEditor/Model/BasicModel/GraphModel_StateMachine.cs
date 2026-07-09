@@ -10,7 +10,11 @@ namespace Unity.GraphToolkit.Editor
 {
     abstract partial class GraphModel
     {
-        static readonly (string, ConditionModelFactory)[] k_DefaultConditionTypes = { ("Add Group Condition", _ => new GroupConditionModel()) };
+        static readonly (string, ConditionModelFactory)[] k_DefaultConditionTypes =
+        {
+            ("Add Group Condition", _ => new GroupConditionModel()),
+            ("Add Variable Condition", _ => new VariableConditionModel()),
+        };
 
         /// <summary>
         /// A delegate to create a new condition model.
@@ -59,6 +63,39 @@ namespace Unity.GraphToolkit.Editor
                 transitionSupport.AddTransition(transition);
             }
             return transitionSupport;
+        }
+
+        /// <summary>
+        /// Reconciles the value of every <see cref="VariableConditionModel"/> that references the given variable,
+        /// recreating it when the variable's type changed. Called when a variable's type changes.
+        /// </summary>
+        /// <param name="declaration">The variable whose type changed.</param>
+        internal void ReconcileVariableConditions(VariableDeclarationModelBase declaration)
+        {
+            foreach (var wire in WireModels)
+            {
+                if (wire is not TransitionSupportModel transitionSupport)
+                    continue;
+
+                foreach (var transition in transitionSupport.Transitions)
+                    ReconcileConditions(transition.ConditionModel, declaration);
+            }
+        }
+
+        static void ReconcileConditions(ConditionModel condition, VariableDeclarationModelBase declaration)
+        {
+            switch (condition)
+            {
+                case null:
+                    break;
+                case GroupConditionModel group:
+                    foreach (var subCondition in group.SubConditions)
+                        ReconcileConditions(subCondition, declaration);
+                    break;
+                case VariableConditionModel variableCondition when variableCondition.Variable == declaration:
+                    variableCondition.ReconcileValueType();
+                    break;
+            }
         }
 
         /// <summary>

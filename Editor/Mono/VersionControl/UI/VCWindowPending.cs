@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor.ShortcutManagement;
 using UnityEngine;
 using UnityEngine.Scripting;
@@ -16,7 +17,7 @@ namespace UnityEditor.VersionControl
     // This window now works in an async manner but the method of update should now be improved to hide
     // the refreshing
     [EditorWindowTitle(title = "Version Control", icon = "UnityEditor.VersionControl")]
-    internal class WindowPending : EditorWindow
+    internal partial class WindowPending : EditorWindow
     {
         internal class Styles
         {
@@ -28,10 +29,14 @@ namespace UnityEditor.VersionControl
             public static readonly GUIContent disabledLabel = EditorGUIUtility.TrTextContent("Disabled");
             public static readonly GUIContent editorSettingsLabel = EditorGUIUtility.TrTextContent("Version Control Settings");
         }
+        [NoAutoStaticsCleanup] // lazy-initialized UI styles cache
         static Styles s_Styles = null;
 
+        [NoAutoStaticsCleanup] // lazy-loaded icon
         static Texture2D changeIcon = null;
+        [NoAutoStaticsCleanup] // lazy-loaded icon
         static Texture2D syncIcon = null;
+        [NoAutoStaticsCleanup] // lazy-loaded icon
         static Texture2D refreshIcon = null;
         GUIStyle header;
         [SerializeField] ListControl pendingList;
@@ -55,7 +60,8 @@ namespace UnityEditor.VersionControl
         private bool scheduleRefresh = false;
 
         // Workaround to reload vcs info upon domain reload. TODO: Fix VersionControl.ListControl to get rid of this
-        static bool s_DidReload = false; // defaults to false after domain reload
+        [AutoStaticsCleanupOnCodeReload]
+        static bool s_DidReload = false;
 
         void InitStyles()
         {
