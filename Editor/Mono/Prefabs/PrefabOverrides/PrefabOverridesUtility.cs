@@ -5,12 +5,15 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.SceneManagement
 {
     internal class PrefabOverridesUtility
     {
+        [NoAutoStaticsCleanup] // Reusable scratch buffer, always Clear()ed before and after use; holds no live references across reload.
         static List<Component> s_ComponentList = new List<Component>();
+        [NoAutoStaticsCleanup] // Reusable scratch buffer, always Clear()ed before and after use; holds no live references across reload.
         static List<Component> s_AssetComponentList = new List<Component>();
 
         static void ThrowExceptionIfNullOrNotPartOfPrefabInstance(GameObject prefabInstance)

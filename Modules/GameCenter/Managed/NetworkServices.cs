@@ -97,7 +97,6 @@ namespace UnityEngine.SocialPlatforms
 
         private static ISocialPlatform SelectSocialPlatform()
         {
-            // statically selecting community
             return new UnityEngine.SocialPlatforms.Local();
         }
     }

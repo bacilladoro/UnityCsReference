@@ -7,6 +7,7 @@ using System.ComponentModel;
 using UnityEditor.Toolbars;
 using UnityEngine;
 using UnityEngine.UIElements;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Overlays
 {
@@ -155,6 +156,7 @@ namespace UnityEditor.Overlays
 
         internal string ussName => m_RootVisualElementName;
 
+        [AutoStaticsCleanupOnCodeReload]
         static VisualTreeAsset s_TreeAsset;
         event Action displayNameChanged;
         VisualElement m_ContentRoot;

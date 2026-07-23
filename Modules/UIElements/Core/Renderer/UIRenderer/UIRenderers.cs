@@ -98,7 +98,7 @@ namespace UnityEngine.UIElements.UIR
         // Set on BeginPanelComponent commands only.
         public EntityId panelComponentId;
 
-        static ProfilerMarker s_ImmediateOverheadMarker = new ProfilerMarker(ProfilerCategory.UIToolkit, "UIR.ImmediateOverhead");
+        static readonly ProfilerMarker s_ImmediateOverheadMarker = new ProfilerMarker(ProfilerCategory.UIToolkit, "UIR.ImmediateOverhead");
 
         public RenderChainCommand()
         {

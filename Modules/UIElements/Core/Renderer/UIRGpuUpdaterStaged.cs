@@ -10,6 +10,7 @@ using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
 using Unity.Profiling;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEngine.UIElements.UIR
 {
@@ -50,7 +51,7 @@ namespace UnityEngine.UIElements.UIR
         }
 
         static readonly MemoryLabel k_MemoryLabel = new(nameof(UIElements), $"Renderer.{nameof(GpuUpdaterStaged)}");
-        static ProfilerMarker s_MarkerGpuMappingFence = new ProfilerMarker("UIR.WaitOnGpuMappingFence");
+        static readonly ProfilerMarker s_MarkerGpuMappingFence = new ProfilerMarker("UIR.WaitOnGpuMappingFence");
 
         readonly Utility.GPUBufferType m_BufferType;
         readonly GpuBufferFlags m_StagingBufferFlags;
@@ -274,6 +275,7 @@ namespace UnityEngine.UIElements.UIR
             }
         }
 
+        [NoAutoStaticsCleanup] // stateless sort comparator; no captured state
         static readonly Comparison<DataSet> k_DataSetSort = (a, b) =>
         {
             uint countA = a.totalDirtyCount;

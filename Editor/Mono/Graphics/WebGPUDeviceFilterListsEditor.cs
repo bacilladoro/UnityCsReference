@@ -132,10 +132,15 @@ namespace UnityEditor
             public static float CalculateElementHeight(uint numStaticItems, bool deviceIdFoldout, bool capabilityFoldout, int featuresCount = 0, int limitsCount = 0)
             {
                 // Calculate the height of a single element in the filter list
-                uint numFields = numStaticItems + (deviceIdFoldout ? 1u : 0u) * Styles.kNumDeviceIdItemsInFilter + 
+                uint numFields = numStaticItems + (deviceIdFoldout ? 1u : 0u) * Styles.kNumDeviceIdItemsInFilter +
                 (capabilityFoldout ? 1u : 0u) * (Styles.kNumCapabilityItemsInFilter + (uint)featuresCount * 1u + (uint)limitsCount * 3u);
 
-                return WebGPUDeviceFilterUI.Styles.kElementHeighWithSpace * numFields + WebGPUDeviceFilterUI.Styles.kHeightBetweenFields;
+                float height = WebGPUDeviceFilterUI.Styles.kElementHeighWithSpace * numFields + WebGPUDeviceFilterUI.Styles.kHeightBetweenFields;
+
+                if (capabilityFoldout && limitsCount > 1)
+                    height += (limitsCount - 1) * Styles.kHeightBetweenFields;
+
+                return height;
             }
 
             public static void DrawDeviceFilterList(SerializedProperty filterListProp, int index, ref Rect elementRect, ref List<bool> deviceIdFoldouts, ref List<bool> capabilityMetricsFoldouts, bool hasPreviousPropFields = false)

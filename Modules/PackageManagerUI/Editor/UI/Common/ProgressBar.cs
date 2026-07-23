@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -10,6 +11,7 @@ namespace UnityEditor.PackageManager.UI.Internal
     [UxmlElement]
     internal partial class ProgressBar : VisualElement
     {
+        [NoAutoStaticsCleanup]
         static private double s_LastWidthTime;
         private const double k_PaintInterval = 1f; // Time interval to repaint
 

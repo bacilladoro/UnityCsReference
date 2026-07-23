@@ -537,7 +537,7 @@ namespace UnityEditor.UIElements.Debugger
             bool IsActive()
             {
                 UpdateVisiblity();
-                return value && style.display == DisplayStyle.Flex;
+                return value && style.display != DisplayStyle.None;
             }
 
             protected virtual void UpdateVisiblity()
@@ -754,7 +754,7 @@ namespace UnityEditor.UIElements.Debugger
                     nameField.text = panel.ownerObject.name;
                     scale.text = $" scale: { panel.scale}, pixelPerPoint {panel.pixelsPerPoint}, scaledPixelPerPoint {panel.scaledPixelsPerPoint}";
                     panelSettings.value = panel.ownerObject;
-                    m_totalVisualElements.text = $" { panel.visualTree.Query<VisualElement>().ToList().Count.ToString()}, {panel.visualTree.Query<VisualElement>().Where(e => e.resolvedStyle.display == DisplayStyle.Flex).ToList().Count.ToString()} diplayNone";
+                    m_totalVisualElements.text = $" { panel.visualTree.Query<VisualElement>().ToList().Count.ToString()}, {panel.visualTree.Query<VisualElement>().Where(e => e.resolvedStyle.display != DisplayStyle.None).ToList().Count.ToString()} diplayNone";
 
                     cacheSummary.text = string.Join(", ", CollectCache(panel.visualTree));
 

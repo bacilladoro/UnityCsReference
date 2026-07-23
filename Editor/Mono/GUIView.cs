@@ -45,6 +45,18 @@ namespace UnityEditor
             }
         }
 
+        [RequiredByNativeCode]
+        internal static void SaveReentrantLayoutState()
+        {
+            SavedGUIState.PushReentrantLayoutState();
+        }
+
+        [RequiredByNativeCode]
+        internal static void RestoreReentrantLayoutState()
+        {
+            SavedGUIState.PopReentrantLayoutState();
+        }
+
         // This callback function allows to peek at events before they
         // are processed in order to clean any dangling state left after
         // an event was unexpectedly used.

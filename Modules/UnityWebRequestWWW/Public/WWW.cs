@@ -162,10 +162,6 @@ namespace UnityEngine
             }
         }
 
-        [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
-        [Obsolete("Obsolete msg (UnityUpgradable) -> * UnityEngine.WWW.GetMovieTexture()", true)]
-        public Object movie { get { return null; } }
-
         [Obsolete("WWW.size is obsolete. Please use WWW.bytesDownloaded instead")]
         public int size { get { return bytesDownloaded; } }
 
@@ -347,14 +343,6 @@ namespace UnityEngine
         {
             return (AudioClip)GetAudioClipInternal(threeD, false, true, audioType);
         }
-
-        [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
-        [System.Obsolete("MovieTexture is deprecated. Use VideoPlayer instead.", false)]
-        public MovieTexture GetMovieTexture()
-        {
-            throw new Exception("MovieTexture has been removed from Unity. Use VideoPlayer instead.");
-        }
-
 
         private bool WaitUntilDoneIfPossible()
         {

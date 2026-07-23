@@ -7,6 +7,7 @@ using UnityEngine.Experimental.Rendering;
 using UnityEngine.SceneManagement;
 using UnityEngine.Rendering;
 using System;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -17,7 +18,11 @@ namespace UnityEditor
 
         public static float GameViewAspectRatio => CameraEditor.GetGameViewAspectRatio();
 
+        // Transient frustum-handle drag state: only set during an active Handles drag and re-derived from GUIUtility.hotControl on the next interaction. Safe to persist across code reload (an int pins nothing).
+        [NoAutoStaticsCleanup]
         static int s_MovingHandleId = 0;
+        // Drag anchor captured at the start of a frustum-handle drag and re-captured on the next drag. Safe to persist across code reload.
+        [NoAutoStaticsCleanup]
         static Vector3 s_InitialFarMid;
         static readonly int[] s_FrustumHandleIds =
         {
@@ -323,11 +328,14 @@ namespace UnityEditor
         }
     }
 
-    internal static class CameraPreviewUtils
+    internal static partial class CameraPreviewUtils
     {
+        [AutoStaticsCleanupOnCodeReload]
         static Camera s_PreviewCamera;
+        [NoAutoStaticsCleanup] // Released explicitly in ReleaseOnCodeUnload; RenderTexture holds native GPU memory that auto-cleanup (null-only) would leak.
         static RenderTexture s_PreviewTexture;
 
+        [AutoStaticsCleanupOnCodeReload]
         internal static Func<Camera> s_VirtualCameraPreviewInstantiator;
 
         internal struct PreviewSettings
@@ -396,6 +404,17 @@ namespace UnityEditor
                     s_PreviewTexture = null;
                 }
             };
+        }
+
+        [OnCodeUnloading]
+        static void ReleaseOnCodeUnload()
+        {
+            // RenderTexture holds native GPU memory; release it before the code (and its statics) are unloaded.
+            if (s_PreviewTexture != null)
+            {
+                s_PreviewTexture.Release();
+                s_PreviewTexture = null;
+            }
         }
 
         static RenderTexture GetPreviewTexture(int width,  int height, bool hdr)

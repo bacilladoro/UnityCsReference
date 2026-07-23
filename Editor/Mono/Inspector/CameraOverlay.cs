@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using UnityEditor.Overlays;
 using UnityEngine;
 using UnityEngine.UIElements;
+using Unity.Scripting.LifecycleManagement;
 using static UnityEditor.CameraPreviewUtils;
 
 namespace UnityEditor
@@ -15,8 +16,9 @@ namespace UnityEditor
     [Obsolete("This Overlay is obsolete. Use the global Cameras Overlay instead.", false)]
     [Overlay(id = k_OverlayID, displayName = k_DisplayName, defaultDisplay = false)]
     [Icon("Icons/Overlays/CameraPreview.png")]
-    class SceneViewCameraOverlay : IMGUIOverlay
+    partial class SceneViewCameraOverlay : IMGUIOverlay
     {
+        [NoAutoStaticsCleanup] // Test/debug override flag; value carries no per-ALC state, safe to persist across reload.
         internal static bool forceDisable = false;
 
         // should match color in GizmosDrawers.cpp
@@ -27,6 +29,7 @@ namespace UnityEditor
         Camera m_SelectedCamera;
         Camera selectedCamera => m_SelectedCamera;
 
+        [AutoStaticsCleanupOnCodeReload]
         static Dictionary<Camera, (SceneViewCameraOverlay overlay, int count)> s_CameraOverlays = new Dictionary<Camera, (SceneViewCameraOverlay, int)>();
 
         SceneViewCameraOverlay(Camera camera)

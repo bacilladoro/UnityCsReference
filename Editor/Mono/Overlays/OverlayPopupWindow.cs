@@ -6,6 +6,7 @@ using System.ComponentModel;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.UIElements;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Overlays
 {
@@ -15,7 +16,9 @@ namespace UnityEditor.Overlays
     [EditorBrowsable(EditorBrowsableState.Never)]
     abstract class PopupWindowBase : EditorWindow
     {
+        [NoAutoStaticsCleanup] // Timestamp used only for a brief click-debounce window; safe to persist across reload.
         static double s_LastClosedTime;
+        [NoAutoStaticsCleanup] // Last activator rect used only for click-debounce comparison; safe to persist across reload.
         static Rect s_LastActivatorRect;
 
         static bool ShouldShowWindow(Rect activatorRect)

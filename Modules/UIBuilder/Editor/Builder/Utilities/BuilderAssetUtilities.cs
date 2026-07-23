@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Unity.Scripting.LifecycleManagement;
 using Unity.UIToolkit.Editor;
 using UnityEditor;
 using UnityEditor.UIElements;
@@ -26,6 +27,7 @@ namespace Unity.UI.Builder
         public static string projectPath { get; } = assetsPath.Substring(0, Application.dataPath.Length - "/Assets".Length);
         public static string packagesPath { get; } = projectPath + "/Packages";
 
+        [NoAutoStaticsCleanup] // Transient within-operation flag: reset to false at the start of every SynchronizePath and only read within that same call; holds no managed references, safe to persist across code reload.
         static bool s_DocumentUndoRecorded;
 
         internal static readonly PropertyName UndoGroupPropertyKey = "__UnityUndoGroup";

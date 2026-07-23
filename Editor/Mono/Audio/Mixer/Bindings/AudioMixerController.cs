@@ -106,10 +106,10 @@ namespace UnityEditor.Audio
     [ExcludeFromPreset]
     sealed partial class AudioMixerController : AudioMixer
     {
-        public static float kMinVolume = -80.0f; // The minimum volume is the level at which sends and effects can be bypassed
-        public static float kMaxEffect = 0.0f;
-        public static float kVolumeWarp = 1.7f;
-        public static string s_GroupEffectDisplaySeperator = "\\"; // Use backslash instead of forward slash to prevent OS menus from splitting path and creating submenus
+        public const float kMinVolume = -80.0f; // The minimum volume is the level at which sends and effects can be bypassed
+        public const float kMaxEffect = 0.0f;
+        public const float kVolumeWarp = 1.7f;
+        public const string s_GroupEffectDisplaySeperator = "\\"; // Use backslash instead of forward slash to prevent OS menus from splitting path and creating submenus
 
         public const int kMaxMeteringChannels = 12;
         public const int kGlobalMeteringChannel = kMaxMeteringChannels;

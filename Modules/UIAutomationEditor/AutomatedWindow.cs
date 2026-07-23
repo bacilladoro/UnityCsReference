@@ -20,7 +20,6 @@ namespace UnityEditor.UIAutomation
         private float m_LastEventSent = -1f;
 
         private bool m_Disposed;
-        private bool m_DeveloperBuild;
 
         public T window { get { return m_EditorWindow; } }
 
@@ -51,14 +50,6 @@ namespace UnityEditor.UIAutomation
             m_EditorWindow.RepaintImmediately(); //will create all the instructions, and will trigger onViewInstructionsChanged
 
             m_Disposed = false;
-            m_DeveloperBuild = Unsupported.IsDeveloperMode();
-        }
-
-        ~AutomatedWindow()
-        {
-            if (!m_Disposed && m_DeveloperBuild)
-                Debug.LogWarningFormat("{0} instance finalized without being disposed. Create it inside a using block or manually call Dispose () when done.", this.GetType());
-            Dispose();
         }
 
         public void Dispose()

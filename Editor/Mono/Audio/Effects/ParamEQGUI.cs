@@ -11,9 +11,9 @@ namespace UnityEditor
 {
     class ParamEqGUI : IAudioEffectPluginGUI
     {
-        public static string kCenterFreqName = "Center freq";
-        public static string kOctaveRangeName = "Octave range";
-        public static string kFrequencyGainName = "Frequency gain";
+        public const string kCenterFreqName = "Center freq";
+        public const string kOctaveRangeName = "Octave range";
+        public const string kFrequencyGainName = "Frequency gain";
 
         public override string Name
         {
@@ -46,7 +46,7 @@ namespace UnityEditor
             return style;
         }
 
-        public static GUIStyle textStyle10 = BuildGUIStyleForLabel(Color.grey, 10, false, FontStyle.Normal, TextAnchor.MiddleCenter);
+        public static readonly GUIStyle textStyle10 = BuildGUIStyleForLabel(Color.grey, 10, false, FontStyle.Normal, TextAnchor.MiddleCenter);
 
         static void DrawFrequencyTickMarks(Rect r, float samplerate, bool logScale, Color col)
         {

@@ -8,10 +8,11 @@ using System.Linq;
 using UnityEditor;
 using UnityEngine.UIElements;
 using Unity.Collections;
+using Unity.Scripting.LifecycleManagement;
 
 namespace Unity.UI.Builder
 {
-    internal static class BuilderStyleSheetsUtilities
+    internal static partial class BuilderStyleSheetsUtilities
     {
         public static void SetActiveUSS(BuilderSelection selection, BuilderPaneWindow paneWindow, StyleSheet styleSheet)
         {
@@ -111,8 +112,11 @@ namespace Unity.UI.Builder
             return paneWindow.document.CheckForUnsavedChanges();
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         internal static Func<string> s_SaveFileDialogCallback = DisplaySaveFileDialogForUSS;
+        [AutoStaticsCleanupOnCodeReload]
         internal static Func<string> s_OpenFileDialogCallback = DisplayOpenFileDialogForUSS;
+        [AutoStaticsCleanupOnCodeReload]
         internal static Func<BuilderPaneWindow, bool> s_CheckForUnsavedChanges = CheckForUnsavedChanges;
 
         internal static void RestoreTestCallbacks()

@@ -33,7 +33,7 @@ namespace UnityEditor
         }
 
         static readonly EntityId kNoneItemID = EntityId.None;
-        static string s_NoneText = "None";
+        const string s_NoneText = "None";
 
         // GUI
 

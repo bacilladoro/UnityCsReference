@@ -10,32 +10,32 @@ namespace UnityEditor
     {
         private static class Styles
         {
-            public static GUIContent colorText = EditorGUIUtility.TrTextContent("Color", "Color (RGB) and Opacity (A)");
-            public static GUIContent normalMapText = EditorGUIUtility.TrTextContent("Normal", "Normal (RGB)");
-            public static GUIContent extraMapText = EditorGUIUtility.TrTextContent("Extra", "Smoothness (R), Metallic (G), AO (B)");
-            public static GUIContent subsurfaceMapText = EditorGUIUtility.TrTextContent("Subsurface", "Subsurface (RGB)");
+            public static readonly GUIContent colorText = EditorGUIUtility.TrTextContent("Color", "Color (RGB) and Opacity (A)");
+            public static readonly GUIContent normalMapText = EditorGUIUtility.TrTextContent("Normal", "Normal (RGB)");
+            public static readonly GUIContent extraMapText = EditorGUIUtility.TrTextContent("Extra", "Smoothness (R), Metallic (G), AO (B)");
+            public static readonly GUIContent subsurfaceMapText = EditorGUIUtility.TrTextContent("Subsurface", "Subsurface (RGB)");
 
-            public static GUIContent smoothnessText = EditorGUIUtility.TrTextContent("Smoothness", "Smoothness value");
-            public static GUIContent metallicText = EditorGUIUtility.TrTextContent("Metallic", "Metallic value");
+            public static readonly GUIContent smoothnessText = EditorGUIUtility.TrTextContent("Smoothness", "Smoothness value");
+            public static readonly GUIContent metallicText = EditorGUIUtility.TrTextContent("Metallic", "Metallic value");
 
-            public static GUIContent twoSidedText = EditorGUIUtility.TrTextContent("Two-Sided", "Set this material to render as two-sided");
-            public static GUIContent hueVariationText = EditorGUIUtility.TrTextContent("Hue Variation", "Hue variation Color (RGB) and Amount (A)");
-            public static GUIContent normalMappingText = EditorGUIUtility.TrTextContent("Normal Map", "Enable normal mapping");
-            public static GUIContent subsurfaceText = EditorGUIUtility.TrTextContent("Subsurface", "Enable subsurface scattering");
-            public static GUIContent subsurfaceIndirectText = EditorGUIUtility.TrTextContent("Indirect Subsurface", "Scalar on subsurface from indirect light");
+            public static readonly GUIContent twoSidedText = EditorGUIUtility.TrTextContent("Two-Sided", "Set this material to render as two-sided");
+            public static readonly GUIContent hueVariationText = EditorGUIUtility.TrTextContent("Hue Variation", "Hue variation Color (RGB) and Amount (A)");
+            public static readonly GUIContent normalMappingText = EditorGUIUtility.TrTextContent("Normal Map", "Enable normal mapping");
+            public static readonly GUIContent subsurfaceText = EditorGUIUtility.TrTextContent("Subsurface", "Enable subsurface scattering");
+            public static readonly GUIContent subsurfaceIndirectText = EditorGUIUtility.TrTextContent("Indirect Subsurface", "Scalar on subsurface from indirect light");
 
-            public static GUIContent windSharedText = EditorGUIUtility.TrTextContent("Shared Motion", "Wind quality setting");
-            public static GUIContent windBranch1Text = EditorGUIUtility.TrTextContent("Branch1 Motion", "Wind quality setting");
-            public static GUIContent windBranch2Text = EditorGUIUtility.TrTextContent("Branch2 Motion", "Wind quality setting");
-            public static GUIContent windRippleText = EditorGUIUtility.TrTextContent("Ripple Motion", "Wind quality setting");
-            public static GUIContent windShimmerText = EditorGUIUtility.TrTextContent("Shimmer Motion", "Wind quality setting");
+            public static readonly GUIContent windSharedText = EditorGUIUtility.TrTextContent("Shared Motion", "Wind quality setting");
+            public static readonly GUIContent windBranch1Text = EditorGUIUtility.TrTextContent("Branch1 Motion", "Wind quality setting");
+            public static readonly GUIContent windBranch2Text = EditorGUIUtility.TrTextContent("Branch2 Motion", "Wind quality setting");
+            public static readonly GUIContent windRippleText = EditorGUIUtility.TrTextContent("Ripple Motion", "Wind quality setting");
+            public static readonly GUIContent windShimmerText = EditorGUIUtility.TrTextContent("Shimmer Motion", "Wind quality setting");
 
-            public static GUIContent billboardText = EditorGUIUtility.TrTextContent("Billboard", "Enable billboard features (crossfading, etc.)");
-            public static GUIContent billboardShadowFadeText = EditorGUIUtility.TrTextContent("Shadow Fade", "Fade shadow effect on billboards");
+            public static readonly GUIContent billboardText = EditorGUIUtility.TrTextContent("Billboard", "Enable billboard features (crossfading, etc.)");
+            public static readonly GUIContent billboardShadowFadeText = EditorGUIUtility.TrTextContent("Shadow Fade", "Fade shadow effect on billboards");
 
-            public static GUIContent primaryMapsText = EditorGUIUtility.TrTextContent("Maps");
-            public static GUIContent optionsText = EditorGUIUtility.TrTextContent("Options");
-            public static GUIContent advancedText = EditorGUIUtility.TrTextContent("Advanced Options");
+            public static readonly GUIContent primaryMapsText = EditorGUIUtility.TrTextContent("Maps");
+            public static readonly GUIContent optionsText = EditorGUIUtility.TrTextContent("Options");
+            public static readonly GUIContent advancedText = EditorGUIUtility.TrTextContent("Advanced Options");
         }
 
         public override void OnGUI(MaterialEditor materialEditor, MaterialProperty[] properties)

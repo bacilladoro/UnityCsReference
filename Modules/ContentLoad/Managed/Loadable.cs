@@ -18,7 +18,7 @@ namespace Unity.Loading
     /// <see cref="Loadable{T}.Target"/>. <see cref="LoadableStatus.Failed"/> indicates the asynchronous load completed without a usable object. This often occurs due to missing built content.
     /// </remarks>
     /// <example>
-    /// <code source="../../ContentBuild/Tests/local.test.build-examples/Editor/ContentLoad/Loadable_LoadAndRelease.cs"/>
+    /// <code source="../../ContentBuild/Tests/local.test.build-examples/Editor/ContentLoad/LoadableStatus_Example.cs"/>
     /// </example>
     public enum LoadableStatus
     {
@@ -80,6 +80,9 @@ namespace Unity.Loading
     /// </typeparam>
     /// <example>
     /// <code source="../../ContentBuild/Tests/local.test.build-examples/Editor/ContentLoad/Loadable_LoadAndRelease.cs"/>
+    /// </example>
+    /// <example>
+    /// <code source="../../ContentBuild/Tests/local.test.build-examples/Editor/ContentLoad/Loadable_LoadAndRelease2.cs"/>
     /// </example>
     /// <seealso cref="LoadableObjectId"/>
     /// <seealso cref="UnityEditor.LoadableObjectIdEditorUtility"/>

@@ -10,6 +10,7 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.SceneManagement;
+using Unity.Scripting.LifecycleManagement;
 using Debug = UnityEngine.Debug;
 using Object = UnityEngine.Object;
 
@@ -284,6 +285,7 @@ namespace UnityEditor
             }
         }
 
+        [NoAutoStaticsCleanup] // Lazy cache of a fixed-path editor asset (Cubemap); survives reload and self-reloads on null, safe to persist.
         private static Cubemap s_DefaultReflection;
         private static Cubemap GetDefaultReflection()
         {

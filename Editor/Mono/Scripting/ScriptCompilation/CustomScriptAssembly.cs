@@ -263,6 +263,68 @@ namespace UnityEditor.Scripting.ScriptCompilation
             "ads", // CS0168: unused variable
         };
 
+        // Unity packages not yet migrated to AutoStatics cleanup, so
+        // exclude from editor/FEP code-reload analysis so enabling Fast Enter Play Mode doesn't
+        // fail compilation if mutable. Please remove a package from this list once it has been fixed.
+        static readonly string[] k_AutoStaticsCleanupExcludedPackages = new string[]
+        {
+            "2d.sprite",
+            "2d.tilemap",
+            "adaptiveperformance",
+            "adaptiveperformance.apple",
+            "adaptiveperformance.google.android",
+            "animation.rigging",
+            "burst",
+            "cinemachine",
+            "collections",
+            "dedicated-server",
+            "editorcoroutines",
+            "entities",
+            "entities.graphics",
+            "ext.nunit",
+            "feature.2d",
+            "feature.ar",
+            "feature.characters-animation",
+            "feature.development",
+            "feature.ecs",
+            "feature.gameplay-storytelling",
+            "feature.mobile",
+            "feature.vr",
+            "feature.worldbuilding",
+            "graph-authoring",
+            "graphtoolkit",
+            "mathematics",
+            "modules.uielementsnative",
+            "multiplayer.center",
+            "multiplayer.playmode",
+            "netcode",
+            "package-manager-ui",
+            "physics",
+            "profiling.core",
+            "project-auditor",
+            "rendering.denoising",
+            "render-pipelines.core",
+            "render-pipelines.high-definition",
+            "render-pipelines.high-definition-config",
+            "render-pipelines.universal",
+            "render-pipelines.universal-config",
+            "sentis",
+            "serialization",
+            "shaderanalysis",
+            "shadergraph",
+            "test-framework",
+            "test-framework.performance",
+            "textmeshpro",
+            "timeline",
+            "transport",
+            "ugui",
+            "ui",
+            "ui.builder",
+            "ui.test-framework",
+            "visualeffectgraph",
+            "xr.core-utils",
+        };
+
         internal static string ImmutablePackageRulesetPath { get; private set; }
 
         public string FilePath { get; set; }
@@ -310,6 +372,18 @@ namespace UnityEditor.Scripting.ScriptCompilation
             return pathSpan.Contains("com.unity.".AsSpan(), StringComparison.OrdinalIgnoreCase);
         }
 
+        private bool IsInAutoStaticsCleanupExcludedPackage()
+        {
+            var pathSpan = PathPrefix.AsSpan();
+            foreach (var packageName in k_AutoStaticsCleanupExcludedPackages)
+            {
+                var packagePath = $"com.unity.{packageName}";
+                if (pathSpan.Contains(packagePath.AsSpan(), StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
+            return false;
+        }
+
 
         public AssemblyFlags AssemblyFlags
         {
@@ -340,6 +414,17 @@ namespace UnityEditor.Scripting.ScriptCompilation
 
                 bool rootFolder, immutable;
                 bool imported = AssetDatabase.TryGetAssetFolderInfo(PathPrefix, out rootFolder, out immutable);
+
+                // Decide whether this assembly is subject to editor/FEP code-reload (AutoStatics) analysis:
+                //   - Immutable (read-only) packages are always excluded here; enable their area in the build
+                //     system's AutoStaticsCleanupConfig.EnabledAreas to validate them during the Unity build.
+                //   - Packages listed in k_AutoStaticsCleanupExcludedPackages are excluded because they are not
+                //     yet annotated for AutoStatics cleanup (e.g. when referenced as mutable "file:" packages in
+                //     Unity's own test projects). Remove a package from that list once it has been fixed.
+                //   - The user's own code (Assets) and their own mutable/local packages are analyzed.
+                bool excludedFromAnalysis = (imported && immutable) || IsInAutoStaticsCleanupExcludedPackage();
+                if (excludedFromAnalysis)
+                    assemblyFlags |= AssemblyFlags.ExcludedFromCodeReloadAnalysis;
 
                 if (imported && immutable)
                 {
@@ -559,7 +644,9 @@ namespace UnityEditor.Scripting.ScriptCompilation
 
             var compilerOptions = new ScriptCompilerOptions
             {
-                AllowUnsafeCode = customScriptAssemblyData.allowUnsafeCode
+                // Unsafe code is always enabled for Unity builds; report true so API consumers and
+                // IDE csproj generators (Rider/VS) stay in sync with the actual compilation.
+                AllowUnsafeCode = true
             };
             customScriptAssembly.CompilerOptions = compilerOptions;
 

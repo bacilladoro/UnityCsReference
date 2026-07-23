@@ -4,6 +4,7 @@
 
 using System;
 using System.Linq;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -45,6 +46,7 @@ namespace UnityEditor.Experimental.GraphView
             UpdateLayer(prevLayer);
         }
 
+        [NoAutoStaticsCleanup] // CSS property key — immutable string handle, no ALC-pinning refs
         static CustomStyleProperty<int> s_LayerProperty = new CustomStyleProperty<int>("--layer");
 
         private void OnCustomStyleResolved(CustomStyleResolvedEvent e)

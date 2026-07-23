@@ -13,8 +13,13 @@ namespace UnityEngine
     public partial class Awaitable
     {
 
-        [RequiredByNativeCode(GenerateProxy = true)]
-        private void SetExceptionFromNative(Exception ex)
+        [RequiredByNativeCode]
+        private static void SetExceptionFromNative(Awaitable self, Exception ex)
+        {
+            self.SetException(ex);
+        }
+    
+        private void SetException(Exception ex)
         {
             bool lockTaken = false;
             try
@@ -32,7 +37,12 @@ namespace UnityEngine
         }
 
 
-        [RequiredByNativeCode(GenerateProxy = true)]
+        [RequiredByNativeCode]
+        private static void RunContinuationFromNative(Awaitable self)
+        {
+            self.RunContinuation();
+        }
+
         private void RunContinuation()
         {
             Action continuation = null;

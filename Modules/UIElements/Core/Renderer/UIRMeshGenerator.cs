@@ -11,6 +11,7 @@ using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
 using Unity.Profiling;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.TextCore;
 using UnityEngine.TextCore.LowLevel;
 using UnityEngine.TextCore.Text;
@@ -640,6 +641,7 @@ namespace UnityEngine.UIElements.UIR
         NativeTextGenerationSettings m_NativeSettings;
         NativeTextBuffer m_NativeTextBuffer;
 
+        [NoAutoStaticsCleanup] // lazily initialized text library; infrastructure singleton
         static TextLib s_TextLib;
 
         List<List<List<int>>> m_DrawTextAdvancedMeshIndices;

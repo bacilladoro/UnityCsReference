@@ -3,222 +3,42 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System.Collections.Generic;
-using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace Unity.UIToolkit.Editor
 {
     [UxmlElement]
-    internal sealed partial class BorderRadiusFoldout : StyleFoldoutField<TextField>
+    internal sealed partial class BorderRadiusFoldout : BorderFoldout
     {
-        public static readonly string textUssClassName = FoldoutFieldPropertyName + "__textfield";
-
-        const string k_TopLeftPropertyName = "borderTopLeftRadius";
-        const string k_TopRightPropertyName = "borderTopRightRadius";
-        const string k_BottomRightPropertyName = "borderBottomRightRadius";
-        const string k_BottomLeftPropertyName = "borderBottomLeftRadius";
-
-        public StyleLengthField topLeftField { get; }
-        public StyleLengthField topRightField { get; }
-        public StyleLengthField bottomRightField { get; }
-        public StyleLengthField bottomLeftField { get; }
-
-        public List<StyleLengthField> fields => new()
+        static readonly string[] k_PropertyNames =
         {
-            topLeftField,
-            topRightField,
-            bottomRightField,
-            bottomLeftField
+            "borderTopLeftRadius",
+            "borderTopRightRadius",
+            "borderBottomRightRadius",
+            "borderBottomLeftRadius"
         };
 
-        IntegerField m_DraggerField;
-        public IntegerField draggerIntegerField => m_DraggerField;
+        static readonly string[] k_Labels = { "Top-Left", "Top-Right", "Bottom-Right", "Bottom-Left" };
+
+        static readonly string[] k_Tooltips =
+        {
+            "<b>USS property: border-top-left-radius</b>\nThe radius of the top-left corner when a rounded rectangle is drawn in the element's box.",
+            "<b>USS property: border-top-right-radius</b>\nThe radius of the top-right corner when a rounded rectangle is drawn in the element's box.",
+            "<b>USS property: border-bottom-right-radius</b>\nThe radius of the bottom-right corner when a rounded rectangle is drawn in the element's box.",
+            "<b>USS property: border-bottom-left-radius</b>\nThe radius of the bottom-left corner when a rounded rectangle is drawn in the element's box."
+        };
+
+        protected override IReadOnlyList<string> propertyNames => k_PropertyNames;
+        protected override IReadOnlyList<string> fieldLabels => k_Labels;
+        protected override IReadOnlyList<string> fieldTooltips => k_Tooltips;
+
+        public StyleLengthField topLeftField => fields[0];
+        public StyleLengthField topRightField => fields[1];
+        public StyleLengthField bottomRightField => fields[2];
+        public StyleLengthField bottomLeftField => fields[3];
 
         public BorderRadiusFoldout() : this("Radius") { }
 
-        public BorderRadiusFoldout(string text)
-            : base(text)
-        {
-            var topLeftRow = new OverrideRow() { name = k_TopLeftPropertyName };
-            topLeftField = new StyleLengthField("Top-Left") { name = k_TopLeftPropertyName }.WithClassList(TextField.alignedFieldUssClassName);
-            topLeftField.SetBinding("value", new StylePropertyBinding(k_TopLeftPropertyName));
-            topLeftRow.Add(topLeftField);
-            Add(topLeftRow);
-
-            var topRightRow = new OverrideRow() { name = k_TopRightPropertyName };
-            topRightField = new StyleLengthField("Top-Right") { name = k_TopRightPropertyName }.WithClassList(TextField.alignedFieldUssClassName);
-            topRightField.SetBinding("value", new StylePropertyBinding(k_TopRightPropertyName));
-            topRightRow.Add(topRightField);
-            Add(topRightRow);
-
-            var bottomRightRight = new OverrideRow() { name = k_BottomRightPropertyName };
-            bottomRightField = new StyleLengthField("Bottom-Right") { name = k_BottomRightPropertyName }.WithClassList(TextField.alignedFieldUssClassName);
-            bottomRightField.SetBinding("value", new StylePropertyBinding(k_BottomRightPropertyName));
-            bottomRightRight.Add(bottomRightField);
-            Add(bottomRightRight);
-
-            var bottomLeftRow = new OverrideRow() { name = k_BottomLeftPropertyName };
-            bottomLeftField = new StyleLengthField("Bottom-Left") { name = k_BottomLeftPropertyName }.WithClassList(TextField.alignedFieldUssClassName);
-            bottomLeftField.SetBinding("value", new StylePropertyBinding(k_BottomLeftPropertyName));
-            bottomLeftRow.Add(bottomLeftField);
-            Add(bottomLeftRow);
-
-            topLeftField.tooltip = "<b>USS property: border-top-left-radius</b>\nThe radius of the top-left corner when a rounded rectangle is drawn in the element's box.";
-            topRightField.tooltip = "<b>USS property: border-top-right-radius</b>\nThe radius of the top-right corner when a rounded rectangle is drawn in the element's box.";
-            bottomRightField.tooltip = "<b>USS property: border-bottom-right-radius</b>\nThe radius of the bottom-right corner when a rounded rectangle is drawn in the element's box.";
-            bottomLeftField.tooltip = "<b>USS property: border-bottom-left-radius</b>\nThe radius of the bottom-left corner when a rounded rectangle is drawn in the element's box.";
-
-            topLeftField.RegisterCallback<PropertyChangedEvent>(e =>
-            {
-                if (e.property == BaseField<StyleLength>.valueProperty ||
-                    e.property == enabledSelfProperty)
-                    UpdateFromChildFields();
-            });
-            topRightField.RegisterCallback<PropertyChangedEvent>(e =>
-            {
-                if (e.property == BaseField<StyleLength>.valueProperty ||
-                    e.property == enabledSelfProperty)
-                    UpdateFromChildFields();
-            });
-            bottomRightField.RegisterCallback<PropertyChangedEvent>(e =>
-            {
-                if (e.property == BaseField<StyleLength>.valueProperty ||
-                    e.property == enabledSelfProperty)
-                    UpdateFromChildFields();
-            });
-            bottomLeftField.RegisterCallback<PropertyChangedEvent>(e =>
-            {
-                if (e.property == BaseField<StyleLength>.valueProperty ||
-                    e.property == enabledSelfProperty)
-                    UpdateFromChildFields();
-            });
-
-            // Used for its dragger.
-            var toggleInput = this.Q(className: "unity-toggle__input");
-            m_DraggerField = new IntegerField(" ");
-            m_DraggerField.name = "dragger-integer-field";
-            m_DraggerField.visualInput.focusable = false;
-            m_DraggerField.tabIndex = -1;
-            m_DraggerField.AddToClassList(DraggerFieldUssClassName);
-            m_DraggerField.RegisterValueChangedCallback(OnDraggerFieldUpdate);
-            toggleInput.Add(m_DraggerField);
-
-            headerInputField.AddToClassList(textUssClassName);
-            headerInputField.AddToClassList(TextField.alignedFieldUssClassName);
-            headerInputField.isDelayed = true;
-
-            headerInputField.RegisterValueChangedCallback(OnHeaderValueChange);
-
-            UpdateFromChildFields();
-        }
-
-        protected override TextField CreateHeaderInputElement()
-        {
-            return new TextField();
-        }
-
-        public override void UpdateFromChildFields()
-        {
-            var allTheSame = true;
-            var singleValue = "none";
-            var cumulativeValue = string.Empty;
-            var shouldBeEnabled = false;
-
-            for (var i = 0; i < fields.Count; ++i)
-            {
-                shouldBeEnabled |= fields[i].enabledSelf;
-                var childValue = fields[i].value.ToString().ToLower();
-                if (childValue.Equals("0"))
-                {
-                    childValue = "0px";
-                }
-
-                if (i == 0)
-                    singleValue = childValue;
-                else if (singleValue != childValue)
-                    allTheSame = false;
-
-                if (i != 0)
-                    cumulativeValue += FieldStringSeparator;
-
-                cumulativeValue += childValue;
-            }
-
-            headerInputField.SetValueWithoutNotify(allTheSame ? singleValue : cumulativeValue);
-            if (fields.Count > 0)
-                draggerIntegerField.SetValueWithoutNotify((int)fields[0].value.value.value);
-            enabledSelf = shouldBeEnabled;
-        }
-
-        private void OnHeaderValueChange(ChangeEvent<string> evt)
-        {
-            var newValue = evt.newValue;
-
-            var splitBy = new[] { ' ' };
-            var inputArray = newValue.Split(splitBy);
-
-            if (inputArray.Length == 1 && fields.Count > 0)
-            {
-                var newCommonValue = newValue;
-
-                for (var i = 0; i < fields.Count; ++i)
-                {
-                    var styleField = fields[i];
-                    styleField.value = Length.ParseString(newCommonValue);
-
-                    if (i == 0 && !newCommonValue.StartsWith(UssVariablePrefix))
-                    {
-                        newCommonValue = fields[i].value.ToString();
-                    }
-                }
-            }
-            else if (inputArray.Length == 2)
-            {
-                topLeftField.value = bottomRightField.value = Length.ParseString(inputArray[0]);
-                topRightField.value = bottomLeftField.value = Length.ParseString(inputArray[1]);
-            }
-            else if (inputArray.Length == 3)
-            {
-                topLeftField.value = Length.ParseString(inputArray[0]);
-                topRightField.value = bottomLeftField.value = Length.ParseString(inputArray[1]);
-                bottomRightField.value = Length.ParseString(inputArray[2]);
-            }
-            else
-            {
-                for (var i = 0; i < Mathf.Min(inputArray.Length, fields.Count); ++i)
-                {
-                    fields[i].value = Length.ParseString(inputArray[i]);
-                }
-            }
-
-            UpdateFromChildFields();
-            evt.StopPropagation();
-        }
-
-        void OnDraggerFieldUpdate(ChangeEvent<int> evt)
-        {
-            headerInputField.value = evt.newValue.ToString();
-        }
-
-        protected override void ForwardDependentPropertiesTracking(TrackPropertyEvent evt)
-        {
-            base.ForwardDependentPropertiesTracking(evt);
-            var target = evt.propertyName switch
-            {
-                k_TopLeftPropertyName => topLeftField,
-                k_TopRightPropertyName => topRightField,
-                k_BottomRightPropertyName => bottomRightField,
-                k_BottomLeftPropertyName => bottomLeftField,
-                _ => null
-            };
-
-            if (target == null)
-                return;
-
-            var subEvent = TrackPropertyEvent.GetPooled(evt.provider,  evt.propertyName);
-            subEvent.target = target;
-            target.SendEvent(subEvent);
-            evt.StopImmediatePropagation();
-        }
+        public BorderRadiusFoldout(string text) : base(text) { }
     }
 }

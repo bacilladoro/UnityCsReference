@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using Unity.Properties;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
@@ -16,7 +17,7 @@ namespace Unity.UI.Builder
     /// <summary>
     /// The content view of the binding window.
     /// </summary>
-    internal class BuilderBindingView : VisualElement, IBuilderSelectionNotifier
+    internal partial class BuilderBindingView : VisualElement, IBuilderSelectionNotifier
     {
         class BindingTypeComparer : IComparer<BindingType>
         {
@@ -44,16 +45,89 @@ namespace Unity.UI.Builder
         private const string k_UITkAuthoringEditor_InspectorStyleSheetDark = "UIToolkitAuthoring/Inspector/UIToolkitAuthoringInspectorDark.uss";
         private const string k_UITkAuthoringEditor_InspectorStyleSheetLight = "UIToolkitAuthoring/Inspector/UIToolkitAuthoringInspectorLight.uss";
 
-        private static readonly BindingType[] k_UxmlBindingTypes;
-        private static readonly List<string> k_UxmlBindingTypeDisplayNames = new();
+        internal class LazyInitStatics
+        {
+            private BindingType[] s_UxmlBindingTypes;
+            private List<string> s_UxmlBindingTypeDisplayNames;
+
+            public BindingType[] UxmlBindingTypes { get => s_UxmlBindingTypes; }
+            public List<string> UxmlBindingTypeDisplayNames { get => s_UxmlBindingTypeDisplayNames; }
+
+            public LazyInitStatics()
+            {
+                s_UxmlBindingTypeDisplayNames = new();
+                s_UxmlBindingTypes = LoadAllAvailableBindingClasses();
+            }
+
+            private BindingType[] LoadAllAvailableBindingClasses()
+            {
+                var bindingTypes = new List<BindingType>();
+                foreach (var t in TypeCache.GetTypesDerivedFrom<Binding>())
+                {
+                    if (t.IsAbstract)
+                        continue;
+
+                    if (t.IsGenericType)
+                        continue;
+
+                    var attributes = t.IsDefined(typeof(UxmlObjectAttribute), false);
+                    if (attributes == false)
+                        continue;
+
+                    // Probably need to do some mapping to a Uxml type name.
+                    var description = UxmlSerializedDataRegistry.GetDescription(t.FullName);
+                    if (null == description)
+                        continue;
+
+                    string itemText = null;
+                    // Display 'Default' for DataBinding class and place it first.
+                    if (t == typeof(DataBinding))
+                    {
+                        bindingTypes.Add(new BindingType
+                        {
+                            type = t,
+                            uxmlFullName = description.uxmlFullName,
+                            displayName = "Default"
+                        });
+                    }
+                    // Skip this type, as it requires context to work and should be used by users.
+                    else if (t.FullName == "Unity.UIToolkit.Editor.StylePropertyBinding")
+                    {
+                        continue;
+                    }
+                    else
+                    {
+                        itemText = ObjectNames.NicifyVariableName(description.uxmlName);
+
+                        if (!string.IsNullOrEmpty(t.Namespace))
+                            itemText = $"{t.Namespace}/{itemText}";
+
+                        bindingTypes.Add(new BindingType
+                        {
+                            type = t,
+                            uxmlFullName = description.uxmlFullName,
+                            displayName = itemText
+                        });
+                    }
+                }
+
+                bindingTypes.Sort(new BindingTypeComparer());
+                foreach (var bindingType in bindingTypes)
+                {
+                    s_UxmlBindingTypeDisplayNames.Add(bindingType.displayName);
+                }
+                return bindingTypes.ToArray();
+            }
+        }
+
+        [AutoStaticsCleanupOnCodeReload]
+        private static Lazy<LazyInitStatics> s_LazyInitStatics = new(() => new LazyInitStatics());
+
+        private static BindingType[] k_UxmlBindingTypes { get => s_LazyInitStatics.Value.UxmlBindingTypes; }
+        private static List<string> k_UxmlBindingTypeDisplayNames { get => s_LazyInitStatics.Value.UxmlBindingTypeDisplayNames; }
 
         // Used in tests.
         internal static BindingType[] allBindingTypes => k_UxmlBindingTypes;
-
-        static BuilderBindingView()
-        {
-            k_UxmlBindingTypes = LoadAllAvailableBindingClasses();
-        }
 
         static int IndexOfBindingType(string uxmlFullName)
         {
@@ -234,66 +308,6 @@ namespace Unity.UI.Builder
             m_BindingIdField.value = bindingPropertyName;
             m_TargetPropertyTypeName.text = TypeUtility.GetTypeDisplayName(propertyType);
             m_TargetPropertyTypeName.tooltip = propertyType?.GetDisplayFullName();
-        }
-
-        private static BindingType[] LoadAllAvailableBindingClasses()
-        {
-            var bindingTypes = new List<BindingType>();
-            foreach (var t in TypeCache.GetTypesDerivedFrom<Binding>())
-            {
-                if (t.IsAbstract)
-                    continue;
-
-                if (t.IsGenericType)
-                    continue;
-
-                var attributes = t.IsDefined(typeof(UxmlObjectAttribute), false);
-                if (attributes == false)
-                    continue;
-
-                // Probably need to do some mapping to a Uxml type name.
-                var description = UxmlSerializedDataRegistry.GetDescription(t.FullName);
-                if (null == description)
-                    continue;
-
-                string itemText = null;
-                // Display 'Default' for DataBinding class and place it first.
-                if (t == typeof(DataBinding))
-                {
-                    bindingTypes.Add(new BindingType
-                    {
-                        type = t,
-                        uxmlFullName = description.uxmlFullName,
-                        displayName = "Default"
-                    });
-                }
-                // Skip this type, as it requires context to work and should be used by users.
-                else if (t.FullName == "Unity.UIToolkit.Editor.StylePropertyBinding")
-                {
-                    continue;
-                }
-                else
-                {
-                    itemText = ObjectNames.NicifyVariableName(description.uxmlName);
-
-                    if (!string.IsNullOrEmpty(t.Namespace))
-                        itemText = $"{t.Namespace}/{itemText}";
-
-                    bindingTypes.Add(new BindingType
-                    {
-                        type = t,
-                        uxmlFullName = description.uxmlFullName,
-                        displayName = itemText
-                    });
-                }
-            }
-
-            bindingTypes.Sort(new BindingTypeComparer());
-            foreach (var bindingType in bindingTypes)
-            {
-                k_UxmlBindingTypeDisplayNames.Add(bindingType.displayName);
-            }
-            return bindingTypes.ToArray();
         }
 
         void UpdateBindingBeingCreatedFromBindingClass()

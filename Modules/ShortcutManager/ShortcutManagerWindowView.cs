@@ -14,6 +14,7 @@ using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEngine.UIElements;
 using Unity.Collections;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.ShortcutManagement
 {
@@ -957,6 +958,7 @@ namespace UnityEditor.ShortcutManagement
         protected const string k_SelectedClass = "selected";
         protected const string k_SpaceClass = "space";
 
+        [NoAutoStaticsCleanup] // monotonic value-type tab-index counter; safe to persist across reload
         static int s_TabIndex = 0;
 
         Key m_SelectedKey;

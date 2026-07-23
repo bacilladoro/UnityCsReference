@@ -6,10 +6,16 @@ using UnityEngine.Bindings;
 
 namespace UnityEngine
 {
+    ///<summary>A heightmap based collider.</summary>
+    ///<seealso cref="SphereCollider" />
+    ///<seealso cref="CapsuleCollider" />
+    ///<seealso cref="PhysicsMaterial" />
+    ///<seealso cref="Rigidbody" />
     [NativeHeader("Modules/TerrainPhysics/TerrainCollider.h")]
     [NativeHeader("Modules/Terrain/Public/TerrainData.h")]
     public class TerrainCollider : Collider
     {
+        ///<summary>The terrain that stores the heightmap.</summary>
         public extern TerrainData terrainData { get; set; }
 
         extern private RaycastHit Raycast(Ray ray, float maxDistance, bool hitHoles, ref bool hasHit);

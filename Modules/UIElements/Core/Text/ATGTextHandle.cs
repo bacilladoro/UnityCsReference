@@ -22,26 +22,26 @@ namespace UnityEngine.UIElements
 
         internal unsafe bool TryGetSourceTextPointer(out IntPtr ptr, out int length)
         {
-              if (m_TextElement.showPlaceholderText
-                  || m_TextElement.edition.isPassword
-                  || (m_TextElement.isElided && !TextLibraryCanElide()))
-              {
-                  ptr = IntPtr.Zero;
-                  length = 0;
-                  return false;
-              }
+            // Placeholder and password text need a processed buffer
+            if (m_TextElement.showPlaceholderText
+                || m_TextElement.edition.isPassword)
+            {
+                ptr = IntPtr.Zero;
+                length = 0;
+                return false;
+            }
 
-              ref var buffer = ref m_TextElement.textBuffer;
-              if (!buffer.isCreated || buffer.length == 0)
-              {
-                  ptr = IntPtr.Zero;
-                  length = 0;
-                  return true;
-              }
+            ref var buffer = ref m_TextElement.textBuffer;
+            if (!buffer.isCreated || buffer.length == 0)
+            {
+                ptr = IntPtr.Zero;
+                length = 0;
+                return true;
+            }
 
-              ptr = (IntPtr)NativeArrayUnsafeUtility.GetUnsafeReadOnlyPtr(buffer.buffer);
-              length = buffer.length;
-              return true;
+            ptr = (IntPtr)NativeArrayUnsafeUtility.GetUnsafeReadOnlyPtr(buffer.buffer);
+            length = buffer.length;
+            return true;
         }
 
         // UUM-90538: empty input fields need a zero-width space so they get a non-zero line height
@@ -238,16 +238,8 @@ namespace UnityEngine.UIElements
 
             nativeSettings.preProcessFlags = PreProcessFlags.None;
 
-            bool useDirectBuffer = textToMeasure == null
-                && !(m_TextElement.isElided && !TextLibraryCanElide())
-                && !m_TextElement.showPlaceholderText
-                && !m_TextElement.edition.isPassword;
-
-            string? text = useDirectBuffer
-                ? null
-                : (textToMeasure
-                    ?? (m_TextElement.isElided && !TextLibraryCanElide() ? m_TextElement.elidedText : m_TextElement.renderedTextString)
-                    ?? "");
+            // A managed string is only required for an explicit measure request
+            string? text = textToMeasure;
 
             var effectiveFontSize = (fontsize ?? style.fontSize.value) * scale;
             nativeSettings.fontSize = (int)Math.Round(effectiveFontSize * 64.0f, MidpointRounding.AwayFromZero);
@@ -341,23 +333,29 @@ namespace UnityEngine.UIElements
             nativeSettings.hoveredTag = (HoveredTag)m_HoveredTag;
             nativeSettings.pixelsPerPointFixed64 = (int)Math.Round(GetPixelsPerPoint() * 64.0f);
 
-            if (useDirectBuffer
-                && TryGetSourceTextPointer(out IntPtr srcPtr, out int srcLen)
-                && srcPtr != IntPtr.Zero)
+            if (text == null && TryGetSourceTextPointer(out IntPtr srcPtr, out int srcLen))
             {
-                nativeSettings.SetTextBuffer(m_TextElement.textBuffer.buffer, m_TextElement.textBuffer.length);
+                if (srcPtr != IntPtr.Zero)
+                {
+                    nativeSettings.SetTextBuffer(m_TextElement.textBuffer.buffer, m_TextElement.textBuffer.length);
+                }
+                else
+                {
+                    m_ProcessedTextBuffer.CopyFrom(string.Empty);
+                    nativeSettings.SetTextBuffer(m_ProcessedTextBuffer.buffer, m_ProcessedTextBuffer.length);
+                }
                 return true;
             }
 
-            // Fallback for placeholder / password / library-incompatible
-            // elision / explicit textToMeasure: materialize into a managed
-            // string and copy into the processed-text buffer.
-            if (useDirectBuffer)
-                text = m_TextElement.renderedTextString ?? "";
+            // Placeholder / password: build the masked or placeholder representation directly into the processed-text buffer
+            if (text == null && m_TextElement.TryGetProcessedRenderedText(ref m_ProcessedTextBuffer))
+            {
+                nativeSettings.SetTextBuffer(m_ProcessedTextBuffer.buffer, m_ProcessedTextBuffer.length);
+                return true;
+            }
 
-            text ??= string.Empty;
-
-            m_ProcessedTextBuffer.CopyFrom(text);
+            // Explicit measured string (MeasureTextSize call): copy the managed string into the processed-text buffer.
+            m_ProcessedTextBuffer.CopyFrom(text ?? string.Empty);
             nativeSettings.SetTextBuffer(m_ProcessedTextBuffer.buffer, m_ProcessedTextBuffer.length);
             return true;
         }

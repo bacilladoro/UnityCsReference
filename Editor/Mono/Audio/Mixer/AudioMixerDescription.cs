@@ -6,6 +6,7 @@ using UnityEngine;
 using UnityEditor;
 using System;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 
 //FIXME: change this to nested namespaces when we merge in trunk
 namespace UnityEditor.Audio
@@ -153,6 +154,7 @@ namespace UnityEditor.Audio
             return true;
         }
 
+        [NoAutoStaticsCleanup] // Registry of effect definitions rebuilt via Refresh()/ClearDefinitions() on project change, not tied to ALC; safe to persist across reload.
         private static readonly List<MixerEffectDefinition> s_MixerEffectDefinitions = new List<MixerEffectDefinition>();
     }
 }

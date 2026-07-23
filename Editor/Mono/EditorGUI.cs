@@ -29,6 +29,7 @@ using UnityEngine.UIElements;
 using UnityEditor.UIElements;
 using UnityEngine.Bindings;
 using Unity.Loading;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -37,8 +38,10 @@ namespace UnityEditor
     [SuppressMessage("ReSharper", "NotAccessedField.Local")]
     public sealed partial class EditorGUI
     {
+        [AutoStaticsCleanupOnCodeReload]
         private static RecycledTextEditor activeEditor;
 
+        [AutoStaticsCleanupOnCodeReload]
         internal static DelayedTextEditor s_DelayedTextEditorInternal;
         internal static DelayedTextEditor s_DelayedTextEditor
         {
@@ -50,6 +53,7 @@ namespace UnityEditor
             }
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         internal static RecycledTextEditor s_RecycledEditorInternal;
         internal static RecycledTextEditor s_RecycledEditor
         {
@@ -61,20 +65,30 @@ namespace UnityEditor
             }
         }
 
+        [NoAutoStaticsCleanup] // transient text-edit state; value type/string, safe to persist
         internal static string s_OriginalText = "";
+        [NoAutoStaticsCleanup] // transient edit string; safe to persist
         internal static string s_RecycledCurrentEditingString;
+        [NoAutoStaticsCleanup] // transient input flag; value type
         private static bool bKeyEventActive = false;
 
+        [NoAutoStaticsCleanup] // transient drag flag; value type
         internal static bool s_DragToPosition = false;
+        [NoAutoStaticsCleanup] // transient drag flag; value type
         internal static bool s_Dragged = false;
+        [NoAutoStaticsCleanup] // transient input flag; value type
         internal static bool s_SelectAllOnMouseUp = true;
 
         private const double kFoldoutExpandTimeout = 0.7;
+        [NoAutoStaticsCleanup] // transient animation timer; value type
         private static double s_FoldoutDestTime;
+        [NoAutoStaticsCleanup] // transient drag control id; value type
         private static int s_DragUpdatedOverID = 0;
 
         private const int kSearchFieldTextLimit = 1024;
+        [NoAutoStaticsCleanup] // transient session flag; value type
         private static bool s_SearchFieldTextLimitApproved = false;
+        [NoAutoStaticsCleanup] // transient control id; value type
         private static int s_SavekeyboardControl = 0;
 
         private static readonly int s_FoldoutHash = "Foldout".GetHashCode();
@@ -112,12 +126,18 @@ namespace UnityEditor
             InitiatedDragging,
             CurrentlyDragging
         }
+        [NoAutoStaticsCleanup] // transient drag enum state; value type
         private static DragCandidateState s_DragCandidateState = DragCandidateState.NotDragging;
         private const float kDragDeadzone = 16;
+        [NoAutoStaticsCleanup] // transient drag origin; value type
         private static Vector2 s_DragStartPos;
+        [NoAutoStaticsCleanup] // transient drag value; value type
         private static double s_DragStartValue = 0;
+        [NoAutoStaticsCleanup] // transient drag value; value type
         private static long s_DragStartIntValue = 0;
+        [NoAutoStaticsCleanup] // transient drag sensitivity; value type
         private static double s_DragSensitivity = 0;
+        [NoAutoStaticsCleanup] // transient drag accumulator; value type
         private static double s_LogarithmicDragAccum = 0;
         // Exponent change per accumulated nice-mouse-delta unit when scrubbing a logarithmic slider's label.
         private const double kLogarithmicDragSensitivity = 0.02;
@@ -140,20 +160,28 @@ namespace UnityEditor
         internal const float kLabelWidthPadding = 3f;
         internal const float kLabelWidthMargin = 40f;
         internal const float kMinLabelWidth = 120f;
+        [NoAutoStaticsCleanup] // numeric format string; safe to persist
         internal static string kFloatFieldFormatString = UINumericFieldsUtils.k_FloatFieldFormatString;
+        [NoAutoStaticsCleanup] // numeric format string; safe to persist
         internal static string kDoubleFieldFormatString = UINumericFieldsUtils.k_DoubleFieldFormatString;
+        [NoAutoStaticsCleanup] // numeric format string; safe to persist
         internal static string kIntFieldFormatString = UINumericFieldsUtils.k_IntFieldFormatString;
+        [NoAutoStaticsCleanup] // transient indent level; value type
         internal static int ms_IndentLevel = 0;
         internal const float kIndentPerLevel = 15;
         internal const int kControlVerticalSpacingLegacy = 2;
         internal const int kDefaultSpacing = 6;
         [VisibleToOtherModules("UnityEditor.AIModule")]
+        [NoAutoStaticsCleanup] // themed style constant (SVC), immutable, safe to persist
         internal static readonly SVC<float> kControlVerticalSpacing = new SVC<float>("--theme-control-vertical-spacing", 2.0f);
+        [NoAutoStaticsCleanup] // themed style constant (SVC), immutable, safe to persist
         internal static readonly SVC<float> kVerticalSpacingMultiField = new SVC<float>("--theme-multifield-vertical-spacing", 0.0f);
 
+        [NoAutoStaticsCleanup] // transient unit label; safe to persist
         internal static string s_UnitString = "";
         internal const int kInspTitlebarIconWidth = 16;
         internal const int kInspTitlebarFoldoutIconWidth = 13;
+        [NoAutoStaticsCleanup] // themed style constant (SVC), immutable, safe to persist
         internal static readonly SVC<float> kWindowToolbarHeight = new SVC<float>("--window-toolbar-height", 21f);
         internal const int kTabButtonHeight = 22;
         internal const int kLargeButtonHeight = 24;
@@ -182,48 +210,66 @@ namespace UnityEditor
         private static readonly GUIContent s_ExtentLabel = EditorGUIUtility.TrTextContent("Extent");
         private static readonly GUIContent s_PositionLabel = EditorGUIUtility.TrTextContent("Position");
         private static readonly GUIContent s_SizeLabel = EditorGUIUtility.TrTextContent("Size");
-        internal static GUIContent s_PleasePressAKey = EditorGUIUtility.TrTextContent("[Please press a key]");
+        internal static readonly GUIContent s_PleasePressAKey = EditorGUIUtility.TrTextContent("[Please press a key]");
 
         internal static readonly GUIContent s_ClipingPlanesLabel = EditorGUIUtility.TrTextContent("Clipping Planes", "The distances from the Camera where rendering starts and stops.");
         internal static readonly GUIContent[] s_NearAndFarLabels = { EditorGUIUtility.TrTextContent("Near", "The closest point to the Camera where drawing occurs."), EditorGUIUtility.TrTextContent("Far", "The furthest point from the Camera that drawing occurs.") };
         internal const float kNearFarLabelsWidth = 35f;
 
+        [NoAutoStaticsCleanup] // transient control id; value type
         private static int s_ColorPickID;
 
+        [NoAutoStaticsCleanup] // transient control id; value type
         private static int s_CurveID;
-        internal static Color kCurveColor = Color.green;
-        internal static Color kCurveBGColor = new Color(0.337f, 0.337f, 0.337f, 1f);
-        internal static EditorGUIUtility.SkinnedColor kSplitLineSkinnedColor = new EditorGUIUtility.SkinnedColor(new Color(0.6f, 0.6f, 0.6f, 1.333f), new Color(0.12f, 0.12f, 0.12f, 1.333f));
+        internal static readonly Color kCurveColor = Color.green;
+        internal static readonly Color kCurveBGColor = new Color(0.337f, 0.337f, 0.337f, 1f);
+        [NoAutoStaticsCleanup] // immutable skinned color constant, safe to persist
+        internal static readonly EditorGUIUtility.SkinnedColor kSplitLineSkinnedColor = new EditorGUIUtility.SkinnedColor(new Color(0.6f, 0.6f, 0.6f, 1.333f), new Color(0.12f, 0.12f, 0.12f, 1.333f));
 
-        internal static Color k_OverrideMarginColor = new Color(1f / 255f, 153f / 255f, 235f / 255f, 0.75f);
-        internal static Color k_OverrideMarginColorSelected = new Color(239f / 255f, 239f / 255f, 239f / 239f, 1f);
-        internal static Color k_OverrideMarginColorNotApplicable = new Color(1f / 255f, 153f / 255f, 235f / 255f, 0.35f);
+        internal static readonly Color k_OverrideMarginColor = new Color(1f / 255f, 153f / 255f, 235f / 255f, 0.75f);
+        internal static readonly Color k_OverrideMarginColorSelected = new Color(239f / 255f, 239f / 255f, 239f / 239f, 1f);
+        internal static readonly Color k_OverrideMarginColorNotApplicable = new Color(1f / 255f, 153f / 255f, 235f / 255f, 0.35f);
 
-        internal static Color k_LiveModifiedMarginLightThemeColor = new Color(183f / 255f, 60f / 255f, 21f / 255f, 1f);
-        internal static Color k_LiveModifiedMarginDarkThemeColor = new Color(255f / 255f, 165f / 255f, 60f / 255f, 1f);
+        internal static readonly Color k_LiveModifiedMarginLightThemeColor = new Color(183f / 255f, 60f / 255f, 21f / 255f, 1f);
+        internal static readonly Color k_LiveModifiedMarginDarkThemeColor = new Color(255f / 255f, 165f / 255f, 60f / 255f, 1f);
 
         private const int kInspTitlebarSpacing = 4;
         private static readonly GUIContent s_PropertyFieldTempContent = new GUIContent();
+        [NoAutoStaticsCleanup] // lazy GUIContent icon; survives reload
         private static GUIContent s_IconDropDown;
+        [NoAutoStaticsCleanup] // lazy Material icon; survives reload
         private static Material s_IconTextureInactive;
 
+        [NoAutoStaticsCleanup] // transient layout flag; value type
         private static bool s_HasPrefixLabel;
         private static readonly GUIContent s_PrefixLabel = new GUIContent((string)null);
+        [NoAutoStaticsCleanup] // transient layout rect; value type
         private static Rect s_PrefixTotalRect;
+        [NoAutoStaticsCleanup] // transient layout rect; value type
         private static Rect s_PrefixRect;
+        [NoAutoStaticsCleanup] // lazy GUIStyle; survives reload
         private static GUIStyle s_PrefixStyle;
+        [NoAutoStaticsCleanup] // lazy GUIStyle; survives reload
         private static GUIStyle s_IconButtonStyle;
+        [NoAutoStaticsCleanup] // transient color cache; value type
         private static Color s_PrefixGUIColor;
 
+        [NoAutoStaticsCleanup] // transient highlight key; safe to persist
         private static string s_LabelHighlightContext;
+        [NoAutoStaticsCleanup] // transient highlight color; value type
         private static Color s_LabelHighlightColor;
+        [NoAutoStaticsCleanup] // transient highlight color; value type
         private static Color s_LabelHighlightSelectionColor;
 
+        [NoAutoStaticsCleanup] // rebuildable flag-name cache; no user refs
         private static string[] m_FlagNames;
+        [NoAutoStaticsCleanup] // rebuildable flag-value cache; no user refs
         private static int[] m_FlagValues;
+        [NoAutoStaticsCleanup] // auto-prop; float layout constant
         internal static float lineHeight { get; set; } = kSingleLineHeight;
 
         // Makes the following controls give the appearance of editing multiple different values.
+        [NoAutoStaticsCleanup] // auto-prop; transient bool state
         public static bool showMixedValue { get; set; }
 
         private static readonly GUIContent s_MixedValueContent = EditorGUIUtility.TrTextContent("\u2014", "Mixed Values");
@@ -231,9 +277,10 @@ namespace UnityEditor
         internal static GUIContent mixedValueContent => s_MixedValueContent;
 
         private static readonly Color s_MixedValueContentColor = new Color(1, 1, 1, 0.5f);
+        [NoAutoStaticsCleanup] // transient color save/restore; value type
         private static Color s_MixedValueContentColorTemp = Color.white;
 
-        internal static SavedBool s_ShowRepaintDots = new SavedBool("ShowRepaintDots", true);
+        internal static readonly SavedBool s_ShowRepaintDots = new SavedBool("ShowRepaintDots", true);
 
         internal static readonly Regex s_ATagRegex = new Regex(@"(?<=\b="")[^""]*");
         internal static readonly Regex s_LinkTagRegex = new Regex(@"(?<=\b=')[^']*");
@@ -247,7 +294,8 @@ namespace UnityEditor
             public static string revertPropertyValueIdenticalToSource = L10n.Tr("Revert (identical value to Prefab '{0}')");
         }
 
-        static EditorGUI()
+        [OnCodeLoaded]
+        static void OnCodeLoadedInitialize()
         {
             hyperLinkClicked += EditorGUI_OpenFileOnHyperLinkClicked;
             ATGTextEventHandler.onComplexHyperlinkClicked += HandleComplexHyperlinkClicked;
@@ -275,6 +323,19 @@ namespace UnityEditor
             activeEditor?.EndEditing();
         }
 
+        internal static void CommitActiveDelayedTextField()
+        {
+            // The newly focused field already committed the outgoing one at the switch; don't re-commit it (UUM-142802).
+            if (DelayedTextEditor.s_SkipFocusOutCommit)
+            {
+                DelayedTextEditor.s_SkipFocusOutCommit = false;
+                return;
+            }
+
+            // Focus left to something that didn't take over the editor; commit the field that lost focus.
+            (activeEditor as DelayedTextEditor)?.CommitAndEndEditing();
+        }
+
         public static void FocusTextInControl(string name)
         {
             GUI.FocusControl(name);
@@ -295,9 +356,12 @@ namespace UnityEditor
             s_FoldoutHeaderGroupActive = 0;
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         private static readonly Stack<PropertyGUIData> s_PropertyStack = new Stack<PropertyGUIData>();
 
+        [AutoStaticsCleanupOnCodeReload]
         private static readonly Stack<bool> s_EnabledStack = new Stack<bool>();
+        [AutoStaticsCleanupOnCodeReload]
         private static readonly Stack<(bool insideList, int depth)> s_IsInsideListStack = new Stack<(bool insideList, int depth)>();
 
         // @TODO: API soon to be deprecated but still in a grace period; documentation states that users
@@ -450,6 +514,7 @@ namespace UnityEditor
                 GUI.isInsideList = false;
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         private static readonly Stack<bool> s_ChangedStack = new Stack<bool>();
 
         public class ChangeCheckScope : GUI.Scope
@@ -560,7 +625,16 @@ namespace UnityEditor
                     return;
                 }
 
-                activeEditor?.EndEditing();
+                // A different control is displacing the shared delayed editor: commit the outgoing one now and flag the later FocusOut to skip it (UUM-142802).
+                if (activeEditor is DelayedTextEditor displacedDelayedEditor && activeEditor.controlID != id)
+                {
+                    displacedDelayedEditor.CommitAndEndEditing();
+                    DelayedTextEditor.s_SkipFocusOutCommit = true;
+                }
+                else
+                {
+                    activeEditor?.EndEditing();
+                }
 
                 activeEditor = this;
                 controlID = id;
@@ -630,6 +704,9 @@ namespace UnityEditor
             private bool m_CommitCommandSentOnLostFocus;
             private const string CommitCommand = "DelayedControlShouldCommit";
 
+            // Set when a control takes over the shared delayed editor; makes the following FocusOut skip its commit.
+            internal static bool s_SkipFocusOutCommit;
+
             private bool m_IgnoreBeginGUI = false;
 
             public void BeginGUI()
@@ -638,6 +715,10 @@ namespace UnityEditor
                 {
                     return;
                 }
+
+                // Clear the skip flag each frame so it can't leak past a single focus transition.
+                s_SkipFocusOutCommit = false;
+
                 if (GUIUtility.keyboardControl == controlID)
                 {
                     controlThatHadFocus = GUIUtility.keyboardControl;
@@ -678,31 +759,60 @@ namespace UnityEditor
                 }
             }
 
+            public override void BeginEditing(int id, string newText, Rect position, GUIStyle style, bool multiline, bool passwordField)
+            {
+                bool alreadyEditingThisControl = IsEditingControl(id);
+                base.BeginEditing(id, newText, position, style, multiline, passwordField);
+
+                if (!alreadyEditingThisControl)
+                {
+                    // Seed the shared editing state from this control so a freshly-focused field never shows the previous field's text.
+                    s_RecycledCurrentEditingString = newText;
+                    controlThatHadFocusValue = newText;
+
+                    // This control is now the active editor; suppress the following FocusOut commit for the outgoing field.
+                    s_SkipFocusOutCommit = true;
+                }
+            }
+
             public override void EndEditing()
             {
                 //The following block handles the case where a different window is focus while editing delayed text box
                 if (Event.current == null)
                 {
-                    // We set this flag because of a bug that was trigger when you switched focus to another window really fast
-                    // right after focusing on the text box. For some reason keyboardControl was changed and the commit message
-                    // was being sent twice which caused layout issues.
-                    m_CommitCommandSentOnLostFocus = true;
-                    m_IgnoreBeginGUI = true;
-                    messageControl = controlID;
-                    var temp = GUIUtility.keyboardControl;
-                    if (viewThatHadFocus != null)
-                    {
-                        viewThatHadFocus.SetKeyboardControl(0);
-
-                        viewThatHadFocus.SendEvent(EditorGUIUtility.CommandEvent(CommitCommand));
-
-                        viewThatHadFocus.SetKeyboardControl(temp);
-                    }
-                    m_IgnoreBeginGUI = false;
-                    messageControl = 0;
+                    SendCommitCommandToViewThatHadFocus();
                 }
 
                 base.EndEditing();
+            }
+
+            internal void CommitAndEndEditing()
+            {
+                // Force the commit during a FocusOut dispatch (Event.current != null), where EndEditing() would not.
+                SendCommitCommandToViewThatHadFocus();
+                base.EndEditing();
+            }
+
+            private void SendCommitCommandToViewThatHadFocus()
+            {
+                // We set this flag because of a bug that was triggered when you switched focus to
+                // another window really fast right after focusing on the text box. For some reason
+                // keyboardControl was changed and the commit message was being sent twice which
+                // caused layout issues.
+                m_CommitCommandSentOnLostFocus = true;
+                m_IgnoreBeginGUI = true;
+                messageControl = controlID;
+                var temp = GUIUtility.keyboardControl;
+                if (viewThatHadFocus != null)
+                {
+                    viewThatHadFocus.SetKeyboardControl(0);
+
+                    viewThatHadFocus.SendEvent(EditorGUIUtility.CommandEvent(CommitCommand));
+
+                    viewThatHadFocus.SetKeyboardControl(temp);
+                }
+                m_IgnoreBeginGUI = false;
+                messageControl = 0;
             }
 
             public string OnGUI(int id, string value, out bool changed)
@@ -1523,6 +1633,7 @@ namespace UnityEditor
             return true;
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<EditorWindow, UnityEditor.HyperLinkClickedEventArgs> hyperLinkClicked;
 
         private static void EditorGUI_OpenFileOnHyperLinkClicked(EditorWindow window, UnityEditor.HyperLinkClickedEventArgs args)
@@ -4037,7 +4148,9 @@ namespace UnityEditor
             EndProperty();
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         private static Func<Enum, bool> s_CurrentCheckEnumEnabled;
+        [AutoStaticsCleanupOnCodeReload]
         private static EnumData s_CurrentEnumData;
 
         private static bool CheckCurrentEnumTypeEnabled(int value)
@@ -7350,7 +7463,9 @@ namespace UnityEditor
             DrawMarginLineForRect(position, EditorGUIUtility.isProSkin? k_LiveModifiedMarginDarkThemeColor : k_LiveModifiedMarginLightThemeColor);
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         private static SerializedProperty s_PendingPropertyKeyboardHandling = null;
+        [AutoStaticsCleanupOnCodeReload]
         private static SerializedProperty s_PendingPropertyDelete = null;
 
         private static void DoPropertyFieldKeyboardHandling(SerializedProperty property)
@@ -7416,7 +7531,9 @@ namespace UnityEditor
             return LayerMaskField(position, layers, null, label, EditorStyles.layerMaskField);
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         private static string[] s_LayerNames;
+        [AutoStaticsCleanupOnCodeReload]
         private static int[] s_LayerValues;
 
         internal static uint LayerMaskField(Rect position, UInt32 layers, SerializedProperty property, GUIContent label, GUIStyle style)
@@ -7802,7 +7919,7 @@ namespace UnityEditor
         static readonly string s_ArrayMultiInfoFormatString = EditorGUIUtility.TrTextContent("This field cannot display arrays with more than {0} elements when multiple objects are selected.").text;
         static readonly GUIContent s_ArrayMultiInfoContent = new GUIContent();
 
-        static ProfilerMarker s_EvalExpressionMarker = new ProfilerMarker("Inspector.EvaluateMultiExpression");
+        static readonly ProfilerMarker s_EvalExpressionMarker = new ProfilerMarker("Inspector.EvaluateMultiExpression");
 
         internal static bool DefaultPropertyField(Rect position, SerializedProperty property, GUIContent label)
         {
@@ -8319,6 +8436,7 @@ namespace UnityEditor
             set { s_CollectingToolTips = value; }
         }
 
+        [NoAutoStaticsCleanup] // transient tooltip-collection flag; value type
         internal static bool s_CollectingToolTips;
 
         internal static int AdvancedPopup(Rect rect, int selectedIndex, string[] displayedOptions)

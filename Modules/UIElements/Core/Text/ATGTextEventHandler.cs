@@ -8,10 +8,11 @@ using System.Text.RegularExpressions;
 using UnityEngine.TextCore;
 using UnityEngine.TextCore.Text;
 using UnityEngine.UIElements;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEngine.UIElements
 {
-    class ATGTextEventHandler
+    partial class ATGTextEventHandler
     {
         static readonly Regex s_ATagRegex = new Regex(@"(?<=\b="")[^""]*");
         static readonly Regex s_LinkTagRegex = new Regex(@"(?<=\b=')[^']*");
@@ -72,6 +73,7 @@ namespace UnityEngine.UIElements
             m_HyperlinkOnPointerOut = HyperlinkOnPointerOut;
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         internal static event Action<Dictionary<string, string>> onComplexHyperlinkClicked;
 
         void EnsureTextGenerationInfoIsValid()

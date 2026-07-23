@@ -7,6 +7,7 @@ using System.IO;
 using System.Collections.Generic;
 using System.Threading;
 
+using Unity.Scripting.LifecycleManagement;
 using Unity.UI.Builder;
 using UnityEditor.Search;
 using UnityEditor.PackageManager;
@@ -240,6 +241,7 @@ namespace UnityEditor.Experimental.GraphView
 
         private const float PackageManagerTimeout = 5f; // 5s
 
+        [NoAutoStaticsCleanup] // session UI state; strings don't pin ALC
         private static readonly List<string> s_HideInstallSampleButtonByTool = new ();
         private readonly List<TreeViewItemData<ITemplateDescriptor>> m_TemplatesTree = new ();
 

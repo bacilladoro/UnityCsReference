@@ -325,8 +325,6 @@ namespace UnityEngine.PlayerLoop
         [RequiredByNativeCode]
         public struct MemoryFrameMaintenance {}
         [RequiredByNativeCode]
-        public struct ExecuteGameCenterCallbacks {}
-        [RequiredByNativeCode]
         public struct XRPreEndFrame {}
         [RequiredByNativeCode]
         public struct ProfilerEndFrame {}

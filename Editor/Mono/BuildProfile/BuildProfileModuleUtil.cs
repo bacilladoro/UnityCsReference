@@ -505,11 +505,14 @@ namespace UnityEditor.Build.Profile
             int subtarget = IsStandalonePlatform(buildTarget) ?
                 (int)activeProfile.subtarget : EditorUserBuildSettings.GetActiveSubtargetFor(buildTarget);
 
-            options.options = GetBuildOptions(buildTarget, buildTargetGroup, buildLocation, customBuildOptions);
+            var buildPath = !string.IsNullOrEmpty(buildLocation) ?
+                buildLocation : activeProfile.GetComponent<BuildDestinationSettings>()?.buildPath ?? string.Empty;
+
+            options.options = GetBuildOptions(buildTarget, buildTargetGroup, buildPath, customBuildOptions);
             options.target = buildTarget;
             options.subtarget = subtarget;
             options.targetGroup = buildTargetGroup;
-            options.locationPathName = buildLocation;
+            options.locationPathName = buildPath;
             options.assetBundleManifestPath = assetBundleManifestPath ?? PostprocessBuildPlayer.GetStreamingAssetsBundleManifestPath();
             options.scenes = EditorBuildSettingsScene.GetActiveSceneList(activeProfile.GetScenesForBuild());
             options.previousBuildReportDirectories = PostprocessBuildPlayer.GetPreviousContentBuildReportDirectories();

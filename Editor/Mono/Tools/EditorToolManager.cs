@@ -11,6 +11,7 @@ using UnityEditor.Actions;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityObject = UnityEngine.Object;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.EditorTools
 {
@@ -22,7 +23,7 @@ namespace UnityEditor.EditorTools
         CreationToolsGroup() {}
     }
 
-    sealed class EditorToolManager : EditorToolStateManager<EditorToolManager, EditorToolManager.EditorToolState>
+    sealed partial class EditorToolManager : EditorToolStateManager<EditorToolManager, EditorToolManager.EditorToolState>
     {
         [Serializable]
         internal class EditorToolState: EditorToolStateBase
@@ -835,8 +836,10 @@ namespace UnityEditor.EditorTools
 
         // Mimic behavior of Tools.toolChanged for backwards compatibility until existing tools are converted to the new
         // apis.
+        [AutoStaticsCleanupOnCodeReload]
         internal static event Action<EditorTool, EditorTool> activeToolChanged;
 
+        [AutoStaticsCleanupOnCodeReload]
         internal static event Action<EditorTool, EditorTool, Type> activeToolChangedForOwner;
 
         // unfiltered component tools includes locked inspectors
@@ -844,6 +847,7 @@ namespace UnityEditor.EditorTools
 
         internal static IEnumerable<ComponentEditor> componentContexts => instance.defaultState.componentContexts;
 
+        [AutoStaticsCleanupOnCodeReload]
         internal static IReadOnlyList<Type> additionalContextToolTypesCache = Array.Empty<Type>();
 
         internal static EditorTool activeTool
@@ -917,6 +921,7 @@ namespace UnityEditor.EditorTools
             public UnityObject targetObject;
             public UnityObject[] targetObjects;
 
+            [NoAutoStaticsCleanup] // Immutable empty sentinel value, holds no live references; safe to persist.
             public static readonly ComponentToolCache Empty = new ComponentToolCache(null, null, typeof(SceneView));
 
             public ComponentToolCache(EditorToolContext context, EditorTool tool, Type toolOwner)
@@ -981,7 +986,9 @@ namespace UnityEditor.EditorTools
             }
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         internal static event Action availableToolsChanged;
+        [AutoStaticsCleanupOnCodeReload]
         internal static event Action<Type> availableToolsChangedForOwner;
 
         EditorToolManager() {}

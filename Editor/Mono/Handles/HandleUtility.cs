@@ -6,6 +6,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Profiling;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.Internal;
 using UnityEngine.Rendering;
@@ -92,6 +93,7 @@ namespace UnityEditor
         public HandleUtility.ResolvePickingCallback resolver { get; }
         public HandleUtility.ResolvePickingWithWorldPositionCallback resolverWithWorldPos { get; }
 
+        [NoAutoStaticsCleanup] // default struct value; no mutable state
         public static readonly RenderPickingResult NoOperation = default;
 
         public RenderPickingResult(int renderedPickingIndexCount, HandleUtility.ResolvePickingCallback resolver)
@@ -168,6 +170,19 @@ namespace UnityEditor
         internal static float GetParametrization(Vector2 x0, Vector2 x1, Vector2 x2)
         {
             return -(Vector2.Dot(x1 - x0, x2 - x1) / (x2 - x1).sqrMagnitude);
+        }
+
+        internal static Vector3 WorldPointWithScreenOffset(Camera cam, Vector3 worldPoint, Vector2 screenOffset)
+        {
+            Transform camTransform = cam.transform;
+            Vector2 screenPoint = cam.WorldToScreenPoint(worldPoint);
+            Vector2 rightPixels = (Vector2)cam.WorldToScreenPoint(worldPoint + camTransform.right) - screenPoint;
+            Vector2 upPixels = (Vector2)cam.WorldToScreenPoint(worldPoint + camTransform.up) - screenPoint;
+
+            float alongRight = rightPixels.sqrMagnitude > Mathf.Epsilon ? screenOffset.x / rightPixels.magnitude : 0f;
+            float alongUp = upPixels.sqrMagnitude > Mathf.Epsilon ? screenOffset.y / upPixels.magnitude : 0f;
+
+            return worldPoint + camTransform.right * alongRight + camTransform.up * alongUp;
         }
 
         // This limits the "shoot off into infinity" factor when the cursor ray and constraint are near parallel.
@@ -266,6 +281,7 @@ namespace UnityEditor
                 return Mathf.Sign(d.x) * d.magnitude * acceleration;
             }
         }
+        [NoAutoStaticsCleanup] // transient interaction state; overwritten on each zoom event
         static bool s_UseYSignZoom;
 
         // Pixel distance from mouse pointer to line.
@@ -320,7 +336,7 @@ namespace UnityEditor
         }
 
         // Pixel distance from mouse pointer to cone projection on screen
-        static ProfilerMarker s_DistanceToConeMarker = new ProfilerMarker("Handles.DistanceToCone");
+        static readonly ProfilerMarker s_DistanceToConeMarker = new ProfilerMarker("Handles.DistanceToCone");
         static readonly Vector3[] s_DistanceToConePoints = new Vector3[7];
         public static float DistanceToCone(Vector3 position, Quaternion rotation, float size)
         {
@@ -349,7 +365,7 @@ namespace UnityEditor
         }
 
         // Pixel distance from mouse pointer to cube projection on screen
-        static ProfilerMarker s_DistanceToCubeMarker = new ProfilerMarker("Handles.DistanceToCube");
+        static readonly ProfilerMarker s_DistanceToCubeMarker = new ProfilerMarker("Handles.DistanceToCube");
         static readonly Vector3[] s_DistanceToCubePoints = new Vector3[8];
         public static float DistanceToCube(Vector3 position, Quaternion rotation, float size)
         {
@@ -370,6 +386,7 @@ namespace UnityEditor
         }
 
         // Pixel distance from mouse pointer to a rectangle on screen
+        [NoAutoStaticsCleanup] // temporary geometry buffer; values overwritten before each use
         static Vector3[] s_Points = { Vector3.zero, Vector3.zero, Vector3.zero, Vector3.zero, Vector3.zero };
         public static float DistanceToRectangle(Vector3 position, Quaternion rotation, float size)
         {
@@ -538,6 +555,7 @@ namespace UnityEditor
             return ClosestPointToArc(center, normal, tangent, 360, radius);
         }
 
+        [NoAutoStaticsCleanup] // temporary arc point buffer; values overwritten before each use
         static Vector3[] m_ArcPointsBuffer = new Vector3[60];
 
         // Pixel distance from mouse pointer to a 3D section of a disc.
@@ -738,6 +756,7 @@ namespace UnityEditor
         }
 
         // Note: input array contents are modified
+        [NoAutoStaticsCleanup] // computed geometry; cleared before each use, no user-assembly refs
         static readonly List<Vector2> s_PointCloudConvexHull = new List<Vector2>();
         static float DistanceToPointCloudConvexHull(params Vector3[] points)
         {
@@ -768,11 +787,16 @@ namespace UnityEditor
             AddControl(controlId, kPickDistance);
         }
 
+        [NoAutoStaticsCleanup] // transient picking state; reset at the start of each BeginHandles call
         static int s_PreviousNearestControl;
+        [NoAutoStaticsCleanup] // transient picking state; reset at the start of each BeginHandles call
         static int s_NearestControl;
+        [NoAutoStaticsCleanup] // transient picking state; reset at the start of each BeginHandles call
         static float s_NearestDistance;
+        [AutoStaticsCleanupOnCodeReload]
         static Camera s_PreviousCamera;
         internal const float kPickDistance = 5.0f;
+        [NoAutoStaticsCleanup] // transient picking distance override; reset to kPickDistance in EndHandles
         internal static float s_CustomPickDistance = kPickDistance;
 
         public static int nearestControl { get { return s_NearestDistance <= kPickDistance ? s_NearestControl : 0; } set { s_NearestControl = value; } }
@@ -1072,13 +1096,17 @@ namespace UnityEditor
         internal delegate GameObject PickClosestGameObjectFunc(Camera cam, int layers, Vector2 position, GameObject[] ignore, GameObject[] filter, out int materialIndex);
 
         // Important! Where possible you should prefer to use pickGameObjectCustomPasses. See above for explanation.
+        [AutoStaticsCleanupOnCodeReload]
         internal static PickClosestGameObjectFunc pickClosestGameObjectDelegate;
 
         // Add the ability to select objects that are not selectable through the usual rendering method
         public delegate GameObject PickGameObjectCallback(Camera cam, int layers, Vector2 position, GameObject[] ignore, GameObject[] filter, out int materialIndex);
+        [AutoStaticsCleanupOnCodeReload]
         public static event PickGameObjectCallback pickGameObjectCustomPasses;
 
+        [AutoStaticsCleanupOnCodeReload]
         static List<PickingObject> s_IgnorePickResultsCache = new List<PickingObject>();
+        [AutoStaticsCleanupOnCodeReload]
         static List<PickingObject> s_FilterPickResultsCache = new List<PickingObject>();
 
         static void SetPickingObjectList<T>(List<PickingObject> list, T[] array) where T : UnityObject
@@ -1163,13 +1191,18 @@ namespace UnityEditor
             }
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         static GameObject[] s_PickingGameObjectIgnore = new GameObject[16];
+        [AutoStaticsCleanupOnCodeReload]
         static GameObject[] s_PickingGameObjectFilter = new GameObject[16];
 
         // this exists to pass picking parameters to hybrid renderer. these fields are only valid within the scope of
         // the PickObject method
+        [AutoStaticsCleanupOnCodeReload]
         static List<PickingObject> s_PickingInclude, s_PickingExclude;
+        [NoAutoStaticsCleanup] // short-lived picking buffer; contents replaced on each picking call, no user-assembly refs
         static List<EntityId> s_RendererIncludeBuffer = new List<EntityId>(), s_EntityIncludeBuffer = new List<EntityId>();
+        [NoAutoStaticsCleanup] // short-lived picking buffer; contents replaced on each picking call, no user-assembly refs
         static List<EntityId> s_RendererExcludeBuffer = new List<EntityId>(), s_EntityExcludeBuffer = new List<EntityId>();
 
         public static PickingIncludeExcludeEntityIdList GetPickingIncludeExcludeEntityIdList(Allocator allocator = Allocator.Persistent)
@@ -1381,9 +1414,11 @@ namespace UnityEditor
             }
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         public static event Func<UnityEngine.Object, IEnumerable<EntityId>> getEntityIdsForAuthoringObject = default;
 
         [Obsolete]
+        [NoAutoStaticsCleanup] // [Obsolete] field: annotating with [AutoStaticsCleanupOnCodeReload] triggers CS0612; delegates removed via event unsubscription before reload
         static Dictionary<Func<UnityEngine.Object, IEnumerable<int>>, Func<UnityEngine.Object, IEnumerable<EntityId>> > legacygetEntityIdsForAuthoringObjectLookup = new();
 
         [Obsolete("Use getEntityIdsForAuthoringObject instead. This event will be removed in a future version.", true)]
@@ -1416,6 +1451,7 @@ namespace UnityEditor
             }
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         public static event Func<int, UnityEngine.Object> getAuthoringObjectForEntity = default;
 
         static UnityEngine.Object GetAuthoringObjectForEntity(int entityIndex)
@@ -1442,6 +1478,7 @@ namespace UnityEditor
         /// <summary>
         /// Event that allows external systems to resolve an entity index to an EntityId.
         /// </summary>
+        [AutoStaticsCleanupOnCodeReload]
         internal static event Func<int, EntityId> getEntityIdFromIndex = default;
         static EntityId GetEntityIdFromIndex(int entityIndex)
         {
@@ -1603,6 +1640,7 @@ namespace UnityEditor
                 return s_HandleMaterial;
             }
         }
+        [NoAutoStaticsCleanup] // cleaned up by native CleanupHandleMaterials() [RequiredByNativeCode]
         static Material s_HandleMaterial;
 
         // Called by native code
@@ -1614,6 +1652,7 @@ namespace UnityEditor
             s_HandleWireMaterial = null;
         }
 
+        [NoAutoStaticsCleanup] // disposed by DisposeArcIndexBuffer() registered to AssemblyReloadEvents.beforeAssemblyReload
         static GraphicsBuffer s_ArcIndexBuffer;
 
         static void DisposeArcIndexBuffer()
@@ -1712,20 +1751,33 @@ namespace UnityEditor
             }
         }
 
+        [NoAutoStaticsCleanup] // cleaned up by native CleanupHandleMaterials() [RequiredByNativeCode]
         static Material s_HandleWireMaterial;
+        [NoAutoStaticsCleanup] // cleaned up by native CleanupHandleMaterials() [RequiredByNativeCode]
         static Material s_HandleWireMaterial2D;
+        [NoAutoStaticsCleanup] // cleaned up by native CleanupHandleMaterials() [RequiredByNativeCode]
         static int s_HandleWireTextureIndex;
+        [NoAutoStaticsCleanup] // cleaned up by native CleanupHandleMaterials() [RequiredByNativeCode]
         static int s_HandleWireTextureSamplerIndex;
+        [NoAutoStaticsCleanup] // cleaned up by native CleanupHandleMaterials() [RequiredByNativeCode]
         static int s_HandleWireTextureIndex2D;
+        [NoAutoStaticsCleanup] // cleaned up by native CleanupHandleMaterials() [RequiredByNativeCode]
         static int s_HandleWireTextureSamplerIndex2D;
 
+        [NoAutoStaticsCleanup] // cleaned up by native CleanupHandleMaterials() [RequiredByNativeCode]
         static Material s_HandleDottedWireMaterial;
+        [NoAutoStaticsCleanup] // cleaned up by native CleanupHandleMaterials() [RequiredByNativeCode]
         static Material s_HandleDottedWireMaterial2D;
+        [NoAutoStaticsCleanup] // cleaned up by native CleanupHandleMaterials() [RequiredByNativeCode]
         static int s_HandleDottedWireTextureIndex;
+        [NoAutoStaticsCleanup] // cleaned up by native CleanupHandleMaterials() [RequiredByNativeCode]
         static int s_HandleDottedWireTextureSamplerIndex;
+        [NoAutoStaticsCleanup] // cleaned up by native CleanupHandleMaterials() [RequiredByNativeCode]
         static int s_HandleDottedWireTextureIndex2D;
+        [NoAutoStaticsCleanup] // cleaned up by native CleanupHandleMaterials() [RequiredByNativeCode]
         static int s_HandleDottedWireTextureSamplerIndex2D;
 
+        [NoAutoStaticsCleanup] // cleaned up by native CleanupHandleMaterials() [RequiredByNativeCode]
         static Material s_HandleArcMaterial;
 
         // Setup shader for later drawing of lines / anti-aliased lines.
@@ -1822,10 +1874,13 @@ namespace UnityEditor
             }
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         static Stack s_SavedCameras = new Stack();
 
         // Objects to ignore when raysnapping (typically the objects being dragged by the handles)
+        [NoAutoStaticsCleanup] // null outside drag operations; null default is safe after reload
         internal static Transform[] ignoreRaySnapObjects = null;
+        [NoAutoStaticsCleanup] // reusable raycast buffer; stale contents overwritten before each use
         static RaycastHit[] s_RaySnapHits = new RaycastHit[100];
 
         static bool TryRaySnap(Ray ray, out RaycastHit resultHit)
@@ -1962,6 +2017,7 @@ namespace UnityEditor
         }
 
         public delegate bool PlaceObjectDelegate(Vector2 guiPosition, out Vector3 position, out Vector3 normal);
+        [AutoStaticsCleanupOnCodeReload]
         public static event PlaceObjectDelegate placeObjectCustomPasses;
 
         public static bool PlaceObject(Vector2 guiPosition, out Vector3 position, out Vector3 normal)
@@ -2170,7 +2226,9 @@ namespace UnityEditor
         public delegate UnityObject ResolvePickingWithWorldPositionCallback(int localPickingIndex, Vector3 worldPos, float depth);
         public delegate RenderPickingResult RenderPickingCallback(in RenderPickingArgs args);
 
+        [AutoStaticsCleanupOnCodeReload]
         private static readonly List<RenderPickingCallback> s_RenderPickingCallbacks = new();
+        [AutoStaticsCleanupOnCodeReload]
         private static readonly List<(int PickingIndexBegin, int PickingIndexEnd, ResolvePickingCallback Resolver, ResolvePickingWithWorldPositionCallback ResolverWithWorldPos)> s_RenderPickingResults = new();
 
         public static bool RegisterRenderPickingCallback(RenderPickingCallback renderPickingCallback)
@@ -2212,9 +2270,12 @@ namespace UnityEditor
 
         // Changed to Object to support VisualElements and other non-GameObject pickable objects
         // todo refactor picking code to remove all the static collections that ferry around include/exclude lists
-        static readonly HashSet<UnityObject> s_PickingIncludeSet = new HashSet<UnityObject>();
-        static readonly HashSet<UnityObject> s_PickingExcludeSet = new HashSet<UnityObject>();
+        [AutoStaticsCleanupOnCodeReload]
+        static readonly HashSet<UnityObject> s_PickingIncludeSet = new();
+        [AutoStaticsCleanupOnCodeReload]
+        static readonly HashSet<UnityObject> s_PickingExcludeSet = new();
 
+        [NoAutoStaticsCleanup] // transient guard flag; false at startup is correct
         private static bool s_InPickingRendering = false;
 
         // Returns true if any of the resolver function uses depth or reconstructed world space position.

@@ -125,7 +125,7 @@ namespace UnityEditor.ShortcutManagement
             }
         }
 
-        public bool StartsWith(IList<KeyCombination> prefix, IEnumerable<KeyCode> keyCodes = null)
+        public bool StartsWith(IList<KeyCombination> prefix, ReadOnlySpan<KeyCode> keyCodes = default)
         {
             if (activeCombination.Count < prefix.Count)
                 return false;
@@ -152,7 +152,7 @@ namespace UnityEditor.ShortcutManagement
 
             if (lastKeyCombination.Equals(lastKeyCombinationActive))
             {
-                if (keyCodes != null)
+                if (!keyCodes.IsEmpty)
                 {
                     var otherCombinationHasDesiredKeyCode = HasSpecifiedKeyCode(keyCodes, lastKeyCombination.keyCode);
                     var activeCombinationHasDesiredKeyCode = HasSpecifiedKeyCode(keyCodes, lastKeyCombinationActive.keyCode);
@@ -166,11 +166,8 @@ namespace UnityEditor.ShortcutManagement
             return false;
         }
 
-        static bool HasSpecifiedKeyCode(IEnumerable<KeyCode> keyCodes, KeyCode currentKeyCode)
+        static bool HasSpecifiedKeyCode(ReadOnlySpan<KeyCode> keyCodes, KeyCode currentKeyCode)
         {
-            if (keyCodes == null)
-                return false;
-
             foreach (var keyCode in keyCodes)
             {
                 if (keyCode == currentKeyCode)

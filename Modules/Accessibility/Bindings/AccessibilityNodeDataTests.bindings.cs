@@ -4,6 +4,7 @@
 
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Bindings;
 using UnityEngine.Scripting;
 
@@ -13,6 +14,8 @@ namespace UnityEngine.Accessibility
     [VisibleToOtherModules("UnityEditor.AccessibilityModule")]
     internal class AccessibilityNodeDataTests
     {
+        // Test-only marshaling holder (value-type struct, no user-code references); overwritten before each read, so safe to persist.
+        [NoAutoStaticsCleanup]
         internal static AccessibilityNodeData nodeDataFromNative;
 
         [NativeMethod(ThrowsException = true)] internal static extern void Test_GetNodeDataToNativeViaBinding(AccessibilityNodeData nodeData);

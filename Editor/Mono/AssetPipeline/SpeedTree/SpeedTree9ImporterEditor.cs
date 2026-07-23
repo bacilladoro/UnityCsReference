@@ -15,10 +15,10 @@ namespace UnityEditor.SpeedTree.Importer
     {
         private static class Styles
         {
-            public static GUIContent ApplyAndGenerate = EditorGUIUtility.TrTextContent("Apply & Generate Materials", "Apply current importer settings and generate materials with new settings.");
-            public static GUIContent Regenerate = EditorGUIUtility.TrTextContent("Regenerate Materials", "Regenerate materials from the current importer settings.");
-            public static GUIContent RegenerateRemapped = EditorGUIUtility.TrTextContent("Regenerate Materials", "Regenerate the remapped materials from the current import settings.");
-            public static GUIContent ApplyAndGenerateRemapped = EditorGUIUtility.TrTextContent("Apply & Generate Materials", "Apply current importer settings and regenerate the remapped materials with new settings.");
+            public static readonly GUIContent ApplyAndGenerate = EditorGUIUtility.TrTextContent("Apply & Generate Materials", "Apply current importer settings and generate materials with new settings.");
+            public static readonly GUIContent Regenerate = EditorGUIUtility.TrTextContent("Regenerate Materials", "Regenerate materials from the current importer settings.");
+            public static readonly GUIContent RegenerateRemapped = EditorGUIUtility.TrTextContent("Regenerate Materials", "Regenerate the remapped materials from the current import settings.");
+            public static readonly GUIContent ApplyAndGenerateRemapped = EditorGUIUtility.TrTextContent("Apply & Generate Materials", "Apply current importer settings and regenerate the remapped materials with new settings.");
 
             public static readonly string ModelTabName = "Model";
             public static readonly string MaterialsTabName = "Materials";
@@ -46,6 +46,12 @@ namespace UnityEditor.SpeedTree.Importer
 
         public override void OnEnable()
         {
+            if (!AreImporterTargetsValid())
+            {
+                base.OnEnable(); // lets the base mark the editor enabled/inert (OnDisable symmetry)
+                return;
+            }
+
             m_STImporter = target as SpeedTree9Importer;
 
             if (tabs == null)

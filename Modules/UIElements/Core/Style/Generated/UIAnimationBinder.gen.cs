@@ -49,6 +49,7 @@ namespace UnityEngine.UIElements
             0, // BorderWidth
             2, // Bottom
             4, // Color
+            2, // ColumnGap
             3, // Cursor
             0, // Display
             72, // Filter
@@ -59,6 +60,7 @@ namespace UnityEngine.UIElements
             1, // FlexShrink
             1, // FlexWrap
             2, // FontSize
+            0, // Gap
             2, // Height
             1, // JustifyContent
             2, // Left
@@ -82,6 +84,7 @@ namespace UnityEngine.UIElements
             1, // Position
             2, // Right
             1, // Rotate
+            2, // RowGap
             3, // Scale
             1, // TextOverflow
             7, // TextShadow
@@ -155,6 +158,7 @@ namespace UnityEngine.UIElements
             PropertyType.Shorthand,
             PropertyType.Length,
             PropertyType.Color,
+            PropertyType.Length,
             PropertyType.Cursor,
             PropertyType.Enum,
             PropertyType.Filter,
@@ -165,6 +169,7 @@ namespace UnityEngine.UIElements
             PropertyType.Float,
             PropertyType.Enum,
             PropertyType.Length,
+            PropertyType.Shorthand,
             PropertyType.Length,
             PropertyType.Enum,
             PropertyType.Length,
@@ -188,6 +193,7 @@ namespace UnityEngine.UIElements
             PropertyType.Enum,
             PropertyType.Length,
             PropertyType.Rotate,
+            PropertyType.Length,
             PropertyType.Scale,
             PropertyType.Enum,
             PropertyType.TextShadow,

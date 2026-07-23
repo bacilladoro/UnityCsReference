@@ -9,6 +9,7 @@ using System.Text;
 using UnityEngine;
 using UnityEngine.Bindings;
 using UnityEngine.Scripting;
+using UnityEngine.TextCore.LowLevel;
 
 namespace UnityEngine.TextCore.Text
 {
@@ -44,10 +45,13 @@ namespace UnityEngine.TextCore.Text
                 var textAsset = Object.FindObjectFromInstanceIDThreadSafe(meshInfo.textAssetId) as TextAsset;
                 HashSet<uint> missingUnicodes = null;
 
-                if (textAsset is SpriteAsset || textAsset == null)
+                if (textAsset is SpriteAsset)
+                    continue;
+
+                if (textAsset == null)
                 {
-                    // Sprite is never populated during text generation.
-                    // If it's missing, we won't add it to the atlas anyway.
+                    if (meshInfo.textAssetId != EntityId.None)
+                        hasMissingGlyphs = true;
                     continue;
                 }
 
@@ -281,5 +285,30 @@ namespace UnityEngine.TextCore.Text
 
         [VisibleToOtherModules("UnityEngine.UIElementsModule")]
         public static extern float GetLineBaselineY(IntPtr ptr, int lineNumber);
+    }
+
+    [NativeHeader("Modules/TextCoreTextEngine/Native/OSFontFallback.h")]
+    [VisibleToOtherModules("UnityEngine.UIElementsModule")]
+    internal static class OSFontFallbackBindings
+    {
+        [FreeFunction("OSFontFallback::GetPendingFallbackCount")]
+        [VisibleToOtherModules("UnityEngine.UIElementsModule")]
+        internal static extern int GetPendingFallbackCount();
+
+        [FreeFunction("OSFontFallback::GetPendingFallbackNativePtr")]
+        [VisibleToOtherModules("UnityEngine.UIElementsModule")]
+        internal static extern IntPtr GetPendingFallbackNativePtr(int index);
+
+        [FreeFunction("OSFontFallback::GetPendingFallbackFontReference")]
+        [VisibleToOtherModules("UnityEngine.UIElementsModule")]
+        internal static extern FontReference GetPendingFallbackFontReference(int index);
+
+        [FreeFunction("OSFontFallback::ClearPendingFallbacks")]
+        [VisibleToOtherModules("UnityEngine.UIElementsModule")]
+        internal static extern void ClearPendingFallbacks();
+
+        [FreeFunction("OSFontFallback::ReleaseNativeFallback")]
+        [VisibleToOtherModules("UnityEngine.UIElementsModule")]
+        internal static extern void ReleaseNativeFallback(IntPtr nativePtr);
     }
 }

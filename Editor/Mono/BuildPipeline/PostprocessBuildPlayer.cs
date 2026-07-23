@@ -11,6 +11,7 @@ using UnityEditor.Build.Reporting;
 using UnityEditor.Modules;
 using UnityEditor.DeploymentTargets;
 using UnityEngine.Scripting;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -65,6 +66,7 @@ namespace UnityEditor
             projectBootConfigEntries.Clear();
         }
 
+        [NoAutoStaticsCleanup] // build-time boot-config key/value strings only, no user-code refs; cleared explicitly via ClearProjectBootConfigEntries
         private static Dictionary<string, string> projectBootConfigEntries = new Dictionary<string, string>();
 
         internal static string GetStreamingAssetsBundleManifestPath()

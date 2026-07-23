@@ -8,11 +8,12 @@ using Unity.UIToolkit.Editor;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
+using Unity.Scripting.LifecycleManagement;
 using PointerType = UnityEngine.UIElements.PointerType;
 
 namespace Unity.UI.Builder
 {
-    internal class BuilderDragger
+    internal partial class BuilderDragger
     {
         protected enum DestinationPane
         {
@@ -31,6 +32,7 @@ namespace Unity.UI.Builder
 
         // It's possible to have multiple BuilderDraggers on the same element. This ensures
         // a kind of capture without using the capture system and just between BuilderDraggers.
+        [AutoStaticsCleanupOnCodeReload]
         internal static BuilderDragger s_CurrentlyActiveBuilderDragger = null;
 
         Vector2 m_Start;

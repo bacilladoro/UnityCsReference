@@ -9,10 +9,11 @@ using UnityEditor.ShortcutManagement;
 using UnityEngine;
 using UnityEngine.Bindings;
 using UObject = UnityEngine.Object;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.EditorTools
 {
-    public static class ToolManager
+    public static partial class ToolManager
     {
         public static Type activeContextType => EditorToolManager.activeToolContext.GetType();
 
@@ -103,17 +104,25 @@ namespace UnityEditor.EditorTools
             }
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action activeToolChanging;
-        
+
+        [AutoStaticsCleanupOnCodeReload]
         internal static event Action<Type> activeToolChangingForOwner;
 
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action activeToolChanged;
+        [AutoStaticsCleanupOnCodeReload]
         internal static event Action<Type> activeToolChangedForOwner;
 
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action activeContextChanging;
+        [AutoStaticsCleanupOnCodeReload]
         internal static event Action<Type> activeContextChangingForOwner;
 
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action activeContextChanged;
+        [AutoStaticsCleanupOnCodeReload]
         internal static event Action<Type> activeContextChangedForOwner;
 
         internal static void ActiveToolWillChange()

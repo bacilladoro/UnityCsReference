@@ -16,6 +16,7 @@ using RequiredByNativeCodeAttribute = UnityEngine.Scripting.RequiredByNativeCode
 using UnityEngine.Bindings;
 using UnityEngine.Assertions;
 using UnityEngine.Serialization;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -159,8 +160,8 @@ namespace UnityEditor
     {
         internal static class GameObjectStyles
         {
-            public static Texture2D gameObjectIcon = EditorGUIUtility.LoadIconRequired("UnityEngine/GameObject Icon");
-            public static Texture2D prefabIcon = EditorGUIUtility.LoadIconRequired("Prefab Icon");
+            public static readonly Texture2D gameObjectIcon = EditorGUIUtility.LoadIconRequired("UnityEngine/GameObject Icon");
+            public static readonly Texture2D prefabIcon = EditorGUIUtility.LoadIconRequired("Prefab Icon");
         }
 
         private const string kMaterialExtension = ".mat";
@@ -610,7 +611,9 @@ namespace UnityEditor
             return true;
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<GameObject> prefabInstanceApplying;
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<GameObject> prefabInstanceApplied;
 
         [RequiredByNativeCode]
@@ -2610,7 +2613,9 @@ namespace UnityEditor
 
         // Called after prefab instances in the scene have been updated
         public delegate void PrefabInstanceUpdated(GameObject instance);
+        [AutoStaticsCleanupOnCodeReload]
         public static PrefabInstanceUpdated prefabInstanceUpdated;
+        [AutoStaticsCleanupOnCodeReload(CleanupStrategy = CleanupStrategy.Clear)]
         private static DelegateWithPerformanceTracker<PrefabInstanceUpdated> m_PrefabInstanceUpdated = new DelegateWithPerformanceTracker<PrefabInstanceUpdated>($"{nameof(PrefabUtility)}.{nameof(prefabInstanceUpdated)}");
 
         [RequiredByNativeCode]
@@ -2659,6 +2664,7 @@ namespace UnityEditor
         }
 
         // Called before the prefab is saved to hdd (called after AssetModificationProcessor.OnWillSaveAssets and before OnPostprocessAllAssets)
+        [AutoStaticsCleanupOnCodeReload]
         internal static event Action<GameObject, string> savingPrefab;
         [RequiredByNativeCode]
         static void Internal_SavingPrefab(GameObject gameObject, string path)
@@ -2667,6 +2673,7 @@ namespace UnityEditor
                 savingPrefab(gameObject, path);
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         internal static event Action prefabInstanceModificationCacheCleared;
         [RequiredByNativeCode]
         static void Internal_PrefabInstanceModificationCacheCleared()
@@ -2726,7 +2733,9 @@ namespace UnityEditor
             return result;
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<GameObject> prefabInstanceReverting;
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<GameObject> prefabInstanceReverted;
 
         [RequiredByNativeCode]
@@ -2745,7 +2754,9 @@ namespace UnityEditor
             prefabInstanceReverted?.Invoke(instanceRoot);
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<GameObject, PrefabUnpackMode> prefabInstanceUnpacking;
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<GameObject, PrefabUnpackMode> prefabInstanceUnpacked;
 
         public static void UnpackPrefabInstance(GameObject instanceRoot, PrefabUnpackMode unpackMode, InteractionMode action)
@@ -3773,6 +3784,7 @@ namespace UnityEditor
             return true;
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         private static event Func<UnityEngine.Object, bool> m_AllowRecordingPrefabPropertyOverridesFor;
 
         internal static event Func<UnityEngine.Object, bool> allowRecordingPrefabPropertyOverridesFor

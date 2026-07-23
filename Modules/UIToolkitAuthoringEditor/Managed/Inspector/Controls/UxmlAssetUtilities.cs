@@ -718,7 +718,7 @@ internal static class UxmlAssetUtilities
             changeUxmlAssets,
             context.element,
             () => RecordDocumentUndoOnce(context),
-            context.element.templateAsset != null,
+            context.isInTemplateInstance,
             handleTemplateOverride,
             (ve) => ve.visualElementAsset);
 

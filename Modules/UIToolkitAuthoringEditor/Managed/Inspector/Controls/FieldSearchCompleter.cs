@@ -14,6 +14,92 @@ using UnityEngine.Bindings;
 namespace Unity.UIToolkit.Editor;
 
 /// <summary>
+/// Abstracts the text-input interactions that FieldSearchCompleter needs, so it can work with
+/// both <see cref="TextField"/> and any <see cref="TextInputBaseField{TValueType}"/>.
+/// </summary>
+interface ICompleterFieldAdapter
+{
+    /// <summary>The root field element (used for callbacks, schedule, elementPanel).</summary>
+    VisualElement Root { get; }
+
+    /// <summary>The visual input element used to anchor the popup.</summary>
+    VisualElement VisualInput { get; }
+
+    string Text { get; }
+
+    bool IsReadOnly { get; }
+    bool HasFocus { get; }
+
+    void SetTextWithoutNotify(string text);
+
+    void Blur();
+
+    void StartTrackingChanges(Action<EventBase, string> callback);
+
+    void StopTrackingChanges();
+
+    void SubmitValueChange(string previousText);
+}
+
+sealed class TextInputBaseFieldAdapter<TValue> : ICompleterFieldAdapter
+{
+    readonly TextInputBaseField<TValue> m_Field;
+    readonly Action<string> m_SetTextWithoutNotify;
+    EventCallback<ChangeEvent<TValue>> m_RegisteredCallback;
+
+    // Stored so SubmitValueChange can re-fire a typed ChangeEvent without needing to parse text.
+    TValue m_LastPreviousValue;
+
+    public TextInputBaseFieldAdapter(TextInputBaseField<TValue> field, Action<string> setTextWithoutNotify = null)
+    {
+        m_Field = field;
+        m_SetTextWithoutNotify = setTextWithoutNotify;
+    }
+
+    public VisualElement Root => m_Field;
+    public VisualElement VisualInput => m_Field?.visualInput;
+    public string Text => m_Field?.text;
+    public bool IsReadOnly => m_Field?.isReadOnly ?? false;
+    public bool HasFocus => m_Field?.hasFocus ?? false;
+
+    public void SetTextWithoutNotify(string text)
+    {
+        if (m_Field == null)
+            return;
+        if (m_SetTextWithoutNotify != null)
+            m_SetTextWithoutNotify(text);
+        else
+            m_Field.textInputBase.text = text;
+    }
+
+    public void Blur() => m_Field?.Blur();
+
+    public void StartTrackingChanges(Action<EventBase, string> callback)
+    {
+        m_RegisteredCallback = e =>
+        {
+            m_LastPreviousValue = e.previousValue;
+            callback(e, string.Empty);
+        };
+        m_Field?.RegisterValueChangedCallback(m_RegisteredCallback);
+    }
+
+    public void StopTrackingChanges()
+    {
+        if (m_RegisteredCallback != null)
+            m_Field?.UnregisterValueChangedCallback(m_RegisteredCallback);
+        m_RegisteredCallback = null;
+    }
+
+    public void SubmitValueChange(string _)
+    {
+        using var evt = ChangeEvent<TValue>.GetPooled(m_LastPreviousValue, m_Field.value);
+        evt.elementTarget = m_Field;
+        m_Field.SendEvent(evt);
+    }
+}
+
+/// <summary>
 /// Interface for the field search completer. It is used to abstract the implementation of the field search completer
 /// and provide a way to refresh the results from the outside, for example from a custom property drawer that uses the
 /// field search completer.
@@ -54,6 +140,7 @@ class FieldSearchCompleter<TData> : IFieldSearchCompleter
     // Internal state
     bool m_DataSourceDirty;
     IVisualElementScheduledItem m_ScheduledFilterUpdate;
+    ICompleterFieldAdapter m_FieldAdapter;
 
     // Callbacks
     public delegate IEnumerable<TData> GetDataSourceDelegate();
@@ -288,8 +375,17 @@ class FieldSearchCompleter<TData> : IFieldSearchCompleter
     /// of this TextField and shows the popup with the matching results based on the text input of this TextField.
     /// Setting up the attached TextField must be done through the SetupCompleterField method to ensure that the
     /// callbacks are properly registered and unregistered.
+    /// <remarks>This is <c>null</c> when the completer is attached to a non-<see cref="TextField"/> control via
+    /// <see cref="SetupCompleterField{TValue}"/>. Use <see cref="AttachedFieldRoot"/> for a null-safe alternative.</remarks>
     /// </summary>
     public TextField AttachedTextField { get; private set; }
+
+    /// <summary>
+    /// The root visual element of the currently attached field, regardless of whether it is a
+    /// <see cref="TextField"/> or another <see cref="TextInputBaseField{TValueType}"/> variant.
+    /// Returns <c>null</c> when no field is attached.
+    /// </summary>
+    public VisualElement AttachedFieldRoot => m_FieldAdapter?.Root;
 
     /// <summary>
     /// Event triggered when the hovered item in the popup list view changes. The event parameter is the data item
@@ -350,18 +446,34 @@ class FieldSearchCompleter<TData> : IFieldSearchCompleter
     /// <param name="useRealWindow">Indicates whether the completer popup should use a real window</param>
     public void SetupCompleterField(TextField field, bool useRealWindow)
     {
+        SetupCompleterFieldCore(field != null ? new TextInputBaseFieldAdapter<string>(field, field.SetValueWithoutNotify) : null, field, useRealWindow);
+    }
+
+    /// <summary>
+    /// Sets up the field search completer to work with the given <see cref="TextInputBaseField{TValueType}"/>.
+    /// </summary>
+    /// <param name="field">The attached field</param>
+    /// <param name="useRealWindow">Indicates whether the completer popup should use a real window</param>
+    public void SetupCompleterField<TValue>(TextInputBaseField<TValue> field, bool useRealWindow)
+    {
+        SetupCompleterFieldCore(field != null ? new TextInputBaseFieldAdapter<TValue>(field) : null, field as TextField, useRealWindow);
+    }
+
+    void SetupCompleterFieldCore(ICompleterFieldAdapter adapter, TextField textField, bool useRealWindow)
+    {
         UsesRealPopupWindow = useRealWindow;
 
-        if (AttachedTextField == field)
+        if (m_FieldAdapter?.Root == adapter?.Root)
             return;
 
         DisconnectFromField();
 
-        AttachedTextField = field;
+        AttachedTextField = textField;
+        m_FieldAdapter = adapter;
 
         ConnectToField();
         if (m_Popup != null)
-            m_Popup.AnchoredElement = AttachedTextField.visualInput;
+            m_Popup.AnchoredElement = m_FieldAdapter?.VisualInput;
     }
 
     /// <summary>
@@ -401,11 +513,11 @@ class FieldSearchCompleter<TData> : IFieldSearchCompleter
             m_Popup.ElementChosen += (index) =>
             {
                 CancelEvaluateFocus();
-                AttachedTextField.SetValueWithoutNotify(GetTextFromData(m_Results[index]));
+                m_FieldAdapter.SetTextWithoutNotify(GetTextFromData(m_Results[index]));
                 m_TemporarilyDontShowPopup = true;
-                AttachedTextField.schedule.Execute((e) =>
+                m_FieldAdapter.Root.schedule.Execute((e) =>
                 {
-                    AttachedTextField.Blur();
+                    m_FieldAdapter.Blur();
                     m_TemporarilyDontShowPopup = false;
                 }).ExecuteLater(k_PauseDelay);
                 if (UsesRealPopupWindow)
@@ -464,18 +576,19 @@ class FieldSearchCompleter<TData> : IFieldSearchCompleter
 
     void ConnectToField()
     {
-        if (AttachedTextField != null && Enabled)
+        if (m_FieldAdapter != null && Enabled)
         {
-            AttachedTextField.RegisterCallback<FocusInEvent>(OnFocusIn, TrickleDown.TrickleDown);
-            AttachedTextField.RegisterCallback<FocusOutEvent>(OnFocusOut, TrickleDown.TrickleDown);
-            AttachedTextField.RegisterValueChangedCallback(OnTextValueChange);
-            AttachedTextField.Q(TextField.textInputUssName)
-                .RegisterCallback<KeyDownEvent>(OnKeyDown, TrickleDown.TrickleDown);
-            AttachedTextField.RegisterCallback<DetachFromPanelEvent>(OnTextFieldDetached);
-            AttachedTextField.RegisterCallback<FocusOutEvent>(OnTextFieldFocusOut);
-            AttachedTextField.RegisterCallback<FocusInEvent>(OnTextFieldFocusInPrepareTracking);
-            AttachedTextField.RegisterCallback<GeometryChangedEvent>(OnTextFieldGeometryChangedEvent);
-            m_PreviousTextFieldWorldPosition = GUIUtility.GUIToScreenRect(AttachedTextField.visualInput.worldBound);
+            var root = m_FieldAdapter.Root;
+            root.RegisterCallback<FocusInEvent>(OnFocusIn, TrickleDown.TrickleDown);
+            root.RegisterCallback<FocusOutEvent>(OnFocusOut, TrickleDown.TrickleDown);
+            m_FieldAdapter.StartTrackingChanges(OnTextValueChange);
+            root.Q(TextField.textInputUssName)
+                ?.RegisterCallback<KeyDownEvent>(OnKeyDown, TrickleDown.TrickleDown);
+            root.RegisterCallback<DetachFromPanelEvent>(OnTextFieldDetached);
+            root.RegisterCallback<FocusOutEvent>(OnTextFieldFocusOut);
+            root.RegisterCallback<FocusInEvent>(OnTextFieldFocusInPrepareTracking);
+            root.RegisterCallback<GeometryChangedEvent>(OnTextFieldGeometryChangedEvent);
+            m_PreviousTextFieldWorldPosition = GUIUtility.GUIToScreenRect(m_FieldAdapter.VisualInput.worldBound);
         }
     }
 
@@ -500,16 +613,14 @@ class FieldSearchCompleter<TData> : IFieldSearchCompleter
     void OnWindowGeometryChanged(object obj, EventArgs args)
     {
         // Wait for the new layout to be performed after the window geometry change
-        AttachedTextField?.schedule.Execute(HandlePopupWindowPositionChanged).ExecuteLater(k_PauseDelay);
+        m_FieldAdapter?.Root.schedule.Execute(HandlePopupWindowPositionChanged).ExecuteLater(k_PauseDelay);
     }
 
     // If the window which hosts the textfield is moved/resized, popup must be forcefully hidden.
     void HandlePopupWindowPositionChanged()
     {
-        if (AttachedTextField?.elementPanel?.ownerObject == null)
-        {
+        if (m_FieldAdapter == null || m_FieldAdapter.Root.elementPanel?.ownerObject == null)
             return;
-        }
 
         // Use the element panel to find which window "owns" field
         var window = GetEditorWindow();
@@ -520,18 +631,19 @@ class FieldSearchCompleter<TData> : IFieldSearchCompleter
         UpdateAnchoredControlScreenPosition();
 
         // If the window is moved, we need to hide the popup
-        var textFieldPositionPostUpdate = (Rect)AttachedTextField.visualInput
+        var textFieldPositionPostUpdate = (Rect)m_FieldAdapter.VisualInput
             .GetProperty(Unity.UIToolkit.Editor.Popup.k_AnchoredElementCachedScreenRectVEPropertyName);
 
         if (m_PreviousTextFieldWorldPosition.Equals(textFieldPositionPostUpdate))
             return;
 
-        if (window.baseRootVisualElement.focusController.focusedElement == AttachedTextField)
+        var root = m_FieldAdapter.Root;
+        if (window.baseRootVisualElement.focusController.focusedElement == root)
         {
-            AttachedTextField.Blur();
+            m_FieldAdapter.Blur();
         }
 
-        if (window.baseRootVisualElement.focusController.m_LastPendingFocusedElement == AttachedTextField)
+        if (window.baseRootVisualElement.focusController.m_LastPendingFocusedElement == root)
         {
             window.baseRootVisualElement.focusController.BlurLastFocusedElement();
         }
@@ -542,17 +654,20 @@ class FieldSearchCompleter<TData> : IFieldSearchCompleter
 
     void DisconnectFromField()
     {
-        if (AttachedTextField != null)
+        if (m_FieldAdapter != null)
         {
-            AttachedTextField.UnregisterCallback<DetachFromPanelEvent>(OnTextFieldDetached);
-            AttachedTextField.UnregisterCallback<FocusInEvent>(OnTextFieldFocusInPrepareTracking);
-            AttachedTextField.UnregisterCallback<FocusOutEvent>(OnTextFieldFocusOut);
-            AttachedTextField.UnregisterCallback<GeometryChangedEvent>(OnTextFieldGeometryChangedEvent);
-            AttachedTextField.UnregisterValueChangedCallback(OnTextValueChange);
-            AttachedTextField.UnregisterCallback<FocusInEvent>(OnFocusIn, TrickleDown.TrickleDown);
-            AttachedTextField.UnregisterCallback<FocusOutEvent>(OnFocusOut, TrickleDown.TrickleDown);
-            AttachedTextField.Q(TextField.textInputUssName)
-                .UnregisterCallback<KeyDownEvent>(OnKeyDown, TrickleDown.TrickleDown);
+            m_ScheduledFilterUpdate?.Pause();
+            m_ScheduledFilterUpdate = null;
+            var root = m_FieldAdapter.Root;
+            root.UnregisterCallback<DetachFromPanelEvent>(OnTextFieldDetached);
+            root.UnregisterCallback<FocusInEvent>(OnTextFieldFocusInPrepareTracking);
+            root.UnregisterCallback<FocusOutEvent>(OnTextFieldFocusOut);
+            root.UnregisterCallback<GeometryChangedEvent>(OnTextFieldGeometryChangedEvent);
+            m_FieldAdapter.StopTrackingChanges();
+            root.UnregisterCallback<FocusInEvent>(OnFocusIn, TrickleDown.TrickleDown);
+            root.UnregisterCallback<FocusOutEvent>(OnFocusOut, TrickleDown.TrickleDown);
+            root.Q(TextField.textInputUssName)
+                ?.UnregisterCallback<KeyDownEvent>(OnKeyDown, TrickleDown.TrickleDown);
         }
     }
 
@@ -595,14 +710,14 @@ class FieldSearchCompleter<TData> : IFieldSearchCompleter
             m_Popup.ListView.makeItem = m_MakeItem;
             m_Popup.ListView.destroyItem = m_DestroyItem;
             m_Popup.ListView.bindItem = m_BindItem;
-            m_Popup.AnchoredElement = AttachedTextField.visualInput;
+            m_Popup.AnchoredElement = m_FieldAdapter?.VisualInput;
         }
     }
 
     // This has to be called during an event to ensure that GUIUtility.GUIToScreenRect() uses the window containing the attached text field.
     void UpdateAnchoredControlScreenPosition()
     {
-        var field = AttachedTextField.visualInput;
+        var field = m_FieldAdapter?.VisualInput;
 
         if (field != null)
         {
@@ -621,14 +736,14 @@ class FieldSearchCompleter<TData> : IFieldSearchCompleter
 
     void OnTextChanged()
     {
-        UpdateFilter(AttachedTextField.text);
+        UpdateFilter(m_FieldAdapter?.Text);
     }
 
     void ScheduleTextChange()
     {
         if (m_ScheduledFilterUpdate == null)
         {
-            m_ScheduledFilterUpdate = AttachedTextField?.schedule.Execute(a => UpdateFilter(AttachedTextField.text));
+            m_ScheduledFilterUpdate = m_FieldAdapter.Root.schedule.Execute(a => UpdateFilter(m_FieldAdapter?.Text));
         }
         else
         {
@@ -742,7 +857,7 @@ class FieldSearchCompleter<TData> : IFieldSearchCompleter
 
         if (AlwaysVisible)
         {
-            if (AttachedTextField.isReadOnly)
+            if (m_FieldAdapter.IsReadOnly)
                 return;
             UpdateAnchoredControlScreenPosition();
             OnTextChanged();
@@ -762,12 +877,12 @@ class FieldSearchCompleter<TData> : IFieldSearchCompleter
         }
     }
 
-    void OnTextValueChange(ChangeEvent<string> e)
+    void OnTextValueChange(EventBase e, string previousText)
     {
         // Do not submit the value change until we evaluate the current focus. See EvaluateFocus.
         if (m_IsEvaluatingFocus)
         {
-            PendValueChange(e);
+            PendValueChange(e, previousText);
         }
         else
         {
@@ -784,7 +899,7 @@ class FieldSearchCompleter<TData> : IFieldSearchCompleter
             return;
 
         m_IsEvaluatingFocus = true;
-        AttachedTextField.schedule.Execute(EvaluateFocus);
+        m_FieldAdapter.Root.schedule.Execute(EvaluateFocus);
     }
 
     void CancelEvaluateFocus()
@@ -805,7 +920,7 @@ class FieldSearchCompleter<TData> : IFieldSearchCompleter
 
         m_IsEvaluatingFocus = false;
 
-        if (AttachedTextField.hasFocus ||
+        if (m_FieldAdapter == null || m_FieldAdapter.HasFocus ||
             (m_Popup?.Window != null && m_Popup?.Window == EditorWindow.focusedWindow))
             return;
 
@@ -813,10 +928,10 @@ class FieldSearchCompleter<TData> : IFieldSearchCompleter
         m_Popup?.Hide();
     }
 
-    void PendValueChange(ChangeEvent<string> e)
+    void PendValueChange(EventBase e, string previousText)
     {
         m_HasPendingValueChanged = true;
-        m_PendingPreviousValue = e.previousValue;
+        m_PendingPreviousValue = previousText;
         e.StopImmediatePropagation();
     }
 
@@ -833,9 +948,7 @@ class FieldSearchCompleter<TData> : IFieldSearchCompleter
 
         try
         {
-            using var evt = ChangeEvent<string>.GetPooled(m_PendingPreviousValue, AttachedTextField.value);
-            evt.elementTarget = AttachedTextField;
-            AttachedTextField.SendEvent(evt);
+            m_FieldAdapter.SubmitValueChange(m_PendingPreviousValue);
         }
         finally
         {
@@ -864,7 +977,7 @@ class FieldSearchCompleter<TData> : IFieldSearchCompleter
 
     void OnKeyDown(KeyDownEvent e)
     {
-        if (AttachedTextField.isReadOnly)
+        if (m_FieldAdapter.IsReadOnly)
             return;
 
         EnsurePopupIsCreated();
@@ -877,10 +990,10 @@ class FieldSearchCompleter<TData> : IFieldSearchCompleter
 
             if (selectedIndex != -1)
             {
-                AttachedTextField.SetValueWithoutNotify(GetTextFromData(m_Results[selectedIndex]));
-                AttachedTextField.Blur();
+                m_FieldAdapter.SetTextWithoutNotify(GetTextFromData(m_Results[selectedIndex]));
+                m_FieldAdapter.Blur();
                 m_TemporarilyDontShowPopup = true;
-                AttachedTextField.schedule.Execute((e) => m_TemporarilyDontShowPopup = false).ExecuteLater(k_PauseDelay);
+                m_FieldAdapter.Root.schedule.Execute((e) => m_TemporarilyDontShowPopup = false).ExecuteLater(k_PauseDelay);
                 if (UsesRealPopupWindow)
                 {
                     m_Popup?.Hide();
@@ -925,12 +1038,10 @@ class FieldSearchCompleter<TData> : IFieldSearchCompleter
 
     EditorWindow GetEditorWindow()
     {
-        if (AttachedTextField.elementPanel == null)
-        {
+        if (m_FieldAdapter == null || m_FieldAdapter.Root.elementPanel == null)
             return null;
-        }
 
-        return AttachedTextField.elementPanel.ownerObject switch
+        return m_FieldAdapter.Root.elementPanel.ownerObject switch
         {
             EditorWindow editorWindow => editorWindow,
             HostView hostView => hostView.actualView,

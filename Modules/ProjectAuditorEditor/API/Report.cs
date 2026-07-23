@@ -94,7 +94,7 @@ namespace Unity.ProjectAuditor.Editor
     [Serializable]
     public sealed class Report : ISerializationCallbackReceiver
     {
-        internal const string k_CurrentVersion = "1.4";
+        internal const string k_CurrentVersion = "1.5";
         internal const string k_SaveFileHeader = "PROJECT_AUDITOR_REPORT";
 
         [SerializeField]
@@ -384,7 +384,7 @@ namespace Unity.ProjectAuditor.Editor
                 if (ic.IsSummary() || ic == IssueCategory.SpriteAtlas)
                     continue;
 
-                if (ic >= IssueCategory.FirstCustomCategory)
+                if (ic >= IssueCategoryExtensions.FirstCustomCategory)
                     break;
 
                 if (SessionInfo != null && SessionInfo.Categories != null && Array.IndexOf(SessionInfo.Categories, ic) == -1)

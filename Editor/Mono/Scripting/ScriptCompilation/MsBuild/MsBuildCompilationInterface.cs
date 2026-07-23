@@ -11,14 +11,6 @@ namespace UnityEditor.Scripting.ScriptCompilation.MsBuild
     static class MsBuildCompilationInterface
     {
         static MsBuildCompilation msBuildCompilation;
-        static MSBuildCompilationStatus mSBuildCompilationStatus = MSBuildCompilationStatus.Uninitialized;
-
-        private enum MSBuildCompilationStatus
-        {
-            Uninitialized,
-            Legacy,
-            NewCsproj,
-        }
 
         static MsBuildCompilationInterface()
         {
@@ -39,13 +31,7 @@ namespace UnityEditor.Scripting.ScriptCompilation.MsBuild
             }
         }
 
-        public static bool IsEnabled()
-        {
-            if (mSBuildCompilationStatus == MSBuildCompilationStatus.Uninitialized)
-                mSBuildCompilationStatus = System.IO.File.Exists("ProjectSettings/enablemsbuild.config") ? MSBuildCompilationStatus.NewCsproj : MSBuildCompilationStatus.Legacy;
-
-            return mSBuildCompilationStatus == MSBuildCompilationStatus.NewCsproj;
-        }
+        public static bool IsEnabled() => UnityEditor.Compilation.CompilationPipeline.IsUsingMSBuild();
 
         [RequiredByNativeCode]
         public static void RequestMsBuildScriptCompilation(bool restore, string reason)

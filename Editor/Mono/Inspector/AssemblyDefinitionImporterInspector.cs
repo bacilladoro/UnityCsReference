@@ -34,7 +34,6 @@ namespace UnityEditor
             public static readonly GUIContent references = EditorGUIUtility.TrTextContent("Assembly Definition References", "The list of assembly files that this assembly definition should reference.");
             public static readonly GUIContent precompiledReferences = EditorGUIUtility.TrTextContent("Assembly References", "The list of Precompiled assemblies that this assembly definition should reference.");
             public static readonly GUIContent generalOptions = EditorGUIUtility.TrTextContent("General Options");
-            public static readonly GUIContent allowUnsafeCode = EditorGUIUtility.TrTextContent("Allow 'unsafe' Code", "When enabled, the C# compiler for this assembly includes types or members that have the `unsafe` keyword.");
             public static readonly GUIContent overrideReferences = EditorGUIUtility.TrTextContent("Override References", "When enabled, you can select which specific precompiled assemblies to refer to via a drop-down list that appears. When not enabled, this assembly definition refers to all auto-referenced precompiled assemblies.");
             public static readonly GUIContent autoReferenced = EditorGUIUtility.TrTextContent("Auto Referenced", "When enabled, this assembly definition is automatically referenced in predefined assemblies.");
             public static readonly GUIContent useGUIDs = EditorGUIUtility.TrTextContent("Use GUIDs", "Use GUIDs instead of assembly names for Assembly Definition References. Allows referenced assemblies to be renamed without having to update references.");
@@ -160,7 +159,6 @@ namespace UnityEditor
 
         SerializedProperty m_AssemblyName;
         SerializedProperty m_RootNamespace;
-        SerializedProperty m_AllowUnsafeCode;
         SerializedProperty m_UseGUIDs;
         SerializedProperty m_AutoReferenced;
         SerializedProperty m_OverrideReferences;
@@ -177,6 +175,8 @@ namespace UnityEditor
         public override void OnEnable()
         {
             base.OnEnable();
+            if (!AreImporterTargetsValid()) // asset gone: base already logged and bailed
+                return;
 
             //Ensure UIElements handles the IMGUI container with margins
             alwaysAllowExpansion = true;
@@ -186,7 +186,6 @@ namespace UnityEditor
             m_SemVersionRanges.Clear();
             m_UnityVersionRanges.Clear();
             m_RootNamespace = extraDataSerializedObject.FindProperty("rootNamespace");
-            m_AllowUnsafeCode = extraDataSerializedObject.FindProperty("allowUnsafeCode");
             m_UseGUIDs = extraDataSerializedObject.FindProperty("useGUIDs");
             m_AutoReferenced = extraDataSerializedObject.FindProperty("autoReferenced");
             m_OverrideReferences = extraDataSerializedObject.FindProperty("overrideReferences");
@@ -269,7 +268,6 @@ namespace UnityEditor
                 GUILayout.Label(Styles.generalOptions, EditorStyles.boldLabel);
 
                 EditorGUILayout.BeginVertical(GUI.skin.box);
-                EditorGUILayout.PropertyField(m_AllowUnsafeCode, Styles.allowUnsafeCode);
                 EditorGUILayout.PropertyField(m_AutoReferenced, Styles.autoReferenced);
                 EditorGUILayout.PropertyField(m_NoEngineReferences, Styles.noEngineReferences);
                 EditorGUILayout.PropertyField(m_OverrideReferences, Styles.overrideReferences);

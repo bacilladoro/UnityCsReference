@@ -27,5 +27,8 @@ namespace UnityEditor.Compilation
         [VisibleToOtherModules("UnityEditor.BurstModule")]
         [FreeFunction]
         internal static extern bool IsScriptDebugInfoEnabled();
+
+        [FreeFunction]
+        internal static extern bool IsUsingMSBuild();
     }
 }

@@ -1570,7 +1570,7 @@ namespace UnityEditor.Experimental.GraphView
             GUI.matrix = m;
         }
 
-        static ProfilerMarker s_ProfilerMarker = new ProfilerMarker("GraphView.OnBeforeUpdate");
+        static readonly ProfilerMarker s_ProfilerMarker = new ProfilerMarker("GraphView.OnBeforeUpdate");
 
         void OnBeforeUpdate(IPanel panel)
         {

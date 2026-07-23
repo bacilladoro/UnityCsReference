@@ -16,7 +16,7 @@ namespace Unity.UIToolkit.Editor;
 
 /// <summary>
 /// 1. When a StyleSheet is added to hierarchy:
-/// - AddStyleSheet() calls m_StyleSheetSelectionHandler.AcquireInstanceId(styleSheet)
+/// - AddStyleSheet() calls m_StyleSheetSelectionHandler.AcquireInstanceId(styleSheet, isReadOnly)
 /// - Selection handler creates a StyleSheetSelection ScriptableObject and returns its EntityId
 /// - EntityId is stored in mappings alongside the HierarchyNode
 /// 2. When a node is selected in hierarchy:
@@ -57,18 +57,38 @@ internal class StyleSheetNodeTypeHandler : HierarchyNodeTypeHandler
     {
         public readonly StyleSheet StyleSheet;
         public readonly StyleRule Rule;
+        public readonly bool IsReadOnly;
+        public readonly VisualTreeAsset OwningDocument;
+        public readonly bool IsGroup;
 
-        public Node(StyleSheet styleSheet)
+        public Node(StyleSheet styleSheet, bool isReadOnly = false, VisualTreeAsset owningDocument = null)
         {
             StyleSheet = styleSheet;
             Rule = null;
+            IsReadOnly = isReadOnly;
+            OwningDocument = owningDocument;
+            IsGroup = false;
         }
 
-        public Node(StyleSheet styleSheet, StyleRule rule)
+        public Node(StyleSheet styleSheet, StyleRule rule, bool isReadOnly = false)
         {
             StyleSheet = styleSheet;
             Rule = rule;
+            IsReadOnly = isReadOnly;
+            OwningDocument = null;
+            IsGroup = false;
         }
+
+        Node(bool isGroup)
+        {
+            StyleSheet = null;
+            Rule = null;
+            IsReadOnly = true;
+            OwningDocument = null;
+            IsGroup = isGroup;
+        }
+
+        public static Node CreateGroup() => new(isGroup: true);
     }
 
     internal class NodeMappings
@@ -84,18 +104,30 @@ internal class StyleSheetNodeTypeHandler : HierarchyNodeTypeHandler
             if (hierarchyNode == HierarchyNode.Null)
                 return false;
 
-            var success = m_HierarchyNodeToNode.TryAdd(hierarchyNode, node) &&
-                          m_SelectionHandles.TryAdd(hierarchyNode, selectionHandle) &&
-                          m_ReversedSelectionHandles.TryAdd(selectionHandle, hierarchyNode);
+            if (!m_HierarchyNodeToNode.TryAdd(hierarchyNode, node))
+                return false;
 
-            // Also maintain StyleSheet mappings for the root node
-            if (success && node.Rule == null && node.StyleSheet != null)
+            if (selectionHandle != EntityId.None)
             {
-                m_Map.TryAdd(hierarchyNode, node.StyleSheet);
-                m_ReversedMap.TryAdd(node.StyleSheet, hierarchyNode);
+                if (!m_SelectionHandles.TryAdd(hierarchyNode, selectionHandle))
+                {
+                    m_HierarchyNodeToNode.Remove(hierarchyNode);
+                    return false;
+                }
+
+                m_ReversedSelectionHandles.TryAdd(selectionHandle, hierarchyNode);
             }
 
-            return success;
+            // Also maintain StyleSheet mappings for the root node
+            if (node.Rule == null && node.StyleSheet != null)
+            {
+                m_Map.TryAdd(hierarchyNode, node.StyleSheet);
+
+                if (!node.IsReadOnly || !m_ReversedMap.ContainsKey(node.StyleSheet))
+                    m_ReversedMap[node.StyleSheet] = hierarchyNode;
+            }
+
+            return true;
         }
 
         public bool TryGetValue(StyleSheet styleSheet, out HierarchyNode node)
@@ -115,17 +147,19 @@ internal class StyleSheetNodeTypeHandler : HierarchyNodeTypeHandler
                 return false;
             }
 
+            node = HierarchyNode.Null;
+            var found = false;
             foreach (var kvp in m_HierarchyNodeToNode)
             {
-                if (kvp.Value.Rule == styleRule)
-                {
-                    node = kvp.Key;
+                if (kvp.Value.Rule != styleRule)
+                    continue;
+                node = kvp.Key;
+                found = true;
+                if (!kvp.Value.IsReadOnly)
                     return true;
-                }
             }
 
-            node = HierarchyNode.Null;
-            return false;
+            return found;
         }
 
         public bool TryGetValue(HierarchyNode hierarchyNode, out Node node)
@@ -163,12 +197,60 @@ internal class StyleSheetNodeTypeHandler : HierarchyNodeTypeHandler
             // Remove StyleSheet mappings if this is a root node
             if (m_Map.Remove(hierarchyNode, out var stylesheet))
             {
-                m_ReversedMap.Remove(stylesheet);
+                if (m_ReversedMap.TryGetValue(stylesheet, out var mapped) && mapped == hierarchyNode)
+                {
+                    if (TryFindNodeForStyleSheet(stylesheet, out var replacement))
+                        m_ReversedMap[stylesheet] = replacement;
+                    else
+                        m_ReversedMap.Remove(stylesheet);
+                }
             }
 
-            return m_HierarchyNodeToNode.Remove(hierarchyNode) &&
-                   m_SelectionHandles.Remove(hierarchyNode, out var selectionHandle) &&
-                   m_ReversedSelectionHandles.Remove(selectionHandle);
+            var removed = m_HierarchyNodeToNode.Remove(hierarchyNode);
+
+            // Group nodes have no selection handle; only clean the selection maps when one exists.
+            if (m_SelectionHandles.Remove(hierarchyNode, out var selectionHandle))
+            {
+                if (m_ReversedSelectionHandles.TryGetValue(selectionHandle, out var mappedNode) && mappedNode == hierarchyNode)
+                {
+                    if (TryFindNodeForSelectionHandle(selectionHandle, out var replacement))
+                        m_ReversedSelectionHandles[selectionHandle] = replacement;
+                    else
+                        m_ReversedSelectionHandles.Remove(selectionHandle);
+                }
+            }
+
+            return removed;
+        }
+
+        bool TryFindNodeForStyleSheet(StyleSheet stylesheet, out HierarchyNode result)
+        {
+            result = HierarchyNode.Null;
+            var found = false;
+            foreach (var (candidate, sheet) in m_Map)
+            {
+                if (sheet != stylesheet)
+                    continue;
+                result = candidate;
+                found = true;
+                if (!m_HierarchyNodeToNode.TryGetValue(candidate, out var node) || !node.IsReadOnly)
+                    return true;
+            }
+            return found;
+        }
+
+        bool TryFindNodeForSelectionHandle(EntityId selectionHandle, out HierarchyNode result)
+        {
+            foreach (var (candidate, handle) in m_SelectionHandles)
+            {
+                if (handle == selectionHandle)
+                {
+                    result = candidate;
+                    return true;
+                }
+            }
+            result = HierarchyNode.Null;
+            return false;
         }
 
         public void RemoveAll(IEnumerable<HierarchyNode> nodes)
@@ -232,10 +314,13 @@ internal class StyleSheetNodeTypeHandler : HierarchyNodeTypeHandler
     internal static readonly string StyleSheetsWindowHierarchyViewUssClassName = StyleSheetsWindowUssClassName + "__hierarchy-view";
     internal static readonly string StyleRuleHeaderUssClassName = StyleSheetsWindowUssClassName + "__style-rule-header";
     internal static readonly string StyleRuleHeaderActiveUssClassName = StyleRuleHeaderUssClassName + "--active-stylesheet";
+    internal static readonly string StyleSheetReadOnlyRowUssClassName = StyleSheetsWindowUssClassName + "__row--readonly";
+    internal static readonly string StyleSheetGroupRowUssClassName = StyleSheetsWindowUssClassName + "__group-row";
     internal static readonly string StyleRuleSelectorNameUssClass = "unity-builder-code-label--element-name";
     internal static readonly string StyleRuleSelectorTypeUssClass = "unity-builder-code-label--element-type";
     internal static readonly string StyleRuleSelectorPseudoStateUssClass = "unity-builder-code-label--element-pseudo-state";
     internal static readonly string StyleRuleSelectorChainedClassUssClass = StyleSheetsWindowUssClassName + "__class-pill--chained";
+    internal const string GroupNodeName = "Inherited Style Sheets";
 
     protected IStyleRuleSelectionHandler SelectionHandler => m_StyleRuleSelectionHandler;
 
@@ -317,17 +402,18 @@ internal class StyleSheetNodeTypeHandler : HierarchyNodeTypeHandler
         return nodes.Length - resolved;
     }
 
-    public HierarchyNode AddStyleSheet(StyleSheet styleSheet)
+    public HierarchyNode AddStyleSheet(StyleSheet styleSheet, bool isReadOnly = false, VisualTreeAsset owningDocument = null, HierarchyNode parent = default)
     {
         if (!Hierarchy.IsCreated)
             return HierarchyNode.Null;
 
-        CommandList.Add(Hierarchy.Root, 1, out var root);
+        var parentNode = parent != HierarchyNode.Null ? parent : Hierarchy.Root;
+        CommandList.Add(parentNode, 1, out var root);
 
-        CommandList.SetName(root[0], styleSheet.name);
+        CommandList.SetName(root[0], styleSheet.name + OwnerSuffix(owningDocument));
 
-        var styleSheetEntityId = m_StyleSheetSelectionHandler.AcquireInstanceId(styleSheet);
-        m_Mappings.TryAdd(root[0], new Node(styleSheet), styleSheetEntityId);
+        var styleSheetEntityId = m_StyleSheetSelectionHandler.AcquireInstanceId(styleSheet, isReadOnly);
+        m_Mappings.TryAdd(root[0], new Node(styleSheet, isReadOnly, owningDocument), styleSheetEntityId);
 
         for (var i = 0; i < styleSheet.rules.Length; i++)
         {
@@ -337,10 +423,10 @@ internal class StyleSheetNodeTypeHandler : HierarchyNodeTypeHandler
             // Only add the rule if it has at least one non-internal selector
             if (!string.IsNullOrWhiteSpace(displayString))
             {
-                var ruleEntityId = m_StyleRuleSelectionHandler.AcquireInstanceId(rule);
+                var ruleEntityId = m_StyleRuleSelectionHandler.AcquireInstanceId(rule, isReadOnly);
 
                 CommandList.Add(root[0], 1, out var ruleNode);
-                m_Mappings.TryAdd(ruleNode[0], new Node(styleSheet, rule), ruleEntityId);
+                m_Mappings.TryAdd(ruleNode[0], new Node(styleSheet, rule, isReadOnly), ruleEntityId);
                 CommandList.SetName(ruleNode[0], displayString);
             }
         }
@@ -348,6 +434,35 @@ internal class StyleSheetNodeTypeHandler : HierarchyNodeTypeHandler
         m_NewlyAddedStyleSheets.Add(styleSheet);
 
         return root[0];
+    }
+
+    public HierarchyNode AddStyleSheetGroup()
+    {
+        if (!Hierarchy.IsCreated)
+            return HierarchyNode.Null;
+
+        CommandList.Add(Hierarchy.Root, 1, out var group);
+        CommandList.SetName(group[0], GroupNodeName);
+        m_Mappings.TryAdd(group[0], Node.CreateGroup(), EntityId.None);
+        return group[0];
+    }
+
+    protected static string OwnerSuffix(VisualTreeAsset owningDocument) => owningDocument != null ? $" ({StyleSheetAssetUtilities.GetDocumentDisplayName(owningDocument)})" : string.Empty;
+
+    public void RefreshStyleSheetNodeName(HierarchyNode node)
+    {
+        if (Hierarchy.IsCreated && m_Mappings.TryGetValue(node, out var styleNode) && styleNode.Rule == null && styleNode.StyleSheet != null)
+            CommandList.SetName(node, styleNode.StyleSheet.name + OwnerSuffix(styleNode.OwningDocument));
+    }
+
+    public void RemoveStyleSheetGroup(HierarchyNode groupNode)
+    {
+        if (groupNode == HierarchyNode.Null)
+            return;
+
+        m_Mappings.TryRemove(groupNode);
+        if (Hierarchy.IsCreated && Hierarchy.Exists(groupNode))
+            CommandList.Remove(groupNode);
     }
 
     public void RemoveStyleSheet(HierarchyNode rootNode)
@@ -364,7 +479,7 @@ internal class StyleSheetNodeTypeHandler : HierarchyNodeTypeHandler
                 var childNode = Hierarchy.GetChild(rootNode, i);
                 if (m_Mappings.TryGetValue(childNode, out var node) && node.Rule != null)
                 {
-                    m_StyleRuleSelectionHandler.ReleaseInstanceId(node.Rule);
+                    m_StyleRuleSelectionHandler.ReleaseInstanceId(node.Rule, node.IsReadOnly);
                 }
 
                 m_Mappings.TryRemove(childNode);
@@ -374,7 +489,7 @@ internal class StyleSheetNodeTypeHandler : HierarchyNodeTypeHandler
         // Release stylesheet selection instance
         if (m_Mappings.TryGetValue(rootNode, out var rootNodeData) && rootNodeData.StyleSheet != null)
         {
-            m_StyleSheetSelectionHandler.ReleaseInstanceId(rootNodeData.StyleSheet);
+            m_StyleSheetSelectionHandler.ReleaseInstanceId(rootNodeData.StyleSheet, rootNodeData.IsReadOnly);
         }
 
         m_Mappings.TryRemove(rootNode);
@@ -382,20 +497,31 @@ internal class StyleSheetNodeTypeHandler : HierarchyNodeTypeHandler
             CommandList.Remove(rootNode);
     }
 
-    public void Sort(HierarchyNode rootNode, List<StyleSheet> styleSheets)
+    public void SortTopLevel(HierarchyNode groupNode, IReadOnlyList<HierarchyNode> editableNodes)
     {
-        // Update sort order for all stylesheets to match UXML order
-        for (var i = 0; i < styleSheets.Count; i++)
-        {
-            if (m_Mappings.TryGetValue(styleSheets[i], out var node))
-            {
-                CommandList.SetSortIndex(node, i);
-            }
-        }
-        CommandList.SortChildren(rootNode);
+        var sortIndex = 0;
+
+        if (groupNode != HierarchyNode.Null)
+            CommandList.SetSortIndex(groupNode, sortIndex++);
+
+        foreach (var node in editableNodes)
+            CommandList.SetSortIndex(node, sortIndex++);
+
+        CommandList.SortChildren(Hierarchy.Root);
     }
 
-    public void RefreshStyleSheetRules(HierarchyNode rootNode, StyleSheet styleSheet)
+    public void SortGroupChildren(HierarchyNode groupNode, IReadOnlyList<HierarchyNode> parentNodes)
+    {
+        if (groupNode == HierarchyNode.Null)
+            return;
+
+        for (var i = 0; i < parentNodes.Count; i++)
+            CommandList.SetSortIndex(parentNodes[i], i);
+
+        CommandList.SortChildren(groupNode);
+    }
+
+    public void RefreshStyleSheetRules(HierarchyNode rootNode, StyleSheet styleSheet, bool isReadOnly = false)
     {
         if (rootNode == HierarchyNode.Null || styleSheet == null)
             return;
@@ -460,12 +586,12 @@ internal class StyleSheetNodeTypeHandler : HierarchyNodeTypeHandler
                 {
                     // Release the old rule first, then acquire the new one
                     // This keeps ref count correct if called multiple times
-                    m_StyleRuleSelectionHandler.ReleaseInstanceId(remap.Previous);
-                    var ruleEntityId = m_StyleRuleSelectionHandler.AcquireInstanceId(remap.Remapped);
+                    m_StyleRuleSelectionHandler.ReleaseInstanceId(remap.Previous, isReadOnly);
+                    var ruleEntityId = m_StyleRuleSelectionHandler.AcquireInstanceId(remap.Remapped, isReadOnly);
 
                     // Update the mapping to point to new rule
                     m_Mappings.TryRemove(node);
-                    m_Mappings.TryAdd(node, new Node(styleSheet, remap.Remapped), ruleEntityId);
+                    m_Mappings.TryAdd(node, new Node(styleSheet, remap.Remapped, isReadOnly), ruleEntityId);
 
                     // Update display name
                     var displayString = m_Exporter.ToUssString(styleSheet, remap.Remapped.complexSelectors, s_ExportOptions);
@@ -482,10 +608,10 @@ internal class StyleSheetNodeTypeHandler : HierarchyNodeTypeHandler
         foreach (var rule in addedRules)
         {
             var displayString = m_Exporter.ToUssString(styleSheet, rule.complexSelectors, s_ExportOptions);
-            var ruleEntityId = m_StyleRuleSelectionHandler.AcquireInstanceId(rule);
+            var ruleEntityId = m_StyleRuleSelectionHandler.AcquireInstanceId(rule, isReadOnly);
 
             CommandList.Add(rootNode, 1, out var ruleNode);
-            m_Mappings.TryAdd(ruleNode[0], new Node(styleSheet, rule), ruleEntityId);
+            m_Mappings.TryAdd(ruleNode[0], new Node(styleSheet, rule, isReadOnly), ruleEntityId);
             CommandList.SetName(ruleNode[0], displayString);
 
             // Add to existingRuleNodes so it gets sorted properly
@@ -497,7 +623,7 @@ internal class StyleSheetNodeTypeHandler : HierarchyNodeTypeHandler
         {
             if (existingRuleNodes.TryGetValue(rule, out var node))
             {
-                m_StyleRuleSelectionHandler.ReleaseInstanceId(rule);
+                m_StyleRuleSelectionHandler.ReleaseInstanceId(rule, isReadOnly);
                 m_Mappings.TryRemove(node);
                 CommandList.Remove(node);
             }
@@ -522,7 +648,17 @@ internal class StyleSheetNodeTypeHandler : HierarchyNodeTypeHandler
 
     public bool IsStyleSheet(in HierarchyNode node)
     {
-        return Mappings.TryGetValue(node, out var styleNode) && styleNode.Rule == null;
+        return Mappings.TryGetValue(node, out var styleNode) && styleNode.Rule == null && !styleNode.IsGroup;
+    }
+
+    public bool IsReadOnly(in HierarchyNode node)
+    {
+        return Mappings.TryGetValue(node, out var styleNode) && styleNode.IsReadOnly;
+    }
+
+    public bool IsGroup(in HierarchyNode node)
+    {
+        return Mappings.TryGetValue(node, out var styleNode) && styleNode.IsGroup;
     }
 
     protected override void Initialize()
@@ -551,11 +687,21 @@ internal class StyleSheetNodeTypeHandler : HierarchyNodeTypeHandler
         if (!Mappings.TryGetValue(item.Node, out var node))
             return;
 
+        ApplyReadOnlyState(item, node.IsReadOnly && !node.IsGroup);
+
+        if (node.IsGroup)
+        {
+            item.RowContainer.AddToClassList(StyleSheetGroupRowUssClassName);
+            item.RowContainer.AddToClassList(StyleRuleHeaderUssClassName);
+            return;
+        }
+
         // Add style classes to the StyleSheet nodes
         if (node.Rule == null)
         {
             item.RowContainer.AddToClassList(StyleRuleHeaderUssClassName);
-            item.RowContainer.EnableInClassList(StyleRuleHeaderActiveUssClassName, node.StyleSheet == Window?.ActiveStyleSheet);
+            item.RowContainer.EnableInClassList(StyleRuleHeaderActiveUssClassName, !node.IsReadOnly && node.StyleSheet == Window?.ActiveStyleSheet);
+
             return;
         }
 
@@ -609,14 +755,14 @@ internal class StyleSheetNodeTypeHandler : HierarchyNodeTypeHandler
                     var classSelectors = trimmedToken.Split('.', StringSplitOptions.RemoveEmptyEntries);
                     foreach (var selector in classSelectors)
                     {
-                        AddSelectorToken(chainedContainer, "." + selector, true);
+                        AddSelectorToken(chainedContainer, "." + selector, true, allowDrag: !node.IsReadOnly);
                     }
 
                     item.LeftCustomContainer.Add(chainedContainer);
                 }
                 else
                 {
-                    AddSelectorToken(item.LeftCustomContainer, trimmedToken, false);
+                    AddSelectorToken(item.LeftCustomContainer, trimmedToken, false, allowDrag: !node.IsReadOnly);
                 }
             }
 
@@ -644,10 +790,17 @@ internal class StyleSheetNodeTypeHandler : HierarchyNodeTypeHandler
 
         item.RowContainer.RemoveFromClassList(StyleRuleHeaderUssClassName);
         item.RowContainer.RemoveFromClassList(StyleRuleHeaderActiveUssClassName);
+        item.RowContainer.RemoveFromClassList(StyleSheetReadOnlyRowUssClassName);
+        item.RowContainer.RemoveFromClassList(StyleSheetGroupRowUssClassName);
         item.Name.style.display = DisplayStyle.Flex;
         item.LeftCustomContainer.Clear();
         item.UnregisterCallback<PointerEnterEvent, StyleRule>(OnStartHover);
         item.UnregisterCallback<PointerLeaveEvent>(OnEndHover);
+    }
+
+    static void ApplyReadOnlyState(HierarchyViewItem item, bool isReadOnly)
+    {
+        item.RowContainer.EnableInClassList(StyleSheetReadOnlyRowUssClassName, isReadOnly);
     }
 
     void OnStartHover(PointerEnterEvent evt, StyleRule rule)
@@ -660,14 +813,14 @@ internal class StyleSheetNodeTypeHandler : HierarchyNodeTypeHandler
         HighlightUtility.ClearHighlights();
     }
 
-    void AddSelectorToken(VisualElement container, string token, bool isChained = false)
+    void AddSelectorToken(VisualElement container, string token, bool isChained = false, bool allowDrag = true)
     {
         var pseudoIndex = token.IndexOf(':');
 
         // Rule with pseudo-class
         if (pseudoIndex > 0)
         {
-            AddSelectorPart(container, token.Substring(0, pseudoIndex), isChained);
+            AddSelectorPart(container, token.Substring(0, pseudoIndex), isChained, allowDrag);
             AddLabel(container, token.Substring(pseudoIndex), StyleRuleSelectorPseudoStateUssClass);
             return;
         }
@@ -679,10 +832,10 @@ internal class StyleSheetNodeTypeHandler : HierarchyNodeTypeHandler
             return;
         }
 
-        AddSelectorPart(container, token, isChained);
+        AddSelectorPart(container, token, isChained, allowDrag);
     }
 
-    void AddSelectorPart(VisualElement container, string selector, bool isChained = false)
+    void AddSelectorPart(VisualElement container, string selector, bool isChained = false, bool allowDrag = true)
     {
         // Class selector
         if (selector.StartsWith(".") && !selector.Contains("["))
@@ -692,7 +845,8 @@ internal class StyleSheetNodeTypeHandler : HierarchyNodeTypeHandler
             if (isChained)
                 pill.AddToClassList(StyleRuleSelectorChainedClassUssClass);
 
-            AddDragSupport(pill, selector);
+            if (allowDrag)
+                AddDragSupport(pill, selector);
             container.Add(pill);
             return;
         }

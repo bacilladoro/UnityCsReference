@@ -21,11 +21,7 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("UnityEngine.UIElements.Tests.StyleSheets")]
 [assembly: InternalsVisibleTo("UnityEngine.UIElements.Tests.Utils")]
 [assembly: InternalsVisibleTo("UnityEngine.UIElements.Tests.UXML")]
-[assembly: InternalsVisibleTo("Unity.Modules.UIToolkitAuthoring.Tests.Editor")]
-
-[assembly: InternalsVisibleTo("Unity.Modules.Licensing.Tests.Editor")]
-[assembly: InternalsVisibleTo("Unity.Modules.SceneTemplateEditor.Tests.Editor")]
-[assembly: InternalsVisibleTo("Unity.Modules.Core.InspectorWindow.Tests.Editor")]
+[assembly: InternalsVisibleTo("Unity.Modules.InputForUI.Tests.Playmode")]
 
 [assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")] // for Moq
 
@@ -33,11 +29,15 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("UnityEditor.UIBuilderModule")]
 [assembly: InternalsVisibleTo("UnityEditor.UIElementsModule")]
 [assembly: InternalsVisibleTo("UnityEditor.UIToolkitAuthoringModule")]
+[assembly: InternalsVisibleTo("Unity.Modules.UIToolkitAuthoring.Tests.Editor")]
+
+[assembly: InternalsVisibleTo("Unity.Modules.Core.InspectorWindow.Tests.Editor")]
 
 [assembly: InternalsVisibleTo("Unity.UIElements.EditorTests")]
 [assembly: InternalsVisibleTo("Unity.UIElements.TestComponents.Editor")]
 [assembly: InternalsVisibleTo("Assembly-CSharp-Editor-testable")]
 [assembly: InternalsVisibleTo("Unity.UI.Builder.EditorTests")]
+[assembly: InternalsVisibleTo("Test.UILibraryVisibility")]
 [assembly: InternalsVisibleTo("Unity.UXMLReferenceGenerator.Bridge")]
 [assembly: InternalsVisibleTo("Unity.UI.TestFramework.Editor")] // for UI Test Framework
 [assembly: InternalsVisibleTo("Unity.UI.TestFramework.Editor.InternalAccessTests")] // for UI Test Framework tests that need internal access
@@ -47,8 +47,8 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("Unity.Modules.InputForUI.Tests.Common")]
 [assembly: InternalsVisibleTo("Unity.Modules.InputForUI.Tests.Editor")]
 [assembly: InternalsVisibleTo("Unity.Modules.Input.Tests.Editor")]
-[assembly: InternalsVisibleTo("Unity.Modules.PackageManagerUI.Tests.Editor")]
-[assembly: InternalsVisibleTo("Unity.Modules.InputForUI.Tests.Playmode")]
+
+
 
 
 // TOLERATED: modules or core packages evolving in lockstep with this module
@@ -59,7 +59,6 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("Unity.Hierarchy.PerformanceTests")] // Hierarchy performance tests
 [assembly: InternalsVisibleTo("UnityEngine.VectorGraphicsModule")] // VectorImage
 [assembly: InternalsVisibleTo("Unity.Modules.VectorGraphics.Tests.Editor")]
-[assembly: InternalsVisibleTo("Unity.ShaderGraph.Editor")] // com.unity.shadergraph
 [assembly: InternalsVisibleTo("Unity.RenderPipelines.Universal.Runtime")]
 [assembly: InternalsVisibleTo("Unity.RenderPipelines.Universal.2D.Runtime")]
 
@@ -70,10 +69,12 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("Unity.XR.Interaction.Toolkit.Samples.StarterAssets.Editor")]
 [assembly: InternalsVisibleTo("Unity.XR.Interaction.Toolkit.Samples.UIToolkit")]
 
+[assembly: InternalsVisibleTo("Unity.Modules.PackageManagerUI.Tests.Editor")]
 [assembly: InternalsVisibleTo("UnityEditor.CoreModule")]
 [assembly: InternalsVisibleTo("UnityEditor.EditorToolbarModule")]
 [assembly: InternalsVisibleTo("UnityEditor.GraphViewModule")]
 [assembly: InternalsVisibleTo("UnityEditor.Graphs")]
+[assembly: InternalsVisibleTo("Unity.ShaderGraph.Editor")] // com.unity.shadergraph
 [assembly: InternalsVisibleTo("UnityEditor.GridAndSnapModule")] // ButtonStripField
 [assembly: InternalsVisibleTo("UnityEditor.PresetsModule")]
 [assembly: InternalsVisibleTo("UnityEditor.PresetsUIModule")]
@@ -88,9 +89,12 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("Unity.Hierarchy.Editor.PerformanceTests")] // Hierarchy performance tests
 [assembly: InternalsVisibleTo("UnityEditor.VectorGraphicsModule")] // VectorImage
 
-[assembly: InternalsVisibleTo("Unity.2D.Sprite.Editor")] // com.unity.2d.sprite: VisualElement.styleSheetList, FocusController.IsFocused
-[assembly: InternalsVisibleTo("Unity.2D.Tilemap.Editor")] // com.unity.2d.tilemap: AbstractGenericMenu
-[assembly: InternalsVisibleTo("Unity.2D.Tilemap.EditorTests")] // com.unity.2d.tilemap.tests: UIElementsUtility
+
+[assembly: InternalsVisibleTo("Unity.Modules.VectorGraphics.Tests.Editor")]
+[assembly: InternalsVisibleTo("Unity.Modules.Licensing.Tests.Editor")]
+[assembly: InternalsVisibleTo("Unity.Modules.SceneTemplateEditor.Tests.Editor")]
+
+
 
 // NOT TOLERATED: assemblies distributed in packages not evolving in lockstep with this module
 // Until this list is empty, your internal API is included in your public API, and changing internal APIs is considered a breaking change.
@@ -98,11 +102,11 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("Unity.InternalAPIEngineBridge.001")] // com.unity.2d.common: VisualElement.pseudoStates, PseudoStates
 [assembly: InternalsVisibleTo("Unity.InternalAPIEngineBridge.002")] // com.unity.entities: VisualElementBridge.cs, ListViewBridge.cs
 [assembly: InternalsVisibleTo("Unity.InternalAPIEngineBridge.003")] // com.unity.vectorgraphics: VectorImage, GradientSettings
-[assembly: InternalsVisibleTo("Unity.InternalAPIEngineBridge.017")] // com.unity.motion: UIElementsUtility
-
-[assembly: InternalsVisibleTo("Unity.InternalAPIEngineBridge.015")] // Eventually remove this line. Kept for earlier, unreleased versions of com.unity.graphtoolsfoundation, which is now com.unity.graphtoolsauthoringframework (line below).
 
 
+[assembly: InternalsVisibleTo("Unity.2D.Sprite.Editor")] // com.unity.2d.sprite: FocusController.IsFocused
+[assembly: InternalsVisibleTo("Unity.2D.Tilemap.Editor")] // com.unity.2d.tilemap: AbstractGenericMenu
+[assembly: InternalsVisibleTo("Unity.2D.Tilemap.EditorTests")] // com.unity.2d.tilemap.tests: UIElementsUtility
 [assembly: InternalsVisibleTo("UnityEditor.GraphToolkitModule")]
 [assembly: InternalsVisibleTo("UnityEditor.Purchasing")] // com.unity.purchasing, VisualElement.AddStyleSheetPath
 

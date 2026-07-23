@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.UIElements.UIR;
 
 namespace UnityEngine.UIElements
@@ -24,6 +25,7 @@ namespace UnityEngine.UIElements
         TextureBlitter m_Blitter;
         Vector2Int m_CurrentSize;
 
+        [NoAutoStaticsCleanup] // monotonic counter for unique texture names; safe to persist
         static int s_TextureCounter;
 
         public DynamicAtlasPage(RenderTextureFormat format, FilterMode filterMode, Vector2Int minSize, Vector2Int maxSize)

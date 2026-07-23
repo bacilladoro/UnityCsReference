@@ -72,6 +72,11 @@ namespace Unity.GraphToolkit.Editor
             /// The guid to assign to the newly created variable declaration.
             /// </summary>
             public Hash128 VariableDeclarationGuid;
+
+            /// <summary>
+            /// The mode to use when creating the variable node.
+            /// </summary>
+            public VariableNodeMode Mode;
         }
 
         /// <summary>
@@ -371,7 +376,10 @@ namespace Unity.GraphToolkit.Editor
                     {
                         if (graphModel.CanCreateVariableNode(variableDeclaration, graphModel))
                         {
-                            createdElement = graphModel.CreateVariableNode(variableDeclaration, creationData.Position, guid);
+                            var mode = VariableNodeMode.Get;
+                            if (creationData.Mode == VariableNodeMode.Set && variableDeclaration.CanCreateSetVariableNode)
+                                mode = VariableNodeMode.Set;
+                            createdElement = graphModel.CreateVariableNode(variableDeclaration, creationData.Position, guid, mode: mode);
                         }
                         else
                         {

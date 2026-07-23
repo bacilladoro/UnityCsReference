@@ -18,6 +18,7 @@ using FrameCapture = UnityEngine.Apple.FrameCapture;
 using FrameCaptureDestination = UnityEngine.Apple.FrameCaptureDestination;
 using UnityEditor.ShortcutManagement;
 using UnityEngine.UIElements;
+using Unity.Scripting.LifecycleManagement;
 
 /*
 The main GameView can be in the following states when entering playmode.
@@ -100,29 +101,29 @@ namespace UnityEditor
 
         internal static class Styles
         {
-            public static GUIContent gizmosContent = EditorGUIUtility.TrTextContent("Gizmos", "Activate / Deactivate gizmos in the GameView");
-            public static GUIContent zoomSliderContent = EditorGUIUtility.TrTextContent("Scale", "Size of the game view on the screen.");
-            public static GUIContent muteOffContent = EditorGUIUtility.TrIconContent("GameViewAudio On", "Mute Audio");
-            public static GUIContent muteOnContent = EditorGUIUtility.TrIconContent("GameViewAudio", "Mute Audio");
-            public static GUIContent shortcutsOnContent = EditorGUIUtility.TrIconContent("Keyboard", "Unity Shortcuts");
-            public static GUIContent shortcutsOffContent = EditorGUIUtility.TrIconContent("KeyboardShortcutsDisabled", "Unity Shortcuts");
-            public static GUIContent statsContent = EditorGUIUtility.TrTextContent("Stats");
-            public static GUIContent frameDebuggerOnContent = EditorGUIUtility.TrTextContent("Frame Debugger On");
-            public static GUIContent noCameraWarningContextMenuContent = EditorGUIUtility.TrTextContent("Warn if No Cameras Rendering");
-            public static GUIContent clearEveryFrameContextMenuContent = EditorGUIUtility.TrTextContent("Clear Every Frame in Edit Mode");
-            public static GUIContent lowResAspectRatiosContextMenuContent = EditorGUIUtility.TrTextContent("Low Resolution Aspect Ratios");
-            public static GUIContent metalFrameCaptureContent = EditorGUIUtility.TrIconContent("FrameCapture", "Capture the current view and open in Xcode frame debugger");
-            public static GUIContent frameDebuggerContent = EditorGUIUtility.TrIconContent("Debug", "Opens the Frame Debugger");
+            public static readonly GUIContent gizmosContent = EditorGUIUtility.TrTextContent("Gizmos", "Activate / Deactivate gizmos in the GameView");
+            public static readonly GUIContent zoomSliderContent = EditorGUIUtility.TrTextContent("Scale", "Size of the game view on the screen.");
+            public static readonly GUIContent muteOffContent = EditorGUIUtility.TrIconContent("GameViewAudio On", "Mute Audio");
+            public static readonly GUIContent muteOnContent = EditorGUIUtility.TrIconContent("GameViewAudio", "Mute Audio");
+            public static readonly GUIContent shortcutsOnContent = EditorGUIUtility.TrIconContent("Keyboard", "Unity Shortcuts");
+            public static readonly GUIContent shortcutsOffContent = EditorGUIUtility.TrIconContent("KeyboardShortcutsDisabled", "Unity Shortcuts");
+            public static readonly GUIContent statsContent = EditorGUIUtility.TrTextContent("Stats");
+            public static readonly GUIContent frameDebuggerOnContent = EditorGUIUtility.TrTextContent("Frame Debugger On");
+            public static readonly GUIContent noCameraWarningContextMenuContent = EditorGUIUtility.TrTextContent("Warn if No Cameras Rendering");
+            public static readonly GUIContent clearEveryFrameContextMenuContent = EditorGUIUtility.TrTextContent("Clear Every Frame in Edit Mode");
+            public static readonly GUIContent lowResAspectRatiosContextMenuContent = EditorGUIUtility.TrTextContent("Low Resolution Aspect Ratios");
+            public static readonly GUIContent metalFrameCaptureContent = EditorGUIUtility.TrIconContent("FrameCapture", "Capture the current view and open in Xcode frame debugger");
+            public static readonly GUIContent frameDebuggerContent = EditorGUIUtility.TrIconContent("Debug", "Opens the Frame Debugger");
 
             public const string k_StatsShortcutID = "Game View/Toggle Stats";
             public const string k_StatsTooltip = "View general rendering information";
             public const string k_AspectRatioTooltip = "Change aspect ratios, emulate low pixel density, allow VSync";
 
-            public static GUIContent renderdocContent;
-            public static GUIStyle gameViewBackgroundStyle;
+            public static readonly GUIContent renderdocContent;
+            public static readonly GUIStyle gameViewBackgroundStyle;
 
             // The ordering here must correspond with ordering in UnityEngine.XR.GameViewRenderMode
-            public static GUIContent[] xrRenderingModes = { EditorGUIUtility.TextContent("Left Eye|Left eye is displayed in play mode."), EditorGUIUtility.TextContent("Right Eye|Right eye is displayed in play mode."), EditorGUIUtility.TextContent("Both Eyes|Both eyes are displayed in play mode."), EditorGUIUtility.TextContent("Occlusion Mesh|Both eyes are displayed in play mode along with the occlusion mesh.") };
+            public static readonly GUIContent[] xrRenderingModes = { EditorGUIUtility.TextContent("Left Eye|Left eye is displayed in play mode."), EditorGUIUtility.TextContent("Right Eye|Right eye is displayed in play mode."), EditorGUIUtility.TextContent("Both Eyes|Both eyes are displayed in play mode."), EditorGUIUtility.TextContent("Occlusion Mesh|Both eyes are displayed in play mode along with the occlusion mesh.") };
 
             static Styles()
             {
@@ -131,6 +132,7 @@ namespace UnityEditor
             }
         }
 
+        [NoAutoStaticsCleanup] // scroll snap timer; safe to persist — stale value causes at most one immediate snap after reload
         static double s_LastScrollTime;
 
         private VisualElement m_StatsWindowInstance;
@@ -501,6 +503,8 @@ namespace UnityEditor
             menu.AddItem(Styles.noCameraWarningContextMenuContent, m_NoCameraWarning, ToggleNoCameraWarning);
             menu.AddItem(Styles.clearEveryFrameContextMenuContent, m_ClearInEditMode, ToggleClearInEditMode);
         }
+
+        internal override bool ShowGenericMenuWhenRestricted() => true;
 
         private void ToggleNoCameraWarning()
         {
@@ -1186,6 +1190,7 @@ namespace UnityEditor
                 InitializeFoldoutState(m_StatsWindowInstance, "HardwareFoldout", true);
                 InitializeFoldoutState(m_StatsWindowInstance, "SceneFoldout", true);
                 InitializeFoldoutState(m_StatsWindowInstance, "DrawsFoldout", false);
+                InitializeFoldoutState(m_StatsWindowInstance, "GRDFoldout", false);
                 InitializeFoldoutState(m_StatsWindowInstance, "MemoryFoldout", false);
                 InitializeFoldoutState(m_StatsWindowInstance, "AnimationMeshFoldout", false);
 

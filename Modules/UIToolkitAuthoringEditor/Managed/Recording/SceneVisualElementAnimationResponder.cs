@@ -37,7 +37,7 @@ namespace Unity.UIToolkit.Editor
                 return false;
 
             if (selectedObject is VisualTreeAssetSelection visualTreeAssetSelection)
-                return TryEditPanelRoot(window, visualTreeAssetSelection.panelComponent, out newSelection);
+                return TryEditPanelRoot(window, visualTreeAssetSelection.PanelComponent, out newSelection);
 
             return false;
         }

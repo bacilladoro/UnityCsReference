@@ -1480,6 +1480,12 @@ namespace Unity.U2D.Physics
         public readonly UnityEngine.Object GetOwner() => PhysicsBody_GetOwner(this);
 
         /// <summary>
+        /// The owner object associated with this body, or NULL if no owner has been specified.
+        /// This is a convenience property that returns the same value as <see cref="GetOwner"/>.
+        /// </summary>
+        public readonly UnityEngine.Object owner => GetOwner();
+
+        /// <summary>
         /// Get if the body is owned.
         /// See <see cref="PhysicsBody.SetOwner(UnityEngine.Object)"/>.
         /// </summary>

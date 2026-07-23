@@ -17,12 +17,13 @@ using UnityEditor.Overlays;
 using UnityEditor.UIElements;
 using UnityEngine.UIElements;
 using Object = UnityEngine.Object;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
     [CustomEditor(typeof(Camera))]
     [CanEditMultipleObjects]
-    public class CameraEditor : Editor
+    public partial class CameraEditor : Editor
     {
         internal static class Styles
         {
@@ -62,7 +63,7 @@ namespace UnityEditor
             public static readonly GUIContent deferredMSAAWarning = EditorGUIUtility.TrTextContent("The target texture is using MSAA. Note that this will not affect MSAA behaviour of this camera. MSAA rendering for cameras is configured through the 'MSAA' camera setting and related project settings. The target texture will always contain resolved pixel data.");
             public static readonly GUIContent dynamicResolutionTimingWarning = EditorGUIUtility.TrTextContent("It is recommended to enable Frame Timing Statistics under Rendering Player Settings when using dynamic resolution cameras.");
 
-            public static GUIStyle invisibleButton;
+            public static readonly GUIStyle invisibleButton = new GUIStyle("InvisibleButton");
 
             public const string k_CameraEditorUxmlPath = "UXML/InspectorWindow/CameraEditor.uxml";
 
@@ -648,6 +649,8 @@ namespace UnityEditor
         Settings m_Settings;
         protected internal Settings settings => m_Settings ??= new Settings(serializedObject);
 
+        // Reusable scratch buffer for SubsystemManager.GetSubsystemDescriptors, which clears and repopulates it on each query. Holds engine XR descriptors (no user-type references), so it is safe to persist across code reload.
+        [NoAutoStaticsCleanup]
         internal static readonly List<XRDisplaySubsystemDescriptor> k_DisplayDescriptors = new();
 
         uint m_LastNonSerializedVersion;
@@ -767,7 +770,6 @@ namespace UnityEditor
                         rowRect.xMax = minusRect.x;
                         GUI.Label(rowRect, string.Format("{0}: {1} ({2})", ce, cb.name, EditorUtility.FormatBytes(cb.sizeInBytes)), EditorStyles.miniLabel);
                         // and a button to remove it
-                        Styles.invisibleButton ??= new GUIStyle("InvisibleButton");
                         if (GUI.Button(minusRect, Styles.iconRemove, Styles.invisibleButton))
                         {
                             camera.RemoveCommandBuffer(ce, cb);
@@ -891,6 +893,7 @@ namespace UnityEditor
         [RequiredByNativeCode]
         internal static void RenderGizmo(Camera camera) => CameraEditorUtils.DrawFrustumGizmo(camera);
 
+        [AutoStaticsCleanupOnCodeReload]
         static Vector2 s_PreviousMainPlayModeViewTargetSize;
 
         public virtual void OnSceneGUI()

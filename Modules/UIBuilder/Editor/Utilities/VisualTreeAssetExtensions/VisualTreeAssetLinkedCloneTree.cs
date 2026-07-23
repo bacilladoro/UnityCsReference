@@ -8,11 +8,13 @@ using UnityEngine.UIElements;
 using UnityEngine;
 using UnityEditor.UIElements;
 using UnityEngine.Assertions;
+using Unity.Scripting.LifecycleManagement;
 
 namespace Unity.UI.Builder
 {
     internal static class VisualTreeAssetLinkedCloneTree
     {
+        [NoAutoStaticsCleanup] // Transient marshaling buffer: populated and Clear()ed within CloneTree's finally, so it never retains references across a code reload.
         static readonly Dictionary<string, VisualElement> s_TemporarySlotInsertionPoints = new Dictionary<string, VisualElement>();
 
         static VisualElement CloneSetupRecursively(VisualTreeAsset vta, VisualElementAsset root, CreationContext context)

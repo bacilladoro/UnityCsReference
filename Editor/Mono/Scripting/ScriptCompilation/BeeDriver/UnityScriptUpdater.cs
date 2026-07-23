@@ -39,7 +39,7 @@ namespace UnityEditor.Scripting.ScriptCompilation
         static RunnableProgram DefaultScriptUpdaterProgram()
         {
             NPath scriptUpdaterExe = $"{EditorApplication.applicationBuildPipelinePath}/Compilation/ApiUpdater/ScriptUpdater.dll";
-            return new SystemProcessRunnableProgram(NetCoreProgram.DotNetMuxerPath.ToString(), new[] {scriptUpdaterExe.InQuotes()}, stdOutMode: StdOutMode.LogStdOutOnFinish);
+            return new SystemProcessRunnableProgram(NetCoreProgram.DotNetMuxerPath.ToString(), new[] {"--roll-forward", "Major", scriptUpdaterExe.InQuotes()}, stdOutMode: StdOutMode.LogStdOutOnFinish);
         }
 
         enum CanUpdateAny

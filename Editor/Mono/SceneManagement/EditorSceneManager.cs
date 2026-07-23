@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.Scripting;
 using UnityEngine.SceneManagement;
@@ -26,6 +27,7 @@ namespace UnityEditor.SceneManagement
             add => m_SceneManagerSetupRestoredEvent.Add(value);
             remove => m_SceneManagerSetupRestoredEvent.Remove(value);
         }
+        [AutoStaticsCleanupOnCodeReload(CleanupStrategy = CleanupStrategy.Clear)]
         private static EventWithPerformanceTracker<SceneManagerSetupRestoredCallback> m_SceneManagerSetupRestoredEvent = new EventWithPerformanceTracker<SceneManagerSetupRestoredCallback>($"{nameof(EditorSceneManager)}.{nameof(sceneManagerSetupRestored)}");
 
         public static event NewSceneCreatedCallback newSceneCreated
@@ -33,6 +35,7 @@ namespace UnityEditor.SceneManagement
             add => m_NewSceneCreatedEvent.Add(value);
             remove => m_NewSceneCreatedEvent.Remove(value);
         }
+        [AutoStaticsCleanupOnCodeReload(CleanupStrategy = CleanupStrategy.Clear)]
         private static EventWithPerformanceTracker<NewSceneCreatedCallback> m_NewSceneCreatedEvent = new EventWithPerformanceTracker<NewSceneCreatedCallback>($"{nameof(EditorSceneManager)}.{nameof(newSceneCreated)}");
 
         public static event SceneOpeningCallback sceneOpening
@@ -40,6 +43,7 @@ namespace UnityEditor.SceneManagement
             add => m_SceneOpeningEvent.Add(value);
             remove => m_SceneOpeningEvent.Remove(value);
         }
+        [AutoStaticsCleanupOnCodeReload(CleanupStrategy = CleanupStrategy.Clear)]
         private static EventWithPerformanceTracker<SceneOpeningCallback> m_SceneOpeningEvent = new EventWithPerformanceTracker<SceneOpeningCallback>($"{nameof(EditorSceneManager)}.{nameof(sceneOpening)}");
 
         public static event SceneOpenedCallback sceneOpened
@@ -47,6 +51,7 @@ namespace UnityEditor.SceneManagement
             add => m_SceneOpenedEvent.Add(value);
             remove => m_SceneOpenedEvent.Remove(value);
         }
+        [AutoStaticsCleanupOnCodeReload(CleanupStrategy = CleanupStrategy.Clear)]
         private static EventWithPerformanceTracker<SceneOpenedCallback> m_SceneOpenedEvent = new EventWithPerformanceTracker<SceneOpenedCallback>($"{nameof(EditorSceneManager)}.{nameof(sceneOpened)}");
 
         public static event SceneClosingCallback sceneClosing
@@ -54,6 +59,7 @@ namespace UnityEditor.SceneManagement
             add => m_SceneClosingEvent.Add(value);
             remove => m_SceneClosingEvent.Remove(value);
         }
+        [AutoStaticsCleanupOnCodeReload(CleanupStrategy = CleanupStrategy.Clear)]
         private static EventWithPerformanceTracker<SceneClosingCallback> m_SceneClosingEvent = new EventWithPerformanceTracker<SceneClosingCallback>($"{nameof(EditorSceneManager)}.{nameof(sceneClosing)}");
 
         public static event SceneClosedCallback sceneClosed
@@ -61,24 +67,28 @@ namespace UnityEditor.SceneManagement
             add => m_SceneClosedEvent.Add(value);
             remove => m_SceneClosedEvent.Remove(value);
         }
+        [AutoStaticsCleanupOnCodeReload(CleanupStrategy = CleanupStrategy.Clear)]
         private static EventWithPerformanceTracker<SceneClosedCallback> m_SceneClosedEvent = new EventWithPerformanceTracker<SceneClosedCallback>($"{nameof(EditorSceneManager)}.{nameof(sceneClosed)}");
         public static event SceneSavingCallback sceneSaving
         {
             add => m_SceneSavingEvent.Add(value);
             remove => m_SceneSavingEvent.Remove(value);
         }
+        [AutoStaticsCleanupOnCodeReload(CleanupStrategy = CleanupStrategy.Clear)]
         private static EventWithPerformanceTracker<SceneSavingCallback> m_SceneSavingEvent = new EventWithPerformanceTracker<SceneSavingCallback>($"{nameof(EditorSceneManager)}.{nameof(sceneSaving)}");
         public static event SceneSavedCallback sceneSaved
         {
             add => m_SceneSavedEvent.Add(value);
             remove => m_SceneSavedEvent.Remove(value);
         }
+        [AutoStaticsCleanupOnCodeReload(CleanupStrategy = CleanupStrategy.Clear)]
         private static EventWithPerformanceTracker<SceneSavedCallback> m_SceneSavedEvent = new EventWithPerformanceTracker<SceneSavedCallback>($"{nameof(EditorSceneManager)}.{nameof(sceneSaved)}");
         public static event SceneDirtiedCallback sceneDirtied
         {
             add => m_SceneDirtiedEvent.Add(value);
             remove => m_SceneDirtiedEvent.Remove(value);
         }
+        [AutoStaticsCleanupOnCodeReload(CleanupStrategy = CleanupStrategy.Clear)]
         private static EventWithPerformanceTracker<SceneDirtiedCallback> m_SceneDirtiedEvent = new EventWithPerformanceTracker<SceneDirtiedCallback>($"{nameof(EditorSceneManager)}.{nameof(sceneDirtied)}");
 
         [RequiredByNativeCode]

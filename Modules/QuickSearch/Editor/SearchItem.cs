@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using UnityEngine;
 using UnityEngine.Bindings;
+using UnityEngine.Pool;
 
 namespace UnityEditor.Search
 {
@@ -413,6 +414,39 @@ namespace UnityEditor.Search
         public T ToObject<T>() where T : UnityEngine.Object
         {
             return ToObject(typeof(T)) as T;
+        }
+
+        // Drops any cached ToObject() result that points at obj, so a disposed object is
+        // never handed back from the cache. Used when an owned SearchServiceItem is torn
+        // down (see SearchServiceItem.Dispose).
+        internal void RemoveCachedObject(UnityEngine.Object obj)
+        {
+            if (m_Objects == null || obj == null)
+                return;
+
+            // Rent a pooled list only if we actually find a match.
+            List<Type> keysToRemove = null;
+            try
+            {
+                foreach (var kvp in m_Objects)
+                {
+                    if (kvp.Value != obj)
+                        continue;
+                    keysToRemove ??= ListPool<Type>.Get();
+                    keysToRemove.Add(kvp.Key);
+                }
+
+                if (keysToRemove != null)
+                {
+                    foreach (var key in keysToRemove)
+                        m_Objects.Remove(key);
+                }
+            }
+            finally
+            {
+                if (keysToRemove != null)
+                    ListPool<Type>.Release(keysToRemove);
+            }
         }
 
         internal Type ToType(Type constraintedType = null)

@@ -10,8 +10,8 @@ namespace Unity.UIToolkit.Editor;
 
 internal interface IStyleSheetSelectionHandler
 {
-    EntityId AcquireInstanceId(StyleSheet styleSheet);
-    void ReleaseInstanceId(StyleSheet styleSheet);
+    EntityId AcquireInstanceId(StyleSheet styleSheet, bool isReadOnly);
+    void ReleaseInstanceId(StyleSheet styleSheet, bool isReadOnly);
 
     void Remap(List<StyleSheetRemap> candidates);
     public void Clear();

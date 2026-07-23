@@ -9,12 +9,14 @@ using System.Reflection;
 using System.Text;
 using UnityEngine;
 using UnityEngine.Scripting;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
     [InitializeOnLoad]
-    public static class SettingsService
+    public static partial class SettingsService
     {
+        [AutoStaticsCleanupOnCodeReload]
         internal static event Action repaintAllSettingsWindow;
 
         public static EditorWindow OpenProjectSettings(string settingsPath = null)
@@ -67,6 +69,7 @@ namespace UnityEditor
             }
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         internal static event Action settingsProviderChanged;
         internal static SettingsProvider[] FetchSettingsProviders()
         {

@@ -141,6 +141,13 @@ namespace UnityEditor.Connect
             }
         }
 
+        static string GetCloudDashboardHost()
+        {
+            return UnityConnect.instance.GetEnvironment() == "staging"
+                ? "https://staging.cloud.unity.com"
+                : "https://cloud.unity.com";
+        }
+
         void BuildPaths()
         {
             m_ApiUrl = m_ServicesUrlsConfig["core"] + "/api";
@@ -149,7 +156,7 @@ namespace UnityEditor.Connect
             m_ProjectApiUrl = m_ProjectsApiUrl + "/{1}";
             m_ProjectCoppaApiUrl = m_ProjectApiUrl + "/coppa";
             m_ProjectUsersApiUrl = m_ProjectApiUrl + "/users";
-            m_ProjectDashboardUrl = m_ServicesUrlsConfig["build"] + "/organizations/{0}/projects/{1}";
+            m_ProjectDashboardUrl = GetCloudDashboardHost() + "/home/organizations/{0}/projects/{1}";
             m_ProjectServiceFlagsApiUrl = m_ApiUrl + "/projects/{0}/service_flags"; //no org to specify
 
             m_CloudBuildProjectUrl = m_ServicesUrlsConfig["build"] + "/build/orgs/{0}/projects/{1}";

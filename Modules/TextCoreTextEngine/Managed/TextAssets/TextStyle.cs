@@ -24,7 +24,7 @@ namespace UnityEngine.TextCore.Text
         // PUBLIC PROPERTIES
 
         /// <summary>
-        /// The name identifying this style. ex. <style="name">.
+        /// The name identifying this style. ex. &lt;style="name"&gt;.
         /// </summary>
         public string name
         { get { return m_Name; } set { if (value != m_Name) m_Name = value; } }
@@ -36,13 +36,13 @@ namespace UnityEngine.TextCore.Text
         { get { return m_HashCode; } set { if (value != m_HashCode) m_HashCode = value; } }
 
         /// <summary>
-        /// The initial definition of the style. ex. <b> <u>.
+        /// The initial definition of the style. ex. &lt;b&gt; &lt;u&gt;.
         /// </summary>
         public string styleOpeningDefinition
         { get { return m_OpeningDefinition; } }
 
         /// <summary>
-        /// The closing definition of the style. ex. </b> </u>.
+        /// The closing definition of the style. ex. &lt;/b&gt; &lt;/u&gt;.
         /// </summary>
         public string styleClosingDefinition
         { get { return m_ClosingDefinition; } }
@@ -99,7 +99,7 @@ namespace UnityEngine.TextCore.Text
         }
 
         /// <summary>
-        /// Function to update the content of the int[] resulting from changes to OpeningDefinition & ClosingDefinition.
+        /// Function to update the content of the int[] resulting from changes to OpeningDefinition &amp; ClosingDefinition.
         /// </summary>
         public void RefreshStyle()
         {

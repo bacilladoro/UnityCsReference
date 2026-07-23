@@ -4,6 +4,7 @@
 
 using UnityEditor.StyleSheets;
 using UnityEngine;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -11,19 +12,23 @@ namespace UnityEditor
     {
         private static class Styles
         {
-            public static GUIContent headerAdd = EditorGUIUtility.TrTextContent("Add");
-            public static GUIContent headerEdit = EditorGUIUtility.TrTextContent("Edit");
-            public static GUIContent typeName = EditorGUIUtility.TrTextContent("Type");
-            public static GUIContent widthHeightText = EditorGUIUtility.TrTextContent("Width & Height");
-            public static GUIContent optionalText = EditorGUIUtility.TrTextContent("Label");
-            public static GUIContent ok = EditorGUIUtility.TrTextContent("OK");
-            public static GUIContent cancel = EditorGUIUtility.TrTextContent("Cancel");
-            public static GUIContent[] typeNames = new[] {EditorGUIUtility.TrTextContent("Aspect Ratio"), EditorGUIUtility.TrTextContent("Fixed Resolution")};
+            public static readonly GUIContent headerAdd = EditorGUIUtility.TrTextContent("Add");
+            public static readonly GUIContent headerEdit = EditorGUIUtility.TrTextContent("Edit");
+            public static readonly GUIContent typeName = EditorGUIUtility.TrTextContent("Type");
+            public static readonly GUIContent widthHeightText = EditorGUIUtility.TrTextContent("Width & Height");
+            public static readonly GUIContent optionalText = EditorGUIUtility.TrTextContent("Label");
+            public static readonly GUIContent ok = EditorGUIUtility.TrTextContent("OK");
+            public static readonly GUIContent cancel = EditorGUIUtility.TrTextContent("Cancel");
+            public static readonly GUIContent[] typeNames = new[] {EditorGUIUtility.TrTextContent("Aspect Ratio"), EditorGUIUtility.TrTextContent("Fixed Resolution")};
 
-            public static SVC<float> windowWidth = new SVC<float>("GameView", "--sizes-menu-modify-item-window-width", 230f);
-            public static SVC<float> windowHeight = new SVC<float>("GameView", "--sizes-menu-modify-item-window-height", 140f);
-            public static SVC<float> windowBottomPadding = new SVC<float>("GameView", "--window-bottom-padding");
-            public static SVC<float> spaceBetweenOkCancelButtons = new SVC<float>("GameView", "--space-between-ok-cancel-buttons", 10f);
+            [NoAutoStaticsCleanup] // Immutable cache of a style constant (managed float, no user-code refs); safe to persist across code reload.
+            public static readonly SVC<float> windowWidth = new SVC<float>("GameView", "--sizes-menu-modify-item-window-width", 230f);
+            [NoAutoStaticsCleanup] // Immutable cache of a style constant (managed float, no user-code refs); safe to persist across code reload.
+            public static readonly SVC<float> windowHeight = new SVC<float>("GameView", "--sizes-menu-modify-item-window-height", 140f);
+            [NoAutoStaticsCleanup] // Immutable cache of a style constant (managed float, no user-code refs); safe to persist across code reload.
+            public static readonly SVC<float> windowBottomPadding = new SVC<float>("GameView", "--window-bottom-padding");
+            [NoAutoStaticsCleanup] // Immutable cache of a style constant (managed float, no user-code refs); safe to persist across code reload.
+            public static readonly SVC<float> spaceBetweenOkCancelButtons = new SVC<float>("GameView", "--space-between-ok-cancel-buttons", 10f);
         }
 
         private GameViewSize m_GameViewSize;

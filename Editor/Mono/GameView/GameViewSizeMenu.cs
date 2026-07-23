@@ -12,7 +12,7 @@ namespace UnityEditor
     {
         static class Styles
         {
-            public static GUIContent vSyncToggleContent = EditorGUIUtility.TrTextContent("VSync (Game view only)", "Enable VSync only for the game view while in playmode.");
+            public static readonly GUIContent vSyncToggleContent = EditorGUIUtility.TrTextContent("VSync (Game view only)", "Enable VSync only for the game view while in playmode.");
         }
         readonly Vector3 kMargins = new (9f, 7f);
         IGameViewSizeMenuUser m_GameView;

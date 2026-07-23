@@ -12,6 +12,7 @@ namespace Unity.UIToolkit.Editor;
 internal sealed partial class VisualTreeAssetInspector : VisualElement
 {
     public static readonly BindingId VisualTreeAssetProperty = nameof(VisualTreeAsset);
+    public static readonly BindingId PanelSettingsProperty = nameof(PanelSettings);
 
     public const string UssClass = "unity-visual-tree-asset-inspector";
     public const string HeaderUssClass = UssClass + "__header";
@@ -20,6 +21,7 @@ internal sealed partial class VisualTreeAssetInspector : VisualElement
     private const string k_VisualTreeAsset = "UIToolkitAuthoring/Inspector/VisualTreeAssetInspector.uxml";
 
     private VisualTreeAsset m_VisualTreeAsset;
+    private PanelSettings m_PanelSettings;
 
     private readonly VisualTreeAssetHeader m_Header;
     private readonly VisualTreeAssetInspectorActionsView m_AssetActionsView;
@@ -37,6 +39,21 @@ internal sealed partial class VisualTreeAssetInspector : VisualElement
             m_Header.VisualTreeAsset = m_VisualTreeAsset;
             m_AssetActionsView.VisualTreeAsset = m_VisualTreeAsset;
             NotifyPropertyChanged(VisualTreeAssetProperty);
+        }
+    }
+
+    [CreateProperty]
+    public PanelSettings PanelSettings
+    {
+        get => m_PanelSettings;
+        set
+        {
+            if (m_PanelSettings == value)
+                return;
+            m_PanelSettings = value;
+
+            m_AssetActionsView.PanelSettings = m_PanelSettings;
+            NotifyPropertyChanged(PanelSettingsProperty);
         }
     }
 

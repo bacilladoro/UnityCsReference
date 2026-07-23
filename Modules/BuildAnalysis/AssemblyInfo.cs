@@ -6,3 +6,4 @@ using System.Runtime.CompilerServices;
 
 [assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")]                  // Moq
 [assembly: InternalsVisibleTo("Unity.Modules.BuildAnalysis.Tests.Editor")]
+[assembly: InternalsVisibleTo("UnityEditor.BuildProfileModule")]

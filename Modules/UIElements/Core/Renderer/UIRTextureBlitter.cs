@@ -14,9 +14,13 @@ namespace UnityEngine.UIElements.UIR
     class TextureBlitter : IDisposable
     {
         const int k_TextureSlotCount = 8;
-        static readonly int[] k_TextureIds;
+        // Shader property IDs are stable and re-resolve lazily on first access after a code
+        // reload, so this stays a plain static readonly array (auto-exempt, no lifecycle
+        // attribute). An [OnCodeLoaded] initializer would root TextureBlitter and force-include
+        // the native UIElements module in UGUI-only stripped builds (CodeStripping).
+        static readonly int[] k_TextureIds = BuildTextureIds();
 
-        static ProfilerMarker s_CommitSampler = new ProfilerMarker(ProfilerCategory.UIToolkit, "UIR.TextureBlitter.Commit");
+        static readonly ProfilerMarker s_CommitSampler = new ProfilerMarker(ProfilerCategory.UIToolkit, "UIR.TextureBlitter.Commit");
 
         BlitInfo[] m_SingleBlit = new BlitInfo[1];
         Material m_BlitMaterial;
@@ -64,11 +68,12 @@ namespace UnityEngine.UIElements.UIR
 
         #endregion // Dispose Pattern
 
-        static TextureBlitter()
+        static int[] BuildTextureIds()
         {
-            k_TextureIds = new int[k_TextureSlotCount];
+            var ids = new int[k_TextureSlotCount];
             for (int i = 0; i < k_TextureSlotCount; ++i)
-                k_TextureIds[i] = Shader.PropertyToID("_MainTex" + i);
+                ids[i] = Shader.PropertyToID("_MainTex" + i);
+            return ids;
         }
 
         public TextureBlitter(int capacity = 512)

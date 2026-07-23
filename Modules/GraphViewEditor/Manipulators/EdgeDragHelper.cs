@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -56,11 +57,12 @@ namespace UnityEditor.Experimental.GraphView
         internal const float k_MaxPanSpeed = k_MaxSpeedFactor * k_PanSpeed;
     }
 
-    public class EdgeDragHelper<TEdge> : EdgeDragHelper where TEdge : Edge, new()
+    public partial class EdgeDragHelper<TEdge> : EdgeDragHelper where TEdge : Edge, new()
     {
         protected List<Port> m_CompatiblePorts;
         private Edge m_GhostEdge;
         protected GraphView m_GraphView;
+        [AutoStaticsCleanupOnCodeReload]
         protected static NodeAdapter s_nodeAdapter = new NodeAdapter();
         protected readonly IEdgeConnectorListener m_Listener;
 

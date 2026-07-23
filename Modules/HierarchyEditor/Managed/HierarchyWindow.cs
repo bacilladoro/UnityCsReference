@@ -136,6 +136,9 @@ namespace Unity.Hierarchy.Editor
             {
                 return hierarchyWindow.m_UndoId;
             }
+
+            public static void TriggerPlayModeStateChanged(HierarchyWindow hierarchyWindow, PlayModeStateChange mode) =>
+                hierarchyWindow.OnPlayModeStateChanged(mode);
         }
 
         string ISearchableContainer.SearchText
@@ -375,6 +378,7 @@ namespace Unity.Hierarchy.Editor
             m_HierarchyView.BindViewItem += OnBindViewItem;
             m_HierarchyView.UnbindViewItem += OnUnbindViewItem;
             m_HierarchyView.PopulateContextMenu += OnPopulateContextMenu;
+            m_HierarchyView.ContextMenuRequested += OnContextMenuRequested;
             m_HierarchyView.GetTooltip += OnGetTooltip;
 
             m_HierarchyView.ListView.showAlternatingRowBackgrounds = HierarchyPreferences.AlternatingRowBackground
@@ -431,6 +435,7 @@ namespace Unity.Hierarchy.Editor
 
             rootVisualElement.RegisterCallback<KeyDownEvent>(OnKeyDown);
             rootVisualElement.RegisterCallback<KeyUpEvent>(OnKeyUp);
+            rootVisualElement.RegisterCallback<NavigationCancelEvent>(OnNavigationCancel, TrickleDown.TrickleDown);
             rootVisualElement.RegisterCallback<PointerUpEvent>(OnPointerUp);
             rootVisualElement.RegisterCallback<AttachToPanelEvent>(OnAttachedToPanel);
             rootVisualElement.RegisterCallback<DetachFromPanelEvent>(OnDetachedFromPanel);
@@ -440,6 +445,7 @@ namespace Unity.Hierarchy.Editor
             ClipboardUtility.copyingGameObjects += OnClearCutStyle;
             ClipboardUtility.pastedGameObjects += OnClearCutStyle;
             ClipboardUtility.duplicatingGameObjects += OnClearCutStyle;
+            CutBoard.cleared += OnCutboardCleared;
             EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
             EditorApplication.enterPlayModePreStart += OnEnterPlayModePreStart;
 
@@ -457,6 +463,8 @@ namespace Unity.Hierarchy.Editor
             HierarchyUndoManager.Register(m_UndoId, m_Hierarchy);
 
             RefreshDescriptors();
+
+            RestoreCutFlagsFromCutBoard();
 
             HierarchyAnalytics.AddWindow(this);
         }
@@ -519,6 +527,7 @@ namespace Unity.Hierarchy.Editor
             }
 
             rootVisualElement.UnregisterCallback<KeyDownEvent>(OnKeyDown);
+            rootVisualElement.UnregisterCallback<NavigationCancelEvent>(OnNavigationCancel, TrickleDown.TrickleDown);
             rootVisualElement.UnregisterCallback<KeyUpEvent>(OnKeyUp);
 
             // Save in memory ViewState in case of domain reload
@@ -532,6 +541,7 @@ namespace Unity.Hierarchy.Editor
             ClipboardUtility.copyingGameObjects -= OnClearCutStyle;
             ClipboardUtility.pastedGameObjects -= OnClearCutStyle;
             ClipboardUtility.duplicatingGameObjects -= OnClearCutStyle;
+            CutBoard.cleared -= OnCutboardCleared;
 
             HierarchyPreferences.UseQueryBuilder.valueChanged -= OnToggleQueryBuilder;
             HierarchyPreferences.AlternatingRowBackground.valueChanged -= OnToggleBackgroundStyleChange;
@@ -557,6 +567,7 @@ namespace Unity.Hierarchy.Editor
                 m_HierarchyView.BindViewItem -= OnBindViewItem;
                 m_HierarchyView.UnbindViewItem -= OnUnbindViewItem;
                 m_HierarchyView.PopulateContextMenu -= OnPopulateContextMenu;
+                m_HierarchyView.ContextMenuRequested -= OnContextMenuRequested;
                 m_HierarchyView.GetTooltip -= OnGetTooltip;
                 m_HierarchyView.Dispose();
                 m_HierarchyView = null;
@@ -606,26 +617,15 @@ namespace Unity.Hierarchy.Editor
         {
             // Update last interacted hierarchy when user presses mouse button (including right-click).
             s_LastInteractedHierarchy = this;
+        }
 
-            // Synchronize global selection from view model on right-click.
+        void OnContextMenuRequested(HierarchyViewItem item)
+        {
+            // Synchronize global selection from view model on right-click (context menu request).
             // This makes sure the element currently selected by the right click in the view
             // is set to the global selection. This is important since some context-menu operations
             // don't take parameters and instead are reading directly from Selection.activeObject or Selection.entityIds.
-            if (IsRightClick((MouseButton)evt.button, evt.modifiers))
-                m_SelectionHandler.SyncGlobalSelectionFromViewModel();
-
-            static bool IsRightClick(MouseButton btn, EventModifiers modifiers)
-            {
-                // on OSX a right click can be either right click or ctrl+left click
-                if (UIElementsUtility.isOSXContextualMenuPlatform)
-                {
-                    return btn == MouseButton.RightMouse
-                           || (btn == MouseButton.LeftMouse
-                               && modifiers == EventModifiers.Control);
-                }
-
-                return btn == MouseButton.RightMouse;
-            }
+            m_SelectionHandler.SyncGlobalSelectionFromViewModel();
         }
 
         void OnHierarchyWindowDragExited(DragExitedEvent evt)
@@ -709,6 +709,13 @@ namespace Unity.Hierarchy.Editor
                     break;
 
                 case PlayModeStateChange.ExitingEditMode:
+                    // A reload on play mode enter invalidates the CutBoard but not the Cut node flag,
+                    // so reset both to keep them in sync when a reload will happen.
+                    if (WillDomainReloadOnEnterPlayMode || WillSceneReloadOnEnterPlayMode)
+                    {
+                        ClipboardUtility.ResetCutboardAndRepaintHierarchyWindows();
+                        m_HierarchyView.ViewModel.ClearFlags(HierarchyNodeFlags.Cut);
+                    }
                     m_HierarchyView.ListView.animation?.SkipAnimation();
                     SaveViewState(HierarchyViewState.Content.EnterPlayMode);
                     break;
@@ -718,6 +725,14 @@ namespace Unity.Hierarchy.Editor
                     break;
             }
         }
+
+        static bool WillDomainReloadOnEnterPlayMode
+            => !EditorSettings.enterPlayModeOptionsEnabled
+                || !EditorSettings.enterPlayModeOptions.HasFlag(EnterPlayModeOptions.DisableDomainReload);
+
+        static bool WillSceneReloadOnEnterPlayMode
+            => !EditorSettings.enterPlayModeOptionsEnabled
+                || !EditorSettings.enterPlayModeOptions.HasFlag(EnterPlayModeOptions.DisableSceneReload);
 
         void IFramableContainer.FrameObject(EntityId entityId, bool ping)
         {
@@ -879,14 +894,41 @@ namespace Unity.Hierarchy.Editor
             {
                 viewModel.ClearFlags(HierarchyNodeFlags.Cut);
                 foreach (var go in gameObjects)
+                    SetCutFlagRecursive(viewModel, go.GetEntityId());
+            }
+        }
+
+        void RestoreCutFlagsFromCutBoard()
+        {
+            var cutTransformsSpan = CutBoard.cutTransformsSpan;
+            if (cutTransformsSpan.IsEmpty)
+                return;
+
+            m_HierarchyView.Update();
+
+            var viewModel = m_HierarchyView.ViewModel;
+            using (var _ = new HierarchyViewModelFlagsChangeScope(viewModel))
+            {
+                viewModel.ClearFlags(HierarchyNodeFlags.Cut);
+                foreach (var transform in cutTransformsSpan)
                 {
-                    var node = m_Hierarchy.GetNodeFromEntityId(go.GetEntityId());
-                    viewModel.SetFlagsRecursive(in node, HierarchyNodeFlags.Cut, HierarchyTraversalDirection.Children);
+                    if (transform != null)
+                        SetCutFlagRecursive(viewModel, transform.gameObject.GetEntityId());
                 }
             }
         }
 
-        void OnClearCutStyle(GameObject[] _)
+        void SetCutFlagRecursive(HierarchyViewModel viewModel, EntityId entityId)
+        {
+            var node = m_Hierarchy.GetNodeFromEntityId(entityId);
+            if (node == HierarchyNode.Null)
+                return;
+            viewModel.SetFlagsRecursive(in node, HierarchyNodeFlags.Cut, HierarchyTraversalDirection.Children);
+        }
+
+        void OnClearCutStyle(GameObject[] _) => OnCutboardCleared();
+
+        void OnCutboardCleared()
         {
             m_HierarchyView.ViewModel.ClearFlags(HierarchyNodeFlags.Cut);
         }
@@ -1032,13 +1074,14 @@ namespace Unity.Hierarchy.Editor
             if (EditorGUIUtility.HandleDefaultRenameEvent(evt.imguiEvent, this))
             {
                 evt.StopPropagation();
-                return;
             }
+        }
 
-            if (evt.keyCode == KeyCode.Escape && CutBoard.hasCutboardData)
-            {
-                CutBoard.Reset();
-            }
+        void OnNavigationCancel(NavigationCancelEvent evt)
+        {
+            if (!CutBoard.hasCutboardData)
+                return;
+            CutBoard.Reset();
         }
 
         void OnKeyUp(KeyUpEvent evt)

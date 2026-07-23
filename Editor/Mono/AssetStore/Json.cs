@@ -509,7 +509,7 @@ namespace UnityEditorInternal
             return new JSONValue(dict);
         }
 
-        static char[] endcodes = new char[] { '\\', '"' };
+        static readonly char[] endcodes = { '\\', '"' };
 
         private JSONValue ParseString()
         {

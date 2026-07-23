@@ -50,11 +50,6 @@ namespace UnityEngine.TextCore.Text
         static List<Texture2D> k_FontAssets_AtlasTexturesUpdateQueue = new List<Texture2D>();
         static HashSet<EntityId> k_FontAssets_AtlasTexturesUpdateQueueLookup = new HashSet<EntityId>();
 
-        /// <summary>
-        /// Internal static array used to avoid allocations when using the GetGlyphPairAdjustmentTable().
-        /// </summary>
-        internal static uint[] k_GlyphIndexArray;
-
         internal static void RegisterFontAssetForFontFeatureUpdate(FontAsset fontAsset)
         {
             EntityId entityId = fontAsset.entityId;
@@ -617,9 +612,11 @@ namespace UnityEngine.TextCore.Text
             {
                 ReadFontAssetDefinition();
 
-                // In theory we know glyphsToAdd are missing, but they might not be if our lookups are simply not initialized.
-                // We need to clean the list here.
-                glyphsToAdd.RemoveAll(glyphId => m_GlyphLookupDictionary.ContainsKey(glyphId));
+                for (int i = glyphsToAdd.Count - 1; i >= 0; i--)
+                {
+                    if (m_GlyphLookupDictionary.ContainsKey(glyphsToAdd[i]))
+                        glyphsToAdd.RemoveAt(i);
+                }
 
                 if (glyphsToAdd.Count == 0)
                     return true;
@@ -671,7 +668,11 @@ namespace UnityEngine.TextCore.Text
 
                 if (successfullyAddedGlyphIndices.Count > 0)
                 {
-                    glyphsToAdd.RemoveAll(id => successfullyAddedGlyphIndices.Contains(id));
+                    for (int i = glyphsToAdd.Count - 1; i >= 0; i--)
+                    {
+                        if (successfullyAddedGlyphIndices.Contains(glyphsToAdd[i]))
+                            glyphsToAdd.RemoveAt(i);
+                    }
                 }
 
                 RegisterAtlasTextureForApply(m_AtlasTextures[m_AtlasTextureIndex]);
@@ -779,8 +780,6 @@ namespace UnityEngine.TextCore.Text
         /// </summary>
         /// <param name="unicode">The Unicode value of the character.</param>
         /// <param name="character">The character data if successfully added to the font asset. Null otherwise.</param>
-        /// <param name="getFontFeatures">Determines if Ligatures are populated or not</param>
-        /// <param name="populateLigatures"></param>
         /// <returns>Returns true if the character has been added. False otherwise.</returns>
         internal bool TryAddCharacterInternal(uint unicode, out Character character)
         {
@@ -793,8 +792,7 @@ namespace UnityEngine.TextCore.Text
         /// </summary>
         /// <param name="unicode">The Unicode value of the character.</param>
         /// <param name="character">The character data if successfully added to the font asset. Null otherwise.</param>
-        /// <param name="getFontFeatures">Determines if Ligatures are populated or not</param>
-        /// <param name="populateLigatures"></param>
+        /// <param name="populateLigatures">Determines if ligatures are populated or not.</param>
         /// <returns>Returns true if the character has been added. False otherwise.</returns>
         internal bool TryAddCharacterInternal(uint unicode, FontStyles fontStyle, TextFontWeight fontWeight, out Character character, bool populateLigatures = true)
         {

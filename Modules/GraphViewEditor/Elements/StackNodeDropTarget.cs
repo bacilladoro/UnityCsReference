@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEngine.UIElements.Experimental;
@@ -28,6 +29,7 @@ namespace UnityEditor.Experimental.GraphView
         private List<IValueAnimation> m_AddAnimations;
         private List<IValueAnimation> m_RemoveAnimations;
         private int m_AnimationDuration = 40;
+        [NoAutoStaticsCleanup] // CSS property key — immutable string handle, no ALC-pinning refs
         private static CustomStyleProperty<int> s_AnimationDuration = new CustomStyleProperty<int>("--animation-duration");
         private int animationDuration => m_AnimationDuration;
 

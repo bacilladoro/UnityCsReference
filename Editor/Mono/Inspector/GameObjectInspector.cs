@@ -13,6 +13,7 @@ using UnityObject = UnityEngine.Object;
 using UnityEditor.Experimental;
 using System.IO;
 using UnityEngine.Pool;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -44,35 +45,35 @@ namespace UnityEditor
 
         static class Styles
         {
-            public static GUIContent typelessIcon = EditorGUIUtility.IconContent("Prefab Icon");
-            public static GUIContent overridesContent = EditorGUIUtility.TrTextContent("Overrides");
-            public static GUIContent staticContent = EditorGUIUtility.TrTextContent("Static", "Enable the checkbox to mark this GameObject as static for all systems.\n\nDisable the checkbox to mark this GameObject as not static for all systems.\n\nUse the drop-down menu to mark as this GameObject as static or not static for individual systems.");
-            public static GUIContent layerContent = EditorGUIUtility.TrTextContent("Layer", "The layer that this GameObject is in.\n\nChoose Add Layer... to edit the list of available layers.");
-            public static GUIContent tagContent = EditorGUIUtility.TrTextContent("Tag", "The tag that this GameObject has.\n\nChoose Untagged to remove the current tag.\n\nChoose Add Tag... to edit the list of available tags.");
-            public static GUIContent staticPreviewContent = EditorGUIUtility.TrTextContent("Static Preview", "This asset is greater than 8MB so, by default, the Asset Preview displays a static preview.\nTo view the asset interactively, click the Asset Preview.");
+            public static readonly GUIContent typelessIcon = EditorGUIUtility.IconContent("Prefab Icon");
+            public static readonly GUIContent overridesContent = EditorGUIUtility.TrTextContent("Overrides");
+            public static readonly GUIContent staticContent = EditorGUIUtility.TrTextContent("Static", "Enable the checkbox to mark this GameObject as static for all systems.\n\nDisable the checkbox to mark this GameObject as not static for all systems.\n\nUse the drop-down menu to mark as this GameObject as static or not static for individual systems.");
+            public static readonly GUIContent layerContent = EditorGUIUtility.TrTextContent("Layer", "The layer that this GameObject is in.\n\nChoose Add Layer... to edit the list of available layers.");
+            public static readonly GUIContent tagContent = EditorGUIUtility.TrTextContent("Tag", "The tag that this GameObject has.\n\nChoose Untagged to remove the current tag.\n\nChoose Add Tag... to edit the list of available tags.");
+            public static readonly GUIContent staticPreviewContent = EditorGUIUtility.TrTextContent("Static Preview", "This asset is greater than 8MB so, by default, the Asset Preview displays a static preview.\nTo view the asset interactively, click the Asset Preview.");
 
-            public static float tagFieldWidth = EditorGUI.CalcPrefixLabelWidth(Styles.tagContent, EditorStyles.boldLabel);
-            public static float layerFieldWidth = EditorGUI.CalcPrefixLabelWidth(Styles.layerContent, EditorStyles.boldLabel);
+            public static readonly float tagFieldWidth = EditorGUI.CalcPrefixLabelWidth(Styles.tagContent, EditorStyles.boldLabel);
+            public static readonly float layerFieldWidth = EditorGUI.CalcPrefixLabelWidth(Styles.layerContent, EditorStyles.boldLabel);
 
-            public static GUIStyle staticDropdown = "StaticDropdown";
-            public static GUIStyle tagPopup = new GUIStyle(EditorStyles.popup);
-            public static GUIStyle layerPopup = new GUIStyle(EditorStyles.popup);
-            public static GUIStyle overridesDropdown = new GUIStyle("MiniPullDown");
-            public static GUIStyle prefabButtonsHorizontalLayout = new GUIStyle { fixedHeight = 17, margin = new RectOffset { top = 1, bottom = 1 } };
+            public static readonly GUIStyle staticDropdown = "StaticDropdown";
+            public static readonly GUIStyle tagPopup = new GUIStyle(EditorStyles.popup);
+            public static readonly GUIStyle layerPopup = new GUIStyle(EditorStyles.popup);
+            public static readonly GUIStyle overridesDropdown = new GUIStyle("MiniPullDown");
+            public static readonly GUIStyle prefabButtonsHorizontalLayout = new GUIStyle { fixedHeight = 17, margin = new RectOffset { top = 1, bottom = 1 } };
 
-            public static GUIContent goTypeLabelMultiple = EditorGUIUtility.TrTextContent("Multiple");
-            private static GUIContent regularPrefab = EditorGUIUtility.TrTextContent("Prefab");
-            private static GUIContent disconnectedPrefab = EditorGUIUtility.TrTextContent("Prefab", "You have broken the prefab connection. Changes to the prefab will not be applied to this object before you Apply or Revert.");
-            private static GUIContent modelPrefab = EditorGUIUtility.TrTextContent("Prefab");
-            private static GUIContent disconnectedModelPrefab =  EditorGUIUtility.TrTextContent("Prefab", "You have broken the prefab connection. Changes to the model will not be applied to this object before you Revert.");
-            private static GUIContent variantPrefab = EditorGUIUtility.TrTextContent("Prefab");
-            private static GUIContent disconnectedVariantPrefab = EditorGUIUtility.TrTextContent("Prefab", "You have broken the prefab connection. Changes to the prefab will not be applied to this object before you Apply or Revert.");
-            private static GUIContent missingPrefabAsset = EditorGUIUtility.TrTextContent("Prefab", "The source Prefab or Model has been deleted.");
-            public static GUIContent openModel = EditorGUIUtility.TrTextContent("Open", "Open Model in external tool.");
-            public static GUIContent openPrefab = EditorGUIUtility.TrTextContent("Open", "Open Prefab Asset '{0}'\nPress modifier key [Alt] to open in isolation.");
-            public static GUIContent tooltipForObjectFieldForRootInPrefabContents = EditorGUIUtility.TrTextContent("", "Replacing the root Prefab instance in a Variant is not supported since it will break all overrides for existing instances of this Variant, including their positions and rotations.");
-            public static GUIContent tooltipForObjectFieldForNestedPrefabs = EditorGUIUtility.TrTextContent("", "You can only replace outermost Prefab instances. Open Prefab Mode to replace a nested Prefab instance.");
-            public static string selectString = L10n.Tr("Select");
+            public static readonly GUIContent goTypeLabelMultiple = EditorGUIUtility.TrTextContent("Multiple");
+            private static readonly GUIContent regularPrefab = EditorGUIUtility.TrTextContent("Prefab");
+            private static readonly GUIContent disconnectedPrefab = EditorGUIUtility.TrTextContent("Prefab", "You have broken the prefab connection. Changes to the prefab will not be applied to this object before you Apply or Revert.");
+            private static readonly GUIContent modelPrefab = EditorGUIUtility.TrTextContent("Prefab");
+            private static readonly GUIContent disconnectedModelPrefab =  EditorGUIUtility.TrTextContent("Prefab", "You have broken the prefab connection. Changes to the model will not be applied to this object before you Revert.");
+            private static readonly GUIContent variantPrefab = EditorGUIUtility.TrTextContent("Prefab");
+            private static readonly GUIContent disconnectedVariantPrefab = EditorGUIUtility.TrTextContent("Prefab", "You have broken the prefab connection. Changes to the prefab will not be applied to this object before you Apply or Revert.");
+            private static readonly GUIContent missingPrefabAsset = EditorGUIUtility.TrTextContent("Prefab", "The source Prefab or Model has been deleted.");
+            public static readonly GUIContent openModel = EditorGUIUtility.TrTextContent("Open", "Open Model in external tool.");
+            public static readonly GUIContent openPrefab = EditorGUIUtility.TrTextContent("Open", "Open Prefab Asset '{0}'\nPress modifier key [Alt] to open in isolation.");
+            public static readonly GUIContent tooltipForObjectFieldForRootInPrefabContents = EditorGUIUtility.TrTextContent("", "Replacing the root Prefab instance in a Variant is not supported since it will break all overrides for existing instances of this Variant, including their positions and rotations.");
+            public static readonly GUIContent tooltipForObjectFieldForNestedPrefabs = EditorGUIUtility.TrTextContent("", "You can only replace outermost Prefab instances. Open Prefab Mode to replace a nested Prefab instance.");
+            public static readonly string selectString = L10n.Tr("Select");
 
             public static readonly float kIconSize = 24;
             public static readonly float column1Width = kIconSize + Styles.tagFieldWidth + 10;
@@ -81,7 +82,7 @@ namespace UnityEditor
             // Columns correspond to PrefabTypeUtility.PrefabAssetType (see comments above rows).
             // Rows correspond to PrefabTypeUtility.PrefabInstanceStatus (None, Connected, Disconnected, Missing).
             // If missing, both enums will be "Missing".
-            static public GUIContent[,] goTypeLabel =
+            static public readonly GUIContent[,] goTypeLabel =
             {
                 // None
                 { null, null, null, null },
@@ -427,6 +428,7 @@ namespace UnityEditor
         }
 
 
+        [NoAutoStaticsCleanup] // lazy cache of StaticEditorFlags enum values; enum array is value-safe across reload, safe to persist
         private static StaticEditorFlags[] s_StaticEditorFlagValues;
 
         internal static bool ShowMixedStaticEditorFlags(StaticEditorFlags mask)
@@ -981,6 +983,7 @@ namespace UnityEditor
             return previewData;
         }
 
+        [NoAutoStaticsCleanup] // scratch buffer refilled by GetComponentsInChildren on each use; contents not retained across calls, safe to persist
         static readonly List<Renderer> s_RendererComponentsList = new List<Renderer>();
 
         static bool IsRendererUsableForPreview(Renderer r)
@@ -1291,10 +1294,15 @@ namespace UnityEditor
 
         // Handle dragging in scene view
         public GameObject m_DragObject;
+        [NoAutoStaticsCleanup] // transient drag-operation flag set and consumed within a single drag interaction, safe to persist
         static bool s_ShouldClearSelection;
+        [NoAutoStaticsCleanup] // transient drag-operation flag set and consumed within a single drag interaction, safe to persist
         internal static bool s_CyclicNestingDetected;
+        [NoAutoStaticsCleanup] // transient drag-operation flag set and consumed within a single drag interaction, safe to persist
         static bool s_PlaceObject;
+        [NoAutoStaticsCleanup] // transient drag-operation state set and consumed within a single drag interaction, safe to persist
         static Vector3 s_PlaceObjectPoint;
+        [NoAutoStaticsCleanup] // transient drag-operation state set and consumed within a single drag interaction, safe to persist
         static Vector3 s_PlaceObjectNormal;
         public void OnSceneDrag(SceneView sceneView, int index)
         {

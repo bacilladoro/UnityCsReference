@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using UnityEngine.Bindings;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Scripting;
 using UnityEngine.UIElements.UIR;
 using static UnityEngine.UIElements.UIDocument;
@@ -23,10 +24,11 @@ namespace UnityEngine.UIElements
     [AddComponentMenu("UI Toolkit/Panel Renderer (UI Toolkit)")]
     [NativeHeader("Modules/UIElements/Core/Native/Renderer/PanelRenderer.h")]
     [ExtensionOfNativeClass]
-    public sealed class PanelRenderer : Renderer, IPanelComponent
+    public sealed partial class PanelRenderer : Renderer, IPanelComponent
     {
         #region Fields
 
+        [AutoStaticsCleanupOnCodeReload]
         internal static Func<IPanelComponent, ILiveReloadAssetTracker<VisualTreeAsset>> CreateLiveReloadVisualTreeAssetTracker;
         ILiveReloadAssetTracker<VisualTreeAsset> m_LiveReloadVisualTreeAssetTracker;
 
@@ -282,6 +284,7 @@ namespace UnityEngine.UIElements
         // For dirty tracking
         internal PanelSettings previousPanelSettings { get; set; }
         internal VisualTreeAsset previousVisualTreeAsset { get; set; }
+        int m_PreviousVisualTreeAssetContentHash;
         internal bool previousEnabled { get; set; }
         internal int previousSortingOrder { get; set; }
 
@@ -397,6 +400,7 @@ namespace UnityEngine.UIElements
 
         // We count instances of PanelRenderer to be able to insert PanelRenderers that have the same sort order in a
         // deterministic way (i.e. instances created before will be placed before in the visual tree).
+        [NoAutoStaticsCleanup] // monotonic counter for creation ordering; safe to persist
         private static int s_CurrentPanelRendererCounter = 0;
         private int m_PanelRendererCreationIndex = 0;
 
@@ -418,6 +422,12 @@ namespace UnityEngine.UIElements
 
         #region Lifecycle
 
+        // Transient per-frame flag: set when panels are dirtied and cleared again within the
+        // same update loop (see UIElementsRuntimeUtility.UpdateRuntimePanels). Safe to persist
+        // across code reload — a stale value self-corrects on the next update. Must NOT use a
+        // cleanup attribute: that codegen roots PanelRenderer (a UnityEngine.Object), which keeps
+        // all its methods and defeats UIElements stripping in UGUI-only builds (CodeStripping test).
+        [NoAutoStaticsCleanup]
         internal static bool shouldCheckForRequiredReinsertions = false;
 
         [RequiredByNativeCode(Optional = true)]
@@ -439,6 +449,15 @@ namespace UnityEngine.UIElements
             // If so, let's initialize the root visual element.
             if (rootVisualElement == null && panelSettings != null)
                 InitRootVisualElement(true);
+            else if (rootVisualElement != null && rootVisualElement.panel == null)
+            {
+                // Reactivation path: the root survived OnPanelRendererDeactivated but was detached
+                // from its panel. It will be reattached by ReactToHierarchyChanges; flag the
+                // callback as pending so InvokeUIReloadCallbacks fires once the panel is restored.
+                // Skip when the root is still attached (e.g., entering playmode without domain
+                // reload), the immediate-fire branch of RegisterUIReloadCallback handles that.
+                m_UIReloadCallbackPending = true;
+            }
         }
 
         [RequiredByNativeCode(Optional = true)]
@@ -498,7 +517,12 @@ namespace UnityEngine.UIElements
             if (!IsActiveAndEnabled())
                 return;
 
-            bool visualTreeAssetChanged = visualTreeAsset != previousVisualTreeAsset;
+            // Detect both reference swaps and in-place reserialization (UI Builder save, reimport).
+            // Without the content-hash check, cloned VisualElements keep StyleValueHandles into the
+            // pre-reserialization StyleSheet arrays and hit "Accessing invalid property" during traversal.
+            bool visualTreeAssetChanged =
+                visualTreeAsset != previousVisualTreeAsset ||
+                (visualTreeAsset != null && visualTreeAsset.contentHash != m_PreviousVisualTreeAssetContentHash);
             InitRootVisualElement(visualTreeAssetChanged);
         }
 
@@ -553,6 +577,7 @@ namespace UnityEngine.UIElements
             SetupRootClassList();
 
             previousVisualTreeAsset = visualTreeAsset;
+            m_PreviousVisualTreeAssetContentHash = visualTreeAsset != null ? visualTreeAsset.contentHash : 0;
             previousPanelSettings = panelSettings;
             isAssetDirty = false;
         }

@@ -10,8 +10,8 @@ namespace Unity.UIToolkit.Editor;
 
 internal interface IStyleRuleSelectionHandler
 {
-    EntityId AcquireInstanceId(StyleRule rule);
-    void ReleaseInstanceId(StyleRule rule);
+    EntityId AcquireInstanceId(StyleRule rule, bool isReadOnly);
+    void ReleaseInstanceId(StyleRule rule, bool isReadOnly);
 
     void Remap(List<StyleRuleRemap> candidates);
     public void Clear();

@@ -27,7 +27,6 @@ namespace UnityEngine.TextCore.Text
         /// <param name="fontStyle">The font style</param>
         /// <param name="fontWeight">The font weight</param>
         /// <param name="isAlternativeTypeface">Indicates if the OUT font asset is an alternative typeface or fallback font asset</param>
-        /// <param name="fontAsset">The font asset that contains the requested character</param>
         /// <returns></returns>
         internal static Character GetCharacterFromFontAsset(uint unicode, FontAsset sourceFontAsset, bool includeFallbacks, FontStyles fontStyle, TextFontWeight fontWeight, out bool isAlternativeTypeface, bool populateLigatures)
         {

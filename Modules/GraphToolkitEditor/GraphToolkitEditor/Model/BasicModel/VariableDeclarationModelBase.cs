@@ -160,6 +160,11 @@ namespace Unity.GraphToolkit.Editor
         public bool IsInputOrOutput => IsOutput || IsInput;
 
         /// <summary>
+        /// Whether a set variable node can be created for this variable declaration model. By default, input and output cannot be created as they are meant to be used as subgraph inputs and outputs.
+        /// </summary>
+        public bool CanCreateSetVariableNode => !IsInputOrOutput;
+
+        /// <summary>
         /// The scope of the variable.
         /// </summary>
         /// <remarks>Setter implementations should set the <see cref="ChangeHint.Data"/> change hint.</remarks>

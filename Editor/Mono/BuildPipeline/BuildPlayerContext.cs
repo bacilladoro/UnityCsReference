@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using NiceIO;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Build
 {
@@ -14,6 +15,7 @@ namespace UnityEditor.Build
     public sealed class BuildPlayerContext
     {
         // Temporary tracking through a global instance
+        [NoAutoStaticsCleanup] // transient per-build global, reassigned in the ctor on every build; holds build options only, no user-code refs
         internal static BuildPlayerContext ActiveInstance { get; private set; }
 
         ///<summary>The player build options associated with this build.</summary>

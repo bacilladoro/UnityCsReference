@@ -62,6 +62,14 @@ namespace UnityEngine.UIElements.StyleSheets
             computedStyle.layoutData.Write().flexBasis = flexBasis;
         }
 
+        public static void ApplyGap(StylePropertyReader reader, ref ComputedStyle computedStyle)
+        {
+            CompileGap(reader, out Length rowGap, out Length columnGap);
+
+            computedStyle.layoutData.Write().rowGap = rowGap;
+            computedStyle.layoutData.Write().columnGap = columnGap;
+        }
+
         public static void ApplyMargin(StylePropertyReader reader, ref ComputedStyle computedStyle)
         {
             CompileBoxArea(reader, out Length marginTop, out Length marginRight, out Length marginBottom, out Length marginLeft);

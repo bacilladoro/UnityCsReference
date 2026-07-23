@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Overlays
 {
@@ -13,6 +14,7 @@ namespace UnityEditor.Overlays
     {
         sealed class DockingOperation : IDisposable
         {
+            [NoAutoStaticsCleanup] // Fixed type-priority lookup table, never reassigned; safe to persist across reload.
             static readonly Type[] s_PickingPriority =
             {
                 typeof(DynamicPanelDropZone),

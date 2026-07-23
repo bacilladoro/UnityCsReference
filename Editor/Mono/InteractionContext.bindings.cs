@@ -33,14 +33,6 @@ namespace UnityEditor
             m_NativePtr = nativePtr;
         }
 
-        ~InteractionContext()
-        {
-            if (m_NativePtr != IntPtr.Zero)
-            {
-                Dispose();
-            }
-        }
-
         public virtual void Dispose()
         {
             if (m_NativePtr != IntPtr.Zero)
@@ -66,8 +58,6 @@ namespace UnityEditor
         private static extern IntPtr Internal_Create(int flags);
         [FreeFunction("DestroyInteractionContext")]
         private static extern void Internal_Destroy(IntPtr m_NativePtr);
-
-        public static InteractionContext UserAction = new InteractionContext(Flags.DisableNone);
 
         internal static class BindingsMarshaller
         {

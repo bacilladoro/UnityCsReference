@@ -6,6 +6,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor.AssetImporters;
 using UnityEditor.Callbacks;
 using UnityEditorInternal;
@@ -52,6 +53,7 @@ namespace UnityEditor.PackageManager.UI.Internal
 
         private const string k_DefaultDependencyVersion = "0.1.0";
 
+        [NoAutoStaticsCleanup]
         private static List<string> s_MajorUnityVersions;
         private static List<string> MajorUnityVersions
         {
@@ -68,7 +70,9 @@ namespace UnityEditor.PackageManager.UI.Internal
             }
         }
 
+        [NoAutoStaticsCleanup]
         private static readonly List<string> MinorUnityVersionsPrior6 = new List<string> { "0", "1", "2", "3" };
+        [NoAutoStaticsCleanup]
         private static List<string> s_MinorUnityVersions = null;
         private static List<string> MinorUnityVersions
         {
@@ -264,6 +268,8 @@ namespace UnityEditor.PackageManager.UI.Internal
         public override void OnEnable()
         {
             base.OnEnable();
+            if (!AreImporterTargetsValid()) // asset gone: base already logged and bailed
+                return;
 
             m_UpmCache = ServicesContainer.instance.Resolve<IUpmCache>();
             m_AssetPath = (target as PackageManifestImporter).assetPath;

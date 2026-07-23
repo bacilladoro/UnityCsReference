@@ -152,6 +152,11 @@ namespace UnityEngine.UIElements
         Color color => default;
 
         /// <summary>
+        /// Horizontal space between elements.
+        /// </summary>
+        float columnGap => default;
+
+        /// <summary>
         /// Defines how an element is displayed in the layout.
         /// </summary>
         /// <remarks>
@@ -307,6 +312,11 @@ namespace UnityEngine.UIElements
         /// A rotation transformation.
         /// </summary>
         Rotate rotate => default;
+
+        /// <summary>
+        /// Vertical space between elements.
+        /// </summary>
+        float rowGap => default;
 
         /// <summary>
         /// A scaling transformation.

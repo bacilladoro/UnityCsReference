@@ -34,6 +34,16 @@ namespace UnityEditor.Shaders
             DXC
         }
 
+        [UsedByNativeCode]
+        internal enum ShaderOptimizationLevel
+        {
+            Default,
+            Disabled,
+            Low,
+            Medium,
+            High
+        }
+
         internal static bool IsEmptyKeyword(string keyword)
         {
             if (keyword.Length == 0)
@@ -217,27 +227,35 @@ namespace UnityEditor.Shaders
             }
         }
 
+        // Per-API compiler settings: toolchain (backend) selection plus its debug-symbol and
+        // optimization-level settings. Keyed by graphics API.
         [RequiredByNativeCode(GenerateProxy = false)]
         [Serializable]
         internal struct ShaderCompilerSettings
         {
             [SerializeField] public GraphicsDeviceType graphicsAPI;
             [SerializeField] public ShaderCompilerToolchain compilerToolchainOverride;
+            [SerializeField] public ShaderOptimizationLevel optimizationLevel;
+            [SerializeField] public bool enableDebugSymbols;
 
             [UsedByNativeCode, RequiredMember]
-            internal static void DeconstructCompilerSettingsArrayElementRaw(ShaderCompilerSettings[] array, int index, out int graphicsAPI, out int compiler)
+            internal static void DeconstructCompilerSettingsArrayElementRaw(ShaderCompilerSettings[] array, int index, out int graphicsAPI, out int compiler, out int optimizationLevel, out bool enableDebugSymbols)
             {
                 ref ShaderCompilerSettings tmp = ref array[index];
                 graphicsAPI = (int)tmp.graphicsAPI;
                 compiler = (int)tmp.compilerToolchainOverride;
+                optimizationLevel = (int)tmp.optimizationLevel;
+                enableDebugSymbols = tmp.enableDebugSymbols;
             }
 
             [UsedByNativeCode, RequiredMember]
-            internal static void ReconstructCompilerSettingsArrayElementRaw(ShaderCompilerSettings[] array, int index, int graphicsAPI, int compiler)
+            internal static void ReconstructCompilerSettingsArrayElementRaw(ShaderCompilerSettings[] array, int index, int graphicsAPI, int compiler, int optimizationLevel, bool enableDebugSymbols)
             {
                 ref ShaderCompilerSettings tmp = ref array[index];
                 tmp.graphicsAPI = (GraphicsDeviceType)graphicsAPI;
                 tmp.compilerToolchainOverride = (ShaderCompilerToolchain)compiler;
+                tmp.optimizationLevel = (ShaderOptimizationLevel)optimizationLevel;
+                tmp.enableDebugSymbols = enableDebugSymbols;
             }
         }
 
@@ -443,7 +461,7 @@ namespace UnityEditor.Shaders
                     defines = newDefines;
                 else
                     throw new ArgumentException(msg);
-                
+
             }
         }
 
@@ -454,47 +472,121 @@ namespace UnityEditor.Shaders
             return defineArray;
         }
 
+        static bool IsToolchainSupportedForAPI(GraphicsDeviceType api, ShaderCompilerToolchain toolchain, int index, out string msg)
+        {
+            ShaderCompilerToolchain[] supported = GetSupportedCompilerToolchainsForAPI(api);
+            if (Array.IndexOf(supported, toolchain) == -1)
+            {
+                msg = "Compiler '" + toolchain + "' is not supported for graphics API '"
+                    + api + "' at index " + index + ".";
+                return false;
+            }
+            msg = "";
+            return true;
+        }
+
+        static bool IsValidGraphicsAPI(GraphicsDeviceType api, int index, out string msg)
+        {
+            if (api == GraphicsDeviceType.Null || !Enum.IsDefined(typeof(GraphicsDeviceType), api))
+            {
+                msg = "Invalid graphics API '" + api + "' at index " + index + ".";
+                return false;
+            }
+            msg = "";
+            return true;
+        }
+
+        static bool IsValidCompilerSettingsEntry(ShaderCompilerSettings entry, int index, out string msg)
+        {
+            if (!IsValidGraphicsAPI(entry.graphicsAPI, index, out msg))
+                return false;
+
+            if (!Enum.IsDefined(typeof(ShaderOptimizationLevel), entry.optimizationLevel))
+            {
+                msg = "Invalid optimization level '" + (int)entry.optimizationLevel + "' for graphics API '"
+                    + entry.graphicsAPI + "' at index " + index + ".";
+                return false;
+            }
+
+            if (entry.compilerToolchainOverride != ShaderCompilerToolchain.Default
+                && !IsToolchainSupportedForAPI(entry.graphicsAPI, entry.compilerToolchainOverride, index, out msg))
+                return false;
+
+            msg = "";
+            return true;
+        }
+
         internal static bool ValidateShaderCompilerSettings(ShaderCompilerSettings[] settings, out string msg)
         {
             if (settings == null)
             {
-                msg = "Null shader compilerToolchain settings array.";
+                msg = "Null shader compiler settings array.";
                 return false;
             }
 
+            var processedAPIs = new HashSet<GraphicsDeviceType>();
             for (int i = 0, n = settings.Length; i < n; ++i)
             {
-                for (int j = i + 1; j < n; ++j)
-                {
-                    if (settings[i].graphicsAPI == settings[j].graphicsAPI)
-                    {
-                        msg = "Duplicate compilerToolchain settings entries for graphics API " + settings[i].graphicsAPI
-                            + " at indices " + i + " and " + j + ".";
-                        return false;
-                    }
-                }
-
-                if (!SupportsCompilerToolchainOverride(settings[i].graphicsAPI))
-                {
-                    msg = "Graphics API '" + settings[i].graphicsAPI + "' at index " + i
-                        + " does not support compilerToolchain selection.";
+                if (!IsValidCompilerSettingsEntry(settings[i], i, out msg))
                     return false;
-                }
 
-                if (settings[i].compilerToolchainOverride != ShaderCompilerToolchain.Default)
+                if (!processedAPIs.Add(settings[i].graphicsAPI))
                 {
-                    ShaderCompilerToolchain[] supported = GetSupportedCompilerToolchainsForAPI(settings[i].graphicsAPI);
-                    if (Array.IndexOf(supported, settings[i].compilerToolchainOverride) == -1)
-                    {
-                        msg = "Compiler '" + settings[i].compilerToolchainOverride + "' is not supported for graphics API '"
-                            + settings[i].graphicsAPI + "' at index " + i + ".";
-                        return false;
-                    }
+                    msg = "Duplicate compiler settings entries for graphics API " + settings[i].graphicsAPI
+                        + " at index " + i + ".";
+                    return false;
                 }
             }
 
             msg = "";
             return true;
+        }
+
+        // Merge a later duplicate row for the same API. opt/debug are real values so the later row
+        // wins; toolchain keeps last-non-Default (Default = no override), matching the resolver
+        // (ResolvePerAPICompilerToolchainSelection in ShaderImportUtils.cpp).
+        static ShaderCompilerSettings MergeDuplicateCompilerSettings(ShaderCompilerSettings existing, ShaderCompilerSettings later)
+        {
+            if (later.compilerToolchainOverride != ShaderCompilerToolchain.Default)
+                existing.compilerToolchainOverride = later.compilerToolchainOverride;
+            existing.optimizationLevel = later.optimizationLevel;
+            existing.enableDebugSymbols = later.enableDebugSymbols;
+            return existing;
+        }
+
+        // Heal bad persisted data on write (compilerSettings is internal, so callers can't fix it):
+        // drop invalid rows and merge duplicate-API rows into one (see MergeDuplicateCompilerSettings).
+        internal static ShaderCompilerSettings[] SanitizeShaderCompilerSettings(ShaderCompilerSettings[] settings)
+        {
+            if (settings == null)
+                return Array.Empty<ShaderCompilerSettings>();
+
+            // List keeps first-appearance order; the map points each API at its row in the list.
+            var kept = new List<ShaderCompilerSettings>(settings.Length);
+            var indexByAPI = new Dictionary<GraphicsDeviceType, int>();
+            bool changed = false;
+
+            for (int i = 0, n = settings.Length; i < n; ++i)
+            {
+                ShaderCompilerSettings entry = settings[i];
+                if (!IsValidCompilerSettingsEntry(entry, i, out _))
+                {
+                    changed = true;
+                }
+                else if (indexByAPI.TryGetValue(entry.graphicsAPI, out int index))
+                {
+                    changed = true;
+                    kept[index] = MergeDuplicateCompilerSettings(kept[index], entry);
+                }
+                else
+                {
+                    indexByAPI.Add(entry.graphicsAPI, kept.Count);
+                    kept.Add(entry);
+                }
+            }
+
+            // Hand back the original array when nothing changed so the caller can tell it was a no-op.
+            return changed ? kept.ToArray() : settings;
         }
 
         [SerializeField] internal ShaderCompilerSettings[] compilerSettings = Array.Empty<ShaderCompilerSettings>();

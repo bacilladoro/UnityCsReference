@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEditorInternal;
 using UnityEditor.Audio;
@@ -23,7 +24,8 @@ namespace UnityEditor
         }
 
         // Cache to prevent constructing string on every event
-        static GUIContent m_ButtonContent = EditorGUIUtility.TrTextContent("", "Audio Mixer parameters can be exposed to scripting. Select an Audio Mixer Group, right click one of its properties in the Inspector and select 'Expose'.");
+        static readonly GUIContent m_ButtonContent = EditorGUIUtility.TrTextContent("", "Audio Mixer parameters can be exposed to scripting. Select an Audio Mixer Group, right click one of its properties in the Inspector and select 'Expose'.");
+        [NoAutoStaticsCleanup] // Display cache invalidation counter compared against controller state; -1 default re-syncs on next access, safe to persist across reload.
         static int m_LastNumExposedParams = -1;
         static GUIContent GetButtonContent(AudioMixerController controller)
         {

@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using Unity.UIToolkit.Editor;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEditor.UIElements.StyleSheets;
 using UnityEngine.UIElements;
@@ -11,6 +12,7 @@ namespace Unity.UI.Builder
 {
     internal static class StyleSheetUtilities
     {
+        [NoAutoStaticsCleanup] // Stateless singleton importer instance with no user-code references; safe to persist across code reload.
         static readonly StyleSheetImporterImpl s_StyleSheetImporter = new StyleSheetImporterImpl();
 
         public static void AddFakeSelector(VisualElement selectorElement)

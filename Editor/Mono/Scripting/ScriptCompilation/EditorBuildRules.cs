@@ -284,6 +284,8 @@ namespace UnityEditor.Scripting.ScriptCompilation
             int index = 0;
 
             bool buildingForEditor = settings.BuildingForEditor;
+            // Enable AutoStatics cleanup analysis for editable code when domain reload is disabled (Fast Enter Play Mode).
+            bool autoStaticsAnalysisEnabled = buildingForEditor && EditorSettings.IsDomainReloadDisabled;
             var safeModeWhiteList = new HashSet<string>(safeModeInfo.GetWhiteListAssemblyNames());
             foreach (var entry in targetAssemblies)
             {
@@ -313,6 +315,15 @@ namespace UnityEditor.Scripting.ScriptCompilation
                 if ((targetAssembly.Flags & AssemblyFlags.EditorOnly) == AssemblyFlags.EditorOnly)
                 {
                     cSharpVersionDefines.Add("UNITY_EDITOR_ONLY_COMPILATION");
+                }
+
+                // Analyze editable user code (Assets + the user's own local packages) for AutoStatics cleanup
+                // safety when domain reload is disabled. Read-only packages and Unity's own packages are excluded
+                // (see AssemblyFlags.ExcludedFromCodeReloadAnalysis): they are validated via the build system scope.
+                if (autoStaticsAnalysisEnabled &&
+                    (targetAssembly.Flags & AssemblyFlags.ExcludedFromCodeReloadAnalysis) == 0)
+                {
+                    cSharpVersionDefines.Add("UNITY_AUTOSTATICS_CLEANUP_ANALYSIS_ENABLED");
                 }
 
                 scriptAssembly.Defines = cSharpVersionDefines.ToArray();

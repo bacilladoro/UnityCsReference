@@ -60,7 +60,6 @@ namespace UnityEditor.Lighting.LightingSearch
 
             Undo.RecordObject(light, "Change light type");
             light.type = (LightType)value;
-            EditorUtility.SetDirty(light);
         }
 
         internal static LightmapBakeType? GetLightMode(GameObject go)
@@ -79,7 +78,6 @@ namespace UnityEditor.Lighting.LightingSearch
 
             Undo.RecordObject(light, "Change light mode");
             light.lightmapBakeType = value;
-            EditorUtility.SetDirty(light);
         }
 
         internal static float? GetColorTemperature(GameObject go)
@@ -96,7 +94,6 @@ namespace UnityEditor.Lighting.LightingSearch
 
             Undo.RecordObject(light, "Change light temperature");
             light.colorTemperature = value;
-            EditorUtility.SetDirty(light);
         }
 
         internal static bool IsAreaLight(LightType type)

@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor.IMGUI.Controls;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -11,6 +12,7 @@ namespace UnityEditor.SceneManagement
 {
     public sealed class MainStage : Stage
     {
+        [NoAutoStaticsCleanup] // disk-backed state cache (Library/StateCache), holds no user-type refs; safe to persist across code reload
         static StateCache<MainStageHierarchyState> s_StateCache = new StateCache<MainStageHierarchyState>("Library/StateCache/MainStageHierarchy/");
 
         internal static MainStage CreateMainStage()

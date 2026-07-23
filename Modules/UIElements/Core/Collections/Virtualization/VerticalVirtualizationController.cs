@@ -32,7 +32,7 @@ namespace UnityEngine.UIElements
 
         internal int itemsCount =>  m_CollectionView.viewController?.GetItemsCount() ?? m_CollectionView.itemsSource.Count;
 
-        protected virtual bool VisibleItemPredicate(T i)=> i.rootElement.style.display == DisplayStyle.Flex;
+        protected virtual bool VisibleItemPredicate(T i)=> i.rootElement.style.display != DisplayStyle.None;
 
         internal T firstVisibleItem
         {
@@ -116,7 +116,7 @@ namespace UnityEngine.UIElements
             {
                 var index = firstVisibleIndex + i;
                 var recycledItem = m_ActiveItems[i];
-                var isVisible = recycledItem.rootElement.style.display == DisplayStyle.Flex;
+                var isVisible = recycledItem.rootElement.style.display != DisplayStyle.None;
 
                 if (rebuild)
                 {
@@ -240,6 +240,59 @@ namespace UnityEngine.UIElements
 
             // Handle focus cycling
             HandleFocus(recycledItem, previousIndex);
+        }
+
+        public sealed override void ScrollToItem(int index)
+        {
+            ScrollToItemVertically(index);
+            ScrollToItemHorizontally(index);
+
+            // The scroll may relayout the target; re-run via the deferred loop so the horizontal reveal uses its final laid-out position (-1 == last item).
+            if (index >= -1 && m_ScrollView.mode != ScrollViewMode.Vertical && IsContentContainerPanelDirtied())
+            {
+                m_DeferredScrollToItemIndex = index;
+                ScheduleDeferredScrollToItem();
+            }
+        }
+
+        protected abstract void ScrollToItemVertically(int index);
+
+        // Brings the start (left edge) of the item's content into view (e.g. a deeply indented TreeView row); re-run by the deferred scroll loop until the item is realized and laid out.
+        protected void ScrollToItemHorizontally(int index)
+        {
+            if (m_ScrollView.mode == ScrollViewMode.Vertical)
+                return;
+
+            // -1 scrolls to the last item; resolve it so a deeply indented last row is revealed too.
+            if (index == -1)
+                index = itemsCount - 1;
+
+            if (index < 0)
+                return;
+
+            var target = m_CollectionView.GetRecycledItemFromIndex(index)?.bindableElement;
+            if (target == null)
+                return;
+
+            var scrollableWidth = m_ScrollView.scrollableWidth;
+            if (float.IsNaN(scrollableWidth) || scrollableWidth <= 0)
+                return;
+
+            var viewMin = m_ScrollView.contentViewport.worldBound.xMin;
+            var viewMax = m_ScrollView.contentViewport.worldBound.xMax;
+            var childMin = target.worldBound.xMin;
+
+            // Bounds are NaN before the first layout pass; bail rather than scroll to a NaN offset.
+            if (float.IsNaN(childMin) || float.IsNaN(viewMin) || float.IsNaN(viewMax))
+                return;
+
+            // Content can be wider than the viewport (flexGrow), so target its left edge, not its whole bounds.
+            if (childMin >= viewMin - 1f && childMin <= viewMax)
+                return;
+
+            // highValue and scrollableWidth are kept equal, so the world-space delta maps 1:1 to the scroll offset.
+            var offsetX = m_ScrollView.scrollOffset.x + (childMin - viewMin);
+            m_ScrollView.scrollOffset = new Vector2(offsetX, m_ScrollView.scrollOffset.y);
         }
 
         bool IsContentContainerPanelDirtied() => m_ScrollView.contentContainer.panel is { isDirty: true };

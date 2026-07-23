@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -59,6 +60,7 @@ namespace Unity.UI.Builder
 
     internal class BuilderSelection
     {
+        [NoAutoStaticsCleanup] // Stateless StylePropertyReader allocated once and never reassigned; holds no user-code references, safe to persist across reload.
         static readonly StylePropertyReader s_StylePropertyReader = new StylePropertyReader();
         List<IBuilderSelectionNotifier> m_Notifiers;
 

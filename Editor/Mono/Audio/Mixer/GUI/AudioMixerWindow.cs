@@ -10,16 +10,18 @@ using UnityEditorInternal;
 using UnityEditor.Audio;
 using UnityEditor.IMGUI.Controls;
 using RequiredByNativeCodeAttribute = UnityEngine.Scripting.RequiredByNativeCodeAttribute;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
     [EditorWindowTitle(title = "Audio Mixer", icon = "Audio Mixer")]
-    internal class AudioMixerWindow : EditorWindow, IHasCustomMenu
+    internal partial class AudioMixerWindow : EditorWindow, IHasCustomMenu
     {
+        [AutoStaticsCleanupOnCodeReload]
         static AudioMixerWindow s_Instance;
 
-        static string kAudioMixerUseRMSMetering = "AudioMixerUseRMSMetering";
-        static string kAudioMixerUseHorzLayout = "AudioMixerUseHorzLayout";
+        const string kAudioMixerUseRMSMetering = "AudioMixerUseRMSMetering";
+        const string kAudioMixerUseHorzLayout = "AudioMixerUseHorzLayout";
 
         enum SectionType
         {
@@ -115,6 +117,7 @@ namespace UnityEditor
                 editSnapShots = EditorGUIUtility.TrTextContent("Edit in Play Mode", "Edit in playmode and your changes are automatically saved. Note when editing is disabled, live values are shown.", EditorGUIUtility.TrIconContent("Animation.Record", "Are scene and inspector changes recorded into the animation curves?").image);
             }
         }
+        [NoAutoStaticsCleanup] // Lazy GUIContent holder, re-created on demand via the null-check below; GUIContent survives reload so safe to persist
         private static GUIContents s_GuiContents;
 
         class AudioMixerPostprocessor : AssetPostprocessor

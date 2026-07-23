@@ -11,6 +11,7 @@ namespace UnityEngine
     [NativeHeader("Modules/Grid/Public/Grid.h")]
     public sealed partial class Grid : GridLayout
     {
+        ///<summary>The size of each cell in the <see cref="Grid" />.</summary>
         public new extern Vector3 cellSize
         {
             [FreeFunction("GridBindings::GetCellSize", HasExplicitThis = true)]
@@ -19,6 +20,7 @@ namespace UnityEngine
             set;
         }
 
+        ///<summary>The size of the gap between each cell in the <see cref="Grid" />.</summary>
         public new extern Vector3 cellGap
         {
             [FreeFunction("GridBindings::GetCellGap", HasExplicitThis = true)]
@@ -27,12 +29,16 @@ namespace UnityEngine
             set;
         }
 
+        ///<summary>Cell shape and packing that the grid uses when converting cell positions to local space.</summary>
+        ///<remarks>See <see cref="GridLayout.CellLayout" /> for the available layouts, which include rectangle, hexagon, and isometric shapes.</remarks>
         public new extern GridLayout.CellLayout cellLayout
         {
             get;
             set;
         }
 
+        ///<summary>Cell swizzle order that the grid applies when converting cell positions to local space.</summary>
+        ///<remarks>Swizzling reorders the cell axes. The default <see cref="GridLayout.CellSwizzle.XYZ" /> keeps cell X, Y, and Z mapped to local X, Y, and Z. <see cref="GridLayout.CellSwizzle.XZY" /> swaps the Y and Z axes, which is useful for placing a 2D grid on the XZ ground plane of a 3D scene. See <see cref="GridLayout.CellSwizzle" /> for all available orders.</remarks>
         public new extern GridLayout.CellSwizzle cellSwizzle
         {
             get;
@@ -45,9 +51,19 @@ namespace UnityEngine
             get;
         }
 
+        ///<summary>Swizzles the given position with the given swizzle order.</summary>
+        ///<param name="swizzle">Determines the rearrangement order for the swizzle.</param>
+        ///<param name="position">Position to swizzle.</param>
+        ///<returns>The swizzled position.</returns>
+        ///<seealso cref="GridLayout.CellSwizzle" />
         [FreeFunction("GridBindings::CellSwizzle")]
         public extern static Vector3 Swizzle(GridLayout.CellSwizzle swizzle, Vector3 position);
 
+        ///<summary>Does the inverse swizzle of the given position for given swizzle order.</summary>
+        ///<param name="swizzle">Determines the rearrangement order for the inverse swizzle.</param>
+        ///<param name="position">Position to inverse swizzle.</param>
+        ///<returns>The inversed swizzled position.</returns>
+        ///<seealso cref="GridLayout.CellSwizzle" />
         [FreeFunction("GridBindings::InverseCellSwizzle")]
         public extern static Vector3 InverseSwizzle(GridLayout.CellSwizzle swizzle, Vector3 position);
     }

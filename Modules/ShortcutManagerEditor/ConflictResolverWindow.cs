@@ -44,10 +44,10 @@ namespace UnityEditor.ShortcutManagement
 
         static class Styles
         {
-            public static GUIStyle wordWrapped = EditorStyles.wordWrappedLabel;
-            public static GUIStyle commandsArea;
-            public static GUIStyle panel;
-            public static GUIStyle warningIcon;
+            public static readonly GUIStyle wordWrapped = EditorStyles.wordWrappedLabel;
+            public static readonly GUIStyle commandsArea;
+            public static readonly GUIStyle panel;
+            public static readonly GUIStyle warningIcon;
 
             static Styles()
             {
@@ -65,21 +65,21 @@ namespace UnityEditor.ShortcutManagement
 
         static class Contents
         {
-            public static GUIContent description = EditorGUIUtility.TrTextContent("You can choose to perform a single command, rebind the shortcut to the selected command, or resolve the conflict in the Shortcut Manager.");
-            public static GUIContent cancel = EditorGUIUtility.TrTextContent("Cancel");
-            public static GUIContent perform = EditorGUIUtility.TrTextContent("Perform Selected");
-            public static GUIContent rebind = EditorGUIUtility.TrTextContent("Rebind Selected");
+            public static readonly GUIContent description = EditorGUIUtility.TrTextContent("You can choose to perform a single command, rebind the shortcut to the selected command, or resolve the conflict in the Shortcut Manager.");
+            public static readonly GUIContent cancel = EditorGUIUtility.TrTextContent("Cancel");
+            public static readonly GUIContent perform = EditorGUIUtility.TrTextContent("Perform Selected");
+            public static readonly GUIContent rebind = EditorGUIUtility.TrTextContent("Rebind Selected");
 
-            public static GUIContent itemName = EditorGUIUtility.TrTextContent("Name");
-            public static GUIContent itemType = EditorGUIUtility.TrTextContent("Type");
-            public static GUIContent itemBindings = EditorGUIUtility.TrTextContent("Shortcut");
+            public static readonly GUIContent itemName = EditorGUIUtility.TrTextContent("Name");
+            public static readonly GUIContent itemType = EditorGUIUtility.TrTextContent("Type");
+            public static readonly GUIContent itemBindings = EditorGUIUtility.TrTextContent("Shortcut");
 
-            public static GUIContent windowTitle = EditorGUIUtility.TrTextContent("Shortcut Conflict");
-            public static GUIContent rebindToSelectedCommand = EditorGUIUtility.TrTextContent("Rebind to selected command");
-            public static GUIContent SelectCommandHeading = EditorGUIUtility.TrTextContent("Select a command to perform:");
-            public static GUIContent OpenShortcutManager = EditorGUIUtility.TrTextContent("Resolve Conflict...");
+            public static readonly GUIContent windowTitle = EditorGUIUtility.TrTextContent("Shortcut Conflict");
+            public static readonly GUIContent rebindToSelectedCommand = EditorGUIUtility.TrTextContent("Rebind to selected command");
+            public static readonly GUIContent SelectCommandHeading = EditorGUIUtility.TrTextContent("Select a command to perform:");
+            public static readonly GUIContent OpenShortcutManager = EditorGUIUtility.TrTextContent("Resolve Conflict...");
 
-            public static Texture2D warningIcon = (Texture2D)EditorGUIUtility.LoadRequired("Icons/ShortcutManager/alertDialog.png");
+            public static readonly Texture2D warningIcon = (Texture2D)EditorGUIUtility.LoadRequired("Icons/ShortcutManager/alertDialog.png");
         }
 
 

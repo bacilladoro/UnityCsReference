@@ -79,14 +79,16 @@ namespace Unity.GraphToolkit.Editor
         /// <param name="variableDeclaration">The variable to create.</param>
         /// <param name="position">The position where to create the node.</param>
         /// <param name="guid">The unique identifier for the node to create.</param>
+        /// <param name="mode">The mode of the variable node to create.</param>
         /// <returns>The command with an additional node to create.</returns>
-        public static CreateNodeCommand WithNodeOnGraph(this CreateNodeCommand command, VariableDeclarationModelBase variableDeclaration, Vector2 position, Hash128 guid = default)
+        public static CreateNodeCommand WithNodeOnGraph(this CreateNodeCommand command, VariableDeclarationModelBase variableDeclaration, Vector2 position, Hash128 guid = default, VariableNodeMode mode = VariableNodeMode.Get)
         {
             return command.WithNode(new CreateNodeCommand.NodeData
             {
                 VariableDeclaration = variableDeclaration,
                 Position = position,
-                Guid = guid
+                Guid = guid,
+                Mode = mode
             });
         }
 
@@ -215,8 +217,9 @@ namespace Unity.GraphToolkit.Editor
         /// <param name="position">The position where to create the node.</param>
         /// <param name="autoAlign">If true, the node will try to align automatically with the port after creation.</param>
         /// <param name="guid">The unique identifier for the node to create.</param>
+        /// <param name="mode">The mode of the variable node to create.</param>
         /// <returns>The command with an additional node to create.</returns>
-        public static CreateNodeCommand WithNodeOnPort(this CreateNodeCommand command, VariableDeclarationModelBase variableDeclaration, PortModel portModel, Vector2 position, bool autoAlign = false, Hash128 guid = default)
+        public static CreateNodeCommand WithNodeOnPort(this CreateNodeCommand command, VariableDeclarationModelBase variableDeclaration, PortModel portModel, Vector2 position, bool autoAlign = false, Hash128 guid = default, VariableNodeMode mode = VariableNodeMode.Get)
         {
             return command.WithNode(new CreateNodeCommand.NodeData
             {
@@ -224,7 +227,8 @@ namespace Unity.GraphToolkit.Editor
                 PortModel = portModel,
                 Position = position,
                 Guid = guid,
-                AutoAlign = autoAlign
+                AutoAlign = autoAlign,
+                Mode = mode
             });
         }
 

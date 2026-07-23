@@ -2,16 +2,14 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
-using System.Linq;
 using System.Text.RegularExpressions;
-using NiceIO;
 using UnityEditor.Scripting.Compilers;
 
 namespace UnityEditor.Scripting.ScriptCompilation
 {
     static class UnitySpecificCompilerMessages
     {
-        public static void AugmentMessagesInCompilationErrorsWithUnitySpecificAdvice(CompilerMessage[] messages, EditorCompilation editorCompilation)
+        public static void AugmentMessagesInCompilationErrorsWithUnitySpecificAdvice(CompilerMessage[] messages)
         {
             for (int i = 0; i != messages.Length; i++)
             {
@@ -19,7 +17,6 @@ namespace UnityEditor.Scripting.ScriptCompilation
                 if (messages[i].type != CompilerMessageType.Error)
                     continue;
 
-                UnsafeErrorProcessor.PostProcess(ref messages[i], editorCompilation);
                 ModuleReferenceErrorProcessor.PostProcess(ref messages[i]);
                 DeterministicAssemblyVersionErrorProcessor.PostProcess(ref messages[i]);
                 CyclicAssemblyReferencesErrorProcessor.PostProcess(ref messages[i]);
@@ -69,36 +66,6 @@ namespace UnityEditor.Scripting.ScriptCompilation
             }
         }
 
-        internal static class UnsafeErrorProcessor
-        {
-            public static void PostProcess(ref CompilerMessage message, EditorCompilation editorCompilation)
-            {
-                if (!message.message.Contains("CS0227"))
-                    return;
-
-                var customScriptAssembly = CustomScriptAssemblyFor(message, editorCompilation);
-
-                var unityUnsafeMessage = customScriptAssembly != null
-                    ? $"Enable \"Allow 'unsafe' code\" in the inspector for '{customScriptAssembly.FilePath}' to fix this error."
-                    : "Enable \"Allow 'unsafe' code\" in Player Settings to fix this error.";
-
-                message.message += $". {unityUnsafeMessage}";
-            }
-
-            private static CustomScriptAssembly CustomScriptAssemblyFor(CompilerMessage m, EditorCompilation editorCompilation)
-            {
-                if (editorCompilation == null)
-                    return null;
-
-                var file = new NPath(m.file).MakeAbsolute(editorCompilation.projectDirectory);
-
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
-                return editorCompilation
-#pragma warning restore UA2001
-                    .GetCustomScriptAssemblies()
-                    .FirstOrDefault(c => file.IsChildOf(new NPath(c.PathPrefix).MakeAbsolute()));
-            }
-        }
         internal static class CyclicAssemblyReferencesErrorProcessor
         {
             public static void PostProcess(ref CompilerMessage message)

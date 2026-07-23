@@ -451,6 +451,9 @@ namespace UnityEditor.StyleSheets
         {
             Resolve();
             PopulateSheet(dest, Rules.Values, Imports, Options);
+            // Stamp the layout like the importer does — these resolver-baked assets (built-in editor
+            // themes) bypass StyleSheetImporter, so without this they'd load unstamped.
+            dest.serializationLayoutHash = StyleSheet.currentSerializationLayoutHash;
         }
 
         class VariableDependencyNode

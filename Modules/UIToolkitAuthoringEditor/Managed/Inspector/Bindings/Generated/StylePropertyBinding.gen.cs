@@ -81,6 +81,8 @@ namespace Unity.UIToolkit.Editor
                     return Update(in id, authoringContext.StyleDiff.bottom, authoringContext, targetElement);
                 case StylePropertyId.Color:
                     return Update(in id, authoringContext.StyleDiff.color, authoringContext, targetElement);
+                case StylePropertyId.ColumnGap:
+                    return Update(in id, authoringContext.StyleDiff.columnGap, authoringContext, targetElement);
                 case StylePropertyId.Cursor:
                     return Update(in id, authoringContext.StyleDiff.cursor, authoringContext, targetElement);
                 case StylePropertyId.Display:
@@ -141,6 +143,8 @@ namespace Unity.UIToolkit.Editor
                     return Update(in id, authoringContext.StyleDiff.right, authoringContext, targetElement);
                 case StylePropertyId.Rotate:
                     return Update(in id, authoringContext.StyleDiff.rotate, authoringContext, targetElement);
+                case StylePropertyId.RowGap:
+                    return Update(in id, authoringContext.StyleDiff.rowGap, authoringContext, targetElement);
                 case StylePropertyId.Scale:
                     return Update(in id, authoringContext.StyleDiff.scale, authoringContext, targetElement);
                 case StylePropertyId.TextOverflow:
@@ -265,6 +269,7 @@ namespace Unity.UIToolkit.Editor
                 case StylePropertyId.BorderTopLeftRadius:
                 case StylePropertyId.BorderTopRightRadius:
                 case StylePropertyId.Bottom:
+                case StylePropertyId.ColumnGap:
                 case StylePropertyId.FlexBasis:
                 case StylePropertyId.FontSize:
                 case StylePropertyId.Height:
@@ -283,6 +288,7 @@ namespace Unity.UIToolkit.Editor
                 case StylePropertyId.PaddingRight:
                 case StylePropertyId.PaddingTop:
                 case StylePropertyId.Right:
+                case StylePropertyId.RowGap:
                 case StylePropertyId.Top:
                 case StylePropertyId.UnityParagraphSpacing:
                 case StylePropertyId.Width:
@@ -477,6 +483,7 @@ namespace Unity.UIToolkit.Editor
                 case StylePropertyId.BorderTopLeftRadius:
                 case StylePropertyId.BorderTopRightRadius:
                 case StylePropertyId.Bottom:
+                case StylePropertyId.ColumnGap:
                 case StylePropertyId.FlexBasis:
                 case StylePropertyId.FontSize:
                 case StylePropertyId.Height:
@@ -495,6 +502,7 @@ namespace Unity.UIToolkit.Editor
                 case StylePropertyId.PaddingRight:
                 case StylePropertyId.PaddingTop:
                 case StylePropertyId.Right:
+                case StylePropertyId.RowGap:
                 case StylePropertyId.Top:
                 case StylePropertyId.UnityParagraphSpacing:
                 case StylePropertyId.Width:
@@ -1466,6 +1474,7 @@ namespace Unity.UIToolkit.Editor
                 case StylePropertyId.BorderRadius:
                 case StylePropertyId.BorderWidth:
                 case StylePropertyId.Flex:
+                case StylePropertyId.Gap:
                 case StylePropertyId.Margin:
                 case StylePropertyId.Padding:
                 case StylePropertyId.Transition:

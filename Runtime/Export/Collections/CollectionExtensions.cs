@@ -90,7 +90,7 @@ namespace Unity.Collections
         /// <typeparam name="T">The item type.</typeparam>
         /// <param name="list">The list.</param>
         [VisibleToOtherModules("UnityEngine.UIElementsModule", "UnityEditor.UIBuilderModule")]
-        internal static T Min<T>([DisallowNull] this IList<T> list, IComparer<T> comparer = null)
+        internal static T Min<T>([DisallowNull] this IReadOnlyList<T> list, IComparer<T> comparer = null)
         {
             if (list.Count == 0)
                 throw new InvalidOperationException("list contains no elements");
@@ -106,12 +106,12 @@ namespace Unity.Collections
             return min;
         }
         /// <summary>
-        /// Gets the minimum element from the list.
+        /// Gets the maximum element from the list.
         /// </summary>
         /// <typeparam name="T">The item type.</typeparam>
         /// <param name="list">The list.</param>
-        [VisibleToOtherModules("UnityEngine.UIElementsModule", "UnityEditor.UIBuilderModule")]
-        internal static T Max<T>([DisallowNull] this IList<T> list, IComparer<T> comparer = null)
+        [VisibleToOtherModules("UnityEngine.UIElementsModule", "UnityEditor.UIBuilderModule", "UnityEditor.ProjectAuditorModule")]
+        internal static T Max<T>([DisallowNull] this IReadOnlyList<T> list, IComparer<T> comparer = null)
         {
             if (list.Count == 0)
                 throw new InvalidOperationException("list contains no elements");

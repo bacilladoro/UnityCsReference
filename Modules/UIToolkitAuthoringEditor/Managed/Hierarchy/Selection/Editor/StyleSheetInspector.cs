@@ -14,9 +14,11 @@ namespace Unity.UIToolkit.Editor;
 internal sealed partial class StyleSheetInspector : VisualElement
 {
     public static readonly BindingId StyleSheetProperty = nameof(StyleSheet);
+    public static readonly BindingId IsReadOnlyProperty = nameof(IsReadOnly);
 
     private NewSelectorField m_NewSelectorField;
     private ListView m_ImportsListView;
+    private bool m_IsReadOnly;
 
     public const string UssClass = "unity-stylesheet-inspector";
 
@@ -47,6 +49,26 @@ internal sealed partial class StyleSheetInspector : VisualElement
 
             NotifyPropertyChanged(StyleSheetProperty);
         }
+    }
+
+    [CreateProperty]
+    public bool IsReadOnly
+    {
+        get => m_IsReadOnly;
+        set
+        {
+            if (m_IsReadOnly == value)
+                return;
+            m_IsReadOnly = value;
+            UpdateReadOnlyState();
+            NotifyPropertyChanged(IsReadOnlyProperty);
+        }
+    }
+
+    void UpdateReadOnlyState()
+    {
+        m_NewSelectorField?.SetEnabled(!m_IsReadOnly);
+        m_ImportsListView?.SetEnabled(!m_IsReadOnly);
     }
 
     public StyleSheetInspector()

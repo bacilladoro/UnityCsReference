@@ -9,6 +9,7 @@ using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
 using Unity.Profiling;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Profiling;
 using UnityEngine.UIElements.UIR;
 using UnityEngine.Bindings;
@@ -442,6 +443,7 @@ namespace UnityEngine.UIElements
             set => UIPainter2D.SetDashOffset(m_Handle, value);
         }
 
+        [NoAutoStaticsCleanup] // transient guard flag; defaults to false, set/cleared within single call scopes
         internal static bool isPainterActive { get; set; }
         private bool ValidateState()
         {
@@ -1028,6 +1030,12 @@ namespace UnityEngine.UIElements
                         // No viewport: offset the content to the origin
                         p.x -= bbox.x;
                         p.y -= bbox.y;
+                    }
+                    else
+                    {
+                        // Viewport provided: offset the content by the viewport origin
+                        p.x -= viewport.x;
+                        p.y -= viewport.y;
                     }
 
                     allVerts[vCount++] = new VectorImageVertex() {

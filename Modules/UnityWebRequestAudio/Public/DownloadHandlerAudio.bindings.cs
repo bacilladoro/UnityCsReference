@@ -80,39 +80,4 @@ namespace UnityEngine.Networking
         }
 
     }
-
-    [System.Obsolete("MovieTexture is deprecated. Use VideoPlayer instead.", true)]
-    [StructLayout(LayoutKind.Sequential)]
-    public sealed class DownloadHandlerMovieTexture : DownloadHandler
-    {
-        public DownloadHandlerMovieTexture()
-        {
-            FeatureRemoved();
-        }
-
-        protected override byte[] GetData()
-        {
-            FeatureRemoved();
-            return null;
-        }
-
-        protected override string GetText()
-        {
-            throw new System.NotSupportedException("String access is not supported for movies");
-        }
-
-        public MovieTexture movieTexture { get { FeatureRemoved(); return null; } }
-
-        public static MovieTexture GetContent(UnityWebRequest uwr)
-        {
-            FeatureRemoved();
-            return null;
-        }
-
-        static void FeatureRemoved()
-        {
-            throw new Exception("Movie texture has been removed, use VideoPlayer instead");
-        }
-
-    }
 }

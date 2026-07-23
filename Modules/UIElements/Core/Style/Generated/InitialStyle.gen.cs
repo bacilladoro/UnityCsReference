@@ -58,6 +58,7 @@ namespace UnityEngine.UIElements.StyleSheets
             s_InitialStyle.layoutData.Write().borderTopWidth = 0f;
             s_InitialStyle.layoutData.Write().bottom = StyleKeyword.Auto.ToLength();
             s_InitialStyle.inheritedData.Write().color = Color.black;
+            s_InitialStyle.layoutData.Write().columnGap = 0f;
             s_InitialStyle.rareData.Write().cursor = default;
             s_InitialStyle.layoutData.Write().display = DisplayStyle.Flex;
             s_InitialStyle.rareData.Write().filter.CopyFrom(new ReadOnlySpan<UnmanagedFilterFunction>());
@@ -88,6 +89,7 @@ namespace UnityEngine.UIElements.StyleSheets
             s_InitialStyle.layoutData.Write().position = Position.Relative;
             s_InitialStyle.layoutData.Write().right = StyleKeyword.Auto.ToLength();
             s_InitialStyle.transformData.Write().rotate = StyleKeyword.None.ToRotate();
+            s_InitialStyle.layoutData.Write().rowGap = 0f;
             s_InitialStyle.transformData.Write().scale = StyleKeyword.None.ToScale();
             s_InitialStyle.rareData.Write().textOverflow = TextOverflow.Clip;
             s_InitialStyle.inheritedData.Write().textShadow = default;
@@ -156,6 +158,7 @@ namespace UnityEngine.UIElements.StyleSheets
         public static float borderTopWidth => s_InitialStyle.layoutData.Read().borderTopWidth;
         public static Length bottom => s_InitialStyle.layoutData.Read().bottom;
         public static Color color => s_InitialStyle.inheritedData.Read().color;
+        public static Length columnGap => s_InitialStyle.layoutData.Read().columnGap;
         public static Cursor cursor => s_InitialStyle.rareData.Read().cursor;
         public static DisplayStyle display => s_InitialStyle.layoutData.Read().display;
         public static ReadOnlySpan<UnmanagedFilterFunction> filter => s_InitialStyle.rareData.Read().filter;
@@ -186,6 +189,7 @@ namespace UnityEngine.UIElements.StyleSheets
         public static Position position => s_InitialStyle.layoutData.Read().position;
         public static Length right => s_InitialStyle.layoutData.Read().right;
         public static Rotate rotate => s_InitialStyle.transformData.Read().rotate;
+        public static Length rowGap => s_InitialStyle.layoutData.Read().rowGap;
         public static Scale scale => s_InitialStyle.transformData.Read().scale;
         public static TextOverflow textOverflow => s_InitialStyle.rareData.Read().textOverflow;
         public static TextShadow textShadow => s_InitialStyle.inheritedData.Read().textShadow;

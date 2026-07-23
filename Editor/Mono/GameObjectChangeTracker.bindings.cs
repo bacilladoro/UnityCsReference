@@ -10,13 +10,15 @@ using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Burst;
 using UnityEngine;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
     [NativeHeader("Editor/Src/Utility/GameObjectChangeTracker.h")]
-    internal static class GameObjectChangeTracker
+    internal static partial class GameObjectChangeTracker
     {
-        static GameObjectChangeTracker() => Init();
+        [OnCodeLoaded]
+        static void Initialize() => Init();
 
         [StaticAccessor("GameObjectChangeTracker", StaticAccessorType.DoubleColon)]
         extern static void Init();
@@ -30,6 +32,7 @@ namespace UnityEditor
         public static unsafe void PublishEvents(NativeArray<GameObjectChangeTrackerEvent> events)
             => OnGameObjectsChanged((IntPtr)events.GetUnsafeReadOnlyPtr(), events.Length);
 
+        [AutoStaticsCleanupOnCodeReload(CleanupStrategy = CleanupStrategy.Clear)]
         private static EventWithPerformanceTracker<GameObjectChangeTrackerEventHandler> m_GameObjectsChanged = new EventWithPerformanceTracker<GameObjectChangeTrackerEventHandler>($"{nameof(GameObjectChangeTracker)}.{nameof(GameObjectsChanged)}");
 
         [RequiredByNativeCode(GenerateProxy = true)]
@@ -62,6 +65,7 @@ namespace UnityEditor
         // TODO: Once Burst supports internal/external functions in static initializers, this can become
         //   static readonly int s_staticSafetyId = AtomicSafetyHandle.NewStaticSafetyId<GameObjectChangeTrackerEvents>();
         // and InitStaticSafetyId() can be replaced with a call to AtomicSafetyHandle.SetStaticSafetyId();
+        [NoAutoStaticsCleanup] // process-lifetime native static safety id; resetting to 0 would re-register a duplicate safety id, safe to persist
         static int s_staticSafetyId;
         [BurstDiscard]
         static void InitStaticSafetyId(ref AtomicSafetyHandle handle1)

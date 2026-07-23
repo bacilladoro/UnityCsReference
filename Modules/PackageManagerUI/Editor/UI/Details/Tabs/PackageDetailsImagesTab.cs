@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.UIElements;
 using System.Collections.Generic;
@@ -12,6 +13,7 @@ namespace UnityEditor.PackageManager.UI.Internal
     {
         public const string k_Id = "images";
 
+        [NoAutoStaticsCleanup]
         private static Texture2D s_LoadingTexture;
 
         private IPackageVersion m_Version;

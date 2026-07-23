@@ -68,7 +68,7 @@ namespace Unity.ProjectAuditor.Editor.UI.Framework
                 var categories = new List<IssueCategory>(categoryArray.Length);
                 foreach (var category in categoryArray)
                 {
-                    if (!category.IsSummary() && category < IssueCategory.FirstCustomCategory)
+                    if (!category.IsSummary() && category < IssueCategoryExtensions.FirstCustomCategory)
                         categories.Add(category);
                 }
 

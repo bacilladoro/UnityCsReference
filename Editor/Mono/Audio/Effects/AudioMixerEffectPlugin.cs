@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 
 namespace UnityEditor.Audio
@@ -14,9 +15,12 @@ namespace UnityEditor.Audio
         internal AudioMixerEffectController m_Effect;
         internal MixerParameterDefinition[] m_ParamDefs;
 
+        [NoAutoStaticsCleanup] // Transient undo-batching flag, reset to false in OnParameterChangesDone after each interaction; safe to persist across reload.
         static bool s_ParameterChangeUndoIsRecorded;
+        [NoAutoStaticsCleanup] // Transient undo-batching flag, reset to false in OnParameterChangesDone after each interaction; safe to persist across reload.
         static bool s_ParameterChangeUndoGroupNameIsSet;
 
+        [NoAutoStaticsCleanup] // Transient per-interaction parameter buffer, Cleared in OnParameterChangesDone; holds only primitive string/float, safe to persist across reload.
         static readonly Dictionary<string, float> k_UpdatedParameterMap = new Dictionary<string, float>();
 
         readonly HashSet<string> m_VerifiedParameters = new HashSet<string>();

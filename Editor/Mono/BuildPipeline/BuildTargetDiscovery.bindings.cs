@@ -13,6 +13,7 @@ using UnityEngine.Scripting;
 using GraphicsDeviceType = UnityEngine.Rendering.GraphicsDeviceType;
 using UnityEditor.Modules;
 using UnityEngine;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -20,7 +21,7 @@ namespace UnityEditor
     [NativeHeader("Editor/Src/BuildPipeline/BuildTargetDiscovery.h")]
     [RequiredByNativeCode]
     [VisibleToOtherModules("UnityEditor.BuildAnalysisModule", "UnityEditor.BuildProfileModule", "UnityEditor.BurstModule")]
-    internal static class BuildTargetDiscovery
+    internal static partial class BuildTargetDiscovery
     {
         [Flags]
         public enum TargetAttributes
@@ -197,6 +198,7 @@ namespace UnityEditor
             return false;
         }
 
+        [NoAutoStaticsCleanup] // static config: array of BuildTarget enums (value type), never reassigned at runtime
         public static BuildTarget[] StandaloneBuildTargets { get; internal set; } = new BuildTarget[]
         {
             BuildTarget.StandaloneOSX,
@@ -384,8 +386,10 @@ namespace UnityEditor
             public PlatformGroup() { }
         }
 
+        [NoAutoStaticsCleanup] // empty-GUID sentinel constant, value type, safe to persist
         static GUID EmptyGuid = new GUID("");
 
+        [NoAutoStaticsCleanup] // enum->GUID lookup of value types only, repopulated by Initialize; no user-code refs
         static Dictionary<BuildTarget, GUID> s_BuildTargetToPlatformGUID = new Dictionary<BuildTarget, GUID>();
 
         // This list should not be exposed ouside of BuildTargetDiscovery to avoid NDA spillage, provide a access function for data here instead.
@@ -394,6 +398,7 @@ namespace UnityEditor
         // This list is ordered by the order in which platforms are displayed in the build profiles window (Do not change!)
         // Changes here should be synced with kBuildTargetUIOrder[] in BuildTargetDiscovery.cpp
         // Name changes here must be reflected in the platform [PLATFORM]BuildTarget.cs and [Platform]BuildTarget.cpp respective DisplayName, niceName and iconName
+        [NoAutoStaticsCleanup] // immutable static platform table (GUID -> PlatformInfo config data), no user-code refs
         static readonly Dictionary<GUID, PlatformInfo> allPlatforms = new Dictionary<GUID, PlatformInfo>
         {
             // first standalones and servers
@@ -850,9 +855,12 @@ namespace UnityEditor
             }
         };
 
+        [NoAutoStaticsCleanup] // GUID->bool install map, value types only, repopulated by Initialize; no user-code refs
         static readonly Dictionary<GUID, bool> k_PlatformInstalledData = new();
+        [AutoStaticsCleanupOnCodeReload]
         static readonly Dictionary<GUID, ISDKPlatformExtension> k_SDKPlatformExtensions = new();
 
+        [NoAutoStaticsCleanup] // immutable static platform-group config (strings + GUID arrays), no user-code refs
         static readonly PlatformGroup[] allPlatformGroups =
         {
             new PlatformGroup

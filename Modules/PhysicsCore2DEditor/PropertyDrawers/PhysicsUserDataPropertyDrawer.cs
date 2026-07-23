@@ -12,7 +12,7 @@ namespace Unity.U2D.Physics.Editor
 {
     /// <summary>
     /// Builds the UI Toolkit fields for a <see cref="PhysicsUserData"/> serialized property.
-    /// The entity id is presented as the object it references, alongside the mask, float, int, long, and bool slots.
+    /// The entity id is presented as the object it references, alongside the mask, float, int, long, Vector3Int, and bool slots.
     /// Add the returned element directly to embed the fields inline, or wrap it in a <see cref="Foldout"/> for a collapsible section.
     /// </summary>
     public static class PhysicsUserDataInspector
@@ -21,7 +21,7 @@ namespace Unity.U2D.Physics.Editor
         /// Create the editable fields for a <see cref="PhysicsUserData"/> property, with no wrapping foldout.
         /// </summary>
         /// <param name="property">The serialized <see cref="PhysicsUserData"/> property to build the fields for.</param>
-        /// <returns>A container with the referenced object field and the mask, float, int, long, and bool fields.</returns>
+        /// <returns>A container with the referenced object field and the mask, float, int, long, Vector3Int, and bool fields.</returns>
         public static VisualElement CreateFields(SerializedProperty property)
         {
             var body = new VisualElement();
@@ -46,6 +46,7 @@ namespace Unity.U2D.Physics.Editor
             body.Add(new PropertyField(property.FindPropertyRelative(nameof(PhysicsUserData.m_Float))));
             body.Add(new PropertyField(property.FindPropertyRelative(nameof(PhysicsUserData.m_Int))));
             body.Add(new PropertyField(property.FindPropertyRelative(nameof(PhysicsUserData.m_Int64))));
+            body.Add(new PropertyField(property.FindPropertyRelative(nameof(PhysicsUserData.m_Vector3Int))));
             body.Add(new PropertyField(property.FindPropertyRelative(nameof(PhysicsUserData.m_Bool))));
 
             return body;
@@ -88,7 +89,7 @@ namespace Unity.U2D.Physics.Editor
                 return EditorGUIUtility.singleLineHeight;
 
             return EditorGUIUtility.singleLineHeight
-                + (EditorGUIUtility.standardVerticalSpacing + EditorGUIUtility.singleLineHeight) * 6;
+                + (EditorGUIUtility.standardVerticalSpacing + EditorGUIUtility.singleLineHeight) * 7;
         }
 
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
@@ -107,6 +108,7 @@ namespace Unity.U2D.Physics.Editor
                 var floatProperty = property.FindPropertyRelative(nameof(PhysicsUserData.m_Float));
                 var intProperty = property.FindPropertyRelative(nameof(PhysicsUserData.m_Int));
                 var int64Property = property.FindPropertyRelative(nameof(PhysicsUserData.m_Int64));
+                var vector3IntProperty = property.FindPropertyRelative(nameof(PhysicsUserData.m_Vector3Int));
                 var boolProperty = property.FindPropertyRelative(nameof(PhysicsUserData.m_Bool));
 
                 float y = foldoutRect.yMax + EditorGUIUtility.standardVerticalSpacing;

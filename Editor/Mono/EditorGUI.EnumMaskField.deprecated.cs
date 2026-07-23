@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 
 #pragma warning disable 618 // disable obsolete warning
@@ -231,11 +232,12 @@ namespace UnityEditor
 
     // Class for storing state for mask menus so we can get the info back to OnGUI from the user selection
     [Obsolete("MaskFieldGUIDeprecated is deprecated. Use MaskFieldGUI instead.")]
-    static class MaskFieldGUIDeprecated
+    static partial class MaskFieldGUIDeprecated
     {
         // Class for storing state for mask menus so we can get the info back to OnGUI from the user selection
-        private class MaskCallbackInfo
+        private partial class MaskCallbackInfo
         {
+            [AutoStaticsCleanupOnCodeReload]
             // The global shared popup state
             public static MaskCallbackInfo m_Instance;
 

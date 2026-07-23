@@ -4,11 +4,13 @@
 
 using System;
 using UnityEngine;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Toolbars;
 
-class AIDropdown : EditorToolbarDropdown
+partial class AIDropdown : EditorToolbarDropdown
 {
+    [AutoStaticsCleanupOnCodeReload]
     internal static AIDropdown instance;
 
     [UnityOnlyMainToolbarPreset]

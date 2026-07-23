@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor.UIElements;
 using UnityEngine.Pool;
 using UnityEngine.UIElements;
@@ -11,6 +12,7 @@ namespace Unity.UI.Builder
 {
     class BuilderStyleSheetExporter : StyleSheetExporter
     {
+        [NoAutoStaticsCleanup] // Stateless exporter singleton with no user-code references; safe to persist across code reload.
         private static readonly BuilderStyleSheetExporter m_Instance = new BuilderStyleSheetExporter();
         public static BuilderStyleSheetExporter instance => m_Instance;
 

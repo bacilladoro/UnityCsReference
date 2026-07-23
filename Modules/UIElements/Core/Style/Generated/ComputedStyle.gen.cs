@@ -56,6 +56,7 @@ namespace UnityEngine.UIElements
         public float borderTopWidth => layoutData.Read().borderTopWidth;
         public Length bottom => layoutData.Read().bottom;
         public Color color => inheritedData.Read().color;
+        public Length columnGap => layoutData.Read().columnGap;
         public Cursor cursor => rareData.Read().cursor;
         public DisplayStyle display => layoutData.Read().display;
         public ReadOnlySpan<UnmanagedFilterFunction> filter => rareData.Read().filter;
@@ -86,6 +87,7 @@ namespace UnityEngine.UIElements
         public Position position => layoutData.Read().position;
         public Length right => layoutData.Read().right;
         public Rotate rotate => transformData.Read().rotate;
+        public Length rowGap => layoutData.Read().rowGap;
         public Scale scale => transformData.Read().scale;
         public TextOverflow textOverflow => rareData.Read().textOverflow;
         public TextShadow textShadow => inheritedData.Read().textShadow;
@@ -304,6 +306,9 @@ namespace UnityEngine.UIElements
                     case StylePropertyId.Color:
                         inheritedData.Write().color = reader.ReadColor(0);
                         break;
+                    case StylePropertyId.ColumnGap:
+                        layoutData.Write().columnGap = reader.ReadLength(0);
+                        break;
                     case StylePropertyId.Cursor:
                         rareData.Write().cursor = reader.ReadCursor(0);
                         break;
@@ -333,6 +338,9 @@ namespace UnityEngine.UIElements
                         break;
                     case StylePropertyId.FontSize:
                         inheritedData.Write().fontSize = reader.ReadLength(0);
+                        break;
+                    case StylePropertyId.Gap:
+                        ShorthandApplicator.ApplyGap(reader, ref this);
                         break;
                     case StylePropertyId.Height:
                         layoutData.Write().height = reader.ReadLength(0);
@@ -402,6 +410,9 @@ namespace UnityEngine.UIElements
                         break;
                     case StylePropertyId.Rotate:
                         transformData.Write().rotate = reader.ReadRotate(0);
+                        break;
+                    case StylePropertyId.RowGap:
+                        layoutData.Write().rowGap = reader.ReadLength(0);
                         break;
                     case StylePropertyId.Scale:
                         transformData.Write().scale = reader.ReadScale(0);
@@ -610,6 +621,9 @@ namespace UnityEngine.UIElements
                 case StylePropertyId.Color:
                     inheritedData.Write().color = sv.color;
                     break;
+                case StylePropertyId.ColumnGap:
+                    layoutData.Write().columnGap = sv.length;
+                    break;
                 case StylePropertyId.Display:
                     layoutData.Write().display = (DisplayStyle)sv.number;
                     if (sv.keyword == StyleKeyword.None)
@@ -692,6 +706,9 @@ namespace UnityEngine.UIElements
                     break;
                 case StylePropertyId.Right:
                     layoutData.Write().right = sv.length;
+                    break;
+                case StylePropertyId.RowGap:
+                    layoutData.Write().rowGap = sv.length;
                     break;
                 case StylePropertyId.TextOverflow:
                     rareData.Write().textOverflow = (TextOverflow)sv.number;
@@ -925,6 +942,9 @@ namespace UnityEngine.UIElements
                 case StylePropertyId.Color:
                     inheritedData.Write().color = other.inheritedData.Read().color;
                     break;
+                case StylePropertyId.ColumnGap:
+                    layoutData.Write().columnGap = other.layoutData.Read().columnGap;
+                    break;
                 case StylePropertyId.Cursor:
                     rareData.Write().cursor = other.rareData.Read().cursor;
                     break;
@@ -1014,6 +1034,9 @@ namespace UnityEngine.UIElements
                     break;
                 case StylePropertyId.Rotate:
                     transformData.Write().rotate = other.transformData.Read().rotate;
+                    break;
+                case StylePropertyId.RowGap:
+                    layoutData.Write().rowGap = other.layoutData.Read().rowGap;
                     break;
                 case StylePropertyId.Scale:
                     transformData.Write().scale = other.transformData.Read().scale;
@@ -1151,6 +1174,11 @@ namespace UnityEngine.UIElements
                     ve.layoutNode.MarkDirty();
                     ve.IncrementVersion(VersionChangeType.Layout);
                     break;
+                case StylePropertyId.ColumnGap:
+                    layoutData.Write().columnGap = newValue;
+                    ve.layoutNode.MarkDirty();
+                    ve.IncrementVersion(VersionChangeType.Layout);
+                    break;
                 case StylePropertyId.FlexBasis:
                     layoutData.Write().flexBasis = newValue;
                     ve.layoutNode.MarkDirty();
@@ -1236,6 +1264,11 @@ namespace UnityEngine.UIElements
                     break;
                 case StylePropertyId.Right:
                     layoutData.Write().right = newValue;
+                    ve.layoutNode.MarkDirty();
+                    ve.IncrementVersion(VersionChangeType.Layout);
+                    break;
+                case StylePropertyId.RowGap:
+                    layoutData.Write().rowGap = newValue;
                     ve.layoutNode.MarkDirty();
                     ve.IncrementVersion(VersionChangeType.Layout);
                     break;
@@ -1745,6 +1778,8 @@ namespace UnityEngine.UIElements
                     return visualData.Read().borderTopRightRadius;
                 case StylePropertyId.Bottom:
                     return layoutData.Read().bottom;
+                case StylePropertyId.ColumnGap:
+                    return layoutData.Read().columnGap;
                 case StylePropertyId.FlexBasis:
                     return layoutData.Read().flexBasis;
                 case StylePropertyId.FontSize:
@@ -1781,6 +1816,8 @@ namespace UnityEngine.UIElements
                     return layoutData.Read().paddingTop;
                 case StylePropertyId.Right:
                     return layoutData.Read().right;
+                case StylePropertyId.RowGap:
+                    return layoutData.Read().rowGap;
                 case StylePropertyId.Top:
                     return layoutData.Read().top;
                 case StylePropertyId.UnityParagraphSpacing:
@@ -2243,6 +2280,11 @@ namespace UnityEngine.UIElements
                     return result;
                 }
 
+                case StylePropertyId.ColumnGap:
+                {
+                    return element.styleAnimation.Start(StylePropertyId.ColumnGap, oldStyle.layoutData.Read().columnGap, newStyle.layoutData.Read().columnGap, durationMs, delayMs, easingCurve);
+                }
+
                 case StylePropertyId.Cursor:
                 {
                     return element.styleAnimation.Start(StylePropertyId.Cursor, oldStyle.rareData.Read().cursor, newStyle.rareData.Read().cursor, durationMs, delayMs, easingCurve);
@@ -2294,6 +2336,14 @@ namespace UnityEngine.UIElements
                 case StylePropertyId.FontSize:
                 {
                     return element.styleAnimation.Start(StylePropertyId.FontSize, oldStyle.inheritedData.Read().fontSize, newStyle.inheritedData.Read().fontSize, durationMs, delayMs, easingCurve);
+                }
+
+                case StylePropertyId.Gap:
+                {
+                    bool result = false;
+                    result |= element.styleAnimation.Start(StylePropertyId.RowGap, oldStyle.layoutData.Read().rowGap, newStyle.layoutData.Read().rowGap, durationMs, delayMs, easingCurve);
+                    result |= element.styleAnimation.Start(StylePropertyId.ColumnGap, oldStyle.layoutData.Read().columnGap, newStyle.layoutData.Read().columnGap, durationMs, delayMs, easingCurve);
+                    return result;
                 }
 
                 case StylePropertyId.Height:
@@ -2426,6 +2476,11 @@ namespace UnityEngine.UIElements
                     }
 
                     return result;
+                }
+
+                case StylePropertyId.RowGap:
+                {
+                    return element.styleAnimation.Start(StylePropertyId.RowGap, oldStyle.layoutData.Read().rowGap, newStyle.layoutData.Read().rowGap, durationMs, delayMs, easingCurve);
                 }
 
                 case StylePropertyId.Scale:
@@ -2782,6 +2837,12 @@ namespace UnityEngine.UIElements
                 }
 
                 if (hasRunningAnimation ||
+                    oldData.columnGap != newData.columnGap)
+                {
+                    result |= element.styleAnimation.Start(StylePropertyId.ColumnGap, oldData.columnGap, newData.columnGap, durationMs, delayMs, easingCurve);
+                }
+
+                if (hasRunningAnimation ||
                     oldData.flexBasis != newData.flexBasis)
                 {
                     result |= element.styleAnimation.Start(StylePropertyId.FlexBasis, oldData.flexBasis, newData.flexBasis, durationMs, delayMs, easingCurve);
@@ -2917,6 +2978,12 @@ namespace UnityEngine.UIElements
                     oldData.right != newData.right)
                 {
                     result |= element.styleAnimation.Start(StylePropertyId.Right, oldData.right, newData.right, durationMs, delayMs, easingCurve);
+                }
+
+                if (hasRunningAnimation ||
+                    oldData.rowGap != newData.rowGap)
+                {
+                    result |= element.styleAnimation.Start(StylePropertyId.RowGap, oldData.rowGap, newData.rowGap, durationMs, delayMs, easingCurve);
                 }
 
                 if (hasRunningAnimation ||
@@ -3396,6 +3463,12 @@ namespace UnityEngine.UIElements
                     return result;
                 }
 
+                case StylePropertyId.ColumnGap:
+                {
+                    var to = sv.keyword == StyleKeyword.Initial ? InitialStyle.Get().layoutData.Read().columnGap : sv.length;
+                    return element.styleAnimation.Start(StylePropertyId.ColumnGap, computedStyle.layoutData.Read().columnGap, to, durationMs, delayMs, easingCurve);
+                }
+
                 case StylePropertyId.FlexBasis:
                 {
                     var to = sv.keyword == StyleKeyword.Initial ? InitialStyle.Get().layoutData.Read().flexBasis : sv.length;
@@ -3550,6 +3623,12 @@ namespace UnityEngine.UIElements
                 {
                     var to = sv.keyword == StyleKeyword.Initial ? InitialStyle.Get().layoutData.Read().right : sv.length;
                     return element.styleAnimation.Start(StylePropertyId.Right, computedStyle.layoutData.Read().right, to, durationMs, delayMs, easingCurve);
+                }
+
+                case StylePropertyId.RowGap:
+                {
+                    var to = sv.keyword == StyleKeyword.Initial ? InitialStyle.Get().layoutData.Read().rowGap : sv.length;
+                    return element.styleAnimation.Start(StylePropertyId.RowGap, computedStyle.layoutData.Read().rowGap, to, durationMs, delayMs, easingCurve);
                 }
 
                 case StylePropertyId.TextOverflow:
@@ -3891,6 +3970,9 @@ namespace UnityEngine.UIElements
                 case StylePropertyId.Color:
                     inheritedData.Write().color = InitialStyle.Get().inheritedData.Read().color;
                     break;
+                case StylePropertyId.ColumnGap:
+                    layoutData.Write().columnGap = InitialStyle.Get().layoutData.Read().columnGap;
+                    break;
                 case StylePropertyId.Cursor:
                     rareData.Write().cursor = InitialStyle.Get().rareData.Read().cursor;
                     break;
@@ -3922,6 +4004,10 @@ namespace UnityEngine.UIElements
                     break;
                 case StylePropertyId.FontSize:
                     inheritedData.Write().fontSize = InitialStyle.Get().inheritedData.Read().fontSize;
+                    break;
+                case StylePropertyId.Gap:
+                    layoutData.Write().rowGap = InitialStyle.Get().layoutData.Read().rowGap;
+                    layoutData.Write().columnGap = InitialStyle.Get().layoutData.Read().columnGap;
                     break;
                 case StylePropertyId.Height:
                     layoutData.Write().height = InitialStyle.Get().layoutData.Read().height;
@@ -3997,6 +4083,9 @@ namespace UnityEngine.UIElements
                     break;
                 case StylePropertyId.Rotate:
                     transformData.Write().rotate = InitialStyle.Get().transformData.Read().rotate;
+                    break;
+                case StylePropertyId.RowGap:
+                    layoutData.Write().rowGap = InitialStyle.Get().layoutData.Read().rowGap;
                     break;
                 case StylePropertyId.Scale:
                     transformData.Write().scale = InitialStyle.Get().transformData.Read().scale;
@@ -4242,7 +4331,9 @@ namespace UnityEngine.UIElements
                     x.maxHeight != y.maxHeight ||
                     x.maxWidth != y.maxWidth ||
                     x.minHeight != y.minHeight ||
-                    x.minWidth != y.minWidth)
+                    x.minWidth != y.minWidth ||
+                    x.columnGap != y.columnGap ||
+                    x.rowGap != y.rowGap)
                 {
                     changes |= VersionChangeType.Layout;
                 }

@@ -9,6 +9,7 @@ using System.Runtime.InteropServices;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs.LowLevel.Unsafe;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEngine.UIElements
 {
@@ -175,6 +176,7 @@ namespace UnityEngine.UIElements
         Entry m_ParentEntry;
         EntryRecorder m_EntryRecorder;
 
+        [NoAutoStaticsCleanup] // safety ID lazily initialized once; idempotent, safe to persist
         static int s_StaticSafetyId;
         AtomicSafetyHandle m_Safety;
         bool m_Safe;

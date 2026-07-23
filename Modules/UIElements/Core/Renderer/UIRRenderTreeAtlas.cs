@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Pool;
 
@@ -96,6 +97,7 @@ namespace UnityEngine.UIElements.UIR
             return true;
         }
 
+        [NoAutoStaticsCleanup] // lazily created helper material; survives reload
         static Material s_MarginMat = null;
 
         static void DrawMargins(RenderTexture rt, int leftMargin, int topMargin, int rightMargin, int bottomMargin, Color color)

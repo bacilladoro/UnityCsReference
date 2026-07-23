@@ -21,7 +21,8 @@ internal class VisualTreeAssetSelectionEditor : UnityEditor.Editor
     {
         var inspector = new VisualTreeAssetInspector
         {
-            VisualTreeAsset = Target.panelComponent?.visualTreeAsset
+            VisualTreeAsset = Target.PanelComponent?.visualTreeAsset,
+            PanelSettings = Target.PanelSettings
         };
 
         var binding = new DataBinding
@@ -37,6 +38,15 @@ internal class VisualTreeAssetSelectionEditor : UnityEditor.Editor
         binding.sourceToUiConverters.AddConverter((ref IPanelComponent panelComponent) => panelComponent?.visualTreeAsset);
 
         inspector.SetBinding(VisualTreeAssetInspector.VisualTreeAssetProperty, binding);
+
+        var panelSettingsBinding = new DataBinding
+        {
+            dataSource = Target,
+            dataSourcePath = VisualTreeAssetSelection.PanelSettingsProperty,
+            bindingMode = BindingMode.ToTarget
+        };
+
+        inspector.SetBinding(VisualTreeAssetInspector.PanelSettingsProperty, panelSettingsBinding);
         return inspector;
     }
 }

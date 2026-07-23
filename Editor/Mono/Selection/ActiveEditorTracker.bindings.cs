@@ -8,6 +8,7 @@ using System.Runtime.InteropServices;
 using UnityEngine;
 using UnityEngine.Bindings;
 using UnityEngine.Scripting;
+using Unity.Scripting.LifecycleManagement;
 using UnityObject = UnityEngine.Object;
 
 namespace UnityEditor
@@ -17,7 +18,7 @@ namespace UnityEditor
     [NativeHeader("Editor/Src/Selection/ActiveEditorTracker.bindings.h")]
     [Serializable]
     [RequiredByNativeCode]
-    public sealed class ActiveEditorTracker
+    public sealed partial class ActiveEditorTracker
     {
         #pragma warning disable 649
         MonoReloadableIntPtrClear m_Property;
@@ -30,6 +31,7 @@ namespace UnityEditor
             m_Property.m_IntPtr = IntPtr.Zero;
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         internal static event Action editorTrackerRebuilt;
 
         internal static class NativeHandleMarshaller

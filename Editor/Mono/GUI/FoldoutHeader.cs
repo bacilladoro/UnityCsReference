@@ -5,6 +5,7 @@
 using UnityEngine;
 using UnityEngine.Internal;
 using System;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -32,6 +33,7 @@ namespace UnityEditor
 
     public sealed partial class EditorGUI
     {
+        [NoAutoStaticsCleanup] // nesting counter, value type, safe to persist
         static int s_FoldoutHeaderGroupActive;
         private static readonly int s_FoldoutHeaderHash = "FoldoutHeader".GetHashCode();
 

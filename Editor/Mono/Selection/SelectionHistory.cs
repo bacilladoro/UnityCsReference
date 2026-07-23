@@ -8,6 +8,7 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.Pool;
 using UnityEngine.SceneManagement;
+using Unity.Scripting.LifecycleManagement;
 using Object = UnityEngine.Object;
 
 namespace UnityEditor
@@ -174,7 +175,7 @@ namespace UnityEditor
         }
     }
 
-    internal class SelectionHistory : ScriptableSingleton<SelectionHistory>
+    internal partial class SelectionHistory : ScriptableSingleton<SelectionHistory>
     {
         const int kHistorySize = 50;
 
@@ -184,6 +185,7 @@ namespace UnityEditor
         bool m_IgnoreNextSelectionChange;
         bool m_ApplyingCustomSelection;
 
+        [AutoStaticsCleanupOnCodeReload]
         public static EditorApplication.CallbackFunction indexChanged;
 
         [MenuItem("Edit/Previous Selection %#[", priority = 70)]

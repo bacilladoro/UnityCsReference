@@ -2,13 +2,14 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 
 namespace UnityEditor
 {
     [CustomEditor(typeof(AudioClip))]
     [CanEditMultipleObjects]
-    internal class AudioClipInspector : Editor
+    internal partial class AudioClipInspector : Editor
     {
         private PreviewRenderUtility m_PreviewUtility;
         private AudioClip m_Clip;
@@ -16,21 +17,31 @@ namespace UnityEditor
         Vector2 m_Position = Vector2.zero;
         private bool m_MultiEditing;
 
+        [NoAutoStaticsCleanup] // lazily-loaded GUIStyle, re-initialised on next access; safe to persist
         static GUIStyle s_PreButton;
 
+        [NoAutoStaticsCleanup] // transient preview layout rect, recomputed each GUI pass
         static Rect s_WantedRect;
+        [NoAutoStaticsCleanup] // user preview toggle, intentionally persists across reload
         static bool s_AutoPlay;
+        [NoAutoStaticsCleanup] // user preview toggle, intentionally persists across reload
         static bool s_Loop;
+        [NoAutoStaticsCleanup] // user preview toggle, intentionally persists across reload
         static bool s_PlayFirst;
+        [AutoStaticsCleanupOnCodeReload]
         static AudioClipInspector s_PlayingInstance;
 
+        [NoAutoStaticsCleanup] // lazily-loaded icon GUIContent, re-initialised on next access; safe to persist
         static GUIContent s_PlayIcon;
+        [NoAutoStaticsCleanup] // lazily-loaded icon GUIContent, re-initialised on next access; safe to persist
         static GUIContent s_AutoPlayIcon;
+        [NoAutoStaticsCleanup] // lazily-loaded icon GUIContent, re-initialised on next access; safe to persist
         static GUIContent s_LoopIcon;
 
-        static private string s_PreviewDisabledMessage = "AudioClip preview not available when Unity Audio is disabled in Project Settings";
-        static private string s_TrPreviewDisabledMessage = L10n.Tr(s_PreviewDisabledMessage);
+        static private readonly string s_PreviewDisabledMessage = "AudioClip preview not available when Unity Audio is disabled in Project Settings";
+        static private readonly string s_TrPreviewDisabledMessage = L10n.Tr(s_PreviewDisabledMessage);
 
+        [NoAutoStaticsCleanup] // lazily-loaded icon Texture2D, asset survives reload; re-initialised on next access
         static Texture2D s_DefaultIcon;
 
         private Material m_HandleLinesMaterial;

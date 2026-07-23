@@ -113,7 +113,8 @@ namespace Unity.UI.Builder
             if (builderWindow == null)
                 yield break;
 
-            foreach (var item in BuilderSharedStyles.GetAllUnappliedClasses(builderWindow.documentRootElement, currentVisualElement))
+            var themeStyleSheet = m_PaneWindow.document.currentCanvasThemeStyleSheet;
+            foreach (var item in BuilderSharedStyles.GetAllUnappliedClasses(builderWindow.documentRootElement, currentVisualElement, themeStyleSheet))
                 yield return item;
         }
 

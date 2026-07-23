@@ -1386,6 +1386,8 @@ namespace UnityEditor
             set;
         }
 
+        [Obsolete(@"Unsafe code is always enabled; this setting no longer has any effect.")]
+        [EditorBrowsable(EditorBrowsableState.Never)]
         public static extern bool allowUnsafeCode
         {
             [StaticAccessor("GetPlayerSettings().GetEditorOnly()")]
@@ -2175,7 +2177,7 @@ namespace UnityEditor
         public static extern D3D12DeviceFilterLists d3D12DeviceFilterListAsset { get; set; }
 
         public static extern WebGPUDeviceFilterLists webGPUDeviceFilterListAsset { get; set; }
-     
+
         [StaticAccessor("PlayerSettingsBindings", StaticAccessorType.DoubleColon)]
         internal static extern RayTracingFeatureFlags GetRayTracingFeaturesSupportForPlatform_Internal(BuildTarget platform, bool checkGraphicsApisList);
 

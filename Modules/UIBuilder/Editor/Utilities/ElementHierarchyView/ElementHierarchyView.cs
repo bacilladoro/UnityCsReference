@@ -14,6 +14,7 @@ using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.Pool;
 using UnityEngine.UIElements;
+using Unity.Scripting.LifecycleManagement;
 
 using TreeViewItem = UnityEngine.UIElements.TreeViewItemData<UnityEngine.UIElements.VisualElement>;
 
@@ -26,7 +27,7 @@ namespace Unity.UI.Builder
         public Vector2 scrollOffset;
     }
 
-    internal class ElementHierarchyView : VisualElement
+    internal partial class ElementHierarchyView : VisualElement
     {
         readonly UnityEngine.Pool.ObjectPool<ClassPill> m_ClassPillsPool = new (
             () =>
@@ -86,6 +87,7 @@ namespace Unity.UI.Builder
         BuilderPaneWindow m_PaneWindow;
         VisualElement m_DocumentRootElement;
         BuilderSelection m_Selection;
+        [AutoStaticsCleanupOnCodeReload]
         static BuilderClassDragger m_ClassDragger;
         BuilderExplorerDragger m_ExplorerDragger;
         BuilderElementContextMenu m_ContextMenuManipulator;
@@ -720,17 +722,27 @@ namespace Unity.UI.Builder
             var row = tooltipElement.GetFirstAncestorWithClass(BaseTreeView.itemUssClassName);
             var fullSelectorText = BuilderSharedStyles.GetSelectorString(label.userData as VisualElement);
 
-            tooltipElement.tooltip = label.isElided ? label.text : string.Empty;
+            var elided = IsLabelElided(label);
+            tooltipElement.tooltip = elided ? label.text : string.Empty;
 
-            if (label.isElided)
+            if (elided)
             {
                 row.tooltip = fullSelectorText;
             }
             else
             {
                 var explorerItem = tooltipElement.GetFirstOfType<BuilderExplorerItem>();
-                row.tooltip = explorerItem.elidableLabels.Exists(x => x.isElided) ? fullSelectorText : string.Empty;
+                row.tooltip = explorerItem.elidableLabels.Exists(IsLabelElided) ? fullSelectorText : string.Empty;
             }
+        }
+
+        static bool IsLabelElided(Label label)
+        {
+            if (label.isElided)
+                return true;
+
+            var textWidth = label.MeasureTextSize(label.text, float.NaN, MeasureMode.Undefined, float.NaN, MeasureMode.Undefined).x;
+            return textWidth > label.contentRect.width;
         }
 
         private void UpdateResizableLabelWidthInSelector(Label label)

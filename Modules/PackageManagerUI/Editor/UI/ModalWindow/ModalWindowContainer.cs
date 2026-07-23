@@ -2,12 +2,14 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 
 namespace UnityEditor.PackageManager.UI.Internal;
 
-internal class ModalWindowContainer : EditorWindow
+internal partial class ModalWindowContainer : EditorWindow
 {
+    [AutoStaticsCleanupOnCodeReload]
     private static ModalWindowContainer instance { get; set; }
 
     private ModalContent m_Content;

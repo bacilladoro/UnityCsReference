@@ -37,28 +37,32 @@ internal sealed class StyleRuleSelectionHandler : IStyleRuleSelectionHandler
     }
 
     [AutoStaticsCleanupOnCodeReload]
-    private static readonly Dictionary<StyleRule, RefCountedSelection> s_SelectionMappings = new();
+    private static readonly Dictionary<(StyleRule rule, bool isReadOnly), RefCountedSelection> s_SelectionMappings = new();
 
-    Dictionary<StyleRule, RefCountedSelection> SelectionMapping => s_SelectionMappings;
-
-    private StyleRuleSelection Acquire(StyleRule rule)
+    private StyleRuleSelection Acquire(StyleRule rule, bool isReadOnly)
     {
-        if (SelectionMapping.TryGetValue(rule, out var refCounted))
+        var key = (rule, isReadOnly);
+        if (s_SelectionMappings.TryGetValue(key, out var refCounted))
         {
-            SelectionMapping[rule] = refCounted.Acquire();
-            return (StyleRuleSelection)refCounted.SelectionObject;
+            s_SelectionMappings[key] = refCounted.Acquire();
+            var existing = (StyleRuleSelection)refCounted.SelectionObject;
+            existing.IsReadOnly = isReadOnly;
+            return existing;
         }
 
         var selectionObject = ScriptableObject.CreateInstance<StyleRuleSelection>();
         selectionObject.hideFlags |= HideFlags.DontUnloadUnusedAsset | HideFlags.DontSaveInEditor;
         selectionObject.StyleRule = rule;
-        SelectionMapping[rule] = new RefCountedSelection(selectionObject, 1);
+        selectionObject.IsReadOnly = isReadOnly;
+        s_SelectionMappings[key] = new RefCountedSelection(selectionObject, 1);
         return selectionObject;
     }
 
     private void Remap(StyleRule rule, UISelectionObject instance)
     {
-        if (SelectionMapping.TryGetValue(rule, out var refCounted))
+        // Remapping only applies to editable selections as inherited (read-only) style rules are never remapped.
+        var key = (rule, false);
+        if (s_SelectionMappings.TryGetValue(key, out var refCounted))
         {
             if (refCounted.Count > 0 || !refCounted.Alive)
                 Debug.LogError("Trying to remap something that is already mapped");
@@ -70,12 +74,13 @@ internal sealed class StyleRuleSelectionHandler : IStyleRuleSelectionHandler
             styleRuleSelection.StyleRule = rule;
         }
 
-        SelectionMapping[rule] = new RefCountedSelection(instance, 1);
+        s_SelectionMappings[key] = new RefCountedSelection(instance, 1);
     }
 
-    private bool Release(StyleRule rule)
+    private bool Release(StyleRule rule, bool isReadOnly)
     {
-        if (SelectionMapping.TryGetValue(rule, out var refCounted))
+        var key = (rule, isReadOnly);
+        if (s_SelectionMappings.TryGetValue(key, out var refCounted))
         {
             if (refCounted.Count == 1 || !refCounted.Alive)
             {
@@ -84,44 +89,45 @@ internal sealed class StyleRuleSelectionHandler : IStyleRuleSelectionHandler
                     Undo.ClearUndo(refCounted.SelectionObject);
                     Object.DestroyImmediate(refCounted.SelectionObject);
                 }
-                SelectionMapping.Remove(rule);
+                s_SelectionMappings.Remove(key);
                 return true;
             }
 
-            SelectionMapping[rule] = refCounted.Release();
+            s_SelectionMappings[key] = refCounted.Release();
         }
 
         return false;
     }
 
-    public EntityId AcquireInstanceId(StyleRule rule)
+    public EntityId AcquireInstanceId(StyleRule rule, bool isReadOnly)
     {
-        var selection = Acquire(rule);
+        var selection = Acquire(rule, isReadOnly);
         return selection.GetEntityId();
     }
 
-    public void ReleaseInstanceId(StyleRule rule)
+    public void ReleaseInstanceId(StyleRule rule, bool isReadOnly)
     {
-        Release(rule);
+        Release(rule, isReadOnly);
     }
 
     public void Remap(List<StyleRuleRemap> remappings)
     {
         foreach (var remap in remappings)
         {
-            if (SelectionMapping.TryGetValue(remap.Previous, out var selection))
+            var key = (remap.Previous, false);
+            if (s_SelectionMappings.TryGetValue(key, out var selection))
             {
                 if (!ReferenceEquals(remap.Previous, remap.Remapped))
                 {
-                    SelectionMapping[remap.Previous] = selection.Kill();
+                    s_SelectionMappings[key] = selection.Kill();
                     Remap(remap.Remapped, selection.SelectionObject);
-                    Release(remap.Previous);
+                    Release(remap.Previous, false);
                 }
 
                 // Force the selection object to notify observers
                 if (selection.SelectionObject is not StyleRuleSelection styleRuleSelection)
                     continue;
-                
+
                 styleRuleSelection.StyleRule = null;
                 styleRuleSelection.StyleRule = remap.Remapped;
             }
@@ -130,7 +136,7 @@ internal sealed class StyleRuleSelectionHandler : IStyleRuleSelectionHandler
 
     public void Clear()
     {
-        foreach (var kvp in SelectionMapping)
+        foreach (var kvp in s_SelectionMappings)
         {
             if (kvp.Value.Alive)
             {
@@ -138,6 +144,6 @@ internal sealed class StyleRuleSelectionHandler : IStyleRuleSelectionHandler
                 Object.DestroyImmediate(kvp.Value.SelectionObject);
             }
         }
-        SelectionMapping.Clear();
+        s_SelectionMappings.Clear();
     }
 }

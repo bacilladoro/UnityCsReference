@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -27,7 +28,7 @@ namespace UnityEditor.PackageManager.UI.Internal
         }
     }
 
-    internal class PageFiltersWindow : EditorWindow
+    internal partial class PageFiltersWindow : EditorWindow
     {
         internal enum FoldoutType
         {
@@ -268,10 +269,12 @@ namespace UnityEditor.PackageManager.UI.Internal
             }
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         private static PageFiltersWindow s_Window;
         public static PageFiltersWindow instance => s_Window;
 
         // The internal modifier is used (instead of private) to give our test project access to these properties/methods
+        [NoAutoStaticsCleanup]
         internal static long s_LastClosedTime;
 
         private Content m_Content;

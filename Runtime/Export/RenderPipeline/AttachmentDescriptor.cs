@@ -8,6 +8,7 @@ using System;
 using System.Runtime.InteropServices;
 using Unity.Collections;
 using UnityEngine.Bindings;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEngine.Rendering
 {
@@ -222,6 +223,7 @@ namespace UnityEngine.Rendering
     [StructLayout(LayoutKind.Sequential)]
     public struct AttachmentIndexArray
     {
+        [NoAutoStaticsCleanup] // unmanaged value type, holds no references
         public static AttachmentIndexArray Emtpy = new AttachmentIndexArray(0);
 
         // This is a fixed size struct that emulates itself as an array

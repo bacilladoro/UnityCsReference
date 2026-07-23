@@ -7,6 +7,7 @@ using System;
 using System.Reflection;
 using UnityEngine;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Toolbars
 {
@@ -68,7 +69,7 @@ namespace UnityEditor.Toolbars
         }
     }
 
-    public static class MainToolbar
+    public static partial class MainToolbar
     {
         internal struct ElementDefinition
         {
@@ -121,6 +122,7 @@ namespace UnityEditor.Toolbars
             return window.TryGetOverlay(path, out overlay);
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         static Dictionary<string, MethodInfo> s_PathToAvailabilityMethods;
         internal static List<ElementDefinition> GetAllElementDefinitions()
         {
@@ -210,7 +212,9 @@ namespace UnityEditor.Toolbars
     {
         public const string presetName = "Unity Default";
 
+        [NoAutoStaticsCleanup] // Shared zero-length empty array (Array.Empty); holds no references, safe to persist.
         readonly static SaveData[] m_EmptySave = Array.Empty<SaveData>();
+        [NoAutoStaticsCleanup] // Shared zero-length empty array (Array.Empty); holds no references, safe to persist.
         readonly static DynamicPanelContainerData[] m_EmptyDynamicPanelContainerData = Array.Empty<DynamicPanelContainerData>();
 
         public SaveData[] saveData => m_EmptySave;

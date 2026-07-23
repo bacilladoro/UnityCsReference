@@ -13,6 +13,7 @@ using System.Text.RegularExpressions;
 using System.Linq;
 using System.IO;
 using UnityEditor.Web;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -297,12 +298,13 @@ namespace UnityEditor
             return s_StandardPackageRegExp.IsMatch(path);
         }
 
-        private static Regex s_StandardPackageRegExp = new Regex(@"/Standard Packages/(Character\ Controller|Glass\ Refraction\ \(Pro\ Only\)|Image\ Effects\ \(Pro\ Only\)|Light\ Cookies|Light\ Flares|Particles|Physic\ Materials|Projectors|Scripts|Standard\ Assets\ \(Mobile\)|Skyboxes|Terrain\ Assets|Toon\ Shading|Tree\ Creator|Water\ \(Basic\)|Water\ \(Pro\ Only\))\.unitypackage$", RegexOptions.IgnoreCase);
-        private static Regex s_GeneratedIDRegExp = new Regex(@"^\{(.*)\}$");
-        private static Regex s_InvalidPathCharsRegExp = new Regex(@"[^a-zA-Z0-9() _-]");
+        private static readonly Regex s_StandardPackageRegExp = new Regex(@"/Standard Packages/(Character\ Controller|Glass\ Refraction\ \(Pro\ Only\)|Image\ Effects\ \(Pro\ Only\)|Light\ Cookies|Light\ Flares|Particles|Physic\ Materials|Projectors|Scripts|Standard\ Assets\ \(Mobile\)|Skyboxes|Terrain\ Assets|Toon\ Shading|Tree\ Creator|Water\ \(Basic\)|Water\ \(Pro\ Only\))\.unitypackage$", RegexOptions.IgnoreCase);
+        private static readonly Regex s_GeneratedIDRegExp = new Regex(@"^\{(.*)\}$");
+        private static readonly Regex s_InvalidPathCharsRegExp = new Regex(@"[^a-zA-Z0-9() _-]");
 
         internal string initialOpenURL;
 
+        [NoAutoStaticsCleanup]
         private static AssetStoreContext s_Instance;
 
         // Some data is created through reflection in C++ and then

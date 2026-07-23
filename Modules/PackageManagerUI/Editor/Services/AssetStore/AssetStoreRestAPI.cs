@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor.Connect;
 
 namespace UnityEditor.PackageManager.UI.Internal
@@ -36,6 +37,7 @@ namespace UnityEditor.PackageManager.UI.Internal
 
         private const int k_GeneralServerError = 599;
         private const int k_GeneralClientError = 499;
+        [NoAutoStaticsCleanup]
         private static readonly Dictionary<int, string> k_KnownErrors = new Dictionary<int, string>
         {
             [400] = "Bad Request",

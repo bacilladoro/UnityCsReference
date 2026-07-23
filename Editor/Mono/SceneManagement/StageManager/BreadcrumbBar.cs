@@ -16,13 +16,13 @@ namespace UnityEditor.IMGUI.Controls
 
         public static class DefaultStyles
         {
-            public static GUIStyle label;
-            public static GUIStyle labelMissing;
-            public static GUIStyle labelBold;
-            public static GUIStyle labelBoldMissing;
-            public static GUIStyle background;
-            public static GUIStyle separatorLine = "BreadcrumbsSeparator";
-            public static GUIStyle separatorArrow = "ArrowNavigationRight";
+            public static readonly GUIStyle label;
+            public static readonly GUIStyle labelMissing;
+            public static readonly GUIStyle labelBold;
+            public static readonly GUIStyle labelBoldMissing;
+            public static readonly GUIStyle background;
+            public static readonly GUIStyle separatorLine = "BreadcrumbsSeparator";
+            public static readonly GUIStyle separatorArrow = "ArrowNavigationRight";
 
             static DefaultStyles()
             {

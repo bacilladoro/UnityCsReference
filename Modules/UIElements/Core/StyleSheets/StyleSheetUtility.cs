@@ -34,6 +34,7 @@ namespace UnityEngine.UIElements
         {
             var newStyleSheet = ScriptableObject.CreateInstance<StyleSheet>();
             newStyleSheet.hideFlags = HideFlags.DontUnloadUnusedAsset | HideFlags.DontSaveInEditor;
+            newStyleSheet.serializationLayoutHash = StyleSheet.currentSerializationLayoutHash;
 
             return newStyleSheet;
         }

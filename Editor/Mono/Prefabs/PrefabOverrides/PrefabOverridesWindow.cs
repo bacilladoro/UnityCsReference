@@ -12,6 +12,7 @@ using UnityEditor.SceneManagement;
 using System.Text;
 using static UnityEditor.GameObjectTreeViewGUI;
 using Object = UnityEngine.Object;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -52,38 +53,38 @@ namespace UnityEditor
         bool m_UnusedOverridesExist;
         static class Styles
         {
-            public static GUIContent revertAllContent = EditorGUIUtility.TrTextContent("Revert All", "Revert all overrides.");
-            public static GUIContent revertSelectedContent = EditorGUIUtility.TrTextContent("Revert Selected", "Revert selected overrides.");
-            public static GUIContent applyAllContent = EditorGUIUtility.TrTextContent("Apply All", "Apply all overrides to Prefab source '{0}'.");
-            public static GUIContent applySelectedContent = EditorGUIUtility.TrTextContent("Apply Selected", "Apply selected overrides to Prefab source '{0}'.");
-            public static GUIContent applyAllToBaseContent = EditorGUIUtility.TrTextContent("Apply All to Prefab Variant parent", "Apply all overrides to Prefab Variant parent '{0}'.");
-            public static GUIContent applySelectedToBaseContent = EditorGUIUtility.TrTextContent("Apply Selected to Prefab Variant parent", "Apply selected overrides to Prefab Variant parent '{0}'.");
-            public static GUIContent titleLabelDefault = EditorGUIUtility.TrTextContent("Review, Revert or Apply Overrides");
-            public static GUIContent titleLabelNoApply = EditorGUIUtility.TrTextContent("Review or Revert Overrides");
-            public static GUIContent noOverridesText = EditorGUIUtility.TrTextContent("No overrides");
-            public static GUIContent instanceLabel = EditorGUIUtility.TrTextContent("on");
-            public static GUIContent contextLabel = EditorGUIUtility.TrTextContent("in");
-            public static GUIContent removeUnusedOverridesButtonContent = EditorGUIUtility.TrTextContentWithIcon("Unused overrides", EditorGUIUtility.LoadIcon("Clear"));
+            public static readonly GUIContent revertAllContent = EditorGUIUtility.TrTextContent("Revert All", "Revert all overrides.");
+            public static readonly GUIContent revertSelectedContent = EditorGUIUtility.TrTextContent("Revert Selected", "Revert selected overrides.");
+            public static readonly GUIContent applyAllContent = EditorGUIUtility.TrTextContent("Apply All", "Apply all overrides to Prefab source '{0}'.");
+            public static readonly GUIContent applySelectedContent = EditorGUIUtility.TrTextContent("Apply Selected", "Apply selected overrides to Prefab source '{0}'.");
+            public static readonly GUIContent applyAllToBaseContent = EditorGUIUtility.TrTextContent("Apply All to Prefab Variant parent", "Apply all overrides to Prefab Variant parent '{0}'.");
+            public static readonly GUIContent applySelectedToBaseContent = EditorGUIUtility.TrTextContent("Apply Selected to Prefab Variant parent", "Apply selected overrides to Prefab Variant parent '{0}'.");
+            public static readonly GUIContent titleLabelDefault = EditorGUIUtility.TrTextContent("Review, Revert or Apply Overrides");
+            public static readonly GUIContent titleLabelNoApply = EditorGUIUtility.TrTextContent("Review or Revert Overrides");
+            public static readonly GUIContent noOverridesText = EditorGUIUtility.TrTextContent("No overrides");
+            public static readonly GUIContent instanceLabel = EditorGUIUtility.TrTextContent("on");
+            public static readonly GUIContent contextLabel = EditorGUIUtility.TrTextContent("in");
+            public static readonly GUIContent removeUnusedOverridesButtonContent = EditorGUIUtility.TrTextContentWithIcon("Unused overrides", EditorGUIUtility.LoadIcon("Clear"));
 
-            public static string nonApplicableTooltipApply = L10n.Tr("There are no overrides that can be applied to Prefab source '{0}'.");
-            public static string nonApplicableTooltipRevert = L10n.Tr("There are no overrides that can be reverted.");
+            public static readonly string nonApplicableTooltipApply = L10n.Tr("There are no overrides that can be applied to Prefab source '{0}'.");
+            public static readonly string nonApplicableTooltipRevert = L10n.Tr("There are no overrides that can be reverted.");
 
-            public static GUIContent infoMultiple = EditorGUIUtility.TrTextContent("Multiple Prefabs selected. Cannot show overrides.");
-            public static GUIContent infoMultipleNoApply = EditorGUIUtility.TrTextContent("Multiple Prefabs selected. Cannot show overrides.\nApplying is not possible for one or more Prefabs. Select individual Prefabs for details.");
+            public static readonly GUIContent infoMultiple = EditorGUIUtility.TrTextContent("Multiple Prefabs selected. Cannot show overrides.");
+            public static readonly GUIContent infoMultipleNoApply = EditorGUIUtility.TrTextContent("Multiple Prefabs selected. Cannot show overrides.\nApplying is not possible for one or more Prefabs. Select individual Prefabs for details.");
 
             // Messages related to the overrides list.
-            public static GUIContent infoModel = EditorGUIUtility.TrTextContent("Applying to a Model Prefab is not possible.");
+            public static readonly GUIContent infoModel = EditorGUIUtility.TrTextContent("Applying to a Model Prefab is not possible.");
 
             // Messages related to reasons for inability to apply.
-            public static GUIContent warningInvalidAsset = EditorGUIUtility.TrTextContent("The Prefab file contains an invalid script. Applying is not possible. Enter Prefab Mode and either remove the script component or recover the script.");
-            public static GUIContent warningHasManagedReferencesWithMissingTypes = EditorGUIUtility.TrTextContent("The Prefab file contains missing SerializeReference types. Applying is not possible. Enter Prefab Mode to see more details.");
-            public static GUIContent warningInvalidInstance = EditorGUIUtility.TrTextContent("The Prefab instance contains an invalid script. Applying is not possible. Remove or recover the script.");
-            public static GUIContent warningImmutable = EditorGUIUtility.TrTextContent("The Prefab file is immutable. Applying is not possible.");
+            public static readonly GUIContent warningInvalidAsset = EditorGUIUtility.TrTextContent("The Prefab file contains an invalid script. Applying is not possible. Enter Prefab Mode and either remove the script component or recover the script.");
+            public static readonly GUIContent warningHasManagedReferencesWithMissingTypes = EditorGUIUtility.TrTextContent("The Prefab file contains missing SerializeReference types. Applying is not possible. Enter Prefab Mode to see more details.");
+            public static readonly GUIContent warningInvalidInstance = EditorGUIUtility.TrTextContent("The Prefab instance contains an invalid script. Applying is not possible. Remove or recover the script.");
+            public static readonly GUIContent warningImmutable = EditorGUIUtility.TrTextContent("The Prefab file is immutable. Applying is not possible.");
 
-            public static GUIStyle boldRightAligned;
-            public static GUIStyle rightAligned;
-            public static GUIStyle removeOverridesButtonLineStyle = "TV Line";
-            public static GUIStyle removeOverridesButtonSelectionStyle = "TV Selection";
+            public static readonly GUIStyle boldRightAligned;
+            public static readonly GUIStyle rightAligned;
+            public static readonly GUIStyle removeOverridesButtonLineStyle = "TV Line";
+            public static readonly GUIStyle removeOverridesButtonSelectionStyle = "TV Selection";
 
             static Styles()
             {
@@ -666,25 +667,25 @@ namespace UnityEditor
 
         static class Styles
         {
-            public static GUIStyle borderStyle = new GUIStyle("grey_border");
-            public static GUIStyle headerLabel = new GUIStyle(EditorStyles.boldLabel);
-            public static GUIStyle headerStyle = new GUIStyle(EditorStyles.boldLabel);
-            public static GUIStyle bodyStyle = new GUIStyle(EditorStyles.label);
-            public static GUIStyle logHintStyle = new GUIStyle(EditorStyles.label);
-            public static GUIStyle headerGroupStyle = new GUIStyle();
-            public static GUIContent headerContentBaseSingular = EditorGUIUtility.TrTextContent("unused override");
-            public static GUIContent headerContentBasePlural = EditorGUIUtility.TrTextContent("unused overrides");
-            public static GUIContent editorLogHint = EditorGUIUtility.TrTextContent("Details will be written to the Editor log.");
-            public static GUIContent buttonContent = EditorGUIUtility.TrTextContent("Remove");
-            public static GUIContent headerContent = EditorGUIUtility.TrTextContent("{0} unused overrides");
-            public static GUIContent unusedRemovedComponentsContentSingular = EditorGUIUtility.TrTextContent("{0} has 1 unused removed component");
-            public static GUIContent unusedRemovedComponentsContentPlural = EditorGUIUtility.TrTextContent("{0} has {1} unused removed components");
-            public static GUIContent unusedRemovedGameObjectsContentSingular = EditorGUIUtility.TrTextContent("{0} has 1 unused removed GameObject");
-            public static GUIContent unusedRemovedGameObjectsContentPlural = EditorGUIUtility.TrTextContent("{0} has {1} unused removed GameObjects");
-            public static GUIContent headerContentSingular = EditorGUIUtility.TrTextContent("1 unused override");
-            public static GUIContent extraOverridesContent = EditorGUIUtility.TrTextContent("and {0} others");
-            public static GUIContent extraInstancesContent = EditorGUIUtility.TrTextContent("on {0} instances");
-            public static GUIContent pathOnInstanceContent = EditorGUIUtility.TrTextContent("on");
+            public static readonly GUIStyle borderStyle = new GUIStyle("grey_border");
+            public static readonly GUIStyle headerLabel = new GUIStyle(EditorStyles.boldLabel);
+            public static readonly GUIStyle headerStyle = new GUIStyle(EditorStyles.boldLabel);
+            public static readonly GUIStyle bodyStyle = new GUIStyle(EditorStyles.label);
+            public static readonly GUIStyle logHintStyle = new GUIStyle(EditorStyles.label);
+            public static readonly GUIStyle headerGroupStyle = new GUIStyle();
+            public static readonly GUIContent headerContentBaseSingular = EditorGUIUtility.TrTextContent("unused override");
+            public static readonly GUIContent headerContentBasePlural = EditorGUIUtility.TrTextContent("unused overrides");
+            public static readonly GUIContent editorLogHint = EditorGUIUtility.TrTextContent("Details will be written to the Editor log.");
+            public static readonly GUIContent buttonContent = EditorGUIUtility.TrTextContent("Remove");
+            public static readonly GUIContent headerContent = EditorGUIUtility.TrTextContent("{0} unused overrides");
+            public static readonly GUIContent unusedRemovedComponentsContentSingular = EditorGUIUtility.TrTextContent("{0} has 1 unused removed component");
+            public static readonly GUIContent unusedRemovedComponentsContentPlural = EditorGUIUtility.TrTextContent("{0} has {1} unused removed components");
+            public static readonly GUIContent unusedRemovedGameObjectsContentSingular = EditorGUIUtility.TrTextContent("{0} has 1 unused removed GameObject");
+            public static readonly GUIContent unusedRemovedGameObjectsContentPlural = EditorGUIUtility.TrTextContent("{0} has {1} unused removed GameObjects");
+            public static readonly GUIContent headerContentSingular = EditorGUIUtility.TrTextContent("1 unused override");
+            public static readonly GUIContent extraOverridesContent = EditorGUIUtility.TrTextContent("and {0} others");
+            public static readonly GUIContent extraInstancesContent = EditorGUIUtility.TrTextContent("on {0} instances");
+            public static readonly GUIContent pathOnInstanceContent = EditorGUIUtility.TrTextContent("on");
 
             static Styles()
             {
@@ -706,6 +707,7 @@ namespace UnityEditor
             }
         }
 
+        [NoAutoStaticsCleanup] // Transient popup-open flag, reset by OnOpen/OnClose; safe to persist across reload (popup is recreated).
         public static bool s_IsOpen;
         PrefabOverridesWindow m_Owner;
         GameObject[] m_SelectedGameObjects;

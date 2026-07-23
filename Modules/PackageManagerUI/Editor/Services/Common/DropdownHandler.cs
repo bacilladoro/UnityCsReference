@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -18,11 +19,12 @@ internal interface IDropdownHandler : IService
     void ShowInProgressDropdown(VisualElement anchorElement);
 }
 
-internal class DropdownHandler : BaseService<IDropdownHandler>, IDropdownHandler
+internal partial class DropdownHandler : BaseService<IDropdownHandler>, IDropdownHandler
 {
-    internal class DropdownWindow : EditorWindow
+    internal partial class DropdownWindow : EditorWindow
     {
-        private static readonly List<DropdownWindow> s_OpenedWindows = new List<DropdownWindow>();
+        [AutoStaticsCleanupOnCodeReload]
+        private static List<DropdownWindow> s_OpenedWindows = new List<DropdownWindow>();
 
         private DropdownContent m_Content;
 

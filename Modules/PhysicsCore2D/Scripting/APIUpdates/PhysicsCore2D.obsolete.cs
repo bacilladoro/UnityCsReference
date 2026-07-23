@@ -47,6 +47,16 @@ namespace Unity.U2D.Physics
         [Obsolete("PhysicsWorld.drawCapacity is deprecated. Draw capacity is now automatically managed.", false)]
         public readonly int drawCapacity { get => 0; set { } }
 
+        [ExcludeFromDocs]
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        [Obsolete("PhysicsWorld.autoContactCallbacks is obsolete. There is no longer a performance benefit to disabling automatic contact callback dispatch, so contact callbacks are now always sent every simulation step. Individual shapes can still control whether they generate contact events at all via PhysicsShape.contactEvents.", true)]
+        public readonly bool autoContactCallbacks { get => throw new NotSupportedException(); set => throw new NotSupportedException(); }
+
+        [ExcludeFromDocs]
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        [Obsolete("PhysicsWorld.autoTriggerCallbacks is obsolete. There is no longer a performance benefit to disabling automatic trigger callback dispatch, so trigger callbacks are now always sent every simulation step. Individual shapes can still control whether they generate trigger events at all via PhysicsShape.triggerEvents.", true)]
+        public readonly bool autoTriggerCallbacks { get => throw new NotSupportedException(); set => throw new NotSupportedException(); }
+
         public partial struct WorldProfile
         {
             [ExcludeFromDocs]
@@ -95,6 +105,16 @@ namespace Unity.U2D.Physics
         [EditorBrowsable(EditorBrowsableState.Never)]
         [Obsolete("PhysicsWorldDefinition.drawCapacity is deprecated. Draw capacity is now automatically managed.", false)]
         public int drawCapacity { readonly get => 0; set { } }
+
+        [ExcludeFromDocs]
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        [Obsolete("PhysicsWorldDefinition.autoContactCallbacks is obsolete. There is no longer a performance benefit to disabling automatic contact callback dispatch, so contact callbacks are now always sent every simulation step. Individual shapes can still control whether they generate contact events at all via PhysicsShape.contactEvents.", true)]
+        public bool autoContactCallbacks { readonly get => throw new NotSupportedException(); set => throw new NotSupportedException(); }
+
+        [ExcludeFromDocs]
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        [Obsolete("PhysicsWorldDefinition.autoTriggerCallbacks is obsolete. There is no longer a performance benefit to disabling automatic trigger callback dispatch, so trigger callbacks are now always sent every simulation step. Individual shapes can still control whether they generate trigger events at all via PhysicsShape.triggerEvents.", true)]
+        public bool autoTriggerCallbacks { readonly get => throw new NotSupportedException(); set => throw new NotSupportedException(); }
     }
 
     public readonly partial struct PhysicsBody

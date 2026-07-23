@@ -18,6 +18,7 @@ using System;
 using System.Net;
 using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
+using Unity.Scripting.LifecycleManagement;
 
 
 namespace UnityEditor
@@ -403,9 +404,13 @@ namespace UnityEditor
             LOGIN_ERROR
         }
 
+        [NoAutoStaticsCleanup]
         static string s_AssetStoreUrl = null;
+        [NoAutoStaticsCleanup]
         static string s_AssetStoreSearchUrl = null;
+        [NoAutoStaticsCleanup]
         static LoginState sLoginState = AssetStoreClient.LoginState.LOGGED_OUT;
+        [NoAutoStaticsCleanup]
         static string sLoginErrorMessage = null;
         public static string LoginErrorMessage { get { return sLoginErrorMessage; } }
         public delegate void DoneCallback(AssetStoreResponse response);

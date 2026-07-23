@@ -17,10 +17,10 @@ namespace UnityEditor.UIElements
         {
             var contents = "VisualElement {}";
             var icon = EditorGUIUtility.IconContent<StyleSheet>().image as Texture2D;
-            ProjectWindowUtil.CreateAssetWithTextContent("NewUSSFile.uss", contents, icon);
+            ProjectWindowUtil.CreateAssetWithTextContent("New USS.uss", contents, icon);
         }
 
-        [MenuItem("Assets/Create/UI Toolkit/TSS Theme File", false, 604, false)]
+        [MenuItem("Assets/Create/UI Toolkit/Theme Style Sheet (TSS)", false, 604, false)]
         public static void CreateTSSFile()
         {
             if (CommandService.Exists(nameof(CreateTSSFile)))
@@ -29,11 +29,11 @@ namespace UnityEditor.UIElements
             {
                 var contents = "VisualElement {}";
                 var icon = EditorGUIUtility.IconContent<ThemeStyleSheet>().image as Texture2D;
-                ProjectWindowUtil.CreateAssetWithTextContent("NewTSSFile.tss", contents, icon);
+                ProjectWindowUtil.CreateAssetWithTextContent("New TSS.tss", contents, icon);
             }
         }
 
-        [MenuItem("Assets/Create/UI Toolkit/Default Runtime Theme File", false, 605, false)]
+        [MenuItem("Assets/Create/UI Toolkit/Default Runtime Theme", false, 605, false)]
         public static void CreateDefaultRuntimeTSSFile()
         {
             if (CommandService.Exists(nameof(CreateDefaultRuntimeTSSFile)))
@@ -42,7 +42,7 @@ namespace UnityEditor.UIElements
             {
                 var contents = "@import url(\"" + ThemeRegistry.kThemeScheme + "://default\");\nVisualElement {}";
                 var icon = EditorGUIUtility.IconContent<ThemeStyleSheet>().image as Texture2D;
-                ProjectWindowUtil.CreateAssetWithTextContent(ThemeRegistry.kUnityRuntimeThemeFileName, contents, icon);
+                ProjectWindowUtil.CreateAssetWithTextContent("New Default Runtime Theme.tss", contents, icon);
             }
         }
     }

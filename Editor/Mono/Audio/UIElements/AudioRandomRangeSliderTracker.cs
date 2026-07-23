@@ -4,6 +4,7 @@
 
 using System;
 using System.Transactions;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEngine.UIElements.Layout;
@@ -13,6 +14,7 @@ namespace UnityEditor.Audio.UIElements;
 [UxmlElement]
 partial class AudioRandomRangeSliderTracker : VisualElement
 {
+    [NoAutoStaticsCleanup] // Immutable USS custom-style property key; holds no ALC-bound state, safe to persist across reload.
     static readonly CustomStyleProperty<Color> s_TrackerEnabledColorProperty = new("--tracker-color");
 
     Slider m_ParentSlider;

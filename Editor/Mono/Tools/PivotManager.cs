@@ -6,6 +6,7 @@ using UnityEngine;
 using System;
 using UnityEditor.EditorTools;
 using UnityEditorInternal;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -108,7 +109,7 @@ namespace UnityEditor
         public override Quaternion rotation => Tools.globalHandleRotation * GridSettings.instance.rotation;
     }
 
-    public static class PivotManager
+    public static partial class PivotManager
     {
         public static Type defaultPivotModeType => typeof(CenterPivotMode);
         public static Type defaultPivotRotationType => typeof(LocalPivotRotation);
@@ -171,9 +172,13 @@ namespace UnityEditor
             activePivotRotationChangedForOwner?.Invoke(toolOwnerType);
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action activePivotModeChanged;
+        [AutoStaticsCleanupOnCodeReload]
         internal static event Action<Type> activePivotModeChangedForOwner;
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action activePivotRotationChanged;
+        [AutoStaticsCleanupOnCodeReload]
         internal static event Action<Type> activePivotRotationChangedForOwner;
     }
 }

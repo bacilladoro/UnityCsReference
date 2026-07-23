@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEditor;
 
@@ -14,7 +15,7 @@ namespace UnityEditor
     public class AudioCurveRendering
     {
         // This slight adjustment is needed to make sure that numerical imprecision doesn't suddenly snap to the wrong pixel (causing vertical gaps and overdrawn lines)
-        private static float pixelEpsilon = 0.005f;
+        private const float k_PixelEpsilon = 0.005f;
 
         public delegate float AudioCurveEvaluator(float x);
         public delegate float AudioCurveAndColorEvaluator(float x, out Color col);
@@ -95,7 +96,7 @@ namespace UnityEditor
             float pixelSize = 1.0f / pixelScale;
             float pixelHalfSize = 0.5f * pixelSize;
             float pixelWidth = Mathf.Ceil(r.width) * pixelScale;
-            float startx = Mathf.Floor(r.x) + pixelEpsilon;
+            float startx = Mathf.Floor(r.x) + k_PixelEpsilon;
             float wx = 1.0f / (float)(pixelWidth - 1);
             float cy = r.height * 0.5f;
             float my = r.y + 0.5f * r.height;
@@ -148,7 +149,7 @@ namespace UnityEditor
             float pixelSize = 1.0f / pixelScale;
             float pixelHalfSize = 0.5f * pixelSize;
             float pixelWidth = Mathf.Ceil(r.width) * pixelScale;
-            float startx = Mathf.Floor(r.x) + pixelEpsilon;
+            float startx = Mathf.Floor(r.x) + k_PixelEpsilon;
             float wx = 1.0f / (float)(pixelWidth - 1);
             float cy = r.height * 0.5f;
             float my = r.y + 0.5f * r.height;
@@ -201,7 +202,7 @@ namespace UnityEditor
             float pixelSize = 1.0f / pixelScale;
             float pixelHalfSize = 0.5f * pixelSize;
             float pixelWidth = Mathf.Ceil(r.width) * pixelScale;
-            float startx = Mathf.Floor(r.x) + pixelEpsilon;
+            float startx = Mathf.Floor(r.x) + k_PixelEpsilon;
             float wx = 1.0f / (float)(pixelWidth - 1);
             float cy = r.height * 0.5f;
             float my = r.y + 0.5f * r.height;
@@ -254,6 +255,7 @@ namespace UnityEditor
             GUI.EndClip();
         }
 
+        [NoAutoStaticsCleanup] // Reusable point-buffer cache, reallocated on demand when size changes; holds only Vector3 values, safe to persist across reload.
         static Vector3[] s_PointCache;
         static Vector3[] GetPointCache(int numPoints)
         {

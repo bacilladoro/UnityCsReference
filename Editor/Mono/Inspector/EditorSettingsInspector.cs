@@ -11,6 +11,7 @@ using UnityEngine.Rendering;
 using UnityEngine.Assertions;
 using UnityEditor.UIElements;
 using UnityEditor.Build.Profile;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -65,6 +66,9 @@ namespace UnityEditor
             public static GUIContent cSharpProjectGeneration = EditorGUIUtility.TrTextContent("C# Project Generation");
             public static GUIContent additionalExtensionsToInclude = EditorGUIUtility.TrTextContent("Additional extensions to include");
             public static GUIContent rootNamespace = EditorGUIUtility.TrTextContent("Root namespace");
+
+            public static GUIContent scriptCompilation = EditorGUIUtility.TrTextContent("Script Compilation");
+            public static readonly GUIContent enableMSBuildCompilationPipeline = EditorGUIUtility.TrTextContent("Enable MSBuild Compilation (Experimental)", "Enable MSBuild compilation for script assemblies. Modification requires a restart of the Editor.");
 
             public static GUIContent textureCompressors = EditorGUIUtility.TrTextContent("Texture Compressors");
             public static GUIContent bc7Compressor = EditorGUIUtility.TrTextContent("BC7 Compressor", "Compressor to use for BC7 format texture compression");
@@ -289,6 +293,7 @@ namespace UnityEditor
         SerializedProperty m_EtcTextureNormalCompressor;
         SerializedProperty m_EtcTextureBestCompressor;
         SerializedProperty m_LineEndingsForNewScripts;
+        SerializedProperty m_EnableMSBuildCompilationPipeline;
         SerializedProperty m_EnterPlayModeOptions;
         SerializedProperty m_ProjectGenerationIncludedExtensions;
         SerializedProperty m_ProjectGenerationRootNamespace;
@@ -307,6 +312,9 @@ namespace UnityEditor
 
         enum CacheServerConnectionState { Unknown, Success, Failure }
         private CacheServerConnectionState m_CacheServerConnectionState;
+
+        [AutoStaticsCleanupOnCodeReload] // session flag
+        static bool m_ScriptCompilationPipelineChangeDialogDisplayed;
 
         public void OnEnable()
         {
@@ -369,6 +377,9 @@ namespace UnityEditor
 
             m_LineEndingsForNewScripts = serializedObject.FindProperty("m_LineEndingsForNewScripts");
             Assert.IsNotNull(m_LineEndingsForNewScripts);
+
+            m_EnableMSBuildCompilationPipeline = serializedObject.FindProperty("m_EnableMSBuildCompilationPipeline");
+            Assert.IsNotNull(m_EnableMSBuildCompilationPipeline);
 
             m_EnterPlayModeOptions = serializedObject.FindProperty("m_EnterPlayModeOptions");
             Assert.IsNotNull(m_EnterPlayModeOptions);
@@ -559,6 +570,7 @@ namespace UnityEditor
             if (EditorSettings.spritePackerMode != SpritePackerMode.SpriteAtlasV2 && EditorSettings.spritePackerMode != SpritePackerMode.SpriteAtlasV2Build && EditorSettings.spritePackerMode != SpritePackerMode.Disabled)
                 EditorGUILayout.IntSlider(m_SpritePackerCacheSize, 1, 200, Content.spriteMaxCacheSize);
 
+            DoScriptCompilationSettings();
             DoProjectGenerationSettings();
             var compressorsChanged = DoTextureCompressorSettings();
             DoLineEndingsSettings();
@@ -950,6 +962,28 @@ namespace UnityEditor
             CreatePopupMenu(Content.mode.text, lineEndingsPopupList, index, SetLineEndingsForNewScripts);
         }
 
+        private void DoScriptCompilationSettings()
+        {
+            GUILayout.Space(10);
+            GUILayout.Label(Content.scriptCompilation, EditorStyles.boldLabel);
+            EditorGUI.BeginChangeCheck();
+            EditorGUILayout.PropertyField(m_EnableMSBuildCompilationPipeline, Content.enableMSBuildCompilationPipeline);
+            if (EditorGUI.EndChangeCheck())
+            {
+                if (!m_ScriptCompilationPipelineChangeDialogDisplayed)
+                {
+                    m_ScriptCompilationPipelineChangeDialogDisplayed = true;
+                    bool doRestart = EditorUtility.DisplayDialog(
+                        L10n.Tr("Modifying scripting compilation pipeline"),
+                        L10n.Tr("Script compilation pipeline changed. This requires a restart of the Editor."),
+                        L10n.Tr("Restart Now"),
+                        L10n.Tr("Restart Later"));
+                    if (doRestart)
+                        EditorApplication.delayCall += EditorApplication.RestartEditorAndRecompileScripts;
+                }
+            }
+        }
+
         private void DoStreamingSettings()
         {
             GUILayout.Space(10);
@@ -1031,7 +1065,12 @@ namespace UnityEditor
 
             if (EditorGUI.EndChangeCheck() && m_IsGlobalSettings)
             {
+                bool domainReloadOldState = EditorSettings.IsDomainReloadDisabled;
+
                 EditorSettings.enterPlayModeOptions = (EnterPlayModeOptions)m_EnterPlayModeOptions.intValue;
+
+                if (domainReloadOldState != EditorSettings.IsDomainReloadDisabled)
+                    Compilation.CompilationPipeline.RequestScriptCompilation();
             }
         }
 

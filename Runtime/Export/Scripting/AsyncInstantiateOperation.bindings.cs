@@ -65,10 +65,10 @@ namespace UnityEngine
             public static IntPtr ConvertToNative(AsyncInstantiateOperation obj) => obj.m_Ptr;
         }
 
-        [RequiredByNativeCode(GenerateProxy =true)]
-        private bool IsCancellationRequested()
+        [RequiredByNativeCode]
+        private static bool IsCancellationRequested(AsyncInstantiateOperation self)
         {
-            return m_CancellationToken.IsCancellationRequested;
+            return self.m_CancellationToken.IsCancellationRequested;
         }
 
         internal virtual Object[] CreateResultArray(int size)

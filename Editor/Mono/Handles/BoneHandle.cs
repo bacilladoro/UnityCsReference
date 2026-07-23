@@ -5,6 +5,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Rendering;
 
 namespace UnityEditor
@@ -18,7 +19,9 @@ namespace UnityEditor
             private List<Matrix4x4> m_BoneLeafMatrices;
             private List<Vector4> m_BoneLeafColors;
 
+            [NoAutoStaticsCleanup] // internal GPU mesh; owned by renderer, no user-assembly refs
             private static Mesh s_Mesh;
+            [NoAutoStaticsCleanup] // internal GPU material; owned by renderer, no user-assembly refs
             private static Material s_Material;
 
             private const float k_Epsilon = 1e-5f;

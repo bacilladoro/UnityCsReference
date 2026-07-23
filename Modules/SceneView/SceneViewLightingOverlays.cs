@@ -9,6 +9,7 @@ using UnityEditor.Rendering;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.UIElements;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -53,7 +54,10 @@ namespace UnityEditor
         FloatField m_ExposureField;
         const float k_ExposureSliderAbsoluteMax = 23.0f;
         float m_ExposureMax = 16f;
-        static Texture2D s_ExposureTexture, s_EmptyExposureTexture;
+        [NoAutoStaticsCleanup] // 1x1 exposure Texture2D rebuilt lazily via the '== null' guard after domain reload destroys it; contents re-written each frame via SetPixel/Apply.
+        static Texture2D s_ExposureTexture;
+        [NoAutoStaticsCleanup] // 1x1 marker Texture2D, lazily rebuilt via the '== null' guard after a destroyed-on-reload texture reads as null; safe to persist.
+        static Texture2D s_EmptyExposureTexture;
 
         public SceneViewLighting()
         {

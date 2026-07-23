@@ -74,7 +74,7 @@ namespace UnityEngine.UIElements.UIR
         protected GpuUpdater m_VertexUpdater;
         protected GpuUpdater m_IndexUpdater;
 
-        static ProfilerMarker s_MarkerAllocate = new ProfilerMarker(ProfilerCategory.UIToolkit, "UIR.Allocate");
+        static readonly ProfilerMarker s_MarkerAllocate = new ProfilerMarker(ProfilerCategory.UIToolkit, "UIR.Allocate");
 
         protected MeshManager(uint initialVertexCapacity, uint initialIndexCapacity, uint extrasStride, GpuUpdaterType gpuUpdaterType)
         {

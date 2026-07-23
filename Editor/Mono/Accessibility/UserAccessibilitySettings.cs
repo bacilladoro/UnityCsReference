@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Accessibility
 {
@@ -16,9 +17,10 @@ namespace UnityEditor.Accessibility
 
     // NOTE: The preferences in this class are currently only exposed via a context menu in the ProfilerWindow
     // these toggles need to instead be moved to e.g., the Preferences menu before they are used elsewhere
-    internal static class UserAccessiblitySettings
+    internal static partial class UserAccessiblitySettings
     {
-        static UserAccessiblitySettings()
+        [OnCodeLoaded]
+        static void Initialize()
         {
             s_ColorBlindCondition = (ColorBlindCondition)EditorPrefs.GetInt(k_ColorBlindConditionPrefKey, (int)ColorBlindCondition.Default);
         }
@@ -39,8 +41,11 @@ namespace UnityEditor.Accessibility
                 }
             }
         }
+        // Editor preference mirror (value-type enum); re-seeded from EditorPrefs in Initialize and safe to persist across reload.
+        [NoAutoStaticsCleanup]
         private static ColorBlindCondition s_ColorBlindCondition;
 
+        [AutoStaticsCleanupOnCodeReload]
         public static Action colorBlindConditionChanged;
     }
 }

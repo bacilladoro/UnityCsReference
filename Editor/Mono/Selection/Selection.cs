@@ -10,6 +10,7 @@ using System.Collections;
 using System.Collections.Generic;
 using JetBrains.Annotations;
 using UnityEngine.Bindings;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -17,11 +18,16 @@ namespace UnityEditor
     {
         static readonly EntityId[] k_SingleSelectionCache = new EntityId[1];
 
+        [AutoStaticsCleanupOnCodeReload]
         public static System.Action selectionChanged;
+        [AutoStaticsCleanupOnCodeReload]
         private static DelegateWithPerformanceTracker<System.Action> m_SelectionChangedEvent = new DelegateWithPerformanceTracker<System.Action>($"{nameof(Selection)}.{nameof(selectionChanged)}");
+        [AutoStaticsCleanupOnCodeReload]
         internal static event System.Action<EntityId> selectedObjectWasDestroyed;
+        [AutoStaticsCleanupOnCodeReload]
         internal static event System.Action<EntityId> nonSelectedObjectWasDestroyed;
 
+        [AutoStaticsCleanupOnCodeReload]
         [PublicAPI] // Used by packages with internal access. Not actually intended for users.
         internal static event System.Action postProcessSelectionMetadata;
 

@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Assertions;
@@ -99,6 +100,7 @@ namespace Unity.UI.Builder
             }
         }
 
+        [NoAutoStaticsCleanup] // immutable style-property key identified by a fixed name string; safe to persist
         internal static CustomStyleProperty<int> s_DummyProperty = new CustomStyleProperty<int>("--my-dummy");
 
         VisualElement MakeItem()

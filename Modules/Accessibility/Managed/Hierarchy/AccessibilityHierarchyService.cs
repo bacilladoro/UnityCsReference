@@ -4,11 +4,13 @@
 
 using System;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEngine.Accessibility
 {
     internal static partial class AccessibilityHierarchyService
     {
+        [AutoStaticsCleanupOnCodeReload]
         static AccessibilityHierarchy s_ActiveHierarchy;
 
         internal static AccessibilityHierarchy activeHierarchy

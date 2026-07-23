@@ -5,15 +5,17 @@
 using System;
 using Unity.Collections;
 using Unity.Profiling;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEngine.UIElements.UIR
 {
     abstract partial class BaseShaderInfoStorage : IDisposable
     {
+        [NoAutoStaticsCleanup] // monotonic counter for unique texture names; safe to persist
         protected static int s_TextureCounter;
-        internal static ProfilerMarker s_MarkerCopyTexture = new ProfilerMarker(ProfilerCategory.UIToolkit, "UIR.ShaderInfoStorage.CopyTexture");
-        internal static ProfilerMarker s_MarkerGetTextureData = new ProfilerMarker(ProfilerCategory.UIToolkit, "UIR.ShaderInfoStorage.GetTextureData");
-        internal static ProfilerMarker s_MarkerUpdateTexture = new ProfilerMarker(ProfilerCategory.UIToolkit, "UIR.ShaderInfoStorage.UpdateTexture");
+        internal static readonly ProfilerMarker s_MarkerCopyTexture = new ProfilerMarker(ProfilerCategory.UIToolkit, "UIR.ShaderInfoStorage.CopyTexture");
+        internal static readonly ProfilerMarker s_MarkerGetTextureData = new ProfilerMarker(ProfilerCategory.UIToolkit, "UIR.ShaderInfoStorage.GetTextureData");
+        internal static readonly ProfilerMarker s_MarkerUpdateTexture = new ProfilerMarker(ProfilerCategory.UIToolkit, "UIR.ShaderInfoStorage.UpdateTexture");
 
         public abstract Texture2D texture { get; }
         public abstract bool AllocateRect(int width, int height, out RectInt uvs);
@@ -223,6 +225,7 @@ namespace UnityEngine.UIElements.UIR
 
     class ShaderInfoStorageRGBA32 : ShaderInfoStorage<Color32>
     {
+        [NoAutoStaticsCleanup] // stateless conversion lambda; no captured state
         static readonly Func<Color, Color32> s_Convert = c => c;
 
         public ShaderInfoStorageRGBA32(int initialSize = 64, int maxSize = 4096) :
@@ -233,6 +236,7 @@ namespace UnityEngine.UIElements.UIR
 
     class ShaderInfoStorageRGBAFloat : ShaderInfoStorage<Color>
     {
+        [NoAutoStaticsCleanup] // stateless conversion lambda; no captured state
         static readonly Func<Color, Color> s_Convert = c => c;
 
         public ShaderInfoStorageRGBAFloat(int initialSize = 64, int maxSize = 4096) :

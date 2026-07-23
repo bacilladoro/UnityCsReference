@@ -55,7 +55,8 @@ namespace Unity.GraphToolkit.Editor
         /// <summary>
         /// The USS class name added to the unchecked change button of a <see cref="VariableSubgraphPortPropertyField"/>.
         /// </summary>
-        public static readonly string changeButtonUncheckedUssClassName = changeButtonUssClassName.WithUssModifier("unchecked");
+        public static readonly string changeButtonUncheckedUssClassName =
+            changeButtonUssClassName.WithUssModifier("unchecked");
 
         /// <summary>
         /// Name for the display settings field.
@@ -65,7 +66,8 @@ namespace Unity.GraphToolkit.Editor
         Toggle m_ChangeButton;
         ToggleButtonGroup m_InputOutput;
 
-        IReadOnlyList<VariableDeclarationModelBase> m_Variables;
+        List<VariableDeclarationModelBase> m_VariableDeclarationModels = new List<VariableDeclarationModelBase>();
+        List<VariableNodeModel> m_VariableNodeModels = new List<VariableNodeModel>();
 
         RootView m_RootView;
         VisualElement m_ToggleContentContainer;
@@ -81,10 +83,9 @@ namespace Unity.GraphToolkit.Editor
 
         const int k_InputOutputValuesCount = 2;
 
-        public VariableSubgraphPortPropertyField(RootView rootView, IReadOnlyList<VariableDeclarationModelBase> variables, bool showToggle)
+        public VariableSubgraphPortPropertyField(RootView rootView, IReadOnlyList<Model> models, bool showToggle)
             : base(rootView)
         {
-            m_Variables = variables;
             m_RootView = rootView;
 
             AddToClassList(ussClassName);
@@ -138,8 +139,25 @@ namespace Unity.GraphToolkit.Editor
             secondLine.Add(spacer);
             m_ToggleContentContainer.Add(secondLine);
 
+            foreach (var model in models)
+            {
+                if (model is VariableDeclarationModelBase vdm)
+                {
+                    m_VariableDeclarationModels.Add(vdm);
+                }
+                else if (model is VariableNodeModel { VariableDeclarationModel: not null } vnm)
+                {
+                    m_VariableNodeModels.Add(vnm);
+                    m_VariableDeclarationModels.Add(vnm.VariableDeclarationModel);
+
+                    // If at least one of the variable node models is already a set variable node, we disable the field as it is not relevant.
+                    if (vnm.Mode == VariableNodeMode.Set)
+                        SetEnabled(false);
+                }
+            }
+
             // If at least one output is selected, we don't show the display settings as it is not relevant.
-            if (!m_Variables.Exists(f => f.IsOutput))
+            if (!m_VariableDeclarationModels.Exists(f => f.IsOutput))
             {
                 var thirdLine = new VisualElement();
                 thirdLine.AddToClassList(lineUssClassName);
@@ -160,45 +178,66 @@ namespace Unity.GraphToolkit.Editor
         void OnToggleChange(ChangeEvent<bool> e)
         {
             m_ToggleContentContainer.EnableInClassList(GraphElementHelper.hiddenUssModifier, !e.newValue);
-            m_RootView.Dispatch(new ChangeVariableModifiersCommand(e.newValue ? ModifierFlags.Read : ModifierFlags.None, m_Variables));
+            m_RootView.Dispatch(new ChangeVariableModifiersCommand(e.newValue ? ModifierFlags.Read : ModifierFlags.None, m_VariableDeclarationModels));
         }
 
         void OnInputOutputChange(ChangeEvent<ToggleButtonGroupState> e)
         {
             bool input = e.newValue.length == 0 || e.newValue.GetActiveOptions(stackalloc int[k_InputOutputValuesCount])[0] == (int)InputOutputValues.Input;
 
-            m_RootView.Dispatch(new ChangeVariableModifiersCommand(input ? ModifierFlags.Read : ModifierFlags.Write, m_Variables));
+            m_RootView.Dispatch(new ChangeVariableModifiersCommand(input ? ModifierFlags.Read : ModifierFlags.Write, m_VariableDeclarationModels));
         }
 
         void OnDisplaySettingsChange(ChangeEvent<string> e)
         {
             var showOnInspectorOnly = e.newValue == k_DisplaySettings[1];
-            m_RootView.Dispatch(new ChangeVariableDisplaySettingsCommand(showOnInspectorOnly, m_Variables));
+            m_RootView.Dispatch(new ChangeVariableDisplaySettingsCommand(showOnInspectorOnly, m_VariableDeclarationModels));
+        }
+
+        bool HasSetVariableNodesInGraph()
+        {
+            if (m_VariableDeclarationModels.Count == 0)
+                return false;
+            var graphModel = m_VariableDeclarationModels[0].GraphModel;
+            if (graphModel == null)
+                return false;
+            foreach (var nodeModel in graphModel.NodeModels)
+            {
+                if (nodeModel is VariableNodeModel { Mode: VariableNodeMode.Set } vnm
+                    && vnm.VariableDeclarationModel != null
+                    && m_VariableDeclarationModels.Contains(vnm.VariableDeclarationModel))
+                    return true;
+            }
+            return false;
         }
 
         public override void UpdateDisplayedValue()
         {
-            if (m_Variables.Count < 1)
+            var hasSetNodes = m_VariableNodeModels.Exists(v => v.Mode == VariableNodeMode.Set) || HasSetVariableNodesInGraph();
+            SetEnabled(!hasSetNodes);
+            tooltip = hasSetNodes ? "Cannot expose as a subgraph port because the variable is used as a set variable node in the graph." : "";
+
+            if (m_VariableDeclarationModels.Count < 1)
                 return;
 
             bool sameActivation = true;
             bool sameDirection = true;
             bool sameDisplaySettings = true;
 
-            var firstModifiers = m_Variables[0].Modifiers;
-            for (int i = 1; i < m_Variables.Count; ++i)
+            var firstModifiers = m_VariableDeclarationModels[0].Modifiers;
+            for (int i = 1; i < m_VariableDeclarationModels.Count; ++i)
             {
-                if (m_Variables[i].ShowOnInspectorOnly != m_Variables[0].ShowOnInspectorOnly)
+                if (m_VariableDeclarationModels[i].ShowOnInspectorOnly != m_VariableDeclarationModels[0].ShowOnInspectorOnly)
                 {
                     sameDisplaySettings = false;
                 }
 
-                if ((m_Variables[i].Modifiers == ModifierFlags.None) != (firstModifiers == ModifierFlags.None))
+                if ((m_VariableDeclarationModels[i].Modifiers == ModifierFlags.None) != (firstModifiers == ModifierFlags.None))
                 {
                     sameActivation = false;
                 }
 
-                if (m_Variables[i].Modifiers.HasFlag(ModifierFlags.Read) != firstModifiers.HasFlag(ModifierFlags.Read))
+                if (m_VariableDeclarationModels[i].Modifiers.HasFlag(ModifierFlags.Read) != firstModifiers.HasFlag(ModifierFlags.Read))
                 {
                     sameDirection = false;
                     break;
@@ -247,7 +286,7 @@ namespace Unity.GraphToolkit.Editor
             {
                 if (sameDisplaySettings)
                 {
-                    m_DisplaySettingsDropdown.SetValueWithoutNotify(m_Variables[0].ShowOnInspectorOnly ? k_DisplaySettings[1] : k_DisplaySettings[0]);
+                    m_DisplaySettingsDropdown.SetValueWithoutNotify(m_VariableDeclarationModels[0].ShowOnInspectorOnly ? k_DisplaySettings[1] : k_DisplaySettings[0]);
                 }
                 else
                 {

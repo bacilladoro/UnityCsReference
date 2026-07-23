@@ -6,6 +6,7 @@ using System;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Bindings;
+using Unity.Scripting.LifecycleManagement;
 using scm = System.ComponentModel;
 using uei = UnityEngine.Internal;
 using RequiredByNativeCodeAttribute = UnityEngine.Scripting.RequiredByNativeCodeAttribute;
@@ -87,10 +88,13 @@ namespace UnityEngine.SceneManagement
 
     public partial class SceneManager
     {
+        [AutoStaticsCleanupOnCodeReload]
         public static event UnityAction<Scene, LoadSceneMode> sceneLoaded;
 
+        [AutoStaticsCleanupOnCodeReload]
         public static event UnityAction<Scene> sceneUnloaded;
 
+        [AutoStaticsCleanupOnCodeReload]
         public static event UnityAction<Scene, Scene> activeSceneChanged;
 
         [Obsolete("Use SceneManager.sceneCount and SceneManager.GetSceneAt(int index) to loop the all scenes instead.")]

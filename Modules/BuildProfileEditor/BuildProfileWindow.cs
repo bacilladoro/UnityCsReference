@@ -140,8 +140,10 @@ namespace UnityEditor.Build.Profile
             m_WindowState = new BuildProfileWorkflowState(OnWorkflowStateChanged);
             var windowUxml = EditorGUIUtility.LoadRequired(k_Uxml) as VisualTreeAsset;
             var windowUss = EditorGUIUtility.LoadRequired(Util.k_StyleSheet) as StyleSheet;
-            rootVisualElement.styleSheets.Add(windowUss);
             windowUxml.CloneTree(rootVisualElement);
+            rootVisualElement.styleSheets.Add(windowUss);
+            rootVisualElement.AddToClassList(EditorGUIUtility.isProSkin ? Util.k_UssClassDark : Util.k_UssClassLight);
+
             var listViewAddProfileButton = rootVisualElement.Q<Button>("fallback-add-profile-button");
             var addBuildProfileButton = rootVisualElement.Q<ToolbarButton>("add-build-profile-button");
             var playerSettingsButton = rootVisualElement.Q<ToolbarButton>("player-settings-button");

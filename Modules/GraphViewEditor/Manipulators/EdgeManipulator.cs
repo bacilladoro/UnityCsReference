@@ -20,7 +20,7 @@ namespace UnityEditor.Experimental.GraphView
         private List<EdgeDragHelper> m_AdditionalEdgeDragHelpers;
         private Port m_DetachedPort;
         private bool m_DetachedFromInputPort;
-        private static int s_StartDragDistance = 10;
+        private const int s_StartDragDistance = 10;
         private IPointerOrMouseEvent m_LastPointerOrMouseDownEvent;
 
         public EdgeManipulator()

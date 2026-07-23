@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -30,7 +31,9 @@ partial class AudioContainerElementClipField : ObjectField
     Color m_ProgressBarBackgroundColor;
     double m_Progress;
 
+    [NoAutoStaticsCleanup] // Immutable USS custom-style property key; holds no ALC-bound state, safe to persist across reload.
     static readonly CustomStyleProperty<Color> s_ProgressBarColorProperty = new("--progress-bar-color");
+    [NoAutoStaticsCleanup] // Immutable USS custom-style property key; holds no ALC-bound state, safe to persist across reload.
     static readonly CustomStyleProperty<Color> s_ProgressBarBackgroundColorProperty = new("--progress-bar-background");
 
     public AudioContainerElementClipField()

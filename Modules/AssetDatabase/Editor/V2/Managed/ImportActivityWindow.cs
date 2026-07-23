@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor.AssetImporters;
 using UnityEditor.Experimental;
 using UnityEditor.IMGUI.Controls;
@@ -22,11 +23,12 @@ namespace UnityEditor
 {
     //If you change the class name, make sure you update the entry
     //13905 in ResourceManager.cpp for RegisterBuiltinEditorScript
-    internal class ImportActivityWindow : EditorWindow
+    internal partial class ImportActivityWindow : EditorWindow
     {
-        public static string kTimeStampFormat = "dd-MM-yyyy hh:mm:ss";
+        public static readonly string kTimeStampFormat = "dd-MM-yyyy hh:mm:ss";
+        [AutoStaticsCleanupOnCodeReload]
         public static ImportActivityWindow m_Instance = null;
-        public static Vector2 kIdealWindowSize = new Vector2(1280, 720);
+        public static readonly Vector2 kIdealWindowSize = new Vector2(1280, 720);
 
         public static void OpenFromPropertyEditor(Object inspectedObject)
         {
@@ -247,10 +249,12 @@ namespace UnityEditor
             }
         }
 
+        [NoAutoStaticsCleanup] // lazy cache of a whitelisted ScalableGUIContent loaded by a fixed icon name; survives reload and re-initialises on first access
         internal static ScalableGUIContent s_OpenFolderIcon;
+        [NoAutoStaticsCleanup] // lazy cache of a whitelisted ScalableGUIContent loaded by a fixed icon name; survives reload and re-initialises on first access
         internal static ScalableGUIContent s_EmptyFolderIcon;
 
-        public static float k_IconWidth = 16f;
+        public static readonly float k_IconWidth = 16f;
         public const float kFirstColumnIndent = 5f;
         public const float kContentsLeftPadding = 18f;
         public const int kRightAlignPadding = 8;

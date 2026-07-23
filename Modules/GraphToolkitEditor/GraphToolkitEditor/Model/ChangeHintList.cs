@@ -59,6 +59,11 @@ namespace Unity.GraphToolkit.Editor
         /// </summary>
         public static readonly ChangeHintList NeedsRedraw = new(ChangeHint.NeedsRedraw);
 
+        /// <summary>
+        /// Change hint list for view recreation changes.
+        /// </summary>
+        public static readonly ChangeHintList RecreateView = new(ChangeHint.RecreateView);
+
         readonly List<ChangeHint> m_ChangeHints;
 
         ChangeHintList(ChangeHint changeHint)
@@ -101,7 +106,9 @@ namespace Unity.GraphToolkit.Editor
                 ReferenceEquals(list, GraphTopology) ||
                 ReferenceEquals(list, Grouping) ||
                 ReferenceEquals(list, UIHints) ||
-                ReferenceEquals(list, NeedsRedraw);
+                ReferenceEquals(list, Animation) ||
+                ReferenceEquals(list, NeedsRedraw) ||
+                ReferenceEquals(list, RecreateView);
         }
 
         /// <summary>
@@ -183,6 +190,7 @@ namespace Unity.GraphToolkit.Editor
             if (changeHint == ChangeHint.UIHints) return UIHints;
             if (changeHint == ChangeHint.Animation) return Animation;
             if (changeHint == ChangeHint.NeedsRedraw) return NeedsRedraw;
+            if (changeHint == ChangeHint.RecreateView) return RecreateView;
 
             return new ChangeHintList(changeHint);
         }

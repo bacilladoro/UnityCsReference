@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEngine;
 
@@ -9,7 +10,9 @@ namespace UnityEditorInternal
 {
     internal class FreeMove
     {
+        [NoAutoStaticsCleanup] // transient drag state; overwritten at the start of each drag operation
         private static Vector2 s_StartMousePosition, s_CurrentMousePosition, s_CurrentMousePositionScreen;
+        [NoAutoStaticsCleanup] // transient drag state; overwritten at the start of each drag operation
         private static Vector3 s_StartPosition;
 
         public static Vector3 Do(int id, Vector3 position, float size, Vector3 snap, Handles.CapFunction handleFunction)

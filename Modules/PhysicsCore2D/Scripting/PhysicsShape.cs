@@ -1230,6 +1230,153 @@ namespace Unity.U2D.Physics
         public unsafe static NativeArray<PhysicsShape> CreateShapeBatch(PhysicsBody body, ReadOnlySpan<ChainSegmentGeometry> geometry, PhysicsShapeDefinition definition, Allocator allocator = Allocator.Temp) => PhysicsShape_CreateShapeBatch(body, PhysicsBuffer.FromSpan<ChainSegmentGeometry>(geometry), PhysicsShape.ShapeType.ChainSegment, definition, allocator).ToNativeArray<PhysicsShape>();
 
         /// <summary>
+        /// Set a batch of <see cref="PhysicsShape"/> to the corresponding <see cref="CircleGeometry"/>.
+        /// The two spans must be the same length; shape[i] is set to geometry[i].
+        /// Like the single geometry setters, this updates the shape type and broadphase but does not update body mass.
+        /// Call <see cref="PhysicsBody.ApplyMassFromShapes"/> on any affected body if a mass update is required.
+        /// Invalid shapes or geometry in the batch are ignored.
+        /// For best performance, the shapes should all be part of the same <see cref="PhysicsWorld"/>, sorted by world otherwise.
+        /// </summary>
+        /// <param name="shapes">The shapes to set.</param>
+        /// <param name="geometry">The geometry to set on each corresponding shape.</param>
+        /// <returns>The number of shapes that were ignored (not set because the shape was invalid).</returns>
+        public static int SetBatchGeometry(ReadOnlySpan<PhysicsShape> shapes, ReadOnlySpan<CircleGeometry> geometry) => PhysicsShape_SetBatchCircleGeometry(shapes, geometry);
+
+        /// <summary>
+        /// Set a batch of <see cref="PhysicsShape"/> to the corresponding <see cref="CapsuleGeometry"/>.
+        /// The two spans must be the same length; shape[i] is set to geometry[i].
+        /// Like the single geometry setters, this updates the shape type and broadphase but does not update body mass.
+        /// Call <see cref="PhysicsBody.ApplyMassFromShapes"/> on any affected body if a mass update is required.
+        /// Invalid shapes or geometry in the batch are ignored.
+        /// For best performance, the shapes should all be part of the same <see cref="PhysicsWorld"/>, sorted by world otherwise.
+        /// </summary>
+        /// <param name="shapes">The shapes to set.</param>
+        /// <param name="geometry">The geometry to set on each corresponding shape.</param>
+        /// <returns>The number of shapes that were ignored (not set because the shape was invalid).</returns>
+        public static int SetBatchGeometry(ReadOnlySpan<PhysicsShape> shapes, ReadOnlySpan<CapsuleGeometry> geometry) => PhysicsShape_SetBatchCapsuleGeometry(shapes, geometry);
+
+        /// <summary>
+        /// Set a batch of <see cref="PhysicsShape"/> to the corresponding <see cref="PolygonGeometry"/>.
+        /// The two spans must be the same length; shape[i] is set to geometry[i].
+        /// Like the single geometry setters, this updates the shape type and broadphase but does not update body mass.
+        /// Call <see cref="PhysicsBody.ApplyMassFromShapes"/> on any affected body if a mass update is required.
+        /// Invalid shapes or geometry in the batch are ignored.
+        /// For best performance, the shapes should all be part of the same <see cref="PhysicsWorld"/>, sorted by world otherwise.
+        /// </summary>
+        /// <param name="shapes">The shapes to set.</param>
+        /// <param name="geometry">The geometry to set on each corresponding shape.</param>
+        /// <returns>The number of shapes that were ignored (not set because the shape was invalid).</returns>
+        public static int SetBatchGeometry(ReadOnlySpan<PhysicsShape> shapes, ReadOnlySpan<PolygonGeometry> geometry) => PhysicsShape_SetBatchPolygonGeometry(shapes, geometry);
+
+        /// <summary>
+        /// Set a batch of <see cref="PhysicsShape"/> to the corresponding <see cref="SegmentGeometry"/>.
+        /// The two spans must be the same length; shape[i] is set to geometry[i].
+        /// Like the single geometry setters, this updates the shape type and broadphase but does not update body mass.
+        /// Call <see cref="PhysicsBody.ApplyMassFromShapes"/> on any affected body if a mass update is required.
+        /// Invalid shapes or geometry in the batch are ignored.
+        /// For best performance, the shapes should all be part of the same <see cref="PhysicsWorld"/>, sorted by world otherwise.
+        /// </summary>
+        /// <param name="shapes">The shapes to set.</param>
+        /// <param name="geometry">The geometry to set on each corresponding shape.</param>
+        /// <returns>The number of shapes that were ignored (not set because the shape was invalid).</returns>
+        public static int SetBatchGeometry(ReadOnlySpan<PhysicsShape> shapes, ReadOnlySpan<SegmentGeometry> geometry) => PhysicsShape_SetBatchSegmentGeometry(shapes, geometry);
+
+        /// <summary>
+        /// Set a batch of <see cref="PhysicsShape"/> to the corresponding <see cref="ChainSegmentGeometry"/>.
+        /// The two spans must be the same length; shape[i] is set to geometry[i].
+        /// If a shape is already a chain segment, its owning chain is preserved.
+        /// Like the single geometry setters, this updates the shape type and broadphase but does not update body mass.
+        /// Call <see cref="PhysicsBody.ApplyMassFromShapes"/> on any affected body if a mass update is required.
+        /// Invalid shapes or geometry in the batch are ignored.
+        /// For best performance, the shapes should all be part of the same <see cref="PhysicsWorld"/>, sorted by world otherwise.
+        /// </summary>
+        /// <param name="shapes">The shapes to set.</param>
+        /// <param name="geometry">The geometry to set on each corresponding shape.</param>
+        /// <returns>The number of shapes that were ignored (not set because the shape was invalid).</returns>
+        public static int SetBatchGeometry(ReadOnlySpan<PhysicsShape> shapes, ReadOnlySpan<ChainSegmentGeometry> geometry) => PhysicsShape_SetBatchChainSegmentGeometry(shapes, geometry);
+
+        /// <summary>
+        /// Set a batch of <see cref="PhysicsShape"/> all to the same <see cref="CircleGeometry"/>.
+        /// Like the single geometry setters, this updates the shape type and broadphase but does not update body mass.
+        /// Call <see cref="PhysicsBody.ApplyMassFromShapes"/> on any affected body if a mass update is required.
+        /// Invalid shapes in the batch are ignored.
+        /// For best performance, the shapes should all be part of the same <see cref="PhysicsWorld"/>, sorted by world otherwise.
+        /// </summary>
+        /// <param name="shapes">The shapes to set.</param>
+        /// <param name="geometry">The geometry to set on every shape.</param>
+        /// <returns>The number of shapes that were ignored (not set because the shape was invalid). If the geometry is invalid, no shapes are set.</returns>
+        public static int SetBatchGeometry(ReadOnlySpan<PhysicsShape> shapes, CircleGeometry geometry)
+        {
+            ReadOnlySpan<CircleGeometry> single = stackalloc CircleGeometry[1] { geometry };
+            return SetBatchGeometry(shapes, single);
+        }
+
+        /// <summary>
+        /// Set a batch of <see cref="PhysicsShape"/> all to the same <see cref="CapsuleGeometry"/>.
+        /// Like the single geometry setters, this updates the shape type and broadphase but does not update body mass.
+        /// Call <see cref="PhysicsBody.ApplyMassFromShapes"/> on any affected body if a mass update is required.
+        /// Invalid shapes in the batch are ignored.
+        /// For best performance, the shapes should all be part of the same <see cref="PhysicsWorld"/>, sorted by world otherwise.
+        /// </summary>
+        /// <param name="shapes">The shapes to set.</param>
+        /// <param name="geometry">The geometry to set on every shape.</param>
+        /// <returns>The number of shapes that were ignored (not set because the shape was invalid). If the geometry is invalid, no shapes are set.</returns>
+        public static int SetBatchGeometry(ReadOnlySpan<PhysicsShape> shapes, CapsuleGeometry geometry)
+        {
+            ReadOnlySpan<CapsuleGeometry> single = stackalloc CapsuleGeometry[1] { geometry };
+            return SetBatchGeometry(shapes, single);
+        }
+
+        /// <summary>
+        /// Set a batch of <see cref="PhysicsShape"/> all to the same <see cref="PolygonGeometry"/>.
+        /// Like the single geometry setters, this updates the shape type and broadphase but does not update body mass.
+        /// Call <see cref="PhysicsBody.ApplyMassFromShapes"/> on any affected body if a mass update is required.
+        /// Invalid shapes in the batch are ignored.
+        /// For best performance, the shapes should all be part of the same <see cref="PhysicsWorld"/>, sorted by world otherwise.
+        /// </summary>
+        /// <param name="shapes">The shapes to set.</param>
+        /// <param name="geometry">The geometry to set on every shape.</param>
+        /// <returns>The number of shapes that were ignored (not set because the shape was invalid). If the geometry is invalid, no shapes are set.</returns>
+        public static int SetBatchGeometry(ReadOnlySpan<PhysicsShape> shapes, PolygonGeometry geometry)
+        {
+            ReadOnlySpan<PolygonGeometry> single = stackalloc PolygonGeometry[1] { geometry };
+            return SetBatchGeometry(shapes, single);
+        }
+
+        /// <summary>
+        /// Set a batch of <see cref="PhysicsShape"/> all to the same <see cref="SegmentGeometry"/>.
+        /// Like the single geometry setters, this updates the shape type and broadphase but does not update body mass.
+        /// Call <see cref="PhysicsBody.ApplyMassFromShapes"/> on any affected body if a mass update is required.
+        /// Invalid shapes in the batch are ignored.
+        /// For best performance, the shapes should all be part of the same <see cref="PhysicsWorld"/>, sorted by world otherwise.
+        /// </summary>
+        /// <param name="shapes">The shapes to set.</param>
+        /// <param name="geometry">The geometry to set on every shape.</param>
+        /// <returns>The number of shapes that were ignored (not set because the shape was invalid). If the geometry is invalid, no shapes are set.</returns>
+        public static int SetBatchGeometry(ReadOnlySpan<PhysicsShape> shapes, SegmentGeometry geometry)
+        {
+            ReadOnlySpan<SegmentGeometry> single = stackalloc SegmentGeometry[1] { geometry };
+            return SetBatchGeometry(shapes, single);
+        }
+
+        /// <summary>
+        /// Set a batch of <see cref="PhysicsShape"/> all to the same <see cref="ChainSegmentGeometry"/>.
+        /// If a shape is already a chain segment, its owning chain is preserved.
+        /// Like the single geometry setters, this updates the shape type and broadphase but does not update body mass.
+        /// Call <see cref="PhysicsBody.ApplyMassFromShapes"/> on any affected body if a mass update is required.
+        /// Invalid shapes in the batch are ignored.
+        /// For best performance, the shapes should all be part of the same <see cref="PhysicsWorld"/>, sorted by world otherwise.
+        /// </summary>
+        /// <param name="shapes">The shapes to set.</param>
+        /// <param name="geometry">The geometry to set on every shape.</param>
+        /// <returns>The number of shapes that were ignored (not set because the shape was invalid). If the geometry is invalid, no shapes are set.</returns>
+        public static int SetBatchGeometry(ReadOnlySpan<PhysicsShape> shapes, ChainSegmentGeometry geometry)
+        {
+            ReadOnlySpan<ChainSegmentGeometry> single = stackalloc ChainSegmentGeometry[1] { geometry };
+            return SetBatchGeometry(shapes, single);
+        }
+
+        /// <summary>
         /// Destroy the shape, destroying all <see cref="PhysicsShape.Contact"/> the shape is involved in.
         /// If the object is owned with <see cref="PhysicsShape.SetOwner(UnityEngine.Object)"/> then you must provide the owner key it returned. Failing to do so will return a warning and the shape will not be destroyed.
         /// The lifetime of the specified owner object is not linked to this shape i.e. this shape will still be owned by the owner object, even if it is destroyed.
@@ -1794,6 +1941,12 @@ namespace Unity.U2D.Physics
         /// </summary>
         /// <returns>The owner object associated with this shape or NULL if no owner has been specified.</returns>
         public readonly UnityEngine.Object GetOwner() => PhysicsShape_GetOwner(this);
+
+        /// <summary>
+        /// The owner object associated with this shape, or NULL if no owner has been specified.
+        /// This is a convenience property that returns the same value as <see cref="GetOwner"/>.
+        /// </summary>
+        public readonly UnityEngine.Object owner => GetOwner();
 
         /// <summary>
         /// Get if the shape is owned.

@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor.Experimental;
 using UnityEditorInternal;
 using UnityEngine;
@@ -12,7 +13,8 @@ namespace UnityEditor.PackageManager.UI.Internal;
 internal class SelectionWindowRow : VisualElement
 {
     // The internal modifier is used (instead of private) to give our test project access to these properties/methods
-    internal static Texture2D s_FolderIcon = EditorGUIUtility.FindTexture(EditorResources.folderIconName);
+    [NoAutoStaticsCleanup]
+    internal static readonly Texture2D s_FolderIcon = EditorGUIUtility.FindTexture(EditorResources.folderIconName);
 
     private static readonly string k_RemoveIconTooltip = L10n.Tr("Remove");
     // The internal modifier is used (instead of private) to give our test project access to these properties/methods

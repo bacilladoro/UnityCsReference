@@ -35,15 +35,12 @@ namespace UnityEngine.TextCore
         /// </summary>
         public string styleName { get { return m_StyleName; } set { m_StyleName = value; } }
 
-        /// <summary>
-        /// The point size used for sampling the typeface. This is also referenced as sampling point size.
-        /// </summary>
+        ///<summary>The point size used for sampling the typeface.</summary>
+        ///<remarks>This is also referenced as sampling point size.</remarks>
         public float pointSize { get { return m_PointSize; } set { m_PointSize = value; } }
 
-        /// <summary>
-        /// The relative scale of the typeface.
-        /// Default value is 1.0f.
-        /// </summary>
+        ///<summary>The relative scale of the typeface.</summary>
+        ///<remarks>The default value is 1.0f.</remarks>
         public float scale { get { return m_Scale; } set { m_Scale = value; } }
 
         /// <summary>
@@ -54,35 +51,28 @@ namespace UnityEngine.TextCore
 
         // Key metrics for the typeface
 
-        /// <summary>
-        /// The line height represents the distance between consecutive lines of text.
-        /// This is the distance from baseline to baseline. It is usually computed as line height = ascent - descent + line gap.
-        /// </summary>
+        ///<summary>The line height represents the distance between consecutive lines of text.</summary>
+        ///<remarks>This is the distance from baseline to baseline. It is usually computed as line height = ascent - descent + line gap.</remarks>
         public float lineHeight { get { return m_LineHeight; } set { m_LineHeight = value; } }
 
-        /// <summary>
-        /// The Ascent line is typically located at the top of the tallest glyph in the typeface. This represents the distance between the baseline and the tallest ascender. This value is usually positive.
-        /// </summary>
+        ///<summary>The Ascent line is typically located at the top of the tallest glyph in the typeface.</summary>
+        ///<remarks>This represents the distance between the baseline and the tallest ascender. This value is usually positive.</remarks>
         public float ascentLine { get { return m_AscentLine; } set { m_AscentLine = value; } }
 
-        /// <summary>
-        /// The Cap line is typically located at the top of capital letters. This value represents the distance between the baseline and the top of capital letters.
-        /// </summary>
+        ///<summary>The Cap line is typically located at the top of capital letters.</summary>
+        ///<remarks>This value represents the distance between the baseline and the top of capital letters.</remarks>
         public float capLine { get { return m_CapLine; } set { m_CapLine = value; } }
 
-        /// <summary>
-        /// The Mean line is typically located at the top of lowercase letters. This value represents the distance between the baseline and the top of lowercase letters.
-        /// </summary>
+        ///<summary>The Mean line is typically located at the top of lowercase letters.</summary>
+        ///<remarks>This value represents the distance between the baseline and the top of lowercase letters.</remarks>
         public float meanLine { get { return m_MeanLine; } set { m_MeanLine = value; } }
 
-        /// <summary>
-        /// The Baseline is an imaginary line upon which all glyphs appear to rest on. This value is typically zero.
-        /// </summary>
+        ///<summary>The Baseline is an imaginary line upon which all glyphs appear to rest on.</summary>
+        ///<remarks>This value is typically zero.</remarks>
         public float baseline { get { return m_Baseline; } set { m_Baseline = value; } }
 
-        /// <summary>
-        /// The Descent line is typically located at the bottom of the glyph with the lowest descender in the typeface. This represents the distance between the baseline and the lowest descender. This value is usually negative.
-        /// </summary>
+        ///<summary>The Descent line is typically located at the bottom of the glyph with the lowest descender in the typeface.</summary>
+        ///<remarks>This represents the distance between the baseline and the lowest descender. This value is usually negative.</remarks>
         public float descentLine { get { return m_DescentLine; } set { m_DescentLine = value; } }
 
         /// <summary>
@@ -125,9 +115,8 @@ namespace UnityEngine.TextCore
         /// </summary>
         public float strikethroughThickness { get { return m_StrikethroughThickness; } set { m_StrikethroughThickness = value; } }
 
-        /// <summary>
-        /// The width of the tab character. This width is typically the same as the space character.
-        /// </summary>
+        ///<summary>The width of the tab character.</summary>
+        ///<remarks>This width is typically the same as the space character.</remarks>
         public float tabWidth { get { return m_TabWidth; } set { m_TabWidth = value; } }
 
         // =============================================

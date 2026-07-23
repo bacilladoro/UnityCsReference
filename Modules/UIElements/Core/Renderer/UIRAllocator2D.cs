@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEngine.UIElements.UIR
 {
@@ -37,6 +38,7 @@ namespace UnityEngine.UIElements.UIR
             public Alloc alloc; // Provided by the area
             public Row next; // The next row MUST have the same height
 
+            [NoAutoStaticsCleanup] // shared object pool; infrastructure singleton
             public static readonly LinkedPool<Row> pool = new LinkedPool<Row>(Create, Reset, 256);
 
             [MethodImpl(MethodImplOptionsEx.AggressiveInlining)]

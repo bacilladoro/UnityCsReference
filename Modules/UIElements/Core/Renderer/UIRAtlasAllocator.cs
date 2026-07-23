@@ -5,6 +5,7 @@
 using System;
 using UnityEngine.Assertions;
 using Unity.Profiling;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEngine.UIElements
 {
@@ -12,7 +13,8 @@ namespace UnityEngine.UIElements
     {
         private class Row
         {
-            private static ObjectPool<Row> s_Pool = new ObjectPool<Row>(() => new Row());
+            [NoAutoStaticsCleanup] // shared object pool; ObjectPool<T> not in whitelist
+            private static readonly ObjectPool<Row> s_Pool = new ObjectPool<Row>(() => new Row());
 
             /// <summary>
             /// Distance from the left of the texture to left side of the row.
@@ -57,7 +59,8 @@ namespace UnityEngine.UIElements
 
         private class AreaNode
         {
-            private static ObjectPool<AreaNode> s_Pool = new ObjectPool<AreaNode>(() => new AreaNode());
+            [NoAutoStaticsCleanup] // shared object pool; ObjectPool<T> not in whitelist
+            private static readonly ObjectPool<AreaNode> s_Pool = new ObjectPool<AreaNode>(() => new AreaNode());
 
             public RectInt rect;
             public AreaNode previous;
@@ -122,7 +125,7 @@ namespace UnityEngine.UIElements
         Row[] m_OpenRows;
         int m_1SidePadding, m_2SidePadding;
 
-        static ProfilerMarker s_MarkerTryAllocate = new ProfilerMarker(ProfilerCategory.UIToolkit, "UIRAtlasAllocator.TryAllocate");
+        static readonly ProfilerMarker s_MarkerTryAllocate = new ProfilerMarker(ProfilerCategory.UIToolkit, "UIRAtlasAllocator.TryAllocate");
 
         #region Dispose Pattern
 

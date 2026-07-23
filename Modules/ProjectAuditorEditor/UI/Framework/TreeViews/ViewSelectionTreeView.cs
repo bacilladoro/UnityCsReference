@@ -47,7 +47,30 @@ namespace Unity.ProjectAuditor.Editor.UI.Framework
             Reload();
         }
 
+        protected override void CommandEventHandling()
+        {
+            // We don't support the "SelectAll" shortcut in this view
+            var evt = Event.current;
+            if ((evt.type == EventType.ExecuteCommand || evt.type == EventType.ValidateCommand)
+                && HasFocus() && evt.commandName == "SelectAll")
+            {
+                evt.Use();
+                return;
+            }
+            base.CommandEventHandling();
+        }
+
         protected override bool CanMultiSelect(TreeViewItem item) => false;
+
+        protected override void DoubleClickedItem(int id)
+        {
+            var item = FindItem(id, rootItem);
+
+            if (item == null || !CanChangeExpandedState(item))
+                return;
+
+            SetExpanded(id, !IsExpanded(id));
+        }
 
         protected override TreeViewItem BuildRoot()
         {

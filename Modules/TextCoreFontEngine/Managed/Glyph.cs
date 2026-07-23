@@ -11,15 +11,18 @@ using UnityEngine.TextCore.LowLevel;
 
 namespace UnityEngine.TextCore
 {
-    /// <summary>
-    /// Glyph class definition types.
-    /// </summary>
+    ///<summary>Options to specify the glyph class definition type.</summary>
     public enum GlyphClassDefinitionType
     {
+        ///<summary>Defines the glyph as Undefined.</summary>
         Undefined = 0,
+        ///<summary>Defines the glyph as a Base glyph.</summary>
         Base = 1,
+        ///<summary>Defines the glyph as a Ligature.</summary>
         Ligature = 2,
+        ///<summary>Defines the glyph as a Mark glyph.</summary>
         Mark = 3,
+        ///<summary>Defines the glyph as a Component glyph.</summary>
         Component = 4
     }
 
@@ -78,13 +81,11 @@ namespace UnityEngine.TextCore
         /// </summary>
         public static GlyphRect zero { get { return s_ZeroGlyphRect; } }
 
-        /// <summary>
-        /// Constructor for new GlyphRect.
-        /// </summary>
-        /// <param name="x">The x position of the glyph in the atlas texture.</param>
-        /// <param name="y">The y position of the glyph in the atlas texture.</param>
-        /// <param name="width">The width of the glyph.</param>
-        /// <param name="height">The height of the glyph.</param>
+        ///<summary>Constructor for a new GlyphRect.</summary>
+        ///<param name="x">The x position of the glyph in the atlas texture.</param>
+        ///<param name="y">The y position of the glyph in the atlas texture.</param>
+        ///<param name="width">The width of the glyph.</param>
+        ///<param name="height">The height of the glyph.</param>
         public GlyphRect(int x, int y, int width, int height)
         {
             m_X = x;
@@ -93,10 +94,8 @@ namespace UnityEngine.TextCore
             m_Height = height;
         }
 
-        /// <summary>
-        /// Construct new GlyphRect from a Rect.
-        /// </summary>
-        /// <param name="rect">The Rect used to construct the new GlyphRect.</param>
+        ///<summary>Constructor for a new GlyphRect.</summary>
+        ///<param name="rect">The Rect used to construct the new GlyphRect.</param>
         public GlyphRect(Rect rect)
         {
             m_X = (int)rect.x;
@@ -105,21 +104,25 @@ namespace UnityEngine.TextCore
             m_Height = (int)rect.height;
         }
 
+        ///<exclude />
         public override int GetHashCode()
         {
             return base.GetHashCode();
         }
 
+        ///<exclude />
         public override bool Equals(object obj)
         {
             return base.Equals(obj);
         }
 
+        ///<exclude />
         public bool Equals(GlyphRect other)
         {
             return base.Equals(other);
         }
 
+        ///<exclude />
         public static bool operator==(GlyphRect lhs, GlyphRect rhs)
         {
             return lhs.x == rhs.x &&
@@ -128,45 +131,35 @@ namespace UnityEngine.TextCore
                 lhs.height == rhs.height;
         }
 
+        ///<exclude />
         public static bool operator!=(GlyphRect lhs, GlyphRect rhs)
         {
             return !(lhs == rhs);
         }
     }
 
-    /// <summary>
-    /// A set of values that define the size, position and spacing of a glyph when performing text layout.
-    /// Units are specified in pixels.
-    /// </summary>
+    ///<summary>A set of values that define the size, position and spacing of a glyph when performing text layout.</summary>
     [Serializable]
     [UsedByNativeCode]
     [StructLayout(LayoutKind.Sequential)]
     public struct GlyphMetrics : IEquatable<GlyphMetrics>
     {
-        /// <summary>
-        /// The width of the glyph, expressed in pixels.
-        /// </summary>
+        ///<summary>The width of the glyph.</summary>
         public float width { get { return m_Width; } set { m_Width = value; } }
 
-        /// <summary>
-        /// The height of the glyph, expressed in pixels.
-        /// </summary>
+        ///<summary>The height of the glyph.</summary>
         public float height { get { return m_Height; } set { m_Height = value; } }
 
-        /// <summary>
-        /// The horizontal distance, in pixels, from the current drawing position (origin) relative to the element's left bounding box edge (bbox).
-        /// </summary>
+        ///<summary>The horizontal distance from the current drawing position (origin) relative to the element's left bounding box edge (bbox).</summary>
+        ///<remarks>This is an horizontal offset from the origin of the element that defines the starting drawing position.</remarks>
         public float horizontalBearingX { get { return m_HorizontalBearingX; } set { m_HorizontalBearingX = value; } }
 
-        /// <summary>
-        /// The vertical distance, in pixel, from the current baseline relative to the element's top bounding box edge (bbox).
-        /// </summary>
+        ///<summary>The vertical distance from the current baseline relative to the element's top bounding box edge (bbox).</summary>
+        ///<remarks>This is a vertical offset from the origin and baseline of the element that defines the starting drawing position and top of the element.</remarks>
         public float horizontalBearingY { get { return m_HorizontalBearingY; } set { m_HorizontalBearingY = value; } }
 
-        /// <summary>
-        /// The horizontal distance, in pixels, to increase (left to right) or decrease (right to left) the drawing position relative to the origin of the text element.
-        /// This determines the origin position of the next text element.
-        /// </summary>
+        ///<summary>The horizontal distance to increase (left to right) or decrease (right to left) the drawing position relative to the origin of the text element.</summary>
+        ///<remarks>This determines the origin position of the next text element.</remarks>
         public float horizontalAdvance { get { return m_HorizontalAdvance; } set { m_HorizontalAdvance = value; } }
 
         // =============================================
@@ -193,15 +186,17 @@ namespace UnityEngine.TextCore
         [NativeName("horizontalAdvance")]
         private float m_HorizontalAdvance;
 
-        /// <summary>
-        /// Constructor for new glyph metrics.
-        /// Units for all parameters are in pixels.
-        /// </summary>
-        /// <param name="width">The width of the glyph.</param>
-        /// <param name="height">The height of the glyph.</param>
-        /// <param name="bearingX">The horizontal bearingX.</param>
-        /// <param name="bearingY">The horizontal bearingY.</param>
-        /// <param name="advance">The horizontal advance.</param>
+        ///<summary>Constructs a new GlyphMetrics structure.</summary>
+        ///<remarks>The horizontal bearingX represents the distance from the current drawing position (origin) relative to the element's left bounding box edge (bbox).
+        ///
+        ///The horizontal bearingY represents the distance from the current drawing position (origin) relative to the element's top bounding box edge (bbox). This represents the top of the text element.
+        ///
+        ///The horizontal advance represents the distance to increase (left to right) or decrease (right to left) the drawing position relative to the origin of the text element. This represents the origin of the next text element.</remarks>
+        ///<param name="width">The width of the glyph.</param>
+        ///<param name="height">The height of the glyph.</param>
+        ///<param name="bearingX">The horizontal bearingX.</param>
+        ///<param name="bearingY">The horizontal bearingY.</param>
+        ///<param name="advance">The horizontal advance.</param>
         public GlyphMetrics(float width, float height, float bearingX, float bearingY, float advance)
         {
             m_Width = width;
@@ -211,21 +206,25 @@ namespace UnityEngine.TextCore
             m_HorizontalAdvance = advance;
         }
 
+        ///<exclude />
         public override int GetHashCode()
         {
             return base.GetHashCode();
         }
 
+        ///<exclude />
         public override bool Equals(object obj)
         {
             return base.Equals(obj);
         }
 
+        ///<exclude />
         public bool Equals(GlyphMetrics other)
         {
             return base.Equals(other);
         }
 
+        ///<exclude />
         public static bool operator==(GlyphMetrics lhs, GlyphMetrics rhs)
         {
             return lhs.width == rhs.width &&
@@ -235,6 +234,7 @@ namespace UnityEngine.TextCore
                 lhs.horizontalAdvance == rhs.horizontalAdvance;
         }
 
+        ///<exclude />
         public static bool operator!=(GlyphMetrics lhs, GlyphMetrics rhs)
         {
             return !(lhs == rhs);
@@ -319,10 +319,8 @@ namespace UnityEngine.TextCore
             m_AtlasIndex = 0;
         }
 
-        /// <summary>
-        /// Constructor for a new glyph
-        /// </summary>
-        /// <param name="glyph">Glyph whose values are copied to the new glyph.</param>
+        ///<summary>Constructor for a new glyph.</summary>
+        ///<param name="glyph">Glyph used as a reference for the new glyph.</param>
         public Glyph(Glyph glyph)
         {
             m_Index = glyph.index;
@@ -345,13 +343,10 @@ namespace UnityEngine.TextCore
             m_AtlasIndex = glyphStruct.atlasIndex;
         }
 
-        /// <summary>
-        /// Constructor for new glyph.
-        /// The scale will be set to a value of 1.0 and atlas index to 0.
-        /// </summary>
-        /// <param name="index">The index of the glyph in the font file.</param>
-        /// <param name="metrics">The metrics of the glyph.</param>
-        /// <param name="glyphRect">The GlyphRect defining the position of the glyph in the atlas texture.</param>
+        ///<summary>Constructor for a new glyph.</summary>
+        ///<param name="index">The index of the glyph in the font file.</param>
+        ///<param name="metrics">The metrics of the glyph.</param>
+        ///<param name="glyphRect">The GlyphRect defining the position of the glyph in the atlas texture.</param>
         public Glyph(uint index, GlyphMetrics metrics, GlyphRect glyphRect)
         {
             m_Index = index;
@@ -361,14 +356,12 @@ namespace UnityEngine.TextCore
             m_AtlasIndex = 0;
         }
 
-        /// <summary>
-        /// Constructor for new glyph.
-        /// </summary>
-        /// <param name="index">The index of the glyph in the font file.</param>
-        /// <param name="metrics">The metrics of the glyph.</param>
-        /// <param name="glyphRect">The GlyphRect defining the position of the glyph in the atlas texture.</param>
-        /// <param name="scale">The relative scale of the glyph.</param>
-        /// <param name="atlasIndex">The index of the atlas texture that contains the glyph.</param>
+        ///<summary>Constructor for a new glyph.</summary>
+        ///<param name="index">The index of the glyph in the font file.</param>
+        ///<param name="metrics">The metrics of the glyph.</param>
+        ///<param name="glyphRect">The GlyphRect defining the position of the glyph in the atlas texture.</param>
+        ///<param name="scale">The relative scale of the glyph.</param>
+        ///<param name="atlasIndex">The index of the atlas texture that contains the glyph.</param>
         public Glyph(uint index, GlyphMetrics metrics, GlyphRect glyphRect, float scale, int atlasIndex)
         {
             m_Index = index;

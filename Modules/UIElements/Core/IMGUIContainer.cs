@@ -85,6 +85,7 @@ namespace UnityEngine.UIElements
         }
 
         private bool m_RefreshCachedLayout = true;
+        private int m_OnGUIExecutionCount; // > 0 while this container's OnGUI is on the call stack
         private GUILayoutUtility.LayoutCache m_Cache = null;
         private GUILayoutUtility.LayoutCache cache
         {
@@ -293,6 +294,8 @@ namespace UnityEngine.UIElements
             var previousMeasuredWidth = layoutMeasuredWidth;
             var previousMeasuredHeight = layoutMeasuredHeight;
 
+            m_OnGUIExecutionCount++;
+
             BeginContainerGUI(cache, evt, this);
 
             // For the IMGUI, we need to update the GUI.color with the actual play mode tint ...
@@ -472,17 +475,16 @@ namespace UnityEngine.UIElements
                             }
                             else if (GUIUtility.keyboardControl != focusController.imguiKeyboardControl)
                             {
-                                // Here we want to resynchronize our internal state ...
-                                newKeyboardFocusControlID = GUIUtility.keyboardControl;
-
                                 if (focusController.GetLeafFocusedElement() == this)
                                 {
-                                    // In this case, the focused element is the right one in the Focus Controller... we are just updating the internal imguiKeyboardControl
+                                    // Focus controller already points here; just update our record.
+                                    newKeyboardFocusControlID = GUIUtility.keyboardControl;
                                     focusController.imguiKeyboardControl = GUIUtility.keyboardControl;
                                 }
-                                else
+                                else if (GUIUtility.OwnsId(GUIUtility.keyboardControl))
                                 {
-                                    // In this case, the focused element is NOT the right one in the Focus Controller... we also have to refocus...
+                                    // Refocus only for a control we own; a foreign keyboardControl (committed delayed field) must not steal focus on repaint.
+                                    newKeyboardFocusControlID = GUIUtility.keyboardControl;
                                     focusController.SyncIMGUIFocus(GUIUtility.keyboardControl, this, false);
                                 }
                             }
@@ -507,6 +509,8 @@ namespace UnityEngine.UIElements
                 // Clear extraneous GUIClips
                 while (GUIClip.Internal_GetCount() > guiClipCount)
                     GUIClip.Internal_Pop();
+
+                m_OnGUIExecutionCount--;
             }
 
             // See if the container size has changed. This is to make absolutely sure the VisualElement resizes
@@ -675,75 +679,143 @@ namespace UnityEngine.UIElements
             return HandleIMGUIEvent(e, m_CachedTransform, m_CachedClippingRect, onGUIHandler, canAffectFocus);
         }
 
+        // Pooled backups of the shared, process-wide Event.current so a nested HandleIMGUIEvent can restore it.
+        static Stack<Event> s_EventCurrentBackupPool;
+
+        // Nesting depth of HandleIMGUIEvent so a nested call knows to hand the enclosing event back on exit.
+        static int s_HandleIMGUIEventDepth;
+
         private bool HandleIMGUIEvent(Event e, Matrix4x4 worldTransform, Rect clippingRect, Action onGUIHandler, bool canAffectFocus)
         {
             if (e == null || onGUIHandler == null || elementPanel == null || elementPanel.IMGUIEventInterests.WantsEvent(e.rawType) == false)
             {
                 return false;
             }
+
+            // Snapshot Event.current so a nested dispatch can't leak its event back and drop a frame (UUM-144946).
+            Event eventBackup = null;
+            if (Event.current != null)
+            {
+                s_EventCurrentBackupPool ??= new Stack<Event>();
+                eventBackup = s_EventCurrentBackupPool.Count > 0 ? s_EventCurrentBackupPool.Pop() : new Event();
+                eventBackup.CopyFrom(Event.current);
+            }
+
+            bool nested = s_HandleIMGUIEventDepth > 0;
+            s_HandleIMGUIEventDepth++;
+
+            try
+            {
+                return HandleIMGUIEventInternal(e, worldTransform, clippingRect, onGUIHandler, canAffectFocus);
+            }
+            finally
+            {
+                s_HandleIMGUIEventDepth--;
+                if (eventBackup != null)
+                {
+                    // Only a nested dispatch restores: our processing replaced Event.current, A top-level dispatch keeps its handler's changes (e.g. Event.current.Use())
+                    // so the native caller still sees the event as used.
+                    if (nested)
+                        Event.current?.CopyFrom(eventBackup);
+                    s_EventCurrentBackupPool.Push(eventBackup);
+                }
+            }
+        }
+
+        private bool HandleIMGUIEventInternal(Event e, Matrix4x4 worldTransform, Rect clippingRect, Action onGUIHandler, bool canAffectFocus)
+        {
             using var scope = new NotUITKScope();
 
-            EventType originalEventType = e.rawType;
-            if (originalEventType != EventType.Layout)
+            // UUM-145914: if re-entering while this container's OnGUI is still on the stack, use a
+            // throwaway cache so we don't Clear() the layout groups the suspended OnGUI is traversing.
+            GUILayoutUtility.LayoutCache reentrantSavedCache = null;
+            if (m_OnGUIExecutionCount > 0)
             {
-                if (m_RefreshCachedLayout || elementPanel.IMGUIEventInterests.WantsLayoutPass(e.rawType))
+                reentrantSavedCache = m_Cache;
+                m_Cache = new GUILayoutUtility.LayoutCache();
+            }
+
+            try
+            {
+                EventType originalEventType = e.rawType;
+                if (originalEventType != EventType.Layout)
                 {
-                    // Only update the layout in-between repaint events.
-                    e.type = EventType.Layout;
-                    DoOnGUI(e, worldTransform, clippingRect, false, layout, onGUIHandler, canAffectFocus);
-                    m_RefreshCachedLayout = false;
-                    e.type = originalEventType;
+                    if (m_RefreshCachedLayout || elementPanel.IMGUIEventInterests.WantsLayoutPass(e.rawType))
+                    {
+                        // The layout pass reuses `e` and zeroes its input fields; preserve them for the real pass.
+                        var savedMousePosition = e.mousePosition;
+                        var savedDelta = e.delta;
+                        var savedButton = e.button;
+                        var savedModifiers = e.modifiers;
+                        var savedClickCount = e.clickCount;
+
+                        e.type = EventType.Layout;
+                        DoOnGUI(e, worldTransform, clippingRect, false, layout, onGUIHandler, canAffectFocus);
+                        m_RefreshCachedLayout = false;
+                        e.type = originalEventType;
+
+                        e.mousePosition = savedMousePosition;
+                        e.delta = savedDelta;
+                        e.button = savedButton;
+                        e.modifiers = savedModifiers;
+                        e.clickCount = savedClickCount;
+                    }
+                    else
+                    {
+                        // Reuse layout cache for other events.
+                        cache.ResetCursor();
+                    }
                 }
-                else
+
+                DoOnGUI(e, worldTransform, clippingRect, false, layout, onGUIHandler, canAffectFocus);
+
+                if (newKeyboardFocusControlID > 0)
                 {
-                    // Reuse layout cache for other events.
-                    cache.ResetCursor();
+                    newKeyboardFocusControlID = 0;
+                    Event focusCommand = new Event
+                    {
+                        type = EventType.ExecuteCommand,
+                        commandName = EventCommandNames.NewKeyboardFocus
+                    };
+
+                    HandleIMGUIEvent(focusCommand, true);
                 }
-            }
 
-            DoOnGUI(e, worldTransform, clippingRect, false, layout, onGUIHandler, canAffectFocus);
-
-            if (newKeyboardFocusControlID > 0)
-            {
-                newKeyboardFocusControlID = 0;
-                Event focusCommand = new Event
+                if (e.rawType == EventType.Used)
                 {
-                    type = EventType.ExecuteCommand,
-                    commandName = EventCommandNames.NewKeyboardFocus
-                };
+                    return true;
+                }
+                else if (e.rawType == EventType.MouseUp && this.HasMouseCapture())
+                {
+                    // This can happen if a MouseDown was caught by a different IM element but we ended up here on the
+                    // MouseUp event because no other element consumed it, including the one that had capture.
+                    // Example case: start text selection in a text field, but drag mouse all the way into another
+                    // part of the editor, release the mouse button.  Since the mouse up was sent to another container,
+                    // we end up here and that is perfectly legal (unfortunately unavoidable for now since no IMGUI control
+                    // used the event), but hot control might still belong to the IM text field at this point.
+                    // We can safely release the hot control which will release the capture as the same time.
+                    GUIUtility.hotControl = 0;
+                }
 
-                HandleIMGUIEvent(focusCommand, true);
+                // If we detect that we were removed while processing this event, hi-jack the event loop to early exit
+                // In IMGUI/Editor this is actually possible just by calling EditorWindow.Close() for example
+                if (elementPanel == null)
+                {
+                    GUIUtility.ExitGUI();
+                }
+
+                return false;
             }
-
-            if (e.rawType == EventType.Used)
+            finally
             {
-                return true;
+                if (reentrantSavedCache != null)
+                    m_Cache = reentrantSavedCache;
             }
-            else if (e.rawType == EventType.MouseUp && this.HasMouseCapture())
-            {
-                // This can happen if a MouseDown was caught by a different IM element but we ended up here on the
-                // MouseUp event because no other element consumed it, including the one that had capture.
-                // Example case: start text selection in a text field, but drag mouse all the way into another
-                // part of the editor, release the mouse button.  Since the mouse up was sent to another container,
-                // we end up here and that is perfectly legal (unfortunately unavoidable for now since no IMGUI control
-                // used the event), but hot control might still belong to the IM text field at this point.
-                // We can safely release the hot control which will release the capture as the same time.
-                GUIUtility.hotControl = 0;
-            }
-
-            // If we detect that we were removed while processing this event, hi-jack the event loop to early exit
-            // In IMGUI/Editor this is actually possible just by calling EditorWindow.Close() for example
-            if (elementPanel == null)
-            {
-                GUIUtility.ExitGUI();
-            }
-
-            return false;
         }
 
         [EventInterest(EventInterestOptionsInternal.TriggeredByOS)]
         [EventInterest(typeof(NavigationMoveEvent), typeof(NavigationSubmitEvent), typeof(NavigationCancelEvent),
-            typeof(BlurEvent), typeof(FocusEvent), typeof(DetachFromPanelEvent), typeof(AttachToPanelEvent))]
+            typeof(FocusOutEvent), typeof(BlurEvent), typeof(FocusEvent), typeof(DetachFromPanelEvent), typeof(AttachToPanelEvent))]
         internal override void HandleEventBubbleUpDisabled(EventBase evt)
         {
             HandleEventBubbleUp(evt);
@@ -751,7 +823,7 @@ namespace UnityEngine.UIElements
 
         [EventInterest(EventInterestOptionsInternal.TriggeredByOS)]
         [EventInterest(typeof(NavigationMoveEvent), typeof(NavigationSubmitEvent), typeof(NavigationCancelEvent),
-            typeof(BlurEvent), typeof(FocusEvent), typeof(DetachFromPanelEvent), typeof(AttachToPanelEvent))]
+            typeof(FocusOutEvent), typeof(BlurEvent), typeof(FocusEvent), typeof(DetachFromPanelEvent), typeof(AttachToPanelEvent))]
         protected override void HandleEventBubbleUp(EventBase evt)
         {
             // No call to base.HandleEventBubbleUp(evt):
@@ -775,6 +847,11 @@ namespace UnityEngine.UIElements
                 focusController?.IgnoreEvent(evt);
             }
 
+            // FocusOut fires before the focus actually changes, so the commit command routes back to us.
+            else if (evt.eventTypeId == FocusOutEvent.TypeId())
+            {
+                UIElementsIMGUIUtility.s_FocusOutContainerCallback?.Invoke(this);
+            }
             // Here, we set flags that will be acted upon in DoOnGUI(), since we need to change IMGUI state.
             else if (evt.eventTypeId == BlurEvent.TypeId())
             {
@@ -794,6 +871,9 @@ namespace UnityEngine.UIElements
             }
             else if (evt.eventTypeId == DetachFromPanelEvent.TypeId())
             {
+                // Detach (e.g. tab switch) fires no FocusOut, so commit the pending delayed-field edit while still attached.
+                if (focusController != null && focusController.IsFocused(this))
+                    UIElementsIMGUIUtility.s_FocusOutContainerCallback?.Invoke(this);
                 if (elementPanel != null)
                 {
                     elementPanel.IMGUIContainersCount--;

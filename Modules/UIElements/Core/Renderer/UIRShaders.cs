@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 
 namespace UnityEngine.UIElements.UIR
@@ -23,6 +24,7 @@ namespace UnityEngine.UIElements.UIR
         public static readonly string k_ForceRenderTypeText = "_UIE_RENDER_TYPE_TEXT";
         public static readonly string k_ForceRenderTypeSvgGradient = "_UIE_RENDER_TYPE_GRADIENT";
 
+        [NoAutoStaticsCleanup] // lazily created default material; survives reload
         static Material s_DefaultMaterial;
 
         public static Material defaultMaterial => GetOrCreateMaterial(ref s_DefaultMaterial, k_Default);
@@ -45,6 +47,7 @@ namespace UnityEngine.UIElements.UIR
             return material;
         }
 
+        [NoAutoStaticsCleanup] // acquire/release reference counter; must persist across reload
         static int s_RefCount;
         public static void Acquire() => ++s_RefCount;
 

@@ -144,6 +144,7 @@ namespace Unity.GraphToolkit.Editor
             registrar.RegisterDefaultCommandHandler<ExpandExpandablePortInInspectorCommand>();
 
             registrar.RegisterDefaultCommandHandler<ChangeVariableTypeCommand>();
+            registrar.RegisterDefaultCommandHandler<ToggleSetVariableNodeCommand>();
 
             registrar.RegisterDefaultCommandHandler<CollapseTransitionsCommand>();
             registrar.RegisterDefaultCommandHandler<AddTransitionCommand>();

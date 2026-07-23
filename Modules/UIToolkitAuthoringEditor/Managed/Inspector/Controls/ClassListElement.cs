@@ -57,6 +57,7 @@ sealed partial class ClassListElement : VisualElement, IVisualElementChangeProce
 
     VisualElement m_Target;
     bool m_IsReadOnly;
+    ThemeStyleSheet m_ThemeStyleSheet;
 
     public VisualElement Target
     {
@@ -113,6 +114,26 @@ sealed partial class ClassListElement : VisualElement, IVisualElementChangeProce
         m_ClassCompleter.ItemChosen += OnClassCompleterItemChosen;
     }
 
+    [EventInterest(typeof(AttachToPanelEvent), typeof(DetachFromPanelEvent))]
+    protected override void HandleEventBubbleUp(EventBase evt)
+    {
+        switch (evt)
+        {
+            case AttachToPanelEvent:
+            {
+                UICommandQueue.RegisterHandler<SetPreviewThemeCommand>(OnPreviewThemeChanged);
+                m_ThemeStyleSheet = GetCanvasThemeQuery.Get();
+                break;
+            }
+            case DetachFromPanelEvent:
+            {
+                UICommandQueue.UnregisterHandler<SetPreviewThemeCommand>(OnPreviewThemeChanged);
+                break;
+            }
+        }
+        base.HandleEventBubbleUp(evt);
+    }
+
     void Release(VisualElement element)
     {
         if (element == null)
@@ -146,6 +167,11 @@ sealed partial class ClassListElement : VisualElement, IVisualElementChangeProce
         if (evt.destinationPanel is Panel p)
             p.RegisterChangeProcessor(this);
         RefreshClassList();
+    }
+
+    void OnPreviewThemeChanged(in CommandContext context)
+    {
+        m_ThemeStyleSheet = ((SetPreviewThemeCommand)context.Command).Theme;
     }
 
     void OnDetachFromPanel(DetachFromPanelEvent evt)
@@ -215,34 +241,61 @@ sealed partial class ClassListElement : VisualElement, IVisualElementChangeProce
 
         results.Add(new ClassCompleterInfo());
 
-        using var _ = ListPool<StyleSheet>.Get(out var sheets);
+        using var sheetsHandle = ListPool<StyleSheet>.Get(out var sheets);
         vta.GetAllReferencedStyleSheets(sheets);
 
-        using var __ = HashSetPool<string>.Get(out var appliedClasses);
+        if (m_ThemeStyleSheet != null && !sheets.Contains(m_ThemeStyleSheet))
+            sheets.Add(m_ThemeStyleSheet);
+
+        using var visitedSheetsHandle = HashSetPool<StyleSheet>.Get(out var visitedSheets);
+        foreach (var s in sheets)
+            visitedSheets.Add(s);
+
+        for (var i = 0; i < sheets.Count; i++)
+        {
+            if (sheets[i] == null || sheets[i].imports == null)
+                continue;
+            foreach (var import in sheets[i].imports)
+            {
+                if (import.styleSheet != null && visitedSheets.Add(import.styleSheet))
+                    sheets.Add(import.styleSheet);
+            }
+        }
+
+        using var appliedClassesHandle = HashSetPool<string>.Get(out var appliedClasses);
         foreach (var cls in Target.GetClasses())
             appliedClasses.Add(cls);
 
         foreach (var sheet in sheets)
         {
+            if (sheet.rules == null) continue;
+
             var sheetHasEntries = false;
-
-            using var ___ = HashSetPool<string>.Get(out var seenInSheet);
-
+            using var seenInSheetHandle = HashSetPool<string>.Get(out var seenInSheet);
             foreach (var rule in sheet.rules)
-            foreach (var complexSelector in rule.complexSelectors)
-            foreach (var selector in complexSelector.selectors)
-            foreach (var part in selector.parts)
             {
-                if (part.type != StyleSelectorType.Class || appliedClasses.Contains(part.value) || !seenInSheet.Add(part.value))
-                    continue;
-
-                if (!sheetHasEntries)
+                if (rule.complexSelectors == null) continue;
+                foreach (var complexSelector in rule.complexSelectors)
                 {
-                    results.Add(new ClassCompleterInfo(sheet));
-                    sheetHasEntries = true;
-                }
+                    if (complexSelector.selectors == null) continue;
+                    foreach (var selector in complexSelector.selectors)
+                    {
+                        if (selector.parts == null) continue;
+                        foreach (var part in selector.parts)
+                        {
+                            if (part.type != StyleSelectorType.Class || appliedClasses.Contains(part.value) || !seenInSheet.Add(part.value))
+                                continue;
 
-                results.Add(new ClassCompleterInfo(part, sheet));
+                            if (!sheetHasEntries)
+                            {
+                                results.Add(new ClassCompleterInfo(sheet));
+                                sheetHasEntries = true;
+                            }
+
+                            results.Add(new ClassCompleterInfo(part, sheet));
+                        }
+                    }
+                }
             }
         }
 

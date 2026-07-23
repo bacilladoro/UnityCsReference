@@ -79,6 +79,8 @@ namespace UnityEngine.UIElements
                     return computedStyle.bottom;
                 case StylePropertyId.Color:
                     return computedStyle.color;
+                case StylePropertyId.ColumnGap:
+                    return computedStyle.columnGap;
                 case StylePropertyId.Cursor:
                     return computedStyle.cursor;
                 case StylePropertyId.Display:
@@ -144,6 +146,8 @@ namespace UnityEngine.UIElements
                     return computedStyle.right;
                 case StylePropertyId.Rotate:
                     return computedStyle.rotate;
+                case StylePropertyId.RowGap:
+                    return computedStyle.rowGap;
                 case StylePropertyId.Scale:
                     return computedStyle.scale;
                 case StylePropertyId.TextOverflow:
@@ -298,6 +302,8 @@ namespace UnityEngine.UIElements
                     return typeof(Length);
                 case StylePropertyId.Color:
                     return typeof(Color);
+                case StylePropertyId.ColumnGap:
+                    return typeof(Length);
                 case StylePropertyId.Cursor:
                     return typeof(Cursor);
                 case StylePropertyId.Display:
@@ -358,6 +364,8 @@ namespace UnityEngine.UIElements
                     return typeof(Length);
                 case StylePropertyId.Rotate:
                     return typeof(Rotate);
+                case StylePropertyId.RowGap:
+                    return typeof(Length);
                 case StylePropertyId.Scale:
                     return typeof(Scale);
                 case StylePropertyId.TextOverflow:
@@ -448,6 +456,8 @@ namespace UnityEngine.UIElements
                     return typeof(Length);
                 case StylePropertyId.BorderWidth:
                     return typeof(float);
+                case StylePropertyId.Gap:
+                    return typeof(Length);
                 case StylePropertyId.Margin:
                     return typeof(Length);
                 case StylePropertyId.Padding:
@@ -516,6 +526,8 @@ namespace UnityEngine.UIElements
                     return style.bottom;
                 case StylePropertyId.Color:
                     return style.color;
+                case StylePropertyId.ColumnGap:
+                    return style.columnGap;
                 case StylePropertyId.Cursor:
                     return style.cursor;
                 case StylePropertyId.Display:
@@ -576,6 +588,8 @@ namespace UnityEngine.UIElements
                     return style.right;
                 case StylePropertyId.Rotate:
                     return style.rotate;
+                case StylePropertyId.RowGap:
+                    return style.rowGap;
                 case StylePropertyId.Scale:
                     return style.scale;
                 case StylePropertyId.TextOverflow:
@@ -736,6 +750,9 @@ namespace UnityEngine.UIElements
                 case StylePropertyId.Color:
                     style.color = (StyleColor)value;
                     break;
+                case StylePropertyId.ColumnGap:
+                    style.columnGap = (StyleLength)value;
+                    break;
                 case StylePropertyId.Cursor:
                     style.cursor = (StyleCursor)value;
                     break;
@@ -825,6 +842,9 @@ namespace UnityEngine.UIElements
                     break;
                 case StylePropertyId.Rotate:
                     style.rotate = (StyleRotate)value;
+                    break;
+                case StylePropertyId.RowGap:
+                    style.rowGap = (StyleLength)value;
                     break;
                 case StylePropertyId.Scale:
                     style.scale = (StyleScale)value;
@@ -1019,6 +1039,9 @@ namespace UnityEngine.UIElements
                 case StylePropertyId.Color:
                     style.color = keyword;
                     break;
+                case StylePropertyId.ColumnGap:
+                    style.columnGap = keyword;
+                    break;
                 case StylePropertyId.Cursor:
                     style.cursor = keyword;
                     break;
@@ -1108,6 +1131,9 @@ namespace UnityEngine.UIElements
                     break;
                 case StylePropertyId.Rotate:
                     style.rotate = keyword;
+                    break;
+                case StylePropertyId.RowGap:
+                    style.rowGap = keyword;
                     break;
                 case StylePropertyId.Scale:
                     style.scale = keyword;
@@ -1336,6 +1362,10 @@ namespace UnityEngine.UIElements
                     return new()
                     {
                     };
+                case StylePropertyId.ColumnGap:
+                    return new()
+                    {
+                    };
                 case StylePropertyId.Cursor:
                     return new()
                     {
@@ -1469,6 +1499,10 @@ namespace UnityEngine.UIElements
                     return new()
                     {
                         StyleKeyword.None
+                    };
+                case StylePropertyId.RowGap:
+                    return new()
+                    {
                     };
                 case StylePropertyId.Scale:
                     return new()
@@ -1679,6 +1713,8 @@ namespace UnityEngine.UIElements
                     return (StyleLength)(Length)value;
                 case StylePropertyId.Color:
                     return (StyleColor)(Color)value;
+                case StylePropertyId.ColumnGap:
+                    return (StyleLength)(Length)value;
                 case StylePropertyId.Cursor:
                     return (StyleCursor)(Cursor)value;
                 case StylePropertyId.Display:
@@ -1739,6 +1775,8 @@ namespace UnityEngine.UIElements
                     return (StyleLength)(Length)value;
                 case StylePropertyId.Rotate:
                     return (StyleRotate)(Rotate)value;
+                case StylePropertyId.RowGap:
+                    return (StyleLength)(Length)value;
                 case StylePropertyId.Scale:
                     return (StyleScale)(Scale)value;
                 case StylePropertyId.TextOverflow:
@@ -1873,6 +1911,8 @@ namespace UnityEngine.UIElements
                     return typeof(StyleLength);
                 case StylePropertyId.Color:
                     return typeof(StyleColor);
+                case StylePropertyId.ColumnGap:
+                    return typeof(StyleLength);
                 case StylePropertyId.Cursor:
                     return typeof(StyleCursor);
                 case StylePropertyId.Display:
@@ -1933,6 +1973,8 @@ namespace UnityEngine.UIElements
                     return typeof(StyleLength);
                 case StylePropertyId.Rotate:
                     return typeof(StyleRotate);
+                case StylePropertyId.RowGap:
+                    return typeof(StyleLength);
                 case StylePropertyId.Scale:
                     return typeof(StyleScale);
                 case StylePropertyId.TextOverflow:
@@ -2054,6 +2096,12 @@ namespace UnityEngine.UIElements
                         "flex-shrink",
                         "flex-basis"
                     };
+                case StylePropertyId.Gap:
+                    return new string[]
+                    {
+                        "row-gap",
+                        "column-gap"
+                    };
                 case StylePropertyId.Margin:
                     return new string[]
                     {
@@ -2133,6 +2181,10 @@ namespace UnityEngine.UIElements
                     longhandIds.Add(StylePropertyId.FlexShrink);
                     longhandIds.Add(StylePropertyId.FlexBasis);
                     return;
+                case StylePropertyId.Gap:
+                    longhandIds.Add(StylePropertyId.RowGap);
+                    longhandIds.Add(StylePropertyId.ColumnGap);
+                    return;
                 case StylePropertyId.Margin:
                     longhandIds.Add(StylePropertyId.MarginTop);
                     longhandIds.Add(StylePropertyId.MarginRight);
@@ -2184,6 +2236,8 @@ namespace UnityEngine.UIElements
                 case StylePropertyId.BorderWidth:
                     return true;
                 case StylePropertyId.Flex:
+                    return true;
+                case StylePropertyId.Gap:
                     return true;
                 case StylePropertyId.Margin:
                     return true;

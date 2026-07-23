@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -15,9 +16,12 @@ namespace UnityEditor.PackageManager.UI.Internal
 
         private const int k_RotationSpeed = 360; // Euler degrees per second
         private const double k_PaintInterval = 0.125f; // Time interval to repaint
+        [NoAutoStaticsCleanup]
         private static int s_Rotation;
+        [NoAutoStaticsCleanup]
         private static double s_LastRotationTime;
-        private static readonly List<LoadingSpinner> s_CurrentSpinners = new List<LoadingSpinner>();
+        [AutoStaticsCleanupOnCodeReload]
+        private static List<LoadingSpinner> s_CurrentSpinners = new List<LoadingSpinner>();
         public LoadingSpinner()
         {
             started = false;

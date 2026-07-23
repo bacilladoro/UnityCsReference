@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor.EditorTools;
 using UnityEngine;
 
@@ -81,6 +82,7 @@ namespace UnityEditor
 
         internal struct TransformHandleParam
         {
+            [NoAutoStaticsCleanup] // mutable default param; set via property Default so cannot be readonly
             static TransformHandleParam s_Default = new TransformHandleParam(
                 // Global
                 new PositionHandleParam(
@@ -503,7 +505,9 @@ namespace UnityEditor
             uniformScale = s.x;
         }
 
+        [NoAutoStaticsCleanup] // transient mode flag; false is correct default after reload
         static bool s_IsHotInCameraAlignedMode = false;
+        [NoAutoStaticsCleanup] // per-drag rotation tracking; keyed by handle ids, no user-assembly refs
         static Dictionary<RotationHandleIds, RotationHandleData> s_TransformHandle_RotationData = new Dictionary<RotationHandleIds, RotationHandleData>();
         internal static void TransformHandle(TransformHandleIds ids, ref Vector3 position, ref Quaternion rotation, ref Vector3 scale, TransformHandleParam param)
         {

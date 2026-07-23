@@ -14,6 +14,7 @@ using System.Text;
 using Bee.BeeDriver;
 using BeeBuildProgramCommon.Data;
 using NiceIO;
+using UnityEditor.Build;
 using UnityEditor.PackageManager;
 using UnityEditorInternal;
 using UnityEngine;
@@ -161,6 +162,11 @@ namespace UnityEditor.Scripting.ScriptCompilation
             RecreateDagDirectoryIfNeeded(dagDir);
             var performingPlayerBuild = UnityBeeDriverProfilerSession.PerformingPlayerBuild;
             NPath profilerOutputFile =  performingPlayerBuild ? UnityBeeDriverProfilerSession.GetTraceEventsOutputForPlayerBuild() : $"{dagDir}/fullprofile.json";
+#pragma warning disable CS0618
+            string il2CppBclDistributionDirectory = (PlayerSettings.GetApiCompatibilityLevel(NamedBuildTarget.FromActiveSettings(target)) == ApiCompatibilityLevel.NET) ?
+                IL2CPPUtils.GetIl2CppBclDistributionDirectory(target, buildOptions) : null;
+#pragma warning restore CS0618
+
             return new BuildRequest()
             {
                 BuildProgram = buildProgram,
@@ -183,7 +189,7 @@ namespace UnityEditor.Scripting.ScriptCompilation
                 Il2CppDir = IL2CPPUtils.GetIl2CppFolder(),
                 Il2CppPath = IL2CPPUtils.GetExePath("il2cpp", out var il2CppIsDevelopmentLocation),
                 Il2CppUsingDevelopmentLocation = il2CppIsDevelopmentLocation,
-                Il2CppBclDistributionDirectory = IL2CPPUtils.GetIl2CppBclDistributionDirectory(target, buildOptions),
+                Il2CppBclDistributionDirectory = il2CppBclDistributionDirectory,
                 UnityLinkerPath = IL2CPPUtils.GetExePath("UnityLinker"),
                 DotNetExe = NetCoreProgram.DotNetMuxerPath.ToString(),
                 EditorContentsPath = EditorApplication.applicationContentsPath,

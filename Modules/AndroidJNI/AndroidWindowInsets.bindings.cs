@@ -45,13 +45,13 @@ namespace UnityEngine.Android
         {
         }
 
-        [RequiredByNativeCode(GenerateProxy = true)]
-        private void SetNativeHandle(IntPtr ptr)
+        [RequiredByNativeCode]
+        private static void SetNativeHandle(AndroidWindowInsets self, IntPtr ptr)
         {
-            m_NativeHandle = ptr;
+            self.m_NativeHandle = ptr;
         }
 
-        [RequiredByNativeCode(GenerateProxy = true)]
+        [RequiredByNativeCode]
         private static int[] GetSupportedInsets()
         {
             // For internal purposes, remove if is exposed in Type

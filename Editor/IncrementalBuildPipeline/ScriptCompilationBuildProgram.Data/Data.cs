@@ -44,7 +44,6 @@ namespace ScriptCompilationBuildProgram.Data
         public string[] Defines = new string[0];
         public string[] PrebuiltReferences = new string[0];
         public int[] References = new int[0];
-        public bool AllowUnsafeCode;
         public string RuleSet;
         public string AnalyzerConfigPath;
         public string LanguageVersion;

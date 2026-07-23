@@ -5,13 +5,14 @@
 using UnityEditor.AssetImporters;
 using UnityEngine.Pool;
 using UnityEngine.UIElements;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.UIElements
 {
     // This currently needs to be in the UI Builder module in order to access the code to export to UXML
     [CanEditMultipleObjects]
     [CustomEditor(typeof(UIElementsViewImporter))]
-    class UIElementsViewImporterEditor : ScriptedImporterEditor
+    partial class UIElementsViewImporterEditor : ScriptedImporterEditor
     {
         protected override bool needsApplyRevert => false;
 
@@ -20,6 +21,7 @@ namespace UnityEditor.UIElements
         static readonly string k_ApplyUpgradesButtonLabel = L10n.Tr("Apply Upgrades (Overwrites File)");
         static readonly string k_ApplyUpgradesButtonLabelMultiple = L10n.Tr("Apply Upgrades (Overwrites Files)");
 
+        [AutoStaticsCleanupOnCodeReload]
         static UxmlUpgradeService s_UpgradeService = new UxmlUpgradeService();
 
         public override VisualElement CreateInspectorGUI()

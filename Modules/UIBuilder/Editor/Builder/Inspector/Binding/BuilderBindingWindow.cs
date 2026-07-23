@@ -5,14 +5,16 @@
 using UnityEngine.UIElements;
 using UnityEditor;
 using UnityEngine;
+using Unity.Scripting.LifecycleManagement;
 
 namespace Unity.UI.Builder
 {
     /// <summary>
     ///  Window used to create and edit bindings.
     /// </summary>
-    class BuilderBindingWindow : EditorWindow
+    partial class BuilderBindingWindow : EditorWindow
     {
+        [AutoStaticsCleanupOnCodeReload]
         private static BuilderBindingWindow s_Window;
         private BuilderBindingView m_View;
 

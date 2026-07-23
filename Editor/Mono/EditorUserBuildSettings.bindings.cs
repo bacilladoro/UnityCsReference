@@ -13,6 +13,7 @@ using UnityEditor.Build.Profile;
 using UnityEngine;
 using UnityEditor.Modules;
 using UnityEngine.Assertions;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -518,9 +519,11 @@ namespace UnityEditor
 
 
         [Obsolete("xboxOneUsername is deprecated, it is unnecessary and non-functional.")]
+        [NoAutoStaticsCleanup] // deprecated non-functional setting; value type holds no user refs, safe to persist
         public static  string xboxOneUsername { get; set; }
 
         [Obsolete("xboxOneNetworkSharePath is deprecated, it is unnecessary and non-functional.")]
+        [NoAutoStaticsCleanup] // deprecated non-functional setting; value type holds no user refs, safe to persist
         public static  string xboxOneNetworkSharePath { get; set; }
 
 
@@ -529,8 +532,10 @@ namespace UnityEditor
         // allow the XboxOne to open the required ports in its
         // manifest.
         [Obsolete("The XDK Xbox One platform was removed in 2021.1", false)]
+        [NoAutoStaticsCleanup] // deprecated non-functional setting; value type holds no user refs, safe to persist
         public static string xboxOneAdditionalDebugPorts { get; set; }
         [Obsolete("The XDK Xbox One platform was removed in 2021.1", false)]
+        [NoAutoStaticsCleanup] // deprecated non-functional setting; value type holds no user refs, safe to persist
         public static bool xboxOneRebootIfDeployFailsAndRetry { get; set; }
 
         // Android platform options.
@@ -723,6 +728,7 @@ namespace UnityEditor
         }
 
         // WDP password is not to be saved with other settings and only stored in memory until Editor is closed
+        [NoAutoStaticsCleanup] // in-memory-only string until editor closes; no user refs, safe to persist
         private static string internal_windowsDevicePortalPassword;
 
         public static string windowsDevicePortalPassword

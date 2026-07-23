@@ -6,14 +6,17 @@ using System;
 using UnityEngine;
 using UnityEngine.Bindings;
 using UnityEditor.StyleSheets;
+using Unity.Scripting.LifecycleManagement;
 using Object = UnityEngine.Object;
 
 namespace UnityEditor
 {
     public sealed partial class EditorGUI
     {
+        [NoAutoStaticsCleanup] // value type theme flag, safe to persist
         static bool loadableIsProSkin = false;
 
+        [NoAutoStaticsCleanup] // cached Texture2D, whitelisted, safe to persist
         static Texture2D s_LoadableStripesTexture;
         static Texture2D LoadableStripesTexture
         {
@@ -31,6 +34,7 @@ namespace UnityEditor
             }
         }
 
+        [NoAutoStaticsCleanup] // cached Texture2D, whitelisted, safe to persist
         static Texture2D s_LoadableStripesTextureFocus;
         static Texture2D LoadableStripesTextureFocus
         {

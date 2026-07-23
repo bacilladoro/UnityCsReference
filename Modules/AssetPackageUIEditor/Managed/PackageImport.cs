@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.Bindings;
 using UnityEngine.Scripting;
@@ -26,10 +27,14 @@ namespace UnityEditor
 
         public ImportPackageItem[] packageItems { get { return m_ImportPackageItems; } }
 
+        [NoAutoStaticsCleanup]
         private static Texture2D s_PackageIcon;
+        [NoAutoStaticsCleanup]
         private static Texture2D s_Preview;
+        [NoAutoStaticsCleanup]
         private static string    s_LastPreviewPath;
 
+        [NoAutoStaticsCleanup]
         readonly static HashSet<char> s_InvalidPathChars = new HashSet<char>(System.IO.Path.GetInvalidPathChars());
 
         internal class Constants
@@ -60,6 +65,7 @@ namespace UnityEditor
                 warnIcon       = EditorGUIUtility.IconContent("console.warnicon");
             }
         }
+        [NoAutoStaticsCleanup]
         static Constants ms_Constants;
 
         [NativeHeader("Modules/AssetPackageEditor/AssetPackage.bindings.h")]

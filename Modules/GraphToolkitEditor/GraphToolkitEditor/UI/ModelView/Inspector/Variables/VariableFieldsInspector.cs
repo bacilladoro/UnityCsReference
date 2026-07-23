@@ -5,7 +5,6 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
-using UnityEngine;
 using UnityEngine.Pool;
 
 namespace Unity.GraphToolkit.Editor
@@ -119,9 +118,19 @@ namespace Unity.GraphToolkit.Editor
             CollectionModeProperty = 1 << 8,
 
             /// <summary>
+            /// Display the 'Allow to set value in graph' property, when the variable node can be a SetVariableNode.
+            /// </summary>
+            SetValueInGraphProperty = 1 << 9,
+
+            /// <summary>
             /// The default, which is to display everything.
             /// </summary>
             Default = TypeProperty | DefaultValueProperty | ExposedProperty | SubgraphPortProperty | TooltipProperty | CollectionModeProperty,
+
+            /// <summary>
+            /// The display flags to use for variable nodes, which is the default set of properties plus the option to set the value in graph, which is relevant for variable nodes but not for variable declarations.
+            /// </summary>
+            VariableNode = Default | SetValueInGraphProperty,
 
             /// <summary>
             /// The value for standard quick settings properties.
@@ -135,6 +144,11 @@ namespace Unity.GraphToolkit.Editor
         public virtual string ExposedPropertyLabelText => "Expose in global inspector";
 
         /// <summary>
+        /// The text used to describe the Set Value in Graph property.
+        /// </summary>
+        public virtual string SetValueInGraph => "Allow to set value in graph";
+
+        /// <summary>
         /// Creates a new instance of the <see cref="VariableFieldsInspector"/> class.
         /// </summary>
         /// <param name="name">The name of the part.</param>
@@ -145,6 +159,12 @@ namespace Unity.GraphToolkit.Editor
         /// <param name="displayFlags"><see cref="DisplayFlags"/> that define which properties to display.</param>
         /// <returns>A new instance of <see cref="VariableFieldsInspector"/>.</returns>
         public static VariableFieldsInspector Create(string name, IReadOnlyList<VariableDeclarationModelBase> models,
+            ChildView ownerElement, string parentClassName, Func<FieldInfo, bool> filter = null, DisplayFlags displayFlags = DisplayFlags.Default)
+        {
+            return models.Count > 0 ? new VariableFieldsInspector(name, models, ownerElement, parentClassName, filter, displayFlags) : null;
+        }
+
+        public static VariableFieldsInspector Create(string name, IReadOnlyList<VariableNodeModel> models,
             ChildView ownerElement, string parentClassName, Func<FieldInfo, bool> filter = null, DisplayFlags displayFlags = DisplayFlags.Default)
         {
             return models.Count > 0 ? new VariableFieldsInspector(name, models, ownerElement, parentClassName, filter, displayFlags) : null;
@@ -176,6 +196,12 @@ namespace Unity.GraphToolkit.Editor
             m_DisplayFlags = displayFlags;
         }
 
+        protected VariableFieldsInspector(string name, IReadOnlyList<VariableNodeModel> models, ChildView ownerElement, string parentClassName, Func<FieldInfo, bool> filter, DisplayFlags displayFlags)
+            : base(name, models, ownerElement, parentClassName, DisplayFlagsToFilter(displayFlags, filter))
+        {
+            m_DisplayFlags = displayFlags;
+        }
+
         TypeHandle m_CurrentDefaultValueFieldType;
 
         /// <inheritdoc />
@@ -192,31 +218,46 @@ namespace Unity.GraphToolkit.Editor
 
             int insertIndex = fieldList.Count > 0 ? 1 : 0; // Name should be first
 
-            var variableModels = new List<VariableDeclarationModelBase>(m_Models.Count);
+            var vdmModels = new List<VariableDeclarationModelBase>();
+            var variableNodeModels = new List<VariableNodeModel>(m_Models.Count);
+
             foreach (var v in m_Models)
             {
-                variableModels.Add(v as VariableDeclarationModelBase);
+                if (v is VariableNodeModel variableNodeModel)
+                {
+                    variableNodeModels.Add(variableNodeModel);
+                    if (variableNodeModel.VariableDeclarationModel != null && !vdmModels.Contains(variableNodeModel.VariableDeclarationModel))
+                        vdmModels.Add(variableNodeModel.VariableDeclarationModel);
+                }
+                else if (v is VariableDeclarationModelBase vdm)
+                {
+                    if (!vdmModels.Contains(vdm))
+                        vdmModels.Add(vdm);
+                }
             }
+
+            if (vdmModels.Count == 0)
+                return baseFieldList;
 
             if (m_DisplayFlags.HasFlagFast(DisplayFlags.TooltipProperty))
             {
-                var tooltipEditor = new VariableTooltipPropertyField(OwnerRootView, variableModels);
+                var tooltipEditor = new VariableTooltipPropertyField(OwnerRootView, vdmModels);
                 fieldList.Insert(insertIndex++, tooltipEditor);
             }
 
             if (m_DisplayFlags.HasFlagFast(DisplayFlags.TypeProperty))
             {
-                var typeEditor = new VariableTypePropertyField(OwnerRootView, variableModels);
+                var typeEditor = new VariableTypePropertyField(OwnerRootView, vdmModels);
                 fieldList.Insert(insertIndex++, typeEditor);
             }
 
             if (m_DisplayFlags.HasFlagFast(DisplayFlags.CollectionModeProperty))
             {
-                var variableDeclaration = variableModels[0];
+                var variableDeclaration = vdmModels[0];
                 var allSerializable = InternalTypeHelpers.IsTypeSerializable(variableDeclaration.DataType.Resolve());
-                for (var i = 1; i < variableModels.Count; ++i)
+                for (var i = 1; i < vdmModels.Count; ++i)
                 {
-                    variableDeclaration = variableModels[i];
+                    variableDeclaration = vdmModels[i];
                     if (!InternalTypeHelpers.IsTypeSerializable(variableDeclaration.DataType.Resolve()))
                     {
                         allSerializable = false;
@@ -226,7 +267,7 @@ namespace Unity.GraphToolkit.Editor
 
                 if (allSerializable)
                 {
-                    var modeEditor = new VariableModePropertyField(OwnerRootView, variableModels);
+                    var modeEditor = new VariableModePropertyField(OwnerRootView, vdmModels);
                     fieldList.Insert(insertIndex++, modeEditor);
                 }
             }
@@ -234,7 +275,7 @@ namespace Unity.GraphToolkit.Editor
             if (m_DisplayFlags.HasFlagFast(DisplayFlags.DefaultValueProperty))
             {
                 // Selected Variables must all have an Initialization model of the same TypeHandle to display their default value.
-                var variableDeclaration = variableModels[0];
+                var variableDeclaration = vdmModels[0];
                 if (!variableDeclaration.Modifiers.HasFlag(ModifierFlags.Write))
                 {
                     using var dispose = ListPool<Constant>.Get(out var constants);
@@ -245,9 +286,9 @@ namespace Unity.GraphToolkit.Editor
                     {
                         firstHandle = variableDeclaration.DataType;
                         constants.Add(variableDeclaration.InitializationModel);
-                        for (var i = 1; i < variableModels.Count; i++)
+                        for (var i = 1; i < vdmModels.Count; i++)
                         {
-                            variableDeclaration = variableModels[i];
+                            variableDeclaration = vdmModels[i];
                             if (variableDeclaration.InitializationModel == null || variableDeclaration.DataType != firstHandle)
                             {
                                 valid = false;
@@ -261,30 +302,36 @@ namespace Unity.GraphToolkit.Editor
                     if (valid)
                     {
                         m_CurrentDefaultValueFieldType = firstHandle;
-                        var field = InlineValueEditor.CreateEditorForConstants(OwnerRootView, variableModels, constants, "Default Value");
+                        var field = InlineValueEditor.CreateEditorForConstants(OwnerRootView, vdmModels, constants, "Default Value");
                         fieldList.Insert(insertIndex++, field);
                     }
                 }
             }
 
-            var graphModel = (OwnerRootView as GraphView)?.GraphModel ?? (variableModels.Count > 0 ? variableModels[0].GraphModel : null);
+            if (m_DisplayFlags.HasAnyFlagFast(DisplayFlags.SetValueInGraphProperty))
+            {
+                var setValueInGraphEditor = new VariableSetValueInGraphPropertyField(OwnerRootView, variableNodeModels, SetValueInGraph);
+                fieldList.Insert(insertIndex++, setValueInGraphEditor);
+            }
+
+            var graphModel = (OwnerRootView as GraphView)?.GraphModel ?? (vdmModels.Count > 0 ? vdmModels[0].GraphModel : null);
             var allowExposedVariables = graphModel?.AllowExposedVariableCreation ?? true;
 
             if (allowExposedVariables && m_DisplayFlags.HasFlagFast(DisplayFlags.ExposedProperty))
             {
-                var exposedEditor = new VariableExposedPropertyField(OwnerRootView, variableModels, ExposedPropertyLabelText);
+                var exposedEditor = new VariableExposedPropertyField(OwnerRootView, vdmModels, ExposedPropertyLabelText);
                 fieldList.Insert(insertIndex++, exposedEditor);
             }
 
             if (m_DisplayFlags.HasFlagFast(DisplayFlags.SubgraphPortProperty))
             {
-                var subgraphPortEditor = new VariableSubgraphPortPropertyField(OwnerRootView, variableModels, !m_DisplayFlags.HasFlag(DisplayFlags.AlwaysSubgraphPortProperty));
+                var subgraphPortEditor = new VariableSubgraphPortPropertyField(OwnerRootView, m_Models, !m_DisplayFlags.HasFlag(DisplayFlags.AlwaysSubgraphPortProperty));
                 fieldList.Insert(insertIndex, subgraphPortEditor);
             }
 
             // If any of the selected variables are not editable, disable all fields.
             var isEditable = true;
-            foreach (var variableModel in variableModels)
+            foreach (var variableModel in vdmModels)
             {
                 if (!variableModel.HasCapability(Capabilities.Editable))
                 {
@@ -307,20 +354,29 @@ namespace Unity.GraphToolkit.Editor
             TypeHandle firstHandle = default;
             ModifierFlags firstModifiers = ModifierFlags.None;
 
-            using (m_Models.OfTypeToPooledList<VariableDeclarationModelBase, Model>(out var variableModels))
+            using var dispose = ListPool<VariableDeclarationModelBase>.Get(out var vdmModels);
+            foreach (var v in m_Models)
             {
-                valid = variableModels[0].InitializationModel != null;
-                if (valid)
+                if (v is VariableDeclarationModelBase vdm && !vdmModels.Contains(vdm))
+                    vdmModels.Add(vdm);
+                else if (v is VariableNodeModel variableNodeModel && variableNodeModel.VariableDeclarationModel != null && !vdmModels.Contains(variableNodeModel.VariableDeclarationModel))
+                    vdmModels.Add(variableNodeModel.VariableDeclarationModel);
+            }
+
+            if (vdmModels.Count == 0)
+                return;
+
+            valid = vdmModels[0].InitializationModel != null;
+            if (valid)
+            {
+                firstHandle = vdmModels[0].DataType;
+                firstModifiers = vdmModels[0].Modifiers;
+                for (var i = 0; i < vdmModels.Count; i++)
                 {
-                    firstHandle = variableModels[0].DataType;
-                    firstModifiers = variableModels[0].Modifiers;
-                    for (var i = 0; i < variableModels.Count; i++)
+                    if (vdmModels[i].InitializationModel == null || vdmModels[i].DataType != firstHandle || vdmModels[i].Modifiers != firstModifiers || m_PreviousModifiers != vdmModels[i].Modifiers)
                     {
-                        if (variableModels[i].InitializationModel == null || variableModels[i].DataType != firstHandle || variableModels[i].Modifiers != firstModifiers || m_PreviousModifiers != variableModels[i].Modifiers)
-                        {
-                            valid = false;
-                            break;
-                        }
+                        valid = false;
+                        break;
                     }
                 }
             }

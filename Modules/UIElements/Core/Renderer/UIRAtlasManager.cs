@@ -6,6 +6,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Profiling;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.UIElements.UIR;
 
 namespace UnityEngine.UIElements
@@ -24,11 +25,12 @@ namespace UnityEngine.UIElements
         private int m_2SidePadding, m_1SidePadding;
         int m_MaxAtlasSize;
 
-        static ProfilerMarker s_MarkerReset = new ProfilerMarker(ProfilerCategory.UIToolkit, "UIR.AtlasManager.Reset");
+        static readonly ProfilerMarker s_MarkerReset = new ProfilerMarker(ProfilerCategory.UIToolkit, "UIR.AtlasManager.Reset");
 
         public int maxImageSize { get; }
         public RenderTextureFormat format { get; }
 
+        [NoAutoStaticsCleanup] // monotonic counter for unique texture names; safe to persist
         static int s_TextureCounter;
 
         /// <summary>

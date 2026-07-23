@@ -14,6 +14,7 @@ using System;
 using System.Reflection;
 using System.IO;
 using System.ComponentModel;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -110,6 +111,7 @@ namespace UnityEditor
         [EditorBrowsable(EditorBrowsableState.Never)]
         internal static readonly string hideAllName = L10n.Tr("Hide All");
 
+        [AutoStaticsCleanupOnCodeReload]
         internal static MainToolbarWindow instance;
 
         MainToolbarAnalytics m_Analytics;
@@ -244,6 +246,7 @@ namespace UnityEditor
             editModeActive = !editModeActive;
         }
 
+        [NoAutoStaticsCleanup] // Scratch set of menu category paths, rebuilt (??= / Clear) each menu population; strings only, safe to persist.
         static HashSet<string> s_UsedMenuCategoryPaths;
         void PopulateMenuWithOverlays(AbstractGenericMenu dropdown, bool includeUtilityFunctions = true)
         {
@@ -331,6 +334,7 @@ namespace UnityEditor
             OverlayPresetManager.GenerateMenu(dropdown, "Presets/", this, false, CheckIfCanvasChangedSinceLastPreset, new UnityOnlyToolbarPreset());
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         static HashSet<Overlay> s_UnityOnlyOverlays = new();
         internal void ShowMenu(Rect dropdownRect)
         {
@@ -349,6 +353,7 @@ namespace UnityEditor
 
     partial class Toolbar : HostView
     {
+        [AutoStaticsCleanupOnCodeReload]
         static Toolbar s_Instance;
         public const float ToolbarHeight = 36f;
 
@@ -403,6 +408,7 @@ namespace UnityEditor
         }
 
         // TODO remove the following code, SubToolbar.cs and SubToolbarZone.cs when collab has stopped using it
+        [NoAutoStaticsCleanup] // Legacy collab sub-toolbar registry (deprecated AddSubToolbar path); intentionally persisted across reload.
         static List<SubToolbar> s_SubToolbars = new List<SubToolbar>();
         internal static IEnumerable<SubToolbar> subToolbars => s_SubToolbars;
 
@@ -415,9 +421,11 @@ namespace UnityEditor
         VisualElement m_Root;
         internal const string deprecatedElementsId = "Unsupported User Elements";
         [Obsolete($"Use {nameof(instance)} instead")]
+        [AutoStaticsCleanupOnCodeReload]
         internal static Toolbar get;
         List<VisualElement> m_DeprecatedElements = new List<VisualElement>();
         internal IReadOnlyList<VisualElement> deprecatedElements => m_DeprecatedElements;
+        [AutoStaticsCleanupOnCodeReload]
         internal static event Action<MainToolbarDockPosition, VisualElement> populateFakeToolbar;
 
         void InitializeFakeHierarchyForDeprecatedToolbarHacks()

@@ -136,6 +136,9 @@ namespace UnityEditor
         [StaticAccessor("GetEditorSettings()", StaticAccessorType.Dot)]
         public static extern LineEndingsMode lineEndingsForNewScripts { get; set; }
 
+        [StaticAccessor("GetEditorSettings()", StaticAccessorType.Dot)]
+        internal static extern bool EnableMSBuildCompilationPipeline { get; set; }
+
         [Obsolete("EditorSettings.webSecurityEmulationEnabled is no longer supported, " +
             "since the Unity Web Player is no longer supported by Unity.")]
         public static bool webSecurityEmulationEnabled
@@ -277,6 +280,10 @@ namespace UnityEditor
 
         [StaticAccessor("GetEditorSettings()", StaticAccessorType.Dot)]
         public static extern EnterPlayModeOptions enterPlayModeOptions { get; set; }
+
+        internal static bool IsDomainReloadDisabled =>
+            enterPlayModeOptionsEnabled &&
+            enterPlayModeOptions.HasFlag(EnterPlayModeOptions.DisableDomainReload);
 
         [Obsolete("serializeInlineMappingsOnOneLine is deprecated. Unity now always serializes inline mappings on one line. This property always returns true.")]
         public static bool serializeInlineMappingsOnOneLine

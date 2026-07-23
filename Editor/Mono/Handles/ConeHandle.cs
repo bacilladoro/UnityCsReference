@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+using Unity.Scripting.LifecycleManagement;
 using UnityEditorInternal;
 using UnityEngine;
 
@@ -10,7 +11,7 @@ namespace UnityEditor
     public sealed partial class Handles
     {
         static readonly int[] k_HandleIndices = { 0, 1, 0, 2, 0, 3, 0, 4 };
-        static Vector3[] s_HandlePoints = new Vector3[5];
+        static readonly Vector3[] s_HandlePoints = new Vector3[5];
 
         internal static Vector2 DoConeHandle(Quaternion rotation, Vector3 position, Vector2 angleAndRange, float angleScale, float rangeScale, bool handlesOnly)
         {

@@ -3,13 +3,15 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 
 namespace UnityEditor
 {
     class WaveformPreview : IDisposable
     {
-        static int s_BaseTextureWidth = 4096;
+        const int s_BaseTextureWidth = 4096;
+        [NoAutoStaticsCleanup] // Lazily reloaded material asset (EditorGUIUtility.LoadRequired) guarded by a null check; safe to persist and re-fetches itself if needed.
         static Material s_Material;
 
         public double start { get { return m_Start; } }

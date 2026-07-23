@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEditor.Snap;
 using UnityEngine;
@@ -11,8 +12,11 @@ namespace UnityEditorInternal
 {
     internal class SliderScale
     {
+        [NoAutoStaticsCleanup] // transient drag state; overwritten at the start of each drag operation
         private static float s_StartScale, s_ScaleDrawLength = 1.0f;
+        [NoAutoStaticsCleanup] // transient drag state; overwritten at the start of each drag operation
         private static Vector2 s_StartMousePosition, s_CurrentMousePosition;
+        [NoAutoStaticsCleanup] // transient drag state; overwritten at the start of each drag operation
         private static Vector3 s_Direction;
 
         public static float DoAxis(int id, float scale, Vector3 position, Vector3 direction, Quaternion rotation, float size, float snap)

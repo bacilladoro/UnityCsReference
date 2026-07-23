@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 
 namespace UnityEditor
@@ -94,11 +95,11 @@ namespace UnityEditor
 
         internal struct PositionHandleParam
         {
-            public static PositionHandleParam DefaultHandle = new PositionHandleParam(
+            public static readonly PositionHandleParam DefaultHandle = new PositionHandleParam(
                 Handle.X | Handle.Y | Handle.Z | Handle.XY | Handle.XZ | Handle.YZ,
                 Vector3.zero, Vector3.one, Vector3.zero, Vector3.one * 0.25f,
                 Orientation.Signed, Orientation.Camera);
-            public static PositionHandleParam DefaultFreeMoveHandle = new PositionHandleParam(
+            public static readonly PositionHandleParam DefaultFreeMoveHandle = new PositionHandleParam(
                 Handle.X | Handle.Y | Handle.Z | Handle.XYZ,
                 Vector3.zero, Vector3.one, Vector3.zero, Vector3.one * 0.25f,
                 Orientation.Signed, Orientation.Signed);
@@ -160,22 +161,26 @@ namespace UnityEditor
             }
         }
 
-        static Vector3[] verts = {Vector3.zero, Vector3.zero, Vector3.zero, Vector3.zero};
+        static readonly Vector3[] verts = {Vector3.zero, Vector3.zero, Vector3.zero, Vector3.zero};
 
         const float kFreeMoveHandleSizeFactor = 0.15f;
 
         // While the user has Free Move mode turned on by holding 'shift' or 'V' (for Vertex Snapping),
         // this variable will be set to True.
+        [NoAutoStaticsCleanup] // transient mode flag; false is correct default after reload
         static bool s_FreeMoveMode = false;
 
         // Which octant the planar move handles are in.
+        [NoAutoStaticsCleanup] // octant selection state; Vector3.one is safe default after reload
         static Vector3 s_PlanarHandlesOctant = Vector3.one;
+        [NoAutoStaticsCleanup] // octant selection state; Vector3.one is safe default after reload
         static Vector3 s_DoPositionHandle_AxisHandlesOctant = Vector3.one;
 
         // If the user is currently mouse dragging then this value will be True
         // and will disallow toggling Free Move mode on or off, or changing the octant of the planar handles.
         static bool currentlyDragging { get { return EditorGUIUtility.hotControl != 0; } }
 
+        [NoAutoStaticsCleanup] // transient arrow cap offset; zero is safe default after reload
         static Vector3 s_DoPositionHandle_ArrowCapConeOffset = Vector3.zero;
 
         public static Vector3 DoPositionHandle(Vector3 position, Quaternion rotation)
@@ -230,12 +235,12 @@ namespace UnityEditor
             return DoPositionHandle_Internal(ids, position, rotation, param);
         }
 
-        static float[] s_DoPositionHandle_Internal_CameraViewLerp = new float[6];
-        static string[] s_DoPositionHandle_Internal_AxisNames = { "xAxis", "yAxis", "zAxis" };
-        static int[] s_DoPositionHandle_Internal_NextIndex = { 1, 2, 0 };
-        static int[] s_DoPositionHandle_Internal_PrevIndex = { 2, 0, 1 };
-        static int[] s_DoPositionHandle_Internal_PrevPlaneIndex = { 5, 3, 4 };
-        static int[] s_DoPositionHandle_Internal_AxisDrawOrder = { 0, 1, 2 };
+        static readonly float[] s_DoPositionHandle_Internal_CameraViewLerp = new float[6];
+        static readonly string[] s_DoPositionHandle_Internal_AxisNames = { "xAxis", "yAxis", "zAxis" };
+        static readonly int[] s_DoPositionHandle_Internal_NextIndex = { 1, 2, 0 };
+        static readonly int[] s_DoPositionHandle_Internal_PrevIndex = { 2, 0, 1 };
+        static readonly int[] s_DoPositionHandle_Internal_PrevPlaneIndex = { 5, 3, 4 };
+        static readonly int[] s_DoPositionHandle_Internal_AxisDrawOrder = { 0, 1, 2 };
 
         static Vector3 DoPositionHandle_Internal(PositionHandleIds ids, Vector3 position, Quaternion rotation, PositionHandleParam param)
         {

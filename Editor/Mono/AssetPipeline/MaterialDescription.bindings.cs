@@ -32,18 +32,7 @@ namespace UnityEditor.AssetImporters
             m_Ptr = Internal_Create();
         }
 
-        ~MaterialDescription()
-        {
-            Destroy();
-        }
-
         public void Dispose()
-        {
-            Destroy();
-            GC.SuppressFinalize(this);
-        }
-
-        void Destroy()
         {
             if (m_Ptr != IntPtr.Zero)
             {

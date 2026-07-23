@@ -10,12 +10,18 @@ using UnityEngine.Experimental.Audio;
 
 namespace UnityEngine.Experimental.Video
 {
+    ///<summary>Extension methods for the <see cref="UnityEngine.Video.VideoPlayer" /> class.</summary>
     [NativeHeader("Modules/Video/Public/ScriptBindings/VideoPlayerExtensions.bindings.h")]
     [NativeHeader("Modules/Video/Public/VideoPlayer.h")]
     [NativeHeader("VideoScriptingClasses.h")]
     [StaticAccessor("VideoPlayerExtensionsBindings", StaticAccessorType.DoubleColon)]
     public static class VideoPlayerExtensions
     {
+        ///<summary>Return the <see cref="Experimental.Audio.AudioSampleProvider" /> for the specified track, used to receive audio samples during playback.</summary>
+        ///<remarks>The sample provider can only be obtained when <see cref="UnityEngine.Video.VideoPlayer.audioOutputMode" /> is set to <see cref="UnityEngine.Video.VideoAudioOutputMode.APIOnly" />.</remarks>
+        ///<param name="vp">The "this" pointer for the extension method.</param>
+        ///<param name="trackIndex">The audio track index for which the sample provider is queried.</param>
+        ///<returns>The sample provider for the specified track.</returns>
         public static AudioSampleProvider GetAudioSampleProvider(this VideoPlayer vp, ushort trackIndex)
         {
             var count = vp.controlledAudioTrackCount;

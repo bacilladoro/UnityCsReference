@@ -6,6 +6,7 @@ using UnityEditorInternal;
 using UnityEngine;
 using UnityEditor;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -160,6 +161,7 @@ namespace UnityEditor
     {
         public delegate void AssetsRefreshed();
 
+        [NoAutoStaticsCleanup]
         static internal Dictionary<int, AssetStoreAsset> s_SelectedAssets;
 
         public static void AddAsset(AssetStoreAsset searchResult, Texture2D placeholderPreviewImage)
@@ -439,8 +441,9 @@ namespace UnityEditor
      *  when asset store assets are selected.
      */
     [CustomEditor(typeof(AssetStoreAssetInspector))]
-    internal class AssetStoreAssetInspector : Editor
+    internal partial class AssetStoreAssetInspector : Editor
     {
+        [AutoStaticsCleanupOnCodeReload]
         static AssetStoreAssetInspector s_SharedAssetStoreAssetInspector;
 
         public static AssetStoreAssetInspector Instance
@@ -465,17 +468,24 @@ namespace UnityEditor
             }
         }
 
+        [NoAutoStaticsCleanup]
         static Styles styles;
 
         bool packageInfoShown = true;
 
         // Payment info for all selected assets
+        [NoAutoStaticsCleanup]
         internal static string s_PurchaseMessage = "";
+        [NoAutoStaticsCleanup]
         internal static string s_PaymentMethodCard = "";
+        [NoAutoStaticsCleanup]
         internal static string s_PaymentMethodExpire = "";
+        [NoAutoStaticsCleanup]
         internal static string s_PriceText = "";
+        [NoAutoStaticsCleanup]
         static GUIContent[] sStatusWheel;
 
+        [NoAutoStaticsCleanup]
         public static bool OfflineNoticeEnabled { get; set; }
 
         // Asset store payment availability
@@ -487,6 +497,7 @@ namespace UnityEditor
             Ok
         }
 
+        [NoAutoStaticsCleanup]
         internal static PaymentAvailability m_PaymentAvailability;
         internal static PaymentAvailability paymentAvailability
         {

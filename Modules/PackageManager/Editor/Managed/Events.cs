@@ -4,12 +4,15 @@
 
 using System;
 using RequiredByNativeCodeAttribute = UnityEngine.Scripting.RequiredByNativeCodeAttribute;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.PackageManager
 {
-    public static class Events
+    public static partial class Events
     {
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<PackageRegistrationEventArgs> registeringPackages;
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<PackageRegistrationEventArgs> registeredPackages;
 
         [RequiredByNativeCode]

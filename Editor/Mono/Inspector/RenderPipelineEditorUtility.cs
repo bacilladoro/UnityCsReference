@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.Pool;
 using UnityEngine.Rendering;
@@ -15,7 +16,7 @@ using Object = UnityEngine.Object;
 [assembly: InternalsVisibleTo("Unity.InternalAPIEngineBridge.RenderPipelines.Core.Runtime.Shared")]
 namespace UnityEditor.Rendering
 {
-    public static class RenderPipelineEditorUtility
+    public static partial class RenderPipelineEditorUtility
     {
         public static Type[] GetDerivedTypesSupportedOnCurrentPipeline<T>()
         {
@@ -42,6 +43,7 @@ namespace UnityEditor.Rendering
             return null;
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         private static Dictionary<Type, Type> s_RenderPipelineAssetToRenderPipelineType = new();
 
         public static Type GetPipelineTypeFromPipelineAssetType(Type pipelineAssetType)
@@ -82,6 +84,7 @@ namespace UnityEditor.Rendering
         public static bool TryRemoveLastRenderingLayerName()
             => TagManager.Internal_TryRemoveLastRenderingLayerName();
 
+        [AutoStaticsCleanupOnCodeReload]
         public static Action onRenderingLayerCountChanged;
 
         /// <summary>

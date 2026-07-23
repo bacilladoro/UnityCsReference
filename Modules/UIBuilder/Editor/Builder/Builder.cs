@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using Unity.UIToolkit.Editor;
 using UnityEditor;
 using UnityEditor.Callbacks;
@@ -11,34 +12,47 @@ using UnityEngine.UIElements;
 
 namespace Unity.UI.Builder
 {
-    sealed class Builder : BuilderPaneWindow, IBuilderViewportWindow, IHasCustomMenu, IDisposable
+    sealed partial class Builder : BuilderPaneWindow, IBuilderViewportWindow, IHasCustomMenu, IDisposable
     {
+        [AutoStaticsCleanupOnCodeReload]
         public static Action<EditorWindow> onActiveBuilderWindowReady;
 
-        static Builder()
+        partial class ScopedLazyClass
         {
-            EditorApplication.fileMenuSaved += () =>
+            public ScopedLazyClass()
             {
-                var builder = ActiveWindow;
-
-                if (builder != null)
+                EditorApplication.fileMenuSaved += () =>
                 {
-                    // Make sure changes are committed before saving the file.
-                    builder.inspector.BeforeSelectionChanged();
+                    var builder = ActiveWindow;
 
-                    if (builder.document.hasUnsavedChanges)
+                    if (builder != null)
                     {
-                        // Give time to UI Builder to reload the changes if the save caused a reimport. Case UUM-76252.
-                        // See BuilderDocumentOpenUXML.OnPostProcessAsset delayed load.
-                        EditorApplication.delayCall += () =>
+                        // Make sure changes are committed before saving the file.
+                        builder.inspector.BeforeSelectionChanged();
+
+                        if (builder.document.hasUnsavedChanges)
                         {
-                            if (builder.document.hasUnsavedChanges)
-                                builder.SaveChanges();
-                        };
+                            // Give time to UI Builder to reload the changes if the save caused a reimport. Case UUM-76252.
+                            // See BuilderDocumentOpenUXML.OnPostProcessAsset delayed load.
+                            EditorApplication.delayCall += () =>
+                            {
+                                if (builder.document.hasUnsavedChanges)
+                                    builder.SaveChanges();
+                            };
+                        }
                     }
-                }
-            };
+                };
+            }
         }
+
+        // ScopedLazy<TValue, CodeLoadedScope> self-registers its own Cleanup() with the lifecycle
+        // controller, which nulls its value on code reload so the next access re-runs the constructor
+        // (re-subscribing to fileMenuSaved). The value is lazy, so it must be touched to take effect;
+        // CreateUI() does this whenever a Builder window is created or recreated after a reload. The
+        // fileMenuSaved handler is a no-op without an active Builder window, so scoping the
+        // subscription to window lifetime preserves the original behavior.
+        static readonly ScopedLazy<ScopedLazyClass, CodeLoadedScope> s_ScopedLazy =
+            new ScopedLazy<ScopedLazyClass, CodeLoadedScope>(() => new ScopedLazyClass());
 
         BuilderSelection m_Selection;
 
@@ -68,6 +82,7 @@ namespace Unity.UI.Builder
         public BuilderStyleSheets styleSheets => m_StyleSheets;
         internal override bool liveReloadPreferenceDefault => true;
         internal override BindingLogLevel defaultBindingLogLevel => BindingLogLevel.None;
+        [NoAutoStaticsCleanup] // Transient element-id handoff for the next document open; overwritten on each open and guarded by == -1 checks, so a persisted value is harmless across reload.
         internal static int s_NextSelectedIdFromDocumentCommand = -1;
 
         readonly Action m_UnregisterBuilderLibraryContentProcessors = BuilderLibraryContent.UnregisterProcessors;
@@ -116,6 +131,7 @@ namespace Unity.UI.Builder
             }
         }
 
+        [NoAutoStaticsCleanup] // Lazily recreated warning GUIContent reused for editor notifications; survives reload safely and is rebuilt on demand when null.
         static GUIContent s_WarningContent;
 
         public static GUIContent lastWarning => s_WarningContent;
@@ -139,6 +155,10 @@ namespace Unity.UI.Builder
 
         public override void CreateUI()
         {
+            // Ensure the fileMenuSaved subscription is established (and re-established after a code
+            // reload, which nulls the ScopedLazy value). See s_ScopedLazy above.
+            _ = s_ScopedLazy.Value;
+
             var root = rootVisualElement;
             titleContent = GetLocalizedTitleContent();
             saveChangesMessage = BuilderConstants.SaveDialogSaveChangesPromptMessage;

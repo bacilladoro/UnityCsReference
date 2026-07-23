@@ -6,6 +6,7 @@ using UnityEditor;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using Unity.Scripting.LifecycleManagement;
 
 namespace Unity.UI.Builder
 {
@@ -16,8 +17,9 @@ namespace Unity.UI.Builder
         AssetDeleteResult OnWillDeleteAsset(string assetPath, RemoveAssetOptions option);
     }
 
-    internal class BuilderAssetModificationProcessor : UnityEditor.AssetModificationProcessor
+    internal partial class BuilderAssetModificationProcessor : UnityEditor.AssetModificationProcessor
     {
+        [AutoStaticsCleanupOnCodeReload]
         private static readonly HashSet<IBuilderAssetModificationProcessor> m_ModificationProcessors = new HashSet<IBuilderAssetModificationProcessor>();
 
         public static void Register(IBuilderAssetModificationProcessor modificationProcessor)

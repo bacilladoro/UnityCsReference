@@ -11,6 +11,7 @@ using UnityEditor.Overlays;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.EditorTools
 {
@@ -19,17 +20,23 @@ namespace UnityEditor.EditorTools
         public Camera handlesCamera { get; }
     }
 
-    static class EditorToolUtility
+    static partial class EditorToolUtility
     {
         static readonly Regex k_NewLine = new Regex(@"\r|\n", RegexOptions.Compiled | RegexOptions.Multiline);
         static readonly Regex k_TrailingForwardSlashOrWhiteSpace = new Regex(@"[/|\s]*\Z", RegexOptions.Compiled);
 
+        [AutoStaticsCleanupOnCodeReload]
         static Dictionary<Type, EditorToolCache> s_ToolCache = new();
+        [AutoStaticsCleanupOnCodeReload]
         static Dictionary<Type, EditorToolCache> s_ContextCache = new();
+        [AutoStaticsCleanupOnCodeReload]
         static Dictionary<Type, List<EditorTypeAssociation>> s_EditorToolAssociations;
+        [AutoStaticsCleanupOnCodeReload]
         static Dictionary<Type, List<EditorTypeAssociation>> s_EditorToolContextAssociations;
 
+        [AutoStaticsCleanupOnCodeReload]
         static Dictionary<Type, GUIContent> s_ToolbarIcons = new();
+        [AutoStaticsCleanupOnCodeReload]
         static Dictionary<Type, ToolOwnerDefinition> s_ToolOwnerDefinitions = new();
 
         internal readonly struct ToolOwnerDefinition

@@ -616,7 +616,7 @@ namespace UnityEngine.TextCore.Text
 
 
         /// <summary>
-        // Retrieves a substring from this instance.
+        /// Retrieves a substring from this instance.
         /// </summary>
         public string Substring(int startIndex, int length)
         {
@@ -636,8 +636,8 @@ namespace UnityEngine.TextCore.Text
         }
 
         /// <summary>
-        // Reports the zero-based index of the first occurrence of the specified Unicode character in this string.
-        // The search starts at a specified character position.
+        /// Reports the zero-based index of the first occurrence of the specified Unicode character in this string.
+        /// The search starts at a specified character position.
         /// </summary>
         /// <remarks>
         /// The search is case sensitive.
@@ -653,8 +653,8 @@ namespace UnityEngine.TextCore.Text
         }
 
         /// <summary>
-        // Reports the zero-based index position of the last occurrence of a specified Unicode character within this
-        // instance. The search starts at a specified character position and proceeds backward toward the beginning of the string.
+        /// Reports the zero-based index position of the last occurrence of a specified Unicode character within this
+        /// instance. The search starts at a specified character position and proceeds backward toward the beginning of the string.
         /// </summary>
         /// <remarks>
         /// The search is case sensitive.

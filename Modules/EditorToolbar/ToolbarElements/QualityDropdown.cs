@@ -3,13 +3,16 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using UnityEngine;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Toolbars
 {
     static class QualityDropdown
     {
         const string k_Path = "Editor Utility/Quality";
+        [NoAutoStaticsCleanup] // Transient UI-displayed flag, re-set every time the toolbar element is rebuilt; safe to persist.
         static bool s_Displayed = false;
+        [NoAutoStaticsCleanup] // Scratch quality-level index, consumed and reset to -1 on each rebuild; safe to persist.
         static int s_TemporaryNewQualityLevel = -1;
 
         static QualityDropdown()

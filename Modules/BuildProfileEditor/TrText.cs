@@ -33,6 +33,9 @@ namespace UnityEditor.Build.Profile
         public static readonly string cloudBuildRequiresProfileTooltip = L10n.Tr("Add a Build Profile to use Build Automation");
         public static readonly string cloudBuildUnsupportedTooltip = L10n.Tr("This platform is not supported by Build Automation");
         public static readonly string buildAndRun = L10n.Tr("Build And Run");
+        public static readonly string lastBuild = L10n.Tr("Last build");
+        public static readonly string lastBuildTooltip = L10n.Tr("Open the last build for this profile in the Build Analysis window.");
+        public static readonly string lastBuildUnknownDate = L10n.Tr("Unknown");
         public static readonly string sharedSettingsInfo =
             L10n.Tr("Platform builds use the shared scene list. To change the scene list or other settings independently, create a Build Profile for this platform.");
         public static readonly string sharedSettingsSectionInfo =
@@ -74,6 +77,11 @@ namespace UnityEditor.Build.Profile
 
         // Build Profile Quality Settings
         public static readonly string qualitySettings = L10n.Tr("Quality Settings");
+
+        // Build Profile Build Destination Settings
+        public static readonly string buildDestinationSettings = L10n.Tr("Build Destination");
+        public static readonly string buildDestinationBrowseButton = L10n.Tr("Browse");
+        public static readonly string buildDestinationFolderTitle = L10n.Tr("Select Build Destination Folder");
 
         // Build Profile Bootstrap View
         public static readonly string buildProfileConfiguration = L10n.Tr("Configuring Build Profile...");

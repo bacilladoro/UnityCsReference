@@ -22,21 +22,21 @@ namespace UnityEditor.SceneManagement
     {
         static class Styles
         {
-            public static GUIContent autoSaveGUIContent = EditorGUIUtility.TrTextContent("Auto Save", "When Auto Save is enabled, every change you make is automatically saved to the Prefab Asset. Disable Auto Save if you experience long import times.");
-            public static GUIContent saveButtonContent = EditorGUIUtility.TrTextContent("Save");
-            public static GUIContent checkoutButtonContent = EditorGUIUtility.TrTextContent("Check Out");
-            public static GUIContent autoSavingBadgeContent = EditorGUIUtility.TrTextContent("Auto Saving...");
-            public static GUIContent immutablePrefabContent = EditorGUIUtility.TrTextContent("Immutable Prefab");
-            public static GUIStyle saveToggle;
-            public static GUIStyle button;
-            public static GUIStyle savingBadge = "Badge";
-            public static GUIStyle exposablePopup = "ExposablePopupMenu";
-            public static GUIStyle exposablePopupItem = "ExposablePopupItem";
-            public static GUIContent contextLabel = EditorGUIUtility.TrTextContent("Context:");
-            public static GUIContent[] contextRenderModeTexts = new[] { EditorGUIUtility.TrTextContent("Normal"), EditorGUIUtility.TrTextContent("Gray"), EditorGUIUtility.TrTextContent("Hidden") };
-            public static StageUtility.ContextRenderMode[] contextRenderModeOptions = new[] { StageUtility.ContextRenderMode.Normal, StageUtility.ContextRenderMode.GreyedOut, StageUtility.ContextRenderMode.Hidden };
-            public static GUIContent showOverridesLabel = EditorGUIUtility.TrTextContent("Show Overrides", "Visualize property overrides from the Prefab instance on the Prefab Asset. Overrides on the root Transform are always visualized.");
-            public static GUIContent showOverridesLabelWithTooManyOverridesTooltip = EditorGUIUtility.TrTextContent("Show Overrides", "Show Overrides are disabled because there are too many overrides to visualize. Overrides on the root Transform are always visualized though.");
+            public static readonly GUIContent autoSaveGUIContent = EditorGUIUtility.TrTextContent("Auto Save", "When Auto Save is enabled, every change you make is automatically saved to the Prefab Asset. Disable Auto Save if you experience long import times.");
+            public static readonly GUIContent saveButtonContent = EditorGUIUtility.TrTextContent("Save");
+            public static readonly GUIContent checkoutButtonContent = EditorGUIUtility.TrTextContent("Check Out");
+            public static readonly GUIContent autoSavingBadgeContent = EditorGUIUtility.TrTextContent("Auto Saving...");
+            public static readonly GUIContent immutablePrefabContent = EditorGUIUtility.TrTextContent("Immutable Prefab");
+            public static readonly GUIStyle saveToggle;
+            public static readonly GUIStyle button;
+            public static readonly GUIStyle savingBadge = "Badge";
+            public static readonly GUIStyle exposablePopup = "ExposablePopupMenu";
+            public static readonly GUIStyle exposablePopupItem = "ExposablePopupItem";
+            public static readonly GUIContent contextLabel = EditorGUIUtility.TrTextContent("Context:");
+            public static readonly GUIContent[] contextRenderModeTexts = new[] { EditorGUIUtility.TrTextContent("Normal"), EditorGUIUtility.TrTextContent("Gray"), EditorGUIUtility.TrTextContent("Hidden") };
+            public static readonly StageUtility.ContextRenderMode[] contextRenderModeOptions = new[] { StageUtility.ContextRenderMode.Normal, StageUtility.ContextRenderMode.GreyedOut, StageUtility.ContextRenderMode.Hidden };
+            public static readonly GUIContent showOverridesLabel = EditorGUIUtility.TrTextContent("Show Overrides", "Visualize property overrides from the Prefab instance on the Prefab Asset. Overrides on the root Transform are always visualized.");
+            public static readonly GUIContent showOverridesLabelWithTooManyOverridesTooltip = EditorGUIUtility.TrTextContent("Show Overrides", "Show Overrides are disabled because there are too many overrides to visualize. Overrides on the root Transform are always visualized though.");
 
             static Styles()
             {
@@ -47,7 +47,7 @@ namespace UnityEditor.SceneManagement
             }
         }
 
-        internal static string s_PrefabInContextPreviewValuesTooltip = L10n.Tr("This property is previewing the overridden value on the Prefab instance.\n\nTo edit this property, open this Prefab Asset in isolation by pressing the modifier key [Alt] while you open it.");
+        internal static readonly string s_PrefabInContextPreviewValuesTooltip = L10n.Tr("This property is previewing the overridden value on the Prefab instance.\n\nTo edit this property, open this Prefab Asset in isolation by pressing the modifier key [Alt] while you open it.");
 
         public enum Mode
         {
@@ -55,19 +55,27 @@ namespace UnityEditor.SceneManagement
             InContext
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<PrefabStage> prefabStageOpened;
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<PrefabStage> prefabStageClosing;
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<PrefabStage> prefabStageDirtied;
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<GameObject> prefabSaving;
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<GameObject> prefabSaved;
 
+        [AutoStaticsCleanupOnCodeReload]
         internal static event Action<PrefabStage> prefabStageSavedAsNewPrefab;
         [AutoStaticsCleanupOnCodeReload]
         internal static event Action<PrefabStage> prefabStageReloading;
         [AutoStaticsCleanupOnCodeReload]
         internal static event Action<PrefabStage> prefabStageReloaded;
 
-        internal static List<PrefabStage> m_AllPrefabStages = new List<PrefabStage>();
+        [AutoStaticsCleanupOnCodeReload]
+        internal static readonly List<PrefabStage> m_AllPrefabStages = new List<PrefabStage>();
+        [NoAutoStaticsCleanup] // Editor state-cache wrapper backed by an on-disk store (Library/StateCache); persists hierarchy expansion state across reloads by design and holds no user-code references.
         static StateCache<PrefabStageHierarchyState> s_StateCache = new StateCache<PrefabStageHierarchyState>("Library/StateCache/PrefabStageHierarchy/");
 
         GameObject m_PrefabContentsRoot; // Prefab asset being edited
@@ -90,6 +98,7 @@ namespace UnityEditor.SceneManagement
         float m_LastSavingDuration = 0f;
         Transform m_LastRootTransform;
         const float kDurationBeforeShowingSavingBadge = 1.0f;
+        [AutoStaticsCleanupOnCodeReload]
         static ExposablePopupMenu s_ContextRenderModeSelector;
         Hash128 m_InitialFileHash;
         byte[] m_InitialFileContent;
@@ -99,7 +108,7 @@ namespace UnityEditor.SceneManagement
         bool m_TemporarilyDisablePatchAllOverridenProperties;
         const int k_MaxNumberOfOverridesToVisualize = 2000;
 
-        internal static SavedBool s_PatchAllOverriddenProperties = new SavedBool("InContextEditingPatchOverriddenProperties", false);
+        internal static readonly SavedBool s_PatchAllOverriddenProperties = new SavedBool("InContextEditingPatchOverriddenProperties", false);
 
         [System.Serializable]
         struct PatchedProperty
@@ -239,8 +248,8 @@ namespace UnityEditor.SceneManagement
 
         static class Icons
         {
-            public static Texture2D prefabVariantIcon = EditorGUIUtility.LoadIconRequired("PrefabVariant Icon");
-            public static Texture2D prefabIcon = EditorGUIUtility.LoadIconRequired("Prefab Icon");
+            public static readonly Texture2D prefabVariantIcon = EditorGUIUtility.LoadIconRequired("PrefabVariant Icon");
+            public static readonly Texture2D prefabIcon = EditorGUIUtility.LoadIconRequired("Prefab Icon");
         }
 
         protected override void OnEnable()
@@ -2152,6 +2161,7 @@ namespace UnityEditor.SceneManagement
 
         static class ValidatePreviewSceneState
         {
+            [NoAutoStaticsCleanup] // Transient scratch buffer cleared at the start of every validation pass and holding only strings; safe to persist across reload as it is always reset before use.
             static List<string> m_Errors = new List<string>();
 
             public static void LogErrors()

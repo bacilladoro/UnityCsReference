@@ -4,11 +4,13 @@
 
 using UnityEngine;
 using UnityEditor.Audio;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
     internal class AudioMixerDrawUtils
     {
+        [NoAutoStaticsCleanup] // Recomputed on demand by DetectVertexOffset(); persisting the rasterization offset across reload is harmless
         // OpenGL and D3D<11 use different ways of specifying the rasterization grid, so in order to draw exactly we need to account for this.
         private static float vertexOffset = -1.0f;
         private static void DetectVertexOffset()
@@ -40,10 +42,10 @@ namespace UnityEditor
             return kEffectColor;
         }
 
-        public static Color kBackgroundHi          = new Color(0.5f, 0.5f, 0.5f);
-        public static Color kBackgroundLo          = new Color(0.3f, 0.3f, 0.3f);
-        public static Color kBackgroundHiHighlight = new Color(0.6f, 0.6f, 0.6f);
-        public static Color kBackgroundLoHighlight = new Color(0.4f, 0.4f, 0.4f);
+        public static readonly Color kBackgroundHi          = new Color(0.5f, 0.5f, 0.5f);
+        public static readonly Color kBackgroundLo          = new Color(0.3f, 0.3f, 0.3f);
+        public static readonly Color kBackgroundHiHighlight = new Color(0.6f, 0.6f, 0.6f);
+        public static readonly Color kBackgroundLoHighlight = new Color(0.4f, 0.4f, 0.4f);
 
         public class Styles
         {
@@ -95,6 +97,7 @@ namespace UnityEditor
                 scrollShadowTexture = EditorGUIUtility.FindTexture("ScrollShadow");
             }
         }
+        [NoAutoStaticsCleanup] // GUIStyle/GUIContent lazy Styles inner class, recreated by InitStyles() on demand
         static Styles s_Styles;
         public static Styles styles { get { return s_Styles; }}
         public static void InitStyles()

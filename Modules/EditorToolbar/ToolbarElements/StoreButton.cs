@@ -5,6 +5,7 @@
 // #define QUICK_SEARCH_STORE
 using UnityEditor.Toolbars;
 using UnityEngine;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Search
 {
@@ -12,6 +13,7 @@ namespace UnityEditor.Search
     {
         const string k_SearchStoreCommand = "OpenSearchStore";
         const string k_OpenAssetStoreCommand = "OpenAssetStoreInBrowser";
+        [NoAutoStaticsCleanup] // Editor texture fetched by fixed name (EditorGUIUtility.FindTexture); the asset survives domain reload.
         static Texture2D s_Icon;
 
         [UnityOnlyMainToolbarPreset]

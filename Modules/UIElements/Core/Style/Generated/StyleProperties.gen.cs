@@ -42,6 +42,7 @@ namespace UnityEngine.UIElements
             internal static readonly BindingId borderTopWidthProperty = "style." + nameof(IStyle.borderTopWidth);
             internal static readonly BindingId bottomProperty = "style." + nameof(IStyle.bottom);
             internal static readonly BindingId colorProperty = "style." + nameof(IStyle.color);
+            internal static readonly BindingId columnGapProperty = "style." + nameof(IStyle.columnGap);
             internal static readonly BindingId cursorProperty = "style." + nameof(IStyle.cursor);
             internal static readonly BindingId displayProperty = "style." + nameof(IStyle.display);
             internal static readonly BindingId filterProperty = "style." + nameof(IStyle.filter);
@@ -72,6 +73,7 @@ namespace UnityEngine.UIElements
             internal static readonly BindingId positionProperty = "style." + nameof(IStyle.position);
             internal static readonly BindingId rightProperty = "style." + nameof(IStyle.right);
             internal static readonly BindingId rotateProperty = "style." + nameof(IStyle.rotate);
+            internal static readonly BindingId rowGapProperty = "style." + nameof(IStyle.rowGap);
             internal static readonly BindingId scaleProperty = "style." + nameof(IStyle.scale);
             internal static readonly BindingId textOverflowProperty = "style." + nameof(IStyle.textOverflow);
             internal static readonly BindingId textShadowProperty = "style." + nameof(IStyle.textShadow);

@@ -102,15 +102,16 @@ namespace Unity.GraphToolkit.Editor
                 DragAndDrop.AcceptDrag();
 
                 var command = new CreateNodeCommand();
+                var mode = e.altKey ? VariableNodeMode.Set : VariableNodeMode.Get;
 
                 var portTarget = (e.target as VisualElement)?.GetFirstOfType<Port>();
                 var variablesCount = variablesWithInfo.Count;
                 foreach (var (model, position) in variablesWithInfo)
                 {
                     if (portTarget != null && variablesCount == 1 && portTarget.CanAcceptDrop(new List<GraphElementModel> { model }))
-                        command.WithNodeOnPort(model, portTarget.PortModel, position, true);
+                        command.WithNodeOnPort(model, portTarget.PortModel, position, true, mode: mode);
                     else
-                        command.WithNodeOnGraph(model, position);
+                        command.WithNodeOnGraph(model, position, mode: mode);
                 }
 
                 GraphView.Dispatch(command);

@@ -4,16 +4,19 @@
 
 using System;
 using System.ComponentModel;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.EditorTools
 {
     [EditorBrowsable(EditorBrowsableState.Never)]
     [Obsolete("EditorTools has been deprecated. Use ToolManager instead (UnityUpgradable) -> ToolManager")]
-    public static class EditorTools
+    public static partial class EditorTools
     {
         public static Type activeToolType => ToolManager.activeToolType;
 
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action activeToolChanging;
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action activeToolChanged;
 
         internal static void ActiveToolWillChange()

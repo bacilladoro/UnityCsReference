@@ -83,7 +83,7 @@ class UnityEditorMSBuildPropsTargetsGeneration
     {
         ProjectGenerator.Instance.GenerateEntryPointProjectIfMissing("Main");
         var unityNugetLocalFeed = Path.Combine(EditorApplication.applicationScriptingPath, "MSBuild/sdk-nugets");
-        ProjectGenerator.Instance.MaintainGlobalJson(GetUnitySdkVersion(unityNugetLocalFeed), "global.json");
+        ProjectGenerator.Instance.MaintainGlobalJson(GetUnitySdkVersion(unityNugetLocalFeed), GetDotnetRuntimeVersion(), "global.json");
         ProjectGenerator.Instance.MaintainNugetConfig(unityNugetLocalFeed, "NuGet.config");
 
         UpdateUnityEditorVersion();
@@ -134,7 +134,7 @@ class UnityEditorMSBuildPropsTargetsGeneration
     {
         ProjectGenerator.Instance.GenerateEntryPointProjectIfMissing("Main");
         var unityNugetLocalFeed = Path.Combine(EditorApplication.applicationScriptingPath, "MSBuild/sdk-nugets");
-        ProjectGenerator.Instance.MaintainGlobalJson(GetUnitySdkVersion(unityNugetLocalFeed), "global.json");
+        ProjectGenerator.Instance.MaintainGlobalJson(GetUnitySdkVersion(unityNugetLocalFeed), GetDotnetRuntimeVersion(), "global.json");
         ProjectGenerator.Instance.MaintainNugetConfig(unityNugetLocalFeed, "NuGet.config");
 
         var optimization = CompilationPipeline.codeOptimization;
@@ -250,6 +250,59 @@ class UnityEditorMSBuildPropsTargetsGeneration
         }
 
         throw new FileNotFoundException($"No {prefix}*{suffix} package found in {sdkNugetsPath}");
+    }
+
+    private static string s_cachedDotnetRuntimeVersion;
+
+    // The .NET SDK version written to the generated global.json (sdk.version) must match the .NET SDK
+    // Unity ships. Read it from the SDK's authoritative ".version" metadata (the version is on the
+    // second line) rather than trusting the folder name, so a .NET upgrade (8 -> 10 -> ...) needs no
+    // change here. We return the full version (e.g. "10.0.102"), preserving minor/patch, and pick the
+    // highest if more than one SDK is present.
+    private static string GetDotnetRuntimeVersion()
+    {
+        if (s_cachedDotnetRuntimeVersion != null)
+            return s_cachedDotnetRuntimeVersion;
+
+        var sdkRoot = Path.Combine(EditorApplication.applicationScriptingPath, "DotNetSdk", "sdk");
+        if (!Directory.Exists(sdkRoot))
+            throw new DirectoryNotFoundException($"Bundled dotnet SDK not found at {sdkRoot}");
+
+        string bestVersion = null;
+        Version bestParsed = null;
+        foreach (var dir in Directory.EnumerateDirectories(sdkRoot))
+        {
+            // Each SDK folder ships a ".version" file whose second line is the SDK version, e.g.
+            //   <commit hash>
+            //   8.0.318
+            //   <rid>
+            var versionFile = Path.Combine(dir, ".version");
+            if (!File.Exists(versionFile))
+                continue;
+            var lines = File.ReadAllLines(versionFile);
+            if (lines.Length < 2)
+                continue;
+            var version = lines[1].Trim();
+            if (version.Length == 0)
+                continue;
+            // Strip any "-preview.x" suffix for comparison, but return the full version string.
+            var numeric = version;
+            var dash = numeric.IndexOf('-');
+            if (dash >= 0)
+                numeric = numeric.Substring(0, dash);
+            if (!Version.TryParse(numeric, out var parsed))
+                continue;
+            if (bestParsed == null || parsed > bestParsed)
+            {
+                bestParsed = parsed;
+                bestVersion = version;
+            }
+        }
+
+        if (bestVersion == null)
+            throw new FileNotFoundException($"No SDK with a valid .version file found under {sdkRoot}");
+
+        return s_cachedDotnetRuntimeVersion = bestVersion;
     }
 
     public static void UpdateInstallPathFile()

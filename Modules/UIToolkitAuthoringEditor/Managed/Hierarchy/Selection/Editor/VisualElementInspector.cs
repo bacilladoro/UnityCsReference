@@ -264,6 +264,7 @@ internal sealed partial class VisualElementInspector : UIInspector
                 InitializeVariablesSection();
                 InitializeAnimationSectionVisibility();
                 UICommandQueue.RegisterHandlerForCategory(CommandCategory.Variables, OnVariableChange);
+                Undo.undoRedoPerformed += OnUndoRedoPerformed;
                 break;
             }
             case DetachFromPanelEvent detachFromPanelEvent:
@@ -276,6 +277,7 @@ internal sealed partial class VisualElementInspector : UIInspector
                     m_StyleInspectorDefaultContent.contentWasGenerated -= OnDefaultContentGeneratedForAnimation;
                 }
                 UICommandQueue.UnregisterHandlerForCategory(CommandCategory.Variables, OnVariableChange);
+                Undo.undoRedoPerformed -= OnUndoRedoPerformed;
                 m_StyleInspectorDefaultContent?.RemoveFromHierarchy();
                 StyleInspectorDefaultContent.Release(m_StyleInspectorDefaultContent);
                 m_StyleInspectorDefaultContent = null;
@@ -325,6 +327,15 @@ internal sealed partial class VisualElementInspector : UIInspector
 
             m_VariablesSection?.Refresh(GetInlineStyleRule(), GetOrCreateInlineStyleRule, m_Element.visualTreeAssetSource);
         }
+    }
+
+    void OnUndoRedoPerformed()
+    {
+        var inlineSheet = m_Element?.visualTreeAssetSource?.inlineSheet;
+        if (inlineSheet == null)
+            return;
+        inlineSheet.RequestRebuild(StyleSheet.RebuildOptions.Synchronous);
+        OnVariableChange(default);
     }
 
     void InitializeAnimationSectionVisibility()

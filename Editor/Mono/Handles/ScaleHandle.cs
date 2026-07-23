@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 
 namespace UnityEditor
@@ -92,8 +93,8 @@ namespace UnityEditor
                 Camera
             }
 
-            static ScaleHandleParam s_Default = new ScaleHandleParam((Handle)(-1), Vector3.zero, Vector3.one, Vector3.one, 1, Orientation.Signed);
-            public static ScaleHandleParam Default { get { return s_Default; } set { s_Default = value; } }
+            static readonly ScaleHandleParam s_Default = new ScaleHandleParam((Handle)(-1), Vector3.zero, Vector3.one, Vector3.one, 1, Orientation.Signed);
+            public static ScaleHandleParam Default { get { return s_Default; } }
 
             public readonly Vector3 axisOffset;
             public readonly Vector3 axisSize;
@@ -123,11 +124,16 @@ namespace UnityEditor
             }
         }
 
+        [NoAutoStaticsCleanup] // octant selection state; Vector3.one is safe default after reload
         static Vector3 s_DoScaleHandle_AxisHandlesOctant = Vector3.one;
-        static int[] s_DoScaleHandle_AxisDrawOrder = { 0, 1, 2 };
+        static readonly int[] s_DoScaleHandle_AxisDrawOrder = { 0, 1, 2 };
+        [NoAutoStaticsCleanup] // transient drag state; overwritten at the start of each drag operation
         static float s_CurrentMultiplier;
+        [NoAutoStaticsCleanup] // transient drag state; overwritten at the start of each drag operation
         static Vector3 s_InitialScale;
+        [NoAutoStaticsCleanup] // transient drag state; set before use each drag operation
         internal static float handleLength { get; set;}
+        [NoAutoStaticsCleanup] // transient drag state; set before use each drag operation
         internal static bool proportionalScale { get; set; }
 
         public static Vector3 DoScaleHandle(Vector3 scale, Vector3 position, Quaternion rotation, float size)

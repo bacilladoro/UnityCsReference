@@ -11,6 +11,7 @@ using Unity.Collections.LowLevel.Unsafe;
 using UnityEditorInternal;
 using UnityEditor.Audio;
 using UnityEditor.IMGUI.Controls;
+using Unity.Scripting.LifecycleManagement;
 using Object = UnityEngine.Object;
 
 namespace UnityEditor
@@ -303,6 +304,7 @@ namespace UnityEditor
             public Texture2D audioMixerGroupIcon = EditorGUIUtility.FindTexture(typeof(UnityEngine.Audio.AudioMixerGroup));
         }
 
+        [NoAutoStaticsCleanup] // Lazy GUIContent/Texture2D style cache rebuilt on demand via null check; assets survive reload, safe to persist.
         static Styles s_Styles;
 
         public AudioMixerGroupTreeView(AudioMixerWindow mixerWindow, TreeViewState<EntityId> treeState)

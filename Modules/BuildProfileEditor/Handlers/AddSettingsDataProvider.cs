@@ -24,7 +24,8 @@ namespace UnityEditor.Build.Profile.Handlers
             new QualitySettingsProvider(),
             new Elements.GraphicsSettingsProvider(),
             new BuildAutomationSettingsProvider(),
-            new AdaptivePerformanceSettingProvider()
+            new AdaptivePerformanceSettingProvider(),
+            new BuildDestinationSettingsProvider()
         };
 
         static IList<IBuildProfileSettingsProvider> s_GenericSettingProviders = null;

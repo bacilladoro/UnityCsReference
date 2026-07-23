@@ -5,6 +5,7 @@
 using System;
 using JetBrains.Annotations;
 using Unity.Profiling;
+using UnityEditor.UIElements.StyleSheets;
 using UnityEngine;
 using UnityEngine.Scripting;
 
@@ -22,6 +23,8 @@ namespace UnityEditor.UIElements
             {
                 UxmlSerializedDataRegistry.RegisterUxmlSerializedDataTypes();
                 UxmlSerializedDataRegistry.RegisterCustomDependencies();
+                ThemeRegistry.RegisterCustomDependencies();
+                RegisterSerializationLayoutDependency();
                 UnityEngine.UIElements.UIElementsInitialization.InitializeUIElementsManaged();
                 VisualTreeAssetHierarchyDropHandler.Register();
 
@@ -33,6 +36,13 @@ namespace UnityEditor.UIElements
             {
                 Debug.LogException(ex);
             }
+        }
+
+        static void RegisterSerializationLayoutDependency()
+        {
+            var hash = new Hash128();
+            hash.Append(UnityEngine.UIElements.StyleSheet.currentSerializationLayoutHash);
+            AssetDatabase.RegisterCustomDependency(UnityEngine.UIElements.StyleSheet.k_SerializationLayoutDependencyKey, hash);
         }
     }
 }

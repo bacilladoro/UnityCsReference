@@ -27,7 +27,11 @@ internal static class StyleSheetContextMenuUtility
         if (handler is not StyleSheetEditingNodeTypeHandler styleSheetHandler)
             return;
 
+        if (styleSheetHandler.IsGroup(node))
+            return;
+
         var isStyleSheet = styleSheetHandler.IsStyleSheet(node);
+        var isReadOnly = styleSheetHandler.IsReadOnly(node);
 
         var copyMenu = k_EditFolderName + "/" + k_Copy;
         AppendAction(menu, k_Copy, Menu.GetHotkey(copyMenu), view.OnCopy, handler.CanCopy(view));
@@ -51,11 +55,11 @@ internal static class StyleSheetContextMenuUtility
         var canAddExistingUss = Menu.GetHotkey(k_AddExistingUss);
         AppendAction(menu, k_AddExistingUss, Menu.GetHotkey(canAddExistingUss), styleSheetHandler.Window.AddStyleSheet);
         var canRemoveUss = Menu.GetHotkey(k_RemoveUss);
-        AppendAction(menu, k_RemoveUss, Menu.GetHotkey(canRemoveUss), () => styleSheetHandler.Window.RemoveStyleSheet(n), isStyleSheet);
+        AppendAction(menu, k_RemoveUss, Menu.GetHotkey(canRemoveUss), () => styleSheetHandler.Window.RemoveStyleSheet(n), isStyleSheet && !isReadOnly);
 
         menu.AppendSeparator();
         var canSetActiveUss = Menu.GetHotkey(k_SetActiveUss);
-        AppendAction(menu, k_SetActiveUss, Menu.GetHotkey(canSetActiveUss),  () => styleSheetHandler.Window.SetActiveStyleSheet(n), isStyleSheet);
+        AppendAction(menu, k_SetActiveUss, Menu.GetHotkey(canSetActiveUss),  () => styleSheetHandler.Window.SetActiveStyleSheet(n), isStyleSheet && !isReadOnly);
     }
 
     static void AppendAction(DropdownMenu menu, string name, string hotkey, Action action, bool enabled = true)

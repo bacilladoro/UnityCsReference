@@ -351,6 +351,7 @@ sealed partial class UICanvasDocumentRoot : VisualElement, IVisualElementChangeP
         if (panelElement == null)
             return;
 
+        ClearSelection();
         panelElement.SubPanel?.UnregisterChangeProcessor(this);
     }
 
@@ -360,6 +361,8 @@ sealed partial class UICanvasDocumentRoot : VisualElement, IVisualElementChangeP
             return;
 
         panelElement.SubPanel?.RegisterChangeProcessor(this);
+        // Rebuild the handles from the current selection when the panel is (re)acquired, e.g. re-entering the stage.
+        OnSelectionChanged();
         m_HandleManager.UpdateAllHandles();
         m_ManipulatorOverlayManager.UpdateAllOverlays();
     }

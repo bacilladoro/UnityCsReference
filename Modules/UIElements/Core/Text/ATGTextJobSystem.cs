@@ -83,9 +83,7 @@ internal class ATGTextJobSystem
         (dict) =>
         {
             foreach (var hashSet in dict.Values)
-            {
                 hashSet.Clear();
-            }
         }, null, false);
 
     internal MeshGenerationCallback m_GenerateTextJobifiedCallback;
@@ -304,21 +302,26 @@ internal class ATGTextJobSystem
     }
 
     static List<uint> s_GlyphsToAddBuffer = new List<uint>();
+    static List<NativeTextInfo> s_TextInfoBuffer = new List<NativeTextInfo>();
+
     void PopulateGlyphs(MeshGenerationContext mgc, object _)
     {
         Dictionary<EntityId, HashSet<uint>> allUniqueMissingGlyphs = s_AggregatedMissingGlyphsPool.Get();
-        bool hasMissingGlyphs = false;
+        bool hasGlyphsToAdd = false;
+        bool anyJobNeedsOSFallbackPass = false;
         foreach (var managedJobData in textJobDatas)
         {
             if (!managedJobData.hasMissingGlyphs)
                 continue;
+
+            anyJobNeedsOSFallbackPass = true;
 
             foreach (var pair in managedJobData.missingGlyphsPerFontAsset)
             {
                 if (pair.Value.Count == 0)
                     continue;
 
-                hasMissingGlyphs = true;
+                hasGlyphsToAdd = true;
 
                 if (!allUniqueMissingGlyphs.TryGetValue(pair.Key, out var unicodeSet))
                 {
@@ -330,14 +333,21 @@ internal class ATGTextJobSystem
             }
         }
 
-        // No missing unicodes means we already converted our mesh to UIR
-        if (!hasMissingGlyphs)
+        bool remappedOSFallbacks = false;
+        if (anyJobNeedsOSFallbackPass)
+        {
+            s_TextInfoBuffer.Clear();
+            foreach (var jd in textJobDatas)
+                s_TextInfoBuffer.Add(jd.textInfo);
+            remappedOSFallbacks = OSFontFallbackResolver.Resolve(s_TextInfoBuffer, allUniqueMissingGlyphs);
+        }
+
+        if (!hasGlyphsToAdd && !remappedOSFallbacks)
         {
             s_AggregatedMissingGlyphsPool.Release(allUniqueMissingGlyphs);
             AddDrawEntries(mgc, _);
             return;
         }
-
 
         foreach (var entry in allUniqueMissingGlyphs)
         {
@@ -409,6 +419,7 @@ internal class ATGTextJobSystem
     static void ConvertMeshInfoToUIRVertex(NativeTextInfo textInfo, TempMeshAllocator alloc, TextElement visualElement, List<List<List<int>>> textElementIndicesByMesh, ref List<Texture2D> atlases, ref List<NativeSlice<Vertex>> verticesArray, ref List<NativeSlice<ushort>> indicesArray, ref List<GlyphRenderMode> renderModes, ref List<float> sdfScales)
     {
         float inverseScale = 1.0f / visualElement.scaledPixelsPerPoint;
+        int meshInfoIndex = 0;
 
         // If multiple colors are required (e.g., color tags or gradient tags are used), then ignore the
         // dynamic-color hint since we cannot store multiple colors for a given text element.
@@ -446,7 +457,7 @@ internal class ATGTextJobSystem
 
             for (int j = 0; j < atlasCount; ++j)
             {
-                var textElementInfoInAtlas = textElementIndicesByMesh[i][j];
+                var textElementInfoInAtlas = textElementIndicesByMesh[meshInfoIndex][j];
                 int remainingVertexCount = textElementInfoInAtlas.Count * 4;
                 int vSrc = 0;
                 while (remainingVertexCount > 0)
@@ -503,6 +514,7 @@ internal class ATGTextJobSystem
                 }
                 Debug.Assert(remainingVertexCount == 0);
             }
+            meshInfoIndex++;
         }
     }
 }

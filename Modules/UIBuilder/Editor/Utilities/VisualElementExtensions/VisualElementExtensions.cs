@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using UnityEditor.UIElements;
 using UnityEngine.Bindings;
 using UnityEngine.UIElements;
+using Unity.Scripting.LifecycleManagement;
 using static Unity.UI.Builder.BuilderUxmlAttributesView;
 
 namespace Unity.UI.Builder
@@ -325,6 +326,7 @@ namespace Unity.UI.Builder
             return element.parent.GetFirstAncestorWithClass(className);
         }
 
+        [NoAutoStaticsCleanup] // Immutable style-property key (wraps a constant string name); holds no user references and is safe to persist across code reload.
         static CustomStyleProperty<string> s_BuilderElementStyleProperty = new CustomStyleProperty<string>("--builder-style");
 
         public static void RegisterCustomBuilderStyleChangeEvent(this VisualElement element, Action<BuilderElementStyle> onElementStyleChanged)

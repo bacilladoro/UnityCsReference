@@ -76,7 +76,14 @@ internal class VariableEditingHandler
         if (attachCompleterOnTarget)
         {
             m_CompleterOnTarget = CreateCompleter();
-            m_CompleterOnTarget.SetupCompleterField(targetField.Q<TextField>(), false);
+            if (field is StyleLengthField lengthField)
+                m_CompleterOnTarget.SetupCompleterField(lengthField.valueField, false);
+            else if (field is StyleFloatField floatField)
+                m_CompleterOnTarget.SetupCompleterField(floatField.valueField, false);
+            else if (field is StyleIntField intField)
+                m_CompleterOnTarget.SetupCompleterField(intField.valueField, false);
+            else
+                m_CompleterOnTarget.SetupCompleterField(field.Q<TextField>(), false);
         }
 
         var fieldLabel = targetField.Q<Label>(BaseField<int>.labelUssClassName);

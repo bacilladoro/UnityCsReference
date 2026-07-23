@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 
 namespace UnityEditor.PackageManager.UI
@@ -11,10 +12,12 @@ namespace UnityEditor.PackageManager.UI
     /// <summary>
     /// Package Manager UI Extensions
     /// </summary>
-    public static class PackageManagerExtensions
+    public static partial class PackageManagerExtensions
     {
         internal static List<IPackageManagerExtension> Extensions { get { return extensions ?? (extensions = new List<IPackageManagerExtension>()); } }
+        [AutoStaticsCleanupOnCodeReload]
         static List<IPackageManagerExtension> extensions;
+        [AutoStaticsCleanupOnCodeReload]
         internal static bool extensionsGUICreated = false;
 
         /// <summary>

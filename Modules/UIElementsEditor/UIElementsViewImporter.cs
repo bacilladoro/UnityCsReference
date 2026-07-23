@@ -25,7 +25,7 @@ namespace UnityEditor.UIElements
     // Make sure UXML is imported after assets than can be addressed in USS
     [VisibleToOtherModules("UnityEditor.UIBuilderModule")]
     [HelpURL("UIE-VisualTree-landing")]
-    [ScriptedImporter(version: 33, ext: "uxml", importQueueOffset: 1102)]
+    [ScriptedImporter(version: 35, ext: "uxml", importQueueOffset: 1102)]
     [ExcludeFromPreset]
     internal class UIElementsViewImporter : ScriptedImporter
     {
@@ -71,6 +71,10 @@ namespace UnityEditor.UIElements
             // Make sure imported objects aren't editable in the Inspector
             vta.hideFlags = HideFlags.NotEditable;
             vta.inlineSheet.hideFlags = HideFlags.NotEditable;
+
+            // Declare a dependency on StylePropertyId layout so the UXML is reimported whenever the list changes.
+            vta.inlineSheet.serializationLayoutHash = StyleSheet.currentSerializationLayoutHash;
+            args.DependsOnCustomDependency(StyleSheet.k_SerializationLayoutDependencyKey);
 
             args.AddObjectToAsset("inlineStyle", vta.inlineSheet);
         }

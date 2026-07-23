@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.ShortcutManagement
 {
@@ -17,6 +18,7 @@ namespace UnityEditor.ShortcutManagement
 
     class BindingValidator : IBindingValidator
     {
+        [NoAutoStaticsCleanup] // immutable readonly set of value-type KeyCodes built once; safe to persist across reload
         static readonly HashSet<KeyCode> s_InvalidKeyCodes = new HashSet<KeyCode>(new[]
         {
             KeyCode.None,

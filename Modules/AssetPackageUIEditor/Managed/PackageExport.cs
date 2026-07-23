@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor.PackageManager.UI.Internal;
 using UnityEngine;
 using UnityEngine.Analytics;
@@ -64,6 +65,7 @@ namespace UnityEditor
         [NonSerialized] private readonly IUtilityAdapter m_UtilityAdapter;
         [NonSerialized] private readonly IEditorUtilityAdapter m_EditorUtilityAdapter;
 
+        [NoAutoStaticsCleanup]
         public static readonly DependencyContainer dependencyContainer = new();
 
         public ExportPackageItem[] items => m_ExportPackageItems;
@@ -72,16 +74,16 @@ namespace UnityEditor
         
         internal static class Styles
         {
-            public static GUIStyle title = "LargeBoldLabel";
-            public static GUIStyle bottomBarBg = "ProjectBrowserBottomBarBg";
-            public static GUIStyle topBarBg = "OT TopBar";
-            public static GUIStyle loadingTextStyle = "CenteredLabel";
-            public static GUIContent authoringOrg = EditorGUIUtility.TrTextContent("Authoring organization:", "The organization that will be used to sign the exported package.");
-            public static GUIContent allText = EditorGUIUtility.TrTextContent("All");
-            public static GUIContent noneText = EditorGUIUtility.TrTextContent("None");
-            public static GUIContent includeDependenciesText = EditorGUIUtility.TrTextContent("Include dependencies", "Include all dependencies required for the selected items in the export list.");
-            public static GUIContent includeScriptsText = EditorGUIUtility.TrTextContent("Include all scripts", "Include all project scripts in the export list to avoid potential compilation errors.");
-            public static GUIContent header = EditorGUIUtility.TrTextContent("Items to Export");
+            public static readonly GUIStyle title = "LargeBoldLabel";
+            public static readonly GUIStyle bottomBarBg = "ProjectBrowserBottomBarBg";
+            public static readonly GUIStyle topBarBg = "OT TopBar";
+            public static readonly GUIStyle loadingTextStyle = "CenteredLabel";
+            public static readonly GUIContent authoringOrg = EditorGUIUtility.TrTextContent("Authoring organization:", "The organization that will be used to sign the exported package.");
+            public static readonly GUIContent allText = EditorGUIUtility.TrTextContent("All");
+            public static readonly GUIContent noneText = EditorGUIUtility.TrTextContent("None");
+            public static readonly GUIContent includeDependenciesText = EditorGUIUtility.TrTextContent("Include dependencies", "Include all dependencies required for the selected items in the export list.");
+            public static readonly GUIContent includeScriptsText = EditorGUIUtility.TrTextContent("Include all scripts", "Include all project scripts in the export list to avoid potential compilation errors.");
+            public static readonly GUIContent header = EditorGUIUtility.TrTextContent("Items to Export");
         }
 
         public PackageExport()

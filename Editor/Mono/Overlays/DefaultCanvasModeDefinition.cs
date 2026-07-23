@@ -3,11 +3,13 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using UnityEngine.UIElements;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Overlays
 {
     sealed class DefaultCanvasModeDefinition : OverlayCanvasModeDefinition
     {
+        [NoAutoStaticsCleanup] // Lazy cache of a UXML asset loaded by fixed path; survives reload and re-initialises on next access.
         static VisualTreeAsset m_UXML;
 
         public override VisualTreeAsset GetUXML()

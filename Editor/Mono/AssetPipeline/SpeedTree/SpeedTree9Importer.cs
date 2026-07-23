@@ -9,6 +9,7 @@ using UnityEngine;
 using UnityEngine.Rendering;
 
 using UnityEditor.AssetImporters;
+using Unity.Scripting.LifecycleManagement;
 
 using STVertex = UnityEditor.SpeedTree.Importer.Vertex;
 using Material = UnityEngine.Material;
@@ -113,8 +114,10 @@ namespace UnityEditor.SpeedTree.Importer
         [SerializeField]
         internal SpeedTreeImporterOutputData m_OutputImporterData;
 
+        [NoAutoStaticsCleanup] // value-type shader-hash cache; recomputed and re-registered on next editor init, safe to persist
         private static ulong s_DefaultShaderHash;
         private static readonly TimeSpan k_CheckDependencyFrequency = TimeSpan.FromSeconds(5);
+        [NoAutoStaticsCleanup] // value-type timestamp used only to throttle dependency checks, safe to persist
         private static DateTime s_LastCheck;
 
         // Cache main objects, created during import process.

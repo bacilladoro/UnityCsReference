@@ -7,13 +7,17 @@ using System;
 using UnityEngine;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Toolbars
 {
     static class AccountDropdown
     {
+        [NoAutoStaticsCleanup] // Recomputed from MPE.ProcessService.level on every EditorApplication.update tick; safe to persist.
         static bool s_Available;
+        [NoAutoStaticsCleanup] // Re-derived from UnityConnect connect state via the StateChanged callback; safe to persist.
         static bool s_LoggedIn;
+        [NoAutoStaticsCleanup] // Editor icon loaded by fixed name (EditorGUIUtility.LoadIcon); the asset survives domain reload.
         static Texture2D s_AccountIcon;
 
         [UnityOnlyMainToolbarPreset]

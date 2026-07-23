@@ -23,19 +23,19 @@ namespace UnityEditor
             public Vector2 m_ScrollPos = new Vector2(0, 0);
         }
 
-        public static float kVolumeScaleMouseDrag = 1.0f;
-        public static float kEffectScaleMouseDrag = 0.3f; // higher precision for effect slot editing
+        public const float kVolumeScaleMouseDrag = 1.0f;
+        public const float kEffectScaleMouseDrag = 0.3f; // higher precision for effect slot editing
 
-        private static Color kMoveColorHighlight = new Color(0.3f, 0.6f, 1.0f, 0.4f);
-        private static Color kMoveSlotColHiAllowed = new Color(1f, 1f, 1f, 0.7f); //new Color(59 / 255f, 162 / 255f, 216 / 255f, 0.7f);
-        private static Color kMoveSlotColLoAllowed = new Color(1f, 1f, 1f, 0.0f);
-        private static Color kMoveSlotColBorderAllowed = new Color(1f, 1f, 1f, 1.0f);
-        private static Color kMoveSlotColHiDisallowed = new Color(1.0f, 0.0f, 0.0f, 0.7f);
-        private static Color kMoveSlotColLoDisallowed = new Color(0.8f, 0.0f, 0.0f, 0.0f);
-        private static Color kMoveSlotColBorderDisallowed = new Color(1.0f, 0.0f, 0.0f, 1.0f);
-        private static int kRectSelectionHashCode = "RectSelection".GetHashCode();
-        private static int kEffectDraggingHashCode = "EffectDragging".GetHashCode();
-        private static int kVerticalFaderHash = "VerticalFader".GetHashCode();
+        private static readonly Color kMoveColorHighlight = new Color(0.3f, 0.6f, 1.0f, 0.4f);
+        private static readonly Color kMoveSlotColHiAllowed = new Color(1f, 1f, 1f, 0.7f); //new Color(59 / 255f, 162 / 255f, 216 / 255f, 0.7f);
+        private static readonly Color kMoveSlotColLoAllowed = new Color(1f, 1f, 1f, 0.0f);
+        private static readonly Color kMoveSlotColBorderAllowed = new Color(1f, 1f, 1f, 1.0f);
+        private static readonly Color kMoveSlotColHiDisallowed = new Color(1.0f, 0.0f, 0.0f, 0.7f);
+        private static readonly Color kMoveSlotColLoDisallowed = new Color(0.8f, 0.0f, 0.0f, 0.0f);
+        private static readonly Color kMoveSlotColBorderDisallowed = new Color(1.0f, 0.0f, 0.0f, 1.0f);
+        private static readonly int kRectSelectionHashCode = "RectSelection".GetHashCode();
+        private static readonly int kEffectDraggingHashCode = "EffectDragging".GetHashCode();
+        private static readonly int kVerticalFaderHash = "VerticalFader".GetHashCode();
 
         public int m_FocusIndex = -1;
         public int m_IndexCounter = 0;
@@ -87,22 +87,6 @@ namespace UnityEditor
         const float spaceBetweenMainGroupsAndReferenced = 50f;
         readonly Vector2 channelStripsOffset = new Vector2(15, 10);
 
-        // For background ui
-        static Texture2D m_GridTexture;
-        private const float kGridTileWidth = 12.0f;
-        private static readonly Color kGridColorDark = new Color(0f, 0f, 0f, 0.18f);
-        private static readonly Color kGridColorLight = new Color(0f, 0f, 0f, 0.10f);
-        private static Color gridColor
-        {
-            get
-            {
-                if (EditorGUIUtility.isProSkin)
-                    return kGridColorDark;
-                else
-                    return kGridColorLight;
-            }
-        }
-
         private AudioMixerDrawUtils.Styles styles
         {
             get { return AudioMixerDrawUtils.styles; }
@@ -111,39 +95,6 @@ namespace UnityEditor
         public AudioMixerChannelStripView(AudioMixerChannelStripView.State state)
         {
             m_State = state;
-        }
-
-        static Texture2D CreateTilableGridTexture(int width, int height, Color backgroundColor, Color lineColor)
-        {
-            Color[] pixels = new Color[width * height];
-
-            // background
-            for (int i = 0; i < height * width; i++)
-                pixels[i] = backgroundColor;
-
-            // right edge
-            for (int i = 0; i < height; i++)
-                pixels[i * width + (width - 1)] = lineColor;
-
-            // bottom edge
-            for (int i = 0; i < width; i++)
-                pixels[(height - 1) * width + i] = lineColor;
-
-            Texture2D texture = new Texture2D(width, height, TextureFormat.RGBA32, false);
-            texture.hideFlags = HideFlags.HideAndDontSave;
-            texture.SetPixels(pixels);
-            texture.Apply();
-            return texture;
-        }
-
-        Texture2D gridTextureTilable
-        {
-            get
-            {
-                if (m_GridTexture == null)
-                    m_GridTexture = CreateTilableGridTexture((int)kGridTileWidth, (int)kGridTileWidth, new Color(0, 0, 0, 0), gridColor);
-                return m_GridTexture;
-            }
         }
 
         void DrawAreaBackground(Rect rect)
@@ -155,8 +106,6 @@ namespace UnityEditor
                 GUI.color = new Color(1, 1, 1, EditorGUIUtility.isProSkin ? 0.6f : 0.2f);
                 AudioMixerDrawUtils.styles.channelStripAreaBackground.Draw(rect, false, false, false, false);
                 GUI.color = prevColor;
-                // Draw grid
-                //GUI.DrawTextureWithTexCoords (rect, gridTextureTilable, new Rect(0, 0, rect.width / gridTextureTilable.width, rect.height / gridTextureTilable.height), true);
             }
         }
 
@@ -332,8 +281,8 @@ namespace UnityEditor
             return value;
         }
 
-        private static Color hfaderCol1 = new Color(0.2f, 0.2f, 0.2f, 1.0f);
-        private static Color hfaderCol2 = new Color(0.4f, 0.4f, 0.4f, 1.0f);
+        private static readonly Color hfaderCol1 = new Color(0.2f, 0.2f, 0.2f, 1.0f);
+        private static readonly Color hfaderCol2 = new Color(0.4f, 0.4f, 0.4f, 1.0f);
 
         public float HorizontalFader(Rect r, float value, float minValue, float maxValue, int direction, float dragScale)
         {

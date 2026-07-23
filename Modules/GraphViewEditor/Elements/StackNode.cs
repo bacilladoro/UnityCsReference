@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -22,7 +23,9 @@ namespace UnityEditor.Experimental.GraphView
 
         internal GraphView graphView { get; set; }
 
+        [NoAutoStaticsCleanup] // CSS property key — immutable string handle, no ALC-pinning refs
         private static CustomStyleProperty<float> s_SeparatorHeight = new CustomStyleProperty<float>("--separator-height");
+        [NoAutoStaticsCleanup] // CSS property key — immutable string handle, no ALC-pinning refs
         private static CustomStyleProperty<float> s_SeparatorExtent = new CustomStyleProperty<float>("--separator-extent");
 
         private float m_SeparatorHeight = 4f;

@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEditor.ShortcutManagement;
 
@@ -11,6 +12,7 @@ namespace UnityEditor
     {
         internal const string k_VertexSnappingShortcut = "Scene View/Vertex Snapping";
         internal const string k_VertexSnappingToggleShortcut = "Scene View/Toggle Vertex Snapping";
+        [NoAutoStaticsCleanup] // transient snap offset; zero is safe default after reload
         private static Vector3 s_VertexSnappingOffset = Vector3.zero;
 
         [Shortcut(k_VertexSnappingToggleShortcut, typeof(SceneView), KeyCode.V, ShortcutModifiers.Shift)]

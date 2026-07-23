@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEngine.UIElements.UIR
 {
@@ -227,7 +228,9 @@ namespace UnityEngine.UIElements.UIR
         public static readonly BMPAlloc identityTransform, infiniteClipRect, fullOpacity, clearColor, defaultTextCoreSettings;
 #pragma warning restore 649
 
+        [NoAutoStaticsCleanup] // ref counter for shared default texture; must persist across reload
         static int s_DefaultShaderInfoTextureRefCount;
+        [NoAutoStaticsCleanup] // lazily created shared texture; survives reload
         static Texture2D s_DefaultShaderInfoTexture;
         static void AcquireDefaultShaderInfoTexture()
         {

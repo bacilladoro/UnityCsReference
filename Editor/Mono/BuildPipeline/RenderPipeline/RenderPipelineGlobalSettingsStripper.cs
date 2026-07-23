@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor.Build.Reporting;
 using UnityEditor.Rendering;
 using UnityEngine;
@@ -14,7 +15,9 @@ namespace UnityEditor.Build.Rendering
     {
         public int callbackOrder => (int) ExecutionOrder.StripRenderPipelineGlobalSettingsAsset;
 
+        [NoAutoStaticsCleanup] // transient within-build flag, reset to false at the start of every OnPreprocessBuild
         static bool s_IsCurrentRenderPipelineGlobalsSettingsDirty;
+        [NoAutoStaticsCleanup] // transient within-build flag, reset to false at the start of every OnPreprocessBuild
         static bool s_IsGraphicsSettingsDirty;
 
         public void OnPreprocessBuild(BuildReport report)

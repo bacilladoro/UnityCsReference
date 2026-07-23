@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using UnityEngine.UIElements;
 using UnityEngine.UIElements.StyleSheets.Syntax;
 using UnityEngine.UIElements.StyleSheets;
+using Unity.Scripting.LifecycleManagement;
 
 namespace Unity.UI.Builder
 {
@@ -21,6 +22,7 @@ namespace Unity.UI.Builder
         public static readonly string UnitRad = "rad";
         public static readonly string UnitTurn = "turn";
 
+        [NoAutoStaticsCleanup] // Immutable lookup table of constant string<->enum entries; safe to persist across code reload.
         public static readonly Dictionary<string, Dimension.Unit> StringToDimensionUnitMap = new Dictionary<string, Dimension.Unit>()
         {
             { UnitPixel, Dimension.Unit.Pixel },
@@ -33,6 +35,7 @@ namespace Unity.UI.Builder
             { UnitMillisecond, Dimension.Unit.Millisecond },
         };
 
+        [NoAutoStaticsCleanup] // Immutable lookup table of constant enum<->string entries; safe to persist across code reload.
         public static readonly Dictionary<Dimension.Unit, string> DimensionUnitToStringMap = new Dictionary<Dimension.Unit, string>()
         {
             { Dimension.Unit.Pixel, UnitPixel },
@@ -53,6 +56,7 @@ namespace Unity.UI.Builder
         public static readonly string KeywordContain = "contain";
 
 
+        [NoAutoStaticsCleanup] // Immutable lookup table of constant string<->keyword entries; safe to persist across code reload.
         public static readonly Dictionary<string, StyleValueKeyword> StringToStyleValueKeywordMap = new Dictionary<string, StyleValueKeyword>()
         {
             { "initial", StyleValueKeyword.Initial },
@@ -62,6 +66,7 @@ namespace Unity.UI.Builder
             { "contain", StyleValueKeyword.Contain }
         };
 
+        [NoAutoStaticsCleanup] // Immutable lookup table of constant keyword<->string entries; safe to persist across code reload.
         public static readonly Dictionary<StyleValueKeyword, string> StyleValueKeywordToStringMap = new Dictionary<StyleValueKeyword, string>()
         {
             { StyleValueKeyword.Initial, "initial" },
@@ -72,10 +77,15 @@ namespace Unity.UI.Builder
         };
 
         // Keyword Lists
+        [NoAutoStaticsCleanup] // Immutable list of constant keyword strings; safe to persist across code reload.
         public static readonly List<string> KLEmpty = new List<string>() {};
+        [NoAutoStaticsCleanup] // Immutable list of constant keyword strings; safe to persist across code reload.
         public static readonly List<string> KLDefault = new List<string>() { KeywordInitial };
+        [NoAutoStaticsCleanup] // Immutable list of constant keyword strings; safe to persist across code reload.
         public static readonly List<string> KLAuto = new List<string>() { KeywordAuto, KeywordInitial };
+        [NoAutoStaticsCleanup] // Immutable list of constant keyword strings; safe to persist across code reload.
         public static readonly List<string> KLNone = new List<string>() { KeywordNone, KeywordInitial };
+        [NoAutoStaticsCleanup] // Immutable list of constant keyword strings; safe to persist across code reload.
         public static readonly List<string> KLCoverContain = new List<string>() { KeywordCover, KeywordContain };
 
         public static List<string> GetStyleKeywords(string binding)

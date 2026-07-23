@@ -5,6 +5,7 @@
 using System.Linq;
 using UnityEngine;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 
 // NOTE:
 // This file should only contain internal functions of the EditorGUI class
@@ -14,8 +15,8 @@ namespace UnityEditor
 {
     public sealed partial class EditorGUI
     {
-        internal static int s_DropdownButtonHash = "DropdownButton".GetHashCode();
-        static int s_MouseDeltaReaderHash = "MouseDeltaReader".GetHashCode();
+        internal static readonly int s_DropdownButtonHash = "DropdownButton".GetHashCode();
+        static readonly int s_MouseDeltaReaderHash = "MouseDeltaReader".GetHashCode();
 
         internal static bool Button(Rect position, GUIContent content)
         {
@@ -158,6 +159,7 @@ namespace UnityEditor
 
 
         // Get mouse delta values in different situations when click-dragging
+        [NoAutoStaticsCleanup] // transient drag position, value type, safe to persist
         static Vector2 s_MouseDeltaReaderLastPos;
         internal static Vector2 MouseDeltaReader(Rect position, bool activated)
         {
@@ -195,7 +197,9 @@ namespace UnityEditor
             return Vector2.zero;
         }
 
+        [NoAutoStaticsCleanup] // cached GUIStyle, whitelisted, safe to persist
         private static GUIStyle s_LargeSplitLeftStyle;
+        [NoAutoStaticsCleanup] // cached GUIStyle, whitelisted, safe to persist
         private static GUIStyle s_LargeSplitRightStyle;
         public static bool LargeSplitButtonWithDropdownList(GUIContent content, string[] buttonNames, GenericMenu.MenuFunction2 callback) =>
             LargeSplitButtonWithDropdownList(content, buttonNames, callback, false);

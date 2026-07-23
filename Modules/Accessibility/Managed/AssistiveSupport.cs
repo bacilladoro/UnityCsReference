@@ -4,6 +4,7 @@
 
 using System;
 using System.Diagnostics.CodeAnalysis;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Bindings;
 
 namespace UnityEngine.Accessibility
@@ -45,7 +46,7 @@ namespace UnityEngine.Accessibility
     ///- &lt;a href="https://support.apple.com/en-us/guide/voiceover/welcome/mac" &gt;VoiceOver user guide for macOS&lt;/a&gt;
     /// </para>
     /// </remarks>
-    public static class AssistiveSupport
+    public static partial class AssistiveSupport
     {
         internal class NotificationDispatcher : IAccessibilityNotificationDispatcher
         {
@@ -95,10 +96,13 @@ namespace UnityEngine.Accessibility
             ForceDisabled,
         }
 
+        [AutoStaticsCleanupOnCodeReload]
+        static IAccessibilityNotificationDispatcher s_NotificationDispatcher = new NotificationDispatcher();
+
         /// <summary>
         /// Service used to send accessibility notifications to the screen reader.
         /// </summary>
-        public static IAccessibilityNotificationDispatcher notificationDispatcher { get; } = new NotificationDispatcher();
+        public static IAccessibilityNotificationDispatcher notificationDispatcher => s_NotificationDispatcher;
 
         /// <summary>
         /// Event invoked on the main thread when the user turns the screen reader on or off.
@@ -122,8 +126,10 @@ namespace UnityEngine.Accessibility
         /// custom event.
         /// <code source="../Tests/AccessibilityExamples/Assets/Examples/NarratorStatusManager.cs"/>
         /// </example>
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<bool> screenReaderStatusChanged;
 
+        [AutoStaticsCleanupOnCodeReload]
         static event Action<AccessibilityHierarchy> s_ActiveHierarchyChanged;
 
         /// <summary>
@@ -145,6 +151,7 @@ namespace UnityEngine.Accessibility
         /// Subscribe to this event if you need to know when the screen reader focus changes. For example, to scroll the
         /// visual element represented by the focused node into view if it is not currently visible.
         /// </remarks>
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<AccessibilityNode> nodeFocusChanged;
 
         /// <summary>
@@ -166,6 +173,17 @@ namespace UnityEngine.Accessibility
         /// <para>
         /// When this property is set, Unity notifies the screen reader of the new hierarchy by calling
         /// <see cref="IAccessibilityNotificationDispatcher.SendScreenChanged"/> (with a @@null@@ parameter).
+        /// </para>
+        /// <para>
+        /// **Note**: Only the accessibility hierarchy for the application's main window is supported. Content displayed
+        /// on additional windows, such as on secondary displays, is not exposed to screen readers.
+        /// </para>
+        /// <para>
+        /// **Warning**: Assigning a hierarchy builds its native representation, and setting this property to @@null@@
+        /// tears it down. This has a non-trivial cost on the following platforms:
+        ///\\
+        ///- **iOS**: Switching the active hierarchy has a high cost that scales with the size of the hierarchy. Avoid setting this property frequently in performance-sensitive code.
+        ///- **macOS**: Switching the active hierarchy has a moderate cost that scales with the size of the hierarchy. Doing so frequently can affect performance.
         /// </para>
         /// </remarks>
         public static AccessibilityHierarchy activeHierarchy
@@ -218,6 +236,7 @@ namespace UnityEngine.Accessibility
             _ => AccessibilityManager.IsScreenReaderEnabled()
         };
 
+        [AutoStaticsCleanupOnCodeReload]
         static ScreenReaderStatusOverride s_ScreenReaderStatusOverride;
 
         /// <summary>

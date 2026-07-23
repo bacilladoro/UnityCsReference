@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor.PackageManager.UI.Internal;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.PackageManager.UI
 {
@@ -13,7 +14,7 @@ namespace UnityEditor.PackageManager.UI
     /// Class for Package Sample
     /// </summary>
     [Serializable]
-    public struct Sample
+    public partial struct Sample
     {
         /// <summary>
         /// Sample import options
@@ -196,6 +197,7 @@ namespace UnityEditor.PackageManager.UI
         /// </example>
         /// <seealso cref="SampleImportEventData"/>
         /// <seealso cref="Import"/>
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<IReadOnlyList<SampleImportEventData>> OnBeforeImportFinish;
 
         internal static void RaiseOnBeforeImportFinish(IReadOnlyList<SampleImportEventData> eventData)

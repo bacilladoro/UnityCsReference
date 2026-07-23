@@ -241,7 +241,7 @@ namespace Unity.ProjectAuditor.Editor.UI
 
                         if (m_ViewManager.HasPendingCategory(category))
                         {
-                            var text = $"{title} analysis still running...";
+                            var text = string.Format(Contents.AnalysisInProgressText, title);
                             var content = EditorGUIUtility.TrTextContent($"{text}|{Utility.GetStatusWheelFrame()}", text, string.Empty, Utility.GetIcon(Utility.IconType.StatusWheel).image);
                             GUILayout.Label(content);
                         }
@@ -378,6 +378,8 @@ namespace Unity.ProjectAuditor.Editor.UI
             public static readonly GUIContent IssueBreakdownContent = EditorGUIUtility.TrTextContent("Issue Breakdown");
             public static readonly GUIContent TopTenIssuesContent = EditorGUIUtility.TrTextContent("Top Ten Issues");
             public static readonly GUIContent AdditionalInsightsContent = EditorGUIUtility.TrTextContent("Additional Insights");
+
+            public static readonly string AnalysisInProgressText = L10n.Tr("{0} analysis is still running in the background (see more in Window > General > Progress)");
         }
     }
 }

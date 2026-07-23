@@ -241,15 +241,16 @@ namespace UnityEditorInternal.Profiling
             BuildRenderingOverviewCard(f);
 
             // === Card 2: GPU Resident Drawer (conditional) ===
-            // Show whenever ANY tracked renderer category is non-zero — including the
-            // informational ones (NonRendering / Inactive). Hiding the card when only those
-            // are non-zero would silently swallow asset-issue warnings.
-            int grd = GetCounter(f, GRDCounterNames.k_GRDRenderers);
-            int excl = GetCounter(f, GRDCounterNames.k_ExcludedRenderers);
-            int nonRendering = GetCounter(f, GRDCounterNames.k_NonRenderingRenderers);
-            int inactive = GetCounter(f, GRDCounterNames.k_InactiveRenderers);
-            if (grd > 0 || excl > 0 || nonRendering > 0 || inactive > 0)
+            // Show whenever GRD ran this frame (the k_Active liveness flag). Each sub-section
+            // self-skips on empty data, so an active-but-empty frame shows just the title.
+            if (GetCounter(f, GRDCounterNames.k_Active) > 0)
+            {
+                int grd = GetCounter(f, GRDCounterNames.k_GRDRenderers);
+                int excl = GetCounter(f, GRDCounterNames.k_ExcludedRenderers);
+                int nonRendering = GetCounter(f, GRDCounterNames.k_NonRenderingRenderers);
+                int inactive = GetCounter(f, GRDCounterNames.k_InactiveRenderers);
                 BuildGRDCard(f, grd, excl, nonRendering, inactive);
+            }
         }
 
         // ==================== CARD 1: RENDERING OVERVIEW ====================

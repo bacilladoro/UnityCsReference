@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Bindings;
 using UnityEngineInternal;
@@ -18,6 +19,7 @@ namespace UnityEditor
         private GUISkin skin;
         private EntityId entityId;
         private GenericStack scrollViewStates;
+        private int unbalancedGroupsCount;
 
         private static extern void Internal_SetupSavedGUIState(out IntPtr state, out Vector2 screenManagerSize);
 
@@ -25,20 +27,36 @@ namespace UnityEditor
 
         internal static extern int Internal_GetGUIDepth();
 
+        // Save/restore only the managed IMGUI layout state (the native GUIState is handled separately).
+        private void CaptureManaged()
+        {
+            skin = GUI.skin;
+            layoutCache = GUILayoutUtility.current.State;
+            unbalancedGroupsCount = GUILayoutUtility.unbalancedgroupscount;
+            entityId = GUIUtility.s_OriginalID;
+            if (GUI.scrollViewStates.Count != 0)
+            {
+                scrollViewStates = GUI.scrollViewStates;
+                GUI.scrollViewStates = new GenericStack();
+            }
+        }
+
+        private void ApplyManaged()
+        {
+            GUILayoutUtility.current.CopyState(layoutCache);
+            GUILayoutUtility.unbalancedgroupscount = unbalancedGroupsCount;
+            GUI.skin = skin;
+            GUIUtility.s_OriginalID = entityId;
+            if (scrollViewStates != null)
+                GUI.scrollViewStates = scrollViewStates;
+        }
+
         internal static SavedGUIState Create()
         {
             SavedGUIState state = new SavedGUIState();
             if (Internal_GetGUIDepth() > 0)
             {
-                state.skin = GUI.skin;
-                state.layoutCache = GUILayoutUtility.current.State;
-                state.entityId = GUIUtility.s_OriginalID;
-                if (GUI.scrollViewStates.Count != 0)
-                {
-                    state.scrollViewStates = GUI.scrollViewStates;
-                    GUI.scrollViewStates = new GenericStack();
-                }
-
+                state.CaptureManaged();
                 Internal_SetupSavedGUIState(out state.guiState, out state.screenManagerSize);
             }
             return state;
@@ -48,18 +66,26 @@ namespace UnityEditor
         {
             if (layoutCache.layoutGroups != null)
             {
-                GUILayoutUtility.current.CopyState(layoutCache);
-                GUI.skin = skin;
-                GUIUtility.s_OriginalID = entityId;
-
-                if (scrollViewStates != null)
-                {
-                    GUI.scrollViewStates = scrollViewStates;
-                }
-
+                ApplyManaged();
                 Internal_ApplySavedGUIState(guiState, screenManagerSize);
                 GUIClip.Reapply();
             }
+        }
+
+        // UUM-145914: managed-only backup used by the native re-entrancy path (GUIView::OnInputEvent).
+        static readonly Stack<SavedGUIState> s_ReentrantLayoutStates = new Stack<SavedGUIState>();
+
+        internal static void PushReentrantLayoutState()
+        {
+            SavedGUIState state = new SavedGUIState();
+            state.CaptureManaged();
+            s_ReentrantLayoutStates.Push(state);
+        }
+
+        internal static void PopReentrantLayoutState()
+        {
+            if (s_ReentrantLayoutStates.Count > 0)
+                s_ReentrantLayoutStates.Pop().ApplyManaged();
         }
     }
 }

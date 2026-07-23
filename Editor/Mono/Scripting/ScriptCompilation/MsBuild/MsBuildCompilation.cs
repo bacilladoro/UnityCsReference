@@ -336,7 +336,6 @@ partial class MsBuildCompilation
             precompiledAssemblyExplicitlyReferenced = precompiledExplicitlyReferenced,
             errors = new List<string>(),
             warnings = new List<string>(),
-            predefinedAssembliesAllowUnsafeCode = PlayerSettings.allowUnsafeCode,
             // Built-ins live outside the project, so the converter can't discover them; supply them here.
             builtinAnalyzerPaths = UnityEditorMSBuildPropsTargetsGeneration.GetBuiltinRoslynAnalyzerPaths(),
             // The editor's analyzer registry: lets the converter classify analyzer DLLs without reading

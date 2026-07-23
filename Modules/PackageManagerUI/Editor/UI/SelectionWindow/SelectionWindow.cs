@@ -4,11 +4,12 @@
 
 using System;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 
 namespace UnityEditor.PackageManager.UI.Internal;
 
-internal class SelectionWindow : EditorWindow
+internal partial class SelectionWindow : EditorWindow
 {
     public static void Open(SelectionWindowData data)
     {
@@ -18,6 +19,7 @@ internal class SelectionWindow : EditorWindow
         window.Show();
     }
 
+    [AutoStaticsCleanupOnCodeReload]
     public static event Action<IReadOnlyCollection<Asset>> onRemoveSelectionDone = delegate {};
 
     private SelectionWindowRoot m_Root;

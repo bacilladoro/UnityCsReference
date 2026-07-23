@@ -21,11 +21,14 @@ internal class StyleSheetsWindow : EditorWindow
     const int k_MenuPriority = 3020;
     const string k_StyleSheetDark = "UIToolkitAuthoring/StyleSheets/StyleSheetsWindowDark.uss";
     const string k_StyleSheetLight = "UIToolkitAuthoring/StyleSheets/StyleSheetsWindowLight.uss";
+    const string k_EmptyLabelSeparatorUssClassName = "unity-style-sheets-window__empty-label--separator";
 
     Hierarchy.Hierarchy m_Hierarchy;
     HierarchyView m_HierarchyView;
     StyleSheetEditingNodeTypeHandler m_Handler;
     Dictionary<StyleSheet, HierarchyNode> m_StyleSheetNodes = new();
+    Dictionary<(VisualTreeAsset owningDocument, StyleSheet styleSheet), HierarchyNode> m_ParentStyleSheetNodes = new();
+    HierarchyNode m_GroupNode = HierarchyNode.Null;
     ILiveReloadSystem m_LiveReloadSystem;
     VisualTreeAsset m_TrackedVTA;
     StyleSheetAssetTracker m_StyleSheetTracker;
@@ -38,7 +41,13 @@ internal class StyleSheetsWindow : EditorWindow
     VisualElement m_ContainerElement;
 
     [NonSerialized]
-    VisualElementEditingStage m_CurrentStage;
+    StyleSheetsContext m_Context = StyleSheetsContext.None;
+
+    [NonSerialized]
+    VisualElementEditingStage m_EditingStage;
+
+    [NonSerialized]
+    VisualTreeAssetEditingContext m_LastSource;
 
     [SerializeReference]
     List<StyleSheet> m_LastStyleSheets = new();
@@ -48,6 +57,8 @@ internal class StyleSheetsWindow : EditorWindow
     internal HierarchyView HierarchyView => m_HierarchyView;
     internal StyleSheetNodeTypeHandler Handler => m_Handler;
     internal HierarchyGlobalSelectionHandler GlobalSelectionHandler => m_GlobalSelectionHandler;
+    internal int ParentStyleSheetCount => m_ParentStyleSheetNodes.Count;
+    internal VisualTreeAsset EditedAsset => m_Context.EditedAsset;
 
     [SerializeField]
     StyleSheet m_ActiveStyleSheet;
@@ -118,6 +129,8 @@ internal class StyleSheetsWindow : EditorWindow
         m_Handler = null;
         m_GlobalSelectionHandler = null;
         m_StyleSheetNodes.Clear();
+        m_ParentStyleSheetNodes.Clear();
+        m_GroupNode = HierarchyNode.Null;
     }
 
     void CreateGUI()
@@ -171,7 +184,8 @@ internal class StyleSheetsWindow : EditorWindow
 
         if (newStage is not VisualElementEditingStage editingStage)
         {
-            m_CurrentStage = null;
+            m_Context = StyleSheetsContext.None;
+            m_EditingStage = null;
 
             RemoveAssetTrackers();
             foreach (var node in m_StyleSheetNodes.Values)
@@ -179,6 +193,16 @@ internal class StyleSheetsWindow : EditorWindow
                 m_Handler.RemoveStyleSheet(node);
             }
             m_StyleSheetNodes.Clear();
+            foreach (var node in m_ParentStyleSheetNodes.Values)
+            {
+                m_Handler.RemoveStyleSheet(node);
+            }
+            m_ParentStyleSheetNodes.Clear();
+            if (m_GroupNode != HierarchyNode.Null)
+            {
+                m_Handler.RemoveStyleSheetGroup(m_GroupNode);
+                m_GroupNode = HierarchyNode.Null;
+            }
             m_ActiveStyleSheetInVisualTreeAsset.Clear();
 
             if (m_ContainerElement != null)
@@ -194,15 +218,16 @@ internal class StyleSheetsWindow : EditorWindow
                 m_StagingModeContainerElement.style.display = DisplayStyle.Flex;
 
             UpdateOpenSettingsButton();
-
             return;
         }
 
         // Track when we first enter staging mode from a non-staging stage
-        if (m_CurrentStage == null && m_Handler != null)
+        if (m_EditingStage == null && m_Handler != null)
             m_Handler.SetEnteringStagingMode();
 
-        m_CurrentStage = editingStage;
+        m_EditingStage = editingStage;
+        m_LastSource = editingStage.Context;
+        m_Context = StyleSheetsContextFactory.FromStage(editingStage);
         m_ContainerElement.style.display = DisplayStyle.Flex;
         m_StagingModeContainerElement.style.display = DisplayStyle.None;
 
@@ -254,8 +279,9 @@ internal class StyleSheetsWindow : EditorWindow
         // tracked VTA to see it it contains any style sheet.
         if (styleSheet == null)
         {
-            var styleSheets = m_TrackedVTA?.GetAllReferencedStyleSheets();
-            if (styleSheets is { Count: > 0 })
+            using var _ = ListPool<StyleSheet>.Get(out var styleSheets);
+            GetEditableStyleSheets(styleSheets);
+            if (styleSheets.Count > 0)
                 styleSheet = styleSheets[0];
         }
 
@@ -282,7 +308,9 @@ internal class StyleSheetsWindow : EditorWindow
             return;
         }
 
-        var noStyleSheets = m_StyleSheetNodes.Count == 0;
+        var noEditableStyleSheets = m_StyleSheetNodes.Count == 0;
+        var hasInheritedStyleSheets = m_ParentStyleSheetNodes.Count > 0;
+        var noStyleSheets = noEditableStyleSheets && !hasInheritedStyleSheets;
         var noNodesDisplayed = m_HierarchyView.ViewModel.Count == 0;
 
         if (m_HierarchyView.Filtering)
@@ -296,7 +324,69 @@ internal class StyleSheetsWindow : EditorWindow
             m_HierarchyView.style.display = noStyleSheets ? DisplayStyle.None : DisplayStyle.Flex;
         }
 
-        m_EmptyLabelElement.style.display = noStyleSheets && !m_HierarchyView.Filtering ? DisplayStyle.Flex : DisplayStyle.None;
+        ShowEmptyStyleSheetLabel(noEditableStyleSheets && !m_HierarchyView.Filtering, hasInheritedStyleSheets);
+    }
+
+    void ShowEmptyStyleSheetLabel(bool show, bool hasInheritedStyleSheets)
+    {
+        m_EmptyLabelElement.style.display = show ? DisplayStyle.Flex : DisplayStyle.None;
+        m_EmptyLabelElement.EnableInClassList(k_EmptyLabelSeparatorUssClassName, show && hasInheritedStyleSheets);
+    }
+
+    void OnEmptyLabelDragUpdated(DragUpdatedEvent evt)
+    {
+        if (!HasDroppableStyleSheet())
+            return;
+
+        DragAndDrop.visualMode = DragAndDropVisualMode.Copy;
+        evt.StopPropagation();
+    }
+
+    void OnEmptyLabelDragPerform(DragPerformEvent evt)
+    {
+        if (m_TrackedVTA == null)
+            return;
+
+        var addedAny = false;
+        foreach (var path in DragAndDrop.paths)
+        {
+            if (!IsAddableStyleSheetPath(path))
+                continue;
+
+            AddStyleSheetCommand.Execute(CommandSources.StyleSheets, m_TrackedVTA, path);
+            addedAny = true;
+        }
+
+        if (!addedAny)
+            return;
+
+        DragAndDrop.AcceptDrag();
+        RefreshStyleSheetList();
+        evt.StopPropagation();
+    }
+
+    bool HasDroppableStyleSheet()
+    {
+        if (m_TrackedVTA == null)
+            return false;
+
+        foreach (var path in DragAndDrop.paths)
+        {
+            if (IsAddableStyleSheetPath(path))
+                return true;
+        }
+
+        return false;
+    }
+
+    bool IsAddableStyleSheetPath(string path)
+    {
+        if (!StyleSheetAssetUtilities.TryLoadValidStyleSheet(path, out var styleSheet))
+            return false;
+
+        using var _ = ListPool<StyleSheet>.Get(out var editable);
+        GetEditableStyleSheets(editable);
+        return !editable.Contains(styleSheet);
     }
 
     void PrepareUI()
@@ -312,6 +402,8 @@ internal class StyleSheetsWindow : EditorWindow
         m_OpenSettingsButton = rootVisualElement.Q<Button>("unity-style-sheets-window-open-settings-button");
         m_OpenSettingsButton.clicked += UIToolkitAuthoringSettingsProvider.OpenSettings;
         m_EmptyLabelElement = rootVisualElement.Q<Label>("unity-style-sheets-window-empty-label");
+        m_EmptyLabelElement.RegisterCallback<DragUpdatedEvent>(OnEmptyLabelDragUpdated);
+        m_EmptyLabelElement.RegisterCallback<DragPerformEvent>(OnEmptyLabelDragPerform);
         m_NoResultsLabelElement = rootVisualElement.Q<Label>("unity-style-sheets-window-no-results-label");
         m_ContainerElement = rootVisualElement.Q<VisualElement>("unity-style-sheets-window-container");
 
@@ -382,7 +474,9 @@ internal class StyleSheetsWindow : EditorWindow
             TrickleDown.TrickleDown);
         m_HierarchyView?.ListView.RegisterCallback<PointerDownEvent>(OnHierarchyWindowMouseDown);
 
-        m_ContainerElement.Add(m_HierarchyView);
+        m_ContainerElement.Insert(m_ContainerElement.IndexOf(m_EmptyLabelElement), m_HierarchyView);
+        m_HierarchyView.style.flexBasis = 0;
+        m_EmptyLabelElement.style.flexBasis = 0;
     }
 
     void OnPointerUp(PointerUpEvent evt)
@@ -428,6 +522,11 @@ internal class StyleSheetsWindow : EditorWindow
         {
             m_LiveReloadSystem?.UnregisterAuthoringTrackerForAsset(m_StyleSheetTracker, stylesheet);
         }
+
+        foreach (var key in m_ParentStyleSheetNodes.Keys)
+        {
+            m_LiveReloadSystem?.UnregisterAuthoringTrackerForAsset(m_StyleSheetTracker, key.styleSheet);
+        }
     }
 
     void UpdateAssetTrackers()
@@ -435,13 +534,14 @@ internal class StyleSheetsWindow : EditorWindow
         if (m_LiveReloadSystem == null)
             return;
 
-        if (StageUtility.GetCurrentStage() is not VisualElementEditingStage uiStage)
+        var editedAsset = m_Context.EditedAsset;
+        if (editedAsset == null)
             return;
 
         if (m_TrackedVTA)
             m_LiveReloadSystem.UnregisterAuthoringTrackerForAsset(m_VisualTreeAssetTracker, m_TrackedVTA);
 
-        m_TrackedVTA = uiStage.EditedVisualTreeAsset;
+        m_TrackedVTA = editedAsset;
         m_LiveReloadSystem.RegisterAuthoringTrackerForAsset(m_VisualTreeAssetTracker, m_TrackedVTA);
 
         // Re-register all existing stylesheets to the live reload system
@@ -449,6 +549,11 @@ internal class StyleSheetsWindow : EditorWindow
         foreach (var stylesheet in m_StyleSheetNodes.Keys)
         {
             m_LiveReloadSystem.RegisterAuthoringTrackerForAsset(m_StyleSheetTracker, stylesheet);
+        }
+
+        foreach (var key in m_ParentStyleSheetNodes.Keys)
+        {
+            m_LiveReloadSystem.RegisterAuthoringTrackerForAsset(m_StyleSheetTracker, key.styleSheet);
         }
 
         RefreshStyleSheetList();
@@ -479,7 +584,7 @@ internal class StyleSheetsWindow : EditorWindow
             return false;
 
         using var _ = ListPool<StyleSheet>.Get(out var sheets);
-        m_TrackedVTA.GetAllReferencedStyleSheets(sheets);
+        GetEditableStyleSheets(sheets);
 
         if (ActiveStyleSheet != null && sheets.Contains(ActiveStyleSheet))
             return true;
@@ -492,6 +597,13 @@ internal class StyleSheetsWindow : EditorWindow
         }
 
         return TryCreateStyleSheet() && ActiveStyleSheet != null;
+    }
+
+    void GetEditableStyleSheets(List<StyleSheet> output)
+    {
+        output.Clear();
+        if (m_TrackedVTA != null)
+            m_TrackedVTA.GetAllReferencedStyleSheets(output);
     }
 
     void OnVisualTreeAssetChanged()
@@ -529,6 +641,17 @@ internal class StyleSheetsWindow : EditorWindow
         RefreshStyleSheetRules();
     }
 
+    void OnProjectChange()
+    {
+        if (m_GroupNode == HierarchyNode.Null)
+            return;
+
+        if (HasMissingParent())
+            RefreshStyleSheetList();
+        else
+            RefreshParentDocumentNames();
+    }
+
     void RefreshStyleSheetList()
     {
         // Update the hierarchy nodes in case there any pending changes.
@@ -536,6 +659,8 @@ internal class StyleSheetsWindow : EditorWindow
 
         if (m_Handler == null || m_Hierarchy == null)
             return;
+
+        RefreshContext();
 
         // Clean up stale nodes that no longer exist in hierarchy (e.g., after domain reload)
         var nodesToRemove = new List<StyleSheet>();
@@ -551,10 +676,30 @@ internal class StyleSheetsWindow : EditorWindow
             m_StyleSheetNodes.Remove(stylesheet);
         }
 
-        var stylesheets = m_TrackedVTA?.GetAllReferencedStyleSheets();
-        var emptyStyleSheetWindow = stylesheets == null || stylesheets.Count == 0;
+        using var staleParentsHandle = ListPool<(VisualTreeAsset owningDocument, StyleSheet styleSheet)>.Get(out var staleParents);
+        foreach (var (key, node) in m_ParentStyleSheetNodes)
+        {
+            if (!m_Hierarchy.Exists(node))
+            {
+                staleParents.Add(key);
+            }
+        }
+        foreach (var key in staleParents)
+        {
+            m_ParentStyleSheetNodes.Remove(key);
+        }
 
-        m_EmptyLabelElement.style.display = emptyStyleSheetWindow ? DisplayStyle.Flex : DisplayStyle.None;
+        using var stylesheetsHandle = ListPool<StyleSheet>.Get(out var stylesheets);
+        GetEditableStyleSheets(stylesheets);
+
+        var parents = m_Context.ParentStyleSheets;
+        var noEditableStyleSheets = stylesheets.Count == 0;
+        var hasInheritedStyleSheets = parents.Count > 0;
+        // Only a document with neither its own nor inherited stylesheets is truly empty; an in-context
+        // document with inherited-only stylesheets still shows the inherited group plus the prompt.
+        var emptyStyleSheetWindow = noEditableStyleSheets && !hasInheritedStyleSheets;
+
+        ShowEmptyStyleSheetLabel(noEditableStyleSheets && !m_HierarchyView.Filtering, hasInheritedStyleSheets);
         m_NoResultsLabelElement.style.display = DisplayStyle.None;
         m_HierarchyView.style.display = emptyStyleSheetWindow ? DisplayStyle.None : DisplayStyle.Flex;
 
@@ -567,6 +712,7 @@ internal class StyleSheetsWindow : EditorWindow
                 m_LiveReloadSystem?.UnregisterAuthoringTrackerForAsset(m_StyleSheetTracker, stylesheet);
             }
             m_StyleSheetNodes.Clear();
+            RemoveOldParentStyleSheets(parents);
 
             ActiveStyleSheet = null;
             if (m_TrackedVTA)
@@ -625,13 +771,7 @@ internal class StyleSheetsWindow : EditorWindow
             m_Handler.Remap(remappings);
         }
 
-        // Add truly new stylesheets
-        foreach (var stylesheet in added)
-        {
-            m_LiveReloadSystem?.RegisterAuthoringTrackerForAsset(m_StyleSheetTracker, stylesheet);
-            var rootNode = m_Handler.AddStyleSheet(stylesheet);
-            m_StyleSheetNodes[stylesheet] = rootNode;
-        }
+        RemoveOldParentStyleSheets(parents);
 
         // Remove truly removed stylesheets
         foreach (var stylesheet in removed)
@@ -644,6 +784,15 @@ internal class StyleSheetsWindow : EditorWindow
             }
         }
 
+        foreach (var stylesheet in added)
+        {
+            m_LiveReloadSystem?.RegisterAuthoringTrackerForAsset(m_StyleSheetTracker, stylesheet);
+            var rootNode = m_Handler.AddStyleSheet(stylesheet);
+            m_StyleSheetNodes[stylesheet] = rootNode;
+        }
+
+        AddNewParentStyleSheets(parents);
+
         // Set and store the active stylesheet for the current visual tree asset
         if (m_ActiveStyleSheetInVisualTreeAsset.TryGetValue(m_TrackedVTA, out var savedActive) && stylesheets.Contains(savedActive))
         {
@@ -655,8 +804,108 @@ internal class StyleSheetsWindow : EditorWindow
             m_ActiveStyleSheetInVisualTreeAsset[m_TrackedVTA] = ActiveStyleSheet;
         }
 
-        // Update sort order for all stylesheets to match UXML order
-        m_Handler.Sort(m_Hierarchy.Root, stylesheets);
+        using var _editableHandle = ListPool<HierarchyNode>.Get(out var editableNodes);
+        foreach (var styleSheet in stylesheets)
+        {
+            if (m_StyleSheetNodes.TryGetValue(styleSheet, out var node))
+                editableNodes.Add(node);
+        }
+        m_Handler.SortTopLevel(m_GroupNode, editableNodes);
+
+        using var _orderHandle = ListPool<HierarchyNode>.Get(out var parentNodes);
+        foreach (var entry in parents)
+        {
+            if (entry.StyleSheet != null && m_ParentStyleSheetNodes.TryGetValue((entry.OwningDocument, entry.StyleSheet), out var node))
+                parentNodes.Add(node);
+        }
+        m_Handler.SortGroupChildren(m_GroupNode, parentNodes);
+    }
+
+    void RefreshContext()
+    {
+        if (m_EditingStage == null)
+        {
+            m_Context = StyleSheetsContext.None;
+            return;
+        }
+
+        var source = m_EditingStage.Context;
+        if (source == m_LastSource && !HasMissingParent())
+            return;
+
+        m_LastSource = source;
+        m_Context = StyleSheetsContextFactory.FromStage(m_EditingStage);
+    }
+
+    bool HasMissingParent()
+    {
+        foreach (var parent in m_Context.ParentStyleSheets)
+        {
+            if (parent.StyleSheet == null)
+                return true;
+        }
+
+        return false;
+    }
+
+    void RefreshParentDocumentNames()
+    {
+        foreach (var node in m_ParentStyleSheetNodes.Values)
+            m_Handler.RefreshStyleSheetNodeName(node);
+    }
+
+    bool TrySaveModifiedDocument() => m_EditingStage == null || m_EditingStage.AskUserToSaveModifiedStage();
+
+    void RemoveOldParentStyleSheets(IReadOnlyList<ParentStyleSheet> parents)
+    {
+        if (m_GroupNode != HierarchyNode.Null && !m_Hierarchy.Exists(m_GroupNode))
+            m_GroupNode = HierarchyNode.Null;
+
+        using var desiredHandle = HashSetPool<(VisualTreeAsset owningDocument, StyleSheet styleSheet)>.Get(out var desired);
+        foreach (var parent in parents)
+            desired.Add((parent.OwningDocument, parent.StyleSheet));
+
+        using var removeHandle = ListPool<(VisualTreeAsset owningDocument, StyleSheet styleSheet)>.Get(out var toRemove);
+        foreach (var key in m_ParentStyleSheetNodes.Keys)
+        {
+            if (!desired.Contains(key))
+                toRemove.Add(key);
+        }
+        foreach (var key in toRemove)
+        {
+            if (m_ParentStyleSheetNodes.TryGetValue(key, out var node))
+            {
+                m_Handler.RemoveStyleSheet(node);
+                m_LiveReloadSystem?.UnregisterAuthoringTrackerForAsset(m_StyleSheetTracker, key.styleSheet);
+                m_ParentStyleSheetNodes.Remove(key);
+            }
+        }
+
+        if (parents.Count == 0 && m_GroupNode != HierarchyNode.Null)
+        {
+            m_Handler.RemoveStyleSheetGroup(m_GroupNode);
+            m_GroupNode = HierarchyNode.Null;
+        }
+    }
+
+    void AddNewParentStyleSheets(IReadOnlyList<ParentStyleSheet> parents)
+    {
+        if (parents.Count == 0)
+            return;
+
+        if (m_GroupNode == HierarchyNode.Null)
+            m_GroupNode = m_Handler.AddStyleSheetGroup();
+
+        foreach (var parent in parents)
+        {
+            var key = (parent.OwningDocument, parent.StyleSheet);
+            if (parent.StyleSheet == null || m_ParentStyleSheetNodes.ContainsKey(key))
+                continue;
+
+            m_LiveReloadSystem?.RegisterAuthoringTrackerForAsset(m_StyleSheetTracker, parent.StyleSheet);
+            m_ParentStyleSheetNodes[key] =
+                m_Handler.AddStyleSheet(parent.StyleSheet, isReadOnly: true, owningDocument: parent.OwningDocument, parent: m_GroupNode);
+        }
     }
 
     void RefreshStyleSheetRules()
@@ -667,18 +916,12 @@ internal class StyleSheetsWindow : EditorWindow
         if (m_Handler == null || m_Hierarchy == null)
             return;
 
-        var stylesheets = m_TrackedVTA?.GetAllReferencedStyleSheets();
-        if (stylesheets == null || stylesheets.Count == 0)
-            return;
-
         // Refresh rules for all existing stylesheets
-        foreach (var styleSheet in stylesheets)
-        {
-            if (m_StyleSheetNodes.TryGetValue(styleSheet, out var ruleNode))
-            {
-                m_Handler.RefreshStyleSheetRules(ruleNode, styleSheet);
-            }
-        }
+        foreach (var (styleSheet, ruleNode) in m_StyleSheetNodes)
+            m_Handler.RefreshStyleSheetRules(ruleNode, styleSheet, isReadOnly: false);
+
+        foreach (var (key, ruleNode) in m_ParentStyleSheetNodes)
+            m_Handler.RefreshStyleSheetRules(ruleNode, key.styleSheet, isReadOnly: true);
     }
 
     public void SetActiveStyleSheet(HierarchyNode hierarchyNode)
@@ -687,6 +930,9 @@ internal class StyleSheetsWindow : EditorWindow
             return;
 
         if (node.Rule != null)
+            return;
+
+        if (node.IsReadOnly)
             return;
 
         ActiveStyleSheet = node.StyleSheet;
@@ -713,14 +959,15 @@ internal class StyleSheetsWindow : EditorWindow
         if (!m_Handler.Mappings.TryGetValue(hierarchyNode, out var node))
             return;
 
+        if (node.IsReadOnly)
+            return;
+
         var styleSheet = node.StyleSheet;
-        if (m_CurrentStage.hasUnsavedChanges)
-        {
-            // If changes were made, make sure they are saved *before* we remove the stylesheet,
-            // otherwise the changes to the style sheet won't be saved.
-            if (!m_CurrentStage.AskUserToSaveModifiedStage())
-                return;
-        }
+
+        // Make sure pending edits are saved *before* we remove the stylesheet, otherwise edits to that
+        // stylesheet would be lost.
+        if (!TrySaveModifiedDocument())
+            return;
 
         RemoveStyleSheetCommand.Execute(CommandSources.StyleSheets, m_TrackedVTA, styleSheet);
         RefreshStyleSheetList();

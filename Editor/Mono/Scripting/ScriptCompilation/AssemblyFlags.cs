@@ -24,5 +24,6 @@ namespace UnityEditor.Scripting.ScriptCompilation
         NoEngineReferences = (1 << 9),
         SuppressCompilerWarnings = (1 << 10),
         ValidateAssembly = (1 << 13),
+        ExcludedFromCodeReloadAnalysis = (1 << 14),
     }
 }

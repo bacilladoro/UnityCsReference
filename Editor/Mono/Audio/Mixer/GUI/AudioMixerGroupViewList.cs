@@ -9,6 +9,7 @@ using System.IO;
 using System;
 using UnityEditorInternal;
 using UnityEditor.Audio;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -25,6 +26,7 @@ namespace UnityEditor
             public GUIContent addButton = EditorGUIUtility.TrIconContent("CreateAddNew");
             public Texture2D viewsIcon = EditorGUIUtility.FindTexture("AudioMixerView Icon");
         }
+        [NoAutoStaticsCleanup] // Lazy GUIContent/Texture2D style cache rebuilt on demand via null check; assets survive reload, safe to persist.
         static Styles s_Styles;
 
         public AudioMixerGroupViewList(ReorderableListWithRenameAndScrollView.State state)

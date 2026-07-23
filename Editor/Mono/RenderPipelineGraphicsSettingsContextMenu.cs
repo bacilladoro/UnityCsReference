@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEditor.Inspector.GraphicsSettingsInspectors;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor.Rendering.Settings;
 using UnityEngine.Rendering;
 
@@ -87,7 +88,7 @@ namespace UnityEditor.Rendering
             => Compare(m1.Item1, m2.Item1);
     }
 
-    static class RenderPipelineGraphicsSettingsContextMenuManager
+    static partial class RenderPipelineGraphicsSettingsContextMenuManager
     {
         // typeof(IRenderPipelineGraphicsSettings2) is used for global menu entries.
         // typeof(IRenderPipelineGraphicsSettings) is used for global menu entries.
@@ -96,6 +97,7 @@ namespace UnityEditor.Rendering
         // still supporting old IRenderPipelineGraphicsSettings, though it is sorted out as to be inserted after.
         // all obsolete handling (caching and sorting before call) is below under pragma
 #pragma warning disable CS0618 // Type or member is obsolete
+        [AutoStaticsCleanupOnCodeReload]
         static Lazy<Dictionary<Type, List<IRenderPipelineGraphicsSettingsContextMenu>>> s_OldMenuEntries = new(OldInitialize);
 
         static Dictionary<Type, List<IRenderPipelineGraphicsSettingsContextMenu>> OldInitialize()
@@ -138,6 +140,7 @@ namespace UnityEditor.Rendering
 #pragma warning restore CS0618 // Type or member is obsolete
         #endregion
 
+        [AutoStaticsCleanupOnCodeReload]
         static Lazy<Dictionary<Type, List<IRenderPipelineGraphicsSettingsContextMenu2>>> s_MenuEntries = new(Initialize);
 
         static Dictionary<Type, List<IRenderPipelineGraphicsSettingsContextMenu2>> Initialize()

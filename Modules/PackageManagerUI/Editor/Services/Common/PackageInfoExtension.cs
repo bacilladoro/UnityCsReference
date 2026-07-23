@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor.Scripting.ScriptCompilation;
 using UnityEngine.Bindings;
 
@@ -13,6 +14,7 @@ namespace UnityEditor.PackageManager.UI.Internal
     internal static class PackageInfoExtension
     {
         public const string k_BuiltinPackageDocsUrlKey = "Scripting API: ";
+        [NoAutoStaticsCleanup]
         private static readonly Dictionary<string, bool> s_IsUnityUrlResults = new();
 
         public static string GetShortVersionId(this PackageInfo packageInfo)

@@ -7,10 +7,18 @@ using System.ComponentModel;
 
 namespace UnityEngine.VFX
 {
+    ///<summary>Space of an exposed properties.</summary>
+    ///<remarks>This value is provided by <see cref="VisualEffectAsset.GetExposedSpace" />.</remarks>
     public enum VFXSpace
     {
+        ///<summary>None Space.</summary>
+        ///<remarks>None Space corresponds to undefined space, this value is returned on not spaceable property while using <see cref="VisualEffectAsset.GetExposedSpace" />.</remarks>
         None = -1,
+        ///<summary>Local Space.</summary>
+        ///<remarks>Local Space corresponds to the object space of the VisualEffect component.</remarks>
         Local = 0,
+        ///<summary>World Space.</summary>
+        ///<remarks>World Space corresponds to the global space of the scene.</remarks>
         World = 1,
     }
 
@@ -342,12 +350,17 @@ namespace UnityEngine.VFX
         FixedDeltaAndExactTimeAndIgnoreTimeScale = FixedDeltaTime | ExactFixedTimeStep | IgnoreTimeScale
     }
 
+    ///<summary>This enumeration describes <see cref="Camera" /> buffer types.</summary>
     [Flags]
     public enum VFXCameraBufferTypes
     {
+        ///<summary>No Buffer.</summary>
         None = 0,
+        ///<summary>The <see cref="Camera" />'s depth buffer.</summary>
         Depth = 1 << 0,
+        ///<summary>The <see cref="Camera" />'s color buffer.</summary>
         Color = 1 << 1,
+        ///<summary>The <see cref="Camera" />'s normal buffer.</summary>
         Normal = 1 << 2,
     }
 

@@ -8,6 +8,7 @@ using UnityEditor.Build;
 using UnityEngine;
 using UnityEngine.Bindings;
 using UnityEngine.Internal;
+using Unity.Scripting.LifecycleManagement;
 using Object = UnityEngine.Object;
 
 namespace UnityEditor;
@@ -21,16 +22,18 @@ sealed partial class EditorGUILayout
 
     internal static float kLabelFloatMaxW => EditorGUIUtility.labelWidth + EditorGUIUtility.fieldWidth + EditorGUI.kSpacing;
 
+    [NoAutoStaticsCleanup] // Transient last-control rect, overwritten every layout call; value type with no cross-reload meaning.
     internal static Rect s_LastRect;
 
     internal const float kPlatformTabWidth = 30;
 
-    internal static SavedBool s_SelectedDefault = new SavedBool("Platform.ShownDefaultTab", true);
+    internal static readonly SavedBool s_SelectedDefault = new SavedBool("Platform.ShownDefaultTab", true);
 
-    static GUIStyle s_TabOnlyOne;
-    static GUIStyle s_TabFirst;
-    static GUIStyle s_TabMiddle;
-    static GUIStyle s_TabLast;
+    // Keep in sync with Tests/EditModeAndPlayModeTests/PlayerSettings/Assets/Editor/PlayerSettingsApplicationIdentifierTests.cs.
+    static readonly GUIStyle s_TabOnlyOne = "Tab onlyOne";
+    static readonly GUIStyle s_TabFirst = "Tab first";
+    static readonly GUIStyle s_TabMiddle = "Tab middle";
+    static readonly GUIStyle s_TabLast = "Tab last";
 
     [ExcludeFromDocs]
     public static bool Foldout(bool foldout, string content)
@@ -2231,15 +2234,6 @@ sealed partial class EditorGUILayout
 
     static Rect GetTabRect(Rect rect, int tabIndex, int tabCount, out GUIStyle tabStyle)
     {
-        if (s_TabOnlyOne == null)
-        {
-            // Keep in sync with Tests/EditModeAndPlayModeTests/PlayerSettings/Assets/Editor/PlayerSettingsApplicationIdentifierTests.cs.
-            s_TabOnlyOne = "Tab onlyOne";
-            s_TabFirst = "Tab first";
-            s_TabMiddle = "Tab middle";
-            s_TabLast = "Tab last";
-        }
-
         tabStyle = s_TabMiddle;
 
         if (tabCount == 1)

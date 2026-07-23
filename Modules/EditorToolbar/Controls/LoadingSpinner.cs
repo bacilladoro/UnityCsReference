@@ -7,11 +7,13 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEngine.UIElements.Experimental;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Toolbars;
 
 class LoadingSpinner : Image
 {
+    [NoAutoStaticsCleanup] // Lazy cache of builtin editor icons fetched by fixed name (IconContent); icons survive domain reload, safe to persist.
     static GUIContent[] s_Wheels;
 
     ValueAnimation<float> m_Animation;

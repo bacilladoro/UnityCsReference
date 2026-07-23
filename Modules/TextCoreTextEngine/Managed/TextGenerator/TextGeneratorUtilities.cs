@@ -998,9 +998,6 @@ namespace UnityEngine.TextCore.Text
         /// <summary>
         /// Method to handle inline replacement of style tag by opening style definition.
         /// </summary>
-        /// <param name="sourceText"></param>
-        /// <param name="srcIndex"></param>
-        /// <param name="srcOffset"></param>
         /// <param name="charBuffer"></param>
         /// <param name="writeIndex"></param>
         /// <returns></returns>
@@ -1062,8 +1059,6 @@ namespace UnityEngine.TextCore.Text
         /// <summary>
         /// Method to handle inline replacement of style tag by closing style definition.
         /// </summary>
-        /// <param name="sourceText"></param>
-        /// <param name="srcIndex"></param>
         /// <param name="charBuffer"></param>
         /// <param name="writeIndex"></param>
         /// <returns></returns>
@@ -1091,7 +1086,6 @@ namespace UnityEngine.TextCore.Text
         ///
         /// </summary>
         /// <param name="style"></param>
-        /// <param name="srcIndex"></param>
         /// <param name="charBuffer"></param>
         /// <param name="writeIndex"></param>
         /// <returns></returns>
@@ -1717,7 +1711,6 @@ namespace UnityEngine.TextCore.Text
         /// <summary>
         ///
         /// </summary>
-        /// <param name="tagDefinition"></param>
         /// <param name="readIndex"></param>
         /// <returns></returns>
         public static int GetMarkupTagHashCode(uint[] styleDefinition, int readIndex)

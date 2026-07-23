@@ -11,31 +11,41 @@ using UnityEngine.Bindings;
 
 namespace UnityEngine.TextCore.LowLevel
 {
-    /// <summary>
-    /// Flags taken from freetype.h
-    /// </summary>
+    // Flags taken from freetype.h
+    ///<summary>The various options (flags) used by the FontEngine when loading glyphs from a font face.</summary>
     [UsedByNativeCode]
     [Flags]
     public enum GlyphLoadFlags
     {
+        ///<summary>Load glyph metrics and bitmap representation if available for the current face size.</summary>
         LOAD_DEFAULT = 0,
+        ///<summary>Load glyphs at default font units without scaling. This flag implies LOAD_NO_HINTING and LOAD_NO_BITMAP and unsets LOAD_RENDER.</summary>
         LOAD_NO_SCALE = 1 << 0,
+        ///<summary>Load glyphs without hinting.</summary>
         LOAD_NO_HINTING = 1 << 1,
+        ///<summary>Load glyph metrics and render outline using 8-bit or antialiased image of the glyph.</summary>
         LOAD_RENDER = 1 << 2,
+        ///<summary>Load glyphs and ignore embedded bitmap strikes.</summary>
         LOAD_NO_BITMAP = 1 << 3,
         //LOAD_VERTICAL_LAYOUT = 1 << 4,
+        ///<summary>Load glyphs using the auto hinter instead of the font's native hinter.</summary>
         LOAD_FORCE_AUTOHINT = 1 << 5,
         //LOAD_CROP_BITMAP = 1 << 6,
         //LOAD_PEDANTIC = 1 << 7,
         //LOAD_IGNORE_GLOBAL_ADVANCE_WIDTH = 1 << 9,
         //LOAD_NO_RECURSE = 1 << 10,
         //LOAD_IGNORE_TRANSFORM = 1 << 11,
+        ///<summary>Load glyph metrics and render outline using 1-bit monochrome.</summary>
         LOAD_MONOCHROME = 1 << 12,
         //LOAD_LINEAR_DESIGN = 1 << 13,
+        ///<summary>Load glyphs using the font's native hinter.</summary>
         LOAD_NO_AUTOHINT = 1 << 15,
         /* Bits 16-19 are used by `LOAD_TARGET_' */
+        ///<summary>Load glyph metrics and render using color bitmaps.</summary>
         LOAD_COLOR = 1 << 20,
+        ///<summary>Load glyph metrics without using the 'hdmx' table. This flag is mostly used to validate font data.</summary>
         LOAD_COMPUTE_METRICS = 1 << 21,
+        ///<summary>Load glyph metrics without allocating and loading the bitmap data.</summary>
         LOAD_BITMAP_METRICS_ONLY = 1 << 22
     }
 
@@ -70,68 +80,100 @@ namespace UnityEngine.TextCore.LowLevel
         RASTER_MODE_COLOR       = 0x10000,
     }
 
-    /// <summary>
-    /// Error codes returned and relevant to the various FontEngine functions.
-    /// Source codes are located in fterrdef.h
-    /// </summary>
+    // Source codes are located in fterrdef.h
+    ///<summary>Error code returned by the various FontEngine functions.</summary>
     public enum FontEngineError
     {
+        ///<summary>Error code returned when the function was successfully executed.</summary>
         Success                 = 0x0,
 
         // Font file structure, type or path related errors.
+        ///<summary>Error code returned by the LoadFontFace function when the file path to the source font file appears invalid.</summary>
         Invalid_File_Path       = 0x1,
+        ///<summary>Error code returned by the LoadFontFace function when the source font file is of an unknown or invalid format.</summary>
         Invalid_File_Format     = 0x2,
+        ///<summary>Error code returned by the LoadFontFace function when the source font file appears invalid or improperly formatted.</summary>
         Invalid_File_Structure  = 0x3,
+        ///<summary>Error code indicating an invalid font file.</summary>
         Invalid_File            = 0x4,
+        ///<summary>Error code indicating failure to load one of the tables of the font file.</summary>
+        ///<remarks>This error is usually associated with failure to load the Kern table or one of the OpenType font tables.</remarks>
         Invalid_Table           = 0x8,
 
         // Glyph related errors.
+        ///<summary>Error code returned by the LoadGlyph function when referencing an invalid or out of range glyph index value.</summary>
         Invalid_Glyph_Index     = 0x10,
+        ///<summary>Error code returned by the LoadGlyph function when referencing an invalid Unicode character value.</summary>
         Invalid_Character_Code  = 0x11,
+        ///<summary>Error code returned by the LoadGlyph or SetFaceSize functions using an invalid pointSize value.</summary>
         Invalid_Pixel_Size      = 0x17,
 
         //
+        ///<summary>Error code indicating failure to initialize the font engine library.</summary>
         Invalid_Library         = 0x21,
 
         // Font face related errors.
+        ///<summary>Error code indicating an invalid font face.</summary>
         Invalid_Face            = 0x23,
 
+        ///<summary>Error code indicating failure to initialize the font engine library and / or successfully load a font face.</summary>
         Invalid_Library_or_Face = 0x29,
 
         // Font atlas generation and glyph rendering related errors.
+        ///<summary>Error code returned when the FontEngine glyph packing or rendering process has been cancelled.</summary>
+        ///<remarks>For example, this error code is used when a user cancels the font asset generation process using the Font Asset Creator.</remarks>
         Atlas_Generation_Cancelled  = 0x64,
+        ///<exclude />
         Invalid_SharedTextureData   = 0x65,
+        ///<summary>Error code returned when referencing an invalid or uninitialized font face handle.</summary>
         Invalid_FontFaceHandle      = 0x66,
 
         // OpenType Layout related errors.
+        ///<summary>OpenType Layout related errors.</summary>
         OpenTypeLayoutLookup_Mismatch = 0x74,
 
         // Additional errors codes will be added as necessary to cover new FontEngine features and functionality.
     }
 
-    /// <summary>
-    /// Rendering modes used by the Font Engine to render glyphs.
-    /// </summary>
+    ///<summary>The rendering modes used by the Font Engine to render glyphs.</summary>
     [UsedByNativeCode]
     public enum GlyphRenderMode
     {
+        ///<summary>Automatically choose the best appropriate render mode (SDFAA or COLOR) based on the font provided.</summary>
         DEFAULT         = 0x0, // Selects either SDFAA or COLOR based on the font face.
 
+        ///<summary>Renders a bitmap representation of the glyph from an 8-bit or antialiased image of the glyph outline with hinting.</summary>
         SMOOTH_HINTED   = GlyphRasterModes.RASTER_MODE_HINTED     | GlyphRasterModes.RASTER_MODE_8BIT  | GlyphRasterModes.RASTER_MODE_BITMAP | GlyphRasterModes.RASTER_MODE_1X,
+        ///<summary>Renders a bitmap representation of the glyph from an 8-bit or antialiased image of the glyph outline with no hinting.</summary>
         SMOOTH          = GlyphRasterModes.RASTER_MODE_NO_HINTING | GlyphRasterModes.RASTER_MODE_8BIT  | GlyphRasterModes.RASTER_MODE_BITMAP | GlyphRasterModes.RASTER_MODE_1X,
 
+        ///<summary>Renders a color bitmap image representation of the glyph with hinting.</summary>
         COLOR_HINTED    = GlyphRasterModes.RASTER_MODE_HINTED     | GlyphRasterModes.RASTER_MODE_COLOR | GlyphRasterModes.RASTER_MODE_BITMAP | GlyphRasterModes.RASTER_MODE_1X,
+        ///<summary>Renders a color bitmap image representation of the glyph no hinting.</summary>
         COLOR           = GlyphRasterModes.RASTER_MODE_NO_HINTING | GlyphRasterModes.RASTER_MODE_COLOR | GlyphRasterModes.RASTER_MODE_BITMAP | GlyphRasterModes.RASTER_MODE_1X,
 
+        ///<summary>Renders a bitmap representation of the glyph from a binary (1-bit monochrome) image of the glyph outline with hinting.</summary>
         RASTER_HINTED   = GlyphRasterModes.RASTER_MODE_HINTED     | GlyphRasterModes.RASTER_MODE_MONO  | GlyphRasterModes.RASTER_MODE_BITMAP | GlyphRasterModes.RASTER_MODE_1X,
+        ///<summary>Renders a bitmap representation of the glyph from a binary (1-bit monochrome) image of the glyph outline with no hinting.</summary>
         RASTER          = GlyphRasterModes.RASTER_MODE_NO_HINTING | GlyphRasterModes.RASTER_MODE_MONO  | GlyphRasterModes.RASTER_MODE_BITMAP | GlyphRasterModes.RASTER_MODE_1X,
 
+        ///<summary>Renders a signed distance field (SDF) representation of the glyph from a binary (1-bit monochrome) image of the glyph outline with no hinting.</summary>
         SDF             = GlyphRasterModes.RASTER_MODE_NO_HINTING | GlyphRasterModes.RASTER_MODE_MONO  | GlyphRasterModes.RASTER_MODE_SDF    | GlyphRasterModes.RASTER_MODE_1X,
+        ///<summary>Renders a signed distance field (SDF) representation of the glyph from a binary (1-bit monochrome) image of the glyph outline with no hinting.</summary>
+        ///<remarks>The sampling of the glyph is upscaled by 8x.</remarks>
         SDF8            = GlyphRasterModes.RASTER_MODE_NO_HINTING | GlyphRasterModes.RASTER_MODE_MONO  | GlyphRasterModes.RASTER_MODE_SDF    | GlyphRasterModes.RASTER_MODE_8X,
+        ///<summary>Renders a signed distance field (SDF) representation of the glyph from a binary (1-bit monochrome) image of the glyph outline with no hinting.</summary>
+        ///<remarks>The sampling of the glyph is upscaled by 16x. This render mode is slow but accurate.</remarks>
         SDF16           = GlyphRasterModes.RASTER_MODE_NO_HINTING | GlyphRasterModes.RASTER_MODE_MONO  | GlyphRasterModes.RASTER_MODE_SDF    | GlyphRasterModes.RASTER_MODE_16X,
+        ///<summary>Renders a signed distance field (SDF) representation of the glyph from a binary (1-bit monochrome) image of the glyph outline with no hinting.</summary>
+        ///<remarks>The sampling of the glyph is upscaled by 32x. This render mode is very slow but accurate.</remarks>
         SDF32           = GlyphRasterModes.RASTER_MODE_NO_HINTING | GlyphRasterModes.RASTER_MODE_MONO  | GlyphRasterModes.RASTER_MODE_SDF    | GlyphRasterModes.RASTER_MODE_32X,
 
+        ///<summary>Renders a signed distance field (SDF) representation of the glyph from an 8-bit or antialiased image of the glyph outline with hinting.</summary>
+        ///<remarks>This render mode is very fast but slightly less accurate.</remarks>
         SDFAA_HINTED    = GlyphRasterModes.RASTER_MODE_HINTED     | GlyphRasterModes.RASTER_MODE_8BIT  | GlyphRasterModes.RASTER_MODE_SDFAA  | GlyphRasterModes.RASTER_MODE_1X,
+        ///<summary>Renders a signed distance field (SDF) representation of the glyph from an 8-bit or antialiased image of the glyph outline with no hinting.</summary>
+        ///<remarks>This render mode is very fast but slightly less accurate.</remarks>
         SDFAA           = GlyphRasterModes.RASTER_MODE_NO_HINTING | GlyphRasterModes.RASTER_MODE_8BIT  | GlyphRasterModes.RASTER_MODE_SDFAA  | GlyphRasterModes.RASTER_MODE_1X,
     }
 
@@ -168,10 +210,15 @@ namespace UnityEngine.TextCore.LowLevel
     [UsedByNativeCode]
     public enum GlyphPackingMode
     {
+        ///<summary>Place the glyph against the short side of a free space to minimize the length of the shorter leftover side.</summary>
         BestShortSideFit    = 0x0,
+        ///<summary>Place the glyph against the longer side of a free space to minimize the length of the longer leftover side.</summary>
         BestLongSideFit     = 0x1,
+        ///<summary>Place the glyph into the smallest free space available in which it can fit.</summary>
         BestAreaFit         = 0x2,
+        ///<summary>Place the glyph into available free space in a Tetris like fashion.</summary>
         BottomLeftRule      = 0x3,
+        ///<summary>Place the glyph into the available free space by trying to maximize the contact point between it and other glyphs.</summary>
         ContactPointRule    = 0x4,
     }
 
@@ -205,6 +252,11 @@ namespace UnityEngine.TextCore.LowLevel
         public string filePath;
     }
 
+    ///<summary>The FontEngine is used to access data from source font files. This includes information about individual characters, glyphs and relevant metrics typically used in the process of text parsing, layout and rendering.
+    ///
+    ///The types of font files supported are TrueType (.ttf, .ttc) and OpenType (.otf).
+    ///
+    ///The FontEngine is also used to raster the visual representation of characters known as glyphs in a given font atlas texture.</summary>
     [NativeHeader("Modules/TextCoreFontEngine/Native/FontEngine.h")]
     public sealed class FontEngine
     {
@@ -241,10 +293,8 @@ namespace UnityEngine.TextCore.LowLevel
         /// </summary>
         internal FontEngine() {}
 
-        /// <summary>
-        /// Initialize the Font Engine and library.
-        /// </summary>
-        /// <returns>Returns a value of zero if the initialization of the Font Engine was successful.</returns>
+        ///<summary>Initialize the Font Engine and required resources.</summary>
+        ///<returns>A value of zero (0) if the initialization of the Font Engine was successful.</returns>
         public static FontEngineError InitializeFontEngine()
         {
             return (FontEngineError)InitializeFontEngine_Internal();
@@ -254,10 +304,8 @@ namespace UnityEngine.TextCore.LowLevel
         static extern int InitializeFontEngine_Internal();
 
 
-        /// <summary>
-        /// Destroy and unload resources used by the Font Engine.
-        /// </summary>
-        /// <returns>Returns a value of zero if the Font Engine and used resources were successfully released.</returns>
+        ///<summary>Destroy and unload resources used by the Font Engine.</summary>
+        ///<returns>A value of zero (0) if the Font Engine and used resources were successfully released.</returns>
         public static FontEngineError DestroyFontEngine()
         {
             return (FontEngineError)DestroyFontEngine_Internal();
@@ -302,11 +350,9 @@ namespace UnityEngine.TextCore.LowLevel
         }
 
 
-        /// <summary>
-        /// Loads the source font file at the given file path.
-        /// </summary>
-        /// <param name="filePath">The file path of the source font file.</param>
-        /// <returns>A value of zero (0) if the font face was loaded successfully.</returns>
+        ///<summary>Load a source font file.</summary>
+        ///<param name="filePath">The path of the source font file relative to the project.</param>
+        ///<returns>A value of zero (0) if the font face was loaded successfully.</returns>
         public static FontEngineError LoadFontFace(string filePath)
         {
             return (FontEngineError)LoadFontFace_Internal(filePath);
@@ -316,12 +362,10 @@ namespace UnityEngine.TextCore.LowLevel
         static extern int LoadFontFace_Internal(string filePath);
 
 
-        /// <summary>
-        /// Loads the font file at the given file path and set it size to the specified point size.
-        /// </summary>
-        /// <param name="filePath">The file path of the source font file.</param>
-        /// <param name="pointSize">The point size used to scale the font face.</param>
-        /// <returns>A value of zero if the font face was loaded successfully.</returns>
+        ///<summary>Load a source font file.</summary>
+        ///<param name="filePath">The path of the source font file relative to the project.</param>
+        ///<param name="pointSize">The point size used to scale the font face.</param>
+        ///<returns>A value of zero (0) if the font face was loaded successfully.</returns>
         public static FontEngineError LoadFontFace(string filePath, int pointSize)
         {
             return (FontEngineError)LoadFontFace_With_Size_Internal(filePath, pointSize);
@@ -330,13 +374,11 @@ namespace UnityEngine.TextCore.LowLevel
         [NativeMethod(Name = "TextCore::FontEngine::LoadFontFace", IsFreeFunction = true)]
         static extern int LoadFontFace_With_Size_Internal(string filePath, int pointSize);
 
-        /// <summary>
-        /// Loads the font file at the given file path and set it size and face index to the specified values.
-        /// </summary>
-        /// <param name="filePath">The file path of the source font file.</param>
-        /// <param name="pointSize">The point size used to scale the font face.</param>
-        /// <param name="faceIndex">The face index of the font face to load. When the font file is a TrueType collection (.TTC), this specifies the face index of the font face to load. If the font file is a TrueType Font (.TTF) or OpenType Font (.OTF) file, the face index is always 0.</param>
-        /// <returns>A value of zero (0) if the font face was loaded successfully.</returns>
+        ///<summary>Load a source font file.</summary>
+        ///<param name="filePath">The path of the source font file relative to the project.</param>
+        ///<param name="pointSize">The point size used to scale the font face.</param>
+        ///<param name="faceIndex">The face index of the font face to load. When the font file is a TrueType collection (.TTC), this specifies the face index of the font face to load. If the font file is a TrueType Font (.TTF) or OpenType Font (.OTF) file, the face index is always zero (0).</param>
+        ///<returns>A value of zero (0) if the font face was loaded successfully.</returns>
         public static FontEngineError LoadFontFace(string filePath, float pointSize, int faceIndex)
         {
             return (FontEngineError)LoadFontFace_With_Size_And_FaceIndex_Internal(filePath, (int)Math.Round(pointSize, MidpointRounding.AwayFromZero), faceIndex);
@@ -363,11 +405,9 @@ namespace UnityEngine.TextCore.LowLevel
         static extern int LoadFontFace_With_Size_And_FaceIndex_FontFaceHandle_Internal(string filePath, int pointSize, int faceIndex, out FontFaceHandle faceHandle);
 
 
-        /// <summary>
-        /// Loads the font file from the provided byte array.
-        /// </summary>
-        /// <param name="sourceFontFile">The byte array that contains the source font file.</param>
-        /// <returns>A value of zero (0) if the font face was loaded successfully.</returns>
+        ///<summary>Load a source font file.</summary>
+        ///<param name="sourceFontFile">The byte array that contains the source font file.</param>
+        ///<returns>A value of zero (0) if the font face was loaded successfully.</returns>
         public static FontEngineError LoadFontFace(byte[] sourceFontFile)
         {
             if (sourceFontFile.Length == 0)
@@ -380,12 +420,10 @@ namespace UnityEngine.TextCore.LowLevel
         static extern int LoadFontFace_FromSourceFontFile_Internal(byte[] sourceFontFile);
 
 
-        /// <summary>
-        /// Loads the font file from the provided byte array and set its size to the given point size.
-        /// </summary>
-        /// <param name="sourceFontFile">The byte array that contains the source font file.</param>
-        /// <param name="pointSize">The point size used to scale the font face.</param>
-        /// <returns>A value of zero (0) if the font face was loaded successfully.</returns>
+        ///<summary>Load a source font file.</summary>
+        ///<param name="pointSize">The point size used to scale the font face.</param>
+        ///<param name="sourceFontFile">The byte array that contains the source font file.</param>
+        ///<returns>A value of zero (0) if the font face was loaded successfully.</returns>
         public static FontEngineError LoadFontFace(byte[] sourceFontFile, int pointSize)
         {
             if (sourceFontFile.Length == 0)
@@ -397,13 +435,11 @@ namespace UnityEngine.TextCore.LowLevel
         [NativeMethod(Name = "TextCore::FontEngine::LoadFontFace", IsFreeFunction = true)]
         static extern int LoadFontFace_With_Size_FromSourceFontFile_Internal(byte[] sourceFontFile, int pointSize);
 
-        /// <summary>
-        /// Loads the font file from the provided byte array and set its size and face index to the specified values.
-        /// </summary>
-        /// <param name="sourceFontFile">The byte array that contains the source font file.</param>
-        /// <param name="pointSize">The point size used to scale the font face.</param>
-        /// <param name="faceIndex">The face index of the font face to load. When the font file is a TrueType collection (.TTC), this specifies the face index of the font face to load. If the font file is a TrueType Font (.TTF) or OpenType Font (.OTF) file, the face index is always 0.</param>
-        /// <returns>A value of zero (0) if the font face was loaded successfully.</returns>
+        ///<summary>Load a source font file.</summary>
+        ///<param name="pointSize">The point size used to scale the font face.</param>
+        ///<param name="sourceFontFile">The byte array that contains the source font file.</param>
+        ///<param name="faceIndex">The face index of the font face to load. When the font file is a TrueType collection (.TTC), this specifies the face index of the font face to load. If the font file is a TrueType Font (.TTF) or OpenType Font (.OTF) file, the face index is always zero (0).</param>
+        ///<returns>A value of zero (0) if the font face was loaded successfully.</returns>
         public static FontEngineError LoadFontFace(byte[] sourceFontFile, float pointSize, int faceIndex)
         {
             if (sourceFontFile.Length == 0)
@@ -439,11 +475,9 @@ namespace UnityEngine.TextCore.LowLevel
         static extern int LoadFontFace_With_Size_And_FaceIndex_FromSourceFontFile_FontFaceHandle_Internal(byte[] sourceFontFile, int pointSize, int faceIndex, out FontFaceHandle faceHandle);
 
 
-        /// <summary>
-        /// Loads the font file from the Unity font's internal font data. Note the Unity font must be set to Dynamic with Include Font Data enabled.
-        /// </summary>
-        /// <param name="font">The font from which to load the data.</param>
-        /// <returns>A value of zero (0) if the font face was loaded successfully.</returns>
+        ///<summary>Load a source font file.</summary>
+        ///<param name="font">The font to load the data from. The Unity font must be set to Dynamic mode with Include Font Data selected.</param>
+        ///<returns>A value of zero (0) if the font face was loaded successfully.</returns>
         public static FontEngineError LoadFontFace(Font font)
         {
             return (FontEngineError)LoadFontFace_FromFont_Internal(font);
@@ -453,12 +487,10 @@ namespace UnityEngine.TextCore.LowLevel
         static extern int LoadFontFace_FromFont_Internal(Font font);
 
 
-        /// <summary>
-        /// Loads the font file from the Unity font's internal font data. Note the Unity font must be set to Dynamic with Include Font Data enabled.
-        /// </summary>
-        /// <param name="font">The font from which to load the data.</param>
-        /// <param name="pointSize">The point size used to scale the font face.</param>
-        /// <returns>A value of zero (0) if the font face was loaded successfully.</returns>
+        ///<summary>Load a source font file.</summary>
+        ///<param name="pointSize">The point size used to scale the font face.</param>
+        ///<param name="font">The font to load the data from. The Unity font must be set to Dynamic mode with Include Font Data selected.</param>
+        ///<returns>A value of zero (0) if the font face was loaded successfully.</returns>
         public static FontEngineError LoadFontFace(Font font, int pointSize)
         {
             return (FontEngineError)LoadFontFace_With_Size_FromFont_Internal(font, pointSize);
@@ -467,13 +499,11 @@ namespace UnityEngine.TextCore.LowLevel
         [NativeMethod(Name = "TextCore::FontEngine::LoadFontFace", IsFreeFunction = true)]
         static extern int LoadFontFace_With_Size_FromFont_Internal(Font font, int pointSize);
 
-        /// <summary>
-        /// Loads the font file from the Unity font's internal font data. Note the Unity font must be set to Dynamic with Include Font Data enabled.
-        /// </summary>
-        /// <param name="font">The font from which to load the data.</param>
-        /// <param name="pointSize">The point size used to scale the font face.</param>
-        /// <param name="faceIndex">The face index of the font face to load. When the font file is a TrueType collection (.TTC), this specifies the face index of the font face to load. If the font file is a TrueType Font (.TTF) or OpenType Font (.OTF) file, the face index is always 0.</param>
-        /// <returns>A value of zero (0) if the font face was loaded successfully.</returns>
+        ///<summary>Load a source font file.</summary>
+        ///<param name="pointSize">The point size used to scale the font face.</param>
+        ///<param name="font">The font to load the data from. The Unity font must be set to Dynamic mode with Include Font Data selected.</param>
+        ///<param name="faceIndex">The face index of the font face to load. When the font file is a TrueType collection (.TTC), this specifies the face index of the font face to load. If the font file is a TrueType Font (.TTF) or OpenType Font (.OTF) file, the face index is always zero (0).</param>
+        ///<returns>A value of zero (0) if the font face was loaded successfully.</returns>
         public static FontEngineError LoadFontFace(Font font, float pointSize, int faceIndex)
         {
             return (FontEngineError)LoadFontFace_With_Size_and_FaceIndex_FromFont_Internal(font, (int)Math.Round(pointSize, MidpointRounding.AwayFromZero), faceIndex);
@@ -521,12 +551,10 @@ namespace UnityEngine.TextCore.LowLevel
         [NativeMethod(Name = "TextCore::FontEngine::LoadFontFace", IsFreeFunction = true)]
         static extern int LoadFontFace_With_Size_FaceIndex_OwnerId_FromFont_FontFaceHandle_Internal(Font font, int pointSize, int faceIndex, EntityId ownerId, out FontFaceHandle faceHandle);
 
-        /// <summary>
-        /// Loads the font file from a potential system font by family and style name.
-        /// </summary>
-        /// <param name="familyName">The family name of the font face to load.</param>
-        /// <param name="styleName">The style name of the font face to load.</param>
-        /// <returns>A value of zero (0) if the font face was loaded successfully.</returns>
+        ///<summary>Load a source font file.</summary>
+        ///<param name="familyName">The family name of the font face to load.</param>
+        ///<param name="styleName">The style name of the font face to load.</param>
+        ///<returns>A value of zero (0) if the font face was loaded successfully.</returns>
         public static FontEngineError LoadFontFace(string familyName, string styleName)
         {
             return (FontEngineError)LoadFontFace_by_FamilyName_and_StyleName_Internal(familyName, styleName);
@@ -535,13 +563,11 @@ namespace UnityEngine.TextCore.LowLevel
         [NativeMethod(Name = "TextCore::FontEngine::LoadFontFace", IsFreeFunction = true)]
         static extern int LoadFontFace_by_FamilyName_and_StyleName_Internal(string familyName, string styleName);
 
-        /// <summary>
-        /// Loads the font file from a potential system font by family and style name at the specified point size.
-        /// </summary>
-        /// <param name="familyName">The family name of the font face to load.</param>
-        /// <param name="styleName">The style name of the font face to load.</param>
-        /// <param name="pointSize">The point size used to scale the font face.</param>
-        /// <returns>A value of zero (0) if the font face was loaded successfully.</returns>
+        ///<summary>Load a source font file.</summary>
+        ///<param name="pointSize">The point size used to scale the font face.</param>
+        ///<param name="familyName">The family name of the font face to load.</param>
+        ///<param name="styleName">The style name of the font face to load.</param>
+        ///<returns>A value of zero (0) if the font face was loaded successfully.</returns>
         public static FontEngineError LoadFontFace(string familyName, string styleName, float pointSize)
         {
             return (FontEngineError)LoadFontFace_With_Size_by_FamilyName_and_StyleName_Internal(familyName, styleName, (int)Math.Round(pointSize, MidpointRounding.AwayFromZero));
@@ -606,10 +632,8 @@ namespace UnityEngine.TextCore.LowLevel
         static extern int UnloadAllFontFaces_Internal();
 
 
-        /// <summary>
-        /// Gets the family names and styles of the system fonts.
-        /// </summary>
-        /// <returns>Returns the names and styles of the system fonts.</returns>
+        ///<summary>Gets the family and style names of the system fonts.</summary>
+        ///<returns>String array that contains the family and style names of the system fonts.</returns>
         public static string[] GetSystemFontNames()
         {
             string[] fontNames = GetSystemFontNames_Internal();
@@ -680,11 +704,9 @@ namespace UnityEngine.TextCore.LowLevel
         static extern bool TryGetSystemFontReference_Internal(string familyName, string styleName, out FontReference fontRef);
 
 
-        /// <summary>
-        /// Set the size of the currently loaded font face.
-        /// </summary>
-        /// <param name="pointSize">The point size used to scale the font face.</param>
-        /// <returns>Returns a value of zero if the font face was successfully scaled to the given point size.</returns>
+        ///<summary>Set the size of the currently loaded font face.</summary>
+        ///<param name="pointSize">The point size used to scale the font face.</param>
+        ///<returns>A value of zero (0) if the font face was successfully scaled to the given point size.</returns>
         public static FontEngineError SetFaceSize(int pointSize)
         {
             return (FontEngineError)SetFaceSize_Internal(pointSize);
@@ -709,10 +731,8 @@ namespace UnityEngine.TextCore.LowLevel
         static extern int SetFaceSize_FontFaceHandle_Internal(ref FontFaceHandle faceHandle, int pointSize);
 
 
-        /// <summary>
-        /// Get information about the currently loaded and sized font face.
-        /// </summary>
-        /// <returns>Returns the FaceInfo of the currently loaded font face.</returns>
+        ///<summary>Get the FaceInfo for the currently loaded and sized typeface.</summary>
+        ///<returns>Returns the FaceInfo of the currently loaded typeface.</returns>
         public static FaceInfo GetFaceInfo()
         {
             FaceInfo faceInfo = new FaceInfo();
@@ -753,10 +773,8 @@ namespace UnityEngine.TextCore.LowLevel
         [NativeMethod(Name = "TextCore::FontEngine::GetFaceCount", IsThreadSafe = true, IsFreeFunction = true)]
         static extern int GetFaceCount_FontFaceHandle_Internal(ref FontFaceHandle faceHandle);
 
-        /// <summary>
-        /// Get the font face(s) and style(s) for the currently loaded font.
-        /// </summary>
-        /// <returns>Array containing the names of the font faces and styles.</returns>
+        ///<summary>Gets the font faces and styles for the currently loaded font.</summary>
+        ///<returns>An array that contains the names of the font faces and styles.</returns>
         public static string[] GetFontFaces()
         {
             string[] faces = GetFontFaces_Internal();
@@ -877,13 +895,11 @@ namespace UnityEngine.TextCore.LowLevel
         static extern int LoadGlyph_FontFaceHandle_Internal(ref FontFaceHandle faceHandle, uint unicode, GlyphLoadFlags loadFlags);
 
 
-        /// <summary>
-        /// Try loading a glyph for the given unicode value. If available, populates the glyph and returns true. Otherwise returns false and populates the glyph with the .notdef / missing glyph data.
-        /// </summary>
-        /// <param name="unicode">The Unicode value of the character whose glyph should be loaded.</param>
-        /// <param name="flags">The Load Flags.</param>
-        /// <param name="glyph">The glyph for the given character using the provided Unicode value or the .notdef glyph (index 0) if no glyph is available for the given Unicode value.</param>
-        /// <returns>Returns true if a glyph exists for the given unicode value. Otherwise returns false.</returns>
+        ///<summary>Try loading a glyph for the given unicode value. If available, populates the glyph and returns true. Otherwise returns false and populates the glyph with the .notdef / missing glyph data.</summary>
+        ///<param name="flags">The glyph loading flag that should be used to load the glyph.</param>
+        ///<param name="glyph">The glyph using the provided index or the .notdef glyph (index 0) if no glyph was found at that index.</param>
+        ///<param name="unicode">The Unicode value of the character whose glyph should be loaded.</param>
+        ///<returns>Returns true if a glyph exists for the given unicode value. Otherwise returns false.</returns>
         public static bool TryGetGlyphWithUnicodeValue(uint unicode, GlyphLoadFlags flags, out Glyph glyph)
         {
             GlyphMarshallingStruct glyphStruct = new GlyphMarshallingStruct();
@@ -926,13 +942,11 @@ namespace UnityEngine.TextCore.LowLevel
         static extern bool TryGetGlyphWithUnicodeValue_FontFaceHandle_Internal(ref FontFaceHandle faceHandle, uint unicode, GlyphLoadFlags loadFlags, ref GlyphMarshallingStruct glyphStruct);
 
 
-        /// <summary>
-        /// Try loading the glyph for the given index value and if available populate the glyph.
-        /// </summary>
-        /// <param name="glyphIndex">The index of the glyph that should be loaded.</param>
-        /// <param name="flags">The Load Flags.</param>
-        /// <param name="glyph">The glyph using the provided index or the .notdef glyph (index 0) if no glyph was found at that index.</param>
-        /// <returns>Returns true if a glyph exists at the given index. Otherwise returns false.</returns>
+        ///<summary>Try loading the glyph for the given index value and if available populate the glyph.</summary>
+        ///<param name="glyphIndex">The index of the glyph that should be loaded.</param>
+        ///<param name="flags">The glyph loading flag that should be used to load the glyph.</param>
+        ///<param name="glyph">The glyph using the provided index or the .notdef glyph (index 0) if no glyph was found at that index.</param>
+        ///<returns>Returns true if a glyph exists at the given index. Otherwise returns false.</returns>
         public static bool TryGetGlyphWithIndexValue(uint glyphIndex, GlyphLoadFlags flags, out Glyph glyph)
         {
             GlyphMarshallingStruct glyphStruct = new GlyphMarshallingStruct();
@@ -2068,7 +2082,7 @@ namespace UnityEngine.TextCore.LowLevel
         /// <summary>
         /// Retrieve all potential glyph pair adjustment records for the given glyph.
         /// </summary>
-        /// <param name="baseGlyphIndex">The index of the glyph.</param>
+        /// <param name="glyphIndex">The index of the glyph.</param>
         /// <returns>An array that contains the adjustment records for the given glyph.</returns>
         [VisibleToOtherModules("UnityEngine.TextCoreTextEngineModule")]
         internal static GlyphPairAdjustmentRecord[] GetPairAdjustmentRecords(FontFaceHandle faceHandle, uint glyphIndex)
@@ -2487,7 +2501,6 @@ namespace UnityEngine.TextCore.LowLevel
         /// <summary>
         /// Internal function used to reset an atlas texture to black
         /// </summary>
-        /// <param name="srcTexture"></param>
         [NativeMethod(Name = "TextCore::FontEngine::ResetAtlasTexture", IsFreeFunction = true)]
         [VisibleToOtherModules("UnityEngine.TextCoreTextEngineModule")]
         internal extern static void ResetAtlasTexture(Texture2D texture);

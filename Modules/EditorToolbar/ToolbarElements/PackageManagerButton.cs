@@ -8,6 +8,7 @@ using UnityEditor.PackageManager.UI.Internal;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Toolbars
 {
@@ -24,6 +25,7 @@ namespace UnityEditor.Toolbars
             return new MainToolbarButton(new MainToolbarContent(icon, tooltip), clickAction);
         }
 
+        [NoAutoStaticsCleanup] // Persistent editor service singleton resolved from ServicesContainer; safe to persist across reload.
         static IPackageDatabase s_PackageDatabase;
 
         const string k_DefaultIconPath = "Icons/PackageManagerDefault.png";

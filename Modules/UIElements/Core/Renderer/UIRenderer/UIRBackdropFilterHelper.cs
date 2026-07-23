@@ -10,7 +10,8 @@ namespace UnityEngine.UIElements.UIR
     static class BackdropFilterHelper
     {
         // Not thread-safe; UIR rendering is sequential. Revisit if panel processing becomes parallel.
-        static MaterialPropertyBlock s_PropertyBlock = new MaterialPropertyBlock();
+        [NoAutoStaticsCleanup] // Reused property block; ApplyFilterChain clears it before each pass
+        static readonly MaterialPropertyBlock s_PropertyBlock = new MaterialPropertyBlock();
 
         [NoAutoStaticsCleanup]
         static bool s_CustomFilterWarningLogged;

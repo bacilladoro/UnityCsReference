@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -10,7 +11,9 @@ namespace UnityEditor.Rendering
 {
     class RenderPipelineGlobalSettingsAssetProcessor : AssetModificationProcessor
     {
+        [NoAutoStaticsCleanup] // public test/config flag, persistent across reloads by design
         public static bool s_CheckDelete = true;
+        [NoAutoStaticsCleanup] // public lazy environment probe, value is stable for the process lifetime
         public static Lazy<bool> s_RunningTestsOrBatchMode = new Lazy<bool>(() => Environment.CommandLine.Contains("-testResults") || Application.isBatchMode);
 
         public static AssetDeleteResult OnWillDeleteAsset(string assetPath, RemoveAssetOptions option)

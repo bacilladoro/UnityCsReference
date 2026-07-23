@@ -324,13 +324,13 @@ namespace UnityEditor
         {
             internal static class Constants
             {
-                public static Texture2D folderIcon = EditorGUIUtility.FindTexture(EditorResources.folderIconName);
-                public static GUIContent badgeNew = EditorGUIUtility.TrIconContent("PackageBadgeNew", "This is a new asset.");
-                public static GUIContent badgeOverride = EditorGUIUtility.TrIconContent("PackageBadgeOverride", "This project setting will be overridden!");
-                public static GUIContent badgeWarnPathConflict = EditorGUIUtility.TrIconContent("console.warnicon", "Warning: File exists in project, but with different GUID. Will override existing asset which may be undesired.");
-                public static GUIContent badgeChange = EditorGUIUtility.TrIconContent("playLoopOff", "This asset is new or has changed.");
-                public static GUIContent badgeWarnPathRestricted = EditorGUIUtility.TrIconContent("console.erroricon", "Error: Asset is restricted and will not be imported in your project.");
-                public static GUIStyle badgeRestrictedStyle = new GUIStyle(GUI.skin.label)
+                public static readonly Texture2D folderIcon = EditorGUIUtility.FindTexture(EditorResources.folderIconName);
+                public static readonly GUIContent badgeNew = EditorGUIUtility.TrIconContent("PackageBadgeNew", "This is a new asset.");
+                public static readonly GUIContent badgeOverride = EditorGUIUtility.TrIconContent("PackageBadgeOverride", "This project setting will be overridden!");
+                public static readonly GUIContent badgeWarnPathConflict = EditorGUIUtility.TrIconContent("console.warnicon", "Warning: File exists in project, but with different GUID. Will override existing asset which may be undesired.");
+                public static readonly GUIContent badgeChange = EditorGUIUtility.TrIconContent("playLoopOff", "This asset is new or has changed.");
+                public static readonly GUIContent badgeWarnPathRestricted = EditorGUIUtility.TrIconContent("console.erroricon", "Error: Asset is restricted and will not be imported in your project.");
+                public static readonly GUIStyle badgeRestrictedStyle = new GUIStyle(GUI.skin.label)
                 {
                     alignment = TextAnchor.MiddleCenter,
                     fontStyle = FontStyle.Bold,
@@ -342,13 +342,7 @@ namespace UnityEditor
                     }
                 };
 
-                public static GUIStyle paddinglessStyle;
-
-                static Constants()
-                {
-                    paddinglessStyle = new GUIStyle();
-                    paddinglessStyle.padding = new RectOffset(0, 0, 0, 0);
-                }
+                public static readonly GUIStyle paddinglessStyle = new GUIStyle { padding = new RectOffset(0, 0, 0, 0) };
             }
 
             static Texture2D CreateBackgroundRestrictedTexture(Color color)

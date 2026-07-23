@@ -153,7 +153,6 @@ namespace UnityEngine.TextCore.Text
         /// <param name="stringIndex">The index of the missing character in the source string.</param>
         /// <param name="text">The source text that contains the missing character.</param>
         /// <param name="fontAsset">The font asset that is missing the requested characters.</param>
-        /// <param name="textComponent">The text component where the requested character is missing.</param>
         public delegate void MissingCharacterEventCallback(uint unicode, int stringIndex, TextInfo text, FontAsset fontAsset);
 
         /// <summary>

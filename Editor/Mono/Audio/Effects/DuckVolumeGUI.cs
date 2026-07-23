@@ -6,6 +6,7 @@
 
 using System;
 using System.Globalization;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor.Audio;
 using UnityEngine;
 
@@ -13,12 +14,12 @@ namespace UnityEditor
 {
     class DuckVolumeGUI : IAudioEffectPluginGUI
     {
-        public static string kThresholdName = "Threshold";
-        public static string kRatioName = "Ratio";
-        public static string kMakeupGainName = "Make-up Gain";
-        public static string kAttackTimeName = "Attack Time";
-        public static string kReleaseTimeName = "Release Time";
-        public static string kKneeName = "Knee";
+        public const string kThresholdName = "Threshold";
+        public const string kRatioName = "Ratio";
+        public const string kMakeupGainName = "Make-up Gain";
+        public const string kAttackTimeName = "Attack Time";
+        public const string kReleaseTimeName = "Release Time";
+        public const string kKneeName = "Knee";
 
         public override string Name
         {
@@ -49,7 +50,7 @@ namespace UnityEditor
             return style;
         }
 
-        public static GUIStyle textStyle10 = BuildGUIStyleForLabel(Color.grey, 10, false, FontStyle.Normal, TextAnchor.MiddleLeft);
+        public static readonly GUIStyle textStyle10 = BuildGUIStyleForLabel(Color.grey, 10, false, FontStyle.Normal, TextAnchor.MiddleLeft);
 
         public static void DrawText(float x, float y, string text)
         {
@@ -70,6 +71,7 @@ namespace UnityEditor
             MakeupGain,
         }
 
+        [NoAutoStaticsCleanup] // Transient drag-interaction state, reset to None at the start of each mouse interaction; safe to persist across reload.
         static DragType dragtype = DragType.None;
 
         protected static Color ScaleAlpha(Color col, float blend)

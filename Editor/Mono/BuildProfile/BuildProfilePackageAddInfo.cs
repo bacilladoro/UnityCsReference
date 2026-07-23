@@ -44,6 +44,8 @@ namespace UnityEditor.Build.Profile
         PackageManager.Requests.AddAndRemoveRequest m_PackageAddRequest = null;
         ProgressEntry m_PackageAddProgressInfo = new();
 
+        bool m_CallbacksSubscribed = false;
+
         /// <summary>
         /// Begins package installation if not already started.
         /// </summary>
@@ -56,7 +58,10 @@ namespace UnityEditor.Build.Profile
             {
                 m_PackageAddRequest = PackageManager.Client.AddAndRemove(packagesToAdd);
                 m_PackageAddRequest.progressUpdated += HandlePackageAddProgress;
+
                 EditorApplication.update += CheckCompletion;
+                AssemblyReloadEvents.beforeAssemblyReload += UnsubscribeRequestCallbacks;
+                m_CallbacksSubscribed = true;
                 isPackageAddRequest = true;
             }
         }
@@ -83,9 +88,33 @@ namespace UnityEditor.Build.Profile
         /// </summary>
         public void Cleanup()
         {
+            UnsubscribeRequestCallbacks();
+            isPackageAddRequest = false;
             m_PackageAddRequest = null;
             OnPackageAddComplete = null;
             OnPackageAddProgress = null;
+        }
+
+        /// <summary>
+        /// Detaches the native-backed callbacks (the editor update loop, the request's
+        /// <c>progressUpdated</c> event, and the domain-reload hook). These must be removed
+        /// before any domain reload — otherwise the native delegate lists keep GC handles to
+        /// this instance from the previous domain, producing "invalid GC handle ... from a
+        /// previous domain" warnings when they are later resolved or released.
+        /// </summary>
+        void UnsubscribeRequestCallbacks()
+        {
+            // Skip when the callbacks weren't subscribed in this domain. After a domain reload
+            // the request object may survive (serialized) but its progress tracker does not, so
+            // unsubscribing progressUpdated would dereference a null tracker and throw.
+            if (!m_CallbacksSubscribed)
+                return;
+
+            m_CallbacksSubscribed = false;
+            AssemblyReloadEvents.beforeAssemblyReload -= UnsubscribeRequestCallbacks;
+            EditorApplication.update -= CheckCompletion;
+            if (m_PackageAddRequest != null)
+                m_PackageAddRequest.progressUpdated -= HandlePackageAddProgress;
         }
 
         bool ContainsPackage(string name)
@@ -103,7 +132,7 @@ namespace UnityEditor.Build.Profile
             if (m_PackageAddRequest == null || !m_PackageAddRequest.IsCompleted)
                 return;
 
-            EditorApplication.update -= CheckCompletion;
+            UnsubscribeRequestCallbacks();
 
             if (m_PackageAddRequest.Status >= PackageManager.StatusCode.Failure)
                 Debug.LogError(m_PackageAddRequest.Error.message);

@@ -8,6 +8,7 @@ using System.Linq;
 using System.Text;
 using Unity.GraphToolkit.CSO;
 using Unity.GraphToolkit.Editor.ContextualMenuItems;
+using Unity.GraphToolkit.Editor.Implementation;
 using Unity.GraphToolkit.InternalBridge;
 using Unity.GraphToolsAuthoringFramework.InternalEditorBridge;
 using Unity.Profiling;
@@ -68,6 +69,9 @@ namespace Unity.GraphToolkit.Editor
         public const float MediumZoom = 0.75f;
 
         GraphViewZoomMode m_ZoomMode;
+
+        //TODO : GTF-2489 - Remove GraphViewEditorWindow.s_FrameElementDelayMs and queue Framing after Graph Load
+        public const long s_FrameElementDelayMs = 60;
 
         /// <summary>
         /// GraphView elements are organized into layers to ensure some type of graph elements
@@ -581,8 +585,8 @@ namespace Unity.GraphToolkit.Editor
             // If pan and zoom are the default values, re-frame to see all elements in the graph
             if (ShouldFrameAllOnFirstLoad && GraphModel != null && pan == GraphViewStateComponent.defaultPosition && zoom == GraphViewStateComponent.defaultScale)
             {
-                // Needs to schedule to have the graph elements views
-                schedule.Execute(this.DispatchFrameAllCommand).ExecuteLater(0);
+                // Needs to schedule to have the graph elements views and layout fully calculated
+                schedule.Execute(this.DispatchFrameAllCommand).ExecuteLater(s_FrameElementDelayMs);
                 return;
             }
 
@@ -945,8 +949,43 @@ namespace Unity.GraphToolkit.Editor
             PopulateContextualMenuActionMap(menuActionMap, evt, selection);
             ViewSelection.BuildContextualMenu(categorizedMenuItems, evt, menuActionMap);
 
+            InvokeUserGraphContextualMenu(evt);
+
             if (Unsupported.IsDeveloperBuild())
                 AppendDeveloperBuildMenuActions(evt, selection);
+        }
+
+        /// <summary>
+        /// Builds a <see cref="GraphMenuContext"/> from the current right-click
+        /// and invokes every static method decorated with
+        /// <see cref="GraphMenuAttribute"/>. Exceptions raised by user
+        /// code are logged so they don't break the rest of the menu.
+        /// </summary>
+        void InvokeUserGraphContextualMenu(ContextualMenuPopulateEvent evt)
+        {
+            var graph = (GraphViewModel?.GraphModelState?.GraphModel as GraphModelImp)?.Graph;
+            if (graph == null)
+                return;
+
+            var clickedModel = (evt.target as ModelView)?.Model as GraphElementModel;
+            object clickedObject = clickedModel is IUserNodeModelImp userNode
+                ? userNode.Node
+                : clickedModel as INode;
+            if (clickedObject == null && clickedModel is WireModel wireModel && wireModel.FromPort != null && wireModel.ToPort != null)
+                clickedObject = graph.GetWire(wireModel.FromPort, wireModel.ToPort);
+
+            var context = new GraphMenuContext(graph, clickedObject, evt.mousePosition, evt.menu);
+
+            var itemCountBefore = evt.menu.MenuItems().Count;
+            MenuCommandRegistry.InvokeGraphHandlers(context);
+
+            // If a handler added entries, separate them from the built-in entries
+            // above so the user's items don't blend visually with the previous
+            // category. Skip when the user's first item is already a separator so
+            // a handler that prepends its own doesn't end up with two.
+            var items = evt.menu.MenuItems();
+            if (items.Count > itemCountBefore && items[itemCountBefore] is not DropdownMenuSeparator)
+                evt.menu.InsertSeparator(string.Empty, itemCountBefore);
         }
 
         // CONTEXTUAL MENU METHODS:
@@ -3242,6 +3281,54 @@ namespace Unity.GraphToolkit.Editor
                 }
             }
 
+            // Handle RecreateView before UpdateChangedModels: read from the raw changeset to avoid
+            // RecreateView being swallowed by Unspecified when DefineNode creates/destroys ports.
+            if (modelChangeSet != null)
+            {
+                foreach (var (guid, hints) in modelChangeSet.ChangedModelsAndHints)
+                {
+                    if (!hints.Contains(ChangeHint.RecreateView))
+                        continue;
+                    if (!GraphModel.TryGetModelFromGuid(guid, out var model))
+                        continue;
+
+                    guid.AppendAllViews(this, null, k_UpdateAllUIs);
+
+                    // Remove the old views before creating the new ones.
+                    foreach (var ui in k_UpdateAllUIs)
+                    {
+                        if (ui is GraphElement ge)
+                        {
+                            // Don't use RemoveElement to avoid MarkGraphElementForRemoval, which would cancel
+                            // the new element's space-partitioning registration and break box selection
+
+                            // Replaces the MouseOverEvent unregister done by RemoveElement.
+                            if (ge is NodeView or WireView)
+                                ge.UnregisterCallback<MouseOverEvent>(OnMouseOver);
+
+                            ge.RemoveFromHierarchy();
+                            ge.RemoveFromRootView();
+                        }
+                    }
+                    k_UpdateAllUIs.Clear();
+
+                    // Create the new view and add it to the graph.
+                    var newUI = ModelViewFactory.CreateUI<GraphElement>(this, model);
+                    if (newUI != null)
+                        AddElement(newUI);
+
+                    changedModels.Remove(guid);
+
+                    // Wire views that survived the recreation still point at the old port view.
+                    // Mark them so UpdateChangedModels reconnects them to the newly created ports.
+                    if (model is AbstractNodeModel node)
+                    {
+                        foreach (var wire in node.GetConnectedWires())
+                            AddChangedModel(wire.Guid, ChangeHintList.Unspecified);
+                    }
+                }
+            }
+
             UpdateChangedModels(changedModels, selectionChangeset, selectionAlreadyUpdatedModels, shouldUpdatePlacematContainer, newPlacemats);
 
             // PF FIXME: node state (enable/disabled, used/unused) should be part of the State.
@@ -4852,6 +4939,7 @@ namespace Unity.GraphToolkit.Editor
             public void AppendInsertNodeMenuItem(ContextualMenuPopulateEvent evt, List<GraphElementModel> selection) => m_GraphView.AppendInsertNodeMenuItem(evt, selection);
             public void AppendCreateOppositePortalMenuItem(ContextualMenuPopulateEvent evt, List<GraphElementModel> selection) => m_GraphView.AppendCreateOppositePortalMenuItem(evt, selection);
             public void AppendRevertWiresMenuItem(ContextualMenuPopulateEvent evt, List<GraphElementModel> selection, bool revertAll) => m_GraphView.AppendRevertWiresMenuItem(evt, selection, revertAll);
+            public void InvokeUserGraphContextualMenu(ContextualMenuPopulateEvent evt) => m_GraphView.InvokeUserGraphContextualMenu(evt);
         }
     }
 }

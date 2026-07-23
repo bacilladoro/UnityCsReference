@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -10,10 +11,15 @@ namespace UnityEditor.Experimental.GraphView
 {
     public class GridBackground : ImmediateModeElement
     {
+        [NoAutoStaticsCleanup] // CSS property key — immutable string handle, no ALC-pinning refs
         static CustomStyleProperty<float> s_SpacingProperty = new CustomStyleProperty<float>("--spacing");
+        [NoAutoStaticsCleanup] // CSS property key — immutable string handle, no ALC-pinning refs
         static CustomStyleProperty<int> s_ThickLinesProperty = new CustomStyleProperty<int>("--thick-lines");
+        [NoAutoStaticsCleanup] // CSS property key — immutable string handle, no ALC-pinning refs
         static CustomStyleProperty<Color> s_LineColorProperty = new CustomStyleProperty<Color>("--line-color");
+        [NoAutoStaticsCleanup] // CSS property key — immutable string handle, no ALC-pinning refs
         static CustomStyleProperty<Color> s_ThickLineColorProperty = new CustomStyleProperty<Color>("--thick-line-color");
+        [NoAutoStaticsCleanup] // CSS property key — immutable string handle, no ALC-pinning refs
         static CustomStyleProperty<Color> s_GridBackgroundColorProperty = new CustomStyleProperty<Color>("--grid-background-color");
 
         static readonly float s_DefaultSpacing = 50f;

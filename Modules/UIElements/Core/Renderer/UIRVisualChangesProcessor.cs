@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Profiling;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEngine.UIElements.UIR
 {
@@ -170,6 +171,7 @@ namespace UnityEngine.UIElements.UIR
                 });
             }
 
+            [NoAutoStaticsCleanup] // scratch buffer cleared after every use; harmless to persist
             static readonly List<MeshModifierRegistration> k_RebuildScratch = new(16);
 
             // Returns true when m_EffectiveModifiers's reference flipped. The chain cache guarantees that

@@ -5,16 +5,19 @@
 using System;
 using UnityEditor;
 using UnityEngine;
+using Unity.Scripting.LifecycleManagement;
 
 namespace Unity.UI.Builder
 {
-    internal static class BuilderDialogsUtility
+    internal static partial class BuilderDialogsUtility
     {
+        [AutoStaticsCleanupOnCodeReload]
         public static bool preventDialogsFromOpening { get; set; }
 
         private static bool cannotOpenDialogs => Application.isBatchMode || preventDialogsFromOpening;
 
         // Used for testing
+        [NoAutoStaticsCleanup] // Plain int test hook reset explicitly by tests before use; holds no managed references, safe to persist across code reload.
         internal static int CannotOpenDisplayDialogComplexDefaultValue = 0;
 
         public static bool DisplayDialog(string title, string message)

@@ -69,11 +69,6 @@ namespace Unity.GraphToolkit.CSO
             State = new State();
         }
 
-        ~CsoTool()
-        {
-            Dispose(false);
-        }
-
         /// <summary>
         /// Initializes the tool.
         /// </summary>
@@ -93,7 +88,6 @@ namespace Unity.GraphToolkit.CSO
         public void Dispose()
         {
             Dispose(true);
-            GC.SuppressFinalize(this);
         }
 
         /// <summary>

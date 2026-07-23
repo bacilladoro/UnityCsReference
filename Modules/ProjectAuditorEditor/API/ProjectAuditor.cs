@@ -334,7 +334,7 @@ namespace Unity.ProjectAuditor.Editor
         internal static IssueCategory GetOrRegisterCategory(string name)
         {
             if (!s_CustomCategories.ContainsKey(name))
-                s_CustomCategories.Add(name, IssueCategory.FirstCustomCategory + s_CustomCategories.Count);
+                s_CustomCategories.Add(name, IssueCategoryExtensions.FirstCustomCategory + s_CustomCategories.Count);
             return s_CustomCategories[name];
         }
 
@@ -357,7 +357,7 @@ namespace Unity.ProjectAuditor.Editor
         /// <returns>The category name, or "Unknown" for an unregistered custom category</returns>
         internal static string GetCategoryName(IssueCategory category)
         {
-            if (category < IssueCategory.FirstCustomCategory)
+            if (category < IssueCategoryExtensions.FirstCustomCategory)
                 return category.ToString();
 
             foreach (var pair in s_CustomCategories)
@@ -411,7 +411,7 @@ namespace Unity.ProjectAuditor.Editor
         // Only used for testing
         internal static int NumCategories()
         {
-            return (int)IssueCategory.FirstCustomCategory + s_CustomCategories.Count;
+            return (int)IssueCategoryExtensions.FirstCustomCategory + s_CustomCategories.Count;
         }
     }
 }

@@ -46,7 +46,7 @@ partial class Popup : VisualElement
     const int k_PopupWindowMinWidth = 200;
     const int k_PopupWindowMaxWidth = 1000;
     const int k_PopupWindowMaxHeight = 1000;
-    const int k_PopupElementMinWidth = 350;
+    const int k_PopupElementMinWidth = 250;
 
     VisualElement m_AnchoredElement;
     Rect m_AnchoredElementScreenPos;
@@ -288,7 +288,9 @@ partial class Popup : VisualElement
 
                 style.left = pos.x;
                 style.top = pos.y + m_AnchoredElement.layout.height;
-                style.width = Math.Max(k_PopupElementMinWidth, m_AnchoredElement.resolvedStyle.width);
+                var anchorWidth = Math.Max(k_PopupElementMinWidth, m_AnchoredElement.resolvedStyle.width);
+                var parentWidth = parent.resolvedStyle.width;
+                style.width = (!float.IsNaN(parentWidth) && parentWidth > 0) ? Math.Min(parentWidth, anchorWidth) : anchorWidth;
             }
         }
     }

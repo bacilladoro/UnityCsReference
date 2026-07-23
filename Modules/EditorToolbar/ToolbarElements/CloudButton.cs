@@ -5,11 +5,13 @@
 using System;
 using UnityEditor.Connect;
 using UnityEditor.PackageManager.UI;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Toolbars
 {
     static class CloudButton
     {
+        [NoAutoStaticsCleanup] // Recomputed from MPE.ProcessService.level on every EditorApplication.update tick; safe to persist.
         static bool s_Availability = true;
         const string k_Path = "Services/Cloud";
 

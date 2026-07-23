@@ -104,30 +104,24 @@ namespace UnityEditor.Search
         public SearchItem item { get; set; }
         private volatile bool m_Disposed;
 
-        protected virtual void Dispose(bool disposing)
+        public void Dispose()
         {
             if (m_Disposed || !this)
                 return;
 
-            if (disposing)
+            m_Disposed = true;
+
+            if (item != null)
             {
-                item.data = null;
+                // Evict from the owning item's caches so a later ToObject() can't hand
+                // back this destroyed object.
+                item.RemoveCachedObject(this);
+                if (ReferenceEquals(item.data, this))
+                    item.data = null;
                 item = null;
             }
 
             DestroyImmediate(this);
-            m_Disposed = true;
-        }
-
-        ~SearchServiceItem()
-        {
-            Dispose(disposing: false);
-        }
-
-        public void Dispose()
-        {
-            Dispose(disposing: true);
-            GC.SuppressFinalize(this);
         }
 
         public override string ToString()

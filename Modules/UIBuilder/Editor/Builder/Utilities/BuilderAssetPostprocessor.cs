@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEditor;
+using Unity.Scripting.LifecycleManagement;
 
 namespace Unity.UI.Builder
 {
@@ -23,14 +24,17 @@ namespace Unity.UI.Builder
         void OnPostProcessAsset();
     }
 
-    internal class BuilderAssetPostprocessor : AssetPostprocessor
+    internal partial class BuilderAssetPostprocessor : AssetPostprocessor
     {
+        [AutoStaticsCleanupOnCodeReload]
         private static readonly HashSet<IBuilderPerFileAssetPostprocessor> m_PerFileProcessors =
             new HashSet<IBuilderPerFileAssetPostprocessor>();
 
+        [AutoStaticsCleanupOnCodeReload]
         private static readonly HashSet<IBuilderOneTimeAssetPostprocessor> m_OneTimeProcessors =
             new HashSet<IBuilderOneTimeAssetPostprocessor>();
 
+        [AutoStaticsCleanupOnCodeReload]
         private static readonly HashSet<IBuilderAssetPostprocessor> m_Processors =
             new HashSet<IBuilderAssetPostprocessor>();
 

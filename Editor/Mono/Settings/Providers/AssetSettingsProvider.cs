@@ -9,6 +9,7 @@ using UnityEngine.UIElements;
 using UnityEditor.StyleSheets;
 using UnityEditorInternal;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -16,6 +17,7 @@ namespace UnityEditor
     {
         static class Styles
         {
+            [NoAutoStaticsCleanup] // GUIStyle from a built-in skin name; holds no user-code refs, safe to persist across reload
             public static GUIStyle settingsStyle = "IconButton";
             public static StyleBlock settingsBtn => EditorResources.GetStyle("sb-settings-icon-btn");
         }

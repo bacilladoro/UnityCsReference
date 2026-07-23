@@ -34,6 +34,14 @@ namespace UnityEditor.Sprites
 
         extern private static System.Object GenerateOutlineImpl([NotNull] Texture2D texture, ref Rect rect, float detail, byte alphaTolerance, bool holeDetection, bool zeroExtrusion);
 
+        internal static void GeneratePhysicsOutline(Texture2D texture, Rect rect, byte alphaLevel, float detailTolerance, bool holeDetection, float minEdgeLengthPixels, out Vector2[][] paths)
+        {
+            var res = GeneratePhysicsOutlineImpl(texture, ref rect, alphaLevel, detailTolerance, holeDetection, minEdgeLengthPixels);
+            paths = (Vector2[][])res;
+        }
+
+        extern private static System.Object GeneratePhysicsOutlineImpl([NotNull] Texture2D texture, ref Rect rect, byte alphaLevel, float detailTolerance, bool holeDetection, float minEdgeLengthPixels);
+
         internal static void GenerateOutlineFromSprite(Sprite sprite, float detail, byte alphaTolerance, bool holeDetection, out Vector2[][] paths)
         {
             var res = GenerateOutlineFromSpriteImpl(sprite, detail, alphaTolerance, holeDetection);

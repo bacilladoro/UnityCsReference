@@ -1356,7 +1356,6 @@ namespace UnityEngine.TextCore.Text
         /// <summary>
         /// Method used to find and cache references to the Underline and Ellipsis characters.
         /// </summary>
-        /// <param name=""></param>
         protected bool GetSpecialCharacters(TextGenerationSettings generationSettings)
         {
             if (!GetEllipsisSpecialCharacter(generationSettings))

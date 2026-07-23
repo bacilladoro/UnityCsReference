@@ -6,6 +6,7 @@ using UnityEngine;
 using System;
 using System.Collections.Generic;
 using UnityEditor.EditorTools;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -89,6 +90,7 @@ namespace UnityEditor
                 }
             }
 
+            [NoAutoStaticsCleanup] // Reusable string scratch buffer, cleared before each use; safe to persist.
             static readonly List<string> s_GroupTypesToRemove = new();
             public void RefreshToolsData()
             {
@@ -144,6 +146,7 @@ namespace UnityEditor
                 }
             }
 
+            [NoAutoStaticsCleanup] // Reusable string key scratch buffer, cleared before each use; safe to persist.
             static readonly List<string> s_KeysBuffer = new();
             public void SetGroupsCollapsed(bool collapsed)
             {

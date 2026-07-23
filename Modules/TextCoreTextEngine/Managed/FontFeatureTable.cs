@@ -10,9 +10,7 @@ using UnityEngine.TextCore.LowLevel;
 
 namespace UnityEngine.TextCore.Text
 {
-    /// <summary>
-    /// Table that contains the various font features available for the given font asset.
-    /// </summary>
+    ///<summary>Represents a table that contains the font features available for a given font asset.</summary>
     [Serializable]
     [Obsolete("Font feature tables and OTL feature tags are obsolete. OpenType layout is now handled natively by Advanced Text Generator (ATG).", false)]
     public class FontFeatureTable
@@ -113,9 +111,7 @@ namespace UnityEngine.TextCore.Text
         // Utility Functions
         // =============================================
 
-        /// <summary>
-        /// Sort the glyph pair adjustment records by glyph index.
-        /// </summary>
+        ///<summary>Sorts the glyph pair adjustment records by glyph index.</summary>
         public void SortGlyphPairAdjustmentRecords()
         {
             // Sort List of Kerning Info
@@ -127,9 +123,7 @@ namespace UnityEngine.TextCore.Text
             }
         }
 
-        /// <summary>
-        /// Sort the Mark-to-Base Adjustment Table records.
-        /// </summary>
+        ///<summary>Sorts the Mark-to-Base Adjustment Table records.</summary>
         public void SortMarkToBaseAdjustmentRecords()
         {
             // Sort List of Kerning Info
@@ -141,9 +135,7 @@ namespace UnityEngine.TextCore.Text
             }
         }
 
-        /// <summary>
-        /// Sort the Mark-to-Mark Adjustment Table records.
-        /// </summary>
+        ///<summary>Sorts the Mark-to-Mark Adjustment Table records.</summary>
         public void SortMarkToMarkAdjustmentRecords()
         {
             // Sort List of Kerning Info

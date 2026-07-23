@@ -19,9 +19,9 @@ namespace UnityEditor.EditorTools
     sealed class EditorToolSettingsOverlay : Overlay, ICreateToolbar, ICreateHorizontalToolbar, ICreateVerticalToolbar
     {
         const string k_NoSettingsLabelName = "NoSettingsLabel";
-        static string k_NoSettingsHorizontal = L10n.Tr("No Tool Settings");
-        static string k_NoSettingsVertical =  L10n.Tr("None");
-        static string k_NoSettingsTooltip =  L10n.Tr("No tool settings available for the currently active tool and context.");
+        static readonly string k_NoSettingsHorizontal = L10n.Tr("No Tool Settings");
+        static readonly string k_NoSettingsVertical =  L10n.Tr("None");
+        static readonly string k_NoSettingsTooltip =  L10n.Tr("No tool settings available for the currently active tool and context.");
 
         Editor m_ToolEditor, m_ContextEditor;
         Editor m_DefaultToolEditor, m_DefaultContextEditor;
@@ -316,7 +316,7 @@ namespace UnityEditor.EditorTools
                 {
                     foreach (var child in childToolbar.children)
                     {
-                        if (child.resolvedStyle.display == DisplayStyle.Flex)
+                        if (child.resolvedStyle.display != DisplayStyle.None)
                             return false;
                     }
                 }

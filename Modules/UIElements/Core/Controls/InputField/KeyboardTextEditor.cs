@@ -67,13 +67,13 @@ namespace UnityEngine.UIElements
 
         void OnFocus(FocusEvent _)
         {
-            (textElement.panel as BaseVisualElementPanel).IMESetIsEnteringText(true);
+            (textElement.panel as BaseVisualElementPanel).OnIsEnteringTextChanged_internal(true);
             textElement.edition.SaveValueAndText();
         }
 
         void OnBlur(BlurEvent _)
         {
-            (textElement.panel as BaseVisualElementPanel).IMESetIsEnteringText(false);
+            (textElement.panel as BaseVisualElementPanel).OnIsEnteringTextChanged_internal(false);
             m_compositionString = string.Empty;
             editingUtilities.isCompositionActive = false;
         }
@@ -81,8 +81,6 @@ namespace UnityEngine.UIElements
         void OnIMEInput(IMEEvent e)
         {
             m_compositionString = e.compositionString ?? string.Empty;
-            // Event composition string should match panel's (same source in production; tests inject panel delegate).
-            Debug.Assert(m_compositionString == ((textElement.panel as BaseVisualElementPanel).IMEGetCompositionString() ?? string.Empty));
             // Refresh the label whenever IME composition is active or its state just transitioned
             // (active->inactive needs a final update to clear the preview).
             if (editingUtilities.UpdateImeState(e.compositionString) || editingUtilities.isCompositionActive)
@@ -193,18 +191,11 @@ namespace UnityEngine.UIElements
                 // On windows, key presses also send events with keycode but no character. Eat them up here.
                 else
                 {
-                    // if we have a composition string, make sure we clear the previous selection.
-                    var oldIsCompositionActive = editingUtilities.isCompositionActive;
                     generatePreview = true;
-
-                    //TODO Remove this once we are certain that all IME changes are going through IMEEvents)
-                    if (editingUtilities.UpdateImeState( (textElement.panel as BaseVisualElementPanel).IMEGetCompositionString() ) || oldIsCompositionActive != editingUtilities.isCompositionActive)
-                        m_Changed = true;
 
                     // Only treat as legacy IME signal when keyCode is None and character is null (platforms may send e.g. KeypadEnter as (char)3 with keyCode None).
                     if (evt.keyCode == KeyCode.None && c == '\0')
                         Debug.LogError($"IME events are supposed to come through IMEEvent instead of KeyDown: {evt}");
-                    Debug.Assert(!m_Changed);
                 }
             }
             if (m_Changed || m_ShouldInvokeUpdateValue)
@@ -234,7 +225,7 @@ namespace UnityEngine.UIElements
             if (imeEnabled && editingUtilities.ShouldUpdateImeWindowPosition())
             {
                 var cursorPos = editingUtilities.GetCurrentCursorPosition();
-                (textElement.panel as BaseVisualElementPanel).IMESetCursorPos( new Vector2(textElement.worldBound.x, textElement.worldBound.y) + cursorPos);
+                (textElement.panel as BaseVisualElementPanel).OnCursorPositonChanged( new Vector2(textElement.worldBound.x, textElement.worldBound.y) + cursorPos);
             }
 
             var fullText = generatePreview ? editingUtilities.GeneratePreviewString(textElement.enableRichText, m_compositionString) : editingUtilities.text;

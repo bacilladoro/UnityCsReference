@@ -60,6 +60,9 @@ namespace Unity.GraphToolkit.Editor
             m_AddButton.AddToClassList(addButtonUssClassName);
             m_AddButton.AddToClassList(Button.ussClassName);
             m_AddButton.RemoveFromClassList(ToolbarMenu.ussClassName);
+            m_AddButton.focusable = true;
+            m_AddButton.tabIndex = 0;
+            m_AddButton.RegisterCallback<NavigationSubmitEvent>(OnAddButtonSubmit);
             m_TitleContainer.Add(m_AddButton);
             CreateAddDropDownMenu();
 
@@ -75,6 +78,12 @@ namespace Unity.GraphToolkit.Editor
         /// <inheritdoc />
         public override void UpdateIndentation(int rank)
         {
+        }
+
+        void OnAddButtonSubmit(NavigationSubmitEvent evt)
+        {
+            m_AddButton.ShowMenu();
+            evt.StopPropagation();
         }
 
         void CreateAddDropDownMenu()

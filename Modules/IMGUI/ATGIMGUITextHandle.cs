@@ -278,6 +278,9 @@ namespace UnityEngine
             s_MissingGlyphsPerFontAsset.Clear();
 
             var invScale = 1 / GUIUtility.pixelsPerPoint;
+
+            TextCore.Text.OSFontFallbackResolver.Resolve(nativeTextInfo, s_MissingGlyphsPerFontAsset);
+
             if (textLib.HasMissingGlyphs(nativeTextInfo, ref s_MissingGlyphsPerFontAsset))
             {
                 PopulateGlyphs(s_MissingGlyphsPerFontAsset);
@@ -299,13 +302,19 @@ namespace UnityEngine
             meshInfos = new MeshInfoBindings[totalAtlasCount];
             int meshInfoIndex = 0;
 
+            int processedMeshIndex = 0;
             for (int i = 0; i < nativeTextInfo.meshInfoCount; i++)
             {
                 ATGMeshInfo meshInfo = nativeTextInfo.meshInfos[i];
                 FontAsset fa = null;
                 var textAsset = Object.FindObjectFromInstanceIDThreadSafe(meshInfo.textAssetId) as TextCore.Text.TextAsset;
-                if (textAsset == null || textAsset is SpriteAsset)
+                if (textAsset == null)
                     continue;
+                if (textAsset is SpriteAsset)
+                {
+                    processedMeshIndex++;
+                    continue;
+                }
                 fa = textAsset as FontAsset;
                 int atlasCount = fa.atlasTextures.Length;
 
@@ -318,7 +327,7 @@ namespace UnityEngine
                 // Create a separate MeshInfoBindings for each atlas
                 for (int j = 0; j < atlasCount; ++j)
                 {
-                    var textElementInfoInAtlas = s_TextElementIndicesByMesh[i][j];
+                    var textElementInfoInAtlas = s_TextElementIndicesByMesh[processedMeshIndex][j];
                     int vertexCount = textElementInfoInAtlas.Count * 4;
 
                     if (vertexCount == 0)
@@ -364,6 +373,7 @@ namespace UnityEngine
 
                     meshInfoIndex++;
                 }
+                processedMeshIndex++;
             }
         }
 

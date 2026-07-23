@@ -4,16 +4,19 @@
 
 using System;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace UnityEditor.PackageManager.UI.Internal
 {
-    internal static class UIUtils
+    internal static partial class UIUtils
     {
+        [NoAutoStaticsCleanup]
         private static readonly IReadOnlyList<string> k_SizeUnits = Array.AsReadOnly(new []{ "KB", "MB", "GB", "TB" });
 
-        private static readonly Dictionary<ScrollView, VisualElement> s_PendingScrollTargets = new();
+        [AutoStaticsCleanupOnCodeReload]
+        private static Dictionary<ScrollView, VisualElement> s_PendingScrollTargets = new();
 
         public static void SetElementDisplay(VisualElement element, bool value)
         {
@@ -159,6 +162,7 @@ namespace UnityEditor.PackageManager.UI.Internal
             InternalShowTextTooltipOnSizeChange(element, 0);
         }
 
-        public static readonly Action<Label> TextTooltipOnSizeChange = ActionShowTextTooltipOnSizeChange;
+        [AutoStaticsCleanupOnCodeReload]
+        public static Action<Label> TextTooltipOnSizeChange = ActionShowTextTooltipOnSizeChange;
     }
 }

@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Bindings;
 
 namespace UnityEngine.Accessibility
@@ -60,6 +61,9 @@ namespace UnityEngine.Accessibility
     ///- <see cref="RuntimePlatform.OSXPlayer"/>
     ///- <see cref="RuntimePlatform.WindowsPlayer"/>
     ///
+    /// **Note**: Only the accessibility hierarchy for the application's main window is supported. Content displayed on
+    /// additional windows, such as on secondary displays, is not exposed to screen readers.
+    ///
     /// SA:
     ///
     ///- [[wiki:accessibility|Accessibility for mobile applications]]
@@ -108,6 +112,8 @@ namespace UnityEngine.Accessibility
         /// instances of AccessibilityHierarchy to guarantee ID uniqueness and avoid confusion of looking for an ID in a
         /// hierarchy that does not contain the node that the ID originally belonged to.
         /// </summary>
+        // Monotonic counter; must persist across code reload so node IDs stay globally unique.
+        [NoAutoStaticsCleanup]
         internal static int nextUniqueNodeId;
 
         /// <summary>
@@ -118,6 +124,9 @@ namespace UnityEngine.Accessibility
         /// example during a scene transition) frees its IDs as soon as it is collected, with no finalizer or explicit
         /// cleanup required.
         /// </summary>
+        // Weak-reference bookkeeping that self-prunes as hierarchies are collected; pairs with the persisted
+        // nextUniqueNodeId counter, so it must also persist across code reload to keep node IDs globally unique.
+        [NoAutoStaticsCleanup]
         static readonly List<WeakReference<AccessibilityHierarchy>> s_LiveHierarchies = new();
 
         /// <summary>
@@ -239,8 +248,13 @@ namespace UnityEngine.Accessibility
         /// different position in the parent's child list.
         /// </summary>
         /// <remarks>
-        /// **Warning**: The moving operation is costly because many checks have to be executed to guarantee the
-        /// integrity of the hierarchy. If this method is called excessively, it might negatively affect performance.
+        /// **Warning**: When this hierarchy is the <see cref="AssistiveSupport.activeHierarchy"/>, this method has a
+        /// non-trivial cost on the following platforms:
+        ///\\
+        ///- **iOS**: Moving a node has a high cost that scales with the size of the subtree being moved. Avoid calling this method frequently in performance-sensitive code.
+        ///- **macOS**: Moving a node has a moderate cost. Calling this method frequently can affect performance.
+        ///\\
+        /// Moving a node in an inactive hierarchy has no native cost.
         /// </remarks>
         /// <param name="node">The node to move.</param>
         /// <param name="newParent">The new parent of the node, or @@null@@ if the node should be placed at the root
@@ -307,6 +321,15 @@ namespace UnityEngine.Accessibility
         /// <summary>
         /// Removes the node from the accessibility hierarchy and removes or re-parents its descendants.
         /// </summary>
+        /// <remarks>
+        /// **Warning**: When this hierarchy is the <see cref="AssistiveSupport.activeHierarchy"/>, this method has a
+        /// non-trivial cost on the following platforms:
+        ///\\
+        ///- **iOS**: Removing a node has a high cost that scales with the size of the affected subtree. Avoid calling this method frequently in performance-sensitive code.
+        ///- **macOS**: Removing a node has a moderate cost that scales with the size of the affected subtree. Calling this method frequently can affect performance.
+        ///\\
+        /// Removing a node from an inactive hierarchy has no native cost.
+        /// </remarks>
         /// <param name="node">The node to remove.</param>
         /// <param name="removeChildren">@@true@@ if the node's descendants should also be removed, or @@false@@ if they
         /// should be moved under the node's parent. Defaults to @@true@@.</param>
@@ -363,6 +386,15 @@ namespace UnityEngine.Accessibility
         /// <summary>
         /// Resets the hierarchy to an empty state, removing all nodes and the screen reader focus.
         /// </summary>
+        /// <remarks>
+        /// **Warning**: When this hierarchy is the <see cref="AssistiveSupport.activeHierarchy"/>, this method has a
+        /// non-trivial cost on the following platforms:
+        ///\\
+        ///- **iOS**: Clearing the hierarchy has a high cost that scales with its size. Avoid calling this method frequently in performance-sensitive code.
+        ///- **macOS**: Clearing the hierarchy has a moderate cost that scales with its size. Calling this method frequently can affect performance.
+        ///\\
+        /// Clearing an inactive hierarchy has no native cost.
+        /// </remarks>
         public void Clear()
         {
             for (var i = m_RootNodes.Count - 1; i >= 0; i--)

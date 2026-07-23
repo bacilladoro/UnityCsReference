@@ -10,6 +10,7 @@ using System.Runtime.InteropServices;
 
 namespace UnityEngine.XR
 {
+    ///<summary>Information about an <see cref="XRMeshSubsystem" />.</summary>
     [NativeHeader("Modules/XR/XRPrefix.h")]
     [NativeHeader("Modules/XR/Subsystems/Planes/XRMeshSubsystemDescriptor.h")]
     [UsedByNativeCode]

@@ -12,7 +12,7 @@ namespace UnityEditor.Experimental.GraphView
     class LineView : VisualElement
     {
         // color for lines
-        internal static PrefColor s_SnappingLineColor = new PrefColor("General/Graph Snapping Line Color", 68 / 255f, 192 / 255f, 255 / 255f, 0.2f);
+        internal static readonly PrefColor s_SnappingLineColor = new PrefColor("General/Graph Snapping Line Color", 68 / 255f, 192 / 255f, 255 / 255f, 0.2f);
 
         public List<Line2> lines { get; private set; } = new List<Line2>();
         public LineView()

@@ -152,6 +152,8 @@ namespace UnityEditorInternal.FrameDebuggerInternal
         public int m_MeshSubset;
         public EntityId[] m_MeshEntityIds;
 
+        public byte[] m_GRDExcludedReasons;
+
         // state for compute shader dispatches
         public EntityId m_ComputeShaderEntityId;
         public string m_ComputeShaderName;

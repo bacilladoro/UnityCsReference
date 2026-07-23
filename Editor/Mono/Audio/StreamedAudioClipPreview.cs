@@ -5,15 +5,18 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 
 
 namespace UnityEditor
 {
-    class StreamedAudioClipPreview : WaveformPreview
+    partial class StreamedAudioClipPreview : WaveformPreview
     {
-        static class AudioClipMinMaxOverview
+        static partial class AudioClipMinMaxOverview
         {
+            [AutoStaticsCleanupOnCodeReload]
+            [IgnoreForUAL0015("This is a cache, that is repopulated on demand")]
             static Dictionary<AudioClip, float[]> s_Data = new Dictionary<AudioClip, float[]>();
             public static float[] GetOverviewFor(AudioClip clip)
             {

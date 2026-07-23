@@ -40,7 +40,12 @@ namespace UnityEditor
         Remember,
         AllowAssetCreation,
         StaticTabs,
-        SearchPopupButton
+        SearchPopupButton,
+
+        // When set (e.g. MPPM virtual players), the host view's generic (tab) menu shows items only from
+        // windows that opt in via EditorWindow.ShowGenericMenuWhenRestricted(); other windows contribute
+        // nothing. Complements HostViewGenericMenu, which toggles the whole menu on/off.
+        RestrictedHostViewGenericMenu
     }
 
     [Serializable]

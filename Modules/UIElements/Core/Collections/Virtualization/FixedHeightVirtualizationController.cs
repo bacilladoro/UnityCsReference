@@ -47,7 +47,7 @@ namespace UnityEngine.UIElements
             return itemsCount * resolvedItemHeight;
         }
 
-        public override void ScrollToItem(int index)
+        protected override void ScrollToItemVertically(int index)
         {
             if (index < ReusableCollectionItem.UndefinedIndex)
                 return;
@@ -77,13 +77,13 @@ namespace UnityEngine.UIElements
                 // Scroll to last item
                 var actualCount = (int)(viewportHeight / pixelAlignedItemHeight);
                 if (itemsCount < actualCount)
-                    m_ScrollView.scrollOffset = new Vector2(0, 0);
+                    m_ScrollView.scrollOffset = new Vector2(m_ScrollView.scrollOffset.x, 0);
                 else
-                    m_ScrollView.scrollOffset = new Vector2(0, (itemsCount + 1) * pixelAlignedItemHeight);
+                    m_ScrollView.scrollOffset = new Vector2(m_ScrollView.scrollOffset.x, (itemsCount + 1) * pixelAlignedItemHeight);
             }
             else if (firstVisibleIndex >= index)
             {
-                m_ScrollView.scrollOffset = Vector2.up * (pixelAlignedItemHeight * index);
+                m_ScrollView.scrollOffset = new Vector2(m_ScrollView.scrollOffset.x, pixelAlignedItemHeight * index);
             }
             else // index > first
             {

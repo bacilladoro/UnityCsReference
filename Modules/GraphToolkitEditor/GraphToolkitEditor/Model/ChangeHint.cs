@@ -28,6 +28,7 @@ namespace Unity.GraphToolkit.Editor
             UIHints = new ChangeHint(nameof(UIHints));
             Animation =  new ChangeHint(nameof(Animation));
             NeedsRedraw = new ChangeHint(nameof(NeedsRedraw));
+            RecreateView = new ChangeHint(nameof(RecreateView));
         }
 
         /// <summary>
@@ -82,5 +83,10 @@ namespace Unity.GraphToolkit.Editor
         /// No model change, but a redraw is needed.
         /// </summary>
         public static readonly ChangeHint NeedsRedraw;
+
+        /// <summary>
+        /// The view for this model must be torn down and recreated, e.g. because the view type changed.
+        /// </summary>
+        public static readonly ChangeHint RecreateView;
     }
 }

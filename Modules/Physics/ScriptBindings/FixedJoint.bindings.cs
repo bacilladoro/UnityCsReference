@@ -6,6 +6,11 @@ using UnityEngine.Bindings;
 
 namespace UnityEngine
 {
+    ///<summary>The Fixed joint groups together 2 rigidbodies, making them stick together in their bound position.</summary>
+    ///<seealso cref="CharacterJoint" />
+    ///<seealso cref="HingeJoint" />
+    ///<seealso cref="SpringJoint" />
+    ///<seealso cref="ConfigurableJoint" />
     [RequireComponent(typeof(Rigidbody))]
     [NativeHeader("Modules/Physics/FixedJoint.h")]
     [NativeClass("Unity::FixedJoint")]

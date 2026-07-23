@@ -8,7 +8,7 @@
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <EnableDefaultItems>false</EnableDefaultItems>
-    <DefineConstants>$(DefineConstants);ALLOW_IMPLICIT_INTERNAL_VISIBILITY;COMBINED_ASSEMBLIES;DEBUGGER_LISTENS_FIXED_PORT;EDITOR_ONLY_NAVMESH_BUILDER_DEPRECATED;ENABLE_ACCELERATOR_CLIENT_DEBUGGING;ENABLE_ALTERNATIVE_LISTEN_PORT;ENABLE_AMD;ENABLE_AR;ENABLE_AUDIO;ENABLE_AUDIO_MANAGER_BASED_SCHEDULING;ENABLE_AUDIO_SCRIPTABLE_PIPELINE;ENABLE_BURST;ENABLE_CACHING;ENABLE_CLOTH;ENABLE_CLOUD_LICENSE;ENABLE_CLOUD_SERVICES;ENABLE_CLOUD_SERVICES_ADS;ENABLE_CLOUD_SERVICES_ANALYTICS;ENABLE_CLOUD_SERVICES_BUILD;ENABLE_CLOUD_SERVICES_CRASH_REPORTING;ENABLE_CLOUD_SERVICES_ENGINE_DIAGNOSTICS;ENABLE_CLOUD_SERVICES_PURCHASING;ENABLE_CLOUD_SERVICES_USE_WEBREQUEST;ENABLE_CLUSTERINPUT;ENABLE_CLUSTER_SYNC;ENABLE_CRUNCH_TEXTURE_COMPRESSION;ENABLE_DIRECTOR_AUDIO;ENABLE_DIRECTOR_TEXTURE;ENABLE_EDITOR_GAME_SERVICES;ENABLE_EDITOR_HUB_LICENSE;ENABLE_ETC_COMPRESSION;ENABLE_EVENT_QUEUE;ENABLE_GAMECENTER_API;ENABLE_GENERATE_NATIVE_PLUGINS_FOR_ASSEMBLIES_API;ENABLE_LZMA;ENABLE_MANAGED_ANIMATION_JOBS;ENABLE_MANAGED_AUDIO_JOBS;ENABLE_MANAGED_JOBS;ENABLE_MANAGED_TRANSFORM_JOBS;ENABLE_MANAGED_UNITYTLS;ENABLE_MARSHALLING_TESTS;ENABLE_MICROPHONE;ENABLE_MOVIES;ENABLE_MULTIPLE_DISPLAYS;ENABLE_NAVIGATION_OFFMESHLINK_TO_NAVMESHLINK;ENABLE_NETWORK;ENABLE_NVIDIA;ENABLE_PHYSICS;ENABLE_RUNTIME_GI;ENABLE_SCRIPTING_GC_WBARRIERS;ENABLE_TEXTURE_STREAMING;ENABLE_UNITYEVENTS;ENABLE_UNITYWEBREQUEST;ENABLE_UNITY_CLOUD_IDENTIFIERS;ENABLE_UNITY_COLLECTIONS_CHECKS;ENABLE_UNITY_CONSENT;ENABLE_UNITY_GAME_SERVICES_ANALYTICS_SUPPORT;ENABLE_UTF8_VALIDATION_ON_STRING_DESERIALIZATION;ENABLE_VERSION_CONTROL_INTEGRATION;ENABLE_VIDEO;ENABLE_VIRTUALTEXTURING;ENABLE_VR;ENABLE_WEBCAM;ENABLE_WEBSOCKET_CLIENT;ENABLE_WEBSOCKET_HOST;ENABLE_WWW;INCLUDE_DYNAMIC_GI;INCLUDE_UNIFIED_RAYTRACING_COMPUTE_BACKEND;INCLUDE_UNIFIED_RAYTRACING_HARDWARE_BACKEND;PLATFORM_SUPPORTS_GAMEPAD_AUDIO;PLATFORM_SUPPORTS_MONO;PLAYERCONNECTION_LISTENS_FIXED_PORT;RENDER_SOFTWARE_CURSOR;TEXTCORE_1_0_OR_NEWER;TRACE;UNITY_ANDROID_API;UNITY_ASSEMBLIES_API;UNITY_ASSERTIONS;UNITY_CAN_SHOW_SPLASH_SCREEN;UNITY_EDITOR;UNITY_EDITOR_API;UNITY_EDITOR_LINUX;UNITY_IPHONE_API;UNITY_METRO_API;UNITY_PS4_API;UNITY_PS5_API;UNITY_STANDALONE_LINUX_API;UNITY_STANDALONE_OSX_API;UNITY_STANDALONE_WIN_API;UNITY_TINYPROFILING_INTERNAL;UNITY_TVOS_API;UNITY_UNITYADS_API;UNITY_WEBGL_API;USE_PROPERTY_DATABASE;USE_QUERY_BUILDER;USE_SEARCH_ENGINE_API;USE_SEARCH_MODULE</DefineConstants>
+    <DefineConstants>$(DefineConstants);ALLOW_IMPLICIT_INTERNAL_VISIBILITY;COMBINED_ASSEMBLIES;DEBUGGER_LISTENS_FIXED_PORT;EDITOR_ONLY_NAVMESH_BUILDER_DEPRECATED;ENABLE_ACCELERATOR_CLIENT_DEBUGGING;ENABLE_ALTERNATIVE_LISTEN_PORT;ENABLE_AMD;ENABLE_AR;ENABLE_AUDIO;ENABLE_AUDIO_MANAGER_BASED_SCHEDULING;ENABLE_AUDIO_SCRIPTABLE_PIPELINE;ENABLE_BURST;ENABLE_CACHING;ENABLE_CLOTH;ENABLE_CLOUD_LICENSE;ENABLE_CLOUD_SERVICES;ENABLE_CLOUD_SERVICES_ADS;ENABLE_CLOUD_SERVICES_ANALYTICS;ENABLE_CLOUD_SERVICES_BUILD;ENABLE_CLOUD_SERVICES_CRASH_REPORTING;ENABLE_CLOUD_SERVICES_ENGINE_DIAGNOSTICS;ENABLE_CLOUD_SERVICES_PURCHASING;ENABLE_CLOUD_SERVICES_USE_WEBREQUEST;ENABLE_CLUSTERINPUT;ENABLE_CLUSTER_SYNC;ENABLE_CRUNCH_TEXTURE_COMPRESSION;ENABLE_DIRECTOR_AUDIO;ENABLE_DIRECTOR_TEXTURE;ENABLE_EDITOR_GAME_SERVICES;ENABLE_EDITOR_HUB_LICENSE;ENABLE_ETC_COMPRESSION;ENABLE_EVENT_QUEUE;ENABLE_GAMECENTER_API;ENABLE_GENERATE_NATIVE_PLUGINS_FOR_ASSEMBLIES_API;ENABLE_LZMA;ENABLE_MANAGED_ANIMATION_JOBS;ENABLE_MANAGED_AUDIO_JOBS;ENABLE_MANAGED_JOBS;ENABLE_MANAGED_TRANSFORM_JOBS;ENABLE_MANAGED_UNITYTLS;ENABLE_MARSHALLING_TESTS;ENABLE_MICROPHONE;ENABLE_MULTIPLE_DISPLAYS;ENABLE_NAVIGATION_OFFMESHLINK_TO_NAVMESHLINK;ENABLE_NETWORK;ENABLE_NVIDIA;ENABLE_PHYSICS;ENABLE_RUNTIME_GI;ENABLE_SCRIPTING_GC_WBARRIERS;ENABLE_TEXTURE_STREAMING;ENABLE_UNITYEVENTS;ENABLE_UNITYWEBREQUEST;ENABLE_UNITY_CLOUD_IDENTIFIERS;ENABLE_UNITY_COLLECTIONS_CHECKS;ENABLE_UNITY_CONSENT;ENABLE_UNITY_GAME_SERVICES_ANALYTICS_SUPPORT;ENABLE_UTF8_VALIDATION_ON_STRING_DESERIALIZATION;ENABLE_VERSION_CONTROL_INTEGRATION;ENABLE_VIDEO;ENABLE_VIRTUALTEXTURING;ENABLE_VR;ENABLE_WEBCAM;ENABLE_WEBSOCKET_CLIENT;ENABLE_WEBSOCKET_HOST;ENABLE_WWW;INCLUDE_DYNAMIC_GI;INCLUDE_UNIFIED_RAYTRACING_COMPUTE_BACKEND;INCLUDE_UNIFIED_RAYTRACING_HARDWARE_BACKEND;PLATFORM_SUPPORTS_GAMEPAD_AUDIO;PLATFORM_SUPPORTS_MONO;PLAYERCONNECTION_LISTENS_FIXED_PORT;RENDER_SOFTWARE_CURSOR;TEXTCORE_1_0_OR_NEWER;TRACE;UNITY_ANDROID_API;UNITY_ASSEMBLIES_API;UNITY_ASSERTIONS;UNITY_CAN_SHOW_SPLASH_SCREEN;UNITY_EDITOR;UNITY_EDITOR_API;UNITY_EDITOR_LINUX;UNITY_IPHONE_API;UNITY_METRO_API;UNITY_PS4_API;UNITY_PS5_API;UNITY_STANDALONE_LINUX_API;UNITY_STANDALONE_OSX_API;UNITY_STANDALONE_WIN_API;UNITY_TINYPROFILING_INTERNAL;UNITY_TVOS_API;UNITY_UNITYADS_API;UNITY_WEBGL_API;USE_PROPERTY_DATABASE;USE_QUERY_BUILDER;USE_SEARCH_ENGINE_API;USE_SEARCH_MODULE</DefineConstants>
     <LangVersion>12.0</LangVersion>
     <NoWarn>1701;169;649;626;UA1002</NoWarn>
     <Nullable>disable</Nullable>
@@ -22,8 +22,8 @@
     <UnityEnableAutoStaticsCleanupCodeGen>false</UnityEnableAutoStaticsCleanupCodeGen>
   </PropertyGroup>
   <PropertyGroup>
-    <HomeDir Condition="$(HOME) != ''">$(HOME)</HomeDir>
-    <HomeDir Condition="$(USERPROFILE) != ''">$(USERPROFILE)</HomeDir>
+    <HomeDir Condition="'$(HOME.Length)' != '0'">$(HOME)</HomeDir>
+    <HomeDir Condition="'$(USERPROFILE.Length)' != '0'">$(USERPROFILE)</HomeDir>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="..\..\Editor\Mono\2D\Common\ScriptBindings\SpriteEditorExtension.bindings.cs">
@@ -688,6 +688,9 @@
     </Compile>
     <Compile Include="..\..\Editor\Mono\BuildPlayerWindowBuildMethods.cs">
       <Link>Editor\Mono\BuildPlayerWindowBuildMethods.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Editor\Mono\BuildProfile\BuildDestinationSettings.cs">
+      <Link>Editor\Mono\BuildProfile\BuildDestinationSettings.cs</Link>
     </Compile>
     <Compile Include="..\..\Editor\Mono\BuildProfile\BuildProfile.API.cs">
       <Link>Editor\Mono\BuildProfile\BuildProfile.API.cs</Link>
@@ -1618,6 +1621,9 @@
     </Compile>
     <Compile Include="..\..\Editor\Mono\Graphics\EditorMaterialUtility.bindings.cs">
       <Link>Editor\Mono\Graphics\EditorMaterialUtility.bindings.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Editor\Mono\Graphics\GRDExclusionReasonText.cs">
+      <Link>Editor\Mono\Graphics\GRDExclusionReasonText.cs</Link>
     </Compile>
     <Compile Include="..\..\Editor\Mono\Graphics\GraphicsStateCollectionImporter.cs">
       <Link>Editor\Mono\Graphics\GraphicsStateCollectionImporter.cs</Link>
@@ -3029,6 +3035,9 @@
     <Compile Include="..\..\Editor\Mono\PlayerSettingsWebGL.bindings.cs">
       <Link>Editor\Mono\PlayerSettingsWebGL.bindings.cs</Link>
     </Compile>
+    <Compile Include="..\..\Editor\Mono\PlayerSettingsWindows.bindings.cs">
+      <Link>Editor\Mono\PlayerSettingsWindows.bindings.cs</Link>
+    </Compile>
     <Compile Include="..\..\Editor\Mono\PlayerSettingsXboxOne.bindings.cs">
       <Link>Editor\Mono\PlayerSettingsXboxOne.bindings.cs</Link>
     </Compile>
@@ -3755,11 +3764,11 @@
     <Compile Include="..\..\Editor\Mono\SerializationDebug.bindings.cs">
       <Link>Editor\Mono\SerializationDebug.bindings.cs</Link>
     </Compile>
-    <Compile Include="..\..\Editor\Mono\Serialization\DictionarySerializationDuplicateEntriesCleanup.cs">
-      <Link>Editor\Mono\Serialization\DictionarySerializationDuplicateEntriesCleanup.cs</Link>
+    <Compile Include="..\..\Editor\Mono\Serialization\DictionaryIgnoredEntriesCache.cs">
+      <Link>Editor\Mono\Serialization\DictionaryIgnoredEntriesCache.cs</Link>
     </Compile>
-    <Compile Include="..\..\Editor\Mono\Serialization\DuplicateEntriesForDictionaries.cs">
-      <Link>Editor\Mono\Serialization\DuplicateEntriesForDictionaries.cs</Link>
+    <Compile Include="..\..\Editor\Mono\Serialization\DictionarySerializationIgnoredEntriesCleanup.cs">
+      <Link>Editor\Mono\Serialization\DictionarySerializationIgnoredEntriesCleanup.cs</Link>
     </Compile>
     <Compile Include="..\..\Editor\Mono\SerializedObject.bindings.cs">
       <Link>Editor\Mono\SerializedObject.bindings.cs</Link>
@@ -3826,6 +3835,9 @@
     </Compile>
     <Compile Include="..\..\Editor\Mono\Shaders\MaterialHierarchyPopup.cs">
       <Link>Editor\Mono\Shaders\MaterialHierarchyPopup.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Editor\Mono\Shaders\RenderPipelineSubShaderStripping.cs">
+      <Link>Editor\Mono\Shaders\RenderPipelineSubShaderStripping.cs</Link>
     </Compile>
     <Compile Include="..\..\Editor\Mono\Shaders\ShaderBuildSettings.cs">
       <Link>Editor\Mono\Shaders\ShaderBuildSettings.cs</Link>
@@ -5114,6 +5126,9 @@
     <Compile Include="..\..\Modules\BuildAnalysis\UI\BuildAnalysisWindow.cs">
       <Link>Modules\BuildAnalysis\UI\BuildAnalysisWindow.cs</Link>
     </Compile>
+    <Compile Include="..\..\Modules\BuildAnalysis\UI\BuildAnalysisWindowLauncher.cs">
+      <Link>Modules\BuildAnalysis\UI\BuildAnalysisWindowLauncher.cs</Link>
+    </Compile>
     <Compile Include="..\..\Modules\BuildAnalysis\UI\BuildListPanel.cs">
       <Link>Modules\BuildAnalysis\UI\BuildListPanel.cs</Link>
     </Compile>
@@ -5192,6 +5207,9 @@
     <Compile Include="..\..\Modules\BuildProfileEditor\BuildProfileEditor.cs">
       <Link>Modules\BuildProfileEditor\BuildProfileEditor.cs</Link>
     </Compile>
+    <Compile Include="..\..\Modules\BuildProfileEditor\BuildProfileLastBuild.cs">
+      <Link>Modules\BuildProfileEditor\BuildProfileLastBuild.cs</Link>
+    </Compile>
     <Compile Include="..\..\Modules\BuildProfileEditor\BuildProfileSettingsAttribute.cs">
       <Link>Modules\BuildProfileEditor\BuildProfileSettingsAttribute.cs</Link>
     </Compile>
@@ -5258,6 +5276,12 @@
     <Compile Include="..\..\Modules\BuildProfileEditor\Elements\Settings\AdaptivePerformanceSettingProvider.cs">
       <Link>Modules\BuildProfileEditor\Elements\Settings\AdaptivePerformanceSettingProvider.cs</Link>
     </Compile>
+    <Compile Include="..\..\Modules\BuildProfileEditor\Elements\Settings\BuildDestinationSettingsEditor.cs">
+      <Link>Modules\BuildProfileEditor\Elements\Settings\BuildDestinationSettingsEditor.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\BuildProfileEditor\Elements\Settings\BuildDestinationSettingsProvider.cs">
+      <Link>Modules\BuildProfileEditor\Elements\Settings\BuildDestinationSettingsProvider.cs</Link>
+    </Compile>
     <Compile Include="..\..\Modules\BuildProfileEditor\Elements\Settings\EditorAsVisualElement.cs">
       <Link>Modules\BuildProfileEditor\Elements\Settings\EditorAsVisualElement.cs</Link>
     </Compile>
@@ -5293,6 +5317,9 @@
     </Compile>
     <Compile Include="..\..\Modules\BuildProfileEditor\Handlers\BuildProfileDataSource.cs">
       <Link>Modules\BuildProfileEditor\Handlers\BuildProfileDataSource.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\BuildProfileEditor\Handlers\BuildProfileLastBuildLine.cs">
+      <Link>Modules\BuildProfileEditor\Handlers\BuildProfileLastBuildLine.cs</Link>
     </Compile>
     <Compile Include="..\..\Modules\BuildProfileEditor\Handlers\BuildProfileWindowActionProvider.cs">
       <Link>Modules\BuildProfileEditor\Handlers\BuildProfileWindowActionProvider.cs</Link>
@@ -5476,6 +5503,12 @@
     </Compile>
     <Compile Include="..\..\Modules\CloudServicesSettingsEditor\Purchasing\ScriptBindings\PurchasingSettings.bindings.cs">
       <Link>Modules\CloudServicesSettingsEditor\Purchasing\ScriptBindings\PurchasingSettings.bindings.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\ContentBuild\Editor\Managed\BuildArtifactMetadata.cs">
+      <Link>Modules\ContentBuild\Editor\Managed\BuildArtifactMetadata.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\ContentBuild\Editor\Managed\BuildArtifactMetadataCollection.bindings.cs">
+      <Link>Modules\ContentBuild\Editor\Managed\BuildArtifactMetadataCollection.bindings.cs</Link>
     </Compile>
     <Compile Include="..\..\Modules\ContentBuild\Editor\Managed\BuildArtifactMetadataId.cs">
       <Link>Modules\ContentBuild\Editor\Managed\BuildArtifactMetadataId.cs</Link>
@@ -5783,8 +5816,8 @@
     <Compile Include="..\..\Modules\GenericRemoteEditor\Public\GenericRemote.bindings.cs">
       <Link>Modules\GenericRemoteEditor\Public\GenericRemote.bindings.cs</Link>
     </Compile>
-    <Compile Include="..\..\Modules\GraphToolkitEditor\CommandStateObserver\AssemblyInfo.cs">
-      <Link>Modules\GraphToolkitEditor\CommandStateObserver\AssemblyInfo.cs</Link>
+    <Compile Include="..\..\Modules\GraphToolkitEditor\AssemblyInfo.cs">
+      <Link>Modules\GraphToolkitEditor\AssemblyInfo.cs</Link>
     </Compile>
     <Compile Include="..\..\Modules\GraphToolkitEditor\CommandStateObserver\Commands\CommandHandlerFunctor.cs">
       <Link>Modules\GraphToolkitEditor\CommandStateObserver\Commands\CommandHandlerFunctor.cs</Link>
@@ -5924,8 +5957,8 @@
     <Compile Include="..\..\Modules\GraphToolkitEditor\GraphToolkitCommonEditor\VariableKind.cs">
       <Link>Modules\GraphToolkitEditor\GraphToolkitCommonEditor\VariableKind.cs</Link>
     </Compile>
-    <Compile Include="..\..\Modules\GraphToolkitEditor\GraphToolkitEditor\AssemblyInfo.cs">
-      <Link>Modules\GraphToolkitEditor\GraphToolkitEditor\AssemblyInfo.cs</Link>
+    <Compile Include="..\..\Modules\GraphToolkitEditor\GraphToolkitCommonEditor\VariableNodeMode.cs">
+      <Link>Modules\GraphToolkitEditor\GraphToolkitCommonEditor\VariableNodeMode.cs</Link>
     </Compile>
     <Compile Include="..\..\Modules\GraphToolkitEditor\GraphToolkitEditor\EditorCommon\ClipboardProvider.cs">
       <Link>Modules\GraphToolkitEditor\GraphToolkitEditor\EditorCommon\ClipboardProvider.cs</Link>
@@ -7124,6 +7157,9 @@
     <Compile Include="..\..\Modules\GraphToolkitEditor\GraphToolkitEditor\UI\ModelView\GraphView\ModelView\PortPreview.cs">
       <Link>Modules\GraphToolkitEditor\GraphToolkitEditor\UI\ModelView\GraphView\ModelView\PortPreview.cs</Link>
     </Compile>
+    <Compile Include="..\..\Modules\GraphToolkitEditor\GraphToolkitEditor\UI\ModelView\GraphView\ModelView\SetVariableNodeView.cs">
+      <Link>Modules\GraphToolkitEditor\GraphToolkitEditor\UI\ModelView\GraphView\ModelView\SetVariableNodeView.cs</Link>
+    </Compile>
     <Compile Include="..\..\Modules\GraphToolkitEditor\GraphToolkitEditor\UI\ModelView\GraphView\ModelView\State.cs">
       <Link>Modules\GraphToolkitEditor\GraphToolkitEditor\UI\ModelView\GraphView\ModelView\State.cs</Link>
     </Compile>
@@ -7351,6 +7387,9 @@
     </Compile>
     <Compile Include="..\..\Modules\GraphToolkitEditor\GraphToolkitEditor\UI\ModelView\Inspector\Variables\VariableModePropertyField.cs">
       <Link>Modules\GraphToolkitEditor\GraphToolkitEditor\UI\ModelView\Inspector\Variables\VariableModePropertyField.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\GraphToolkitEditor\GraphToolkitEditor\UI\ModelView\Inspector\Variables\VariableSetValueInGraphPropertyField.cs">
+      <Link>Modules\GraphToolkitEditor\GraphToolkitEditor\UI\ModelView\Inspector\Variables\VariableSetValueInGraphPropertyField.cs</Link>
     </Compile>
     <Compile Include="..\..\Modules\GraphToolkitEditor\GraphToolkitEditor\UI\ModelView\Inspector\Variables\VariableSubgraphPortPropertyField.cs">
       <Link>Modules\GraphToolkitEditor\GraphToolkitEditor\UI\ModelView\Inspector\Variables\VariableSubgraphPortPropertyField.cs</Link>
@@ -7652,6 +7691,9 @@
     <Compile Include="..\..\Modules\GraphToolkitEditor\GraphToolkitEditor\UI\Views\GraphView\ContextualMenuItems\IHasContextualMenuItems.cs">
       <Link>Modules\GraphToolkitEditor\GraphToolkitEditor\UI\Views\GraphView\ContextualMenuItems\IHasContextualMenuItems.cs</Link>
     </Compile>
+    <Compile Include="..\..\Modules\GraphToolkitEditor\GraphToolkitEditor\UI\Views\GraphView\ContextualMenuItems\MenuCommandRegistry.cs">
+      <Link>Modules\GraphToolkitEditor\GraphToolkitEditor\UI\Views\GraphView\ContextualMenuItems\MenuCommandRegistry.cs</Link>
+    </Compile>
     <Compile Include="..\..\Modules\GraphToolkitEditor\GraphToolkitEditor\UI\Views\GraphView\GraphAnimator.cs">
       <Link>Modules\GraphToolkitEditor\GraphToolkitEditor\UI\Views\GraphView\GraphAnimator.cs</Link>
     </Compile>
@@ -7793,14 +7835,20 @@
     <Compile Include="..\..\Modules\GraphToolkitEditor\GraphToolkitEditor\UI\Windows\WindowAssetPostprocessingWatcher.cs">
       <Link>Modules\GraphToolkitEditor\GraphToolkitEditor\UI\Windows\WindowAssetPostprocessingWatcher.cs</Link>
     </Compile>
-    <Compile Include="..\..\Modules\GraphToolkitEditor\GraphToolkitPublic\AssemblyInfo.cs">
-      <Link>Modules\GraphToolkitEditor\GraphToolkitPublic\AssemblyInfo.cs</Link>
+    <Compile Include="..\..\Modules\GraphToolkitEditor\GraphToolkitPublic\Attribute\BlackboardMenuAttribute.cs">
+      <Link>Modules\GraphToolkitEditor\GraphToolkitPublic\Attribute\BlackboardMenuAttribute.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\GraphToolkitEditor\GraphToolkitPublic\Attribute\GraphMenuAttribute.cs">
+      <Link>Modules\GraphToolkitEditor\GraphToolkitPublic\Attribute\GraphMenuAttribute.cs</Link>
     </Compile>
     <Compile Include="..\..\Modules\GraphToolkitEditor\GraphToolkitPublic\Attribute\GraphToolbarElementAttribute.cs">
       <Link>Modules\GraphToolkitEditor\GraphToolkitPublic\Attribute\GraphToolbarElementAttribute.cs</Link>
     </Compile>
     <Compile Include="..\..\Modules\GraphToolkitEditor\GraphToolkitPublic\DataTypeStyleMapper.cs">
       <Link>Modules\GraphToolkitEditor\GraphToolkitPublic\DataTypeStyleMapper.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\GraphToolkitEditor\GraphToolkitPublic\GraphMenuContext.cs">
+      <Link>Modules\GraphToolkitEditor\GraphToolkitPublic\GraphMenuContext.cs</Link>
     </Compile>
     <Compile Include="..\..\Modules\GraphToolkitEditor\GraphToolkitPublic\Graph\Graph.cs">
       <Link>Modules\GraphToolkitEditor\GraphToolkitPublic\Graph\Graph.cs</Link>
@@ -7961,9 +8009,6 @@
     <Compile Include="..\..\Modules\GraphToolkitEditor\GraphToolkitPublic\Wire\Wire.cs">
       <Link>Modules\GraphToolkitEditor\GraphToolkitPublic\Wire\Wire.cs</Link>
     </Compile>
-    <Compile Include="..\..\Modules\GraphToolkitEditor\GraphToolkit\AssemblyInfo.cs">
-      <Link>Modules\GraphToolkitEditor\GraphToolkit\AssemblyInfo.cs</Link>
-    </Compile>
     <Compile Include="..\..\Modules\GraphToolkitEditor\GraphToolkit\TypeSystem\BuiltInTypeHandles.cs">
       <Link>Modules\GraphToolkitEditor\GraphToolkit\TypeSystem\BuiltInTypeHandles.cs</Link>
     </Compile>
@@ -8009,12 +8054,6 @@
     <Compile Include="..\..\Modules\GraphToolkitEditor\GraphToolkit\Utility\StringExtensions.cs">
       <Link>Modules\GraphToolkitEditor\GraphToolkit\Utility\StringExtensions.cs</Link>
     </Compile>
-    <Compile Include="..\..\Modules\GraphToolkitEditor\InternalBridge\AssemblyInfo.cs">
-      <Link>Modules\GraphToolkitEditor\InternalBridge\AssemblyInfo.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Modules\GraphToolkitEditor\InternalBridge\Editor\AssemblyInfo.cs">
-      <Link>Modules\GraphToolkitEditor\InternalBridge\Editor\AssemblyInfo.cs</Link>
-    </Compile>
     <Compile Include="..\..\Modules\GraphToolkitEditor\InternalBridge\Editor\BridgeForTests.cs">
       <Link>Modules\GraphToolkitEditor\InternalBridge\Editor\BridgeForTests.cs</Link>
     </Compile>
@@ -8050,9 +8089,6 @@
     </Compile>
     <Compile Include="..\..\Modules\GraphToolkitEditor\InternalBridge\VisualElementBridge.cs">
       <Link>Modules\GraphToolkitEditor\InternalBridge\VisualElementBridge.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Modules\GraphToolkitEditor\UnityRestricted\AssemblyInfo.cs">
-      <Link>Modules\GraphToolkitEditor\UnityRestricted\AssemblyInfo.cs</Link>
     </Compile>
     <Compile Include="..\..\Modules\GraphToolkitEditor\UnityRestricted\UnityRestrictedAttribute.cs">
       <Link>Modules\GraphToolkitEditor\UnityRestricted\UnityRestrictedAttribute.cs</Link>
@@ -10810,6 +10846,15 @@
     </Compile>
     <Compile Include="..\..\Modules\PackageManager\Editor\Managed\TrustLevel.cs">
       <Link>Modules\PackageManager\Editor\Managed\TrustLevel.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\PackageManager\Editor\Managed\TrustPolicyLevel.cs">
+      <Link>Modules\PackageManager\Editor\Managed\TrustPolicyLevel.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\PackageManager\Editor\Managed\TrustPolicySettings.bindings.cs">
+      <Link>Modules\PackageManager\Editor\Managed\TrustPolicySettings.bindings.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\PackageManager\Editor\Managed\TrustPolicySettings.cs">
+      <Link>Modules\PackageManager\Editor\Managed\TrustPolicySettings.cs</Link>
     </Compile>
     <Compile Include="..\..\Modules\PackageManager\Editor\Managed\UnityLifecycleInfo.cs">
       <Link>Modules\PackageManager\Editor\Managed\UnityLifecycleInfo.cs</Link>
@@ -16181,11 +16226,17 @@
     <Compile Include="..\..\Modules\UIToolkitAuthoringEditor\Managed\Hierarchy\Selection\Editor\Controls\StylePropertyField\StyleFoldoutField\BorderColorFoldout.cs">
       <Link>Modules\UIToolkitAuthoringEditor\Managed\Hierarchy\Selection\Editor\Controls\StylePropertyField\StyleFoldoutField\BorderColorFoldout.cs</Link>
     </Compile>
+    <Compile Include="..\..\Modules\UIToolkitAuthoringEditor\Managed\Hierarchy\Selection\Editor\Controls\StylePropertyField\StyleFoldoutField\BorderFoldout.cs">
+      <Link>Modules\UIToolkitAuthoringEditor\Managed\Hierarchy\Selection\Editor\Controls\StylePropertyField\StyleFoldoutField\BorderFoldout.cs</Link>
+    </Compile>
     <Compile Include="..\..\Modules\UIToolkitAuthoringEditor\Managed\Hierarchy\Selection\Editor\Controls\StylePropertyField\StyleFoldoutField\BorderRadiusFoldout.cs">
       <Link>Modules\UIToolkitAuthoringEditor\Managed\Hierarchy\Selection\Editor\Controls\StylePropertyField\StyleFoldoutField\BorderRadiusFoldout.cs</Link>
     </Compile>
     <Compile Include="..\..\Modules\UIToolkitAuthoringEditor\Managed\Hierarchy\Selection\Editor\Controls\StylePropertyField\StyleFoldoutField\BorderWidthFoldout.cs">
       <Link>Modules\UIToolkitAuthoringEditor\Managed\Hierarchy\Selection\Editor\Controls\StylePropertyField\StyleFoldoutField\BorderWidthFoldout.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\UIToolkitAuthoringEditor\Managed\Hierarchy\Selection\Editor\Controls\StylePropertyField\StyleFoldoutField\GapFoldoutField.cs">
+      <Link>Modules\UIToolkitAuthoringEditor\Managed\Hierarchy\Selection\Editor\Controls\StylePropertyField\StyleFoldoutField\GapFoldoutField.cs</Link>
     </Compile>
     <Compile Include="..\..\Modules\UIToolkitAuthoringEditor\Managed\Hierarchy\Selection\Editor\Controls\StylePropertyField\StyleFoldoutField\LengthFoldoutField.cs">
       <Link>Modules\UIToolkitAuthoringEditor\Managed\Hierarchy\Selection\Editor\Controls\StylePropertyField\StyleFoldoutField\LengthFoldoutField.cs</Link>
@@ -16631,6 +16682,9 @@
     <Compile Include="..\..\Modules\UIToolkitAuthoringEditor\Managed\Queries\GetActiveStyleSheetQuery.cs">
       <Link>Modules\UIToolkitAuthoringEditor\Managed\Queries\GetActiveStyleSheetQuery.cs</Link>
     </Compile>
+    <Compile Include="..\..\Modules\UIToolkitAuthoringEditor\Managed\Queries\GetCanvasThemeQuery.cs">
+      <Link>Modules\UIToolkitAuthoringEditor\Managed\Queries\GetCanvasThemeQuery.cs</Link>
+    </Compile>
     <Compile Include="..\..\Modules\UIToolkitAuthoringEditor\Managed\Queries\RequestSelectionQuery.cs">
       <Link>Modules\UIToolkitAuthoringEditor\Managed\Queries\RequestSelectionQuery.cs</Link>
     </Compile>
@@ -16823,6 +16877,9 @@
     <Compile Include="..\..\Modules\UIToolkitAuthoringEditor\Managed\StyleSheets\StyleSheetNodeTypeHandler.cs">
       <Link>Modules\UIToolkitAuthoringEditor\Managed\StyleSheets\StyleSheetNodeTypeHandler.cs</Link>
     </Compile>
+    <Compile Include="..\..\Modules\UIToolkitAuthoringEditor\Managed\StyleSheets\StyleSheetsContext.cs">
+      <Link>Modules\UIToolkitAuthoringEditor\Managed\StyleSheets\StyleSheetsContext.cs</Link>
+    </Compile>
     <Compile Include="..\..\Modules\UIToolkitAuthoringEditor\Managed\StyleSheets\StyleSheetsWindow.cs">
       <Link>Modules\UIToolkitAuthoringEditor\Managed\StyleSheets\StyleSheetsWindow.cs</Link>
     </Compile>
@@ -17000,6 +17057,9 @@
     <Compile Include="..\..\Modules\UnityEditorAnalyticsEditor\Events\EditorAnalyticsEvent.bindings.cs">
       <Link>Modules\UnityEditorAnalyticsEditor\Events\EditorAnalyticsEvent.bindings.cs</Link>
     </Compile>
+    <Compile Include="..\..\Modules\UnityEditorAnalyticsEditor\InheritedSessionArgs.bindings.cs">
+      <Link>Modules\UnityEditorAnalyticsEditor\InheritedSessionArgs.bindings.cs</Link>
+    </Compile>
     <Compile Include="..\..\Modules\UnityEditorAnalyticsEditor\UsabilityAnalytics.bindings.cs">
       <Link>Modules\UnityEditorAnalyticsEditor\UsabilityAnalytics.bindings.cs</Link>
     </Compile>
@@ -17099,11 +17159,11 @@
     <Compile Include="..\..\artifacts\MonolithicEditorDlls\InternalsVisibleTo.cs">
       <Link>artifacts\MonolithicEditorDlls\InternalsVisibleTo.cs</Link>
     </Compile>
-    <Reference Include="..\..\artifacts\Stevedore\unity-compiler-win-x64_7ef3\Unity.CompilationPipeline.Common\Unity.CompilationPipeline.Common.dll" />
-    <Reference Include="..\..\artifacts\Stevedore\msbu-tools_686c\buildTools\UnityEditor.MSBuild.dll" />
-    <Reference Include="..\..\artifacts\Stevedore\msbu-tools_686c\msbuild.host\Unity.BuildService.Host.dll" />
-    <Reference Include="..\..\artifacts\Stevedore\msbu-tools_686c\buildTools\Unity.BuildService.dll" />
-    <Reference Include="..\..\artifacts\Stevedore\msbu-tools_686c\asmDefToCSProj\AsmDefToCSProjLib.dll" />
+    <Reference Include="..\..\artifacts\Stevedore\unity-compiler-win-x64_403c\Unity.CompilationPipeline.Common\Unity.CompilationPipeline.Common.dll" />
+    <Reference Include="..\..\artifacts\Stevedore\msbu-tools_2f72\buildTools\UnityEditor.MSBuild.dll" />
+    <Reference Include="..\..\artifacts\Stevedore\msbu-tools_2f72\msbuild.host\Unity.BuildService.Host.dll" />
+    <Reference Include="..\..\artifacts\Stevedore\msbu-tools_2f72\buildTools\Unity.BuildService.dll" />
+    <Reference Include="..\..\artifacts\Stevedore\msbu-tools_2f72\asmDefToCSProj\AsmDefToCSProjLib.dll" />
     <Reference Include="..\..\External\Unity.Cecil\builds\lib\net40\Unity.Cecil.dll" />
     <Reference Include="..\..\External\ExCSS\builds\builds\lib\netstandard2.0\ExCSS.Unity.dll" />
     <Reference Include="..\..\Tools\Bee\build\Distribution\BeeDriver2\Bee.BeeDriver2.dll" />
@@ -17137,7 +17197,7 @@
     </PropertyGroup>
   </Target>
   <ItemGroup>
-    <Analyzer Include="/tmp/uitoolkit_gen_j7nz6p0w/Unity.UIToolkit.SourceGenerator.dll" />
+    <Analyzer Include="/tmp/uitoolkit_gen_tomgzkfq/Unity.UIToolkit.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.2" />

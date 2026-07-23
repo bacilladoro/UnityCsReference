@@ -10,6 +10,7 @@ using Unity.Collections;
 using UnityEditor.Build.Reporting;
 using UnityEngine;
 using UnityEngine.Scripting;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Mono.BuildPipeline
 {
@@ -47,6 +48,7 @@ namespace UnityEditor.Mono.BuildPipeline
             public string unityVersion;
 
             // These options could impact the cache data files.
+            [NoAutoStaticsCleanup] // constant bitmask of BuildOptions enum flags (value type), never mutated; safe to persist
             public static BuildOptions BuildOptionsMask = BuildOptions.CompressWithLz4 |
                 BuildOptions.ConnectToHost |
                 BuildOptions.ConnectWithProfiler |

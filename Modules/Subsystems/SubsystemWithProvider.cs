@@ -2,12 +2,19 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+using Unity.Profiling;
+
 namespace UnityEngine.SubsystemsImplementation
 {
     public abstract class SubsystemWithProvider : ISubsystem
     {
+        static readonly ProfilerMarker k_StartMarker = new ProfilerMarker("SubsystemWithProvider.Start");
+        static readonly ProfilerMarker k_StopMarker = new ProfilerMarker("SubsystemWithProvider.Stop");
+        static readonly ProfilerMarker k_DestroyMarker = new ProfilerMarker("SubsystemWithProvider.Destroy");
+
         public void Start()
         {
+            using var _ = k_StartMarker.Auto();
             if (running)
                 return;
 
@@ -20,6 +27,7 @@ namespace UnityEngine.SubsystemsImplementation
 
         public void Stop()
         {
+            using var _ = k_StopMarker.Auto();
             if (!running)
                 return;
 
@@ -32,6 +40,7 @@ namespace UnityEngine.SubsystemsImplementation
 
         public void Destroy()
         {
+            using var _ = k_DestroyMarker.Auto();
             Stop();
             if (SubsystemManager.RemoveStandaloneSubsystem(this))
                 OnDestroy();
@@ -51,6 +60,9 @@ namespace UnityEngine.SubsystemsImplementation
         where TSubsystemDescriptor : SubsystemDescriptorWithProvider
         where TProvider : SubsystemProvider<TSubsystem>
     {
+        static readonly ProfilerMarker k_InitializeMarker = new ProfilerMarker("SubsystemWithProvider.Initialize");
+        static readonly ProfilerMarker k_CreateMarker = new ProfilerMarker("SubsystemWithProvider.OnCreate");
+
         public TSubsystemDescriptor subsystemDescriptor { get; private set; }
 
         protected internal TProvider provider { get; private set; }
@@ -62,10 +74,12 @@ namespace UnityEngine.SubsystemsImplementation
 
         internal override sealed void Initialize(SubsystemDescriptorWithProvider descriptor, SubsystemProvider provider)
         {
+            using var _ = k_InitializeMarker.Auto();
             providerBase = provider;
             this.provider = (TProvider)provider;
             subsystemDescriptor = (TSubsystemDescriptor)descriptor;
-            OnCreate();
+            using (k_CreateMarker.Auto())
+                OnCreate();
         }
 
         internal override sealed SubsystemDescriptorWithProvider descriptor => subsystemDescriptor;

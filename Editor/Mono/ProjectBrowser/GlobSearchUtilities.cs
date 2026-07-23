@@ -4,8 +4,10 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -13,25 +15,27 @@ namespace UnityEditor
     {
         static readonly Regex k_BasicSymbolsRegex = new Regex(@"(?<range>\\\[..+?\])|(?<dstarfold>\\\*\\\*/)|(?<dstar>\\\*\\\*)|(?<star>\\\*)|(?<single>\\\?)");
         static readonly Regex k_ComplexSymbolsRegex = new Regex(@"(?<or>\\\(.+?(?:\\\|.+?)+\\\))");
-        static Dictionary<string, Func<string, string>> s_GlobToRegexMatch;
+        [NoAutoStaticsCleanup] // immutable lookup table of internal glob→regex lambdas built once; no user refs, safe to persist
+        static readonly ImmutableDictionary<string, Func<string, string>> s_GlobToRegexMatch;
 
         static GlobSearchUtilities()
         {
-            s_GlobToRegexMatch = new Dictionary<string, Func<string, string>>();
+            var globToRegexMatch = new Dictionary<string, Func<string, string>>();
 
             //Match any number of characters, where characters exist - end in a fold.
-            s_GlobToRegexMatch.Add("dstarfold", match => "(.+/)?");
+            globToRegexMatch.Add("dstarfold", match => "(.+/)?");
 
             //Match any number of characters
-            s_GlobToRegexMatch.Add("dstar", match => ".*");
+            globToRegexMatch.Add("dstar", match => ".*");
 
             //Match any number of non-"/" characters
-            s_GlobToRegexMatch.Add("star", match => @"[^/]*");
+            globToRegexMatch.Add("star", match => @"[^/]*");
 
             //Match a single non-"/" character
-            s_GlobToRegexMatch.Add("single", match => @"[^/]");
-            s_GlobToRegexMatch.Add("range", match => match.Replace(@"\[", "["));
-            s_GlobToRegexMatch.Add("or", match => match.Replace(@"\(", "(").Replace(@"\|", "|").Replace(@"\)", ")"));
+            globToRegexMatch.Add("single", match => @"[^/]");
+            globToRegexMatch.Add("range", match => match.Replace(@"\[", "["));
+            globToRegexMatch.Add("or", match => match.Replace(@"\(", "(").Replace(@"\|", "|").Replace(@"\)", ")"));
+            s_GlobToRegexMatch = globToRegexMatch.ToImmutableDictionary();
         }
 
         static string GlobToRegex(string glob)

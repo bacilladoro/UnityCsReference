@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEngine.UIElements.StyleSheets;
@@ -12,6 +13,7 @@ namespace UnityEditor.Experimental.GraphView
 {
     public class IconBadge : VisualElement
     {
+        [NoAutoStaticsCleanup] // CSS property key — immutable string handle, no ALC-pinning refs
         static CustomStyleProperty<int> s_DistanceProperty = new CustomStyleProperty<int>("--distance");
 
         private VisualElement m_TipElement;
@@ -452,11 +454,21 @@ namespace UnityEditor.Experimental.GraphView
 
 
             if (m_IconElement != null)
-                m_IconElement.layout = iconRect;
+            {
+                m_IconElement.style.position = Position.Absolute;
+                m_IconElement.style.left = iconRect.x;
+                m_IconElement.style.top = iconRect.y;
+                m_IconElement.style.width = iconRect.width;
+                m_IconElement.style.height = iconRect.height;
+            }
 
             if (m_TipElement != null)
             {
-                m_TipElement.layout = tipRect;
+                m_TipElement.style.position = Position.Absolute;
+                m_TipElement.style.left = tipRect.x;
+                m_TipElement.style.top = tipRect.y;
+                m_TipElement.style.width = tipRect.width;
+                m_TipElement.style.height = tipRect.height;
 
                 if (m_TipElement.visible != tipVisible)
                 {

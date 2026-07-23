@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor.Experimental;
 using UnityEditor.IMGUI.Controls;
 using UnityEditor.SceneManagement;
@@ -18,7 +19,7 @@ using Object = UnityEngine.Object;
 
 namespace UnityEditor
 {
-    internal class GameObjectTreeViewGUI : TreeViewGUI<EntityId>
+    internal partial class GameObjectTreeViewGUI : TreeViewGUI<EntityId>
     {
         enum GameObjectColorType
         {
@@ -30,21 +31,22 @@ namespace UnityEditor
 
         internal static class GameObjectStyles
         {
-            public static GUIStyle disabledLabel = new GUIStyle("PR DisabledLabel");
-            public static GUIStyle prefabLabel = "PR PrefabLabel";
-            public static GUIStyle disabledPrefabLabel = "PR DisabledPrefabLabel";
-            public static GUIStyle brokenPrefabLabel = "PR BrokenPrefabLabel";
-            public static GUIStyle disabledBrokenPrefabLabel = "PR DisabledBrokenPrefabLabel";
-            public static GUIStyle optionsButtonStyle = "PaneOptions";
-            public static GUIStyle sceneHeaderBg = "SceneTopBarBg";
-            public static SVC<float> sceneHeaderWidth = new SVC<float>("SceneTopBarBg", "border-bottom-width", 1f);
-            public static GUIStyle rightArrow = "ArrowNavigationRight";
-            public static GUIStyle overridesHoverHighlight = "HoverHighlight";
-            public static GUIStyle hoveredItemBackgroundStyle = "WhiteBackground";
-            public static Color hoveredBackgroundColor =
+            public static readonly GUIStyle disabledLabel = new GUIStyle("PR DisabledLabel");
+            public static readonly GUIStyle prefabLabel = "PR PrefabLabel";
+            public static readonly GUIStyle disabledPrefabLabel = "PR DisabledPrefabLabel";
+            public static readonly GUIStyle brokenPrefabLabel = "PR BrokenPrefabLabel";
+            public static readonly GUIStyle disabledBrokenPrefabLabel = "PR DisabledBrokenPrefabLabel";
+            public static readonly GUIStyle optionsButtonStyle = "PaneOptions";
+            public static readonly GUIStyle sceneHeaderBg = "SceneTopBarBg";
+            [NoAutoStaticsCleanup] // SVC<float> style-value cache keyed by a fixed style/property name; value survives reload, safe to persist
+            public static readonly SVC<float> sceneHeaderWidth = new SVC<float>("SceneTopBarBg", "border-bottom-width", 1f);
+            public static readonly GUIStyle rightArrow = "ArrowNavigationRight";
+            public static readonly GUIStyle overridesHoverHighlight = "HoverHighlight";
+            public static readonly GUIStyle hoveredItemBackgroundStyle = "WhiteBackground";
+            public static readonly Color hoveredBackgroundColor =
                 EditorResources.GetStyle("game-object-tree-view").GetColor("-unity-object-tree-hovered-color");
 
-            public static Texture2D sceneIcon = (Texture2D)EditorGUIUtility.IconContent("SceneAsset Icon").image;
+            public static readonly Texture2D sceneIcon = (Texture2D)EditorGUIUtility.IconContent("SceneAsset Icon").image;
 
             static GameObjectStyles()
             {
@@ -59,6 +61,7 @@ namespace UnityEditor
         private float m_PrevScollPos;
         private float m_PrevTotalHeight;
         internal delegate float OnHeaderGUIDelegate(Rect availableRect, string scenePath);
+        [AutoStaticsCleanupOnCodeReload]
         internal static OnHeaderGUIDelegate OnPostHeaderGUI = null;
 
         // Cache asset paths for managed VCS implementations.

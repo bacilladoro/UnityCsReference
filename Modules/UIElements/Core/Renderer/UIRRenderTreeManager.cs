@@ -8,6 +8,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Unity.Collections;
 using Unity.Profiling;
+using Unity.Scripting.LifecycleManagement;
 using static UnityEngine.UIElements.UIR.RenderTree;
 
 namespace UnityEngine.UIElements.UIR
@@ -32,6 +33,7 @@ namespace UnityEngine.UIElements.UIR
     // here we'll simply keep track of them so they can be reused, but we can only reuse them when a Reset has been performed.
     class MeshWriteDataPool : ImplicitPool<MeshWriteData>
     {
+        [NoAutoStaticsCleanup] // stateless factory lambda; no captured state
         static readonly Func<MeshWriteData> k_CreateAction = () => new MeshWriteData();
 
         public MeshWriteDataPool()
@@ -168,6 +170,7 @@ namespace UnityEngine.UIElements.UIR
             }
         }
 
+        [NoAutoStaticsCleanup] // shared object pool; infrastructure singleton
         static EntryPool s_SharedEntryPool = new(10000);
 
         // Profiling

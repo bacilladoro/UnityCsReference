@@ -944,31 +944,12 @@ namespace UnityEditor
 
             for (int i = 0; i < lines.Length; ++i)
             {
-                string textBeforeFilePath = " (at ";
-                int filePathIndex = lines[i].IndexOf(textBeforeFilePath, StringComparison.Ordinal);
-                if (filePathIndex > 0)
-                {
-                    filePathIndex += textBeforeFilePath.Length;
-                    if (lines[i][filePathIndex] != '<') // sometimes no url is given, just an id between <>, we can't do an hyperlink
-                    {
-                        string filePathPart = lines[i].Substring(filePathIndex);
-                        int lineIndex = filePathPart.LastIndexOf(":", StringComparison.Ordinal); // LastIndex because the url can contain ':' ex:"C:"
-                        if (lineIndex > 0)
-                        {
-                            int endLineIndex = filePathPart.LastIndexOf(")", StringComparison.Ordinal); // LastIndex because files or folder in the url can contain ')'
-                            if (endLineIndex > 0)
-                            {
-                                string lineString =
-                                    filePathPart.Substring(lineIndex + 1, (endLineIndex) - (lineIndex + 1));
-                                string filePath = filePathPart.Substring(0, lineIndex);
+                if (TryAppendMonoHyperlink(lines[i], textWithHyperlinks))
+                    continue;
 
-                                textWithHyperlinks.Append($"{lines[i].Substring(0, filePathIndex)}<color={EditorGUIUtility.GetHyperlinkColorForSkin()}><link=\"href='{filePath}' line='{lineString}'\">{filePath}:{lineString}</link></color>)\n");
+                if (TryAppendDotNetHyperlink(lines[i], textWithHyperlinks))
+                    continue;
 
-                                continue; // continue to evade the default case
-                            }
-                        }
-                    }
-                }
                 // default case if no hyperlink : we just write the line
                 textWithHyperlinks.Append(lines[i] + "\n");
             }
@@ -977,6 +958,89 @@ namespace UnityEditor
                 textWithHyperlinks.Remove(textWithHyperlinks.Length - 1, 1);
 
             return textWithHyperlinks.ToString();
+        }
+
+        // Mono/IL2CPP frames render the source location as "... (at <path>:<line>)".
+        // Runs in the OnGUI repaint path, so append index ranges directly to the builder (no per-line
+        // temp-string/interpolation allocations).
+        private static bool TryAppendMonoHyperlink(string line, StringBuilder builder)
+        {
+            const string k_FileMarker = " (at ";
+            int filePathIndex = line.IndexOf(k_FileMarker, StringComparison.Ordinal);
+            if (filePathIndex <= 0)
+                return false;
+
+            filePathIndex += k_FileMarker.Length;
+            if (filePathIndex >= line.Length || line[filePathIndex] == '<') // sometimes no url is given, just an id between <>, we can't do an hyperlink
+                return false;
+
+            int endLineIndex = line.LastIndexOf(')'); // LastIndex because files or folder in the url can contain ')'
+            if (endLineIndex <= filePathIndex)
+                return false;
+
+            // LastIndex (bounded to before the ')') because the url can contain ':' ex:"C:"
+            int lineIndex = line.LastIndexOf(':', endLineIndex - 1, endLineIndex - filePathIndex);
+            if (lineIndex <= filePathIndex)
+                return false;
+
+            int pathLength = lineIndex - filePathIndex;
+            int numberStart = lineIndex + 1;
+            int numberLength = endLineIndex - numberStart;
+
+            builder.Append(line, 0, filePathIndex);
+            builder.Append("<color=");
+            builder.Append(EditorGUIUtility.GetHyperlinkColorForSkin());
+            builder.Append("><link=\"href='");
+            builder.Append(line, filePathIndex, pathLength);
+            builder.Append("' line='");
+            builder.Append(line, numberStart, numberLength);
+            builder.Append("'\">");
+            builder.Append(line, filePathIndex, pathLength);
+            builder.Append(':');
+            builder.Append(line, numberStart, numberLength);
+            builder.Append("</link></color>)\n");
+            return true;
+        }
+
+        // CoreCLR renders the native .NET location form "... in <path>:line <N>".
+        // Runs in the OnGUI repaint path, so append index ranges directly to the builder (no per-line
+        // temp-string/interpolation allocations).
+        private static bool TryAppendDotNetHyperlink(string line, StringBuilder builder)
+        {
+            const string k_InMarker = " in ";
+            const string k_LineMarker = ":line ";
+            int netLineIndex = line.LastIndexOf(k_LineMarker, StringComparison.Ordinal);
+            if (netLineIndex <= 0)
+                return false;
+
+            int inIndex = line.LastIndexOf(k_InMarker, netLineIndex, StringComparison.Ordinal);
+            if (inIndex <= 0)
+                return false;
+
+            int netPathStart = inIndex + k_InMarker.Length;
+            if (netPathStart >= line.Length || line[netPathStart] == '<')
+                return false;
+
+            int pathLength = netLineIndex - netPathStart;
+
+            // The .NET shape ends the frame at the line number (no closing delimiter); upstream
+            // PostprocessStacktrace has already stripped any trailing '\r'.
+            int numberStart = netLineIndex + k_LineMarker.Length;
+            int numberLength = line.Length - numberStart;
+
+            builder.Append(line, 0, netPathStart);
+            builder.Append("<color=");
+            builder.Append(EditorGUIUtility.GetHyperlinkColorForSkin());
+            builder.Append("><link=\"href='");
+            builder.Append(line, netPathStart, pathLength);
+            builder.Append("' line='");
+            builder.Append(line, numberStart, numberLength);
+            builder.Append("'\">");
+            builder.Append(line, netPathStart, pathLength);
+            builder.Append(':');
+            builder.Append(line, numberStart, numberLength);
+            builder.Append("</link></color>\n");
+            return true;
         }
 
         internal static string GetCallstackFormattedSignatureFromGenericMethod(Dictionary<MethodInfo, Regex> methodSignatureRegex, MethodInfo method, string line)

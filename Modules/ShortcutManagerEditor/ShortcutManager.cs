@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.ShortcutManagement
 {
@@ -54,11 +55,14 @@ namespace UnityEditor.ShortcutManagement
         }
     }
 
-    public static class ShortcutManager
+    public static partial class ShortcutManager
     {
         public const string defaultProfileId = "Default";
 
-        public static IShortcutManager instance { get; } = new ShortcutManagerImplementation(ShortcutIntegration.instance.profileManager);
+        [AutoStaticsCleanupOnCodeReload]
+        private static Lazy<IShortcutManager> s_instance = new(() => new ShortcutManagerImplementation(ShortcutIntegration.instance.profileManager));
+
+        public static IShortcutManager instance { get { return s_instance.Value; } }
 
         public static void RegisterTag(string tag) => ShortcutIntegration.instance.contextManager.RegisterTag(tag);
 

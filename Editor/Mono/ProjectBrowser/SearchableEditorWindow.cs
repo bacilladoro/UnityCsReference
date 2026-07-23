@@ -7,10 +7,12 @@ using System.Collections.Generic;
 using Object = UnityEngine.Object;
 using System;
 using UnityEngine.Bindings;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
-    public class SearchableEditorWindow : EditorWindow, ISearchableContainer
+    [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("CodeReloadSafety", "UAL0001:Unsealed Public Class", Justification = "Unsealed on purpose")]
+    public partial class SearchableEditorWindow : EditorWindow, ISearchableContainer
     {
         public enum SearchMode { All, Name, Type, Label, AssetBundleName }
         public enum SearchModeHierarchyWindow { All, Name, Type }
@@ -51,8 +53,9 @@ namespace UnityEditor
             return filter;
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         static List<SearchableEditorWindow> searchableWindows = new List<SearchableEditorWindow>();
-        private static int s_SearchableEditorWindowSearchField = "SearchableEditorWindowSearchField".GetHashCode();
+        private static readonly int s_SearchableEditorWindowSearchField = "SearchableEditorWindowSearchField".GetHashCode();
 
         internal HierarchyType m_HierarchyType = HierarchyType.Assets;
         internal string m_SearchFilter = "";

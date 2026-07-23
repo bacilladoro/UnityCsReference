@@ -23,6 +23,14 @@ namespace UnityEngine.XR
         AngularAccelerationAvailable = 0x00000020
     }
 
+    ///<summary>Describes the state of a node tracked by an XR system.</summary>
+    ///<remarks>To track available XR nodes and acquire state data, handle the <see cref="InputTracking.nodeAdded" /> and <see cref="InputTracking.nodeRemoved" /> events or call <see cref="InputTracking.GetNodeStates" />.
+    ///
+    ///            Not all XR platforms provide complete tracking data. Use the methods <see cref="XR.XRNodeState.TryGetPosition" />, <see cref="XR.XRNodeState.TryGetRotation" />, etc. to read the data if it's available.
+    ///
+    ///            XR devices can be accessed in different ways, with the XR Node representing a physical input source such as a head position, hand, or camera.
+    ///
+    ///            See [XR Input](xref:xr_input) for an overview of accessing XR devices.</remarks>
     [StructLayout(LayoutKind.Sequential)]
     [UsedByNativeCode]
     public struct XRNodeState
@@ -40,6 +48,7 @@ namespace UnityEngine.XR
         private ulong m_UniqueID;
 
         // Properties
+        ///<summary>The unique identifier of the tracked node.</summary>
         public ulong uniqueID
         {
             get
@@ -52,6 +61,7 @@ namespace UnityEngine.XR
             }
         }
 
+        ///<summary>The type of the tracked node as specified in <see cref="XR.XRNode" />.</summary>
         public XRNode nodeType
         {
             get
@@ -64,6 +74,8 @@ namespace UnityEngine.XR
             }
         }
 
+        ///<summary>Set to true if the node is presently being tracked by the underlying XR system,
+        ///and false if the node is not presently being tracked by the underlying XR system.</summary>
         public bool tracked
         {
             get
@@ -76,6 +88,7 @@ namespace UnityEngine.XR
             }
         }
 
+        ///<summary>Sets the vector representing the current position of the tracked node.</summary>
         public Vector3 position
         {
             set
@@ -85,6 +98,7 @@ namespace UnityEngine.XR
             }
         }
 
+        ///<summary>Sets the quaternion representing the current rotation of the tracked node.</summary>
         public Quaternion rotation
         {
             set
@@ -94,6 +108,7 @@ namespace UnityEngine.XR
             }
         }
 
+        ///<summary>Sets the vector representing the current velocity of the tracked node.</summary>
         public Vector3 velocity
         {
             set
@@ -103,6 +118,7 @@ namespace UnityEngine.XR
             }
         }
 
+        ///<summary>Sets the vector representing the current angular velocity of the tracked node.</summary>
         public Vector3 angularVelocity
         {
             set
@@ -112,6 +128,7 @@ namespace UnityEngine.XR
             }
         }
 
+        ///<summary>Sets the vector representing the current acceleration of the tracked node.</summary>
         public Vector3 acceleration
         {
             set
@@ -121,6 +138,7 @@ namespace UnityEngine.XR
             }
         }
 
+        ///<summary>Sets the vector representing the current angular acceleration of the tracked node.</summary>
         public Vector3 angularAcceleration
         {
             set
@@ -131,31 +149,43 @@ namespace UnityEngine.XR
         }
 
         // Getters
+        ///<summary>Attempt to retrieve a vector representing the current position of the tracked node.</summary>
+        ///<returns>True if the position was set in the output parameter. False if the position is not available due to limitations of the underlying platform or if the node is not presently tracked.</returns>
         public bool TryGetPosition(out Vector3 position)
         {
             return TryGet(m_Position, AvailableTrackingData.PositionAvailable, out position);
         }
 
+        ///<summary>Attempt to retrieve a quaternion representing the current rotation of the tracked node.</summary>
+        ///<returns>True if the rotation was set in the output parameter. False if the rotation is not available due to limitations of the underlying platform or if the node is not presently tracked.</returns>
         public bool TryGetRotation(out Quaternion rotation)
         {
             return TryGet(m_Rotation, AvailableTrackingData.RotationAvailable, out rotation);
         }
 
+        ///<summary>Attempt to retrieve a vector representing the current velocity of the tracked node.</summary>
+        ///<returns>True if the velocity was set in the output parameter. False if the velocity is not available due to limitations of the underlying platform or if the node is not presently tracked.</returns>
         public bool TryGetVelocity(out Vector3 velocity)
         {
             return TryGet(m_Velocity, AvailableTrackingData.VelocityAvailable, out velocity);
         }
 
+        ///<summary>Attempt to retrieve a Vector3 representing the current angular velocity of the tracked node.</summary>
+        ///<returns>True if the angular velocity was set in the output parameter. False if the angular velocity is not available due to limitations of the underlying platform or if the node is not presently tracked.</returns>
         public bool TryGetAngularVelocity(out Vector3 angularVelocity)
         {
             return TryGet(m_AngularVelocity, AvailableTrackingData.AngularVelocityAvailable, out angularVelocity);
         }
 
+        ///<summary>Attempt to retrieve a vector representing the current acceleration of the tracked node.</summary>
+        ///<returns>True if the acceleration was set in the output parameter. False if the acceleration is not available due to limitations of the underlying platform or if the node is not presently tracked.</returns>
         public bool TryGetAcceleration(out Vector3 acceleration)
         {
             return TryGet(m_Acceleration, AvailableTrackingData.AccelerationAvailable, out acceleration);
         }
 
+        ///<summary>Attempt to retrieve a Vector3 representing the current angular acceleration of the tracked node.</summary>
+        ///<returns>True if the angular acceleration was set in the output parameter. False if the angular acceleration is not available due to limitations of the underlying platform or if the node is not presently tracked.</returns>
         public bool TryGetAngularAcceleration(out Vector3 angularAcceleration)
         {
             return TryGet(m_AngularAcceleration, AvailableTrackingData.AngularAccelerationAvailable, out angularAcceleration);

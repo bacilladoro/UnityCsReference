@@ -4,11 +4,13 @@
 
 using System;
 using UnityEngine.Scripting;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEngine.Rendering
 {
-    public class SupportedRenderingFeatures
+    public partial class SupportedRenderingFeatures
     {
+        [AutoStaticsCleanupOnCodeReload]
         private static SupportedRenderingFeatures s_Active = new SupportedRenderingFeatures();
         public static SupportedRenderingFeatures active
         {

@@ -8,6 +8,7 @@ using System.Runtime.InteropServices;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs.LowLevel.Unsafe;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEngine.UIElements
 {
@@ -84,6 +85,7 @@ namespace UnityEngine.UIElements.UIR
         GCHandle m_GCHandle;
         ThreadData[] m_ThreadData;
 
+        [NoAutoStaticsCleanup] // safety ID lazily initialized; value type counter
         static int s_StaticSafetyId;
         AtomicSafetyHandle m_SafetyHandle;
 

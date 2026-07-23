@@ -47,11 +47,6 @@ namespace Unity.UIToolkit.Editor
             generateVisualContent += OnGenerateVisualContent;
         }
 
-        ~CheckerboardBackground()
-        {
-            DestroyTexture();
-        }
-
         void DestroyTexture()
         {
             if (m_Texture != null)

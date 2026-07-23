@@ -41,6 +41,7 @@ namespace UnityEngine.UIElements
             internal static readonly BindingId borderTopWidthProperty = "resolvedStyle." + nameof(IResolvedStyle.borderTopWidth);
             internal static readonly BindingId bottomProperty = "resolvedStyle." + nameof(IResolvedStyle.bottom);
             internal static readonly BindingId colorProperty = "resolvedStyle." + nameof(IResolvedStyle.color);
+            internal static readonly BindingId columnGapProperty = "resolvedStyle." + nameof(IResolvedStyle.columnGap);
             internal static readonly BindingId displayProperty = "resolvedStyle." + nameof(IResolvedStyle.display);
             internal static readonly BindingId filterProperty = "resolvedStyle." + nameof(IResolvedStyle.filter);
             internal static readonly BindingId flexBasisProperty = "resolvedStyle." + nameof(IResolvedStyle.flexBasis);
@@ -69,6 +70,7 @@ namespace UnityEngine.UIElements
             internal static readonly BindingId positionProperty = "resolvedStyle." + nameof(IResolvedStyle.position);
             internal static readonly BindingId rightProperty = "resolvedStyle." + nameof(IResolvedStyle.right);
             internal static readonly BindingId rotateProperty = "resolvedStyle." + nameof(IResolvedStyle.rotate);
+            internal static readonly BindingId rowGapProperty = "resolvedStyle." + nameof(IResolvedStyle.rowGap);
             internal static readonly BindingId scaleProperty = "resolvedStyle." + nameof(IResolvedStyle.scale);
             internal static readonly BindingId textOverflowProperty = "resolvedStyle." + nameof(IResolvedStyle.textOverflow);
             internal static readonly BindingId textShadowProperty = "resolvedStyle." + nameof(IResolvedStyle.textShadow);

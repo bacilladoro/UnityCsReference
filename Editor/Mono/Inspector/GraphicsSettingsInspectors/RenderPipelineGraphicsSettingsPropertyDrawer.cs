@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor.Rendering;
 using UnityEditor.UIElements;
 using UnityEngine;
@@ -156,7 +157,7 @@ namespace UnityEditor.Inspector.GraphicsSettingsInspectors
     //  - This result in several time the SerializedPropertyChangeEvent being raised.
     // Also at binding we do not want to raise notification. As there is a previous SerializedObject state to
     // compare, we can trim that, even for Arrays that have a lot of elements to bind/update.
-    static internal class Notifier
+    static internal partial class Notifier
     {
         struct NotificationRequest
         {
@@ -198,8 +199,11 @@ namespace UnityEditor.Inspector.GraphicsSettingsInspectors
                 => HashCode.Combine(rpgs, path);
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         static HashSet<NotificationRequest> s_NotificationRequests = new();
+        [NoAutoStaticsCleanup] // transient scope flag, reset to false by EndScope each use
         static bool s_Scoped = false;
+        [AutoStaticsCleanupOnCodeReload]
         static Dictionary<Type, SerializedObject> s_SharedPreviousStates = null;
 
         [InitializeOnLoadMethod]

@@ -4,6 +4,7 @@
 
 using System;
 using System.Diagnostics.CodeAnalysis;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEngine.Accessibility;
 
@@ -34,6 +35,7 @@ public static partial class AccessibilitySettings
     /// <summary>
     /// Event invoked on the main thread when the user changes the font scale in the system settings.
     /// </summary>
+    [AutoStaticsCleanupOnCodeReload]
     public static event Action<float> fontScaleChanged;
 
     /// <summary>
@@ -43,11 +45,13 @@ public static partial class AccessibilitySettings
     /// **Platform support**: This event is only triggered on iOS. On Android, this event is not necessary because the
     /// application restarts when the user changes the bold text setting.
     /// </remarks>
+    [AutoStaticsCleanupOnCodeReload]
     public static event Action<bool> boldTextStatusChanged;
 
     /// <summary>
     /// Event invoked on the main thread when the user changes the closed captioning setting in the system settings.
     /// </summary>
+    [AutoStaticsCleanupOnCodeReload]
     public static event Action<bool> closedCaptioningStatusChanged;
 
     /// <summary>

@@ -1040,14 +1040,29 @@ namespace UnityEngine.UIElements
 
         internal AbstractGenericMenu CreateMenu() => CreateMenuFunctor.Invoke();
 
-        //TODO plug IME to the proper place
-        internal Func<string> IMEGetCompositionString = () => Input.compositionString;
-        internal Action<bool> IMESetIsEnteringText = (isEnteringText) =>
+        internal void OnIsEnteringTextChanged_internal(bool isEnteringtext)
+        {
+            OnIsEnteringTextChanged.Invoke(isEnteringtext);
+        }
+
+        /// <summary>
+        /// True if is some text field in the panel is entering text. 
+        /// </summary>
+        internal event Action<bool> OnIsEnteringTextChanged = (isEnteringText) =>
         {
             Input.imeCompositionMode = isEnteringText ? IMECompositionMode.On : IMECompositionMode.Auto;
         };
 
-        internal Action<Vector2> IMESetCursorPos = (v2) => Input.compositionCursorPos = v2; // What coordinate system is this? seems like we are sending the panel pixel directly to the os
+        internal void OnCursorPositonChanged_internal(Vector2 CursorPostion)
+        {
+            OnCursorPositonChanged.Invoke(CursorPostion);
+        }
+
+        /// <summary>
+        /// The new cursor position in panel coordinates
+        /// </summary>
+        internal Action<Vector2> OnCursorPositonChanged =
+            (v2) => Input.compositionCursorPos = v2; // Scaled pixels in the editor (should match the panel postion when not in test). Undefined at runtime.
 
         internal void PointerLeavesPanel(int pointerId, EventBase triggerEvent = null)
         {

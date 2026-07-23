@@ -5,6 +5,7 @@
 using System;
 using System.Reflection;
 using Unity.Collections;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEngine.Rendering
 {
@@ -18,6 +19,7 @@ namespace UnityEngine.Rendering
             SupportedByBaseClass
         }
 
+        [NoAutoStaticsCleanup] // holds a fixed engine Type[] (RenderPipelineAsset); no user references, safe to persist across code reload
         static readonly Lazy<Type[]> k_DefaultRenderPipelineAsset = new(() => new[] { typeof(RenderPipelineAsset) });
         public Type[] renderPipelineTypes { get; }
 

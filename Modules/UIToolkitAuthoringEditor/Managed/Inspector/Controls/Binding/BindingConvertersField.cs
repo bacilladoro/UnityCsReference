@@ -129,7 +129,7 @@ namespace Unity.UIToolkit.Editor
 
             protected override string GetResultCountText(int count)
             {
-                return base.GetResultCountText(string.IsNullOrEmpty(AttachedTextField.text) ? count : count - 1);
+                return base.GetResultCountText(string.IsNullOrEmpty(AttachedTextField?.text) ? count : count - 1);
             }
 
             void ShowGroupDetails(ConverterGroup group)

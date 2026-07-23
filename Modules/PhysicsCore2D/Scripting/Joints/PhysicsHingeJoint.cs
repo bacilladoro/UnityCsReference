@@ -221,6 +221,12 @@ namespace Unity.U2D.Physics
         public readonly UnityEngine.Object GetOwner() => m_JointHandle.GetOwner();
 
         /// <summary>
+        /// The owner object associated with this joint, or NULL if no owner has been specified.
+        /// This is a convenience property that returns the same value as <see cref="GetOwner"/>.
+        /// </summary>
+        public readonly UnityEngine.Object owner => GetOwner();
+
+        /// <summary>
         /// Get if the joint is owned.
         /// See <see cref="PhysicsJoint.SetOwner(UnityEngine.Object)"/>.
         /// </summary>

@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Jobs;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.UIElements.UIR;
 
 namespace UnityEngine.UIElements
@@ -503,6 +504,7 @@ namespace UnityEngine.UIElements
             this.id = id;
         }
 
+        [NoAutoStaticsCleanup] // stateless sort comparator; no captured state
         public static readonly Comparison<MeshModifierRegistration> s_Comparer = (a, b) =>
         {
             if (a.priority != b.priority)

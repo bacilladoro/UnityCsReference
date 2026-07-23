@@ -10,6 +10,7 @@ using UnityEngine.Bindings;
 using UnityEngine.Internal;
 using UnityEngine.Playables;
 using Unity.IntegerTime;
+using Unity.Scripting.LifecycleManagement;
 
 using RequiredByNativeCodeAttribute = UnityEngine.Scripting.RequiredByNativeCodeAttribute;
 
@@ -402,17 +403,6 @@ namespace UnityEngine
         [NativeMethod(Name = "AudioSettings::GetDSPBufferSize", IsFreeFunction = true)]
         extern static public void GetDSPBufferSize(out int bufferLength, out int numBuffers);
 
-        // Set the mixer's buffer size in samples.
-        [Obsolete("AudioSettings.SetDSPBufferSize is deprecated and has been replaced by audio project settings and the AudioSettings.GetConfiguration/AudioSettings.Reset API.")]
-        static public void SetDSPBufferSize(int bufferLength, int numBuffers)
-        {
-            Debug.LogWarning("AudioSettings.SetDSPBufferSize is deprecated and has been replaced by audio project settings and the AudioSettings.GetConfiguration/AudioSettings.Reset API.");
-            AudioConfiguration config = GetConfiguration();
-            config.dspBufferSize = bufferLength;
-            if (!SetConfiguration(config))
-                Debug.LogWarning("SetDSPBufferSize failed");
-        }
-
         extern static internal bool editingInPlaymode
         {
             [NativeName("IsEditingInPlaymode")]
@@ -450,8 +440,11 @@ namespace UnityEngine
 
         public delegate void AudioConfigurationChangeHandler(bool deviceWasChanged);
 
+        [AutoStaticsCleanupOnCodeReload]
         static public event AudioConfigurationChangeHandler OnAudioConfigurationChanged;
+        [AutoStaticsCleanupOnCodeReload]
         internal static event Action OnAudioSystemShuttingDown;
+        [AutoStaticsCleanupOnCodeReload]
         internal static event Action OnAudioSystemStartedUp;
 
         [RequiredByNativeCode]
@@ -489,7 +482,7 @@ namespace UnityEngine
             set { Debug.LogWarning("AudioSettings.audioSpatialExperience is not implemented on this platform."); }
         }
 
-        public static class Mobile
+        public static partial class Mobile
         {
             static public bool muteState
             {
@@ -511,6 +504,7 @@ namespace UnityEngine
             }
 
 #pragma warning disable 0067
+            [AutoStaticsCleanupOnCodeReload]
             static public event Action<bool> OnMuteStateChanged;
 #pragma warning restore 0067
 
@@ -529,7 +523,7 @@ namespace UnityEngine
     // A container for audio data.
     [NativeHeader("Modules/Audio/Public/ScriptBindings/Audio.bindings.h")]
     [StaticAccessor("AudioClipBindings", StaticAccessorType.DoubleColon)]
-    public sealed class AudioClip : AudioResource, IAudioGenerator
+    public sealed partial class AudioClip : AudioResource, IAudioGenerator
     {
         private AudioClip() {}
 
@@ -556,14 +550,6 @@ namespace UnityEngine
 
         // Sample frequency (read-only)
         extern public int frequency { get; }
-
-        // Is a streamed audio clip ready to play? (read-only)
-        [Obsolete("Use AudioClip.loadState instead to get more detailed information about the loading process.")]
-        extern public bool isReadyToPlay
-        {
-            [NativeName("ReadyToPlay")]
-            get;
-        }
 
         // AudioClip load type (read-only)
         extern public AudioClipLoadType loadType { get; }
@@ -644,25 +630,6 @@ namespace UnityEngine
                 throw new ArgumentException("AudioClip.SetData failed; invalid data");
 
             return SetData(this, data, offsetSamples);
-        }
-
-        /// *listonly*
-        [Obsolete("The _3D argument of AudioClip is deprecated. Use the spatialBlend property of AudioSource instead to morph between 2D and 3D playback.")]
-        public static AudioClip Create(string name, int lengthSamples, int channels, int frequency, bool _3D, bool stream)
-        {
-            return Create(name, lengthSamples, channels, frequency, stream);
-        }
-
-        [Obsolete("The _3D argument of AudioClip is deprecated. Use the spatialBlend property of AudioSource instead to morph between 2D and 3D playback.")]
-        public static AudioClip Create(string name, int lengthSamples, int channels, int frequency, bool _3D, bool stream, PCMReaderCallback pcmreadercallback)
-        {
-            return Create(name, lengthSamples, channels, frequency, stream, pcmreadercallback, null);
-        }
-
-        [Obsolete("The _3D argument of AudioClip is deprecated. Use the spatialBlend property of AudioSource instead to morph between 2D and 3D playback.")]
-        public static AudioClip Create(string name, int lengthSamples, int channels, int frequency, bool _3D, bool stream, PCMReaderCallback pcmreadercallback, PCMSetPositionCallback pcmsetpositioncallback)
-        {
-            return Create(name, lengthSamples, channels, frequency, stream, pcmreadercallback, pcmsetpositioncallback);
         }
 
         public static AudioClip Create(string name, int lengthSamples, int channels, int frequency, bool stream)
@@ -753,7 +720,7 @@ namespace UnityEngine
                 return DiscreteTime.FromTicks(GeneratorInstance.Configuration.FramesAndSampleRateToDiscreteTimeTicks(samples, (uint)frequency));
             }
         }
-        
+
         public GeneratorInstance CreateInstance(ControlContext context, AudioFormat? nestedFormat, ProcessorInstance.CreationParameters creationParameters)
         {
             CheckIsNotPersistent();
@@ -786,7 +753,7 @@ namespace UnityEngine
     // Representation of a listener in 3D space.
     [RequireComponent(typeof(Transform))]
     [StaticAccessor("AudioListenerBindings", StaticAccessorType.DoubleColon)]
-    public sealed class AudioListener : AudioBehaviour
+    public sealed partial class AudioListener : AudioBehaviour
     {
         [NativeMethod(ThrowsException = true)]
         extern static private void GetOutputDataHelper([Out] float[] samples, int channel);
@@ -804,28 +771,11 @@ namespace UnityEngine
         // This lets you set whether the Audio Listener should be updated in the fixed or dynamic update.
         extern public AudioVelocityUpdateMode velocityUpdateMode { get; set; }
 
-        // Returns a block of the listener (master)'s output data
-        [Obsolete("GetOutputData returning a float[] is deprecated, use GetOutputData and pass a pre allocated array instead.")]
-        static public float[] GetOutputData(int numSamples, int channel)
-        {
-            float[] samples = new float[numSamples];
-            GetOutputDataHelper(samples, channel);
-            return samples;
-        }
 
         // Returns a block of the listener (master)'s output data
         static public void GetOutputData(float[] samples, int channel)
         {
             GetOutputDataHelper(samples, channel);
-        }
-
-        // Returns a block of the listener (master)'s spectrum data
-        [Obsolete("GetSpectrumData returning a float[] is deprecated, use GetSpectrumData and pass a pre allocated array instead.")]
-        static public float[] GetSpectrumData(int numSamples, int channel, FFTWindow window)
-        {
-            float[] samples = new float[numSamples];
-            GetSpectrumDataHelper(samples, channel, window);
-            return samples;
         }
 
         // Returns a block of the listener (master)'s spectrum data
@@ -921,51 +871,6 @@ namespace UnityEngine
         extern internal Object generatorObject { get; set; }
 
         extern public AudioMixerGroup outputAudioMixerGroup { get; set; }
-
-        [NativeConditional("PLATFORM_SUPPORTS_GAMEPAD_AUDIO")]
-        [NativeMethod(Name = "AudioSourceBindings::PlayOnDualShock4", HasExplicitThis = true, ThrowsException = true)]
-        [Obsolete("Use PlayOnGamepad instead")]
-        extern public bool PlayOnDualShock4(Int32 userId);
-
-        [NativeConditional("PLATFORM_SUPPORTS_GAMEPAD_AUDIO")]
-        [NativeMethod(Name = "AudioSourceBindings::SetDualShock4SpeakerMixLevel", HasExplicitThis = true, ThrowsException = true)]
-        [Obsolete("Use SetGamepadSpeakerMixLevel instead")]
-        extern public bool SetDualShock4PadSpeakerMixLevel(Int32 userId, Int32 mixLevel);
-
-        [NativeConditional("PLATFORM_SUPPORTS_GAMEPAD_AUDIO")]
-        [NativeMethod(Name = "AudioSourceBindings::SetDualShock4SpeakerMixLevelDefault", HasExplicitThis = true, ThrowsException = true)]
-        [Obsolete("Use SetGamepadSpeakerMixLevelDefault instead")]
-        extern public bool SetDualShock4PadSpeakerMixLevelDefault(Int32 userId);
-
-        [NativeConditional("PLATFORM_SUPPORTS_GAMEPAD_AUDIO")]
-        [NativeMethod(Name = "AudioSourceBindings::SetDualShock4SpeakerRestrictedAudio", HasExplicitThis = true, ThrowsException = true)]
-        [Obsolete("Use SetgamepadSpeakerRestrictedAudio instead")]
-        extern public bool SetDualShock4PadSpeakerRestrictedAudio(Int32 userId, bool restricted);
-
-        [NativeConditional("PLATFORM_SUPPORTS_GAMEPAD_AUDIO")]
-        [NativeMethod(Name = "AudioSourceBindings::PlayOnGamepad", HasExplicitThis = true, ThrowsException = true)]
-        [Obsolete("Use PlayOnGamepad instead")]
-        extern public bool PlayOnDualShock4PadIndex(Int32 slot);
-
-        [NativeConditional("PLATFORM_SUPPORTS_GAMEPAD_AUDIO")]
-        [NativeMethod(Name = "AudioSourceBindings::DisableGamepadOutput", HasExplicitThis = true)]
-        [Obsolete("Use DisableGamepadOutput instead")]
-        extern public bool DisableDualShock4Output();
-
-        [NativeConditional("PLATFORM_SUPPORTS_GAMEPAD_AUDIO")]
-        [NativeMethod(Name = "AudioSourceBindings::SetGamepadSpeakerMixLevel", HasExplicitThis = true, ThrowsException = true)]
-        [Obsolete("Use SetGamepadSpeakerMixLevel instead")]
-        extern public bool SetDualShock4PadSpeakerMixLevelPadIndex(Int32 slot, Int32 mixLevel);
-
-        [NativeConditional("PLATFORM_SUPPORTS_GAMEPAD_AUDIO")]
-        [NativeMethod(Name = "AudioSourceBindings::SetGamepadSpeakerMixLevelDefault", HasExplicitThis = true, ThrowsException = true)]
-        [Obsolete("Use SetGamepadSpeakerMixLevelDefault instead")]
-        extern public bool SetDualShock4PadSpeakerMixLevelDefaultPadIndex(Int32 slot);
-
-        [NativeConditional("PLATFORM_SUPPORTS_GAMEPAD_AUDIO")]
-        [NativeMethod(Name = "AudioSourceBindings::SetGamepadSpeakerRestrictedAudio", HasExplicitThis = true, ThrowsException = true)]
-        [Obsolete("Use SetGamepadSpeakerRestrictedAudio instead")]
-        extern public bool SetDualShock4PadSpeakerRestrictedAudioPadIndex(Int32 slot, bool restricted);
 
         [NativeConditional("PLATFORM_SUPPORTS_GAMEPAD_AUDIO")]
         [NativeMethod(Name = "AudioSourceBindings::PlayOnGamepad", HasExplicitThis = true, ThrowsException = true)]
@@ -1174,27 +1079,9 @@ namespace UnityEngine
         extern public AudioRolloffMode rolloffMode { get; set; }
 
         // Returns a block of the currently playing source's output data
-        [Obsolete("GetOutputData returning a float[] is deprecated, use GetOutputData and pass a pre allocated array instead.")]
-        public float[] GetOutputData(int numSamples, int channel)
-        {
-            float[] samples = new float[numSamples];
-            GetOutputDataHelper(this, samples, channel);
-            return samples;
-        }
-
-        // Returns a block of the currently playing source's output data
         public void GetOutputData(float[] samples, int channel)
         {
             GetOutputDataHelper(this, samples, channel);
-        }
-
-        // Returns a block of the currently playing source's spectrum data
-        [Obsolete("GetSpectrumData returning a float[] is deprecated, use GetSpectrumData and pass a pre allocated array instead.")]
-        public float[] GetSpectrumData(int numSamples, int channel, FFTWindow window)
-        {
-            float[] samples = new float[numSamples];
-            GetSpectrumDataHelper(this, samples, channel, window);
-            return samples;
         }
 
         // Returns a block of the currently playing source's spectrum data
@@ -1236,7 +1123,7 @@ namespace UnityEngine
     // Reverb Zones are used when you want to gradually change from a point
     [RequireComponent(typeof(Transform))]
     [NativeHeader("Modules/Audio/Public/AudioReverbZone.h")]
-    public sealed class AudioReverbZone : Behaviour
+    public sealed partial class AudioReverbZone : Behaviour
     {
         //  The distance from the centerpoint that the reverb will have full effect at. Default = 10.0.
         extern public float minDistance { get; set; }
@@ -1279,14 +1166,6 @@ namespace UnityEngine
 
         // reference low frequency (hz)
         extern public float LFReference { get; set; }
-
-        // like rolloffscale in global settings, but for reverb room size effect
-        [Obsolete("Warning! roomRolloffFactor is no longer supported.")]
-        public float roomRolloffFactor
-        {
-            get { Debug.LogWarning("Warning! roomRolloffFactor is no longer supported."); return 10.0f; }
-            set { Debug.LogWarning("Warning! roomRolloffFactor is no longer supported."); }
-        }
 
         // Value that controls the echo density in the late reverberation decay
         extern public float diffusion { get; set; }
@@ -1355,7 +1234,7 @@ namespace UnityEngine
 
     // The Audio Chorus Filter takes an Audio Clip and processes it creating a chorus effect.
     [RequireComponent(typeof(AudioBehaviour))]
-    public sealed class AudioChorusFilter : Behaviour
+    public sealed partial class AudioChorusFilter : Behaviour
     {
         // Volume of original signal to pass to output. 0.0 to 1.0. Default = 0.5.
         extern public float dryMix { get; set; }
@@ -1377,14 +1256,6 @@ namespace UnityEngine
 
         //  Chorus modulation depth. 0.0 to 1.0. Default = 0.03.
         extern public float depth { get; set; }
-
-        // Chorus feedback. Controls how much of the wet signal gets fed back into the chorus buffer. 0.0 to 1.0. Default = 0.0.
-        [Obsolete("Warning! Feedback is deprecated. This property does nothing.")]
-        public float feedback
-        {
-            get { Debug.LogWarning("Warning! Feedback is deprecated. This property does nothing."); return 0.0f; }
-            set { Debug.LogWarning("Warning! Feedback is deprecated. This property does nothing."); }
-        }
     }
 
     // The Audio Reverb Filter takes an Audio Clip and distortionates it in a
@@ -1402,14 +1273,6 @@ namespace UnityEngine
 
         // Room effect high-frequency level re. low frequency level in mB. Ranges from -10000.0 to 0.0. Default is 0.0.
         extern public float roomHF { get; set; }
-
-        // Rolloff factor for room effect. Ranges from 0.0 to 10.0. Default is 10.0
-        [Obsolete("Warning! roomRolloffFactor is no longer supported.")]
-        public float roomRolloffFactor
-        {
-            get { Debug.LogWarning("Warning! roomRolloffFactor is no longer supported."); return 10.0f; }
-            set { Debug.LogWarning("Warning! roomRolloffFactor is no longer supported."); }
-        }
 
         // Reverberation decay time at low-frequencies in seconds. Ranges from 0.1 to 20.0. Default is 1.0.
         extern public float decayTime { get; set; }

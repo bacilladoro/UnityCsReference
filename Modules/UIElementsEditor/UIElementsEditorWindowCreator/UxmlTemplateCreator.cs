@@ -49,7 +49,7 @@ namespace UnityEditor.UIElements
             var contents = CreateUXMLTemplate(folder);
             var icon = EditorGUIUtility.IconContent<VisualTreeAsset>().image as Texture2D;
 
-            ProjectWindowUtil.CreateAssetWithTextContent("NewUXMLTemplate.uxml", contents, icon, onRenameComplete);
+            ProjectWindowUtil.CreateAssetWithTextContent("New UXML.uxml", contents, icon, onRenameComplete);
         }
 
         [VisibleToOtherModules("UnityEditor.UIToolkitAuthoringModule")]

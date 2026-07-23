@@ -9,6 +9,7 @@ using System.Text;
 using UnityEditor.UIElements.StyleSheets;
 using UnityEngine;
 using UnityEngine.UIElements;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Overlays
 {
@@ -58,7 +59,7 @@ namespace UnityEditor.Overlays
     // changes, since the overlay text color will change and likely be incompatible with the previous background color, hindering accessibility.
     // All floating (displayed OVER window) overlays are expected to take on the custom color.
     // All docked (displacing window) overlays are expected to maintain the default toolbar color, since they do not obstruct the view.
-    internal class OverlayPrefs : ScriptableSingleton<OverlayPrefs>
+    internal partial class OverlayPrefs : ScriptableSingleton<OverlayPrefs>
     {
         class WindowSettings
         {
@@ -108,7 +109,9 @@ namespace UnityEditor.Overlays
         HashSet<string> m_ColorPrefKeys = new HashSet<string>();
         bool m_StyleSheetDirty = false;
 
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action styleSheetChanged;
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<Type, bool> enabledChanged;
 
         internal static Color GetDefaultColor(Type windowType)

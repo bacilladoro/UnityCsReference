@@ -11,6 +11,7 @@ using System.Collections;
 
 namespace UnityEngine
 {
+    ///<summary>Deprecated feature, no longer available</summary>
     public partial class ProceduralMaterial : Material
     {
         static void FeatureRemoved()

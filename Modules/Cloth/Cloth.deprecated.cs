@@ -8,6 +8,7 @@ namespace UnityEngine
 { 
     public sealed partial class Cloth
     {
+        ///<exclude />
         [Obsolete("Parameter solverFrequency is obsolete and no longer supported. Please use clothSolverFrequency instead.")]
         public bool solverFrequency
         {
@@ -15,9 +16,11 @@ namespace UnityEngine
             set { clothSolverFrequency = value == true ? 120f : 0.0f; }  // use the default value
         }
 
+        ///<exclude />
         [Obsolete("useContinuousCollision is no longer supported, use enableContinuousCollision instead")]
         public float useContinuousCollision { get; set; }
 
+        ///<exclude />
         [Obsolete("Deprecated.Cloth.selfCollisions is no longer supported since Unity 5.0.", true)]
         public bool selfCollision { get; }
     }

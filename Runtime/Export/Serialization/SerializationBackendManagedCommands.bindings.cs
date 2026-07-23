@@ -218,9 +218,9 @@ internal unsafe struct ManagedCommandPropertyNameEntry  // 8 bytes
     public uint         fieldOffset;
 }
 
-// Mirrors ManagedCommandFixedBlockPrefix in SerializationCommands.h. Brackets
-// every DC segment as `FBP(N) DCs FBP(0)`. See the native header for the full
-// dual-role description.
+// Mirrors ManagedCommandFixedBlockPrefix in SerializationCommands.h. Opens
+// every DC segment with a leading `FBP(N)`; the consumer commits the segment
+// at the next boundary. See the native header for the full description.
 internal struct ManagedCommandFixedBlockPrefix  // 4 bytes
 {
     public RttiDataType opCode;
@@ -579,7 +579,7 @@ internal struct DictionaryHeaderWrite  // 24 + sizeof(IntPtr) bytes
 
 // Mirrors ManagedCommandDictionaryRead in SerializationCommands.h. Same opcode
 // value as DictionaryHeaderWrite — the dispatchers live in separate switches
-// (write inside ObjectToSerializationBuffer, read inside SerializationBufferToObject)
+// (write inside ObjectsToSerializationBuffer, read inside SerializationBufferToObjects)
 // so opcode reuse is unambiguous.
 internal struct DictionaryHeaderRead  // 24 + 2*sizeof(IntPtr) bytes
 {
@@ -602,14 +602,15 @@ internal struct DictionaryHeaderRead  // 24 + 2*sizeof(IntPtr) bytes
 //
 // Contract for writerPtr / writerAvailable (see SerializationCommands.h's
 // FlushBufferFunc comment for the canonical description):
-//   - At entry to the C# executor and after every flushBuffer call, writerPtr
-//     points at a writable region of writerAvailable bytes, and writerAvailable
-//     is always >= kManagedBlockMaxPayloadSize. The region is either the cache
-//     writer's tail (when it has at least that much remaining; zero-copy fast
-//     path) or stackBuffer (sized kManagedBlockSpillBufferSize; native side
-//     memcpys it in on the next flush).
-//   - C# can therefore write up to writerAvailable bytes into writerPtr
-//     unconditionally, with no per-site stack-vs-writer branching.
+//   - Each flush passes minNextWrite — the size the caller is about to write. On
+//     return (and at entry to the executor) writerPtr points at a writable region of
+//     writerAvailable bytes, sized for it: the cache writer's tail when it holds
+//     minNextWrite (zero-copy fast path) or stackBuffer (sized
+//     kManagedBlockSpillBufferSize; native side memcpys it in on the next flush).
+//   - For minNextWrite <= kManagedBlockSpillBufferSize the region always holds it, so
+//     C# can write up to minNextWrite bytes into writerPtr unconditionally, with no
+//     per-site stack-vs-writer branching. A caller that may write more (TryReserve /
+//     Bulk) re-checks writerAvailable and takes its own spill arm.
 //
 // Pack = 8 keeps EntityId's UInt64 8-byte aligned on every runtime, matching the
 // native C++ ABI (EntityID.h:68). Without an explicit Pack, some 32-bit Mono
@@ -622,8 +623,8 @@ internal unsafe struct NativeBufferContext
     public void*    writer;            // native CachedWriter* — opaque to C#
     public byte*    stackBuffer;       // native-side spill buffer (size = kManagedBlockSpillBufferSize); stable for the lifetime of the call
     public byte*    writerPtr;         // current write destination — writer's tail or stackBuffer; updated by flushBuffer
-    public int      writerAvailable;   // bytes available at writerPtr; updated by flushBuffer; always >= kManagedBlockMaxPayloadSize after a flush / initial setup
-    public delegate* unmanaged[Cdecl]<NativeBufferContext*, byte*, int, void> flushBuffer;
+    public int      writerAvailable;   // bytes available at writerPtr; updated by flushBuffer; >= the flush's minNextWrite (when that is <= kManagedBlockSpillBufferSize)
+    public delegate* unmanaged[Cdecl]<NativeBufferContext*, byte*, int, int, void> flushBuffer;
     public IntPtr   resolverHandle;    // ILSOIResolver*; forwarded to WriteUnityObjectToBuffer. Null falls back to the global PersistentManager path.
     public int      flags;             // UnityObjectTransferFlags bits (write path consults PackEntityIdInLSOI).
     public int      _pad;              // pad to 8-byte align fuidContext on 64-bit
@@ -634,7 +635,7 @@ internal unsafe struct NativeBufferContext
 
 // Read-side mirror of NativeBufferContext. The C++ dispatcher
 // (Transfer_ManagedBlock_StreamedBinaryRead) populates this once per managed
-// block and hands it to SerializationBufferToObject; C# walks the entry stream
+// block and hands it to SerializationBufferToObjects; C# walks the entry stream
 // and pulls bytes through readerPtr/readerAvailable, refilling on demand via
 // ensureReadable (segment-sized requests) or readBytesDirect (bulk array bodies
 // that bypass the spill buffer).
@@ -659,7 +660,7 @@ internal unsafe struct NativeReadBufferContext
     public delegate* unmanaged[Cdecl]<NativeReadBufferContext*, void> syncReader;
     public IntPtr   resolverHandle;    // ILSOIResolver*; forwarded to ReadUnityObjectFromBuffer. Null falls back to the global PersistentManager path.
     public int      flags;             // UnityObjectTransferFlags bits forwarded to ReadUnityObjectFromBuffer.
-    public bool     warnOnDuplicates;  // True for serialized-file loads and Object.Instantiate clones; false for Inspector ApplyModifiedProperties and other in-memory transfers.
+    public bool     warnAboutIgnoredEntries;  // True for serialized-file loads and Object.Instantiate clones; false for Inspector ApplyModifiedProperties and other in-memory transfers.
     public byte     _pad0;
     public byte     _pad1;
     public byte     _pad2;             // align fuidContext to 8-byte boundary
@@ -870,20 +871,21 @@ internal static unsafe partial class SerializationBackendManagedCommands
     [FreeFunction("DictionaryFieldUniqueIdentifierBindings::FormatDictionaryFieldUniqueIdentifierForActiveContext", IsThreadSafe = true)]
     private static extern string FormatDictionaryFieldUniqueIdentifier(IntPtr dictionaryIdentifierTemplate);
 
-    [FreeFunction("DictionaryFieldUniqueIdentifierBindings::LogDictionaryDuplicateKeyWarning", IsThreadSafe = true)]
-    private static extern void LogDictionaryDuplicateKeyWarning(string message, EntityId hostingEntityId);
+    [FreeFunction("DictionaryFieldUniqueIdentifierBindings::LogDictionaryKeyWarning", IsThreadSafe = true)]
+    private static extern void LogDictionaryKeyWarning(string message, EntityId hostingEntityId);
 
     // Must match the C++ constants in SerializationCommands.h.
     //
-    // kManagedBlockMaxPayloadSize: cap on a single FBP-bracketed segment, and
-    //   the post-condition floor on ctx->writerAvailable after any flushBuffer
-    //   call. Any single segment / string chunk / array chunk that respects
-    //   this cap is guaranteed to fit at ctx->writerPtr without re-checking.
+    // kManagedBlockMaxPayloadSize: cap on a single FBP-bracketed segment, and the
+    //   largest minNextWrite any non-spill caller passes to flushBuffer. A flush
+    //   requested with minNextWrite <= this cap returns a region of at least that
+    //   size, so a single segment / string chunk / array chunk respecting the cap
+    //   fits at ctx->writerPtr without re-checking.
     // kManagedBlockSpillBufferSize: size of the stack-allocated spill buffer
     //   on the native side (NativeBufferContext.stackBuffer). FlushBuffer hands
-    //   this back as the writable region whenever the cache writer's tail has
-    //   < kManagedBlockMaxPayloadSize bytes remaining. Sized equal to the
-    //   segment cap: exactly one segment per spill flush.
+    //   this back as the writable region whenever the cache writer's tail can't
+    //   hold the requested minNextWrite. Sized equal to the segment cap so it
+    //   satisfies any minNextWrite <= the cap: one segment per spill flush.
     private const int kManagedBlockMaxPayloadSize  = 1024;
     private const int kManagedBlockSpillBufferSize = 1024;
 
@@ -898,8 +900,8 @@ internal static unsafe partial class SerializationBackendManagedCommands
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static unsafe void InvokeFlushBuffer(NativeBufferContext* ctx,
-        byte* bufferUsed, int writtenBytes)
-        => ctx->flushBuffer(ctx, bufferUsed, writtenBytes);
+        byte* bufferUsed, int writtenBytes, int minNextWrite)
+        => ctx->flushBuffer(ctx, bufferUsed, writtenBytes, minNextWrite);
 
     // Refills ctx->readerPtr / ctx->readerAvailable so at least `needed` bytes
     // are addressable contiguously at the new readerPtr. Caller invariant: only
@@ -1011,59 +1013,77 @@ internal static unsafe partial class SerializationBackendManagedCommands
         return entry;
     }
 
-    // The native writer (FlushManagedBlockToCommandQueue in ManagedBlockAccumulator.h)
-    // keeps every DirectCopyGroupHeader at a 4-byte-aligned offset relative to entriesPtr,
-    // so each DirectCopyLargeEntry array has the alignment its uint fields need. The loop
-    // below re-aligns pos to a 4-byte boundary after consuming each group to match.
-    //
-    // Source-side reads (baseAddr + entry.fieldOffset) can still be unaligned since managed
-    // class layout is outside this writer's control; they are handled separately.
+    // BufferDataStager (the deferred-write cursor threaded through the write path) lives in
+    // BufferDataStager.cs — a partial-class fragment of this type.
+
+    // Header of ManagedCommandsBlockCommand (SerializationCommands.h). The native
+    // entry bytes are appended inline right after this header, so
+    // entryBytes = (byte*)cmd + sizeof(this). func is a native function pointer we
+    // never invoke here — kept as IntPtr purely so the struct size/alignment match
+    // native (8-byte aligned; static_assert(sizeof % 8 == 0) on the native side).
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct ManagedCommandsBlockCommandHeader
+    {
+        public IntPtr func;
+        public uint   commandSize;
+        public uint   entryBufferSize;
+        public uint   totalPayloadSize;
+    }
+
+    // Serializes a run of ManagedCommandsBlockCommands, returning the first non-managed cursor.
+    // A single BufferDataStager threads across the whole run so consecutive blocks coalesce;
+    // one trailing flush commits the accumulated bytes.
     [RequiredByNativeCode]
-    public static unsafe void ObjectToSerializationBuffer(
+    public static unsafe IntPtr ObjectsToSerializationBuffer(
         IntPtr pinnedBase,
-        IntPtr entriesPtr,
-        int    entryBufferSize,
+        IntPtr runStart,
+        IntPtr runEnd,
         IntPtr bufferContext,
         IntPtr transfer)
     {
         var ctx = (NativeBufferContext*)bufferContext;
 
-        byte* output         = null;
-        int   dstSize        = 0;
-        // Bytes written directly into the writer's current block but not yet committed
-        // via InvokeFlushBuffer. Threaded by ref through ExecuteWriteCommands and any
-        // recursion (VRT bodies, per-element collection loops) so consecutive segments
-        // coalesce into a single flush, regardless of nesting depth. The build side
-        // brackets every fixed-size segment with FBP(N)..FBP(0); FBP(0) rolls dstSize
-        // into pendingAdvance, so by the time we return here pendingAdvance carries
-        // every closed-but-uncommitted segment from the entire stream.
-        int   pendingAdvance = 0;
-        ExecuteWriteCommands(ctx, pinnedBase, entriesPtr, entryBufferSize, transfer,
-            ref output, ref dstSize, ref pendingAdvance, repeatCount: 1, repeatStride: 0);
+        // output: base of the fixed segment currently open at the stager's staging tail
+        // (writerPtr + m_Staged); set by each FixedBlockPrefix(N) and indexed by the
+        // DirectCopy entries within it.
+        byte* output = null;
+        // The whole run's deferred-write cursor: one stager threads across every block in
+        // the run (below), so consecutive blocks coalesce; by the time the loop ends it
+        // carries every uncommitted byte, committed by the single flush after it.
+        BufferDataStager bufferDataStager = new BufferDataStager(ctx);
 
-        // Single trailing commit. pendingAdvance is the common case; dstSize > 0
-        // only fires if the build side ever omits the closing FBP(0) — keep the
-        // arm as a safety net.
-        if (pendingAdvance > 0)
-            InvokeFlushBuffer(ctx, ctx->writerPtr, pendingAdvance);
-        if (dstSize > 0)
-            InvokeFlushBuffer(ctx, output, dstSize);
+        byte* cmd = (byte*)runStart;
+        byte* end = (byte*)runEnd;
+        // Discriminator: the run is the maximal span of commands sharing the first
+        // block's func (each native command type has a unique func pointer).
+        IntPtr managedFunc = cmd < end ? ((ManagedCommandsBlockCommandHeader*)cmd)->func : IntPtr.Zero;
+        while (cmd < end)
+        {
+            var header = (ManagedCommandsBlockCommandHeader*)cmd;
+            if (header->func != managedFunc)
+                break;
+            byte* entryBytes = cmd + sizeof(ManagedCommandsBlockCommandHeader);
+            ExecuteWriteCommands(ctx, pinnedBase, (IntPtr)entryBytes, (int)header->entryBufferSize, transfer,
+                ref output, ref bufferDataStager, repeatCount: 1, repeatStride: 0);
+            cmd += header->commandSize;
+        }
+
+        // Final commit for the whole run; nothing follows, so no window is needed afterward.
+        bufferDataStager.FlushStaged(0);
+
+        return (IntPtr)cmd;
     }
 
-    // Walks the entries between [entriesPtr, entriesPtr + entryBufferSize),
-    // executing each opcode against the pinned managed object (source) and
-    // the buffer chain owned by ctx (destination). Buffer state (output /
-    // dstSize / pendingAdvance) is threaded by ref so the inline FBP /
-    // String / VRT cases can claim and commit per-segment destinations,
-    // and so recursive calls (per-element collection bodies, VRT bodies)
-    // accumulate writer-tail bytes across iterations instead of flushing
-    // on every return.
+    // Walks the entries in [entriesPtr, entriesPtr + entryBufferSize), executing each
+    // opcode against the pinned source object and the ctx buffer chain. output (the open
+    // segment base) and bufferDataStager are threaded by ref so the inline FBP / String /
+    // VRT cases claim per-segment destinations and recursive calls (per-element collection
+    // bodies, VRT bodies) accumulate writer-tail bytes across iterations.
     //
-    // pendingAdvance is owned by the outermost caller (ObjectToSerializationBuffer)
-    // which initializes it to 0 and issues the single final flush after this
-    // method returns. Inner recursive callers must not flush it on return —
-    // doing so would emit one P/Invoke per nested element/instance, which is
-    // exactly what threading by ref avoids.
+    // The stager is owned by the outermost caller (ObjectsToSerializationBuffer), which
+    // issues the single trailing flush after the run loop; inner recursive callers must
+    // not flush on return — doing so would emit one P/Invoke per nested element/instance,
+    // which is exactly what threading the stager by ref avoids.
     private static unsafe void ExecuteWriteCommands(
         NativeBufferContext* ctx,
         IntPtr pinnedBase,
@@ -1071,8 +1091,7 @@ internal static unsafe partial class SerializationBackendManagedCommands
         int    entryBufferSize,
         IntPtr transfer,
         ref byte* output,
-        ref int   dstSize,
-        ref int   pendingAdvance,
+        ref BufferDataStager bufferDataStager,
         int  repeatCount,
         long repeatStride)
     {
@@ -1284,34 +1303,9 @@ internal static unsafe partial class SerializationBackendManagedCommands
                     int segmentSize = prefix->payloadSize;
                     pos += sizeof(ManagedCommandFixedBlockPrefix);
 
-                    // Trailing FBP(0): close the prior segment by rolling its bytes
-                    // into pendingAdvance. We do NOT flush here — flushes happen only
-                    // when the next segment won't fit alongside what's been deferred,
-                    // when variable-sized data takes over, or at end of execution.
-                    if (dstSize > 0)
-                    {
-                        pendingAdvance += dstSize;
-                        dstSize = 0;
-                    }
-
-                    if (segmentSize == 0)
-                        break;
-
-                    // FBP(N>0): claim the next segment. Flush only when it doesn't fit
-                    // alongside the already-deferred bytes. After any flush the
-                    // FlushBuffer contract guarantees ctx->writerAvailable >=
-                    // kManagedBlockMaxPayloadSize >= segmentSize, so the segment is
-                    // always claimable at writerPtr (offset 0) afterward.
-                    if (ctx->writerAvailable - pendingAdvance < segmentSize)
-                    {
-                        if (pendingAdvance > 0)
-                        {
-                            InvokeFlushBuffer(ctx, ctx->writerPtr, pendingAdvance);
-                            pendingAdvance = 0;
-                        }
-                    }
-                    output  = ctx->writerPtr + pendingAdvance;
-                    dstSize = segmentSize;
+                    // Open the next segment at the staging tail (Reserve flushes only if it
+                    // won't fit). The DirectCopy entries that follow index off output.
+                    output = bufferDataStager.Reserve(segmentSize);
                     break;
                 }
 
@@ -1372,14 +1366,7 @@ internal static unsafe partial class SerializationBackendManagedCommands
                     var hdr = (UnityObjectArrayHeader*)pos;
                     pos += sizeof(UnityObjectArrayHeader);
 
-                    // Commit deferred bytes before the collection's writes land at writerPtr,
-                    // as the Array/List case does.
-                    if (pendingAdvance > 0)
-                    {
-                        InvokeFlushBuffer(ctx, ctx->writerPtr, pendingAdvance);
-                        pendingAdvance = 0;
-                    }
-
+                    // The helper stages the count, which rides the first body batch's flush.
                     byte[] dataAsBytes;
                     int    count;
                     if (hdr->kind == LinearCollectionKind.Array)
@@ -1388,7 +1375,7 @@ internal static unsafe partial class SerializationBackendManagedCommands
                             ref Unsafe.AddByteOffset(ref baseAddr, (nint)hdr->fieldOffset));
                         if (arr == null)
                         {
-                            WriteFramedInt32(ctx, 0);
+                            Unsafe.WriteUnaligned(bufferDataStager.Reserve(4), 0);
                             break;
                         }
                         dataAsBytes = Unsafe.As<Array, byte[]>(ref arr);
@@ -1400,14 +1387,14 @@ internal static unsafe partial class SerializationBackendManagedCommands
                             ref Unsafe.AddByteOffset(ref baseAddr, (nint)hdr->fieldOffset));
                         if (list == null || list._items == null)
                         {
-                            WriteFramedInt32(ctx, 0);
+                            Unsafe.WriteUnaligned(bufferDataStager.Reserve(4), 0);
                             break;
                         }
                         dataAsBytes = list._items;
                         count       = list._size;
                     }
 
-                    ConsumeLinearCollectionUnityObjectArray(ctx, dataAsBytes, count, hdr->elementStride);
+                    ConsumeLinearCollectionUnityObjectArray(ctx, dataAsBytes, count, hdr->elementStride, ref bufferDataStager);
                     break;
                 }
 
@@ -1416,12 +1403,7 @@ internal static unsafe partial class SerializationBackendManagedCommands
                     var hdr = (EntityIdArrayHeader*)pos;
                     pos += sizeof(EntityIdArrayHeader);
 
-                    if (pendingAdvance > 0)
-                    {
-                        InvokeFlushBuffer(ctx, ctx->writerPtr, pendingAdvance);
-                        pendingAdvance = 0;
-                    }
-
+                    // The helper stages the count, which rides the first body batch's flush.
                     byte[] dataAsBytes;
                     int    count;
                     if (hdr->kind == LinearCollectionKind.Array)
@@ -1430,7 +1412,7 @@ internal static unsafe partial class SerializationBackendManagedCommands
                             ref Unsafe.AddByteOffset(ref baseAddr, (nint)hdr->fieldOffset));
                         if (arr == null)
                         {
-                            WriteFramedInt32(ctx, 0);
+                            Unsafe.WriteUnaligned(bufferDataStager.Reserve(4), 0);
                             break;
                         }
                         dataAsBytes = Unsafe.As<Array, byte[]>(ref arr);
@@ -1442,14 +1424,14 @@ internal static unsafe partial class SerializationBackendManagedCommands
                             ref Unsafe.AddByteOffset(ref baseAddr, (nint)hdr->fieldOffset));
                         if (list == null || list._items == null)
                         {
-                            WriteFramedInt32(ctx, 0);
+                            Unsafe.WriteUnaligned(bufferDataStager.Reserve(4), 0);
                             break;
                         }
                         dataAsBytes = list._items;
                         count       = list._size;
                     }
 
-                    ConsumeLinearCollectionEntityIdArray(ctx, dataAsBytes, count, hdr->elementStride);
+                    ConsumeLinearCollectionEntityIdArray(ctx, dataAsBytes, count, hdr->elementStride, ref bufferDataStager);
                     break;
                 }
 
@@ -1518,31 +1500,15 @@ internal static unsafe partial class SerializationBackendManagedCommands
                         + "the accumulator decomposes it into DirectCopy{4,8} entries.");
 
                 case RttiDataType.String:
-                    // FBP(0) precedes every String, so dstSize == 0 and
-                    // pendingAdvance may be non-zero. Flush both before the string
-                    // takes over the writer.
-                    if (pendingAdvance > 0)
-                    {
-                        InvokeFlushBuffer(ctx, ctx->writerPtr, pendingAdvance);
-                        pendingAdvance = 0;
-                    }
-                    if (dstSize > 0)
-                    {
-                        InvokeFlushBuffer(ctx, output, dstSize);
-                        dstSize = 0;
-                    }
-                    ConsumeString(ctx, ref baseAddr, ref pos);
+                    // Stages the framed string at writerPtr + staged, so it joins the
+                    // surrounding fixed segments in one trailing flush.
+                    ConsumeString(ctx, ref baseAddr, ref pos, ref bufferDataStager);
                     break;
 
                 case RttiDataType.ValueReferenceType:
-                    // Build emits FBP(0) before every VRT header, so dstSize == 0
-                    // here. pendingAdvance is threaded into the inner body so
-                    // bytes already deferred at the writer's tail survive the
-                    // recursion — the inner FBP(N) handler opens its segment
-                    // at writerPtr + pendingAdvance and only flushes when the
-                    // combined region wouldn't fit. Net result: a class with
-                    // many small VRT children coalesces into a single flush.
-                    ConsumeValueReference(ctx, ref baseAddr, transfer, ref output, ref dstSize, ref pendingAdvance, ref pos);
+                    // Recurse with the stager threaded through, so a child's segments
+                    // coalesce with the surrounding flow instead of flushing per child.
+                    ConsumeValueReference(ctx, ref baseAddr, transfer, ref output, ref bufferDataStager, ref pos);
                     break;
 
                 case RttiDataType.NativeValueStruct:
@@ -1550,16 +1516,8 @@ internal static unsafe partial class SerializationBackendManagedCommands
                     var entry = (ManagedCommandNativeValueStructEntry*)pos;
                     pos += sizeof(ManagedCommandNativeValueStructEntry);
 
-                    if (pendingAdvance > 0)
-                    {
-                        InvokeFlushBuffer(ctx, ctx->writerPtr, pendingAdvance);
-                        pendingAdvance = 0;
-                    }
-                    if (dstSize > 0)
-                    {
-                        InvokeFlushBuffer(ctx, output, dstSize);
-                        dstSize = 0;
-                    }
+                    // Native dispatcher writes straight to the writer: flush staged bytes first, resync after.
+                    bufferDataStager.FlushStaged(kManagedBlockMaxPayloadSize);
 
                     // Inline value struct: hand the field's own address to the native
                     // Transfer dispatcher. baseAddr is pinned by the ExecuteWriteCommands
@@ -1569,7 +1527,7 @@ internal static unsafe partial class SerializationBackendManagedCommands
 
                     ((delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr, void>)entry->fnPtr)(nvsFieldPtr, transfer, IntPtr.Zero);
 
-                    InvokeFlushBuffer(ctx, ctx->writerPtr, 0);
+                    bufferDataStager.ResyncWithNativeBuffer();
                     break;
                 }
 
@@ -1578,16 +1536,8 @@ internal static unsafe partial class SerializationBackendManagedCommands
                     var entry = (ManagedCommandSimpleNativeTypeEntry*)pos;
                     pos += sizeof(ManagedCommandSimpleNativeTypeEntry);
 
-                    if (pendingAdvance > 0)
-                    {
-                        InvokeFlushBuffer(ctx, ctx->writerPtr, pendingAdvance);
-                        pendingAdvance = 0;
-                    }
-                    if (dstSize > 0)
-                    {
-                        InvokeFlushBuffer(ctx, output, dstSize);
-                        dstSize = 0;
-                    }
+                    // Native dispatcher writes straight to the writer: flush staged bytes first, resync after.
+                    bufferDataStager.FlushStaged(kManagedBlockMaxPayloadSize);
 
                     ref byte field = ref Unsafe.AddByteOffset(ref baseAddr, (nint)entry->fieldOffset);
 
@@ -1605,13 +1555,12 @@ internal static unsafe partial class SerializationBackendManagedCommands
 
                     ((delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr, void>)entry->fnPtr)(nativePtr, transfer, entry->userData);
 
-                    InvokeFlushBuffer(ctx, ctx->writerPtr, 0);
+                    bufferDataStager.ResyncWithNativeBuffer();
                     break;
                 }
 
-                // Callbacks emit no wire bytes; their wrapping FBP(0)..FBP(0)
-                // makes the surrounding payload-size budget trivial, so no
-                // flush/buffer bookkeeping is needed here.
+                // Callbacks emit no wire bytes, so no flush/buffer bookkeeping
+                // is needed here.
                 case RttiDataType.CallOnBeforeSerializeClass:
                 {
                     var header = (CallbackHeader*)pos;
@@ -1637,42 +1586,27 @@ internal static unsafe partial class SerializationBackendManagedCommands
 
                 case RttiDataType.Array:
                 case RttiDataType.List:
-                    // Build emits FBP(0) before every linear-collection header,
-                    // so dstSize == 0 here. The collection's own writes (the
-                    // SInt32 count, the trivially-copyable bulk body, the tail
-                    // pad) all land at writerPtr — so any deferred bytes there
-                    // would be clobbered. Flush before handing off; the per-
-                    // element recursion path then re-accumulates pendingAdvance
-                    // across elements via the same ref.
-                    if (pendingAdvance > 0)
-                    {
-                        InvokeFlushBuffer(ctx, ctx->writerPtr, pendingAdvance);
-                        pendingAdvance = 0;
-                    }
-                    ConsumeLinearCollection(ctx, ref baseAddr, transfer, ref output, ref dstSize, ref pendingAdvance, ref pos);
+                    // ConsumeLinearCollection owns the bufferDataStager per-arm: the trivially-
+                    // copyable bulk body coalesces (stages when it fits); the per-element /
+                    // shuffle arms flush first since their count + body land at writerPtr
+                    // (offset 0).
+                    ConsumeLinearCollection(ctx, ref baseAddr, transfer, ref output, ref bufferDataStager, ref pos);
                     break;
 
                 case RttiDataType.Dictionary:
-                    // Same FBP(0)-before-header invariant as LinearCollection above:
-                    // build closes any pending segment, dstSize == 0, and the
-                    // dispatcher writes the count + per-entry body via writerPtr.
-                    if (pendingAdvance > 0)
-                    {
-                        InvokeFlushBuffer(ctx, ctx->writerPtr, pendingAdvance);
-                        pendingAdvance = 0;
-                    }
-                    ConsumeDictionary(ctx, ref baseAddr, transfer, ref output, ref dstSize, ref pendingAdvance, ref pos);
+                    // ConsumeDictionary stages the count; the per-entry bodies coalesce after
+                    // it via the same FBP threading as the per-element collection path.
+                    ConsumeDictionary(ctx, ref baseAddr, transfer, ref output, ref bufferDataStager, ref pos);
                     break;
 
                 case RttiDataType.FixedBuffer:
-                    // Build emits FBP(0) before every FixedBuffer header, so dstSize == 0
-                    if (dstSize != 0)
-                        throw new InvalidOperationException("FixedBuffer must be preceded by FBP(0) — see AppendFixedBufferToManagedBlock.");
-                    ConsumeFixedBuffer(ctx, ref baseAddr, ref pos, ref pendingAdvance);
+                    // ConsumeFixedBuffer stages its framed record, coalescing with any
+                    // open segment.
+                    ConsumeFixedBuffer(ref baseAddr, ref pos, ref bufferDataStager);
                     break;
 
                 case RttiDataType.PropertyNameId:
-                    ConsumePropertyNameEditor(ctx, ref baseAddr, ref pos, ref dstSize, ref pendingAdvance);
+                    ConsumePropertyNameEditor(ctx, ref baseAddr, ref pos, ref bufferDataStager);
                     break;
 
                 case RttiDataType.Reference:
@@ -1685,115 +1619,38 @@ internal static unsafe partial class SerializationBackendManagedCommands
             }
 
             // Re-align pos to a 4-byte offset relative to entriesStart before reading the
-            // next header. Only compact groups with an odd entry count need this
-            // (2-byte skip); large groups are already a multiple of 4.
+            // next header: the native writer (FlushManagedBlockToCommandQueue in
+            // ManagedBlockAccumulator.h) keeps every DirectCopyGroupHeader 4-byte-aligned
+            // relative to entriesPtr, so each DirectCopyLargeEntry array gets the alignment
+            // its uint fields need. Only compact groups with an odd entry count need this
+            // fixup (2-byte skip); large groups are already a multiple of 4. (Source-side
+            // reads at baseAddr + fieldOffset may still be unaligned — managed class layout
+            // is outside this writer's control — and are handled separately.)
             long entryOffset = pos - entriesStart;
             long aligned = (entryOffset + 3) & ~3L;
             pos = entriesStart + aligned;
         }
         }
 
-        // No trailing flush: pendingAdvance is owned by the outermost caller
-        // (ObjectToSerializationBuffer). Inner callers and collection batches inherit
+        // No trailing flush: the stager's staged bytes are owned by the outermost caller
+        // (ObjectsToSerializationBuffer). Inner callers and collection batches inherit
         // accumulated bytes so consecutive elements / nested instances coalesce.
     }
 
-    // Writes a string (length prefix + UTF-8 body + 4-byte alignment pad) into the
-    // writable region. The flushBuffer contract guarantees writerAvailable is at
-    // least kManagedBlockMaxPayloadSize on entry and after each flush, so we always
-    // write into ctx->writerPtr — no per-site stack-vs-writer branching.
-    //
-    // Two paths:
-    //   - Fast path: the whole framed payload fits in the current writable region.
-    //     One direct write, one flush, no Encoder needed.
-    //   - Chunked path: stream codepoints into the region in chunks, flushing
-    //     when the encoder fills the available space.
+    // String opcode: read the managed string field and frame it via the shared
+    // WriteFramedString, which stages into the writer tail so a string field defers
+    // like a fixed DirectCopy segment.
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static unsafe void ConsumeString(
-        NativeBufferContext* ctx, ref byte baseAddr, ref byte* pos)
+        NativeBufferContext* ctx, ref byte baseAddr, ref byte* pos,
+        ref BufferDataStager bufferDataStager)
     {
         var entry = (ManagedCommandStringEntry*)pos;
         pos += sizeof(ManagedCommandStringEntry);
         // Field offset points at a managed string reference inside the pinned object;
         // Unsafe.As<byte, string> reinterprets that ref as a string ref.
         string str = Unsafe.As<byte, string>(ref Unsafe.AddByteOffset(ref baseAddr, entry->fieldOffset)) ?? string.Empty;
-
-        // Truncate at first '\0' before byte counting so the length prefix,
-        // body, and padding agree on the same effective string. Matches the
-        // strlen-based write contract: bytes past an embedded null are dropped.
-        ReadOnlySpan<char> chars = str.AsSpan();
-        int nullIdx = chars.IndexOf('\0');
-        if (nullIdx >= 0)
-            chars = chars.Slice(0, nullIdx);
-
-        // Computed up front because it goes into the 4-byte SInt32 length prefix and
-        // also drives the fast-path / chunked-path decision.
-        int totalByteCount = Encoding.UTF8.GetByteCount(chars);
-        int padBytes = (4 - (totalByteCount & 3)) & 3;
-        int totalFramedSize = 4 + totalByteCount + padBytes;
-
-        // Fast path: whole framed payload fits in the current writable region.
-        if (ctx->writerAvailable >= totalFramedSize)
-        {
-            byte* dst = ctx->writerPtr;
-            Unsafe.WriteUnaligned(dst, totalByteCount);
-            if (totalByteCount > 0)
-                Encoding.UTF8.GetBytes(chars, new Span<byte>(dst + 4, totalByteCount));
-            if (padBytes > 0)
-                Unsafe.InitBlockUnaligned(dst + 4 + totalByteCount, 0, (uint)padBytes);
-            InvokeFlushBuffer(ctx, dst, totalFramedSize);
-            return;
-        }
-
-        // Chunked path. Length header first.
-        WriteFramedInt32(ctx, totalByteCount);
-
-        // Body: stream chunk by chunk into the current writable region. After each
-        // flush the contract guarantees a fresh region of at least
-        // kManagedBlockMaxPayloadSize bytes (≥ 4, so even a worst-case 4-byte UTF-8
-        // codepoint always fits).
-        if (totalByteCount > 0)
-        {
-            // Pass flush: false while input remains so the encoder can hold a
-            // high surrogate across chunks until the matching low surrogate
-            // arrives in the next call. Setting flush: true mid-stream would
-            // emit a U+FFFD replacement for the held high surrogate and then
-            // another U+FFFD for the orphan low surrogate in the next chunk —
-            // corrupting any surrogate pair that happens to straddle a chunk.
-            Encoder encoder = s_Utf8Encoder ??= Encoding.UTF8.GetEncoder();
-            encoder.Reset();
-            ReadOnlySpan<char> remaining = chars;
-
-            while (!remaining.IsEmpty)
-            {
-                encoder.Convert(remaining, new Span<byte>(ctx->writerPtr, ctx->writerAvailable),
-                                flush: false,
-                                out int charsUsed, out int bytesUsed, out _);
-                if (bytesUsed > 0)
-                    InvokeFlushBuffer(ctx, ctx->writerPtr, bytesUsed);
-                remaining = remaining.Slice(charsUsed);
-            }
-
-            // Drain encoder state with a final flush:true call. For valid input this
-            // is a no-op; for an unpaired high surrogate it emits a 3-byte
-            // replacement character (U+FFFD).
-            {
-                encoder.Convert(ReadOnlySpan<char>.Empty, new Span<byte>(ctx->writerPtr, ctx->writerAvailable),
-                                flush: true,
-                                out _, out int bytesUsed, out _);
-                if (bytesUsed > 0)
-                    InvokeFlushBuffer(ctx, ctx->writerPtr, bytesUsed);
-            }
-        }
-
-        // Alignment padding (0–3 zero bytes). The contract guarantees
-        // writerAvailable >= kManagedBlockMaxPayloadSize >= 3 here, so the pad
-        // always fits in the current region.
-        if (padBytes > 0)
-        {
-            Unsafe.InitBlockUnaligned(ctx->writerPtr, 0, (uint)padBytes);
-            InvokeFlushBuffer(ctx, ctx->writerPtr, padBytes);
-        }
+        WriteFramedString(ctx, str.AsSpan(), ref bufferDataStager);
     }
 
     // Write side of the PropertyName opcode. Frames byte-identically to
@@ -1804,12 +1661,12 @@ internal static unsafe partial class SerializationBackendManagedCommands
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static unsafe void ConsumePropertyNamePlayer(
         NativeBufferContext* ctx, ref byte baseAddr, ref byte* pos,
-        ref int dstSize, ref int pendingAdvance)
+        ref BufferDataStager bufferDataStager)
     {
         var entry = (ManagedCommandPropertyNameEntry*)pos;
         pos += sizeof(ManagedCommandPropertyNameEntry);
         int id = Unsafe.ReadUnaligned<int>(ref Unsafe.AddByteOffset(ref baseAddr, entry->fieldOffset));
-        WriteFramedDecimalInt32(ctx, id, ref dstSize, ref pendingAdvance);
+        WriteFramedDecimalInt32(ctx, id, ref bufferDataStager);
     }
 
     // Editor non-game-release: persists the resolved name. Reads the whole struct so
@@ -1818,7 +1675,7 @@ internal static unsafe partial class SerializationBackendManagedCommands
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static unsafe void ConsumePropertyNameEditor(
         NativeBufferContext* ctx, ref byte baseAddr, ref byte* pos,
-        ref int dstSize, ref int pendingAdvance)
+        ref BufferDataStager bufferDataStager)
     {
         var entry = (ManagedCommandPropertyNameEntry*)pos;
         byte serializesAsId = entry->serializesAsId;
@@ -1830,29 +1687,23 @@ internal static unsafe partial class SerializationBackendManagedCommands
             PropertyName pn = Unsafe.ReadUnaligned<PropertyName>(ref field);
             string s = PropertyNameUtils.StringFromPropertyName(pn);
             // null (unregistered id) → empty string, matching the native system.
-            WriteFramedString(ctx, (s ?? string.Empty).AsSpan(), ref dstSize, ref pendingAdvance);
+            WriteFramedString(ctx, (s ?? string.Empty).AsSpan(), ref bufferDataStager);
         }
         else
         {
             int id = Unsafe.ReadUnaligned<int>(ref field);
-            WriteFramedDecimalInt32(ctx, id, ref dstSize, ref pendingAdvance);
+            WriteFramedDecimalInt32(ctx, id, ref bufferDataStager);
         }
     }
 
-    // Length-prefixed UTF-8 framing (same wire shape as the String opcode), coalescing
-    // into pendingAdvance. Editor PropertyName-name path. The chunked arm handles names
-    // larger than one buffer region — rare in practice, kept for correctness.
+    // Length-prefixed UTF-8 framing (4-byte SInt32 length + UTF-8 body truncated at the
+    // first '\0' + 0..3-byte pad to 4-byte alignment), staged into the writer tail.
+    // Shared by the String opcode and the editor PropertyName-name path; the chunked arm
+    // handles strings larger than one buffer region.
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static unsafe void WriteFramedString(NativeBufferContext* ctx, ReadOnlySpan<char> chars,
-        ref int dstSize, ref int pendingAdvance)
+        ref BufferDataStager bufferDataStager)
     {
-        // Roll any open fixed segment into the deferred region (FBP(0) precedes the opcode, so usually 0).
-        if (dstSize > 0)
-        {
-            pendingAdvance += dstSize;
-            dstSize = 0;
-        }
-
         int nullIdx = chars.IndexOf('\0');
         if (nullIdx >= 0)
             chars = chars.Slice(0, nullIdx);
@@ -1861,41 +1712,24 @@ internal static unsafe partial class SerializationBackendManagedCommands
         int padBytes = (4 - (totalByteCount & 3)) & 3;
         int totalFramedSize = 4 + totalByteCount + padBytes;
 
-        // Coalesce path: fits after the deferred bytes — write there and defer; no flush.
-        if (ctx->writerAvailable - pendingAdvance >= totalFramedSize)
+        // Stage the whole framed string when it fits a single window — alongside any
+        // already-staged bytes, or in a fresh region after a flush. No flush of its own.
+        byte* dst = bufferDataStager.TryReserve(totalFramedSize);
+        if (dst != null)
         {
-            byte* dst = ctx->writerPtr + pendingAdvance;
             Unsafe.WriteUnaligned(dst, totalByteCount);
             if (totalByteCount > 0)
                 Encoding.UTF8.GetBytes(chars, new Span<byte>(dst + 4, totalByteCount));
             if (padBytes > 0)
                 Unsafe.InitBlockUnaligned(dst + 4 + totalByteCount, 0, (uint)padBytes);
-            pendingAdvance += totalFramedSize;
             return;
         }
 
-        // Won't fit alongside the deferred bytes: flush them, freeing a full region.
-        if (pendingAdvance > 0)
-        {
-            InvokeFlushBuffer(ctx, ctx->writerPtr, pendingAdvance);
-            pendingAdvance = 0;
-        }
-
-        // Fits in a fresh region: write at offset 0 and defer so a following field coalesces.
-        if (ctx->writerAvailable >= totalFramedSize)
-        {
-            byte* dst = ctx->writerPtr;
-            Unsafe.WriteUnaligned(dst, totalByteCount);
-            if (totalByteCount > 0)
-                Encoding.UTF8.GetBytes(chars, new Span<byte>(dst + 4, totalByteCount));
-            if (padBytes > 0)
-                Unsafe.InitBlockUnaligned(dst + 4 + totalByteCount, 0, (uint)padBytes);
-            pendingAdvance = totalFramedSize;
-            return;
-        }
-
-        // Chunked path (oversized name). Length header first; pendingAdvance stays 0.
-        WriteFramedInt32(ctx, totalByteCount);
+        // Chunked path (oversized name): TryReserve has committed the staged bytes
+        // (staged == 0). Stage the length header — it rides the first body chunk's flush
+        // rather than crossing on its own — then stream the body region by region, flushing
+        // only when a region fills with body still to write.
+        Unsafe.WriteUnaligned(bufferDataStager.Reserve(4), totalByteCount);
         if (totalByteCount > 0)
         {
             // flush:false while input remains so the encoder can hold a high surrogate
@@ -1905,23 +1739,32 @@ internal static unsafe partial class SerializationBackendManagedCommands
             ReadOnlySpan<char> remaining = chars;
             while (!remaining.IsEmpty)
             {
-                encoder.Convert(remaining, new Span<byte>(ctx->writerPtr, ctx->writerAvailable),
+                encoder.Convert(remaining, new Span<byte>(bufferDataStager.StagingPtr, bufferDataStager.StagingRoom),
                                 flush: false, out int charsUsed, out int bytesUsed, out _);
-                if (bytesUsed > 0)
-                    InvokeFlushBuffer(ctx, ctx->writerPtr, bytesUsed);
+                bufferDataStager.Stage(bytesUsed);
                 remaining = remaining.Slice(charsUsed);
+                // Body remains but the encoder stopped: the window is full. Flush to open a
+                // fresh region. When the body is done we keep the bytes staged so the pad —
+                // and the next field — coalesce onto the surrounding flow's flush.
+                if (!remaining.IsEmpty)
+                    bufferDataStager.FlushStaged(kManagedBlockMaxPayloadSize);
             }
-            encoder.Convert(ReadOnlySpan<char>.Empty, new Span<byte>(ctx->writerPtr, ctx->writerAvailable),
-                            flush: true, out _, out int tailBytes, out _);
-            if (tailBytes > 0)
-                InvokeFlushBuffer(ctx, ctx->writerPtr, tailBytes);
+            // End-of-stream drain: the encoder may still hold one high surrogate, emitted now
+            // as a replacement (<= 3 bytes). If the final chunk filled the window exactly it
+            // has no room, so flush and retry; otherwise this is a single no-op Convert.
+            bool completed;
+            do
+            {
+                encoder.Convert(ReadOnlySpan<char>.Empty, new Span<byte>(bufferDataStager.StagingPtr, bufferDataStager.StagingRoom),
+                                flush: true, out _, out int tailBytes, out completed);
+                bufferDataStager.Stage(tailBytes);
+                if (!completed)
+                    bufferDataStager.FlushStaged(kManagedBlockMaxPayloadSize);
+            } while (!completed);
         }
 
         if (padBytes > 0)
-        {
-            Unsafe.InitBlockUnaligned(ctx->writerPtr, 0, (uint)padBytes);
-            InvokeFlushBuffer(ctx, ctx->writerPtr, padBytes);
-        }
+            Unsafe.InitBlockUnaligned(bufferDataStager.Reserve(padBytes), 0, (uint)padBytes);
     }
 
     // Decimal-ASCII Int32 (== native IntToString) in the String wire shape. Framed
@@ -1929,14 +1772,8 @@ internal static unsafe partial class SerializationBackendManagedCommands
     // IL2CPP would accumulate the stackalloc into the caller's frame (alloca is only
     // reclaimed on return).
     private static unsafe void WriteFramedDecimalInt32(NativeBufferContext* ctx, int value,
-        ref int dstSize, ref int pendingAdvance)
+        ref BufferDataStager bufferDataStager)
     {
-        if (dstSize > 0)
-        {
-            pendingAdvance += dstSize;
-            dstSize = 0;
-        }
-
         // Build digits least-significant-first in a stack scratch, then emit in order.
         // long magnitude so Int32.MinValue is representable.
         bool negative = value < 0;
@@ -1954,13 +1791,8 @@ internal static unsafe partial class SerializationBackendManagedCommands
         int padBytes = (4 - (n & 3)) & 3;
         int totalFramedSize = 4 + n + padBytes;
 
-        if (ctx->writerAvailable - pendingAdvance < totalFramedSize && pendingAdvance > 0)
-        {
-            InvokeFlushBuffer(ctx, ctx->writerPtr, pendingAdvance);
-            pendingAdvance = 0;
-        }
-
-        byte* dst = ctx->writerPtr + pendingAdvance;
+        // Framed payload <= 16 bytes always fits a window, so Reserve never spills.
+        byte* dst = bufferDataStager.Reserve(totalFramedSize);
         Unsafe.WriteUnaligned(dst, n);
         int w = 4;
         if (negative)
@@ -1969,18 +1801,6 @@ internal static unsafe partial class SerializationBackendManagedCommands
             dst[w++] = rev[i];
         if (padBytes > 0)
             Unsafe.InitBlockUnaligned(dst + 4 + n, 0, (uint)padBytes);
-        pendingAdvance += totalFramedSize;
-    }
-
-    // Writes a 4-byte int32 into the writable region. The flushBuffer contract
-    // guarantees writerAvailable >= kManagedBlockMaxPayloadSize >= 4 on entry
-    // here (every caller has just flushed or is at start-of-execution), so this
-    // is unconditionally a single direct write + flush — no spill arm needed.
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static unsafe void WriteFramedInt32(NativeBufferContext* ctx, int value)
-    {
-        Unsafe.WriteUnaligned(ctx->writerPtr, value);
-        InvokeFlushBuffer(ctx, ctx->writerPtr, 4);
     }
 
     // Wrapper construction path for SimpleNativeType reads in ExecuteReadCommands.
@@ -2046,8 +1866,8 @@ internal static unsafe partial class SerializationBackendManagedCommands
     }
 
     // Consumes a ValueReferenceType entry and recurses into ExecuteWriteCommands
-    // with the inner instance pinned as the source. The body's own FBP(N)..FBP(0)
-    // bracketing drives buffer claims and flushes.
+    // with the inner instance pinned as the source. The body's own leading FBP(N)
+    // segment markers drive buffer claims and flushes.
     //
     // runtimeTypeHandle discriminates the encoding:
     //   - Non-zero (class field): resolve via GetOrCreateVrtInstance and pin
@@ -2062,7 +1882,7 @@ internal static unsafe partial class SerializationBackendManagedCommands
     // for every real class.
     private static unsafe void ConsumeValueReference(
         NativeBufferContext* ctx, ref byte baseAddr, IntPtr transfer,
-        ref byte* output, ref int dstSize, ref int pendingAdvance, ref byte* pos)
+        ref byte* output, ref BufferDataStager bufferDataStager, ref byte* pos)
     {
         var header = (ValueReferenceHeader*)pos;
         pos += sizeof(ValueReferenceHeader);
@@ -2089,7 +1909,7 @@ internal static unsafe partial class SerializationBackendManagedCommands
             ExecuteWriteCommands(ctx,
                 (IntPtr)Unsafe.AsPointer(ref nestedBase),
                 (IntPtr)nestedStart, nestedBytes, transfer,
-                ref output, ref dstSize, ref pendingAdvance, repeatCount: 1, repeatStride: 0);
+                ref output, ref bufferDataStager, repeatCount: 1, repeatStride: 0);
         }
         else
         {
@@ -2098,7 +1918,7 @@ internal static unsafe partial class SerializationBackendManagedCommands
             fixed (byte* nestedBase = &Unsafe.As<ObjectWrapper>(obj).Data)
             {
                 ExecuteWriteCommands(ctx, (IntPtr)nestedBase,
-                    (IntPtr)nestedStart, nestedBytes, transfer, ref output, ref dstSize, ref pendingAdvance, repeatCount: 1, repeatStride: 0);
+                    (IntPtr)nestedStart, nestedBytes, transfer, ref output, ref bufferDataStager, repeatCount: 1, repeatStride: 0);
             }
         }
 
@@ -2805,13 +2625,14 @@ internal static unsafe partial class SerializationBackendManagedCommands
         // write-side InvokeMethodCommand), so this is the single OBS invocation
         // for the callsite — see EmitInvokeInterfaceMethodCommandIfRequired.
 
-        // Instance methods on value types take their `this` as a managed
-        // byref to the struct data (NOT as a boxed MonoObject*). The build
-        // side resolves the function pointer via GetMethodFunctionPointer
-        // below, which goes through MethodInfo.MethodHandle.GetFunctionPointer
-        // — that returns the underlying instance entry, not the unboxing
-        // thunk — so passing `ref baseAddr` to the struct's inline data
-        // matches the ABI calli expects.
+        // Instance methods on value types take their `this` as a managed byref to the
+        // struct data (NOT as a boxed MonoObject*). On Mono/IL2CPP the build side resolves
+        // the function pointer via GetMethodFunctionPointer -> MethodInfo.MethodHandle.
+        // GetFunctionPointer, which returns the underlying value-type instance entry. On
+        // CoreCLR that instance entry is not directly callable, so GetInterfaceMethodFunctionPointer
+        // returns the entry of a static StructCallbackInvokerHelper<T> shim instead. Either way
+        // the stored pointer is a `delegate*<ref byte, void>`, so passing `ref baseAddr` to the
+        // struct's inline data matches the ABI the calli expects.
         try
         {
             ((delegate*<ref byte, void>)fnPtr)(ref baseAddr);
@@ -2852,20 +2673,27 @@ internal static unsafe partial class SerializationBackendManagedCommands
         return handle.GetFunctionPointer();
     }
 
+    // Selects which ISerializationCallbackReceiver method a struct-callback resolution targets.
+    // Native (Common.cpp ResolveInterfaceMethodFunctionPointer) passes this as an int enum rather
+    // than the interface method name, so no string is marshaled across the native↔managed boundary
+    // on every per-type struct-callback resolution.
+    internal enum SerializationCallbackMethod
+    {
+        OnBeforeSerialize,
+        OnAfterDeserialize,
+    }
 
-    // CoreCLR-only interface-method resolver for struct-callback dispatch.
-    // Reinterpreting the raw MethodDesc* as a RuntimeMethodHandle and calling
-    // GetFunctionPointer aborts for methods in dynamically-loaded ALCs, and even when it
-    // resolves, invoking the result through a `delegate*<ref byte, void>` calli mismatches
-    // CoreCLR's value-type instance-method calling convention (it works on Mono). So the
-    // native side (Common.cpp ResolveInterfaceMethodFunctionPointer, ENABLE_CORECLR) passes
-    // the declaring TYPE handle + the interface method NAME, and this returns a GCHandle to
-    // an Action<IntPtr> invoker that boxes the struct, invokes the method, and copies the
-    // (possibly mutated) struct back. The struct-callback consumers decode the GCHandle
-    // under ENABLE_CORECLR. Limitation: Marshal.PtrToStructure/StructureToPtr only handle
-    // blittable value types; non-blittable structs throw NotSupportedException here.
+
+    // CoreCLR-only interface-method resolver for struct-callback dispatch. The native side
+    // (Common.cpp ResolveInterfaceMethodFunctionPointer, ENABLE_CORECLR) passes the declaring
+    // TYPE handle + a SerializationCallbackMethod enum selector (not a method-name string, and
+    // never a raw MethodDesc*) — so we avoid the
+    // synthetic-handle path that aborts for methods in dynamically-loaded ALCs. We instantiate
+    // the StructCallbackInvokerHelper<T> shim for the concrete struct type and return its
+    // static entry point; the struct-callback callsites invoke it via `delegate*<ref byte, void>`
+    // calli, identical to Mono/IL2CPP. Returns IntPtr.Zero (callback skipped) on any failure.
     [RequiredByNativeCode]
-    internal static IntPtr GetInterfaceMethodFunctionPointer(IntPtr typeHandleValue, string methodName)
+    internal static IntPtr GetInterfaceMethodFunctionPointer(IntPtr typeHandleValue, SerializationCallbackMethod callbackMethod)
     {
         // Not reachable on Mono/IL2CPP — native only calls this under ENABLE_CORECLR
         // (see Common.cpp ResolveInterfaceMethodFunctionPointer).
@@ -2890,7 +2718,7 @@ internal static unsafe partial class SerializationBackendManagedCommands
     // collection serialises as a zero-length empty one).
     private static unsafe void ConsumeLinearCollection(
         NativeBufferContext* ctx, ref byte baseAddr, IntPtr transfer,
-        ref byte* output, ref int dstSize, ref int pendingAdvance, ref byte* pos)
+        ref byte* output, ref BufferDataStager bufferDataStager, ref byte* pos)
     {
         var header = (LinearCollectionHeader*)pos;
         pos += sizeof(LinearCollectionHeader);
@@ -2909,7 +2737,7 @@ internal static unsafe partial class SerializationBackendManagedCommands
                 ref Unsafe.AddByteOffset(ref baseAddr, (nint)header->fieldOffset));
             if (arr == null)
             {
-                WriteFramedInt32(ctx, 0);
+                Unsafe.WriteUnaligned(bufferDataStager.Reserve(4), 0);
                 pos = nestedStart + nestedBytes;
                 return;
             }
@@ -2924,7 +2752,7 @@ internal static unsafe partial class SerializationBackendManagedCommands
                 ref Unsafe.AddByteOffset(ref baseAddr, (nint)header->fieldOffset));
             if (list == null || list._items == null)
             {
-                WriteFramedInt32(ctx, 0);
+                Unsafe.WriteUnaligned(bufferDataStager.Reserve(4), 0);
                 pos = nestedStart + nestedBytes;
                 return;
             }
@@ -2935,112 +2763,91 @@ internal static unsafe partial class SerializationBackendManagedCommands
         if ((header->flags & LinearCollectionFlags.TriviallyCopyable) != 0)
         {
             long  totalBytesL = (long)count * (long)header->elementStride;
-            // Wire format: SInt32 length then count*elementStride raw bytes;
+            // Wire format: SInt32 length then count*elementStride raw bytes, padded to 4;
             // element counts above int.MaxValue are not representable.
             int   totalBytes  = checked((int)totalBytesL);
             int   padBytes    = (4 - (totalBytes & 3)) & 3;
+            int   framedSize  = 4 + totalBytes + padBytes;
 
-            if (totalBytes == 0)
+            // Stage the whole framed array (count + body + pad) when it fits a window, so a
+            // small or empty blittable array coalesces with the surrounding segments.
+            byte* dst = bufferDataStager.TryReserve(framedSize);
+            if (dst != null)
             {
-                // Empty array: just write the count (0). No element data follows.
-                WriteFramedInt32(ctx, count);
-            }
-            else
-            {
-                fixed (byte* dataPtr = dataAsBytes)
+                Unsafe.WriteUnaligned(dst, count);
+                if (totalBytes > 0)
                 {
-                    int needed = 4 + totalBytes;
-                    if (ctx->writerAvailable >= needed)
-                    {
-                        // Fast path: count + entire body fits in the current
-                        // writable region. One MemoryCopy + one flush; the flush
-                        // becomes an AdvanceWritePosition with no C++ memcpy.
-                        Unsafe.WriteUnaligned(ctx->writerPtr, count);
-                        Buffer.MemoryCopy(dataPtr, ctx->writerPtr + 4, totalBytes, totalBytes);
-                        InvokeFlushBuffer(ctx, ctx->writerPtr, needed);
-                    }
-                    else
-                    {
-                        // Body doesn't fit alongside the count. Write the count,
-                        // then hand the pinned source pointer directly to
-                        // FlushBuffer — its spill arm runs writer.Write(source,
-                        // totalBytes) which fills the writer's tail, transitions
-                        // through any number of cache-writer blocks, and lands
-                        // partway into the final block, all in one call. One
-                        // P/Invoke for an array of any size.
-                        WriteFramedInt32(ctx, count);
-                        InvokeFlushBuffer(ctx, dataPtr, totalBytes);
-                    }
+                    fixed (byte* dataPtr = dataAsBytes)
+                        Buffer.MemoryCopy(dataPtr, dst + 4, totalBytes, totalBytes);
                 }
+                if (padBytes > 0)
+                    Unsafe.InitBlockUnaligned(dst + 4 + totalBytes, 0, (uint)padBytes);
+                pos = nestedStart + nestedBytes;
+                return;
             }
 
-            if (padBytes > 0)
+            // Body exceeds a whole window: TryReserve has committed the staged bytes
+            // (staged == 0). Frame the count, hand the pinned source to FlushBuffer's spill
+            // arm (streams `totalBytes` through any number of cache-writer blocks in one
+            // call), then the tail pad.
+            fixed (byte* dataPtr = dataAsBytes)
             {
-                // The contract guarantees writerAvailable >= kManagedBlockMaxPayloadSize
-                // >= 3 here, so the 0..3-byte pad always fits in the current region.
-                Unsafe.InitBlockUnaligned(ctx->writerPtr, 0, (uint)padBytes);
-                InvokeFlushBuffer(ctx, ctx->writerPtr, padBytes);
+                Unsafe.WriteUnaligned(bufferDataStager.Reserve(4), count);
+                bufferDataStager.FlushStaged(kManagedBlockMaxPayloadSize);
+                bufferDataStager.Bulk(dataPtr, totalBytes);
             }
+            if (padBytes > 0)
+                Unsafe.InitBlockUnaligned(bufferDataStager.Reserve(padBytes), 0, (uint)padBytes);
 
             pos = nestedStart + nestedBytes;
             return;
         }
 
+        // The trivially-copyable arm returned above; reaching here means a per-element
+        // element type. Both the shuffle path and the per-element path below stage everything
+        // through the cursor — the count, the element bodies, and the tail pad all coalesce
+        // and ride the surrounding flow's flushes, so neither needs a flush of its own.
         if ((header->flags & LinearCollectionFlags.ShufflePath) != 0)
         {
             ConsumeLinearCollectionShufflePath(
                 ctx, dataAsBytes, count,
                 (long)header->elementStride,
                 (int)header->elementWireSize,
-                nestedStart, nestedBytes);
+                nestedStart, nestedBytes,
+                ref bufferDataStager);
             pos = nestedStart + nestedBytes;
             return;
         }
 
-        // Per-element fallback (bodies not eligible for ShufflePath or TriviallyCopyable):
-        // each element's trailing FBP(0) keeps dstSize == 0 between elements, matching
-        // the executor invariant.
-        WriteFramedInt32(ctx, count);
+        // Per-element recursion: stage the SInt32 length, then walk each element's command
+        // stream (the element class's FBP-bracketed DC + String entries) through the same
+        // cursor with the element pinned.
+        Unsafe.WriteUnaligned(bufferDataStager.Reserve(4), count);
 
         if (count > 0)
         {
             fixed (byte* dataPtr = dataAsBytes)
             {
                 long stride = (long)header->elementStride;
-                // pendingAdvance threaded by ref so an N-element array of small structs
-                // coalesces into ceil(N*body/cap) flushes instead of N.
+                // Threading the stager by ref + repeatCount lets ExecuteWriteCommands walk
+                // each element's body in one call, coalescing an N-element array of small
+                // structs into ceil(N*body/cap) flushes instead of N.
                 ExecuteWriteCommands(ctx, (IntPtr)dataPtr,
                     (IntPtr)nestedStart, nestedBytes, transfer,
-                    ref output, ref dstSize, ref pendingAdvance,
+                    ref output, ref bufferDataStager,
                     repeatCount: count, repeatStride: stride);
             }
         }
 
-        // Commit bytes deferred by per-element coalescing before the tail pad
-        // — the loop leaves pendingAdvance non-zero because the last element's
-        // closing FBP(0) rolls into it instead of flushing.
-        if (pendingAdvance > 0)
-        {
-            InvokeFlushBuffer(ctx, ctx->writerPtr, pendingAdvance);
-            pendingAdvance = 0;
-        }
-
-        // Pad total wire output to 4-byte alignment, matching the trivially-
-        // copyable path and the legacy ArrayOfManagedObjectsTransferer (which
-        // pads every field to 4 bytes individually). elementWireSize is 0 for
-        // variable-length element types (strings); those are already 4-byte
-        // aligned, no aggregate pad needed.
+        // Pad total wire output to 4-byte alignment, staged after the last element.
+        // elementWireSize is 0 for variable-length elements (strings), already aligned.
         int elementWireSize = (int)header->elementWireSize;
         if (elementWireSize > 0)
         {
             int totalWritten = count * elementWireSize;
             int padBytes     = (4 - (totalWritten & 3)) & 3;
             if (padBytes > 0)
-            {
-                // FlushBuffer guarantees writerAvailable >= kManagedBlockMaxPayloadSize >= 3.
-                Unsafe.InitBlockUnaligned(ctx->writerPtr, 0, (uint)padBytes);
-                InvokeFlushBuffer(ctx, ctx->writerPtr, padBytes);
-            }
+                Unsafe.InitBlockUnaligned(bufferDataStager.Reserve(padBytes), 0, (uint)padBytes);
         }
 
         pos = nestedStart + nestedBytes;
@@ -3069,9 +2876,11 @@ internal static unsafe partial class SerializationBackendManagedCommands
 
     // No per-element interpreter frame; bytes match the generic path.
     private static unsafe void ConsumeLinearCollectionUnityObjectArray(
-        NativeBufferContext* ctx, byte[] dataAsBytes, int count, long stride)
+        NativeBufferContext* ctx, byte[] dataAsBytes, int count, long stride, ref BufferDataStager bufferDataStager)
     {
-        WriteFramedInt32(ctx, count);
+        // Stage the count; it rides the first batch's flush. An empty array leaves it for the
+        // surrounding flow's trailing commit.
+        Unsafe.WriteUnaligned(bufferDataStager.Reserve(4), count);
         if (count == 0)
             return;
 
@@ -3083,11 +2892,16 @@ internal static unsafe partial class SerializationBackendManagedCommands
             int   left   = count;
             while (left > 0)
             {
-                int batch = ctx->writerAvailable / wire;
+                // The staged count (or a prior batch's tail) can leave < one record of room;
+                // flush to open a fresh window so at least one record fits below.
+                if (bufferDataStager.StagingRoom < wire)
+                    bufferDataStager.FlushStaged(kManagedBlockMaxPayloadSize);
+
+                int batch = bufferDataStager.StagingRoom / wire;
                 if (batch > left)
                     batch = left;
 
-                byte* dst = ctx->writerPtr;
+                byte* dst = bufferDataStager.StagingPtr;
                 // Pack arm: read each EntityId inline (no icall). The branch is per batch, not per element.
                 // Game release falls to the icall arm so the UUM-143556 drop runs (see the scalar case).
                 if ((ctx->flags & UnityObjectTransferFlags.PackEntityIdInLSOI) != 0
@@ -3107,7 +2921,9 @@ internal static unsafe partial class SerializationBackendManagedCommands
                         ctx->resolverHandle, ctx->flags, (IntPtr)srcCur, batch, stride, (IntPtr)dst);
                 }
 
-                InvokeFlushBuffer(ctx, ctx->writerPtr, batch * wire);
+                // Stage the batch; it flushes with the next window-full batch or, for the
+                // last batch, with the surrounding flow.
+                bufferDataStager.Stage(batch * wire);
                 srcCur += (long)batch * stride;
                 left   -= batch;
             }
@@ -3116,9 +2932,11 @@ internal static unsafe partial class SerializationBackendManagedCommands
 
     // EntityId counterpart; bytes match the per-element path. id==0 → zeroed LSOI (no resolver call).
     private static unsafe void ConsumeLinearCollectionEntityIdArray(
-        NativeBufferContext* ctx, byte[] dataAsBytes, int count, long stride)
+        NativeBufferContext* ctx, byte[] dataAsBytes, int count, long stride, ref BufferDataStager bufferDataStager)
     {
-        WriteFramedInt32(ctx, count);
+        // Stage the count; it rides the first batch's flush. An empty array leaves it for the
+        // surrounding flow's trailing commit.
+        Unsafe.WriteUnaligned(bufferDataStager.Reserve(4), count);
         if (count == 0)
             return;
 
@@ -3130,11 +2948,16 @@ internal static unsafe partial class SerializationBackendManagedCommands
             int   left   = count;
             while (left > 0)
             {
-                int batch = ctx->writerAvailable / wire;
+                // The staged count (or a prior batch's tail) can leave < one record of room;
+                // flush to open a fresh window so at least one record fits below.
+                if (bufferDataStager.StagingRoom < wire)
+                    bufferDataStager.FlushStaged(kManagedBlockMaxPayloadSize);
+
+                int batch = bufferDataStager.StagingRoom / wire;
                 if (batch > left)
                     batch = left;
 
-                byte* dst = ctx->writerPtr;
+                byte* dst = bufferDataStager.StagingPtr;
                 // Pack arm: encode each id inline (no icall). The branch is per batch, not per element.
                 if ((ctx->flags & UnityObjectTransferFlags.PackEntityIdInLSOI) != 0)
                 {
@@ -3151,7 +2974,9 @@ internal static unsafe partial class SerializationBackendManagedCommands
                         ctx->resolverHandle, ctx->flags, (IntPtr)srcCur, batch, stride, (IntPtr)dst);
                 }
 
-                InvokeFlushBuffer(ctx, ctx->writerPtr, batch * wire);
+                // Stage the batch; it flushes with the next window-full batch or, for the
+                // last batch, with the surrounding flow.
+                bufferDataStager.Stage(batch * wire);
                 srcCur += (long)batch * stride;
                 left   -= batch;
             }
@@ -3174,7 +2999,7 @@ internal static unsafe partial class SerializationBackendManagedCommands
     // legacy auto-empty-on-write behavior in TransferField_Dictionary.
     private static unsafe void ConsumeDictionary(
         NativeBufferContext* ctx, ref byte baseAddr, IntPtr transfer,
-        ref byte* output, ref int dstSize, ref int pendingAdvance, ref byte* pos)
+        ref byte* output, ref BufferDataStager bufferDataStager, ref byte* pos)
     {
         var header = (DictionaryHeaderWrite*)pos;
         pos += sizeof(DictionaryHeaderWrite);
@@ -3186,7 +3011,7 @@ internal static unsafe partial class SerializationBackendManagedCommands
             ref Unsafe.AddByteOffset(ref baseAddr, (nint)header->fieldOffset));
         if (dictRef == null)
         {
-            WriteFramedInt32(ctx, 0);
+            Unsafe.WriteUnaligned(bufferDataStager.Reserve(4), 0);
             pos = nestedStart + nestedBytes;
             return;
         }
@@ -3206,7 +3031,8 @@ internal static unsafe partial class SerializationBackendManagedCommands
                 ctx->hostingEntityId, dictRef, header->fieldUniqueIdentifierTemplate);
 
             int count = entries?.Length ?? 0;
-            WriteFramedInt32(ctx, count);
+            // Stage the count; per-entry bodies coalesce after it via the FBP threading below.
+            Unsafe.WriteUnaligned(bufferDataStager.Reserve(4), count);
 
             if (count > 0)
             {
@@ -3217,20 +3043,14 @@ internal static unsafe partial class SerializationBackendManagedCommands
                     long stride = (long)header->entryStride;
                     ExecuteWriteCommands(ctx, (IntPtr)dataPtr,
                         (IntPtr)nestedStart, nestedBytes, transfer,
-                        ref output, ref dstSize, ref pendingAdvance,
+                        ref output, ref bufferDataStager,
                         repeatCount: count, repeatStride: stride);
                 }
             }
 
-            // Same per-element-recursion commit / pad as ConsumeLinearCollection:
-            // flush any bytes the last entry's closing FBP(0) rolled into
-            // pendingAdvance, then 0..3 byte aggregate alignment pad.
-            if (pendingAdvance > 0)
-            {
-                InvokeFlushBuffer(ctx, ctx->writerPtr, pendingAdvance);
-                pendingAdvance = 0;
-            }
-
+            // 0..3 byte aggregate alignment pad, staged after the last entry so the count,
+            // entry bodies, and pad all coalesce and ride the surrounding flow's flushes
+            // (same as ConsumeLinearCollection's per-element arm).
             // entryStride doubles as elementWireSize for the dict path — the
             // probe-built per-entry body's wire bytes equal the managed entry
             // size by construction (SerializedKeyValue<K,V> has no inline
@@ -3240,10 +3060,7 @@ internal static unsafe partial class SerializationBackendManagedCommands
             int totalWritten = count * (int)header->entryStride;
             int padBytes     = (4 - (totalWritten & 3)) & 3;
             if (padBytes > 0)
-            {
-                Unsafe.InitBlockUnaligned(ctx->writerPtr, 0, (uint)padBytes);
-                InvokeFlushBuffer(ctx, ctx->writerPtr, padBytes);
-            }
+                Unsafe.InitBlockUnaligned(bufferDataStager.Reserve(padBytes), 0, (uint)padBytes);
         }
         finally
         {
@@ -3259,7 +3076,7 @@ internal static unsafe partial class SerializationBackendManagedCommands
     // or reflection.
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static unsafe void ConsumeFixedBuffer(
-        NativeBufferContext* ctx, ref byte baseAddr, ref byte* pos, ref int pendingAdvance)
+        ref byte baseAddr, ref byte* pos, ref BufferDataStager bufferDataStager)
     {
         var header = (FixedBufferHeader*)pos;
         pos += sizeof(FixedBufferHeader);
@@ -3272,52 +3089,31 @@ internal static unsafe partial class SerializationBackendManagedCommands
         byte* dataPtr = (byte*)Unsafe.AsPointer(
             ref Unsafe.AddByteOffset(ref baseAddr, header->fieldOffset));
 
-        // 4-byte count + padded payload, so the record keeps pendingAdvance 4-byte aligned.
+        // 4-byte count + padded payload, so the record keeps the staging cursor 4-byte aligned.
         int record = 4 + totalBytes + padBytes;
 
-        // Append the record into the writer window and grow pendingAdvance without
-        // flushing, so a run of fixed buffers (and adjacent DirectCopy segments)
-        // commits in one flush — the batching the DirectCopy segment path relies on.
-        if (ctx->writerAvailable - pendingAdvance >= record)
+        // Stage the framed record when it fits a window, so a run of fixed buffers (and
+        // adjacent DirectCopy segments) commits in one flush — the batching the DirectCopy
+        // segment path relies on.
+        byte* dst = bufferDataStager.TryReserve(record);
+        if (dst != null)
         {
-            byte* dst = ctx->writerPtr + pendingAdvance;
             Unsafe.WriteUnaligned(dst, count);
             Buffer.MemoryCopy(dataPtr, dst + 4, totalBytes, totalBytes);
             if (padBytes > 0)
                 Unsafe.InitBlockUnaligned(dst + 4 + totalBytes, 0, (uint)padBytes);
-            pendingAdvance += record;
             return;
         }
 
-        // Record won't fit alongside the deferred bytes: flush them so it can start
-        // at writerPtr, then retry against the refilled window.
-        if (pendingAdvance > 0)
-        {
-            InvokeFlushBuffer(ctx, ctx->writerPtr, pendingAdvance);
-            pendingAdvance = 0;
-        }
-
-        if (ctx->writerAvailable >= record)
-        {
-            Unsafe.WriteUnaligned(ctx->writerPtr, count);
-            Buffer.MemoryCopy(dataPtr, ctx->writerPtr + 4, totalBytes, totalBytes);
-            if (padBytes > 0)
-                Unsafe.InitBlockUnaligned(ctx->writerPtr + 4 + totalBytes, 0, (uint)padBytes);
-            pendingAdvance = record;
-            return;
-        }
-
-        // Payload exceeds a whole window: frame the count, then hand the inline
-        // source to FlushBuffer's spill arm so it crosses any number of cache-writer
-        // blocks in one flush. The tail pad always fits — FlushBuffer leaves
-        // writerAvailable >= kManagedBlockMaxPayloadSize.
-        WriteFramedInt32(ctx, count);
-        InvokeFlushBuffer(ctx, dataPtr, totalBytes);
+        // Payload exceeds a whole window: TryReserve has committed the staged bytes
+        // (staged == 0). Frame the count, hand the inline source to FlushBuffer's spill
+        // arm so it crosses any number of cache-writer blocks in one flush, then the tail
+        // pad (Bulk requests a full window, and the pad's Reserve threads its own size).
+        Unsafe.WriteUnaligned(bufferDataStager.Reserve(4), count);
+        bufferDataStager.FlushStaged(kManagedBlockMaxPayloadSize);
+        bufferDataStager.Bulk(dataPtr, totalBytes);
         if (padBytes > 0)
-        {
-            Unsafe.InitBlockUnaligned(ctx->writerPtr, 0, (uint)padBytes);
-            InvokeFlushBuffer(ctx, ctx->writerPtr, padBytes);
-        }
+            Unsafe.InitBlockUnaligned(bufferDataStager.Reserve(padBytes), 0, (uint)padBytes);
     }
 
     // EntityId <-> 12-byte LocalSerializedObjectIdentifier, the pure-managed
@@ -3345,22 +3141,20 @@ internal static unsafe partial class SerializationBackendManagedCommands
     // whose per-element body is purely DC + FBP and fits in a single segment.
     // The body bytes are identical to what the per-element recursion path
     // would walk; we just walk them once per element with a fixed per-element
-    // destination and skip all the FBP segment-claim / pendingAdvance bookkeeping.
+    // destination and skip all the FBP segment-claim / staging bookkeeping.
     //
-    // Buffer accounting: the FlushBuffer contract guarantees writerAvailable >=
-    // kManagedBlockMaxPayloadSize after every flush, and the build side gates
-    // shuffle eligibility on elementWireSize <= kManagedBlockMaxPayloadSize, so
-    // the per-batch element count is always >= 1. Each batch fills the writer's
-    // current region in a single tight loop and commits with one InvokeFlushBuffer
-    // call — taking the per-element P/Invoke count from O(count) (one per element
-    // in the per-element recursion path) to O(ceil(count * elementWireSize / cap)).
+    // The build side gates shuffle eligibility on elementWireSize <= kManagedBlockMaxPayloadSize,
+    // so a fresh window always holds at least one element. Each batch stages rather than
+    // flushing, so the count rides the first batch and the last coalesces with the surrounding
+    // flow — one flush per window instead of one P/Invoke per element.
     private static unsafe void ConsumeLinearCollectionShufflePath(
         NativeBufferContext* ctx,
         byte[] dataAsBytes, int count,
         long stride, int elementWireSize,
-        byte* body, int bodyLen)
+        byte* body, int bodyLen,
+        ref BufferDataStager bufferDataStager)
     {
-        WriteFramedInt32(ctx, count);
+        Unsafe.WriteUnaligned(bufferDataStager.Reserve(4), count);
         if (count == 0)
             return;
 
@@ -3371,14 +3165,17 @@ internal static unsafe partial class SerializationBackendManagedCommands
 
             while (elementsLeft > 0)
             {
-                // Build-side gate (elementWireSize <= kManagedBlockMaxPayloadSize)
-                // combined with FlushBuffer's post-flush availability contract
-                // makes batch >= 1 unconditionally on entry.
-                int batch = ctx->writerAvailable / elementWireSize;
+                // The staged count (or a prior batch's tail) can leave < one element of room;
+                // flush to open a fresh window. The build-side gate (elementWireSize <=
+                // kManagedBlockMaxPayloadSize) then makes batch >= 1.
+                if (bufferDataStager.StagingRoom < elementWireSize)
+                    bufferDataStager.FlushStaged(kManagedBlockMaxPayloadSize);
+
+                int batch = bufferDataStager.StagingRoom / elementWireSize;
                 if (batch > elementsLeft)
                     batch = elementsLeft;
 
-                byte* dst        = ctx->writerPtr;
+                byte* dst        = bufferDataStager.StagingPtr;
                 int   batchBytes = batch * elementWireSize;
 
                 // Pre-zero the batch's wire window. The transposed walker uses
@@ -3393,7 +3190,9 @@ internal static unsafe partial class SerializationBackendManagedCommands
 
                 ExecuteShuffleBatch(srcCur, dst, batch, stride, elementWireSize, body, bodyLen);
 
-                InvokeFlushBuffer(ctx, ctx->writerPtr, batchBytes);
+                // Stage the batch; it flushes with the next window-full batch or, for the last
+                // batch, with the surrounding flow.
+                bufferDataStager.Stage(batchBytes);
                 srcCur       += (long)batch * stride;
                 elementsLeft -= batch;
             }
@@ -3417,8 +3216,8 @@ internal static unsafe partial class SerializationBackendManagedCommands
     // every DC1 / DC2 entry — only the low N bytes carried meaning, the
     // upper 4-N spilled into adjacent slots and were either overwritten by
     // subsequent entries within the same element, or by the first entries
-    // of the next element, or by the trailing FBP(0) marker. Per-element
-    // ordering kept that overlap-and-fixup pattern coherent. Transposing
+    // of the next element. Per-element ordering kept that overlap-and-fixup
+    // pattern coherent. Transposing
     // breaks it: an entry's spillover for element e now lands in element
     // e+1 *after* element e+1's matching entry has already written its
     // value, with no later write to fix it up. So the transposed walker
@@ -3943,8 +3742,8 @@ internal static unsafe partial class SerializationBackendManagedCommands
         // Always allocate and assign the collection, even when count == 0.
         // The wire format collapses null and empty source collections to the
         // same `count == 0` framing (see ConsumeLinearCollection on the write
-        // side: both `arr == null` and `arr.Length == 0` short-circuit to
-        // WriteFramedInt32(0) with no body). A non-null zero-length collection
+        // side: both `arr == null` and `arr.Length == 0` stage a count of 0
+        // with no body). A non-null zero-length collection
         // is the contract user OnAfterDeserialize callbacks (e.g. UpmCache
         // iterating `m_SerializedProductSearchPackageInfoProductIds.Length`)
         // rely on. Skipping the assignment here would leave the field at its
@@ -4073,10 +3872,11 @@ internal static unsafe partial class SerializationBackendManagedCommands
             }
             else
             {
-                // Per-element recursion: each element's FBP-bracketed body is
-                // walked by ExecuteReadCommands with the element pinned. The
-                // trailing FBP(0) on each iteration advances ctx->readerPtr by
-                // elementWireSize, stepping naturally to the next element.
+                // Per-element recursion: each element's body is walked by
+                // ExecuteReadCommands with the element pinned. Each call's
+                // end-of-stream commit (CommitReadSegment) advances
+                // ctx->readerPtr past the element's final segment, stepping
+                // naturally to the next element.
                 fixed (byte* dataPtr = dataAsBytes)
                 {
                     long stride  = (long)header->elementStride;
@@ -4308,6 +4108,25 @@ internal static unsafe partial class SerializationBackendManagedCommands
         AssignArrayBacking(ref baseAddr, header->kind, header->fieldOffset, arr, dataAsBytes, count, elementType);
     }
 
+    // Builds the single Console warning covering whichever key problems the managed deserializer reported for a
+    // dictionary: duplicate keys, null keys, or both. At least one flag is true when this is called. Kept in sync
+    // with the native DictionaryField.cpp ComposeDictionaryKeyWarning so both read paths report identical text.
+    // Only invoked from the warning path below, which is compiled out in UNITY_NATIVE_TEST_RESOURCES.
+    private static string ComposeDictionaryKeyWarningMessage(string dictionaryIdentifier, bool hadDuplicates, bool hadNullKeys)
+    {
+        // Clauses share a single "Dictionary field '<id>' " prefix so the both-problems case names the field once.
+        string body = string.Empty;
+        if (hadDuplicates)
+            body = "contains duplicate key entries. Ensure all keys are unique. Only the first occurrence of each key will be added to the dictionary object.";
+        if (hadNullKeys)
+        {
+            if (body.Length > 0)
+                body += " It also ";
+            body += "contains entries with a null key. A dictionary can't contain a null key, so Unity excludes these entries from the dictionary object.";
+        }
+        return "Dictionary field '" + dictionaryIdentifier + "' " + body;
+    }
+
     // Read-path mirror of ConsumeDictionary. Reads the count prefix and per-entry
     // body (same shape ConsumeLinearCollectionRead's per-element-recursion path
     // produces) into a SerializedKeyValue<K,V>[] staging array, then calls
@@ -4321,11 +4140,11 @@ internal static unsafe partial class SerializationBackendManagedCommands
     // produces (DictionaryField.cpp:142-144) so write→read round-trips through
     // the cache are stable.
     //
-    // Duplicate-key warning: when ctx->warnOnDuplicates is set (serialized-file
+    // Ignored-entry warning: when ctx->warnAboutIgnoredEntries is set (serialized-file
     // load or Object.Instantiate clone) AND SetEntriesFromSerializedData reports
-    // hadDuplicates AND we have a non-empty dictionary identifier, emit the
-    // clickable Console warning via LogDictionaryDuplicateKeyWarning — same
-    // flags + EntityId hookup as DictionaryField::LogDuplicateKeyWarning.
+    // duplicate or null keys AND we have a non-empty dictionary identifier, emit a
+    // single clickable Console warning covering both problems via LogDictionaryKeyWarning
+    // — same flags + EntityId hookup as DictionaryField::LogDictionaryKeyWarning.
     private static unsafe void ConsumeDictionaryRead(
         NativeReadBufferContext* ctx,
         ref byte baseAddr,
@@ -4429,24 +4248,22 @@ internal static unsafe partial class SerializationBackendManagedCommands
                 // the non-typed SetEntriesFromSerializedData entry point when
                 // the index is -1.
                 bool hadDuplicates;
+                bool hadNullKeys;
                 DictionarySerialization.InvokeSetEntriesTyped(
                     header->setEntriesTypedIndex,
-                    ctx->hostingEntityId, dictRef, entries, dictionaryIdentifier, out hadDuplicates);
+                    ctx->hostingEntityId, dictRef, entries, dictionaryIdentifier, out hadDuplicates, out hadNullKeys);
 
-                // Warn-on-duplicates policy mirrors the legacy DictionaryField::SetArray
-                // path: only fires for serialized-file loads + Object.Instantiate clones
-                // (ctx->warnOnDuplicates set by the native dispatcher), and only when
-                // we actually have a formatted identifier — without one we can't tell
-                // the user which dictionary field is affected. LogDictionaryDuplicateKeyWarning
-                // is a [FreeFunction] unavailable in UNITY_NATIVE_TEST_RESOURCES, so it's
-                // compiled out there.
-                if (ctx->warnOnDuplicates && hadDuplicates && !string.IsNullOrEmpty(dictionaryIdentifier))
+                // Warn policy mirrors the legacy DictionaryField::SetArray path: only fires for
+                // serialized-file loads + Object.Instantiate clones (ctx->warnAboutIgnoredEntries set by
+                // the native dispatcher), and only when we actually have a formatted identifier —
+                // without one we can't tell the user which dictionary field is affected. A single
+                // combined warning covers both problems, so a dictionary with duplicate keys and
+                // null keys logs one Console entry, not two. LogDictionaryKeyWarning is a
+                // [FreeFunction] unavailable in UNITY_NATIVE_TEST_RESOURCES, so it's compiled out there.
+                if (ctx->warnAboutIgnoredEntries && (hadDuplicates || hadNullKeys) && !string.IsNullOrEmpty(dictionaryIdentifier))
                 {
-                    string message =
-                        "Dictionary field '" + dictionaryIdentifier + "' contains duplicate key entries. " +
-                        "Ensure all keys are unique. Only the first occurrence of each key will be added " +
-                        "to the dictionary object.";
-                    LogDictionaryDuplicateKeyWarning(message, ctx->hostingEntityId);
+                    string message = ComposeDictionaryKeyWarningMessage(dictionaryIdentifier, hadDuplicates, hadNullKeys);
+                    LogDictionaryKeyWarning(message, ctx->hostingEntityId);
                 }
             }
         }
@@ -4788,8 +4605,10 @@ internal static unsafe partial class SerializationBackendManagedCommands
     }
 
     // Read-path mirror of ConsumeValueReference. The inner body is its own
-    // self-contained FBP(N)..FBP(0) chain, so ExecuteReadCommands gets a fresh
-    // innerSegmentSize=0. Same class / struct split — see ConsumeValueReference.
+    // self-contained FBP(N) segment chain, so ExecuteReadCommands gets a fresh
+    // innerSegmentSize=0; its end-of-stream commit advances readerPtr past the
+    // body's final segment before we return. Same class / struct split — see
+    // ConsumeValueReference.
     private static unsafe void ConsumeValueReferenceRead(
         NativeReadBufferContext* ctx, ref byte baseAddr, IntPtr transfer, ref byte* pos)
     {
@@ -4841,37 +4660,63 @@ internal static unsafe partial class SerializationBackendManagedCommands
         pos = nestedStart + nestedBytes;
     }
 
-    // Read counterpart of ObjectToSerializationBuffer.
+    // Read counterpart of ObjectsToSerializationBuffer. Reads a run of ManagedCommandsBlockCommands,
+    // returning the first non-managed cursor. ctx carry state (readerPtr/readerAvailable) threads
+    // across the run; the native caller rewinds the surplus once after this returns.
     [RequiredByNativeCode]
-    public static unsafe void SerializationBufferToObject(
+    public static unsafe IntPtr SerializationBufferToObjects(
         IntPtr pinnedBase,
-        IntPtr entriesPtr,
-        int entryBufferSize,
+        IntPtr runStart,
+        IntPtr runEnd,
         IntPtr readContext,
         IntPtr transfer)
     {
-        // Managed object memory: accessed via ref so the GC can track it (the caller
-        // currently pins, but the contract is "managed memory"). Unmanaged buffers
-        // (input, command stream) stay as raw byte*.
         ref byte baseAddr = ref Unsafe.AsRef<byte>((void*)pinnedBase);
         var ctx = (NativeReadBufferContext*)readContext;
 
-        int currentSegmentSize = 0;
-        ExecuteReadCommands(
-            ctx,
-            ref baseAddr,
-            (byte*)entriesPtr, entryBufferSize,
-            transfer,
-            ref currentSegmentSize,
-            repeatCount: 1, repeatStride: 0);
+        byte* cmd = (byte*)runStart;
+        byte* end = (byte*)runEnd;
+        IntPtr managedFunc = cmd < end ? ((ManagedCommandsBlockCommandHeader*)cmd)->func : IntPtr.Zero;
+        while (cmd < end)
+        {
+            var header = (ManagedCommandsBlockCommandHeader*)cmd;
+            if (header->func != managedFunc)
+                break;
+            byte* entryBytes = cmd + sizeof(ManagedCommandsBlockCommandHeader);
+            int currentSegmentSize = 0;
+            ExecuteReadCommands(
+                ctx,
+                ref baseAddr,
+                entryBytes, (int)header->entryBufferSize,
+                transfer,
+                ref currentSegmentSize,
+                repeatCount: 1, repeatStride: 0);
+            cmd += header->commandSize;
+        }
+
+        return (IntPtr)cmd;
     }
 
-    // Inner loop shared by SerializationBufferToObject (top-level) and
+    // Commits the current fixed segment on the read side by advancing the
+    // reader cursor past the bytes just read. Called at each segment boundary
+    // — the next leading FBP(N), a variable-sized entry, or end-of-stream.
+    // A zero currentSegmentSize (no open segment) makes this a no-op.
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static unsafe void CommitReadSegment(
+        NativeReadBufferContext* ctx, ref int currentSegmentSize)
+    {
+        ctx->readerPtr       += currentSegmentSize;
+        ctx->readerAvailable -= currentSegmentSize;
+        currentSegmentSize    = 0;
+    }
+
+    // Inner loop shared by SerializationBufferToObjects (top-level) and
     // ConsumeLinearCollectionRead (per-element recursion). Each segment's DC
     // destOffsets restart at 0; segments are laid out contiguously in the
-    // refill window we receive from EnsureReadable. We advance ctx->readerPtr
-    // past each completed segment when the trailing FBP(0) fires so the next
-    // segment's destOffsets land on the right slice.
+    // refill window we receive from EnsureReadable. The cursor advances past a
+    // completed segment at the next segment boundary (leading FBP(N), a
+    // variable-sized entry, or end-of-stream — see CommitReadSegment) so the
+    // next segment's destOffsets land on the right slice.
     //
     // currentSegmentSize is threaded by ref so a recursion frame opened inside
     // a segment (for nested per-element bodies) sees the parent's outstanding
@@ -4896,10 +4741,10 @@ internal static unsafe partial class SerializationBackendManagedCommands
             while (pos < endPos)
             {
             // Refresh segment-local read cursor each iteration. ctx->readerPtr is
-            // stable within a segment (no ensureReadable calls between FBP(N>0)
-            // and FBP(0)), but FBP(0), variable-sized entries (LinearCollection,
-            // future String/VRT), and the leading FBP(N>0) of the next segment
-            // may all move it, so we re-snapshot before reading any DC entry.
+            // stable within a segment, but variable-sized entries (LinearCollection,
+            // String/VRT) and the leading FBP(N>0) of the next segment move it, so we
+            // re-snapshot before reading any DC entry. (No trailing FBP(0) in the stream:
+            // segments commit via CommitReadSegment at the next FBP(N)/variable entry.)
             byte* input = ctx->readerPtr;
             var opCode = (RttiDataType)pos[0];
 
@@ -5090,28 +4935,15 @@ internal static unsafe partial class SerializationBackendManagedCommands
                 {
                     var prefix = (ManagedCommandFixedBlockPrefix*)pos;
                     pos += sizeof(ManagedCommandFixedBlockPrefix);
-                    if (prefix->payloadSize > 0)
-                    {
-                        // Open-segment marker: ensure the next `payloadSize` bytes
-                        // are addressable contiguously at ctx->readerPtr. We don't
-                        // advance the cursor here — DC entries within the segment
-                        // index off ctx->readerPtr + entry->destOffset; the
-                        // matching FBP(0) advances past the segment.
-                        currentSegmentSize = prefix->payloadSize;
-                        if (ctx->readerAvailable < currentSegmentSize)
-                            InvokeEnsureReadable(ctx, currentSegmentSize);
-                    }
-                    else
-                    {
-                        // Close-segment marker: commit the segment we just read
-                        // by advancing the cursor past it. readerAvailable shrinks
-                        // by the same amount; if a subsequent ensureReadable
-                        // exceeds what's left, the spill path will refill from the
-                        // CachedReader.
-                        ctx->readerPtr      += currentSegmentSize;
-                        ctx->readerAvailable -= currentSegmentSize;
-                        currentSegmentSize = 0;
-                    }
+
+                    // Commit the prior segment, then open the new one. The read cursor
+                    // advances only at a segment boundary — DC entries index off
+                    // ctx->readerPtr + entry->destOffset within the open segment.
+                    CommitReadSegment(ctx, ref currentSegmentSize);
+
+                    currentSegmentSize = prefix->payloadSize;
+                    if (ctx->readerAvailable < currentSegmentSize)
+                        InvokeEnsureReadable(ctx, currentSegmentSize);
                     break;
                 }
 
@@ -5219,6 +5051,10 @@ internal static unsafe partial class SerializationBackendManagedCommands
                 // Gated on ENABLE_CORECLR alone (matching the emitter): native-test image uses the per-element fallback inside.
                 case RttiDataType.UnityObjectArray:
                 {
+                    // Variable-sized entries read directly from readerPtr, so the
+                    // in-progress fixed segment must be committed (cursor advanced
+                    // past it) before handing off.
+                    CommitReadSegment(ctx, ref currentSegmentSize);
                     ConsumeLinearCollectionUnityObjectArrayRead(ctx, ref baseAddr, ref pos);
                     break;
                 }
@@ -5226,6 +5062,7 @@ internal static unsafe partial class SerializationBackendManagedCommands
                 // EntityId array: value stores, safe on all runtimes, not CoreCLR-gated.
                 case RttiDataType.EntityIdArray:
                 {
+                    CommitReadSegment(ctx, ref currentSegmentSize);
                     ConsumeLinearCollectionEntityIdArrayRead(ctx, ref baseAddr, ref pos);
                     break;
                 }
@@ -5233,24 +5070,28 @@ internal static unsafe partial class SerializationBackendManagedCommands
                 case RttiDataType.Array:
                 case RttiDataType.List:
                 {
+                    CommitReadSegment(ctx, ref currentSegmentSize);
                     ConsumeLinearCollectionRead(ctx, ref baseAddr, transfer, ref pos);
                     break;
                 }
 
                 case RttiDataType.Dictionary:
                 {
+                    CommitReadSegment(ctx, ref currentSegmentSize);
                     ConsumeDictionaryRead(ctx, ref baseAddr, transfer, ref pos);
                     break;
                 }
 
                 case RttiDataType.FixedBuffer:
                 {
+                    CommitReadSegment(ctx, ref currentSegmentSize);
                     ConsumeFixedBufferRead(ctx, ref baseAddr, ref pos);
                     break;
                 }
 
                 case RttiDataType.ValueReferenceType:
                 {
+                    CommitReadSegment(ctx, ref currentSegmentSize);
                     ConsumeValueReferenceRead(ctx, ref baseAddr, transfer, ref pos);
                     break;
                 }
@@ -5280,6 +5121,7 @@ internal static unsafe partial class SerializationBackendManagedCommands
 
                 case RttiDataType.String:
                 {
+                    CommitReadSegment(ctx, ref currentSegmentSize);
                     ConsumeStringRead(ctx, ref baseAddr, ref pos);
                     break;
                 }
@@ -5288,6 +5130,11 @@ internal static unsafe partial class SerializationBackendManagedCommands
                 {
                     var entry = (ManagedCommandNativeValueStructEntry*)pos;
                     pos += sizeof(ManagedCommandNativeValueStructEntry);
+
+                    // The native dispatch reads straight off the CachedReader at the
+                    // current cursor, so commit the in-progress fixed segment first to
+                    // advance readerPtr past it.
+                    CommitReadSegment(ctx, ref currentSegmentSize);
 
                     // Inline value struct: the storage is inline (no wrapper to
                     // construct), so just hand the field's own address to the native
@@ -5305,6 +5152,11 @@ internal static unsafe partial class SerializationBackendManagedCommands
                 {
                     var entry = (ManagedCommandSimpleNativeTypeReadEntry*)pos;
                     pos += sizeof(ManagedCommandSimpleNativeTypeReadEntry);
+
+                    // The native dispatch reads straight off the CachedReader at the
+                    // current cursor, so commit the in-progress fixed segment first to
+                    // advance readerPtr past it.
+                    CommitReadSegment(ctx, ref currentSegmentSize);
 
                     // Wrapper field is a reference slot in the host instance. If null,
                     // construct via the entry's runtimeTypeHandle + ctorFunctionPtr so
@@ -5342,6 +5194,7 @@ internal static unsafe partial class SerializationBackendManagedCommands
                 }
 
                 case RttiDataType.PropertyNameId:
+                    CommitReadSegment(ctx, ref currentSegmentSize);
                     ConsumePropertyNameRead(ctx, ref baseAddr, ref pos);
                     break;
 
@@ -5355,13 +5208,19 @@ internal static unsafe partial class SerializationBackendManagedCommands
                     throw new NotSupportedException($"OpCode {opCode} not supported");
             }
 
-            // Match the writer's 4-byte header alignment (see ObjectToSerializationBuffer
+            // Match the writer's 4-byte header alignment (see ObjectsToSerializationBuffer
             // for details). Compact groups with an odd entry count leave pos 2 bytes short.
             long entryOffset = pos - entryBase;
             long aligned = (entryOffset + 3) & ~3L;
             pos = entryBase + aligned;
         }
         }
+
+        // Commit the last open segment once the stream is exhausted. Earlier segments
+        // (including each earlier element of a repeatCount walk) were already committed by
+        // the leading FBP(N)/variable entry that followed them; nothing follows the final
+        // one, so commit it here.
+        CommitReadSegment(ctx, ref currentSegmentSize);
     }
 }
 

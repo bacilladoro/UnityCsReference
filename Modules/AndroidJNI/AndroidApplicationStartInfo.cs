@@ -265,6 +265,54 @@ namespace UnityEngine.Android
         ReservedRangeDeveloper = 30
     }
 
+    /// <summary>
+    /// Interface for reading a historical Android application start record for this application.
+    /// </summary>
+    /// <remarks>
+    /// Use <see cref="ApplicationStartInfoProvider.GetHistoricalProcessStartReasons"/> to obtain instances of this interface.
+    /// Each instance describes one historical process start, including why the process was started,
+    /// how it was started (cold, warm, or hot), and timing milestones recorded during startup.
+    ///
+    /// This API wraps the Android <c>ApplicationStartInfo</c> class, available on Android API level 35 and later.
+    /// On earlier API levels, <see cref="ApplicationStartInfoProvider.GetHistoricalProcessStartReasons"/> returns an empty array.
+    /// </remarks>
+    /// <example>
+    /// <code lang="cs"><![CDATA[
+    /// using UnityEngine;
+    /// using UnityEngine.Android;
+    ///
+    /// public class AppStartDiagnostics : MonoBehaviour
+    /// {
+    ///     void Start()
+    ///     {
+    ///         IApplicationStartInfo[] records = ApplicationStartInfoProvider.GetHistoricalProcessStartReasons(1);
+    ///         if (records.Length == 0)
+    ///         {
+    ///             Debug.Log("No start info available (requires Android API 35+).");
+    ///             return;
+    ///         }
+    ///
+    ///         IApplicationStartInfo info = records[0];
+    ///
+    ///         // Log core start properties.
+    ///         Debug.Log($"Process: {info.processName} (pid {info.pid})");
+    ///         Debug.Log($"Reason: {info.reason}, type: {info.startType}, state: {info.startupState}");
+    ///         Debug.Log($"Force-stopped before launch: {info.wasForceStopped}");
+    ///
+    ///         // Log the launch mode when the start was triggered by an activity launch.
+    ///         if (info.reason == StartReason.Launcher || info.reason == StartReason.StartActivity)
+    ///             Debug.Log($"Launch mode: {info.launchMode}");
+    ///
+    ///         // Calculate time to first frame; timestamps are clock-monotonic values in nanoseconds.
+    ///         if (info.startupTimestamps.TryGetValue(StartTimestamp.Launch, out long launchNs) &&
+    ///             info.startupTimestamps.TryGetValue(StartTimestamp.FirstFrame, out long firstFrameNs))
+    ///         {
+    ///             Debug.Log($"Time to first frame: {(firstFrameNs - launchNs) / 1_000_000} ms");
+    ///         }
+    ///     }
+    /// }
+    /// ]]></code>
+    /// </example>
     public interface IApplicationStartInfo
     {
         /// <summary>
@@ -275,21 +323,21 @@ namespace UnityEngine.Android
         int pid { get; }
 
         /// <summary>
-        /// <para>Return the defining kernel user identifier, maybe different from getRealUid() and getPackageUid(), if an external service has the android:useAppZygote set to true and was bound with the flag Context.BIND_EXTERNAL_SERVICE - in this case, this field here will be the kernel user identifier of the external service provider.</para>
+        /// <para>Returns the defining kernel user identifier. This might differ from <c>getRealUid()</c> and <c>getPackageUid()</c>, if an external service has the <c>android:useAppZygote</c> set to <c>true</c> and is bound with the <c>Context.BIND_EXTERNAL_SERVICE</c> flag. In this case, this field is the kernel user identifier of the external service provider.</para>
         /// <seealso href="https://developer.android.com/reference/android/app/ApplicationStartInfo#getDefiningUid()">developer.android.com</seealso>
         /// </summary>
         /// <returns>int</returns>
         int definingUid { get; }
 
         /// <summary>
-        /// <para>Similar to getRealUid(), it's the kernel user identifier that is assigned at the package installation time.</para>
+        /// <para>Similar to <c>getRealUid()</c>, this is the kernel user identifier assigned at the package installation time.</para>
         /// <seealso href="https://developer.android.com/reference/android/app/ApplicationStartInfo#getPackageUid()">developer.android.com</seealso>
         /// </summary>
         /// <returns>int</returns>
         int packageUid { get; }
 
         /// <summary>
-        /// <para>Return the kernel user identifier of the process, most of the time the system uses this to do access control checks. It's typically the uid of the package where the component is running from, except the case of external service, where getDefiningUid() will be the same as the package uid of the component.</para>
+        /// <para>Returns the kernel user identifier the system uses for access control checks. It's typically the UID of the package where the component is running. In case of external services, <c>getDefiningUid()</c> is the same as the package UID of the component.</para>
         /// <seealso href="https://developer.android.com/reference/android/app/ApplicationStartInfo#getRealUid()">developer.android.com</seealso>
         /// </summary>
         /// <returns>int</returns>
@@ -310,14 +358,14 @@ namespace UnityEngine.Android
         StartReason reason { get; }
 
         /// <summary>
-        /// <para>Return the type of start, which can be one of "cold", "warm" or "hot".</para>
+        /// <para>Returns the type of app start: cold, warm, or hot.</para>
         /// <seealso href="https://developer.android.com/reference/android/app/ApplicationStartInfo#getStartType()">developer.android.com</seealso>
         /// </summary>
         /// <returns>StartType</returns>
         StartType startType { get; }
 
         /// <summary>
-        /// <para>Return the startup state of the process.</para>
+        /// <para>Returns the startup state of the process at the time this record was captured.</para>
         /// <seealso href="https://developer.android.com/reference/android/app/ApplicationStartInfo#getStartupState()">developer.android.com</seealso>
         /// </summary>
         /// <returns>StartupState</returns>
@@ -331,28 +379,28 @@ namespace UnityEngine.Android
         LaunchMode launchMode { get; }
 
         /// <summary>
-        /// <para>Return the URI string representation of the intent used to launch the activity (via Intent.toUri(0)), if this start was initiated with an activity launch; return null otherwise.</para>
+        /// <para>Returns the URI string representation of the intent used to launch the activity via <c>Intent.toUri(0)</c>. Returns null if this start was initiated with an activity launch.</para>
         /// <seealso href="https://developer.android.com/reference/android/app/ApplicationStartInfo#getIntent()">developer.android.com</seealso>
         /// </summary>
         /// <returns>URI string of the launch Intent, or null if there was no intent.</returns>
         string intentUri { get; }
 
         /// <summary>
-        /// <para>Return the timestamps (see <see href="https://developer.android.com/reference/android/os/SystemClock#uptimeMillis()">SystemClock.uptimeMillis</see>) collected during the startup of the application, keyed by the integer constants with the START_TIMESTAMP_ prefix in this class. The system could collect a specific timestamp only if the conditions of the specific startup transition are met.</para>
+        /// <para>Return the timestamps collected using <see href="https://developer.android.com/reference/android/os/SystemClock#uptimeNanos()">SystemClock.uptimeNanos</see> during the startup of the application, keyed by <see cref="StartTimestamp"/> values. The system records a specific timestamp only if the conditions of the corresponding startup transition are met.</para>
         /// <seealso href="https://developer.android.com/reference/android/app/ApplicationStartInfo#getStartupTimestamps()">developer.android.com</seealso>
         /// </summary>
-        /// <returns>A read-only dictionary mapping StartTimestamp type to timestamp values in milliseconds. This value cannot be null.</returns>
+        /// <returns>A read-only dictionary mapping <see cref="StartTimestamp"/> to clock-monotonic timestamp values in nanoseconds. This value cannot be null.</returns>
         IReadOnlyDictionary<StartTimestamp, long> startupTimestamps { get; }
 
         /// <summary>
-        /// <para>Return whether the process was in a force-stopped state when it was started.</para>
+        /// <para>Return whether the process was in a force-stopped state when it started.</para>
         /// <seealso href="https://developer.android.com/reference/android/app/ApplicationStartInfo#wasForceStopped()">developer.android.com</seealso>
         /// </summary>
         /// <returns>bool</returns>
         bool wasForceStopped { get; }
 
         /// <summary>
-        /// <para>Return the component that was started. Available only on API level 36+, returns 0 on earlier versions.</para>
+        /// <para>Return the Android component type that triggered this process start. Available only on Android API level 36 and later.</para>
         /// <seealso href="https://developer.android.com/reference/android/app/ApplicationStartInfo#getStartComponent()">developer.android.com</seealso>
         /// </summary>
         /// <returns>StartComponent. Returns <c>0</c> on API &lt; 36.</returns>
@@ -363,11 +411,11 @@ namespace UnityEngine.Android
     public static class ApplicationStartInfoProvider
     {
         /// <summary>
-        /// <para>Return a list of ApplicationStartInfo records containing the reasons for the most recent app starts.</para>
+        /// <para>Return the most recent historical process start records for this application, sorted from most recent to least recent.</para>
         /// <seealso href="https://developer.android.com/reference/android/app/ActivityManager#getHistoricalProcessStartReasons(int)">developer.android.com</seealso>
         /// </summary>
-        /// <param name="maxNum">The maximum number of results to be returned; a value of 0 means to ignore this parameter and return all matching records. Value is 0 or greater.</param>
-        /// <returns>IApplicationStartInfo[] a list of ApplicationStartInfo records matching the criteria, sorted in the order from most recent to least recent. This value cannot be null.</returns>
+        /// <param name="maxNum">The maximum number of records to return. Use <c>0</c> to return all available records.</param>
+        /// <returns>An array of <see cref="IApplicationStartInfo"/> records, sorted from most recent to least recent. Never <c>null</c>. Returns an empty array on Android API levels earlier than 35.</returns>
         public static IApplicationStartInfo[] GetHistoricalProcessStartReasons(int maxNum = 0)
         {
             IApplicationStartInfo[] result = null;

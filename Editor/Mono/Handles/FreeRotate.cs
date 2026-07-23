@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEngine;
 
@@ -10,6 +11,7 @@ namespace UnityEditorInternal
     internal class FreeRotate
     {
         static readonly Color s_DimmingColor = new Color(0f, 0f, 0f, 0.078f);
+        [NoAutoStaticsCleanup] // transient drag state; overwritten at the start of each drag operation
         private static Vector2 s_CurrentMousePosition;
 
         public static Quaternion Do(int id, Quaternion rotation, Vector3 position, float size)

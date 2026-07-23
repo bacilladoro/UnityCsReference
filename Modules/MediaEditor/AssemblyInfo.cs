@@ -4,5 +4,6 @@
 
 using System.Runtime.CompilerServices;
 
+[assembly: InternalsVisibleTo("Unity.Video.Tests")]
 [assembly: InternalsVisibleTo("Unity.Video.PlayModeTests")]
 [assembly: InternalsVisibleTo("Unity.Video.EditModeTests")]

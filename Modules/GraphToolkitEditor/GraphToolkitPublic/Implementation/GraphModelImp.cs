@@ -432,6 +432,11 @@ namespace Unity.GraphToolkit.Editor.Implementation
 
         public IVariableNode AddVariableNode(IVariable variable, Vector2 position)
         {
+            return AddVariableNode(variable, position, VariableNodeMode.Get);
+        }
+
+        public IVariableNode AddVariableNode(IVariable variable, Vector2 position, VariableNodeMode mode)
+        {
             CheckModificationLock();
 
             if (variable == null)
@@ -450,7 +455,10 @@ namespace Unity.GraphToolkit.Editor.Implementation
                 throw new ArgumentException("The variable declaration doesn't exist in the graph. It may have been removed", nameof(variable));
             }
 
-            return (IVariableNode)base.CreateVariableNode(declModel, position);
+            if (mode == VariableNodeMode.Set && !declModel.CanCreateSetVariableNode)
+                throw new ArgumentException($"Variable '{declModel.Title}' cannot be used as a set variable node.", nameof(mode));
+
+            return (IVariableNode)base.CreateVariableNode(declModel, position, mode: mode);
         }
 
         public ISubgraphNode AddSubgraphNode(Graph subgraph, Vector2 position)

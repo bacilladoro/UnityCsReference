@@ -4,6 +4,7 @@
 
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor.IMGUI.Controls;
 using UnityEngine;
 using UnityEngine.Bindings;
@@ -11,8 +12,9 @@ using UnityEngine.SceneManagement;
 
 namespace UnityEditor.SceneManagement
 {
-    public abstract class Stage : ScriptableObject
+    public abstract partial class Stage : ScriptableObject
     {
+        [AutoStaticsCleanupOnCodeReload]
         static List<Stage> s_AllStages = new List<Stage>();
         internal static ReadOnlyCollection<Stage> allStages {  get { return s_AllStages.AsReadOnly(); } }
 

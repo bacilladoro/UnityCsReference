@@ -623,14 +623,14 @@ namespace UnityEditor
                 public const string rightClass = "unity-prefab-compare__right";
                 public const string headerButtonClass = "unity-prefab-compare__header-buttons";
 
-                public static GUIStyle headerGroupStyle = new GUIStyle();
-                public static GUIContent sourceContent = EditorGUIUtility.TrTextContent("Prefab Source");
-                public static GUIContent instanceContent = EditorGUIUtility.TrTextContent("Override");
-                public static GUIContent removedContent = EditorGUIUtility.TrTextContent("Removed");
-                public static GUIContent addedContent = EditorGUIUtility.TrTextContent("Added");
-                public static GUIContent noModificationsContent = EditorGUIUtility.TrTextContent("No Overrides");
-                public static GUIContent applyContent = EditorGUIUtility.TrTextContent("Apply", "Apply overrides on this object.");
-                public static GUIContent revertContent = EditorGUIUtility.TrTextContent("Revert", "Revert overrides on this object.");
+                public static readonly GUIStyle headerGroupStyle = new GUIStyle();
+                public static readonly GUIContent sourceContent = EditorGUIUtility.TrTextContent("Prefab Source");
+                public static readonly GUIContent instanceContent = EditorGUIUtility.TrTextContent("Override");
+                public static readonly GUIContent removedContent = EditorGUIUtility.TrTextContent("Removed");
+                public static readonly GUIContent addedContent = EditorGUIUtility.TrTextContent("Added");
+                public static readonly GUIContent noModificationsContent = EditorGUIUtility.TrTextContent("No Overrides");
+                public static readonly GUIContent applyContent = EditorGUIUtility.TrTextContent("Apply", "Apply overrides on this object.");
+                public static readonly GUIContent revertContent = EditorGUIUtility.TrTextContent("Revert", "Revert overrides on this object.");
 
                 static Styles()
                 {

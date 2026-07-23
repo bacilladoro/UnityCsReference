@@ -4,11 +4,12 @@
 
 using UnityEngine;
 using System;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor.Snap;
 
 namespace UnityEditor.IMGUI.Controls
 {
-    public abstract class PrimitiveBoundsHandle
+    public abstract partial class PrimitiveBoundsHandle
     {
         [Flags]
         public enum Axes
@@ -47,6 +48,8 @@ namespace UnityEditor.IMGUI.Controls
                 return s_EditModeButton;
             }
         }
+
+        [AutoStaticsCleanupOnCodeReload]
         private static GUIContent s_EditModeButton;
 
         public static float DefaultMidpointHandleSizeFunction(Vector3 position)

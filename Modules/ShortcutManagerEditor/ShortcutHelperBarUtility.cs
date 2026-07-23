@@ -8,43 +8,61 @@ using System.IO;
 using System.Text;
 using UnityEditor.EditorTools;
 using UnityEngine;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.ShortcutManagement
 {
-    static class ShortcutHelperBarUtility
+    static partial class ShortcutHelperBarUtility
     {
         const string k_IconsParentPath = "Icons/ShortcutHelperBar/";
 
+        [NoAutoStaticsCleanup] // value-type modifier-filter flag; safe to persist across reload
         static bool s_FilterControl;
+        [NoAutoStaticsCleanup] // value-type modifier-filter flag; safe to persist across reload
         static bool s_FilterAction;
+        [NoAutoStaticsCleanup] // value-type modifier-filter flag; safe to persist across reload
         static bool s_FilterShift;
+        [NoAutoStaticsCleanup] // value-type modifier-filter flag; safe to persist across reload
         static bool s_FilterAlt;
         public static bool filterControl => s_FilterControl;
         public static bool filterAction => s_FilterAction;
         public static bool filterShift => s_FilterShift;
         public static bool filterAlt => s_FilterAlt;
 
+        [NoAutoStaticsCleanup] // editor icon cache loaded by fixed path; survives reload
         static Texture2D[] s_MouseIcons = new Texture2D[3];
+        [NoAutoStaticsCleanup] // editor icon cache loaded by fixed path; survives reload
         static Texture2D[] s_MouseDragIcons = new Texture2D[3];
+        [NoAutoStaticsCleanup] // static label strings; safe to persist across reload
         static string[] s_ExtraMouseButtons = new string[4];
 
+        [NoAutoStaticsCleanup] // static modifier label string; safe to persist across reload
         static string m_ControlModifierLabel;
+        [NoAutoStaticsCleanup] // static modifier label string; safe to persist across reload
         static string m_ActionModifierLabel;
+        [NoAutoStaticsCleanup] // static modifier label string; safe to persist across reload
         static string m_ShiftModifierLabel;
+        [NoAutoStaticsCleanup] // static modifier label string; safe to persist across reload
         static string m_AltModifierLabel;
         public static string controlModifierLabel => m_ControlModifierLabel;
         public static string actionModifierLabel => m_ActionModifierLabel;
         public static string shiftModifierLabel => m_ShiftModifierLabel;
         public static string altModifierLabel => m_AltModifierLabel;
 
+        [NoAutoStaticsCleanup] // GUIContent cache populated once; safe to persist across reload
         static GUIContent[] m_MouseButtonContent = new GUIContent[3];
+        [NoAutoStaticsCleanup] // GUIContent cache populated once; safe to persist across reload
         static GUIContent[] m_MouseDragContent = new GUIContent[3];
+        [NoAutoStaticsCleanup] // GUIContent cache populated once; safe to persist across reload
         static GUIContent[] m_ExtraMouseButtonContent = new GUIContent[4];
 
+        [AutoStaticsCleanupOnCodeReload]
         static (ClutchShortcutContext context, KeyCode keyCode) s_ClutchShortcutContext;
 
+        [AutoStaticsCleanupOnCodeReload]
         static List<ShortcutEntry> s_Shortcuts = new();
 
+        [AutoStaticsCleanupOnCodeReload]
         static SortedDictionary<ShortcutModifiers, List<ShortcutEntry>> s_GroupedShortcuts = new(new SortShortcutModifierHelper());
 
         public static ReadOnlyDictionary<ShortcutModifiers, List<ShortcutEntry>> groupedShortcuts => new (s_GroupedShortcuts);
@@ -60,6 +78,7 @@ namespace UnityEditor.ShortcutManagement
             EventType.TouchUp
         };
 
+        [AutoStaticsCleanupOnCodeReload]
         static HashSet<IShortcutUpdate> s_Clients = new();
         public interface IShortcutUpdate
         {
@@ -252,9 +271,13 @@ namespace UnityEditor.ShortcutManagement
             UpdateShortcuts();
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         static bool s_UpdateShortcuts;
+        [AutoStaticsCleanupOnCodeReload]
         static EventType s_PreviousEventType;
+        [AutoStaticsCleanupOnCodeReload]
         static KeyCode s_PreviousKeyCode;
+        [AutoStaticsCleanupOnCodeReload]
         static EventModifiers s_PreviousModifiers;
 
         static void HandleKey(EventType type, KeyCode keyCode, EventModifiers modifiers)

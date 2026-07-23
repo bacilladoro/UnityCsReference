@@ -6,12 +6,15 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Unity.Collections;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
     static class PrefabReplaceUtility
     {
+        [NoAutoStaticsCleanup] // Transient value-type flag set right before showing the object picker and read in its callback; safe to persist across reload.
         static bool s_CreateOverrides = false;
+        [NoAutoStaticsCleanup] // Transient value-type option set right before showing the object picker and read in its callback; safe to persist across reload.
         static PrefabOverridesOptions s_PrefabOverideOptions = PrefabOverridesOptions.KeepAllPossibleOverrides;
 
         internal static void ReplaceCurrentSelectionWithPrefabUsingObjectPicker(object userdata)
@@ -342,12 +345,12 @@ namespace UnityEditor
 
     internal static class PrefabReplaceSettingsUserPreferences
     {
-        static SavedInt m_ObjectMatchMode = new SavedInt("PrefabReplace.ObjectMatchMode", (int)ObjectMatchMode.ByHierarchy);
-        static SavedBool m_GameObjectsNotMatchedBecomesOverride = new SavedBool("PrefabReplace.GameObjectsNotMatchedBecomesOverride", true);
-        static SavedBool m_ComponentsNotMatchedBecomesOverride = new SavedBool("PrefabReplace.ComponentsNotMatchedBecomesOverride", true);
-        static SavedInt m_ClearOverridesOptions = new SavedInt("PrefabReplace.ClearOverridesOptions", (int)PrefabOverridesOptions.KeepAllPossibleOverrides);
-        static SavedBool m_UseAssetName = new SavedBool("PrefabReplace.UseAssetName", true);
-        static SavedBool m_LogInfo = new SavedBool("PrefabReplace.LogInfo", false);
+        static readonly SavedInt m_ObjectMatchMode = new SavedInt("PrefabReplace.ObjectMatchMode", (int)ObjectMatchMode.ByHierarchy);
+        static readonly SavedBool m_GameObjectsNotMatchedBecomesOverride = new SavedBool("PrefabReplace.GameObjectsNotMatchedBecomesOverride", true);
+        static readonly SavedBool m_ComponentsNotMatchedBecomesOverride = new SavedBool("PrefabReplace.ComponentsNotMatchedBecomesOverride", true);
+        static readonly SavedInt m_ClearOverridesOptions = new SavedInt("PrefabReplace.ClearOverridesOptions", (int)PrefabOverridesOptions.KeepAllPossibleOverrides);
+        static readonly SavedBool m_UseAssetName = new SavedBool("PrefabReplace.UseAssetName", true);
+        static readonly SavedBool m_LogInfo = new SavedBool("PrefabReplace.LogInfo", false);
 
         public static ObjectMatchMode objectMatchMode { get { return (ObjectMatchMode)m_ObjectMatchMode.value; } set { m_ObjectMatchMode.value = Convert.ToInt32(value); } }
         public static PrefabOverridesOptions prefabOverridesOptions { get { return (PrefabOverridesOptions)m_ClearOverridesOptions.value; } set { m_ClearOverridesOptions.value = Convert.ToInt32(value); } }

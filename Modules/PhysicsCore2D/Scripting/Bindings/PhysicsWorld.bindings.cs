@@ -38,10 +38,6 @@ namespace Unity.U2D.Physics
         [NativeMethod(Name = "PhysicsWorld::GetPreSolveCallbacks", IsThreadSafe = true)] extern internal static bool PhysicsWorld_GetPreSolveCallbacks(PhysicsWorld world);
         [NativeMethod(Name = "PhysicsWorld::SetAutoBodyUpdateCallbacks", IsThreadSafe = true)] extern internal static void PhysicsWorld_SetAutoBodyUpdateCallbacks(PhysicsWorld world, bool flag);
         [NativeMethod(Name = "PhysicsWorld::GetAutoBodyUpdateCallbacks", IsThreadSafe = true)] extern internal static bool PhysicsWorld_GetAutoBodyUpdateCallbacks(PhysicsWorld world);
-        [NativeMethod(Name = "PhysicsWorld::SetAutoContactCallbacks", IsThreadSafe = true)] extern internal static void PhysicsWorld_SetAutoContactCallbacks(PhysicsWorld world, bool flag);
-        [NativeMethod(Name = "PhysicsWorld::GetAutoContactCallbacks", IsThreadSafe = true)] extern internal static bool PhysicsWorld_GetAutoContactCallbacks(PhysicsWorld world);
-        [NativeMethod(Name = "PhysicsWorld::SetAutoTriggerCallbacks", IsThreadSafe = true)] extern internal static void PhysicsWorld_SetAutoTriggerCallbacks(PhysicsWorld world, bool flag);
-        [NativeMethod(Name = "PhysicsWorld::GetAutoTriggerCallbacks", IsThreadSafe = true)] extern internal static bool PhysicsWorld_GetAutoTriggerCallbacks(PhysicsWorld world);
         [NativeMethod(Name = "PhysicsWorld::SetAutoJointThresholdCallbacks", IsThreadSafe = true)] extern internal static void PhysicsWorld_SetAutoJointThresholdCallbacks(PhysicsWorld world, bool flag);
         [NativeMethod(Name = "PhysicsWorld::GetAutoJointThresholdCallbacks", IsThreadSafe = true)] extern internal static bool PhysicsWorld_GetAutoJointThresholdCallbacks(PhysicsWorld world);
         [NativeMethod(Name = "PhysicsWorld::SetBounceThreshold", IsThreadSafe = true)] extern internal static void PhysicsWorld_SetBounceThreshold(PhysicsWorld world, float value);

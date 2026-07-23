@@ -3,7 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System.Collections.Generic;
-using L10n = UnityEditor.L10n;
+using UnityEditor.Rendering;
 
 namespace UnityEditorInternal.Profiling
 {
@@ -23,6 +23,9 @@ namespace UnityEditorInternal.Profiling
     static class GRDCounterNames
     {
         internal const string k_CategoryName = "GPU Resident Drawer";
+
+        // Liveness — per-frame "GRD is active this frame" flag (mirror of GRDProfilerCounters).
+        internal const string k_Active = "GRD Active";
 
         // Pipeline Timing (top-level stages)
         internal const string k_DataCollection = "Data Collection";
@@ -63,6 +66,12 @@ namespace UnityEditorInternal.Profiling
         internal const string k_LOD1 = "LOD 1";
         internal const string k_LOD2 = "LOD 2";
         internal const string k_LOD3Plus = "LOD 3+";
+
+        // Batch Stats — mirror of GRDProfilerCounters.
+        internal const string k_BatchCount = "Batch Count";
+        internal const string k_UniqueMaterials = "Unique Materials";
+        internal const string k_UniqueMeshes = "Unique Meshes";
+        internal const string k_SingleInstanceBatches = "Single-Instance Batches";
 
         // Exclusion Reasons — index matches GRDExclusionReason enum (index 0 = None = null).
         // The category arrays below partition this list; together they MUST cover every non-null
@@ -120,46 +129,28 @@ namespace UnityEditorInternal.Profiling
             "Excl: Inactive Or Disabled",
         };
 
-        // Exclusion Reason Display Labels — Editor-only UI text; no runtime equivalent.
-        // Wire-format counter names (above) double as Profiler API identifiers and must stay
-        // stable. These user-facing labels are decoupled so we can revise copy without breaking
-        // the counter API. Keys are the wire-format names; values are wrapped in L10n.Tr.
-        // Falls back to strip-Excl behavior for any key not present.
-        internal static readonly Dictionary<string, string> k_ExclusionReasonDisplayLabels = new()
+        // Maps each wire-format counter name (k_ExclusionReasonCounterNames[i]) to the index-aligned entry in `byReasonIndex`.
+        // Index 0(None) and any null entries are skipped.
+        // Index alignment between the two arrays is guaranteed by GRDProfilerCounterNamesTests.
+        static Dictionary<string, string> BuildReasonTextMap(string[] byReasonIndex)
         {
-            { "Excl: LOD Animate CrossFading", L10n.Tr("LODGroup Animate Cross-fading enabled") },
-            { "Excl: Custom MaterialPropertyBlock", L10n.Tr("Unsupported MaterialPropertyBlock properties") },
-            { "Excl: Render Callback", L10n.Tr("Renderer uses custom render callback") },
-            { "Excl: Non-Standard Sort Key", L10n.Tr("Unsupported renderer sorting configuration") },
-            { "Excl: Proxy Volume Probe", L10n.Tr("Light Probe Usage set to Use Proxy Volume") },
-            { "Excl: Blend Probes With Anchor", L10n.Tr("Blend Probes mode with custom Probe Anchor Override") },
-            { "Excl: Enlighten Vertex Stream", L10n.Tr("Renderer uses Enlighten realtime GI vertex streams") },
-            { "Excl: Missing DOTS Instancing", L10n.Tr("Shader does not support DOTS_INSTANCING_ON") },
-            { "Excl: Too Many Submeshes", L10n.Tr("Mesh has too many submeshes") },
-            { "Excl: GPU Driven Disabled", L10n.Tr("GPU Resident Drawer disabled for this renderer/project") },
-            { "Excl: Animation Visibility", L10n.Tr("Renderer visibility controlled by animation") },
-            { "Excl: TextMesh Component", L10n.Tr("TextMesh renderer is not supported") },
-        };
+            var map = new Dictionary<string, string>();
+            int n = System.Math.Min(k_ExclusionReasonCounterNames.Length, byReasonIndex.Length);
+            for (int i = 1; i < n; i++)
+            {
+                string key = k_ExclusionReasonCounterNames[i];
+                string text = byReasonIndex[i];
+                if (key != null && text != null)
+                    map[key] = text;
+            }
+            return map;
+        }
 
-        // Exclusion Reason Tooltips — Editor-only UI text; no runtime equivalent.
-        // Tooltip text is wrapped in L10n.Tr; keys are the wire-format counter names and stay untranslated.
-        internal static readonly Dictionary<string, string> k_ExclusionReasonTooltips = new()
-        {
-            { "Excl: LOD Animate CrossFading", L10n.Tr("Renderers are excluded because their LODGroup has Animate Cross-fading enabled. Disable Animate Cross-fading on the affected LODGroup to allow GRD compatibility.") },
-            { "Excl: Custom MaterialPropertyBlock", L10n.Tr("Renderers use MaterialPropertyBlock properties that are not supported by GRD. Remove unsupported per-renderer property overrides or use a supported material/instancing setup.") },
-            { "Excl: Render Callback", L10n.Tr("A MonoBehaviour on the renderer implements OnWillRenderObject, OnBecameVisible, or OnBecameInvisible. Remove these callbacks to restore GRD compatibility.") },
-            { "Excl: Non-Standard Sort Key", L10n.Tr("Renderer uses a non-default Sorting Layer or Sorting Order that GRD cannot batch. Reset Sorting Layer and Order to their defaults to restore GRD compatibility.") },
-            { "Excl: Proxy Volume Probe", L10n.Tr("Light Probe Usage is set to Use Proxy Volume, which GRD does not support. Switch to Blend Probes or Off to restore GRD compatibility.") },
-            { "Excl: Blend Probes With Anchor", L10n.Tr("Blend Probes is active with a custom Probe Anchor Override set, which GRD cannot follow. Clear the Anchor Override to restore GRD compatibility.") },
-            { "Excl: Enlighten Vertex Stream", L10n.Tr("Enlighten realtime GI is supplying vertex streams to this renderer, which GRD does not consume. Switch to Progressive Lightmapper or a different GI mode to restore GRD compatibility.") },
-            { "Excl: Missing DOTS Instancing", L10n.Tr("The renderer's shader does not include DOTS_INSTANCING_ON support, which GRD requires. Use a GRD-compatible shader (URP Lit, HDRP Lit, or one with the DOTS_INSTANCING_ON variant).") },
-            { "Excl: Null Material", L10n.Tr("A material slot has no material assigned, or the assigned material has no shader. Assign a valid GRD-compatible material.") },
-            { "Excl: Too Many Submeshes", L10n.Tr("The renderer has more than 128 material slots, exceeding the GRD per-renderer limit. Reduce the number of sub-meshes or merge meshes to fit within the limit.") },
-            { "Excl: Missing Mesh", L10n.Tr("No mesh is assigned to this renderer. Assign a mesh to enable GRD.") },
-            { "Excl: GPU Driven Disabled", L10n.Tr("GPU Resident Drawer is explicitly disabled for this renderer or project. Enable Allow GPU Driven Rendering in the renderer or project settings to restore GRD compatibility.") },
-            { "Excl: Animation Visibility", L10n.Tr("The animation system controls this renderer's visibility, which GRD does not support. Remove the animated visibility track or stop animating the renderer's enabled state.") },
-            { "Excl: TextMesh Component", L10n.Tr("This renderer uses the legacy TextMesh component, which GRD does not support. Replace it with TextMeshPro to restore GRD compatibility.") },
-            { "Excl: Inactive Or Disabled", L10n.Tr("The GameObject or Renderer component is inactive, disabled, or rendering is forced off.") },
-        };
+        // Exclusion Reason Display Labels — Editor-only UI text; no runtime equivalent.
+        // Text source of truth is UnityEditor.Rendering.GRDExclusionReasonText(shared with the Frame Debugger).
+        // Edit copy there, not here.
+        internal static readonly Dictionary<string, string> k_ExclusionReasonDisplayLabels = BuildReasonTextMap(GRDExclusionReasonText.k_Labels);
+
+        internal static readonly Dictionary<string, string> k_ExclusionReasonTooltips = BuildReasonTextMap(GRDExclusionReasonText.k_Tooltips);
     }
 }

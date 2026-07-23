@@ -3,11 +3,13 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using UnityEditor.UIElements;
+using Unity.Scripting.LifecycleManagement;
 
 namespace Unity.UI.Builder
 {
-    static class TransitionPropertyDropdownContent
+    static partial class TransitionPropertyDropdownContent
     {
+        [AutoStaticsCleanupOnCodeReload]
         public static CategoryDropdownContent Content;
     }
 }

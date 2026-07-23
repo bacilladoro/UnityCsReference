@@ -6,6 +6,7 @@ using System.Globalization;
 using UnityEditor.StyleSheets;
 using UnityEngine;
 using UnityEditor.UIElements.StyleSheets;
+using Unity.Scripting.LifecycleManagement;
 
 namespace Unity.UI.Builder
 {
@@ -72,6 +73,7 @@ namespace Unity.UI.Builder
     /// </summary>
     internal static class ValueToUxml
     {
+        [NoAutoStaticsCleanup] // Stateless converter singleton with no user-code references; safe to persist across code reload.
         static readonly ValueToUxmlConverter s_Converter = new();
         public static string Convert<T>(T value)
         {

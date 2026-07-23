@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using Unity.GraphToolkit.Editor.ContextualMenuItems;
+using Unity.GraphToolkit.Editor.Implementation;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Assertions;
@@ -625,8 +626,31 @@ namespace Unity.GraphToolkit.Editor
             var menuActionMap = new Dictionary<string, Action>();
             PopulateMenuActionMap(menuActionMap, evt);
             ViewSelection.BuildContextualMenu(ContextualMenuHelpers.CategorizeMenuItems(PortModel.ContextualMenuItems), evt, menuActionMap);
+
+            InvokeUserGraphContextualMenu(evt);
+
             m_HasContextualMenuBeenBuilt = true;
             evt.StopPropagation();
+        }
+
+        void InvokeUserGraphContextualMenu(ContextualMenuPopulateEvent evt)
+        {
+            var graph = (GraphView?.GraphModel as GraphModelImp)?.Graph;
+            if (graph == null)
+                return;
+
+            var context = new GraphMenuContext(graph, PortModel, evt.mousePosition, evt.menu);
+
+            var itemCountBefore = evt.menu.MenuItems().Count;
+            MenuCommandRegistry.InvokeGraphHandlers(context);
+
+            // If a handler added entries, separate them from the built-in entries
+            // above so the user's items don't blend visually with the previous
+            // category. Skip when the user's first item is already a separator so
+            // a handler that prepends its own doesn't end up with two.
+            var items = evt.menu.MenuItems();
+            if (items.Count > itemCountBefore && items[itemCountBefore] is not DropdownMenuSeparator)
+                evt.menu.InsertSeparator(string.Empty, itemCountBefore);
         }
 
         bool IsMouseOnCapsuleNodeTitle(Vector2 mousePosition)

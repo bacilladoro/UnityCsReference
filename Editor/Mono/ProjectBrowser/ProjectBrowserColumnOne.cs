@@ -208,8 +208,8 @@ namespace UnityEditor
 
     internal class ProjectBrowserColumnOneTreeViewDataSource : LazyTreeViewDataSource<EntityId>
     {
-        static string kProjectBrowserString = "ProjectBrowser";
-        static Texture2D s_FolderIcon = EditorGUIUtility.FindTexture(EditorResources.folderIconName);
+        static readonly string kProjectBrowserString = "ProjectBrowser";
+        static readonly Texture2D s_FolderIcon = EditorGUIUtility.FindTexture(EditorResources.folderIconName);
 
         public bool skipHiddenPackages { get; set; }
 

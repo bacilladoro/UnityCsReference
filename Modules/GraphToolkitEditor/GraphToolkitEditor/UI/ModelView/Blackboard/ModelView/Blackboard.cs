@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Unity.GraphToolkit.Editor.ContextualMenuItems;
+using Unity.GraphToolkit.Editor.Implementation;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -306,6 +307,9 @@ namespace Unity.GraphToolkit.Editor
             m_TreeView.handleDrop += OnHandleDrop;
             m_TreeView.setupDragAndDrop += OnSetupDragAndDrop;
 
+            m_TreeView.RegisterCallback<PointerDownEvent>(OnTreeViewPointerDown, TrickleDown.TrickleDown);
+            m_TreeView.RegisterCallback<PointerUpEvent>(OnTreeViewPointerUp);
+
             hierarchy.Add(m_TreeView);
             m_TreeView.BringToFront();
         }
@@ -373,6 +377,7 @@ namespace Unity.GraphToolkit.Editor
         /// <returns>A <see cref="StartDragArgs"/> containing elements to drag.</returns>
         protected virtual StartDragArgs OnSetupDragAndDrop(SetupDragAndDropArgs args)
         {
+            m_LeftButtonDown = false;
             var arg = args.startDragArgs;
 
             List<GraphElementModel> graphElements = new List<GraphElementModel>();
@@ -410,6 +415,8 @@ namespace Unity.GraphToolkit.Editor
 
         void OnSelectionChange(IEnumerable<int> indices)
         {
+            m_PendingInspectorDisplayModels = null;
+
             if (m_IgnoreSelectionChange)
                 return;
             var selection = new List<GraphElementModel>();
@@ -428,7 +435,42 @@ namespace Unity.GraphToolkit.Editor
             // Remove unselectable from selection
             m_TreeView.SetSelectionWithoutNotify(filteredIndices);
 
-            BlackboardView.Dispatch(new SelectElementsCommand(SelectElementsCommand.SelectionMode.Replace, selection));
+            bool allDroppable = selection.Count > 0;
+            foreach (var model in selection)
+            {
+                if (!model.IsDroppable())
+                {
+                    allDroppable = false;
+                    break;
+                }
+            }
+
+            if (allDroppable && m_LeftButtonDown)
+            {
+                // UIToolkit fires selectedIndicesChanged on PointerDown, before the drag threshold.
+                m_PendingInspectorDisplayModels = selection;
+            }
+            else
+            {
+                BlackboardView.Dispatch(new SelectElementsCommand(SelectElementsCommand.SelectionMode.Replace, selection));
+            }
+        }
+
+        void OnTreeViewPointerDown(PointerDownEvent evt)
+        {
+            if (evt.button == 0)
+                m_LeftButtonDown = true;
+        }
+
+        void OnTreeViewPointerUp(PointerUpEvent evt)
+        {
+            if (evt.button == 0)
+            {
+                m_LeftButtonDown = false;
+                if (m_PendingInspectorDisplayModels != null)
+                    BlackboardView.Dispatch(new SelectElementsCommand(SelectElementsCommand.SelectionMode.Replace, true, m_PendingInspectorDisplayModels));
+            }
+            m_PendingInspectorDisplayModels = null;
         }
 
         /// <inheritdoc />
@@ -553,6 +595,55 @@ namespace Unity.GraphToolkit.Editor
             var menuActionMap = new Dictionary<string, Action>();
             PopulateMenuActionMap(menuActionMap, evt);
             ViewSelection.BuildContextualMenu(categorizedMenuItems, evt, menuActionMap);
+
+            InvokeUserBlackboardContextualMenu(evt);
+        }
+
+        /// <summary>
+        /// Builds a <see cref="GraphMenuContext"/> from the current right-click
+        /// and invokes every static method decorated with
+        /// <see cref="BlackboardMenuAttribute"/>. Exceptions raised by
+        /// user code are logged so they don't break the rest of the menu.
+        /// </summary>
+        void InvokeUserBlackboardContextualMenu(ContextualMenuPopulateEvent evt)
+        {
+            var graph = (BlackboardView?.BlackboardRootViewModel?.GraphModelState?.GraphModel as GraphModelImp)?.Graph;
+            if (graph == null)
+                return;
+
+            var blackboardElement = FindClickedBlackboardElement(evt);
+            var clickedVariable = blackboardElement?.GraphElementModel as IVariable;
+
+            var context = new GraphMenuContext(graph, clickedVariable, evt.mousePosition, evt.menu);
+
+            var itemCountBefore = evt.menu.MenuItems().Count;
+            MenuCommandRegistry.InvokeBlackboardHandlers(context);
+
+            // If a handler added entries, separate them from the built-in entries
+            // above so the user's items don't blend visually with the previous
+            // category. Skip when the user's first item is already a separator so
+            // a handler that prepends its own doesn't end up with two.
+            var items = evt.menu.MenuItems();
+            if (items.Count > itemCountBefore && items[itemCountBefore] is not DropdownMenuSeparator)
+                evt.menu.InsertSeparator(string.Empty, itemCountBefore);
+        }
+
+        static BlackboardElement FindClickedBlackboardElement(ContextualMenuPopulateEvent evt)
+        {
+            if (evt.target is BlackboardElement direct)
+                return direct;
+
+            // Some VisualElement inputs handle the pointer event themselves, so
+            // walk up the parents the same way GetBlackboardSelection does.
+            var parent = (evt.target as VisualElement)?.parent;
+            while (parent != null)
+            {
+                if (parent is BlackboardElement element)
+                    return element;
+                parent = parent.parent;
+            }
+
+            return null;
         }
 
         /// <summary>
@@ -867,6 +958,8 @@ namespace Unity.GraphToolkit.Editor
         }
 
         bool m_IgnoreSelectionChange;
+        bool m_LeftButtonDown;
+        List<GraphElementModel> m_PendingInspectorDisplayModels;
 
         internal void UpdateCollapse()
         {
@@ -919,6 +1012,7 @@ namespace Unity.GraphToolkit.Editor
             }
 
             public void BuildContextualMenu(ContextualMenuPopulateEvent e) => m_Blackboard.BuildContextualMenu(e);
+            public void InvokeUserBlackboardContextualMenu(ContextualMenuPopulateEvent e) => m_Blackboard.InvokeUserBlackboardContextualMenu(e);
         }
     }
 }

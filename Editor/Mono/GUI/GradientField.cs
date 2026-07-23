@@ -4,6 +4,7 @@
 
 using UnityEngine;
 using UnityEditorInternal;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -58,6 +59,7 @@ namespace UnityEditor
     public sealed partial class EditorGUI
     {
         static readonly int s_GradientHash = "s_GradientHash".GetHashCode();
+        [NoAutoStaticsCleanup] // editor interaction id, value type, safe to persist
         static int s_GradientID;
 
         // Gradient versions

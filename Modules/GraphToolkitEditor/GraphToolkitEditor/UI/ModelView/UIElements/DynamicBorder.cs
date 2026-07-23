@@ -303,9 +303,9 @@ namespace Unity.GraphToolkit.Editor
             float wantedWidth;
 
             if (zoomLevel < SmallWidthThreshold)
-                wantedWidth = selectionFactor * SmallSelectionWidth + (m_Hover ? HoverWidth : 0);
+                wantedWidth = Math.Max(selectionFactor * SmallSelectionWidth, m_Hover ? HoverWidth : 0);
             else
-                wantedWidth = selectionFactor * SelectionWidth + (m_Hover ? HoverWidth : 0);
+                wantedWidth = Math.Max(selectionFactor * SelectionWidth, m_Hover ? HoverWidth : 0);
 
             if (zoomLevel > 1.0f)
                 zoomLevel = 1.0f;

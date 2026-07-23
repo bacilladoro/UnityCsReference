@@ -238,6 +238,26 @@ namespace UnityEngine.UIElements.StyleSheets
             backgroundSize = BackgroundPropertyHelper.ConvertScaleModeToBackgroundSize(scaleMode);
         }
 
+        private static void CompileGap(StylePropertyReader reader, out Length rowGap, out Length columnGap)
+        {
+            rowGap = 0f;
+            columnGap = 0f;
+
+            var valueCount = reader.valueCount;
+            switch (valueCount)
+            {
+                case 0:
+                    break;
+                case 1:
+                    rowGap = columnGap = reader.ReadLength(0);
+                    break;
+                default:
+                    rowGap = reader.ReadLength(0);
+                    columnGap = reader.ReadLength(1);
+                    break;
+            }
+        }
+
         private static void CompileBoxArea(StylePropertyReader reader, out Length top, out Length right, out Length bottom, out Length left)
         {
             top = 0f;

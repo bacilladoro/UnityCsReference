@@ -12,6 +12,7 @@ using UnityEngine.Rendering;
 using UnityEngine.SceneManagement;
 using UnityEngine.Scripting;
 using UnityEngine.Scripting.APIUpdating;
+using Unity.Scripting.LifecycleManagement;
 
 
 namespace UnityEditor.SceneManagement
@@ -483,6 +484,7 @@ namespace UnityEditor.SceneManagement
             return previewScene;
         }
 
+        [NoAutoStaticsCleanup] // Lazy cache of a built-in Cubemap loaded by fixed path; the asset survives reload and the field re-initialises itself on next access via the null-check.
         static Cubemap s_DefaultReflection;
         static Cubemap GetDefaultReflection()
         {

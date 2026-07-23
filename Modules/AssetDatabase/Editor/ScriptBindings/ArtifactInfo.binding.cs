@@ -46,8 +46,8 @@ namespace UnityEditor
     [StructLayout(LayoutKind.Sequential)]
     internal struct ArtifactInfoProducedFiles
     {
-        public static string kStorageInline = "Inline";
-        public static string kStorageLibrary = "Library";
+        public static readonly string kStorageInline = "Inline";
+        public static readonly string kStorageLibrary = "Library";
 
         private string m_Extension;
         private string m_LibraryPath;

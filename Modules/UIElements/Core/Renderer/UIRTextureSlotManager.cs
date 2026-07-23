@@ -8,18 +8,22 @@ namespace UnityEngine.UIElements.UIR
 {
     partial class TextureSlotManager
     {
-        static TextureSlotManager()
-        {
-            k_MaxSlotCount = 8;
-            slotIds = new int[k_MaxSlotCount];
-            for (int i = 0; i < k_MaxSlotCount; ++i)
-                slotIds[i] = Shader.PropertyToID($"_Texture{i}");
-        }
-
-        internal static readonly int k_MaxSlotCount;
+        internal static readonly int k_MaxSlotCount = 8;
         internal static readonly int k_SlotSize = 2; // Number of float4 per slot
-        internal static int[] slotIds;
+        // Shader property IDs are stable and re-resolve lazily on first access after a code
+        // reload, so this stays a plain static readonly array (auto-exempt, no lifecycle
+        // attribute). An [OnCodeLoaded] initializer would root TextureSlotManager and
+        // force-include the native UIElements module in UGUI-only stripped builds (CodeStripping).
+        internal static readonly int[] slotIds = BuildSlotIds();
         internal static readonly int textureTableId = Shader.PropertyToID("_TextureInfo");
+
+        static int[] BuildSlotIds()
+        {
+            var ids = new int[k_MaxSlotCount];
+            for (int i = 0; i < k_MaxSlotCount; ++i)
+                ids[i] = Shader.PropertyToID($"_Texture{i}");
+            return ids;
+        }
 
         TextureId[] m_Textures;
         int[] m_LastUseTime;

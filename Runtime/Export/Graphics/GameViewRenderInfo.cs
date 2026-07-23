@@ -4,6 +4,7 @@
 
 using System;
 using UnityEngine.Bindings;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEngine
 {
@@ -30,9 +31,10 @@ namespace UnityEngine
     /// Holds the editor implementation for <see cref="IGameViewRenderInfo"/> lookup by display index.
     /// </summary>
     [VisibleToOtherModules("UnityEditor", "UnityEngine.UIElementsModule", "UnityEngine.InputForUIModule")]
-    internal static class GameViewRenderInfoQuery
+    internal static partial class GameViewRenderInfoQuery
     {
         [VisibleToOtherModules("UnityEditor", "UnityEngine.UIElementsModule", "UnityEngine.InputForUIModule")]
+        [AutoStaticsCleanupOnCodeReload]
         internal static Func<int, IGameViewRenderInfo> getImplementation;
     }
 }

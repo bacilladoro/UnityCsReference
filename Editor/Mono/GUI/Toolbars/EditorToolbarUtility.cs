@@ -7,6 +7,7 @@ using UnityEditor.Overlays;
 using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEditor.Toolbars;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Toolbars
 {
@@ -85,6 +86,7 @@ namespace UnityEditor.Toolbars
             return GetToolbarOverrideElementIds(toolOrContextEditor, defaultElementIds, toolbarType);
         }
 
+        [NoAutoStaticsCleanup] // Reused scratch buffer for toolbar element ids (cleared per call); holds only strings, safe to persist.
         static List<string> s_ToolbarElementIdsCopy = new(16);
         internal static IReadOnlyList<string> GetToolbarOverrideElementIds(Editor toolOrContextEditor, IEnumerable<string> defaultElementIds,  OverridableToolbar toolbarType)
         {

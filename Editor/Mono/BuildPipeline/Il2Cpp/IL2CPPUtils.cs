@@ -21,6 +21,7 @@ using UnityEngine.Internal;
 using UnityEngine.Scripting;
 using Debug = UnityEngine.Debug;
 using UnityEngine.Scripting.APIUpdating;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -54,10 +55,13 @@ namespace UnityEditor
 
 namespace UnityEditorInternal
 {
-    internal static class SysrootManager
+    internal static partial class SysrootManager
     {
+        [AutoStaticsCleanupOnCodeReload] // caches Sysroot instances created from reloadable TypeCache-derived types; reset on reload, rebuilt by InitializeOnLoadMethod
         private static Dictionary<string, Sysroot> _knownSysroots = null;
+        [NoAutoStaticsCleanup] // host machine platform, fixed for the whole session; safe to persist across code reload
         private static string _hostPlatform = null;
+        [NoAutoStaticsCleanup] // host machine architecture, fixed for the whole session; safe to persist across code reload
         private static string _hostArch = null;
 
         private static string MakeKey(string hostPlatform, string hostArch, string targetPlatform, string targetArch)
@@ -428,6 +432,11 @@ namespace UnityEditorInternal
 
         static string GetIl2CppBclDistributionDirectory(BuildTarget target, NamedBuildTarget namedTarget, BuildOptions buildOptions)
         {
+#pragma warning disable CS0618
+            if (PlayerSettings.GetApiCompatibilityLevel(namedTarget) != ApiCompatibilityLevel.NET)
+                throw new NotSupportedException($"{nameof(GetIl2CppBclDistributionDirectory)} is only supported for IL2CPP with the NET profile.");
+#pragma warning restore CS0618
+
             var gotBuildTarget = BuildTargetDiscovery.TryGetBuildTarget(target, out var ibuildTarget);
             if (!gotBuildTarget || ibuildTarget.ScriptingPlatformProperties == null)
             {

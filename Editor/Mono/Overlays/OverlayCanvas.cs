@@ -13,6 +13,7 @@ using UnityEngine.Profiling;
 using UnityEngine.Serialization;
 using UnityEngine.UIElements;
 using Unity.Collections;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Overlays
 {
@@ -281,7 +282,7 @@ namespace UnityEditor.Overlays
     }
 
     [Serializable]
-    public sealed class OverlayCanvas : ISerializationCallbackReceiver
+    public sealed partial class OverlayCanvas : ISerializationCallbackReceiver
     {
         internal static readonly string ussClassName = "unity-overlay-canvas";
         const string k_UxmlPathDropZone = "UXML/Overlays/overlay-toolbar-dropzone.uxml";
@@ -293,6 +294,7 @@ namespace UnityEditor.Overlays
         const string k_WindowRootName = "overlay-window-root";
         const string k_SceneContainersName = "overlay-scene-containers";
         const string k_AnchoredContainerName = "AnchoredContainers";
+        [AutoStaticsCleanupOnCodeReload]
         static VisualTreeAsset s_DropZoneTreeAsset;
 
         static SaveData defaultSaveData => new SaveData()
@@ -342,7 +344,7 @@ namespace UnityEditor.Overlays
         List<Overlay> m_Overlays = new List<Overlay>();
         List<Overlay> m_TransientOverlays = new();
 
-        internal static string k_DefaultPresetName = "Default";
+        internal const string k_DefaultPresetName = "Default";
         [SerializeField]
         string m_LastAppliedPresetName = k_DefaultPresetName;
 

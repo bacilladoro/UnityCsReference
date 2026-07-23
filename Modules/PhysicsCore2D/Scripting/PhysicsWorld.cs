@@ -982,6 +982,12 @@ namespace Unity.U2D.Physics
         public readonly UnityEngine.Object GetOwner() => PhysicsWorld_GetOwner(this);
 
         /// <summary>
+        /// The owner object associated with this world, or NULL if no owner has been specified.
+        /// This is a convenience property that returns the same value as <see cref="GetOwner"/>.
+        /// </summary>
+        public readonly UnityEngine.Object owner => GetOwner();
+
+        /// <summary>
         /// Get if the world is owned.
         /// See <see cref="PhysicsWorld.SetOwner(UnityEngine.Object)"/>.
         /// </summary>
@@ -1067,18 +1073,6 @@ namespace Unity.U2D.Physics
         /// See <see cref="PhysicsWorld.SendBodyUpdateCallbacks"/>
         /// </summary>
         public readonly bool autoBodyUpdateCallbacks { get => PhysicsWorld_GetAutoBodyUpdateCallbacks(this); set => PhysicsWorld_SetAutoBodyUpdateCallbacks(this, value); }
-
-        /// <summary>
-        /// Controls if shape contact callback targets are automatically called.
-        /// See <see cref="PhysicsWorld.SendContactCallbacks"/>
-        /// </summary>
-        public readonly bool autoContactCallbacks { get => PhysicsWorld_GetAutoContactCallbacks(this); set => PhysicsWorld_SetAutoContactCallbacks(this, value); }
-
-        /// <summary>
-        /// Controls if shape trigger callback targets are automatically called.
-        /// See <see cref="PhysicsWorld.SendTriggerCallbacks"/>
-        /// </summary>
-        public readonly bool autoTriggerCallbacks { get => PhysicsWorld_GetAutoTriggerCallbacks(this); set => PhysicsWorld_SetAutoTriggerCallbacks(this, value); }
 
         /// <summary>
         /// Controls if joint threshold callback targets are automatically called.
@@ -1451,7 +1445,7 @@ namespace Unity.U2D.Physics
         /// Send all current <see cref="PhysicsWorld.contactBeginEvents"/> and <see cref="PhysicsWorld.contactEndEvents"/> where either of the <see cref="PhysicsShape"/> involved are valid (see <see cref="PhysicsShape.isValid"/>) and have a callback target assigned (see <see cref="PhysicsShape.callbackTarget"/>).
         /// These events will only be created if both of the shape pairs has <see cref="PhysicsShape.contactEvents"/> set to true.
         /// Only callback targets that implement <see cref="PhysicsCallbacks.IContactCallback"/> will be called.
-        /// This will be called automatically if <see cref="PhysicsWorld.autoContactCallbacks"/> is true.
+        /// This is called automatically every simulation step.
         /// This must be called on the main thread.
         /// </summary>
         public readonly void SendContactCallbacks()
@@ -1477,7 +1471,7 @@ namespace Unity.U2D.Physics
         /// Send all current <see cref="PhysicsWorld.triggerBeginEvents"/> and <see cref="PhysicsWorld.triggerEndEvents"/> where either of the <see cref="PhysicsShape"/> involved are valid (see <see cref="PhysicsShape.isValid"/>) and have a callback target assigned (see <see cref="PhysicsShape.callbackTarget"/>).
         /// These events will only be created if one of the shape pairs has <see cref="PhysicsShape.triggerEvents"/> set to true.
         /// Only callback targets that implement <see cref="PhysicsCallbacks.ITriggerCallback"/> will be called.
-        /// This will be called automatically if <see cref="PhysicsWorld.autoTriggerCallbacks"/> is true.
+        /// This is called automatically every simulation step.
         /// This must be called on the main thread.
         /// </summary>
         public readonly void SendTriggerCallbacks()

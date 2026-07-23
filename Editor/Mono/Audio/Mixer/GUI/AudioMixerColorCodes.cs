@@ -10,7 +10,7 @@ namespace UnityEditor
     internal static class AudioMixerColorCodes
     {
         // Must match 'colorNames' array
-        static Color[] darkSkinColors = new[]
+        static readonly Color[] darkSkinColors = new[]
         {
             new Color(0.5f, 0.5f, 0.5f, 0.2f),
             new Color(255 / 255f, 208 / 255f,   0 / 255f),
@@ -24,7 +24,7 @@ namespace UnityEditor
         };
 
         // Must match 'colorNames' array
-        static Color[] lightSkinColors = new[]
+        static readonly Color[] lightSkinColors = new[]
         {
             new Color(0.5f, 0.5f, 0.5f, 0.2f),
             new Color(255 / 255f, 214 / 255f,  22 / 255f),
@@ -37,7 +37,7 @@ namespace UnityEditor
             new Color(114 / 255f, 169 / 255f,  24 / 255f)
         };
 
-        static string[] colorNames = new[] {    "No Color",
+        static readonly string[] colorNames = new[] {    "No Color",
                                                 "Yellow",
                                                 "Orange",
                                                 "Red",

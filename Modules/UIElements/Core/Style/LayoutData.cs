@@ -13,7 +13,8 @@ namespace UnityEngine.UIElements;
 // Size is set manually to ensure alignment on 8 bytes
 // Tests are protecting us against drift from the native version
 // TODO generate the LayoutData group like other style data groups
-[StructLayout(LayoutKind.Sequential, Size = 224)]
+// 240 = natural size 236 (incl. column-gap/row-gap) padded up to the next multiple of 8, matching native.
+[StructLayout(LayoutKind.Sequential, Size = 240)]
 struct LayoutData : IStyleDataGroup<LayoutData>
 {
     public static LayoutData Default = new()
@@ -33,6 +34,9 @@ struct LayoutData : IStyleDataGroup<LayoutData>
         FlexGrow = float.NaN,
         FlexShrink = float.NaN,
         FlexBasis = Length.Auto(),
+
+        ColumnGap = new Length(0),
+        RowGap = new Length(0),
 
         Border = LayoutDefaults.BorderValues,
         Position = LayoutDefaults.EdgeValuesUnit,
@@ -60,6 +64,9 @@ struct LayoutData : IStyleDataGroup<LayoutData>
     public float FlexShrink;
     public Length FlexBasis;
 
+    public Length ColumnGap;
+    public Length RowGap;
+
     public FixedBuffer4<float> Border;
     public FixedBuffer4<Length> Position;
     public FixedBuffer4<Length> Margin;
@@ -83,6 +90,7 @@ struct LayoutData : IStyleDataGroup<LayoutData>
     public FlexDirection flexDirection { get => (FlexDirection)FlexDirection; set => FlexDirection = (LayoutFlexDirection)value; }
     public float flexGrow { get => FlexGrow; set => FlexGrow = value; }
     public float flexShrink { get => FlexShrink; set => FlexShrink = value; }
+    public Length columnGap { get => ColumnGap; set => ColumnGap = value; }
     public Wrap flexWrap { get => (Wrap)FlexWrap; set => FlexWrap = (LayoutWrap)value; }
     public Length height { get => Dimensions[(int)LayoutDimension.Height]; set => Dimensions[(int)LayoutDimension.Height] = value; }
     public Justify justifyContent { get => (Justify)JustifyContent; set => JustifyContent = (LayoutJustify)value; }
@@ -102,6 +110,7 @@ struct LayoutData : IStyleDataGroup<LayoutData>
     public Length paddingTop { get => Padding[(int) LayoutStyleEdge.Top]; set => Padding[(int) LayoutStyleEdge.Top] = value; }
     public Position position { get => (Position)PositionType; set => PositionType = (LayoutPositionType)value; }
     public Length right { get => Position[(int) LayoutStyleEdge.Right]; set => Position[(int) LayoutStyleEdge.Right] = value; }
+    public Length rowGap { get => RowGap; set => RowGap = value; }
     public Length top { get => Position[(int) LayoutStyleEdge.Top]; set => Position[(int) LayoutStyleEdge.Top] = value; }
     public Length width { get => Dimensions[(int)LayoutDimension.Width]; set => Dimensions[(int)LayoutDimension.Width] = value; }
 

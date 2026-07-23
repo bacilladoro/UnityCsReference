@@ -5,10 +5,11 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.ShortcutManagement
 {
-    class Trigger
+    partial class Trigger
     {
         IDirectory m_Directory;
         IConflictResolver m_ConflictResolver;
@@ -40,7 +41,8 @@ namespace UnityEditor.ShortcutManagement
         // accessed by tests
         internal Dictionary<KeyCode, ClutchShortcutContext> m_ClutchActivatedContexts = new();
 
-        static readonly Event s_QueuedMouseClutchEvent = new Event(), s_CachedCurrentEvent = new Event();
+        [AutoStaticsCleanupOnCodeReload]
+        static Event s_QueuedMouseClutchEvent = new(), s_CachedCurrentEvent = new();
 
         struct ActiveClutch
         {
@@ -54,6 +56,7 @@ namespace UnityEditor.ShortcutManagement
 
         (KeyCode keyCode, ShortcutEntry entry, object context) m_ActiveMouseActionEntry;
 
+        [NoAutoStaticsCleanup] // immutable readonly lookup of value-type EventType enums; safe to persist across reload
         static readonly List<EventType> k_ShortcutEventFilter = new List<EventType>
         {
             EventType.KeyDown,

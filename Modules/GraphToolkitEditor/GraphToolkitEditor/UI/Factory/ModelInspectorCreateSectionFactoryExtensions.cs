@@ -171,7 +171,32 @@ namespace Unity.GraphToolkit.Editor
         /// <returns>An inspector UI for the node.</returns>
         public static MultipleModelsView CreateSectionInspector(this ElementBuilder elementBuilder, IReadOnlyList<VariableNodeModel> models)
         {
-            return CreateSectionCache.CallCreateSection(elementBuilder, models.SelectToList(t => t.DeclarationModel as VariableDeclarationModelBase));
+            var ui = new ModelInspector();
+            ui.Setup(models, elementBuilder.View as ModelInspectorView, elementBuilder.Context);
+
+            if (elementBuilder.Context is InspectorSectionContext inspectorSectionContext)
+            {
+                switch (inspectorSectionContext.Section.SectionType)
+                {
+                    case SectionType.Advanced:
+                    {
+                        var inspectorFields = VariableFieldsInspector.Create(ModelInspector.fieldsPartName, models, ui, ModelInspector.ussClassName, _ => true, VariableFieldsInspector.DisplayFlags.AdvancedProperties);
+                        ui.PartList.AppendPart(inspectorFields);
+                        break;
+                    }
+                    case SectionType.Properties:
+                    {
+                        var inspectorFields = VariableFieldsInspector.Create(ModelInspector.fieldsPartName, models, ui, ModelInspector.ussClassName, SerializedFieldsInspector.CanBeInspected, VariableFieldsInspector.DisplayFlags.VariableNode);
+                        ui.PartList.AppendPart(inspectorFields);
+                        break;
+                    }
+                }
+            }
+
+            ui.BuildUITree();
+            ui.DoCompleteUpdate();
+
+            return ui;
         }
 
         /// <summary>

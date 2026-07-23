@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEngine;
 
@@ -11,12 +12,17 @@ namespace UnityEditorInternal
     internal class Slider1D
     {
         // Used for plane intersection translation
+        [NoAutoStaticsCleanup] // transient drag state; overwritten at the start of each drag operation
         static Vector3 s_ConstraintOrigin, s_ConstraintDirection, s_HandleOffset;
+        [NoAutoStaticsCleanup] // transient drag state; overwritten at the start of each drag operation
         static float s_StartHandleSize;
+        [NoAutoStaticsCleanup] // transient drag state; overwritten at the start of each drag operation
         static Matrix4x4 s_StartInverseHandleMatrix;
 
         // Used for 2D translation (fallback when ray plane intersection fails)
+        [NoAutoStaticsCleanup] // transient drag state; overwritten at the start of each drag operation
         static Vector2 s_StartMousePosition;
+        [NoAutoStaticsCleanup] // transient drag state; overwritten at the start of each drag operation
         static Vector3 s_StartPosition;
 
         internal static Vector3 Do(int id, Vector3 position, Vector3 direction, float size, Handles.CapFunction capFunction, float snap)

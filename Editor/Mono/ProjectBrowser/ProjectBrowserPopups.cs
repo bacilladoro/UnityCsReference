@@ -7,15 +7,17 @@ using UnityEngine;
 using UnityEditorInternal;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
-    internal class PopupList : PopupWindowContent
+    internal partial class PopupList : PopupWindowContent
     {
         public delegate void OnSelectCallback(ListElement element);
+        [AutoStaticsCleanupOnCodeReload]
         static EditorGUI.RecycledTextEditor s_RecycledEditor = new EditorGUI.RecycledTextEditor();
-        static string s_TextFieldName = "ProjectBrowserPopupsTextField";
-        static int s_TextFieldHash = s_TextFieldName.GetHashCode();
+        static readonly string s_TextFieldName = "ProjectBrowserPopupsTextField";
+        static readonly int s_TextFieldHash = s_TextFieldName.GetHashCode();
         public enum Gravity
         {
             Top,
@@ -248,6 +250,7 @@ namespace UnityEditor
         }
 
         // Static
+        [NoAutoStaticsCleanup] // lazy GUIStyle cache (inner Styles class); GUIStyles survive code reload, safe to persist
         static Styles s_Styles;
 
         // State

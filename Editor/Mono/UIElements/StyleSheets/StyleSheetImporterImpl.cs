@@ -148,6 +148,14 @@ namespace UnityEditor.UIElements.StyleSheets
                 if (!ThemeRegistry.themes.TryGetValue(themeName, out var themePath))
                     return null;
 
+                // Built-in themes live outside the AssetDatabase, so the regular
+                // DependsOnArtifact/DependsOnSourceAsset path can't track them. We
+                // instead depend on a custom dependency that ThemeRegistry republishes
+                // at editor init with a content-derived hash; that lets us reimport
+                // dependent UXML/USS precisely when the theme actually changes,
+                // without resorting to bumping the importer version.
+                m_Context?.DependsOnCustomDependency(ThemeRegistry.FormatThemeDependencyKey(themeName));
+
                 var themeAssetToCopy = EditorGUIUtility.Load(themePath);
                 Debug.Assert(themeAssetToCopy != null, $"Theme not found searching for '{themeName}' at <{themePath}>.");
 
@@ -456,6 +464,14 @@ namespace UnityEditor.UIElements.StyleSheets
 
         void VisitUrlFunction(string path)
         {
+            // An unassigned material or asset-reference variable is stored as url(""); keep it as a null asset reference so it resolves to empty without a false invalid-URI warning.
+            if (string.IsNullOrEmpty(path)
+                && (m_Builder.currentProperty.id == StylePropertyId.Custom || m_Builder.currentProperty.id == StylePropertyId.UnityMaterial))
+            {
+                m_Builder.AddValue((Object)null);
+                return;
+            }
+
             var response = URIHelpers.ValidateAssetURL(assetPath, path);
 
             if (response.hasWarningMessage)
@@ -1068,6 +1084,10 @@ namespace UnityEditor.UIElements.StyleSheets
                 HashUtilities.ComputeHash128(b, ref h);
             }
             asset.contentHash = h.GetHashCode();
+
+            // Stamp the layout and depend on it so the asset reimports when it changes.
+            asset.serializationLayoutHash = UnityStyleSheet.currentSerializationLayoutHash;
+            m_Context?.DependsOnCustomDependency(UnityStyleSheet.k_SerializationLayoutDependencyKey);
         }
 
         void AddUssParserError(TokenizerError error)

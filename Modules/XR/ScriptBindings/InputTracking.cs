@@ -9,6 +9,10 @@ using UnityEngine.Scripting.APIUpdating;
 
 namespace UnityEngine.XR
 {
+    ///<summary>A collection of methods and properties for accessing XR input devices by their XR Node representation.</summary>
+    ///<remarks>XR devices can be accessed in different ways, with the XR Node representing a physical input source such as a head position, hand, or camera.
+    ///
+    ///See [XR Input](xref:xr_input) for an overview of accessing XR devices.</remarks>
     [RequiredByNativeCode]
     public static partial class InputTracking
     {
@@ -20,12 +24,20 @@ namespace UnityEngine.XR
             TrackingLost
         }
 
+        ///<summary>Called when a tracked node begins reporting tracking information.</summary>
+        ///<remarks>The event argument describes the node that has begun being tracked.</remarks>
         [AutoStaticsCleanupOnCodeReload]
         public static event Action<XRNodeState> trackingAcquired = null;
+        ///<summary>Called when a tracked node stops reporting tracking information.</summary>
+        ///<remarks>The event argument describes the node that has lost tracking.</remarks>
         [AutoStaticsCleanupOnCodeReload]
         public static event Action<XRNodeState> trackingLost = null;
+        ///<summary>Called when a tracked node is added to the underlying XR system.</summary>
+        ///<remarks>The event argument describes the node that has been added.</remarks>
         [AutoStaticsCleanupOnCodeReload]
         public static event Action<XRNodeState> nodeAdded = null;
+        ///<summary>Called when a tracked node is removed from the underlying XR system.</summary>
+        ///<remarks>The event argument describes the node that has been removed.</remarks>
         [AutoStaticsCleanupOnCodeReload]
         public static event Action<XRNodeState> nodeRemoved = null;
 

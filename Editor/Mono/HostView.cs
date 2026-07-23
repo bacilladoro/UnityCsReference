@@ -88,6 +88,9 @@ namespace UnityEditor
         [NonSerialized] protected readonly RectOffset m_BorderSize = new RectOffset();
         internal bool showGenericMenu { get; set; } = true;
 
+        private bool m_ShowGenericMenuWindowOptions = false;
+        private bool m_RestrictGenericMenuProvider = false;
+
         protected delegate void EditorWindowDelegate();
         protected delegate void EditorWindowShowButtonDelegate(Rect rect);
 
@@ -234,7 +237,7 @@ namespace UnityEditor
 
             RegisterSelectedPane(sendEvents: true);
 
-            showGenericMenu = ModeService.HasCapability(ModeCapability.HostViewGenericMenu, true);
+            RefreshCapabilities();
             ModeService.modeChanged += OnEditorModeChanged;
         }
 
@@ -253,8 +256,15 @@ namespace UnityEditor
         {
             if (!this)
                 return;
-            showGenericMenu = ModeService.HasCapability(ModeCapability.HostViewGenericMenu, true);
+            RefreshCapabilities();
             Repaint();
+        }
+
+        private void RefreshCapabilities()
+        {
+            showGenericMenu = ModeService.HasCapability(ModeCapability.HostViewGenericMenu, true);
+            m_ShowGenericMenuWindowOptions = !ModeService.HasCapability(ModeCapability.StaticTabs, false);
+            m_RestrictGenericMenuProvider = ModeService.HasCapability(ModeCapability.RestrictedHostViewGenericMenu, false);
         }
 
         private void HandleSplitView()
@@ -766,7 +776,7 @@ namespace UnityEditor
 
         protected void ShowGenericMenu(float leftOffset, float topOffset)
         {
-            if (showGenericMenu)
+            if (showGenericMenu && (!m_RestrictGenericMenuProvider || (m_ActualView != null && m_ActualView.ShowGenericMenuWhenRestricted())))
             {
                 Rect paneMenu = new Rect(leftOffset, topOffset, Styles.menuButton.fixedWidth, Styles.menuButton.fixedHeight);
                 if (EditorGUI.DropdownButton(paneMenu, GUIContent.none, FocusType.Passive, Styles.menuButton))
@@ -896,15 +906,20 @@ namespace UnityEditor
             GenericMenu menu = new GenericMenu();
 
             IHasCustomMenu menuProvider = view as IHasCustomMenu;
-            if (menuProvider != null)
+            if (menuProvider != null && (!m_RestrictGenericMenuProvider || view.ShowGenericMenuWhenRestricted()))
                 menuProvider.AddItemsToMenu(menu);
 
-            AddDefaultItemsToMenu(menu, view);
+            if (m_ShowGenericMenuWindowOptions)
+            {
+                AddDefaultItemsToMenu(menu, view);
 
-            if (view != null)
-                AddWindowActionMenu(menu, view);
+                if (view != null)
+                    AddWindowActionMenu(menu, view);
+            }
 
-            menu.DropDown(pos);
+            if (menu.GetItemCount() > 0)
+                menu.DropDown(pos);
+
             Event.current.Use();
         }
 

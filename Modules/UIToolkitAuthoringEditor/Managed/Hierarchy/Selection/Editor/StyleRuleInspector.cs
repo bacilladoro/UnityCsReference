@@ -4,7 +4,6 @@
 
 using System;
 using Unity.Properties;
-using Unity.UIToolkit.Editor.Utilities;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEditor.UIElements;
@@ -40,6 +39,7 @@ internal sealed partial class StyleRuleInspector : UIInspector
     private PanelElement m_PanelElement;
     private __SelectorElement m_Element;
     private bool m_IsUpdating;
+    private ThemeStyleSheet m_ThemeStyleSheet;
 
     [CreateProperty]
     public StyleRule StyleRule
@@ -112,7 +112,11 @@ internal sealed partial class StyleRuleInspector : UIInspector
         IsReadOnly = false;
     }
 
-    void OnPreviewThemeChanged(in CommandContext context) => SetSelectorElementInlineStyles();
+    void OnPreviewThemeChanged(in CommandContext context)
+    {
+        m_ThemeStyleSheet = ((SetPreviewThemeCommand)context.Command).Theme;
+        SetSelectorElementInlineStyles();
+    }
 
     void OnVariableChange(in CommandContext context)
     {
@@ -132,7 +136,7 @@ internal sealed partial class StyleRuleInspector : UIInspector
         m_IsUpdating = true;
         try
         {
-            m_StyleRule.styleSheet.RequestRebuild();
+            m_StyleRule.styleSheet.RequestRebuild(StyleSheet.RebuildOptions.Synchronous);
             SetSelectorElementInlineStyles();
             m_VariablesSection.Refresh(m_StyleRule);
         }
@@ -142,6 +146,7 @@ internal sealed partial class StyleRuleInspector : UIInspector
         }
     }
 
+    [EventInterest(typeof(AttachToPanelEvent), typeof(DetachFromPanelEvent))]
     protected override void HandleEventBubbleUp(EventBase evt)
     {
         switch (evt)
@@ -155,6 +160,7 @@ internal sealed partial class StyleRuleInspector : UIInspector
                 m_Element ??= new __SelectorElement();
                 m_PanelElement.SubPanel.visualTree.Add(m_Element);
 
+                m_ThemeStyleSheet = GetCanvasThemeQuery.Get();
                 SetSelectorElementInlineStyles();
 
                 m_StyleInspector.contentContainer.Add(m_StyleInspectorDefaultContent = StyleInspectorDefaultContent.Get());
@@ -189,6 +195,7 @@ internal sealed partial class StyleRuleInspector : UIInspector
                 m_PanelElement.DestroySubPanel();
                 m_Element = null;
                 m_PanelElement = null;
+                m_ThemeStyleSheet = null;
 
                 Undo.undoRedoPerformed -= OnUndoRedoPerformed;
                 UICommandQueue.UnregisterHandler<SetPreviewThemeCommand>(OnPreviewThemeChanged);
@@ -248,18 +255,6 @@ internal sealed partial class StyleRuleInspector : UIInspector
             animationSection.style.display = UIToolkitProjectSettings.s_EnablePanelRendererAnimationAtBoot ? StyleKeyword.Null : DisplayStyle.None;
     }
 
-    ThemeStyleSheet GetViewportTheme()
-    {
-        if (StageUtility.GetCurrentStage() is VisualElementEditingStage stage)
-        {
-            var selected = PreviewThemeState.ForDocument(stage.Context.RootVisualTreeAsset).SelectedTheme;
-            if (selected != null)
-                return selected;
-        }
-
-        return this.GetPanelSettings()?.themeStyleSheet;
-    }
-
     void SetSelectorElementInlineStyles()
     {
         if (m_StyleRule == null || m_StyleRule.styleSheet == null || m_Element == null)
@@ -268,9 +263,10 @@ internal sealed partial class StyleRuleInspector : UIInspector
         m_Element.styleSheets.Clear();
 
         // Inject theme so theme variables appear in variableContext.
-        var theme = GetViewportTheme();
-        if (theme != null)
-            m_Element.styleSheets.Add(theme);
+        var effectiveTheme = m_ThemeStyleSheet
+            ?? (StageUtility.GetCurrentStage() as VisualElementEditingStage)?.Context.PanelSettings?.themeStyleSheet;
+        if (effectiveTheme != null)
+            m_Element.styleSheets.Add(effectiveTheme);
 
         m_Element.styleSheets.Add(m_StyleRule.styleSheet);
 

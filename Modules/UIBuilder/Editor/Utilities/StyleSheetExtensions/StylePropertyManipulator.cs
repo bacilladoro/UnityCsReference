@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.Scripting.LifecycleManagement;
 using Unity.UIToolkit.Editor;
 using UnityEditor;
 using UnityEngine;
@@ -22,7 +23,7 @@ namespace Unity.UI.Builder
     /// <remarks>
     /// Any external changes to the related <see cref="StyleSheet"/>s' internal structure may invalidate this data.
     /// </remarks>
-    class StylePropertyManipulator : IDisposable
+    partial class StylePropertyManipulator : IDisposable
     {
         /// <summary>
         /// Helper type to help setting a string as a variable in a generic context.
@@ -66,9 +67,10 @@ namespace Unity.UI.Builder
             }
         }
 
-        internal struct StylePropertyPart : IDisposable
+        internal partial struct StylePropertyPart : IDisposable
         {
-            static readonly UnityEngine.Pool.ObjectPool<List<StylePropertyValue>> s_Pool =
+            [AutoStaticsCleanupOnCodeReload]
+            static UnityEngine.Pool.ObjectPool<List<StylePropertyValue>> s_Pool =
                 new UnityEngine.Pool.ObjectPool<List<StylePropertyValue>>(
                     () => new List<StylePropertyValue>(),
                     null,
@@ -117,7 +119,8 @@ namespace Unity.UI.Builder
             }
         }
 
-        static readonly UnityEngine.Pool.ObjectPool<StylePropertyManipulator> s_Pool =
+        [AutoStaticsCleanupOnCodeReload]
+        static UnityEngine.Pool.ObjectPool<StylePropertyManipulator> s_Pool =
             new UnityEngine.Pool.ObjectPool<StylePropertyManipulator>(
                 () => new StylePropertyManipulator(),
                 null,

@@ -76,15 +76,13 @@ namespace UnityEditor
 
             // FIXME: the highlight mesh is drawn *over* the text, hiding it. We have to reduce the alpha value of the highlight color
             // in order to make the text readable. Blocked by jira https://jira.unity3d.com/browse/UUM-9296
-            private static float s_HighlightColorAlpha = 0.67f;
+            private static readonly float s_HighlightColorAlpha = 0.67f;
 
-            private static string s_SelectionColorTag = null;
-            public static string SelectionColorTag => s_SelectionColorTag
-                ??= $"<mark=#{ColorUtility.ToHtmlStringRGBA(new Color(HighlightColor.r, HighlightColor.g, HighlightColor.b, s_HighlightColorAlpha))}>";
+            private static readonly string s_SelectionColorTag = $"<mark=#{ColorUtility.ToHtmlStringRGBA(new Color(HighlightColor.r, HighlightColor.g, HighlightColor.b, s_HighlightColorAlpha))}>";
+            public static string SelectionColorTag => s_SelectionColorTag;
             public static readonly string SelectionColorEndTag = "</mark>";
-            private static string s_TextColorTag = null;
-            public static string TextColorTag => s_TextColorTag
-                ??= $"<color=#{ColorUtility.ToHtmlStringRGBA(settingsPanel.GetColor("-unity-search-highlight-color"))}>";
+            private static readonly string s_TextColorTag = $"<color=#{ColorUtility.ToHtmlStringRGBA(settingsPanel.GetColor("-unity-search-highlight-color"))}>";
+            public static string TextColorTag => s_TextColorTag;
             public static readonly string TextColorEndTag = "</color>";
             public static readonly Regex TagRegex = new(@"<[^>]*>", RegexOptions.Compiled);
 

@@ -12,18 +12,18 @@ namespace UnityEditor.SpeedTree.Importer
     {
         private static class Styles
         {
-            public static GUIContent RemapOptions = EditorGUIUtility.TrTextContent("On Demand Remap");
-            public static GUIContent RemapMaterialsInProject = EditorGUIUtility.TrTextContent("Search and Remap...", "Click on this button to search and remap the materials from the project.");
-            public static GUIContent ExternalMaterialMappings = EditorGUIUtility.TrTextContent("Remapped Materials", "External materials to use for each embedded material.");
+            public static readonly GUIContent RemapOptions = EditorGUIUtility.TrTextContent("On Demand Remap");
+            public static readonly GUIContent RemapMaterialsInProject = EditorGUIUtility.TrTextContent("Search and Remap...", "Click on this button to search and remap the materials from the project.");
+            public static readonly GUIContent ExternalMaterialMappings = EditorGUIUtility.TrTextContent("Remapped Materials", "External materials to use for each embedded material.");
 
-            public static GUIContent Materials = EditorGUIUtility.TrTextContent("Materials");
-            public static GUIContent ExtractEmbeddedMaterials = EditorGUIUtility.TrTextContent("Extract Materials...", "Click on this button to extract the embedded materials.");
+            public static readonly GUIContent Materials = EditorGUIUtility.TrTextContent("Materials");
+            public static readonly GUIContent ExtractEmbeddedMaterials = EditorGUIUtility.TrTextContent("Extract Materials...", "Click on this button to extract the embedded materials.");
 
-            public static GUIContent InternalMaterialHelp = EditorGUIUtility.TrTextContent("Materials are embedded inside the imported asset.");
-            public static GUIContent MaterialAssignmentsHelp = EditorGUIUtility.TrTextContent("Material assignments can be remapped below.");
+            public static readonly GUIContent InternalMaterialHelp = EditorGUIUtility.TrTextContent("Materials are embedded inside the imported asset.");
+            public static readonly GUIContent MaterialAssignmentsHelp = EditorGUIUtility.TrTextContent("Material assignments can be remapped below.");
 
-            public static GUIContent ExternalMaterialSearchHelp = EditorGUIUtility.TrTextContent("Searches the user provided directory and matches the materials that share the same name and LOD with the originally imported material.");
-            public static GUIContent SelectMaterialFolder = EditorGUIUtility.TrTextContent("Select Materials Folder");
+            public static readonly GUIContent ExternalMaterialSearchHelp = EditorGUIUtility.TrTextContent("Searches the user provided directory and matches the materials that share the same name and LOD with the originally imported material.");
+            public static readonly GUIContent SelectMaterialFolder = EditorGUIUtility.TrTextContent("Select Materials Folder");
         }
 
         private SpeedTree9Importer m_STImporter;

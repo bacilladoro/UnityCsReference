@@ -7,20 +7,30 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine.Pool;
 using UnityEngine.UIElements;
+using Unity.Scripting.LifecycleManagement;
 
 namespace Unity.UI.Builder
 {
-    class BuilderAttributeTypeName : VisualElement
+    partial class BuilderAttributeTypeName : VisualElement
     {
-        static readonly UnityEngine.Pool.ObjectPool<Label> s_LabelPool = new UnityEngine.Pool.ObjectPool<Label>(
-            () => new Label(),
-            null,
-            l =>
+        [AutoStaticsCleanupOnCodeReload]
+        static UnityEngine.Pool.ObjectPool<Label> s_LabelPool = null;
+        static UnityEngine.Pool.ObjectPool<Label> labelPool
+        {
+            get
             {
-                l.RemoveFromClassList(s_NamespaceClass);
-                l.RemoveFromClassList(s_TypeNameClass);
-                l.RemoveFromClassList(s_MatchedTokenClass);
-            });
+                if (s_LabelPool == null)
+                    s_LabelPool = new UnityEngine.Pool.ObjectPool<Label>(() => new Label(),
+                    null,
+                    l =>
+                    {
+                        l.RemoveFromClassList(s_NamespaceClass);
+                        l.RemoveFromClassList(s_TypeNameClass);
+                        l.RemoveFromClassList(s_MatchedTokenClass);
+                    });
+                return s_LabelPool;
+            }
+        }
 
         const string s_UssPathNoExt = BuilderConstants.UtilitiesPath + "/TypeField/BuilderAttributeTypeName";
         const string s_UssPath = s_UssPathNoExt + ".uss";
@@ -103,7 +113,7 @@ namespace Unity.UI.Builder
             this.Query<Label>().ForEach(l =>
             {
                 if (l != m_InNamespace)
-                    s_LabelPool.Release(l)
+                    labelPool.Release(l)
                     ;
             });
             m_TypeName.Clear();
@@ -127,7 +137,7 @@ namespace Unity.UI.Builder
 
             if (nsLength == 0)
             {
-                var namespaceLabel = s_LabelPool.Get();
+                var namespaceLabel = labelPool.Get();
                 namespaceLabel.AddToClassList(s_NamespaceClass);
                 m_Namespace.Add(namespaceLabel);
                 namespaceLabel.text = "global namespace";
@@ -135,7 +145,7 @@ namespace Unity.UI.Builder
 
             if (string.IsNullOrEmpty(searchString))
             {
-                var namespaceLabel = s_LabelPool.Get();
+                var namespaceLabel = labelPool.Get();
                 namespaceLabel.AddToClassList(s_NamespaceClass);
                 m_Namespace.Add(namespaceLabel);
                 // Using the source namespace directly here, since we don't want to include the `.`
@@ -143,7 +153,7 @@ namespace Unity.UI.Builder
                     ? type.Namespace
                     : "global namespace";
 
-                var typeNameLabel = s_LabelPool.Get();
+                var typeNameLabel = labelPool.Get();
                 m_TypeName.Add(typeNameLabel);
                 typeNameLabel.text = fullName.Substring(nsLength);
                 typeNameLabel.AddToClassList(s_TypeNameClass);
@@ -171,7 +181,7 @@ namespace Unity.UI.Builder
                     {
                         if (part.startIndex + part.length <= nsLength)
                         {
-                            var namespaceLabel = s_LabelPool.Get();
+                            var namespaceLabel = labelPool.Get();
                             m_Namespace.Add(namespaceLabel);
                             var length = part.length;
                             if (part.startIndex + part.length == nsLength)
@@ -182,13 +192,13 @@ namespace Unity.UI.Builder
                         }
                         else
                         {
-                            var namespaceLabel = s_LabelPool.Get();
+                            var namespaceLabel = labelPool.Get();
                             namespaceLabel.AddToClassList(s_NamespaceClass);
                             m_Namespace.Add(namespaceLabel);
                             namespaceLabel.text = part.source.Substring(part.startIndex, nsLength - part.startIndex - 1);
                             namespaceLabel.EnableInClassList(s_MatchedTokenClass, part.isMatchedToken);
 
-                            var typeNameLabel = s_LabelPool.Get();
+                            var typeNameLabel = labelPool.Get();
                             m_TypeName.Add(typeNameLabel);
                             typeNameLabel.text =
                                 part.source.Substring(nsLength, part.startIndex + part.length - nsLength);
@@ -198,7 +208,7 @@ namespace Unity.UI.Builder
                     }
                     else
                     {
-                        var typeNameLabel = s_LabelPool.Get();
+                        var typeNameLabel = labelPool.Get();
                         m_TypeName.Add(typeNameLabel);
                         typeNameLabel.text = part.ToString();
                         typeNameLabel.AddToClassList(s_TypeNameClass);

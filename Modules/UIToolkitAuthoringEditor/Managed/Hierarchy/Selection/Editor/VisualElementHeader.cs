@@ -122,7 +122,7 @@ partial class VisualElementHeader : UISelectionObjectHeader
             return;
 
         bool showTemplateOptions = false;
-        bool canOpenInContext = false;
+        bool canOpenInContext = true;
 
         if (inStagingMode)
         {

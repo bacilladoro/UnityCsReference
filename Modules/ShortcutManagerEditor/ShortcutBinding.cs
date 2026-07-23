@@ -6,11 +6,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.ShortcutManagement
 {
     public struct ShortcutBinding : IEquatable<ShortcutBinding>
     {
+        [NoAutoStaticsCleanup] // immutable default/empty value-type sentinel; safe to persist across reload
         public static ShortcutBinding empty { get; } = new ShortcutBinding();
 
         readonly KeyCombination[] m_KeyCombinationSequence;

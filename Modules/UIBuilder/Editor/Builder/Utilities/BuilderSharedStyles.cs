@@ -347,7 +347,7 @@ namespace Unity.UI.Builder
             return complexSelectors;
         }
 
-        public static IEnumerable<ClassCompleterInfo> GetAllUnappliedClasses(VisualElement documentRootElement, VisualElement currentVisualElement)
+        public static IEnumerable<ClassCompleterInfo> GetAllUnappliedClasses(VisualElement documentRootElement, VisualElement currentVisualElement, StyleSheet themeStyleSheet = null)
         {
             var results = new List<ClassCompleterInfo>();
 
@@ -362,36 +362,61 @@ namespace Unity.UI.Builder
             foreach (var cls in currentVisualElement.GetClasses())
                 appliedClasses.Add(cls);
 
+            using var sheetsHandle = ListPool<StyleSheet>.Get(out var sheets);
             foreach (var styleSheetElement in selectorContainer.Children())
             {
                 var styleSheet = GetStyleSheetElementProperty(styleSheetElement);
-                if (styleSheet == null)
+                if (styleSheet != null)
+                    sheets.Add(styleSheet);
+            }
+
+            if (themeStyleSheet != null && !sheets.Contains(themeStyleSheet))
+                sheets.Add(themeStyleSheet);
+
+            using var visitedHandle = HashSetPool<StyleSheet>.Get(out var visited);
+            foreach (var s in sheets)
+                visited.Add(s);
+
+            for (var i = 0; i < sheets.Count; i++)
+            {
+                if (sheets[i] == null || sheets[i].imports == null)
                     continue;
-
-                var sheetHeader = new ClassCompleterInfo(styleSheet);
-                var headerAdded = false;
-
-                using var seenInSheetHandle = HashSetPool<string>.Get(out var seenInSheet);
-
-                foreach (var selectorElement in styleSheetElement.Children())
+                foreach (var import in sheets[i].imports)
                 {
-                    var complexSelector = GetSelectorProperty(selectorElement);
-                    if (complexSelector == null)
-                        continue;
+                    if (import.styleSheet != null && visited.Add(import.styleSheet))
+                        sheets.Add(import.styleSheet);
+                }
+            }
 
-                    foreach (var selector in complexSelector.selectors)
-                    foreach (var part in selector.parts)
+            foreach (var sheet in sheets)
+            {
+                if (sheet.rules == null) continue;
+
+                var headerAdded = false;
+                using var seenInSheetHandle = HashSetPool<string>.Get(out var seenInSheet);
+                foreach (var rule in sheet.rules)
+                {
+                    if (rule.complexSelectors == null) continue;
+                    foreach (var complexSelector in rule.complexSelectors)
                     {
-                        if (part.type != StyleSelectorType.Class || appliedClasses.Contains(part.value) || !seenInSheet.Add(part.value))
-                            continue;
-
-                        if (!headerAdded)
+                        if (complexSelector.selectors == null) continue;
+                        foreach (var selector in complexSelector.selectors)
                         {
-                            results.Add(sheetHeader);
-                            headerAdded = true;
-                        }
+                            if (selector.parts == null) continue;
+                            foreach (var part in selector.parts)
+                            {
+                                if (part.type != StyleSelectorType.Class || appliedClasses.Contains(part.value) || !seenInSheet.Add(part.value))
+                                    continue;
 
-                        results.Add(new ClassCompleterInfo(part, styleSheet));
+                                if (!headerAdded)
+                                {
+                                    results.Add(new ClassCompleterInfo(sheet));
+                                    headerAdded = true;
+                                }
+
+                                results.Add(new ClassCompleterInfo(part, sheet));
+                            }
+                        }
                     }
                 }
             }

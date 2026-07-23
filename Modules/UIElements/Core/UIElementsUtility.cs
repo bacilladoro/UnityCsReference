@@ -19,6 +19,7 @@ namespace UnityEngine.UIElements
 
         internal static Action<IMGUIContainer> s_BeginContainerCallback;
         internal static Action<IMGUIContainer> s_EndContainerCallback;
+        internal static Action<IMGUIContainer> s_FocusOutContainerCallback;
 
 
 

@@ -1000,10 +1000,8 @@ namespace UnityEditor.Scripting.ScriptCompilation
             ValidateSubtarget(buildTarget, ref subtarget);
             var namedBuildTarget = NamedBuildTarget.FromTargetAndSubtarget(buildTarget, subtarget);
 
-            if ((options & EditorScriptCompilationOptions.BuildingPredefinedAssembliesAllowUnsafeCode) == EditorScriptCompilationOptions.BuildingPredefinedAssembliesAllowUnsafeCode)
-            {
-                predefinedAssembliesCompilerOptions.AllowUnsafeCode = true;
-            }
+            // Unsafe code is always enabled; reported via the public ScriptCompilerOptions.AllowUnsafeCode.
+            predefinedAssembliesCompilerOptions.AllowUnsafeCode = true;
 
             if ((options & EditorScriptCompilationOptions.BuildingUseDeterministicCompilation) == EditorScriptCompilationOptions.BuildingUseDeterministicCompilation)
             {
@@ -1262,6 +1260,24 @@ namespace UnityEditor.Scripting.ScriptCompilation
                 return instanceId;
             }
 
+            instanceId = ReserveEntityIdForAssetPath(filePath);
+
+            fileInstanceIdCache.Add(filePath, instanceId);
+
+            return instanceId;
+        }
+
+        // Resolves a file path to the EntityId used to ping the asset when double clicking a console message.
+        // Unlike AssetDatabase.LoadAssetAtPath, this works in batch mode and before the AssetDatabase is
+        // initialized, and never returns null - it reserves a deterministic id from the asset GUID instead.
+        internal static EntityId ReserveEntityIdForAssetPath(string filePath)
+        {
+            // in batch mode, we don't have a Console Window, so we don't need an instance id
+            if (Application.isBatchMode || string.IsNullOrEmpty(filePath))
+            {
+                return EntityId.None;
+            }
+
             // The AssetDatabase does not expect absolute paths. In this case, we
             // try to get the Logical path for the supplied filePath and pass that along
             var logicalFilePath = FileUtil.GetLogicalPath(filePath);
@@ -1273,11 +1289,7 @@ namespace UnityEditor.Scripting.ScriptCompilation
             var guid = AssetDatabase.GUIDFromAssetPath(logicalFilePath);
 
             // script compilation errors can happen before the asset database is initialized, so we reserve the instance id ahead of time (it is deterministic)
-            instanceId = AssetDatabase.ReserveMonoScriptEntityId(guid);
-
-            fileInstanceIdCache.Add(filePath, instanceId);
-
-            return instanceId;
+            return AssetDatabase.ReserveMonoScriptEntityId(guid);
         }
 
         void CompleteActiveBuildWhilePumping()
@@ -1321,7 +1333,7 @@ namespace UnityEditor.Scripting.ScriptCompilation
 
         public CompilerMessage[][] ProcessCompilationResult(ScriptAssembly[] assemblies, BeeDriverResult result, bool buildingForEditor, object context)
         {
-            var compilerMessagesForNodeResults = BeeScriptCompilation.ParseAllNodeResultsIntoCompilerMessages(result.BeeDriverMessages, result.NodeFinishedMessages, this);
+            var compilerMessagesForNodeResults = BeeScriptCompilation.ParseAllNodeResultsIntoCompilerMessages(result.BeeDriverMessages, result.NodeFinishedMessages);
             InvokeAssemblyCompilationFinished(assemblies, result, buildingForEditor, compilerMessagesForNodeResults);
             InvokeCompilationFinished(context);
             return compilerMessagesForNodeResults;
@@ -1694,7 +1706,7 @@ namespace UnityEditor.Scripting.ScriptCompilation
                             var versionDefineExpression = m_UnityVersionRanges.GetExpression(targetAssemblyVersionDefine.expression);
                             if (versionDefineExpression.ValidationError != null)
                             {
-                                VersionDefinesConsoleLogs?.LogVersionDefineError(targetAssembly, versionDefineExpression.ValidationError);
+                                LogVersionDefineError(targetAssembly, versionDefineExpression.ValidationError);
                                 isValid = false;
                                 break;
                             }
@@ -1708,7 +1720,7 @@ namespace UnityEditor.Scripting.ScriptCompilation
                             var versionDefineExpression = m_SemVersionRanges.GetExpression(targetAssemblyVersionDefine.expression);
                             if (versionDefineExpression.ValidationError != null)
                             {
-                                VersionDefinesConsoleLogs?.LogVersionDefineError(targetAssembly, versionDefineExpression.ValidationError);
+                                LogVersionDefineError(targetAssembly, versionDefineExpression.ValidationError);
                                 isValid = false;
                                 break;
                             }
@@ -1736,6 +1748,22 @@ namespace UnityEditor.Scripting.ScriptCompilation
 
             Array.Resize(ref defines, populatedVersionDefinesCount);
             return defines;
+        }
+
+        void LogVersionDefineError(TargetAssembly targetAssembly, ExpressionNotValidException validationError)
+        {
+            if (VersionDefinesConsoleLogs == null)
+            {
+                return;
+            }
+
+            // Resolve the EntityId from the asmdef path here (where the batch-mode-safe lookup lives) rather
+            // than loading the asset in the logger - AssetDatabase.LoadAssetAtPath cannot be relied on in this
+            // context (e.g. during a batch-mode player build) and returning null there masked the real error
+            // with a NullReferenceException.
+            var customScriptAssembly = FindCustomTargetAssemblyFromTargetAssembly(targetAssembly);
+            var assetEntityId = ReserveEntityIdForAssetPath(customScriptAssembly.FilePath);
+            VersionDefinesConsoleLogs.LogVersionDefineError(assetEntityId, validationError);
         }
 
         public ScriptAssembly[] GetAllScriptAssembliesOfType(ScriptAssemblySettings settings, TargetAssemblyType type, ICompilationSetupWarningTracker warningSink)

@@ -11,6 +11,7 @@ using UnityEditor.Overlays;
 using UnityEditor.Toolbars;
 using UnityEngine.UIElements;
 using UnityEngine.Pool;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -93,8 +94,9 @@ namespace UnityEditor
         }
     }
 
-    static class ManipulationToolUtility
+    static partial class ManipulationToolUtility
     {
+        [AutoStaticsCleanupOnCodeReload]
         public static Vector3 minDragDifference { get; set; }
         public static void SetMinDragDifferenceForPos(Vector3 position)
         {
@@ -131,6 +133,7 @@ namespace UnityEditor
         }
 
         public delegate void HandleDragChange(string handleName, bool dragging);
+        [AutoStaticsCleanupOnCodeReload]
         public static HandleDragChange handleDragChange;
         public static void BeginDragging(string handleName)
         {
@@ -171,6 +174,7 @@ namespace UnityEditor
 
     class TransformTool : ManipulationTool<TransformTool>
     {
+        [NoAutoStaticsCleanup] // Transient per-drag scale accumulator, reset to one on MouseDown; safe to persist.
         static Vector3 s_Scale;
 
         public override GUIContent toolbarIcon
@@ -438,6 +442,7 @@ namespace UnityEditor
             get { return EditorGUIUtility.TrTextContentWithIcon("Scale Tool", "Scale Tool", "ScaleTool"); }
         }
 
+        [NoAutoStaticsCleanup] // Transient per-drag scale accumulator, reset to one on MouseDown; safe to persist.
         private static Vector3 s_CurrentScale = Vector3.one;
 
         protected override bool ShouldToolGUIBeDisabled(out GUIContent disabledLabel)
@@ -671,10 +676,11 @@ namespace UnityEditor
             GUI.color = oldColor;
         }
 
-        private static int s_ResizeHandlesHash = "ResizeHandles".GetHashCode();
-        private static int s_RotationHandlesHash = "RotationHandles".GetHashCode();
-        private static int s_MoveHandleHash = "MoveHandle".GetHashCode();
-        private static int s_PivotHandleHash = "PivotHandle".GetHashCode();
+        private static readonly int s_ResizeHandlesHash = "ResizeHandles".GetHashCode();
+        private static readonly int s_RotationHandlesHash = "RotationHandles".GetHashCode();
+        private static readonly int s_MoveHandleHash = "MoveHandle".GetHashCode();
+        private static readonly int s_PivotHandleHash = "PivotHandle".GetHashCode();
+        [NoAutoStaticsCleanup] // Per-drag rect snapshot captured on MouseDown; safe to persist.
         private static Rect s_StartRect = new Rect();
 
         private static Vector3 GetRectPointInWorld(Rect rect, Vector3 pivot, Quaternion rotation, int xHandle, int yHandle)
@@ -829,12 +835,19 @@ namespace UnityEditor
             return scale;
         }
 
+        [NoAutoStaticsCleanup] // Per-drag move-handle scratch state, re-initialised on MouseDown; safe to persist.
         private static Vector3 s_StartMouseWorldPos;
+        [NoAutoStaticsCleanup] // Per-drag move-handle scratch state, re-initialised on MouseDown; safe to persist.
         private static Vector3 s_StartPosition;
+        [NoAutoStaticsCleanup] // Per-drag move-handle scratch state, re-initialised on MouseDown; safe to persist.
         private static Vector2 s_StartMousePos;
+        [NoAutoStaticsCleanup] // Per-drag move-handle scratch state, re-initialised on MouseDown; safe to persist.
         private static Vector3 s_StartRectPosition;
+        [NoAutoStaticsCleanup] // Per-drag move-handle scratch state, re-initialised on MouseDown; safe to persist.
         private static Vector2 s_CurrentMousePos;
+        [NoAutoStaticsCleanup] // Per-drag move-handle scratch state, re-initialised on MouseDown; safe to persist.
         private static bool s_Moving = false;
+        [NoAutoStaticsCleanup] // Per-drag move-handle scratch state, re-initialised on MouseDown; safe to persist.
         private static int s_LockAxis = -1;
 
         static Vector3 MoveHandlesGUI(Rect rect, Vector3 pivot, Quaternion rotation)

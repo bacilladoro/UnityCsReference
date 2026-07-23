@@ -283,17 +283,69 @@ namespace Unity.GraphToolkit.Editor
         /// <summary>
         /// Creates and adds a new variable node referencing an existing variable.
         /// </summary>
-        /// <param name="variable">The variable to reference. Must belong to this graph.</param>
-        /// <param name="position">The position of the node.</param>
+        /// <param name="variable">Variable to reference. Must belong to this graph.</param>
+        /// <param name="position">Position of the node on the graph canvas.</param>
         /// <returns>The newly created variable node.</returns>
         /// <remarks>
+        /// The created node is in <see cref="VariableNodeMode.Get"/> mode.
+        /// To create a node that can write to the variable, use
+        /// <see cref="AddVariableNode(IVariable, Vector2, VariableNodeMode)"/> and pass <see cref="VariableNodeMode.Set"/>.
+        /// Set mode is only available for variables of kind <see cref="VariableKind.Local"/>.
+        ///
         /// Enclose this method with <see cref="UndoBeginRecordGraph"/> and <see cref="UndoEndRecordGraph"/> to
         /// add this operation to the undo stack and to update the graph view with the changes.
         /// </remarks>
+        /// <example nocheck="true">
+        /// <code lang="cs"><![CDATA[
+        /// IVariable health = graph.CreateVariable<int>("Health");
+        ///
+        /// graph.UndoBeginRecordGraph("Add Variable Node");
+        /// IVariableNode node = graph.AddVariableNode(health, new Vector2(100, 100));
+        /// graph.UndoEndRecordGraph();
+        ///
+        /// // node.Mode == VariableNodeMode.Get
+        /// // Health is a local variable, so the node has an output port that provides its current value.
+        /// ]]></code>
+        /// </example>
         public IVariableNode AddVariableNode(IVariable variable, Vector2 position)
         {
             CheckImplementation();
             return m_Implementation.AddVariableNode(variable, position);
+        }
+
+        /// <summary>
+        /// Creates and adds a new variable node with the specified mode, referencing an existing variable.
+        /// </summary>
+        /// <param name="variable">Variable to reference. Must belong to this graph.</param>
+        /// <param name="position">Position of the node on the graph canvas.</param>
+        /// <param name="mode">Mode of the variable node.</param>
+        /// <returns>The newly created variable node.</returns>
+        /// <remarks>
+        /// The <paramref name="mode"/> parameter determines the ports the node exposes. Refer to <see cref="VariableNodeMode"/>
+        /// for details. <see cref="VariableNodeMode.Set"/> is only supported for variables of kind <see cref="VariableKind.Local"/>.
+        ///
+        /// To change the mode of an existing variable node, use the **Allow to set value in graph** checkbox in the node's inspector.
+        ///
+        /// Enclose this method with <see cref="UndoBeginRecordGraph"/> and <see cref="UndoEndRecordGraph"/> to
+        /// add this operation to the undo stack and to update the graph view with the changes.
+        /// </remarks>
+        /// <example nocheck="true">
+        /// <code lang="cs"><![CDATA[
+        /// // Local variables support both Get and Set modes.
+        /// IVariable speed = graph.CreateVariable<float>("Speed");
+        ///
+        /// graph.UndoBeginRecordGraph("Add Set Variable Node");
+        /// IVariableNode setNode = graph.AddVariableNode(speed, new Vector2(100, 100), VariableNodeMode.Set);
+        /// graph.UndoEndRecordGraph();
+        ///
+        /// // setNode.Mode == VariableNodeMode.Set
+        /// // The node has an extra input port for writing the value of Speed in the graph.
+        /// ]]></code>
+        /// </example>
+        public IVariableNode AddVariableNode(IVariable variable, Vector2 position, VariableNodeMode mode)
+        {
+            CheckImplementation();
+            return m_Implementation.AddVariableNode(variable, position, mode);
         }
 
         /// <summary>

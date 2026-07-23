@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEditorInternal;
@@ -50,14 +51,17 @@ namespace Unity.UI.Builder
         UxmlSerialization   = 1 << 13
     }
 
-    internal static class BuilderAnalyticsUtility
+    internal static partial class BuilderAnalyticsUtility
     {
         internal const string uieCoreModule = "UnityEngine.UIElementsModule";
 
         // Used in tests
+        [NoAutoStaticsCleanup] // Test-only snapshot of the last save event (serializable POCO of primitives/strings); holds no user-type or ALC references, safe to persist across code reload.
         public static BuilderSaveEventData cachedSaveEventData { get; private set; }
 
+        [AutoStaticsCleanupOnCodeReload]
         static HashSet<string> userAssemblies;
+        [AutoStaticsCleanupOnCodeReload]
         internal static Dictionary<string, Type> typeCache;
 
         /// <summary>

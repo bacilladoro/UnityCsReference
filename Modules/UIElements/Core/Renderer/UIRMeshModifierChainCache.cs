@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEngine.UIElements.UIR
 {
@@ -22,6 +23,7 @@ namespace UnityEngine.UIElements.UIR
 
         sealed class RefComparer : IEqualityComparer<List<MeshModifierRegistration>>
         {
+            [NoAutoStaticsCleanup] // stateless singleton comparer; no captured state
             public static readonly RefComparer Instance = new();
             public bool Equals(List<MeshModifierRegistration> x, List<MeshModifierRegistration> y) => ReferenceEquals(x, y);
             public int GetHashCode(List<MeshModifierRegistration> obj) => RuntimeHelpers.GetHashCode(obj);

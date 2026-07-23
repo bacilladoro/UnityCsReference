@@ -10,22 +10,27 @@ using UObject = UnityEngine.Object;
 using UnityEditor.EditorTools;
 using UnityEditor.StyleSheets;
 using UnityEditor.Experimental;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
     public sealed partial class EditorGUILayout
     {
+        [NoAutoStaticsCleanup] // Internal GUIContent array pool, no user references; safe to persist.
         static readonly EditorToolGUI.ReusableArrayPool<GUIContent> s_ButtonArrays = new EditorToolGUI.ReusableArrayPool<GUIContent>();
+        [NoAutoStaticsCleanup] // Internal bool array pool, no user references; safe to persist.
         static readonly EditorToolGUI.ReusableArrayPool<bool> s_BoolArrays = new EditorToolGUI.ReusableArrayPool<bool>();
+        [AutoStaticsCleanupOnCodeReload]
         static readonly List<EditorTool> s_CustomEditorTools = new List<EditorTool>();
+        [AutoStaticsCleanupOnCodeReload]
         static readonly List<EditorToolContext> s_CustomEditorContexts = new List<EditorToolContext>();
 
         static class Styles
         {
-            public static GUIStyle command = "AppCommand";
-            public static GUIStyle commandLeft;
-            public static GUIStyle commandMid;
-            public static GUIStyle commandRight;
+            public static readonly GUIStyle command = "AppCommand";
+            public static readonly GUIStyle commandLeft;
+            public static readonly GUIStyle commandMid;
+            public static readonly GUIStyle commandRight;
 
             static Styles()
             {
@@ -188,7 +193,7 @@ namespace UnityEditor
         }
     }
 
-    static class EditorToolGUI
+    static partial class EditorToolGUI
     {
         // Number of buttons present in the tools toolbar.
         internal const int k_ToolbarButtonCount = 7;
@@ -200,7 +205,9 @@ namespace UnityEditor
             public static readonly GUIContent noToolsAvailable = EditorGUIUtility.TrTextContent("No custom tools available");
         }
 
+        [NoAutoStaticsCleanup] // Fixed-size toolbar icon buffer overwritten each layout; safe to persist.
         public static GUIContent[] s_ShownToolIcons = new GUIContent[k_ToolbarButtonCount];
+        [NoAutoStaticsCleanup] // Fixed-size toolbar enabled-flags buffer overwritten each layout; safe to persist.
         public static bool[] s_ShownToolEnabled = new bool[k_ToolbarButtonCount];
 
         [EditorBrowsable(EditorBrowsableState.Never)]
@@ -227,7 +234,9 @@ namespace UnityEditor
             }
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         static readonly List<EditorTool> s_ToolList = new List<EditorTool>();
+        [AutoStaticsCleanupOnCodeReload(CleanupStrategy = CleanupStrategy.Clear)] // non-trivial initializer but Clearing is enough
         static readonly List<EditorTool> s_EditorToolModes = new List<EditorTool>(8);
         public static readonly StyleRect s_ButtonRect = EditorResources.GetStyle("AppToolbar-Button").GetRect(StyleCatalogKeyword.size, StyleRect.Size(22, 22));
 

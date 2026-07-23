@@ -14,7 +14,7 @@ namespace UnityEditor.UIElements.StyleSheets
     // Make sure style sheets importer after allowed dependent assets: textures, fonts and json
     // Has to be higher then AssetImportOrder.kImportOrderLate
     [HelpURL("UIE-USS")]
-    [ScriptedImporter(version: 20, ext: "uss", importQueueOffset: 1100)]
+    [ScriptedImporter(version: 22, ext: "uss", importQueueOffset: 1100)]
     [ExcludeFromPreset]
     class StyleSheetImporter : ScriptedImporter
     {
@@ -74,6 +74,7 @@ namespace UnityEditor.UIElements.StyleSheets
             {
                 StyleSheet asset = ScriptableObject.CreateInstance<StyleSheet>();
                 asset.hideFlags = HideFlags.NotEditable;
+                asset.serializationLayoutHash = StyleSheet.currentSerializationLayoutHash;
 
                 if (!string.IsNullOrEmpty(contents))
                 {
@@ -109,6 +110,8 @@ namespace UnityEditor.UIElements.StyleSheets
         public override void OnEnable()
         {
             base.OnEnable();
+            if (!AreImporterTargetsValid()) // asset gone: base already logged and bailed
+                return;
 
             m_DisableValidation = serializedObject.FindProperty("disableValidation");
             m_UnsupportedSelectorAction = serializedObject.FindProperty("unsupportedSelectorAction");

@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using DiscoveredTargetInfo = UnityEditor.BuildTargetDiscovery.DiscoveredTargetInfo;
 using TargetAttributes = UnityEditor.BuildTargetDiscovery.TargetAttributes;
 using UnityEngine.Bindings;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Build
 {
@@ -218,11 +219,16 @@ namespace UnityEditor.Build
     }
 
     [VisibleToOtherModules("UnityEditor.BurstModule")]
-    internal class BuildPlatforms
+    internal partial class BuildPlatforms
     {
-        static readonly BuildPlatforms s_Instance = new BuildPlatforms();
+        // Reset to null on code reload so the next access rebuilds the instance with the current
+        // platform install state (set by the platform ExtensionModules as they reload). Lazily
+        // re-created on first access rather than eagerly, so it never runs before native
+        // BuildTargetDiscovery is ready during a build.
+        [AutoStaticsCleanupOnCodeReload]
+        static BuildPlatforms s_Instance;
 
-        public static BuildPlatforms instance => s_Instance;
+        public static BuildPlatforms instance => s_Instance ??= new BuildPlatforms();
 
         internal BuildPlatforms()
         {

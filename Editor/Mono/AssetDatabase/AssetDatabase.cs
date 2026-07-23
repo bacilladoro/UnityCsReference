@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor.VersionControl;
 using UnityEngine.Scripting;
 using uei = UnityEngine.Internal;
@@ -24,6 +25,7 @@ namespace UnityEditor
             add => m_importPackageStartedEvent.Add(value);
             remove => m_importPackageStartedEvent.Remove(value);
         }
+        [AutoStaticsCleanupOnCodeReload(CleanupStrategy = CleanupStrategy.Clear)]
         private static EventWithPerformanceTracker<ImportPackageCallback> m_importPackageStartedEvent = new EventWithPerformanceTracker<ImportPackageCallback>($"{nameof(AssetDatabase)}.{nameof(importPackageStarted)}");
 
         // Delegate to be called when package import completes
@@ -32,10 +34,13 @@ namespace UnityEditor
             add => m_importPackageCompletedEvent.Add(value);
             remove => m_importPackageCompletedEvent.Remove(value);
         }
+        [AutoStaticsCleanupOnCodeReload(CleanupStrategy = CleanupStrategy.Clear)]
         private static EventWithPerformanceTracker<ImportPackageCallback> m_importPackageCompletedEvent = new EventWithPerformanceTracker<ImportPackageCallback>($"{nameof(AssetDatabase)}.{nameof(importPackageCompleted)}");
 
         // Called when package import completes, listing the selected items
+        [AutoStaticsCleanupOnCodeReload]
         public static Action<string[]> onImportPackageItemsCompleted;
+        [AutoStaticsCleanupOnCodeReload(CleanupStrategy = CleanupStrategy.Clear)]
         private static DelegateWithPerformanceTracker<Action<string[]>> m_onImportPackageItemsCompleted = new DelegateWithPerformanceTracker<Action<string[]>>($"{nameof(AssetDatabase)}.{nameof(onImportPackageItemsCompleted)}");
 
         // Delegate to be called when package import is cancelled
@@ -44,7 +49,8 @@ namespace UnityEditor
             add => m_importPackageCancelledEvent.Add(value);
             remove => m_importPackageCancelledEvent.Remove(value);
         }
-        private static EventWithPerformanceTracker<ImportPackageCallback> m_importPackageCancelledEvent = new EventWithPerformanceTracker<ImportPackageCallback>($"{nameof(AssetDatabase)}.{nameof(importPackageCancelled)}");
+        [AutoStaticsCleanupOnCodeReload(CleanupStrategy = CleanupStrategy.Clear)]
+        private static readonly EventWithPerformanceTracker<ImportPackageCallback> m_importPackageCancelledEvent = new EventWithPerformanceTracker<ImportPackageCallback>($"{nameof(AssetDatabase)}.{nameof(importPackageCancelled)}");
 
         // Delegate to be called when package import fails
         public static event ImportPackageFailedCallback importPackageFailed
@@ -52,6 +58,7 @@ namespace UnityEditor
             add => m_importPackageFailedEvent.Add(value);
             remove => m_importPackageFailedEvent.Remove(value);
         }
+        [AutoStaticsCleanupOnCodeReload(CleanupStrategy = CleanupStrategy.Clear)]
         private static EventWithPerformanceTracker<ImportPackageFailedCallback> m_importPackageFailedEvent = new EventWithPerformanceTracker<ImportPackageFailedCallback>($"{nameof(AssetDatabase)}.{nameof(importPackageFailed)}");
 
         [RequiredByNativeCode]

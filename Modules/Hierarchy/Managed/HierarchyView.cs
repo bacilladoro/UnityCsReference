@@ -94,9 +94,6 @@ namespace Unity.Hierarchy
         VisualElement m_StyleContainer;
         IVisualElementScheduledItem m_ScheduledItem;
         int m_LastMouseUpSelectionIndex;
-        // Rejects the spurious same-frame second ClickEvent from PostDispatch on the same foldout.
-        int m_LastFoldoutFrame = -1;
-        HierarchyNode m_LastFoldoutNode = HierarchyNode.Null;
 
         // Tracks the in-flight animation so same-node clicks can reverse instead of restarting.
         // m_AnimatingExpanding is the target direction — needed because deferred collapse leaves
@@ -215,6 +212,14 @@ namespace Unity.Hierarchy
         /// </summary>
         [VisibleToOtherModules("UnityEditor.HierarchyModule")]
         internal event Action<HierarchyView> Bind; // Internal because it is only used by HierarchyWindow to allow to statically customize the HierarchyView.
+
+        /// <summary>
+        /// Raised when a context menu is requested, before it is populated. The argument is the targeted
+        /// <see cref="HierarchyViewItem"/>, or null when the context menu is requested over empty space.
+        /// Internal because it is only used by HierarchyWindow to synchronize the global selection before the menu is built.
+        /// </summary>
+        [VisibleToOtherModules("UnityEditor.HierarchyModule")]
+        internal event Action<HierarchyViewItem> ContextMenuRequested;
 
         /// <summary>
         /// The source <see cref="Hierarchy"/> used to populate this <see cref="HierarchyView"/>.
@@ -1323,12 +1328,17 @@ namespace Unity.Hierarchy
             var localposition = hierarchyView.ChangeCoordinatesTo(m_ListViewScrollView, evt.localMousePosition);
             var itemIndex = GetIndexFromLocalPosition(localposition);
             var item = GetHierarchyViewItemFromIndex(itemIndex);
+
             // item == null if user right-clicks in empty space of HierarchyView.
             // PopulateContextMenu callbacks may populate the menu with default actions
             // not specific to any one view item if the view item == null.
             if (item == null)
-            {
                 m_Selection.Clear();
+
+            ContextMenuRequested?.Invoke(item);
+
+            if (item == null)
+            {
                 foreach (var handler in m_Hierarchy.EnumerateNodeTypeHandlers())
                 {
                     if (handler is IHierarchyEditorNodeTypeHandler editorHandler)
@@ -1724,6 +1734,9 @@ namespace Unity.Hierarchy
         // Clear selection when left clicking on the empty space.
         void OnListViewPointerDown(PointerDownEvent evt)
         {
+            if (IsRightClick((MouseButton)evt.button, evt.modifiers))
+                return;
+
             // Cancel any pending rename on pointer down, before selection changes
             CancelScheduledRename();
 
@@ -1738,9 +1751,26 @@ namespace Unity.Hierarchy
             evt.StopImmediatePropagation();
         }
 
+        static bool IsRightClick(MouseButton button, EventModifiers modifiers)
+        {
+            if (button == MouseButton.RightMouse)
+                return true;
+
+            // on OSX a right click can also be ctrl+left click
+            var platform = Application.platform;
+            return button == MouseButton.LeftMouse
+                   && modifiers == EventModifiers.Control
+                   && (platform == RuntimePlatform.OSXEditor || platform == RuntimePlatform.OSXPlayer);
+        }
+
+        void OnBindItem(HierarchyViewItem item)
+        {
+            item.ExpandedStateChanged += SetExpandedState;
+        }
+
         void OnUnbindItem(HierarchyViewItem element)
         {
-            element.ExpandedStateChanged -= OnExpandedStateChanged;
+            element.ExpandedStateChanged -= SetExpandedState;
         }
 
         void OnHandlerCreated(HierarchyNodeTypeHandlerBase handler)
@@ -1759,22 +1789,6 @@ namespace Unity.Hierarchy
             var root = m_CollectionView.GetRootElementForIndex(index);
             var item = root?.Q<HierarchyViewItem>();
             return item;
-        }
-
-        void OnBindItem(HierarchyViewItem item)
-        {
-            item.ExpandedStateChanged += OnExpandedStateChanged;
-        }
-
-        void OnExpandedStateChanged(in HierarchyNode node, bool isExpanded, bool recurse)
-        {
-            if (m_LastFoldoutFrame == Time.frameCount && m_LastFoldoutNode.Equals(node))
-                return;
-
-            m_LastFoldoutFrame = Time.frameCount;
-            m_LastFoldoutNode = node;
-
-            SetExpandedState(in node, isExpanded, recurse);
         }
 
         internal void SetExpandedState(in HierarchyNode node, bool isExpanded, bool recurse)

@@ -17,14 +17,14 @@ namespace UnityEditor
     {
         static class Styles
         {
-            public static GUIContent missingScriptsHelpText = EditorGUIUtility.TrTextContent("Prefab has missing scripts. Open Prefab to fix the issue.");
-            public static GUIContent missingSerializeReferenceHelpText = EditorGUIUtility.TrTextContent("Prefab has missing SerializeReference Types. Open Prefab to fix the issue. Changing the Prefab directly will cause those types to be lost.");
-            public static GUIContent multiSelectionMissingScriptsHelpText = EditorGUIUtility.TrTextContent("Some of the selected Prefabs have missing scripts and needs to be fixed before editing them. Click to Open Prefab to fix the issue.");
-            public static GUIContent savingFailedHelpText = EditorGUIUtility.TrTextContent("Saving has failed. Check the Console window to get more insight into what needs to be fixed on the Prefab Asset.\n\nOpen Prefab to fix the issue.");
-            public static GUIContent variantOfText = EditorGUIUtility.TrTextContent("Variant Parent");
-            public static string localizedTitleMultiplePrefabs = L10n.Tr("Prefab Assets");
-            public static string localizedTitleSinglePrefab = L10n.Tr("Prefab Asset");
-            public static GUIStyle openButtonStyle = "AC Button";
+            public static readonly GUIContent missingScriptsHelpText = EditorGUIUtility.TrTextContent("Prefab has missing scripts. Open Prefab to fix the issue.");
+            public static readonly GUIContent missingSerializeReferenceHelpText = EditorGUIUtility.TrTextContent("Prefab has missing SerializeReference Types. Open Prefab to fix the issue. Changing the Prefab directly will cause those types to be lost.");
+            public static readonly GUIContent multiSelectionMissingScriptsHelpText = EditorGUIUtility.TrTextContent("Some of the selected Prefabs have missing scripts and needs to be fixed before editing them. Click to Open Prefab to fix the issue.");
+            public static readonly GUIContent savingFailedHelpText = EditorGUIUtility.TrTextContent("Saving has failed. Check the Console window to get more insight into what needs to be fixed on the Prefab Asset.\n\nOpen Prefab to fix the issue.");
+            public static readonly GUIContent variantOfText = EditorGUIUtility.TrTextContent("Variant Parent");
+            public static readonly string localizedTitleMultiplePrefabs = L10n.Tr("Prefab Assets");
+            public static readonly string localizedTitleSinglePrefab = L10n.Tr("Prefab Asset");
+            public static readonly GUIStyle openButtonStyle = "AC Button";
             public static readonly GUIContent hierarchyIcon = EditorGUIUtility.IconContent("UnityEditor.SceneHierarchyWindow");
             public const int kHierarchyIconWidth = 44;
         }

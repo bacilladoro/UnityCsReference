@@ -5,14 +5,16 @@
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.Scripting;
 
 namespace UnityEditor.PackageManager
 {
     [System.Obsolete(@"BuildUtilities is deprecated and will be removed in a later version, use PluginImporter.SetIncludeInBuildDelegate instead.", false)]
-    public static class BuildUtilities
+    public static partial class BuildUtilities
     {
+        [AutoStaticsCleanupOnCodeReload]
         private static Dictionary<string, IShouldIncludeInBuildCallback> m_PackageNameToCallback = new Dictionary<string, IShouldIncludeInBuildCallback>();
 
         public static void RegisterShouldIncludeInBuildCallback(IShouldIncludeInBuildCallback cb)

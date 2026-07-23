@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEngine;
 
@@ -10,8 +11,11 @@ namespace UnityEditorInternal
 {
     internal class Slider2D
     {
+        [NoAutoStaticsCleanup] // transient drag state; overwritten at the start of each drag operation
         private static Vector2 s_CurrentMousePosition;
+        [NoAutoStaticsCleanup] // transient drag state; overwritten at the start of each drag operation
         private static Vector3 s_StartPosition;
+        [NoAutoStaticsCleanup] // transient drag state; overwritten at the start of each drag operation
         private static Vector2 s_StartPlaneOffset;
 
         // Returns the new handlePos

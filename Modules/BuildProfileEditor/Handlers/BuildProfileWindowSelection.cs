@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System.Collections.Generic;
+using UnityEditor.Build.Analysis;
 using UnityEditor.Build.Profile.Elements;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -29,6 +30,7 @@ namespace UnityEditor.Build.Profile.Handlers
         readonly Image m_SelectedProfileImage;
         readonly Label m_SelectedProfileNameLabel;
         readonly Label m_SelectedProfilePlatformLabel;
+        readonly BuildProfileLastBuildLine m_LastBuildLine;
 
         readonly List<BuildProfile> m_SelectedBuildProfiles;
         readonly Dictionary<GUID, int> m_MultiSelectLabelCountMap;
@@ -50,6 +52,11 @@ namespace UnityEditor.Build.Profile.Handlers
             m_SelectedProfileImage = rootVisualElement.Q<Image>("selected-profile-image");
             m_SelectedProfileNameLabel = rootVisualElement.Q<Label>("selected-profile-name");
             m_SelectedProfilePlatformLabel = rootVisualElement.Q<Label>("selected-profile-platform");
+            m_LastBuildLine = new BuildProfileLastBuildLine(
+                rootVisualElement,
+                BuildProfileLastBuild.GetLatestForProfile,
+                BuildAnalysisWindowLauncher.OpenWithBuild,
+                BuildHistory.GetRevision);
         }
 
         internal void UpdateSelectionGUI(BuildProfile profile)
@@ -59,6 +66,7 @@ namespace UnityEditor.Build.Profile.Handlers
                 m_SelectedProfileImage.image = BuildProfileModuleUtil.GetPlatformIcon(new GUID(string.Empty));
                 m_SelectedProfileNameLabel.text = $"{m_SelectedBuildProfiles.Count} Build Profiles";
                 m_SelectedProfilePlatformLabel.text = GetMultiSelectLabelString();
+                m_LastBuildLine.Update(null);
             }
             else
             {
@@ -78,6 +86,8 @@ namespace UnityEditor.Build.Profile.Handlers
                     m_SelectedProfilePlatformLabel.text = $"{platformDisplayName} Build Profile";
                     m_SelectedProfilePlatformLabel.Show();
                 }
+
+                m_LastBuildLine.Update(profile);
             }
         }
 
@@ -91,6 +101,7 @@ namespace UnityEditor.Build.Profile.Handlers
             m_SelectedProfileImage.image = BuildProfileModuleUtil.GetPlatformIcon(platformId);
             m_SelectedProfileNameLabel.text = BuildProfileModuleUtil.GetClassicPlatformDisplayName(platformId);
             m_SelectedProfilePlatformLabel.Hide();
+            m_LastBuildLine.Update(null);
         }
 
         /// <summary>

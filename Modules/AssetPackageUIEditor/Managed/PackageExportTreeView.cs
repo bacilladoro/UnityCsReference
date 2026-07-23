@@ -12,6 +12,7 @@ using UnityEditorInternal;
 using UnityEditor.Experimental;
 using Unity.Collections;
 using UnityEditor.AssetPackage;
+using Unity.Scripting.LifecycleManagement;
 
 using TreeViewController = UnityEditor.IMGUI.Controls.TreeViewController<int>;
 using TreeViewItem = UnityEditor.IMGUI.Controls.TreeViewItem<int>;
@@ -245,7 +246,7 @@ namespace UnityEditor
         {
             internal static class Constants
             {
-                public static Texture2D folderIcon = EditorGUIUtility.FindTexture(EditorResources.folderIconName);
+                public static readonly Texture2D folderIcon = EditorGUIUtility.FindTexture(EditorResources.folderIconName);
             }
 
             public Action<PackageExportTreeViewItem> itemWasToggled;

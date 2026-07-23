@@ -6,6 +6,7 @@ using UnityEngine;
 using System;
 using System.Collections.Generic;
 using UnityEditor.EditorTools;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -40,7 +41,7 @@ namespace UnityEditor
         }
     }
 
-    class EditorPivotManager : EditorToolStateManager<EditorPivotManager, EditorPivotManager.EditorPivotState>
+    partial class EditorPivotManager : EditorToolStateManager<EditorPivotManager, EditorPivotManager.EditorPivotState>
     {
         [Serializable]
         internal class EditorPivotState: EditorToolStateBase
@@ -402,7 +403,9 @@ namespace UnityEditor
             }
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action availableSettingsChanged;
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<Type> availableSettingsChangedForType;
 
         EditorPivotManager()

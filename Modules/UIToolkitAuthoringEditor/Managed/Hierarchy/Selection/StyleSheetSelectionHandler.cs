@@ -43,28 +43,32 @@ internal sealed class StyleSheetSelectionHandler : IStyleSheetSelectionHandler
     }
 
     [AutoStaticsCleanupOnCodeReload]
-    private static readonly Dictionary<StyleSheet, RefCountedSelection> s_SelectionMappings = new();
+    private static readonly Dictionary<(StyleSheet styleSheet, bool isReadOnly), RefCountedSelection> s_SelectionMappings = new();
 
-    Dictionary<StyleSheet, RefCountedSelection> SelectionMapping => s_SelectionMappings;
-
-    private StyleSheetSelection Acquire(StyleSheet styleSheet)
+    private StyleSheetSelection Acquire(StyleSheet styleSheet, bool isReadOnly)
     {
-        if (SelectionMapping.TryGetValue(styleSheet, out var refCounted))
+        var key = (styleSheet, isReadOnly);
+        if (s_SelectionMappings.TryGetValue(key, out var refCounted))
         {
-            SelectionMapping[styleSheet] = refCounted.Acquire();
-            return (StyleSheetSelection)refCounted.SelectionObject;
+            s_SelectionMappings[key] = refCounted.Acquire();
+            var existing = (StyleSheetSelection)refCounted.SelectionObject;
+            existing.IsReadOnly = isReadOnly;
+            return existing;
         }
 
         var selectionObject = ScriptableObject.CreateInstance<StyleSheetSelection>();
         selectionObject.hideFlags |= HideFlags.DontUnloadUnusedAsset | HideFlags.DontSaveInEditor;
         selectionObject.StyleSheet = styleSheet;
-        SelectionMapping[styleSheet] = new RefCountedSelection(selectionObject, 1);
+        selectionObject.IsReadOnly = isReadOnly;
+        s_SelectionMappings[key] = new RefCountedSelection(selectionObject, 1);
         return selectionObject;
     }
 
     private void Remap(StyleSheet styleSheet, UISelectionObject instance)
     {
-        if (SelectionMapping.TryGetValue(styleSheet, out var refCounted))
+        // Remapping only applies to editable selections as inherited (read-only) stylesheets are never remapped.
+        var key = (styleSheet, false);
+        if (s_SelectionMappings.TryGetValue(key, out var refCounted))
         {
             if (refCounted.Count > 0 || !refCounted.Alive)
                 Debug.LogError("Trying to remap something that is already mapped");
@@ -76,12 +80,13 @@ internal sealed class StyleSheetSelectionHandler : IStyleSheetSelectionHandler
             styleSheetSelection.StyleSheet = styleSheet;
         }
 
-        SelectionMapping[styleSheet] = new RefCountedSelection(instance, 1);
+        s_SelectionMappings[key] = new RefCountedSelection(instance, 1);
     }
 
-    private bool Release(StyleSheet styleSheet)
+    private bool Release(StyleSheet styleSheet, bool isReadOnly)
     {
-        if (SelectionMapping.TryGetValue(styleSheet, out var refCounted))
+        var key = (styleSheet, isReadOnly);
+        if (s_SelectionMappings.TryGetValue(key, out var refCounted))
         {
             if (refCounted.Count == 1 || !refCounted.Alive)
             {
@@ -90,43 +95,44 @@ internal sealed class StyleSheetSelectionHandler : IStyleSheetSelectionHandler
                     Undo.ClearUndo(refCounted.SelectionObject);
                     Object.DestroyImmediate(refCounted.SelectionObject);
                 }
-                SelectionMapping.Remove(styleSheet);
+                s_SelectionMappings.Remove(key);
                 return true;
             }
 
-            SelectionMapping[styleSheet] = refCounted.Release();
+            s_SelectionMappings[key] = refCounted.Release();
         }
 
         return false;
     }
 
-    public EntityId AcquireInstanceId(StyleSheet styleSheet)
+    public EntityId AcquireInstanceId(StyleSheet styleSheet, bool isReadOnly)
     {
-        var selection = Acquire(styleSheet);
+        var selection = Acquire(styleSheet, isReadOnly);
         return selection.GetEntityId();
     }
 
-    public void ReleaseInstanceId(StyleSheet styleSheet)
+    public void ReleaseInstanceId(StyleSheet styleSheet, bool isReadOnly)
     {
-        Release(styleSheet);
+        Release(styleSheet, isReadOnly);
     }
 
     public void Remap(List<StyleSheetRemap> remappings)
     {
         foreach (var remap in remappings)
         {
-            if (SelectionMapping.TryGetValue(remap.Previous, out var selection))
+            var key = (remap.Previous, false);
+            if (s_SelectionMappings.TryGetValue(key, out var selection))
             {
-                SelectionMapping[remap.Previous] = selection.Kill();
+                s_SelectionMappings[key] = selection.Kill();
                 Remap(remap.Remapped, selection.SelectionObject);
-                Release(remap.Previous);
+                Release(remap.Previous, false);
             }
         }
     }
 
     public void Clear()
     {
-        foreach (var kvp in SelectionMapping)
+        foreach (var kvp in s_SelectionMappings)
         {
             if (kvp.Value.Alive)
             {
@@ -134,6 +140,6 @@ internal sealed class StyleSheetSelectionHandler : IStyleSheetSelectionHandler
                 Object.DestroyImmediate(kvp.Value.SelectionObject);
             }
         }
-        SelectionMapping.Clear();
+        s_SelectionMappings.Clear();
     }
 }

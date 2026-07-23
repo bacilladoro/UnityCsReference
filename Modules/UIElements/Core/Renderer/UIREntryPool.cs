@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using Unity.Jobs.LowLevel.Unsafe;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEngine.UIElements.UIR
 {
@@ -18,7 +19,9 @@ namespace UnityEngine.UIElements.UIR
         Stack<Entry>[] m_ThreadEntries;
         ImplicitPool<Entry> m_SharedPool;
 
+        [NoAutoStaticsCleanup] // stateless factory lambda; no captured state
         static readonly Func<Entry> k_CreateAction = () => new Entry();
+        [NoAutoStaticsCleanup] // stateless reset lambda; no captured state
         static readonly Action<Entry> k_ResetAction = e => e.Reset();
 
         public EntryPool(int maxCapacity = 1024)

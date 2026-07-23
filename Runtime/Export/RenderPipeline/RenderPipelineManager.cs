@@ -8,17 +8,22 @@ using Unity.Collections.LowLevel.Unsafe;
 using System.Collections;
 using UnityEngine.Pool;
 using UnityEngine.Scripting;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEngine.Rendering
 {
     public static partial class RenderPipelineManager
     {
+        [NoAutoStaticsCleanup] // reset by [OnCodeUnloading] CleanupRenderPipeline()
         private static bool s_CleanUpPipeline = false;
 
+        [NoAutoStaticsCleanup] // reset by [OnCodeUnloading] CleanupRenderPipeline()
         private static RenderPipelineAsset s_CurrentPipelineAsset;
 
         internal static RenderPipelineAsset currentPipelineAsset => s_CurrentPipelineAsset;
+        [NoAutoStaticsCleanup] // disposed by [OnCodeUnloading] CleanupRenderPipeline()
         static RenderPipeline s_CurrentPipeline = null;
+        [AutoStaticsCleanupOnCodeReload]
         static bool s_PendingRPAssignationToRaise = false;
         public static RenderPipeline currentPipeline
         {
@@ -34,15 +39,23 @@ namespace UnityEngine.Rendering
             }
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<ScriptableRenderContext, List<Camera>> beginContextRendering;
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<ScriptableRenderContext, List<Camera>> endContextRendering;
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<ScriptableRenderContext, Camera> beginCameraRendering;
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<ScriptableRenderContext, Camera> endCameraRendering;
 
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action activeRenderPipelineTypeChanged;
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<RenderPipelineAsset, RenderPipelineAsset> activeRenderPipelineAssetChanged;
 
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action activeRenderPipelineCreated;
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action activeRenderPipelineDisposed;
         public static bool pipelineSwitchCompleted => ReferenceEquals(s_CurrentPipelineAsset, GraphicsSettings.currentRenderPipeline) && !IsPipelineRequireCreation();
 
@@ -117,6 +130,10 @@ namespace UnityEngine.Rendering
                 s_CleanUpPipeline = true;
             }
         }
+
+        // Coordinated pipeline teardown on code unload; the [NoAutoStaticsCleanup] statics above rely on it.
+        [OnCodeUnloading]
+        static void OnCodeUnloading() => CleanupRenderPipeline();
 
         [RequiredByNativeCode]
         internal static void CleanupRenderPipeline()

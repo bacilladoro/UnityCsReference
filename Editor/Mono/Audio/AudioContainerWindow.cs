@@ -14,11 +14,12 @@ using UnityEngine.Assertions;
 using UnityEngine.Audio;
 using UnityEngine.Scripting;
 using UnityEngine.UIElements;
+using Unity.Scripting.LifecycleManagement;
 using Object = UnityEngine.Object;
 
 namespace UnityEditor;
 
-sealed class AudioContainerWindow : EditorWindow
+sealed partial class AudioContainerWindow : EditorWindow
 {
     enum Icons
     {
@@ -32,6 +33,7 @@ sealed class AudioContainerWindow : EditorWindow
     /// <summary>
     /// The cached instance of the window, if it is open.
     /// </summary>
+    [AutoStaticsCleanupOnCodeReload]
     internal static AudioContainerWindow Instance { get; private set; }
 
     internal readonly AudioContainerWindowState State = new();

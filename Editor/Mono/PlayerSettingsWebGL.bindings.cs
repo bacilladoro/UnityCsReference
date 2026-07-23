@@ -284,12 +284,12 @@ namespace UnityEditor
                 set;
             }
 
-            [NativeProperty("webProgressiveAssetLoading", TargetType.Field)]
+            [NativeProperty("WebProgressiveAssetLoading")]
             public extern static bool progressiveAssetLoading
             {
-                [StaticAccessor("GetPlayerSettings().GetEditorOnly()", StaticAccessorType.Dot)]
+                [StaticAccessor("GetPlayerSettings()", StaticAccessorType.Dot)]
                 get;
-                [StaticAccessor("GetPlayerSettings().GetEditorOnlyForUpdate()", StaticAccessorType.Dot)]
+                [StaticAccessor("GetPlayerSettings()", StaticAccessorType.Dot)]
                 set;
             }
         }

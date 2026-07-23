@@ -10,10 +10,34 @@ using Unity.Collections;
 
 namespace UnityEngine.VFX
 {
+    ///<summary>Extension methods for adding <see cref="Rendering.GraphicsStateCollection.GraphicsState">GraphicsStates</see> into a <see cref="Rendering.GraphicsStateCollection" /> from <see cref="VisualEffectAsset" />.</summary>
     [NativeHeader("Modules/VFX/Public/ScriptBindings/VFXGraphicsStateCollectionBindings.h")]
     public static class VFXGraphicsStateCollectionBindings
     {
 
+        ///<summary>Generates and adds new graphics states to the collection from an array of visual effect assets.</summary>
+        ///<remarks>This method creates and attempts to add graphics states by processing arrays of assets. This is a convenient way to populate the collection without constructing each 
+        ///                <see cref="Rendering.GraphicsStateCollection.GraphicsState" /> object manually. Each graphics state is populated with data from the mesh, render state, and render pass, and sets any remaining fields to their default values. 
+        ///                To set remaining fields to specific values instead, use <see cref="AddGraphicsStatesFromReference" />.
+        ///
+        ///                - When you provide a <see cref="VisualEffectAsset" /> array, this function scans each asset to get pairs of shaders and geometry used in the render outputs.
+        ///
+        ///                For each individual pair, the function generates graphics states for all combinations of that mesh's submeshes and that material's shader passes. 
+        ///                The generated shader variants use the set of <see cref="Material.enabledKeywords">enabled keywords</see> for each <see cref="Material" /> and include the global shader keywords that are **currently enabled** in the active context if they are not explicitly provided.
+        ///                Finally, the function will not add a graphics state if an identical one already exists for a given shader variant. 
+        ///
+        ///                If a list of <see cref="Rendering.GraphicsStateCollection.GraphicsState" /> objects is already available, then <see cref="Rendering.GraphicsStateCollection.AddGraphicsStateForVariant" /> can instead be used to add to the collection.</remarks>
+        ///<param name="graphicsStateCollection">The GraphicsStateCollection in which to add the graphics state.</param>
+        ///<param name="visualEffectAssets">An array of <see cref="VisualEffectAsset" /> files to scan for each unique mesh and shader pairs.</param>
+        ///<param name="samples">The number of samples per pixel in this rendering configuration.</param>
+        ///<param name="attachments">The array of color attachments used in this rendering configuration.</param>
+        ///<param name="subPasses">The array containing information of each subpass.</param>
+        ///<param name="subPassIndex">The index of the active subpass in this rendering configuration.</param>
+        ///<param name="depthAttachmentIndex">The index of the attachment to be used as the depth/stencil buffer for this rendering configuration.</param>
+        ///<param name="shadingRateIndex">The index of the attachment to be used as the shading rate image for this rendering configuration.</param>
+        ///<returns>True if at least one new graphics state was successfully added, false otherwise.</returns>
+        ///<seealso cref="AddGraphicsStatesFromReference" />
+        ///<seealso cref="CommandBuffer.BeginRenderPass" />
         public static bool AddGraphicsStates(this GraphicsStateCollection graphicsStateCollection, VisualEffectAsset[] visualEffectAssets, int samples, NativeArray<AttachmentDescriptor> attachments, NativeArray<SubPassDescriptor> subPasses,
             [uei.DefaultValue("0")] int subPassIndex = 0, [uei.DefaultValue("-1")] int depthAttachmentIndex = -1, [uei.DefaultValue("-1")] int shadingRateIndex = -1)
         {
@@ -21,6 +45,30 @@ namespace UnityEngine.VFX
             return AddGraphicsStates(graphicsStateCollection, visualEffectAssets, globalKeywords, samples, attachments, subPasses, subPassIndex, depthAttachmentIndex, shadingRateIndex);
         }
 
+        ///<summary>Generates and adds new graphics states to the collection from an array of visual effect assets.</summary>
+        ///<remarks>This method creates and attempts to add graphics states by processing arrays of assets. This is a convenient way to populate the collection without constructing each 
+        ///                <see cref="Rendering.GraphicsStateCollection.GraphicsState" /> object manually. Each graphics state is populated with data from the mesh, render state, and render pass, and sets any remaining fields to their default values. 
+        ///                To set remaining fields to specific values instead, use <see cref="AddGraphicsStatesFromReference" />.
+        ///
+        ///                - When you provide a <see cref="VisualEffectAsset" /> array, this function scans each asset to get pairs of shaders and geometry used in the render outputs.
+        ///
+        ///                For each individual pair, the function generates graphics states for all combinations of that mesh's submeshes and that material's shader passes. 
+        ///                The generated shader variants use the set of <see cref="Material.enabledKeywords">enabled keywords</see> for each <see cref="Material" /> and include the global shader keywords that are **currently enabled** in the active context if they are not explicitly provided.
+        ///                Finally, the function will not add a graphics state if an identical one already exists for a given shader variant. 
+        ///
+        ///                If a list of <see cref="Rendering.GraphicsStateCollection.GraphicsState" /> objects is already available, then <see cref="Rendering.GraphicsStateCollection.AddGraphicsStateForVariant" /> can instead be used to add to the collection.</remarks>
+        ///<param name="graphicsStateCollection">The GraphicsStateCollection in which to add the graphics state.</param>
+        ///<param name="visualEffectAssets">An array of <see cref="VisualEffectAsset" /> files to scan for each unique mesh and shader pairs.</param>
+        ///<param name="globalKeywords">An array of <see cref="GlobalKeyword" /> objects to use in conjunction with each material's enabled keywords when generating shader variants.</param>
+        ///<param name="samples">The number of samples per pixel in this rendering configuration.</param>
+        ///<param name="attachments">The array of color attachments used in this rendering configuration.</param>
+        ///<param name="subPasses">The array containing information of each subpass.</param>
+        ///<param name="subPassIndex">The index of the active subpass in this rendering configuration.</param>
+        ///<param name="depthAttachmentIndex">The index of the attachment to be used as the depth/stencil buffer for this rendering configuration.</param>
+        ///<param name="shadingRateIndex">The index of the attachment to be used as the shading rate image for this rendering configuration.</param>
+        ///<returns>True if at least one new graphics state was successfully added, false otherwise.</returns>
+        ///<seealso cref="AddGraphicsStatesFromReference" />
+        ///<seealso cref="CommandBuffer.BeginRenderPass" />
         public static bool AddGraphicsStates(this GraphicsStateCollection graphicsStateCollection, VisualEffectAsset[] visualEffectAssets, GlobalKeyword[] globalKeywords, int samples, NativeArray<AttachmentDescriptor> attachments, NativeArray<SubPassDescriptor> subPasses,
             [uei.DefaultValue("0")] int subPassIndex = 0, [uei.DefaultValue("-1")] int depthAttachmentIndex = -1, [uei.DefaultValue("-1")] int shadingRateIndex = -1)
         {
@@ -32,6 +80,21 @@ namespace UnityEngine.VFX
             return added;
         }
 
+        ///<summary>Generates and adds new graphics states from arrays of assets, using a reference graphics state to initialize unspecified values.</summary>
+        ///<remarks>This function operates like <see cref="AddGraphicsStates" />, but instead of using default values for <see cref="Rendering.GraphicsStateCollection.GraphicsState" /> fields, 
+        ///                it copies values from the provided <c>refState</c> for any fields not determined by the input parameters.</remarks>
+        ///<param name="graphicsStateCollection">The GraphicsStateCollection in which to add the graphics state.</param>
+        ///<param name="refState">The reference <see cref="Rendering.GraphicsStateCollection.GraphicsState">GraphicsState</see> to use as a template for initializing unspecified values.</param>
+        ///<param name="visualEffectAssets">An array of <see cref="VisualEffectAsset" /> files to scan for each unique mesh and shader pairs.</param>
+        ///<param name="samples">The number of samples per pixel in this rendering configuration.</param>
+        ///<param name="attachments">The array of color attachments used in this rendering configuration.</param>
+        ///<param name="subPasses">The array containing information of each subpass.</param>
+        ///<param name="subPassIndex">The index of the active subpass in this rendering configuration.</param>
+        ///<param name="depthAttachmentIndex">The index of the attachment to be used as the depth/stencil buffer for this rendering configuration.</param>
+        ///<param name="shadingRateIndex">The index of the attachment to be used as the shading rate image for this rendering configuration.</param>
+        ///<returns>True if at least one new graphics state was successfully added, false otherwise.</returns>
+        ///<seealso cref="AddGraphicsStates" />
+        ///<seealso cref="CommandBuffer.BeginRenderPass" />
         public static bool AddGraphicsStatesFromReference(this GraphicsStateCollection graphicsStateCollection, GraphicsStateCollection.GraphicsState refState, VisualEffectAsset[] visualEffectAssets, int samples, NativeArray<AttachmentDescriptor> attachments, NativeArray<SubPassDescriptor> subPasses,
             [uei.DefaultValue("0")] int subPassIndex = 0, [uei.DefaultValue("-1")] int depthAttachmentIndex = -1, [uei.DefaultValue("-1")] int shadingRateIndex = -1)
         {
@@ -39,17 +102,52 @@ namespace UnityEngine.VFX
             return AddGraphicsStatesFromReference_Internal(graphicsStateCollection, refState, visualEffectAssets, globalKeywords, samples, attachments, subPasses, subPassIndex, depthAttachmentIndex, shadingRateIndex);
         }
 
+        ///<summary>Generates and adds new graphics states from arrays of assets, using a reference graphics state to initialize unspecified values.</summary>
+        ///<remarks>This function operates like <see cref="AddGraphicsStates" />, but instead of using default values for <see cref="Rendering.GraphicsStateCollection.GraphicsState" /> fields, 
+        ///                it copies values from the provided <c>refState</c> for any fields not determined by the input parameters.</remarks>
+        ///<param name="graphicsStateCollection">The GraphicsStateCollection in which to add the graphics state.</param>
+        ///<param name="refState">The reference <see cref="Rendering.GraphicsStateCollection.GraphicsState">GraphicsState</see> to use as a template for initializing unspecified values.</param>
+        ///<param name="visualEffectAssets">An array of <see cref="VisualEffectAsset" /> files to scan for each unique mesh and shader pairs.</param>
+        ///<param name="globalKeywords">An array of <see cref="GlobalKeyword" /> objects to use in conjunction with each material's enabled keywords when generating shader variants.</param>
+        ///<param name="samples">The number of samples per pixel in this rendering configuration.</param>
+        ///<param name="attachments">The array of color attachments used in this rendering configuration.</param>
+        ///<param name="subPasses">The array containing information of each subpass.</param>
+        ///<param name="subPassIndex">The index of the active subpass in this rendering configuration.</param>
+        ///<param name="depthAttachmentIndex">The index of the attachment to be used as the depth/stencil buffer for this rendering configuration.</param>
+        ///<param name="shadingRateIndex">The index of the attachment to be used as the shading rate image for this rendering configuration.</param>
+        ///<returns>True if at least one new graphics state was successfully added, false otherwise.</returns>
+        ///<seealso cref="AddGraphicsStates" />
+        ///<seealso cref="CommandBuffer.BeginRenderPass" />
         public static bool AddGraphicsStatesFromReference(this GraphicsStateCollection graphicsStateCollection, GraphicsStateCollection.GraphicsState refState, VisualEffectAsset[] visualEffectAssets, GlobalKeyword[] globalKeywords, int samples, NativeArray<AttachmentDescriptor> attachments, NativeArray<SubPassDescriptor> subPasses,
             [uei.DefaultValue("0")] int subPassIndex = 0, [uei.DefaultValue("-1")] int depthAttachmentIndex = -1, [uei.DefaultValue("-1")] int shadingRateIndex = -1)
         {
             return AddGraphicsStatesFromReference_Internal(graphicsStateCollection, refState, visualEffectAssets, globalKeywords, samples, attachments, subPasses, subPassIndex, depthAttachmentIndex, shadingRateIndex);
         }
 
+        ///<summary>Generates and adds new graphics states from arrays of assets, using a reference graphics state to initialize unspecified values.</summary>
+        ///<remarks>This function operates like <see cref="AddGraphicsStates" />, but instead of using default values for <see cref="Rendering.GraphicsStateCollection.GraphicsState" /> fields, 
+        ///                it copies values from the provided <c>refState</c> for any fields not determined by the input parameters.</remarks>
+        ///<param name="graphicsStateCollection">The GraphicsStateCollection in which to add the graphics state.</param>
+        ///<param name="refState">The reference <see cref="Rendering.GraphicsStateCollection.GraphicsState">GraphicsState</see> to use as a template for initializing unspecified values.</param>
+        ///<param name="visualEffectAssets">An array of <see cref="VisualEffectAsset" /> files to scan for each unique mesh and shader pairs.</param>
+        ///<returns>True if at least one new graphics state was successfully added, false otherwise.</returns>
+        ///<seealso cref="AddGraphicsStates" />
+        ///<seealso cref="CommandBuffer.BeginRenderPass" />
         public static bool AddGraphicsStatesFromReference(this GraphicsStateCollection graphicsStateCollection, GraphicsStateCollection.GraphicsState refState, VisualEffectAsset[] visualEffectAssets)
         {
             return AddGraphicsStatesFromReference(graphicsStateCollection, refState, visualEffectAssets, Shader.enabledGlobalKeywords);
         }
 
+        ///<summary>Generates and adds new graphics states from arrays of assets, using a reference graphics state to initialize unspecified values.</summary>
+        ///<remarks>This function operates like <see cref="AddGraphicsStates" />, but instead of using default values for <see cref="Rendering.GraphicsStateCollection.GraphicsState" /> fields, 
+        ///                it copies values from the provided <c>refState</c> for any fields not determined by the input parameters.</remarks>
+        ///<param name="graphicsStateCollection">The GraphicsStateCollection in which to add the graphics state.</param>
+        ///<param name="refState">The reference <see cref="Rendering.GraphicsStateCollection.GraphicsState">GraphicsState</see> to use as a template for initializing unspecified values.</param>
+        ///<param name="visualEffectAssets">An array of <see cref="VisualEffectAsset" /> files to scan for each unique mesh and shader pairs.</param>
+        ///<param name="globalKeywords">An array of <see cref="GlobalKeyword" /> objects to use in conjunction with each material's enabled keywords when generating shader variants.</param>
+        ///<returns>True if at least one new graphics state was successfully added, false otherwise.</returns>
+        ///<seealso cref="AddGraphicsStates" />
+        ///<seealso cref="CommandBuffer.BeginRenderPass" />
         public static bool AddGraphicsStatesFromReference(this GraphicsStateCollection graphicsStateCollection, GraphicsStateCollection.GraphicsState refState, VisualEffectAsset[] visualEffectAssets, GlobalKeyword[] globalKeywords)
         {
             int samples = refState.sampleCount;

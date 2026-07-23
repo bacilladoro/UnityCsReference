@@ -6,6 +6,7 @@ using System;
 using System.Runtime.CompilerServices;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEngine.UIElements.UIR
 {
@@ -33,6 +34,7 @@ namespace UnityEngine.UIElements.UIR
         MemoryLabel m_Label;
 
         AtomicSafetyHandle m_Safety;
+        [NoAutoStaticsCleanup] // safety ID lazily initialized; value type counter
         static int s_StaticSafetyId;
 
         public int Length { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => m_Length; }

@@ -61,6 +61,18 @@ partial struct LayoutNode
         set => Style.FlexWrap = value;
     }
 
+    public Length ColumnGap
+    {
+        get => ReadOnlyStyle.ColumnGap;
+        set => Style.ColumnGap = value;
+    }
+
+    public Length RowGap
+    {
+        get => ReadOnlyStyle.RowGap;
+        set => Style.RowGap = value;
+    }
+
     public float FlexGrow
     {
         get => ReadOnlyStyle.FlexGrow;

@@ -7,6 +7,7 @@ using System.Runtime.CompilerServices;
 using Unity.Collections;
 using Unity.Jobs.LowLevel.Unsafe;
 using Unity.Profiling;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Profiling;
 using UnityEngine.UIElements.UIR;
 
@@ -288,11 +289,13 @@ namespace UnityEngine.UIElements
             return exp;
         }
 
+        [NoAutoStaticsCleanup] // monotonically-increasing ID counter; persisting across reload just continues the sequence
         static long s_NextMeshModifierId;
 
         public static long GetNextMeshModifierId() => unchecked(++s_NextMeshModifierId);
 
         [ThreadStatic]
+        [NoAutoStaticsCleanup] // ThreadStatic per-thread cache; re-initialized on access
         static int? s_ThreadIndex;
 
         [MethodImpl(MethodImplOptionsEx.AggressiveInlining)]

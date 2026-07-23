@@ -5,6 +5,7 @@
 using UnityEngine;
 using UnityEditor;
 using System;
+using Unity.Scripting.LifecycleManagement;
 using RenameOverlay = UnityEditor.RenameOverlay<int>;
 
 namespace UnityEditorInternal
@@ -38,6 +39,7 @@ namespace UnityEditorInternal
             public GUIStyle reorderableListLabel = "ReorderableList";
             public GUIStyle reorderableListLabelRightAligned = "ReorderableListRightAligned";
         }
+        [NoAutoStaticsCleanup] // Lazy GUIStyle holder (named built-in styles), re-initialized on first access via null-check; safe to persist across reload.
         static Styles s_Styles;
 
         public GUIStyle elementStyle

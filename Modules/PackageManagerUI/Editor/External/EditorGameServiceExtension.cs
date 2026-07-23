@@ -5,12 +5,13 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 
 namespace UnityEditor.PackageManager.UI.Internal
 {
     // The internal modifier is used (instead of private) to give our test project access to these properties/methods
-    internal class EditorGameServiceExtension : IWindowCreatedHandler, IPackageSelectionChangedHandler
+    internal partial class EditorGameServiceExtension : IWindowCreatedHandler, IPackageSelectionChangedHandler
     {
         public interface ICloudProjectSettings
         {
@@ -39,9 +40,13 @@ namespace UnityEditor.PackageManager.UI.Internal
         private const int k_ServicesPriority = 200;
         public const string k_ServicesExtensionPageName = "services";
 
+        [AutoStaticsCleanupOnCodeReload]
         internal static Dictionary<string, int> groupIndexes = new Dictionary<string, int>();
+        [AutoStaticsCleanupOnCodeReload]
         private static Dictionary<string, string> s_GroupNames = new Dictionary<string, string>();
+        [AutoStaticsCleanupOnCodeReload]
         private static Dictionary<string, string> s_GroupMap = new Dictionary<string, string>();
+        [AutoStaticsCleanupOnCodeReload]
         internal static ICloudProjectSettings cloudProjectSettings = new CloudProjectSettings();
 
         internal static bool FilterServicesPackage(IPackage package)

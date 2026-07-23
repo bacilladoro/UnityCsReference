@@ -231,7 +231,22 @@ namespace UnityEditor.Rendering
         }
 
         extern public static ShaderBuildSettings GetShaderBuildSettings();
-        extern public static void SetShaderBuildSettings(ShaderBuildSettings settings);
+
+        [NativeName("SetShaderBuildSettings")] extern internal static void SetShaderBuildSettingsImpl(ShaderBuildSettings settings);
+
+        public static void SetShaderBuildSettings(ShaderBuildSettings settings)
+        {
+            // Sanitize instead of throwing: compilerSettings is internal, so a caller editing
+            // something else (e.g. Defines) can't repair bad rows read from disk (e.g. a project
+            // saved by an older editor version or hand-edited YAML).
+            var original = settings.compilerSettings ?? Array.Empty<ShaderBuildSettings.ShaderCompilerSettings>();
+            var sanitized = ShaderBuildSettings.SanitizeShaderCompilerSettings(original);
+            if (!ReferenceEquals(sanitized, original))
+                Debug.LogWarning("SetShaderBuildSettings: dropped invalid or duplicate shader compiler settings rows.");
+            settings.compilerSettings = sanitized;
+
+            SetShaderBuildSettingsImpl(settings);
+        }
         extern public static bool ShouldValidateGraphicsForActiveBuildTarget();
 
         extern public static LightBaker defaultLightBaker { get; set; }

@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEditor.PackageManager;
 using UnityEditor.UIElements;
@@ -21,17 +22,21 @@ using TreeViewItem = UnityEngine.UIElements.TreeViewItemData<Unity.UI.Builder.Bu
 
 namespace Unity.UI.Builder
 {
-    class BuilderLibraryProjectScanner
+    partial class BuilderLibraryProjectScanner
     {
+        [NoAutoStaticsCleanup] // fixed list of engine namespace prefixes to filter out, never mutated; safe to persist
         static readonly List<string> s_NameSpacesToAvoid = new List<string> { "Unity", "UnityEngine", "UnityEditor" };
 
+        [NoAutoStaticsCleanup] // fixed allowlist of package names, never mutated; safe to persist
         private static readonly HashSet<string> s_PermittedPackagesSet = new HashSet<string>()
         {
             "com.unity.dt.app-ui",
         };
 
         readonly SearchFilter m_SearchFilter;
+        [AutoStaticsCleanupOnCodeReload]
         private static IEnumerable<HierarchyIterator> m_Assets;
+        [AutoStaticsCleanupOnCodeReload]
         private static readonly Dictionary<string, string> m_AssetIDAndPathPair = new Dictionary<string, string>();
 
         public BuilderLibraryProjectScanner()
@@ -42,6 +47,10 @@ namespace Unity.UI.Builder
                 classNames = new[] { "VisualTreeAsset" }
             };
         }
+
+        static bool IsUnityBuiltInEditorAssembly(Assembly assembly) =>
+            assembly.GetCustomAttribute<AssemblyIsEditorAssembly>() != null &&
+            assembly.GetName().Name.StartsWith("UnityEditor");
 
         static bool AllowPackageType(Type type)
         {
@@ -72,6 +81,19 @@ namespace Unity.UI.Builder
 
                     if (elementAttribute == null || elementAttribute.visibility == LibraryVisibility.Default)
                     {
+                        if (!Unsupported.IsDeveloperMode())
+                        {
+                            var hidden = IsUnityBuiltInEditorAssembly(elementType.Assembly);
+                            if (!hidden)
+                            {
+                                var a = elementType.Assembly.GetCustomAttribute<UILibraryVisibilityAttribute>();
+                                if (a != null && a.Visibility == LibraryVisibility.Hidden)
+                                    hidden = true;
+                            }
+                            if (hidden)
+                                continue;
+                        }
+
                         // Avoid adding our own internal factories (like Package Manager templates).
                         if (!Unsupported.IsDeveloperMode() && hasNamespace && s_NameSpacesToAvoid.Exists(elementType.Namespace.StartsWith))
                         {

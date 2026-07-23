@@ -204,7 +204,7 @@ namespace UnityEngine.UIElements
             }
         }
 
-        public override void ScrollToItem(int index)
+        protected override void ScrollToItemVertically(int index)
         {
             if (index < ReusableCollectionItem.UndefinedIndex)
                 return;
@@ -234,12 +234,12 @@ namespace UnityEngine.UIElements
                 m_ForcedLastVisibleItem = itemsCount - 1;
                 m_ForcedFirstVisibleItem = ReusableCollectionItem.UndefinedIndex;
                 m_StickToBottom = true;
-                m_ScrollView.scrollOffset = new Vector2(0, viewportHeight >= currentContentHeight ? 0 : currentContentHeight);
+                m_ScrollView.scrollOffset = new Vector2(m_ScrollView.scrollOffset.x, viewportHeight >= currentContentHeight ? 0 : currentContentHeight);
             }
             else if (firstVisibleIndex >= index)
             {
                 // We don't do anything if the scroll offset won't change (UUM-10285)
-                var newOffset = new Vector2(0, GetContentHeightForIndex(index - 1));
+                var newOffset = new Vector2(m_ScrollView.scrollOffset.x, GetContentHeightForIndex(index - 1));
                 if (newOffset == m_ScrollView.scrollOffset)
                     return;
 
@@ -256,7 +256,7 @@ namespace UnityEngine.UIElements
                 var yScrollOffset = itemOffset - viewportHeight + BaseVerticalCollectionView.s_DefaultItemHeight;
                 m_ForcedLastVisibleItem = index;
                 m_ForcedFirstVisibleItem = ReusableCollectionItem.UndefinedIndex;
-                m_ScrollView.scrollOffset = new Vector2(0, yScrollOffset);
+                m_ScrollView.scrollOffset = new Vector2(m_ScrollView.scrollOffset.x, yScrollOffset);
             }
 
             // Due to the nature of the scheduler, the second time around we need to process the flags to refresh the content.

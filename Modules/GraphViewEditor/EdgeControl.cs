@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.UIElements;
 using System.Collections.Generic;
@@ -10,7 +11,7 @@ using UnityEngine.Profiling;
 
 namespace UnityEditor.Experimental.GraphView
 {
-    public class EdgeControl : VisualElement
+    public partial class EdgeControl : VisualElement
     {
         private struct EdgeCornerSweepValues
         {
@@ -27,6 +28,7 @@ namespace UnityEditor.Experimental.GraphView
         private VisualElement m_ToCap;
         private GraphView m_GraphView;
 
+        [AutoStaticsCleanupOnCodeReload]
         private static Stack<VisualElement> capPool = new Stack<VisualElement>();
 
         private static VisualElement GetCap()
@@ -95,6 +97,7 @@ namespace UnityEditor.Experimental.GraphView
         private const float k_EdgeSweepResampleRatio = 4.0f;
         private const int k_EdgeStraightLineSegmentDivisor = 5;
 
+        [NoAutoStaticsCleanup] // reusable scratch buffer; Gradient holds only value-type color/alpha keys, no ALC-pinning refs
         static readonly Gradient k_Gradient = new Gradient();
 
         private Orientation m_InputOrientation;

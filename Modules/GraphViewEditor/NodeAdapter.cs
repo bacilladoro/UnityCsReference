@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.Assemblies;
 
@@ -23,9 +24,11 @@ namespace UnityEditor.Experimental.GraphView
     }
 
     // TODO: This is a straight port from Canvas2D. I don't think that having to check for types in the assembly using reflection is the way we want to go.
-    public class NodeAdapter
+    public partial class NodeAdapter
     {
+        [AutoStaticsCleanupOnCodeReload]
         private static List<MethodInfo> s_TypeAdapters;
+        [AutoStaticsCleanupOnCodeReload]
         private static Dictionary<int, MethodInfo> s_NodeAdapterDictionary;
 
         public bool CanAdapt(object a, object b)

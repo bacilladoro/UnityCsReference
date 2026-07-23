@@ -371,7 +371,7 @@ namespace UnityEngine.TextCore.Text
         /// <summary>
         /// Function to retrieve the current item from the stack.
         /// </summary>
-        /// <returns>itemStack <T></returns>
+        /// <returns>itemStack &lt;T&gt;</returns>
         public T CurrentItem()
         {
             if (index > 0)

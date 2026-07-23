@@ -12,6 +12,7 @@ using UnityEngine.Profiling;
 using UnityEngine.Experimental.Rendering;
 
 using UnityEditor;
+using UnityEditor.Rendering;
 using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditorInternal.FrameDebuggerInternal
@@ -302,6 +303,7 @@ namespace UnityEditorInternal.FrameDebuggerInternal
         private int dataTypeEnumLength => Enum.GetNames(typeof(ShaderPropertyType)).Length;
         private StringBuilder m_StringBuilder = new StringBuilder(32768);
         private StringBuilder m_MeshStringBuilder = new StringBuilder(64);
+        private StringBuilder m_GRDExclusionStringBuilder = new StringBuilder(64);
 
         // Nested sub-sections for Details
         private DetailsSectionCollection m_DetailsSections;
@@ -1095,6 +1097,7 @@ namespace UnityEditorInternal.FrameDebuggerInternal
             m_ShadingRateImageTexture = null;
             m_StringBuilder.Clear();
             m_MeshStringBuilder.Clear();
+            m_GRDExclusionStringBuilder.Clear();
             m_Details = string.Empty;
             m_MeshNamesString = string.Empty;
             m_RealShaderName = string.Empty;
@@ -1431,6 +1434,35 @@ namespace UnityEditorInternal.FrameDebuggerInternal
                 }
             }
 
+            // GRD exclusion - group affected object by reason.
+            // Reason byte is interpreted only here via the shared text table(single source: UnityEditor.Rendering.GRDExclusionReasonText).
+            var grdReasons = curEventData.m_GRDExcludedReasons;
+            var reasonCount = grdReasons != null ? grdReasons.Length : 0;
+            if (reasonCount > 0)
+            {
+                var countByReason = new SortedDictionary<byte, int>();
+                for (int i = 0; i < reasonCount; i++)
+                {
+                    var reason = grdReasons[i];
+                    countByReason.TryGetValue(reason, out int count);
+                    countByReason[reason] = count + 1;
+                }
+
+                bool isFirst = true;
+                foreach (var reasonAndCount in countByReason)
+                {
+                    string reasonText = GRDExclusionReasonText.GetLabel(reasonAndCount.Key);
+                    if(reasonAndCount.Value > 1)
+                        reasonText += $" ({reasonAndCount.Value})";
+
+                    string label = isFirst ? "GRD Exclusion Cause" : string.Empty;
+                    m_GRDExclusionStringBuilder.AppendFormat(k_TwoColumnFormat, label, reasonText);
+                    m_GRDExclusionStringBuilder.AppendLine();
+
+                    isFirst = false;
+                }
+            }
+
             // Set variable rate shading image details
             if (FrameDebuggerHelper.IsVRSSupported() || !string.IsNullOrEmpty(curEventData.m_ShadingRateImageName))
             {
@@ -1454,7 +1486,9 @@ namespace UnityEditorInternal.FrameDebuggerInternal
             string batchbreakCause = FrameDebuggerStyles.EventDetails.s_BatchBreakCauses[curEventData.m_BatchBreakCause];
             FrameDebuggerHelper.SpliceText(ref batchbreakCause, 85);
 
-            m_DetailsSections.GetStringBuilder(DetailsSectionType.EventInfo)
+            var eventInfo = m_DetailsSections.GetStringBuilder(DetailsSectionType.EventInfo);
+
+            eventInfo
                 // Draw info
                 .AppendLine(string.Format(k_TwoColumnFormat, "DrawInstanced Calls", drawInstancedCalls))
                 .AppendLine(string.Format(k_TwoColumnFormat, "Instances", drawInstances))
@@ -1464,7 +1498,17 @@ namespace UnityEditorInternal.FrameDebuggerInternal
                 .AppendLine()
                 // Batch break cause
                 .AppendLine(string.Format(k_TwoColumnFormat, "Batch Break Cause", batchbreakCause))
-                .AppendLine()
+                .AppendLine();
+
+            // GRD exclusion block
+            if (m_GRDExclusionStringBuilder.Length > 0)
+            {
+                eventInfo
+                    .Append(m_GRDExclusionStringBuilder)
+                    .AppendLine();
+            }
+
+            eventInfo
                 // Mesh
                 .Append(m_MeshStringBuilder);
 

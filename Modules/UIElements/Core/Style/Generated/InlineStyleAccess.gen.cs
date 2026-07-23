@@ -429,6 +429,23 @@ namespace UnityEngine.UIElements
             }
         }
 
+        StyleLength IStyle.columnGap
+        {
+            get
+            {
+                return GetStyleLength(StylePropertyId.ColumnGap);
+            }
+
+            set
+            {
+                if (SetStyleValue(StylePropertyId.ColumnGap, value))
+                {
+                    ve.IncrementVersion(VersionChangeType.Styles | VersionChangeType.Layout);
+                    ve.layoutNode.MarkDirty();
+                }
+            }
+        }
+
         StyleEnum<DisplayStyle> IStyle.display
         {
             get
@@ -901,6 +918,23 @@ namespace UnityEngine.UIElements
             set
             {
                 if (SetStyleValue(StylePropertyId.Right, value))
+                {
+                    ve.IncrementVersion(VersionChangeType.Styles | VersionChangeType.Layout);
+                    ve.layoutNode.MarkDirty();
+                }
+            }
+        }
+
+        StyleLength IStyle.rowGap
+        {
+            get
+            {
+                return GetStyleLength(StylePropertyId.RowGap);
+            }
+
+            set
+            {
+                if (SetStyleValue(StylePropertyId.RowGap, value))
                 {
                     ve.IncrementVersion(VersionChangeType.Styles | VersionChangeType.Layout);
                     ve.layoutNode.MarkDirty();

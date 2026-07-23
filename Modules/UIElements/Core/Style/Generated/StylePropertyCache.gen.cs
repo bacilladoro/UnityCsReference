@@ -144,6 +144,10 @@ namespace UnityEngine.UIElements.StyleSheets
                 "<color>"
             },
                         {
+                "column-gap",
+                "<length-percentage>"
+            },
+                        {
                 "cursor",
                 "[ [ <resource> | <url> ] [ <integer> <integer> ]? ] | [ arrow | text | resize-vertical | resize-horizontal | link | slide-arrow | resize-up-right | resize-up-left | move-arrow | rotate-arrow | scale-arrow | arrow-plus | arrow-minus | pan | orbit | zoom | fps | split-resize-up-down | split-resize-left-right | not-allowed ]"
             },
@@ -182,6 +186,10 @@ namespace UnityEngine.UIElements.StyleSheets
                         {
                 "font-size",
                 "<length>"
+            },
+                        {
+                "gap",
+                "<'row-gap'> <'column-gap'>?"
             },
                         {
                 "height",
@@ -237,7 +245,7 @@ namespace UnityEngine.UIElements.StyleSheets
             },
                         {
                 "opacity",
-                "<number>"
+                "<number [0,1]>"
             },
                         {
                 "overflow",
@@ -274,6 +282,10 @@ namespace UnityEngine.UIElements.StyleSheets
                         {
                 "rotate",
                 "none | [ x | y | z | <number>{3} ] && <angle> | <angle>"
+            },
+                        {
+                "row-gap",
+                "<length-percentage>"
             },
                         {
                 "scale",

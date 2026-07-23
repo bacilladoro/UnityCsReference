@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEngine;
 
@@ -32,7 +33,7 @@ namespace UnityEditor.Experimental.GraphView
     }
 
     [InitializeOnLoad]
-    public class SearchWindow : EditorWindow
+    public partial class SearchWindow : EditorWindow
     {
         // Styles
 
@@ -55,9 +56,13 @@ namespace UnityEditor.Experimental.GraphView
 
         // Static variables
 
+        [NoAutoStaticsCleanup] // lazy style cache; no user-assembly refs, safe to persist across code reload
         private static Styles s_Styles;
+        [AutoStaticsCleanupOnCodeReload]
         private static SearchWindow s_FilterWindow = null;
+        [NoAutoStaticsCleanup] // timestamp of last window close; no user-assembly refs, throttle logic tolerates stale value
         private static long s_LastClosedTime;
+        [AutoStaticsCleanupOnCodeReload]
         private static bool s_DirtyList = false;
 
         // Member variables

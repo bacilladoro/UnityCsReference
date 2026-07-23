@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Bindings;
 using UnityEngine.Pool;
 using UnityEngine.Scripting;
@@ -16,7 +17,7 @@ namespace UnityEngine.Accessibility
     /// </summary>
     [NativeHeader("Modules/Accessibility/Native/AccessibilityManager.h")]
     [VisibleToOtherModules("UnityEditor.AccessibilityModule")]
-    internal class AccessibilityManager
+    internal partial class AccessibilityManager
     {
         /// <summary>
         /// Notifications that the operating system can send.
@@ -129,19 +130,24 @@ namespace UnityEngine.Accessibility
             }
 
             // Read-only property that holds the singleton instance, created the first time it is accessed.
+            // Singleton infrastructure instance; holds no user-code references, so it is safe to persist across reloads.
+            [NoAutoStaticsCleanup]
             internal static readonly AccessibilityManager s_Instance = new();
         }
 
         /// <summary>
         /// Event that is invoked on the main thread when the screen reader is enabled or disabled.
         /// </summary>
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<bool> screenReaderStatusChanged;
 
         /// <summary>
         /// Event that is invoked on the main thread when the screen reader focus changes.
         /// </summary>
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<AccessibilityNode> nodeFocusChanged;
 
+        [AutoStaticsCleanupOnCodeReload]
         internal static Queue<NotificationContext> asyncNotificationContexts = new();
 
         bool m_RefreshNodeFramesRequested;
@@ -290,7 +296,7 @@ namespace UnityEngine.Accessibility
         }
 
         [NativeHeader("Modules/Accessibility/Native/AccessibilityManager.h")]
-        [FreeFunction("SetAccessibilityNodeDataPtr")]
+        [FreeFunction("SetAccessibilityNodeDataPtr", IsThreadSafe = true)]
         internal extern static void SetAccessibilityNodeDataPtr(IntPtr destNodeDataPtr, AccessibilityNodeData sourceNodeData);
 
         /// <summary>

@@ -19,12 +19,13 @@ using UnityEngine.Scripting;
 using Object = UnityEngine.Object;
 using UnityEngine.Pool;
 using Unity.Collections;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
     // The title is also used for fetching the project window tab icon: Project.png
     [EditorWindowTitle(title = "Project", icon = "Project")]
-    internal class ProjectBrowser : EditorWindow, IHasCustomMenu, ISearchableContainer, IFramableContainer
+    internal partial class ProjectBrowser : EditorWindow, IHasCustomMenu, ISearchableContainer, IFramableContainer
     {
         public static readonly EntityId kPackagesFolderInstanceId = EntityId.FromULong(int.MaxValue|1ul<<32);
         public static readonly EntityId kAssetCreationInstanceID_ForNonExistingAssets = EntityId.FromULong(((ulong)int.MaxValue-1)|1ul<<32);
@@ -60,12 +61,14 @@ namespace UnityEditor
         private const string k_WarningRootFolderDeletionFormat = "The operation \"{0}\" cannot be executed because the selection is a root folder or an immutable asset.";
 
         // Alive ProjectBrowsers
-        private static List<ProjectBrowser> s_ProjectBrowsers = new List<ProjectBrowser>();
+        [AutoStaticsCleanupOnCodeReload]
+        private static readonly List<ProjectBrowser> s_ProjectBrowsers = new List<ProjectBrowser>();
         public static List<ProjectBrowser> GetAllProjectBrowsers()
         {
             return s_ProjectBrowsers;
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         public static ProjectBrowser s_LastInteractedProjectBrowser;
 
         string ISearchableContainer.SearchText
@@ -138,8 +141,9 @@ namespace UnityEditor
             }
         }
 
+        [NoAutoStaticsCleanup] // lazy GUIStyle cache (inner Styles class); GUIStyles survive code reload, safe to persist
         static Styles s_Styles;
-        static int s_HashForSearchField = "ProjectBrowserSearchField".GetHashCode();
+        static readonly int s_HashForSearchField = "ProjectBrowserSearchField".GetHashCode();
 
         // Search filter
         [SerializeField]
@@ -935,7 +939,6 @@ namespace UnityEditor
                 // "Texture2D",
                 // "RenderTexture",
                 // "Cubemap",
-                // "MovieTexture",
             };
         }
 
@@ -3401,8 +3404,9 @@ namespace UnityEditor
             }
         }
 
-        internal class BreadCrumbListMenu
+        internal partial class BreadCrumbListMenu
         {
+            [AutoStaticsCleanupOnCodeReload]
             static ProjectBrowser m_Caller;
             string m_SubFolder;
 

@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor.Snap;
 using UnityEngine;
 
@@ -98,6 +99,7 @@ namespace UnityEditor
                 All = ~None
             }
 
+            [NoAutoStaticsCleanup] // mutable default param; has public setter so cannot be readonly
             static RotationHandleParam s_Default = new RotationHandleParam((Handle)(-1), Vector3.one, 1f, 1.1f, true, true);
             public static RotationHandleParam Default { get { return s_Default; } set { s_Default = value; } }
 

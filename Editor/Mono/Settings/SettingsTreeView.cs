@@ -26,8 +26,8 @@ namespace UnityEditor
         private static class Styles
         {
             public static StyleBlock tree => EditorResources.GetStyle("sb-settings-tree");
-            public static GUIStyle listItem = "SettingsListItem";
-            public static GUIStyle treeItem = "SettingsTreeItem";
+            public static readonly GUIStyle listItem = "SettingsListItem";
+            public static readonly GUIStyle treeItem = "SettingsTreeItem";
         }
 
         private bool m_ListViewMode;

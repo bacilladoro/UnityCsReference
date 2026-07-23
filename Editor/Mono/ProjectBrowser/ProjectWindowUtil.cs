@@ -10,6 +10,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor.Audio;
 using UnityEditor.Compilation;
 using UnityEditor.ProjectWindowCallback;
@@ -122,8 +123,9 @@ namespace UnityEditor
                 ProjectWindowUtil.ShowCreatedAsset(o);
             }
         }
-        internal class DoCreateFolderWithSelection : DoCreateFolder
+        internal partial class DoCreateFolderWithSelection : DoCreateFolder
         {
+            [AutoStaticsCleanupOnCodeReload]
             public static DoCreateFolderWithSelection Instance = null;
 
             [SerializeField]
@@ -1007,8 +1009,8 @@ namespace UnityEditor
         }
 
 
-        internal static string k_DraggingFavoriteGenericData = "DraggingFavorite";
-        internal static string k_IsFolderGenericData = "IsFolder";
+        internal static readonly string k_DraggingFavoriteGenericData = "DraggingFavorite";
+        internal static readonly string k_IsFolderGenericData = "IsFolder";
 
         internal static bool IsFavoritesItem(EntityId entityId)
         {

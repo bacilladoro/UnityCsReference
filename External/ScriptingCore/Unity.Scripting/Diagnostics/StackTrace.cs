@@ -7,6 +7,9 @@ namespace Unity.Scripting;
 internal static class StackTrace
 {
     const string k_HideInCallstackAttributeTypeName = "UnityEngine.HideInCallstackAttribute";
+    const string k_InteropNamespace = "Unity.Private.Scripting.Interop";
+    const string k_InvokeWrapperPrefix = "runtime_invoke_wrapper";
+
     static string s_BasePath = string.Empty;
 
     internal static string BasePath
@@ -21,6 +24,11 @@ internal static class StackTrace
         }
     }
 
+    // This code is shared between Mono and CoreCLR, so we cannot conditionally compile the frame format.
+    // We use by default the Mono format as long as it's supported. This value is overridden on CoreCLR
+    // initialization. To be removed once Mono support is fully removed.
+    internal static bool UseMonoFormat { get; set; } = true;
+
     [System.Security.SecuritySafeCritical] // System.Diagnostics.StackTrace cannot be accessed from transparent code (PSM, 2.12)
     internal static void GetMessageAndStackTrace(Exception? exception, out string message, out string stackTrace)
     {
@@ -33,10 +41,12 @@ internal static class StackTrace
         var traceString = "";
         while (exception != null)
         {
+            // Strip the interop/marshalling shim frames.
+            var exceptionTrace = NormalizeManagedExceptionTrace(exception.StackTrace);
             if (traceString.Length == 0)
-                traceString = exception.StackTrace ?? "";
+                traceString = exceptionTrace;
             else
-                traceString = (exception.StackTrace ?? "") + "\n" + traceString;
+                traceString = exceptionTrace + "\n" + traceString;
 
             var thisMessage = exception.GetType().Name;
             var exceptionMessage = "";
@@ -62,10 +72,73 @@ internal static class StackTrace
         stackTrace = sb.ToString();
     }
 
-    // NB if you change this formatting/code there is a separate Mono quick path in MonoManager.cpp that must be updated as well.
+    static string NormalizeManagedExceptionTrace(string? rawTrace)
+    {
+        if (string.IsNullOrEmpty(rawTrace))
+            return "";
+
+        var sb = new StringBuilder(rawTrace.Length);
+        var traceSpan = rawTrace.AsSpan();
+        while (ExtractNextLine(traceSpan, out var line, out traceSpan))
+        {
+            if (line.Contains(k_InteropNamespace, StringComparison.Ordinal) ||
+                line.Contains(k_InvokeWrapperPrefix, StringComparison.Ordinal))
+                continue;
+
+            if (sb.Length > 0)
+                sb.Append('\n');
+            sb.Append(line);
+        }
+
+        return sb.ToString();
+    }
+
+    static bool ExtractNextLine(ReadOnlySpan<char> trace, out ReadOnlySpan<char> line, out ReadOnlySpan<char> remaining)
+    {
+        if (trace.IsEmpty)
+        {
+            line = ReadOnlySpan<char>.Empty;
+            remaining = ReadOnlySpan<char>.Empty;
+            return false;
+        }
+
+        var end = trace.IndexOf('\n');
+        if (end < 0)
+        {
+            line = trace;
+            remaining = ReadOnlySpan<char>.Empty;
+        }
+        else
+        {
+            line = trace[..end];
+            remaining = trace[(end + 1)..];
+        }
+
+        // CoreCLR joins frames with Environment.NewLine ("\r\n" on Windows); drop the '\r'
+        // so the rebuilt trace is normalized to '\n'.
+        if (line.Length > 0 && line[^1] == '\r')
+            line = line[..^1];
+
+        return true;
+    }
+
+    // Renders a managed stack trace. The frame shape depends on UseMonoFormat:
+    // Mono keeps the historical "Type:Method(...) (at path:N)"; CoreCLR emits the native .NET
+    // "Type.Method(...) in path:line N". Mono's log path normally uses the native quick path in
+    // MonoManager.cpp, but this method still runs on Mono via the exception path, so it must stay backend-aware.
     [System.Security.SecuritySafeCritical] // System.Diagnostics.StackTrace cannot be accessed from transparent code (PSM, 2.12)
     internal static string Format(System.Diagnostics.StackTrace stackTrace)
     {
+        const char k_TypeMethodSeparator = '.';
+        const string k_LocationPrefix = " in ";
+        const string k_LineNumberSeparator = ":line ";
+        const string k_LocationSuffix = "";
+
+        const char k_TypeMethodSeparatorMono = ':';
+        const string k_LocationPrefixMono = " (at ";
+        const string k_LineNumberSeparatorMono = ":";
+        const string k_LocationSuffixMono = ")";
+
         var basePath = BasePath;
         var sb = new StringBuilder(255);
         int iIndex;
@@ -84,6 +157,9 @@ internal static class StackTrace
             if (classType == null)
                 continue;
 
+            if (classType.Namespace == k_InteropNamespace)
+                continue;
+
             // Add namespace.classname:MethodName
             var ns = classType.Namespace;
             if (!string.IsNullOrEmpty(ns))
@@ -93,7 +169,7 @@ internal static class StackTrace
             }
 
             sb.Append(classType.Name);
-            sb.Append(':');
+            sb.Append(UseMonoFormat ? k_TypeMethodSeparatorMono : k_TypeMethodSeparator);
             sb.Append(mb.Name);
             sb.Append('(');
 
@@ -122,7 +198,7 @@ internal static class StackTrace
                 // part that allows us to generate hyperlinks and code pointers.
                 if (!ShouldStripLineNumbers(mb))
                 {
-                    sb.Append(" (at ");
+                    sb.Append(UseMonoFormat ? k_LocationPrefixMono : k_LocationPrefix);
 
                     if (!string.IsNullOrEmpty(basePath))
                     {
@@ -133,9 +209,9 @@ internal static class StackTrace
                     }
 
                     sb.Append(path);
-                    sb.Append(':');
+                    sb.Append(UseMonoFormat ? k_LineNumberSeparatorMono : k_LineNumberSeparator);
                     sb.Append(frame.GetFileLineNumber());
-                    sb.Append(')');
+                    sb.Append(UseMonoFormat ? k_LocationSuffixMono : k_LocationSuffix);
                 }
             }
 

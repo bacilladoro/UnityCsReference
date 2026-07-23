@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEngine.Profiling;
@@ -12,9 +13,13 @@ namespace UnityEditor.Experimental.GraphView
     {
         private const float k_EndPointRadius = 4.0f;
         private const float k_InterceptWidth = 6.0f;
+        [NoAutoStaticsCleanup] // CSS property key — immutable string handle, no ALC-pinning refs
         private static CustomStyleProperty<int> s_EdgeWidthProperty = new CustomStyleProperty<int>("--edge-width");
+        [NoAutoStaticsCleanup] // CSS property key — immutable string handle, no ALC-pinning refs
         private static CustomStyleProperty<Color> s_SelectedEdgeColorProperty = new CustomStyleProperty<Color>("--selected-edge-color");
+        [NoAutoStaticsCleanup] // CSS property key — immutable string handle, no ALC-pinning refs
         private static CustomStyleProperty<Color> s_GhostEdgeColorProperty = new CustomStyleProperty<Color>("--ghost-edge-color");
+        [NoAutoStaticsCleanup] // CSS property key — immutable string handle, no ALC-pinning refs
         private static CustomStyleProperty<Color> s_EdgeColorProperty = new CustomStyleProperty<Color>("--edge-color");
 
         private static readonly int s_DefaultEdgeWidth = 2;

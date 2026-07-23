@@ -173,9 +173,14 @@ namespace UnityEditor.Search
             Debug.Log($"{name} {progressId}, {string.Join(", ", args)}, main ={UnityEditorInternal.InternalEditorUtility.CurrentThreadIsMainThread()}");
         }
 
-        void Dispose(bool disposing, bool callResolver)
+        public void Dispose()
         {
-            LogProgress("Dispose", m_Disposed, disposing);
+            Dispose(true);
+        }
+
+        void Dispose(bool callResolver)
+        {
+            LogProgress("Dispose", m_Disposed);
 
             if (m_Disposed)
                 return;
@@ -184,13 +189,13 @@ namespace UnityEditor.Search
             for (var i = m_ChildrenTask.Count - 1; i >= 0; --i)
             {
                 var childTask = m_ChildrenTask[i];
-                childTask.Dispose(disposing, callResolver);
+                childTask.Dispose(callResolver);
             }
 
             AssemblyReloadEvents.beforeAssemblyReload -= OnBeforeAssemblyReload;
             var allStopped = CancelImmediateWithoutResolver();
             if (!allStopped)
-                Debug.LogWarning($"SearchTask '{name}' had active threads when disposed ({(disposing ? "From Dispose" : "From Finalizer")}).");
+                Debug.LogWarning($"SearchTask '{name}' had active threads when disposed.");
             if (callResolver)
             {
                 ResolveCancel();
@@ -201,30 +206,14 @@ namespace UnityEditor.Search
             m_LocalCancelEvent?.Dispose();
             m_LocalCancelEvent = null;
 
-            if (disposing)
-            {
-                FinishReport();
-                if (userData is IDisposable disposable)
-                    disposable.Dispose();
-            }
+            FinishReport();
+            if (userData is IDisposable disposable)
+                disposable.Dispose();
 
             ClearReport();
             userData = null;
             m_Disposed = true;
         }
-
-        public void Dispose()
-        {
-            Dispose(true);
-        }
-
-        void Dispose(bool callResolver)
-        {
-            Dispose(true, callResolver);
-            GC.SuppressFinalize(this);
-        }
-
-        ~SearchTask() => Dispose(false, false);
 
         public bool RunThread(Action routine)
         {

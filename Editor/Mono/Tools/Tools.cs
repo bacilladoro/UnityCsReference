@@ -10,6 +10,7 @@ using UnityEngine;
 using UnityEngine.Scripting;
 using UnityEditorInternal;
 using UnityEditor.EditorTools;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -64,19 +65,26 @@ namespace UnityEditor
             }
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         static Tools s_Get;
 
 #pragma warning disable 618
         [System.Obsolete("Use EditorTools.activeToolDidChange or EditorTools.activeToolWillChange")]
         internal delegate void OnToolChangedFunc(Tool from, Tool to);
         [System.Obsolete("Use EditorTools.activeToolDidChange or EditorTools.activeToolWillChange")]
+        [AutoStaticsCleanupOnCodeReload]
         internal static OnToolChangedFunc onToolChanged;
-#pragma warning restore 618 
+#pragma warning restore 618
 
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action pivotModeChanged;
+        [AutoStaticsCleanupOnCodeReload]
         internal static event Action<Type> pivotModeChangedForOwner;
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action pivotRotationChanged;
+        [AutoStaticsCleanupOnCodeReload]
         internal static event Action<Type> pivotRotationChangedForOwner;
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action viewToolChanged;
 
         public static Tool current
@@ -143,11 +151,15 @@ namespace UnityEditor
             }
         }
 
+        [NoAutoStaticsCleanup] // Transient view-tool latch (enum), reset during input handling; safe to persist.
         internal static ViewTool s_LockedViewTool = ViewTool.None;
+        [NoAutoStaticsCleanup] // Transient mouse-button latch, reset during input handling; safe to persist.
         internal static int s_ButtonDown = -1;
         public static bool viewToolActive => SceneViewMotion.viewToolIsActive;
 
+        [NoAutoStaticsCleanup] // Cached handle position, recomputed lazily when invalidated; safe to persist.
         static Vector3 s_HandlePosition;
+        [NoAutoStaticsCleanup] // Dirty-flag for the cached handle position; safe to persist.
         static bool s_HandlePositionComputed;
         internal static Vector3 cachedHandlePosition
         {
@@ -182,7 +194,7 @@ namespace UnityEditor
             }
         }
 
-        private static ProfilerMarker s_GetHandlePositionMarker = new ProfilerMarker($"{nameof(Tools)}.{nameof(GetHandlePosition)}");
+        private static readonly ProfilerMarker s_GetHandlePositionMarker = new ProfilerMarker($"{nameof(Tools)}.{nameof(GetHandlePosition)}");
         internal static Vector3 GetHandlePosition()
         {
             Transform t = Selection.activeTransform;
@@ -369,8 +381,10 @@ namespace UnityEditor
                 state.hidden = hide;
         }
 
+        [NoAutoStaticsCleanup] // Transient vertex-dragging flag, set/cleared within input handling; safe to persist.
         internal static bool vertexDragging;
 
+        [AutoStaticsCleanupOnCodeReload]
         static Event m_VertexDraggingShortcutEvent;
         internal static Event vertexDraggingShortcutEvent
         {
@@ -394,10 +408,14 @@ namespace UnityEditor
             set => m_VertexDraggingShortcutEvent = value;
         }
 
+        [NoAutoStaticsCleanup] // Per-drag locked handle position; safe to persist.
         static Vector3 s_LockHandlePosition;
+        [NoAutoStaticsCleanup] // Per-drag handle-lock flag; safe to persist.
         static bool s_LockHandlePositionActive = false;
 
+        [NoAutoStaticsCleanup] // Per-drag locked rect axis; safe to persist.
         static int s_LockHandleRectAxis;
+        [NoAutoStaticsCleanup] // Per-drag rect-axis-lock flag; safe to persist.
         static bool s_LockHandleRectAxisActive = false;
 
         struct LayerSettings
@@ -413,8 +431,9 @@ namespace UnityEditor
 
         LayerSettings m_LayerSettings = new LayerSettings(-1, -1);
 
+        [NoAutoStaticsCleanup] // Disk-backed layer settings state cache (fixed path, value-type entries); safe to persist.
         static StateCache<LayerSettings> s_LayersStateCache = new StateCache<LayerSettings>("Library/StateCache/LayerSettings/");
-        static Hash128 m_LayerSettingsKey = Hash128.Compute("LayerSettings");
+        static readonly Hash128 m_LayerSettingsKey = Hash128.Compute("LayerSettings");
 
         public static int visibleLayers
         {
@@ -644,8 +663,10 @@ namespace UnityEditor
             s_LockHandlePositionActive = true;
         }
 
+        [NoAutoStaticsCleanup] // Handle offset accumulator (value type), reset by selection change; safe to persist.
         internal static Vector3 handleOffset;
 
+        [NoAutoStaticsCleanup] // Local handle offset accumulator (value type), reset by selection change; safe to persist.
         internal static Vector3 localHandleOffset;
 
         internal static void LockHandlePosition()

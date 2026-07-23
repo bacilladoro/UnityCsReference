@@ -64,7 +64,7 @@ namespace UnityEditor.UIElements
             return defaultTssAsset;
         }
 
-        [MenuItem("Assets/Create/UI Toolkit/Panel Settings Asset", priority = 702)]
+        [MenuItem("Assets/Create/UI Toolkit/Panel Settings", priority = 702)]
         static void CreatePanelSettings()
         {
             var defaultTssAsset = GetFirstThemeOrCreateDefaultTheme();
@@ -75,14 +75,14 @@ namespace UnityEditor.UIElements
             ProjectWindowUtil.CreateAsset(settings, "New Panel Settings.asset");
         }
 
-        [MenuItem("Assets/Create/UI Toolkit/Filter Function Definition", priority = 703)]
+        [MenuItem("Assets/Create/UI Toolkit/Filter Function Definition", priority = 704)]
         static void CreateFilterFunctionDefinition()
         {
             var registry = ScriptableObject.CreateInstance<FilterFunctionDefinition>();
             ProjectWindowUtil.CreateAsset(registry, "New Filter Function Definition.asset");
         }
 
-        [MenuItem("Assets/Create/UI Toolkit/UI Animation Clip", priority = 704)]
+        [MenuItem("Assets/Create/UI Toolkit/UI Animation Clip", priority = 705)]
         static void CreateUIAnimationClip()
         {
             var clip = new UIAnimationClip();

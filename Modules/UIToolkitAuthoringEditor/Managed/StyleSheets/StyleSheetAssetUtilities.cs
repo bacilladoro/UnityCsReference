@@ -8,6 +8,7 @@ using System.Text.RegularExpressions;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Bindings;
+using UnityEngine.UIElements;
 
 namespace Unity.UIToolkit.Editor
 {
@@ -48,6 +49,39 @@ namespace Unity.UIToolkit.Editor
             }
         }
 
+        /// <summary>
+        /// Tries to load a valid USS <see cref="StyleSheet"/> from <paramref name="path"/>. Returns false and
+        /// a null sheet when the path isn't an actual .uss file, or it imported with errors.
+        /// </summary>
+        public static bool TryLoadValidStyleSheet(string path, out StyleSheet styleSheet)
+        {
+            styleSheet = null;
+            if (string.IsNullOrEmpty(path))
+                return false;
+
+            if (!typeof(StyleSheet).IsAssignableFrom(AssetDatabase.GetMainAssetTypeAtPath(path)))
+                return false;
+
+            var sheet = AssetDatabase.LoadAssetAtPath<StyleSheet>(path);
+            if (sheet == null || sheet.importedWithErrors)
+                return false;
+
+            styleSheet = sheet;
+            return true;
+        }
+
+        /// <summary>
+        /// Returns the display name (file name) of <paramref name="visualTreeAsset"/>, derived live from the
+        /// asset path so it reflects renames. Falls back to the object name when there is no asset path.
+        /// </summary>
+        public static string GetDocumentDisplayName(VisualTreeAsset visualTreeAsset)
+        {
+            if (visualTreeAsset == null)
+                return string.Empty;
+
+            var path = AssetDatabase.GetAssetPath(visualTreeAsset);
+            return string.IsNullOrEmpty(path) ? visualTreeAsset.name : Path.GetFileName(path);
+        }
 
         /// <summary>
         /// Displays a save file dialog for creating a new USS file.

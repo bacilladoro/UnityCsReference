@@ -11,7 +11,6 @@ using UnityEngine.Bindings;
 using UnityEngine.Internal;
 using UnityEngine.SceneManagement;
 using UnityEngine.Scripting;
-using Unity.Scripting.LifecycleManagement;
 using System.Runtime.InteropServices;
 using Object = UnityEngine.Object;
 
@@ -78,43 +77,9 @@ namespace Unity.Loading
     [StaticAccessor("ContentLoad", StaticAccessorType.DoubleColon)]
     public static partial class ContentLoadManager
     {
-        [AutoStaticsCleanupOnCodeReload]
-        static int s_AllowEditModeRegistrationDepth;
-
-        // Test-only override that suppresses the edit-mode registration check. Search for
-        // AllowEditModeRegistrationForTesting to find tests still relying on edit-mode registration.
-        // This override (and its remaining callers) will be removed once those tests are migrated to
-        // Play Mode — see CBD-2011 (https://jira.unity3d.com/browse/CBD-2011).
-        internal struct AllowEditModeRegistrationScope : IDisposable
-        {
-            bool m_Active;
-
-            internal static AllowEditModeRegistrationScope Enter()
-            {
-                s_AllowEditModeRegistrationDepth++;
-                return new AllowEditModeRegistrationScope { m_Active = true };
-            }
-
-            public void Dispose()
-            {
-                if (!m_Active)
-                    return;
-                m_Active = false;
-                // Guard against decrementing below zero if the counter was reset under us
-                // (e.g. by AutoStaticsCleanupOnCodeReload during a domain reload mid-scope).
-                if (s_AllowEditModeRegistrationDepth > 0)
-                    s_AllowEditModeRegistrationDepth--;
-            }
-        }
-
-        internal static AllowEditModeRegistrationScope AllowEditModeRegistrationForTesting()
-            => AllowEditModeRegistrationScope.Enter();
-
         static void ThrowIfEditModeRegistrationDisallowed()
         {
-            // Use <= 0 so a stale Dispose() after a domain reload (which resets the counter via
-            // AutoStaticsCleanupOnCodeReload) cannot leave the guard permanently suppressed.
-            if (Application.isEditor && !Application.isPlaying && s_AllowEditModeRegistrationDepth <= 0)
+            if (Application.isEditor && !Application.isPlaying)
                 throw new InvalidOperationException("ContentLoadManager.RegisterContentDirectory is not supported in edit mode. Enter Play Mode before registering a content directory.");
         }
 

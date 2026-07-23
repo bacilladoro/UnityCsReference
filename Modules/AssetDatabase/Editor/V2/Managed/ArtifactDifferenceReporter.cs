@@ -87,26 +87,26 @@ namespace UnityEditor
 
         private List<ArtifactInfoDifference> m_AllDiffs;
 
-        public static string kGlobal_artifactFormatVersion = "Global/artifactFormatVersion";
-        public static string kGlobal_allImporterVersion = "Global/allImporterVersion";
-        public static string kImporterRegistry_ImporterType = "ImporterRegistry/ImporterType";
-        public static string kImporterRegistry_ImporterVersion = "ImporterRegistry/ImporterVersion";
-        public static string kImporterRegistry_PostProcessorVersionHash = "ImporterRegistry/PostProcessorVersionHash";
-        public static string kSourceAsset_NameOfAsset = "SourceAsset/NameOfAsset";
-        public static string kSourceAsset_GuidOfPathLocation = "SourceAsset/GuidOfPathLocation";
-        public static string kSourceAsset_HashOfSourceAssetByGUID = "SourceAsset/HashOfSourceAssetByGUID";
-        public static string kSourceAsset_MetaFileHash = "SourceAsset/MetaFileHash";
-        public static string kArtifact_HashOfContent = "Artifact/HashOfContent";
-        public static string kArtifact_HashOfGuidsOfChildren = "SourceAsset/HashOfGuidsOfChildren";
-        public static string kArtifact_FileIdOfMainObject = "Artifact/Property";
-        public static string kEnvironment_Platform = "Environment/Platform";
-        public static string kEnvironment_TextureImportCompression = "Environment/TextureImportCompression";
-        public static string kEnvironment_ColorSpace = "Environment/ColorSpace";
-        public static string kEnvironment_GraphicsAPIMask = "Environment/GraphicsAPIMask";
-        public static string kEnvironment_ScriptingRuntimeVersion = "Environment/ScriptingRuntimeVersion";
-        public static string kEnvironment_CustomDependency = "Environment/CustomDependency";
-        public static string kEnvironment_PlatformGroup = "Environment/BuildTargetPlatformGroup";
-        public static string kIndeterministicImporter = "ImporterRegistry/IndeterministicImporter";
+        public static readonly string kGlobal_artifactFormatVersion = "Global/artifactFormatVersion";
+        public static readonly string kGlobal_allImporterVersion = "Global/allImporterVersion";
+        public static readonly string kImporterRegistry_ImporterType = "ImporterRegistry/ImporterType";
+        public static readonly string kImporterRegistry_ImporterVersion = "ImporterRegistry/ImporterVersion";
+        public static readonly string kImporterRegistry_PostProcessorVersionHash = "ImporterRegistry/PostProcessorVersionHash";
+        public static readonly string kSourceAsset_NameOfAsset = "SourceAsset/NameOfAsset";
+        public static readonly string kSourceAsset_GuidOfPathLocation = "SourceAsset/GuidOfPathLocation";
+        public static readonly string kSourceAsset_HashOfSourceAssetByGUID = "SourceAsset/HashOfSourceAssetByGUID";
+        public static readonly string kSourceAsset_MetaFileHash = "SourceAsset/MetaFileHash";
+        public static readonly string kArtifact_HashOfContent = "Artifact/HashOfContent";
+        public static readonly string kArtifact_HashOfGuidsOfChildren = "SourceAsset/HashOfGuidsOfChildren";
+        public static readonly string kArtifact_FileIdOfMainObject = "Artifact/Property";
+        public static readonly string kEnvironment_Platform = "Environment/Platform";
+        public static readonly string kEnvironment_TextureImportCompression = "Environment/TextureImportCompression";
+        public static readonly string kEnvironment_ColorSpace = "Environment/ColorSpace";
+        public static readonly string kEnvironment_GraphicsAPIMask = "Environment/GraphicsAPIMask";
+        public static readonly string kEnvironment_ScriptingRuntimeVersion = "Environment/ScriptingRuntimeVersion";
+        public static readonly string kEnvironment_CustomDependency = "Environment/CustomDependency";
+        public static readonly string kEnvironment_PlatformGroup = "Environment/BuildTargetPlatformGroup";
+        public static readonly string kIndeterministicImporter = "ImporterRegistry/IndeterministicImporter";
 
         internal IReadOnlyList<ArtifactInfoDifference> GetAllDifferences()
         {

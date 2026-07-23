@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.Internal;
 
@@ -24,32 +25,32 @@ namespace UnityEditor
     public sealed partial class Handles
     {
         // Color of the X axis handle
-        internal static PrefColor s_XAxisColor = new PrefColor("Scene/X Axis", 219f / 255, 62f / 255, 29f / 255, .93f);
+        internal static readonly PrefColor s_XAxisColor = new PrefColor("Scene/X Axis", 219f / 255, 62f / 255, 29f / 255, .93f);
         public static Color xAxisColor { get { return s_XAxisColor; } }
         // Color of the Y axis handle
-        internal static PrefColor s_YAxisColor = new PrefColor("Scene/Y Axis", 154f / 255, 243f / 255, 72f / 255, .93f);
+        internal static readonly PrefColor s_YAxisColor = new PrefColor("Scene/Y Axis", 154f / 255, 243f / 255, 72f / 255, .93f);
         public static Color yAxisColor { get { return s_YAxisColor; } }
         // Color of the Z axis handle
-        internal static PrefColor s_ZAxisColor = new PrefColor("Scene/Z Axis", 58f / 255, 122f / 255, 248f / 255, .93f);
+        internal static readonly PrefColor s_ZAxisColor = new PrefColor("Scene/Z Axis", 58f / 255, 122f / 255, 248f / 255, .93f);
         public static Color zAxisColor { get { return s_ZAxisColor; } }
         // Color of the Constrain Proportions scale handles
-        internal static PrefColor constrainProportionsScaleHandleColor = new PrefColor("Scene/Constrain Proportions Scale Handle", 190f / 255, 190f / 255, 190f / 255, 1f);
+        internal static readonly PrefColor constrainProportionsScaleHandleColor = new PrefColor("Scene/Constrain Proportions Scale Handle", 190f / 255, 190f / 255, 190f / 255, 1f);
         // Color of the center handle
-        internal static PrefColor s_CenterColor = new PrefColor("Scene/Center Axis", .8f, .8f, .8f, .93f);
+        internal static readonly PrefColor s_CenterColor = new PrefColor("Scene/Center Axis", .8f, .8f, .8f, .93f);
         public static Color centerColor { get { return s_CenterColor; } }
         // color for handles the currently active handle
-        internal static PrefColor s_SelectedColor = new PrefColor("Scene/Selected Axis", 246f / 255, 242f / 255, 50f / 255, .89f);
+        internal static readonly PrefColor s_SelectedColor = new PrefColor("Scene/Selected Axis", 246f / 255, 242f / 255, 50f / 255, .89f);
         public static Color selectedColor { get { return s_SelectedColor; } }
         // color for handles the currently hovered handle
-        internal static PrefColor s_PreselectionColor = new PrefColor("Scene/Preselection Highlight", 201f / 255, 200f / 255, 144f / 255, 0.89f);
+        internal static readonly PrefColor s_PreselectionColor = new PrefColor("Scene/Preselection Highlight", 201f / 255, 200f / 255, 144f / 255, 0.89f);
         public static Color preselectionColor { get { return s_PreselectionColor; } }
         // soft color for general stuff - used to draw e.g. the arc selection while dragging
-        internal static PrefColor s_SecondaryColor = new PrefColor("Scene/Guide Line", .5f, .5f, .5f, .2f);
+        internal static readonly PrefColor s_SecondaryColor = new PrefColor("Scene/Guide Line", .5f, .5f, .5f, .2f);
         public static Color secondaryColor { get { return s_SecondaryColor; } }
         // internal color for static handles
-        internal static Color staticColor = new Color(.5f, .5f, .5f, 0f);
+        internal static readonly Color staticColor = new Color(.5f, .5f, .5f, 0f);
         // internal blend ratio for static colors
-        internal static float staticBlend = 0.6f;
+        internal static readonly float staticBlend = 0.6f;
 
         static PrefColor s_ElementColor => new PrefColor("Scene/Element Default", 0f, 224f / 255f, 1f, 1f);
         static PrefColor s_ElementPreselectionColor => new PrefColor("Scene/Element Preselection", 1f, 207f / 255f, 112f / 255f, 1f);
@@ -59,36 +60,36 @@ namespace UnityEditor
         public static Color elementPreselectionColor => s_ElementPreselectionColor;
         public static Color elementSelectionColor => s_ElementSelectionColor;
 
-        internal static float backfaceAlphaMultiplier = 0.2f;
-        internal static Color s_ColliderHandleColor = new Color(145f, 244f, 139f, 210f) / 255;
-        internal static Color s_ColliderHandleColorDisabled = new Color(84, 200f, 77f, 140f) / 255;
-        internal static Color s_BoundingBoxHandleColor = new Color(255, 255, 255, 150) / 255;
+        internal static readonly float backfaceAlphaMultiplier = 0.2f;
+        internal static readonly Color s_ColliderHandleColor = new Color(145f, 244f, 139f, 210f) / 255;
+        internal static readonly Color s_ColliderHandleColorDisabled = new Color(84, 200f, 77f, 140f) / 255;
+        internal static readonly Color s_BoundingBoxHandleColor = new Color(255, 255, 255, 150) / 255;
 
         // Should match s_ColliderHandleColor to start unless the user overrides the color. As Gizmos are drawn from CPP there is no way currently to hook the ColliderHandleColor up properly.
         public static Color UIColliderHandleColor { get { return s_UIColliderHandleColor; } }
-        internal static PrefColor s_UIColliderHandleColor = new PrefColor("Scene/UI Collider Handle", 145f / 255, 244f / 255, 139f / 255, 210f / 255);
+        internal static readonly PrefColor s_UIColliderHandleColor = new PrefColor("Scene/UI Collider Handle", 145f / 255, 244f / 255, 139f / 255, 210f / 255);
 
         internal readonly static GUIContent s_StaticLabel = EditorGUIUtility.TrTextContent("Static");
         internal readonly static GUIContent s_PrefabLabel = EditorGUIUtility.TrTextContent("Prefab");
 
-        internal static int s_SliderHash = "SliderHash".GetHashCode();
-        internal static int s_Slider2DHash = "Slider2DHash".GetHashCode();
-        internal static int s_FreeRotateHandleHash = "FreeRotateHandleHash".GetHashCode();
-        internal static int s_RadiusHandleHash = "RadiusHandleHash".GetHashCode();
-        internal static int s_xAxisMoveHandleHash  = "xAxisFreeMoveHandleHash".GetHashCode();
-        internal static int s_yAxisMoveHandleHash  = "yAxisFreeMoveHandleHash".GetHashCode();
-        internal static int s_zAxisMoveHandleHash  = "zAxisFreeMoveHandleHash".GetHashCode();
-        internal static int s_FreeMoveHandleHash  = "FreeMoveHandleHash".GetHashCode();
-        internal static int s_xzAxisMoveHandleHash = "xzAxisFreeMoveHandleHash".GetHashCode();
-        internal static int s_xyAxisMoveHandleHash = "xyAxisFreeMoveHandleHash".GetHashCode();
-        internal static int s_yzAxisMoveHandleHash = "yzAxisFreeMoveHandleHash".GetHashCode();
-        internal static int s_xAxisScaleHandleHash = "xAxisScaleHandleHash".GetHashCode();
-        internal static int s_yAxisScaleHandleHash = "yAxisScaleHandleHash".GetHashCode();
-        internal static int s_zAxisScaleHandleHash = "zAxisScaleHandleHash".GetHashCode();
-        internal static int s_ScaleSliderHash = "ScaleSliderHash".GetHashCode();
-        internal static int s_ScaleValueHandleHash = "ScaleValueHandleHash".GetHashCode();
-        internal static int s_DiscHash = "DiscHash".GetHashCode();
-        internal static int s_ButtonHash = "ButtonHash".GetHashCode();
+        internal static readonly int s_SliderHash = "SliderHash".GetHashCode();
+        internal static readonly int s_Slider2DHash = "Slider2DHash".GetHashCode();
+        internal static readonly int s_FreeRotateHandleHash = "FreeRotateHandleHash".GetHashCode();
+        internal static readonly int s_RadiusHandleHash = "RadiusHandleHash".GetHashCode();
+        internal static readonly int s_xAxisMoveHandleHash  = "xAxisFreeMoveHandleHash".GetHashCode();
+        internal static readonly int s_yAxisMoveHandleHash  = "yAxisFreeMoveHandleHash".GetHashCode();
+        internal static readonly int s_zAxisMoveHandleHash  = "zAxisFreeMoveHandleHash".GetHashCode();
+        internal static readonly int s_FreeMoveHandleHash  = "FreeMoveHandleHash".GetHashCode();
+        internal static readonly int s_xzAxisMoveHandleHash = "xzAxisFreeMoveHandleHash".GetHashCode();
+        internal static readonly int s_xyAxisMoveHandleHash = "xyAxisFreeMoveHandleHash".GetHashCode();
+        internal static readonly int s_yzAxisMoveHandleHash = "yzAxisFreeMoveHandleHash".GetHashCode();
+        internal static readonly int s_xAxisScaleHandleHash = "xAxisScaleHandleHash".GetHashCode();
+        internal static readonly int s_yAxisScaleHandleHash = "yAxisScaleHandleHash".GetHashCode();
+        internal static readonly int s_zAxisScaleHandleHash = "zAxisScaleHandleHash".GetHashCode();
+        internal static readonly int s_ScaleSliderHash = "ScaleSliderHash".GetHashCode();
+        internal static readonly int s_ScaleValueHandleHash = "ScaleValueHandleHash".GetHashCode();
+        internal static readonly int s_DiscHash = "DiscHash".GetHashCode();
+        internal static readonly int s_ButtonHash = "ButtonHash".GetHashCode();
 
         static readonly int kPropUseGuiClip = Shader.PropertyToID("_UseGUIClip");
         static readonly int kPropHandleZTest = Shader.PropertyToID("_HandleZTest");
@@ -182,29 +183,30 @@ namespace UnityEditor
             }
         }
 
-        internal static int s_xRotateHandleHash = "xRotateHandleHash".GetHashCode();
-        internal static int s_yRotateHandleHash = "yRotateHandleHash".GetHashCode();
-        internal static int s_zRotateHandleHash = "zRotateHandleHash".GetHashCode();
-        internal static int s_cameraAxisRotateHandleHash = "cameraAxisRotateHandleHash".GetHashCode();
-        internal static int s_xyzRotateHandleHash = "xyzRotateHandleHash".GetHashCode();
-        internal static int s_xScaleHandleHash = "xScaleHandleHash".GetHashCode();
-        internal static int s_yScaleHandleHash = "yScaleHandleHash".GetHashCode();
-        internal static int s_zScaleHandleHash = "zScaleHandleHash".GetHashCode();
-        internal static int s_xyzScaleHandleHash = "xyzScaleHandleHash".GetHashCode();
+        internal static readonly int s_xRotateHandleHash = "xRotateHandleHash".GetHashCode();
+        internal static readonly int s_yRotateHandleHash = "yRotateHandleHash".GetHashCode();
+        internal static readonly int s_zRotateHandleHash = "zRotateHandleHash".GetHashCode();
+        internal static readonly int s_cameraAxisRotateHandleHash = "cameraAxisRotateHandleHash".GetHashCode();
+        internal static readonly int s_xyzRotateHandleHash = "xyzRotateHandleHash".GetHashCode();
+        internal static readonly int s_xScaleHandleHash = "xScaleHandleHash".GetHashCode();
+        internal static readonly int s_yScaleHandleHash = "yScaleHandleHash".GetHashCode();
+        internal static readonly int s_zScaleHandleHash = "zScaleHandleHash".GetHashCode();
+        internal static readonly int s_xyzScaleHandleHash = "xyzScaleHandleHash".GetHashCode();
 
-        private static Color lineTransparency = new Color(1, 1, 1, 0.75f);
+        private static readonly Color lineTransparency = new Color(1, 1, 1, 0.75f);
 
+        [NoAutoStaticsCleanup] // SavedFloat reads EditorPrefs; value remains valid after reload
         internal static SavedFloat s_LineThickness = new SavedFloat("SceneView.handleLineThickness", 2.0f);
         public static float lineThickness => s_LineThickness.value;
 
         // When hovering over some handle axis/control, this is the indication that it would
         // get picked on mouse press:
         // Color gets a bit more bright and less opaque,
-        internal static Color s_HoverIntensity = new Color(1.0f, 1.0f, 1.0f, 1.33f);
+        internal static readonly Color s_HoverIntensity = new Color(1.0f, 1.0f, 1.0f, 1.33f);
         // Handle lines get more thick,
-        internal static float s_HoverExtraThickness = 1.0f;
+        internal static readonly float s_HoverExtraThickness = 1.0f;
         // 3D handle elements (caps) get slightly larger.
-        internal static float s_HoverExtraScale = 1.05f;
+        internal static readonly float s_HoverExtraScale = 1.05f;
 
         // When axis is looking away from camera, fade it out along 25 -> 15 degrees range
         static readonly float kCameraViewLerpStart1 = Mathf.Cos(Mathf.Deg2Rad * 25.0f);
@@ -221,10 +223,11 @@ namespace UnityEditor
 
         public delegate float SizeFunction(Vector3 position);
 
-        static PrefColor[] s_AxisColor = { s_XAxisColor, s_YAxisColor, s_ZAxisColor };
+        static readonly PrefColor[] s_AxisColor = { s_XAxisColor, s_YAxisColor, s_ZAxisColor };
+        [NoAutoStaticsCleanup] // constant axis direction vectors; no mutable state
         static Vector3[] s_AxisVector = { Vector3.right, Vector3.up, Vector3.forward };
 
-        internal static Color s_DisabledHandleColor = new Color(0.5f, 0.5f, 0.5f, 0.5f);
+        internal static readonly Color s_DisabledHandleColor = new Color(0.5f, 0.5f, 0.5f, 0.5f);
 
         internal static Color GetColorByAxis(int axis)
         {
@@ -678,6 +681,7 @@ namespace UnityEditor
         }
 
         // Draw a camera-facing Rectangle. Pass this into handle functions.
+        [NoAutoStaticsCleanup] // temporary geometry buffer; values overwritten before each use
         static Vector3[] s_RectangleHandlePointsCache = new Vector3[5];
         public static void RectangleHandleCap(int controlID, Vector3 position, Quaternion rotation, float size, EventType eventType)
         {
@@ -1194,6 +1198,7 @@ namespace UnityEditor
         }
 
         // Draw a camera-facing Rectangle. Pass this into handle functions.
+        [NoAutoStaticsCleanup] // temporary geometry buffer; values overwritten before each use
         static Vector3[] s_RectangleCapPointsCache = new Vector3[5];
 
         internal static void RectangleCap(int controlID, Vector3 position, Quaternion rotation, Vector2 size)
@@ -1451,6 +1456,7 @@ namespace UnityEditor
             GL.PopMatrix();
         }
 
+        [NoAutoStaticsCleanup] // null after reload triggers re-init via Init(); no user-assembly refs
         internal static Mesh s_CubeMesh, s_SphereMesh, s_ConeMesh, s_CylinderMesh, s_QuadMesh;
         internal static void Init()
         {

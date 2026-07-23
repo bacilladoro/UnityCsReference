@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
@@ -14,9 +15,9 @@ using HelpBoxControl = UnityEngine.UIElements.HelpBox;
 
 namespace Unity.UI.Builder
 {
-    static class BuilderLibraryContent
+    static partial class BuilderLibraryContent
     {
-        class AssetModificationProcessor : IBuilderAssetModificationProcessor
+        internal class AssetModificationProcessor : IBuilderAssetModificationProcessor
         {
             readonly Action m_OnAssetChange;
 
@@ -66,34 +67,66 @@ namespace Unity.UI.Builder
             }
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         static readonly Dictionary<Type, BuilderLibraryTreeItem> s_ControlsTypeCache = new Dictionary<Type, BuilderLibraryTreeItem>();
-        static readonly BuilderLibraryProjectScanner s_ProjectAssetsScanner = new BuilderLibraryProjectScanner();
+        [AutoStaticsCleanupOnCodeReload]
+        static BuilderLibraryProjectScanner s_ProjectAssetsScanner = new BuilderLibraryProjectScanner();
+        [AutoStaticsCleanupOnCodeReload]
         static int s_ProjectUxmlPathsHash;
         // Used to keep track of when the library content is being needlessly regenerated on Domain Reload.
+        [AutoStaticsCleanupOnCodeReload]
         internal static int libraryRegenerationTestCounter = 0;
 
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action OnLibraryContentUpdated;
+        [AutoStaticsCleanupOnCodeReload]
         public static List<TreeViewItem> standardControlsTree { get; private set; }
+        [AutoStaticsCleanupOnCodeReload]
         public static List<TreeViewItem> standardControlsTreeNoEditor { get; private set; }
+        [AutoStaticsCleanupOnCodeReload]
         public static List<TreeViewItem> projectContentTree { get; private set; }
+        [AutoStaticsCleanupOnCodeReload]
         public static List<TreeViewItem> projectContentTreeNoPackages { get; private set; }
 
+        [NoAutoStaticsCleanup] // sets of fixed standard/editor control type names, rebuilt by GenerateControlsItemsTree on first access; safe to persist
         static HashSet<string> s_StandardEditorControls = new();
+        [NoAutoStaticsCleanup] // sets of fixed standard/editor control type names, rebuilt by GenerateControlsItemsTree on first access; safe to persist
         static HashSet<string> s_StandardControls = new();
 
         static readonly int k_DefaultVisualElementFlexGrow = 1;
         static readonly Color k_DefaultVisualElementBackgroundColor = new (0, 0, 0, 0);
 
-        static readonly AssetModificationProcessor s_AssetModificationProcessor = new AssetModificationProcessor(() =>
+        // The asset processors are created and registered together inside this lazily-initialised
+        // holder. The Lazy below is reset on each code reload (see [AutoStaticsCleanupOnCodeReload]),
+        // so accessing the getters recreates the processors and re-registers them — they are never
+        // left null.
+        internal class LazyInitStatics
         {
-            RegenerateLibraryContent();
-        });
-        static readonly AssetPostprocessor s_AssetPostProcessor = new AssetPostprocessor(() =>
-        {
-            RegenerateLibraryContent();
-        });
+            AssetModificationProcessor s_AssetModificationProcessor;
+            AssetPostprocessor s_AssetPostProcessor;
 
-        static BuilderLibraryContent()
+            public AssetModificationProcessor AssetModificationProcessor { get => s_AssetModificationProcessor; }
+            public AssetPostprocessor AssetPostProcessor { get => s_AssetPostProcessor; }
+
+            public LazyInitStatics()
+            {
+                s_AssetModificationProcessor = new AssetModificationProcessor(() => { RegenerateLibraryContent(); });
+                s_AssetPostProcessor = new AssetPostprocessor(() => { RegenerateLibraryContent(); });
+                BuilderAssetModificationProcessor.Register(s_AssetModificationProcessor);
+                BuilderAssetPostprocessor.Register(s_AssetPostProcessor);
+            }
+        }
+
+        [AutoStaticsCleanupOnCodeReload]
+        private static Lazy<LazyInitStatics> s_LazyInitStatics = new(() => new LazyInitStatics());
+
+        static AssetModificationProcessor s_AssetModificationProcessor { get => s_LazyInitStatics.Value.AssetModificationProcessor; }
+        static AssetPostprocessor s_AssetPostProcessor { get => s_LazyInitStatics.Value.AssetPostProcessor; }
+
+        // A class that uses AutoStaticsCleanup attributes can't also have a static constructor, so the
+        // one-time registration runs from this [OnCodeLoaded] hook, which re-runs on every code reload.
+        [OnCodeLoaded]
+        static void Initialize()
         {
             BuilderAssetModificationProcessor.Register(s_AssetModificationProcessor);
             BuilderAssetPostprocessor.Register(s_AssetPostProcessor);

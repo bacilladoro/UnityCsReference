@@ -6,6 +6,7 @@ using System;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Loading;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Bindings;
 using RequiredByNativeCodeAttribute = UnityEngine.Scripting.RequiredByNativeCodeAttribute;
 
@@ -29,12 +30,14 @@ namespace UnityEngine.SceneManagement
         public static extern AsyncOperation UnloadSceneNameIndexInternal(string sceneName, int sceneBuildIndex, bool immediately, UnloadSceneOptions options, out bool outSuccess);
     }
 
-    public class SceneManagerAPI
+    public partial class SceneManagerAPI
     {
-        static SceneManagerAPI s_DefaultAPI = new SceneManagerAPI();
+        [NoAutoStaticsCleanup] // Default API singleton; always the base instance, never holds user code, safe to persist across code reload
+        static readonly SceneManagerAPI s_DefaultAPI = new SceneManagerAPI();
         // Internal code must use ActiveAPI over overrideAPI to properly fallback to default api handling
         internal static SceneManagerAPI ActiveAPI => overrideAPI ?? s_DefaultAPI;
 
+        [AutoStaticsCleanupOnCodeReload]
         public static SceneManagerAPI overrideAPI { get; set; }
 
         protected internal SceneManagerAPI() {}
@@ -51,6 +54,7 @@ namespace UnityEngine.SceneManagement
     [RequiredByNativeCode]
     public partial class SceneManager
     {
+        [AutoStaticsCleanupOnCodeReload]
         static internal bool s_AllowLoadScene = true;
 
         public static extern int sceneCount

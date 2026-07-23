@@ -4,6 +4,7 @@
 
 using UnityEngine;
 using UnityEditor;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -11,7 +12,7 @@ namespace UnityEditor
     {
         private struct TransformData
         {
-            public static Quaternion[] s_Alignments = new Quaternion[]
+            public static readonly Quaternion[] s_Alignments = new Quaternion[]
             {
                 Quaternion.LookRotation(Vector3.right, Vector3.up),
                 Quaternion.LookRotation(Vector3.right, Vector3.forward),
@@ -221,15 +222,23 @@ namespace UnityEditor
             }
         }
 
+        [NoAutoStaticsCleanup] // Transient drag event-type tracker, reset to Ignore between events; safe to persist.
         static EventType s_EventTypeBefore = EventType.Ignore;
+        [NoAutoStaticsCleanup] // Per-drag transform snapshot array, nulled when drag ends; safe to persist.
         static TransformData[] s_MouseDownState = null;
+        [NoAutoStaticsCleanup] // Per-drag start handle position; safe to persist.
         static Vector3 s_StartHandlePosition = Vector3.zero;
+        [NoAutoStaticsCleanup] // Per-drag previous handle position; safe to persist.
         static Vector3 s_PreviousHandlePosition = Vector3.zero;
+        [NoAutoStaticsCleanup] // Per-drag start handle rotation; safe to persist.
         static Quaternion s_StartHandleRotation = Quaternion.identity;
         public static Vector3 mouseDownHandlePosition { get { return s_StartHandlePosition; } }
         public static Quaternion mouseDownHandleRotation { get { return s_StartHandleRotation; } set { s_StartHandleRotation = value; } }
+        [NoAutoStaticsCleanup] // Per-drag start local handle offset; safe to persist.
         static Vector3 s_StartLocalHandleOffset = Vector3.zero;
+        [NoAutoStaticsCleanup] // Per-drag hot control id; safe to persist.
         static int s_HotControl = 0;
+        [NoAutoStaticsCleanup] // Per-drag handle-lock flag; safe to persist.
         static bool s_LockHandle = false;
 
         public static bool active { get { return s_MouseDownState != null; } }

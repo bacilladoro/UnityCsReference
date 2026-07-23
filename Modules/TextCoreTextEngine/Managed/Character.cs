@@ -7,9 +7,7 @@ using System;
 
 namespace UnityEngine.TextCore.Text
 {
-    /// <summary>
-    /// A basic element of text.
-    /// </summary>
+    ///<summary>Represents a single character.</summary>
     [Serializable]
     public class Character : TextElement
     {

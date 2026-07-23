@@ -2,6 +2,9 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+using System.Collections.Generic;
+using Unity.Collections;
+
 namespace Unity.ProjectAuditor.Editor
 {
     /// <summary>
@@ -162,16 +165,12 @@ namespace Unity.ProjectAuditor.Editor
         /// <summary>
         /// Category for the summary of issues relating to upgrading the project
         /// </summary>
-        UpgradeSummary,
-
-        /// <summary>
-        /// Enum value indicating the first available custom category
-        /// </summary>
-        FirstCustomCategory
+        UpgradeSummary
     }
 
     internal static class IssueCategoryExtensions
     {
         public static bool IsSummary(this IssueCategory category) => category == IssueCategory.OptimizationSummary || category == IssueCategory.UpgradeSummary;
+        public static readonly IssueCategory FirstCustomCategory = ((IReadOnlyList<IssueCategory>)System.Enum.GetValues(typeof(IssueCategory))).Max() + 1;
     }
 }

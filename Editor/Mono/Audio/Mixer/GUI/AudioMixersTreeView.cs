@@ -12,6 +12,7 @@ using UnityEditor.Audio;
 using UnityEditor.IMGUI.Controls;
 using UnityEngine.Audio;
 using Unity.Collections;
+using Unity.Scripting.LifecycleManagement;
 using Object = UnityEngine.Object;
 
 namespace UnityEditor
@@ -538,6 +539,7 @@ namespace UnityEditor
             public GUIContent addButton = EditorGUIUtility.TrIconContent("CreateAddNew", "Add mixer asset. The asset will be saved in the same folder as the current selected mixer or, if none is selected, saved in the Assets folder.");
             public Texture2D audioMixerIcon = EditorGUIUtility.FindTexture(typeof(AudioMixerController));
         }
+        [NoAutoStaticsCleanup] // Lazy GUIContent/Texture2D holder loaded by fixed name/type, re-initialized on first access via null-check; safe to persist across reload.
         static Styles s_Styles;
 
         public AudioMixersTreeView(AudioMixerWindow mixerWindow, TreeViewState<EntityId> treeState, Func<List<AudioMixerController>> getAllControllersCallback)

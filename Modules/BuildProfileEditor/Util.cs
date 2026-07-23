@@ -14,6 +14,9 @@ namespace UnityEditor.Build.Profile
     internal static class Util
     {
         internal const string k_StyleSheet = "BuildProfile/StyleSheets/BuildProfile.uss";
+        internal const string k_UssClassDark = "build-profile-window--dark";
+        internal const string k_UssClassLight = "build-profile-window--light";
+
         internal const string k_PY_MediumUssClass = "py-medium";
 
         /// <summary>

@@ -4,6 +4,7 @@
 
 using System.Collections.Generic;
 using System.IO;
+using Unity.Scripting.LifecycleManagement;
 using Unity.UIToolkit.Editor;
 using UnityEditor;
 using UnityEngine;
@@ -267,6 +268,7 @@ namespace Unity.UI.Builder
         public static readonly string InputFieldStyleValueTooltipDictionaryKeyFormat = "{0}"+FieldTooltipDictionarySeparator+"{1}";
         public static readonly string MatchingStyleSheetRuleSourceTooltipFormatString = "    Selector: {0}\n    Sheet: {1}";
         public static readonly string VariableBindingTooltipFormatString =  "    Name: {0}\n    Sheet: {1}";
+        [NoAutoStaticsCleanup] // Fixed string->string tooltip lookup built once; immutable content, no user-code references, safe to persist across reload.
         public static readonly Dictionary<string, string> InspectorStylePropertiesTooltipsDictionary = new Dictionary<string, string>()
         {
             {"align-content", "Alignment of the whole area of children on the cross axis if they span over multiple lines in this container by using the flex-wrap property."},
@@ -373,6 +375,7 @@ namespace Unity.UI.Builder
         internal const string PixelPercentageInitialValue = "Enter a value as a pixel, percentage, or initial.";
         internal const string PixelOrInitialValue = "Enter a value as a pixel or initial.";
 
+        [NoAutoStaticsCleanup] // Fixed string->string tooltip lookup built once; immutable content, no user-code references, safe to persist across reload.
         public static readonly Dictionary<string, string> InspectorStylePropertiesValuesTooltipsDictionary =
             new Dictionary<string, string>
             {
@@ -801,6 +804,7 @@ namespace Unity.UI.Builder
         // Styles
         public static readonly string StylePropertyPathPrefix = "style.";
 
+        [NoAutoStaticsCleanup] // Fixed list of style-property names built once; immutable strings, no user-code references, safe to persist across reload.
         public static readonly List<string> SpecialSnowflakeLengthStyles = new ()
         {
             "border-left-width",
@@ -809,6 +813,7 @@ namespace Unity.UI.Builder
             "border-bottom-width"
         };
 
+        [NoAutoStaticsCleanup] // Fixed list of style-property names built once; immutable strings, no user-code references, safe to persist across reload.
         internal static readonly List<string> ViewportOverlayEnablingStyleProperties = new List<string>()
         {
             "width",
@@ -827,6 +832,7 @@ namespace Unity.UI.Builder
             "border-bottom-width"
         };
 
+        [NoAutoStaticsCleanup] // Fixed string->string enum-name lookup built once; immutable content, no user-code references, safe to persist across reload.
         public static readonly Dictionary<string, string> SpecialEnumNamesCases = new()
         {
             {"nowrap", "no-wrap"},

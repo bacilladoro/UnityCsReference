@@ -4,6 +4,7 @@
 
 using System;
 using UnityEngine.Bindings;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEngine.Playables
 {
@@ -27,6 +28,7 @@ namespace UnityEngine.Playables
         private System.Type m_SourceBindingType;
         private CreateOutputMethod m_CreateOutputMethod;
 
+        [NoAutoStaticsCleanup] // None is an immutable empty-array singleton, safe to keep alive across code reloads
         public static readonly PlayableBinding[] None = Array.Empty<PlayableBinding>();
         public static readonly double DefaultDuration = double.PositiveInfinity;
 

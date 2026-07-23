@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEngine;
 
@@ -15,9 +16,13 @@ namespace UnityEditorInternal
         const float k_RotationUnitSnapMajorMarkerSize = 0.2f;
         const float k_GrabZoneScale = 0.3f;
 
+        [NoAutoStaticsCleanup] // transient drag state; overwritten at the start of each drag operation
         static Vector2 s_StartMousePosition, s_CurrentMousePosition;
+        [NoAutoStaticsCleanup] // transient drag state; overwritten at the start of each drag operation
         static Vector3 s_StartPosition, s_StartAxis;
+        [NoAutoStaticsCleanup] // transient drag state; overwritten at the start of each drag operation
         static Quaternion s_StartRotation;
+        [NoAutoStaticsCleanup] // transient drag state; overwritten at the start of each drag operation
         static float s_RotationDist;
 
         public static Quaternion Do(int id, Quaternion rotation, Vector3 position, Vector3 axis, float size, bool cutoffPlane, float snap)

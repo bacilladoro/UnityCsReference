@@ -74,6 +74,12 @@ namespace UnityEditor
         private float m_MemoryUpdateTimeAccumulator = 0.0f;
         private int m_MemoryUpdateFrameCounter = 0;
 
+        // --- GRD Batching (read GRDProfilerCounters via wire-format strings) ---
+        private ProfilerRecorder m_GRDUniqueMaterialsRecorder;
+        private ProfilerRecorder m_GRDUniqueMeshesRecorder;
+        private ProfilerRecorder m_GRDSingleInstanceBatchesRecorder;
+        private ProfilerRecorder m_GRDActiveRecorder;
+
         // --- String Fields ---
         private string m_FpsText = "- FPS (Playmode Off)";
         private string m_GlobalFrametimeText = "- ms (Playmode Off)";
@@ -90,7 +96,22 @@ namespace UnityEditor
         {
             m_TotalMemoryRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "Total Used Memory");
             m_GfxMemoryRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "Gfx Used Memory");
+
+            // Wire-format mirror of GRDProfilerCounters (Packages/com.unity.render-pipelines.core);
+            // it emits, the Stats Window reads. Keep these strings in sync with that file.
+            var grdCategory = new ProfilerCategory("GPU Resident Drawer");
+            m_GRDUniqueMaterialsRecorder = ProfilerRecorder.StartNew(grdCategory, "Unique Materials");
+            m_GRDUniqueMeshesRecorder = ProfilerRecorder.StartNew(grdCategory, "Unique Meshes");
+            m_GRDSingleInstanceBatchesRecorder = ProfilerRecorder.StartNew(grdCategory, "Single-Instance Batches");
+            m_GRDActiveRecorder = ProfilerRecorder.StartNew(grdCategory, "GRD Active");
         }
+
+        // True while GRD is running this frame. Backs grdRowsDisplay.
+        private bool grdActive => m_GRDActiveRecorder.Valid && m_GRDActiveRecorder.LastValue > 0;
+
+        // style.display for the GRD batch rows (bound in Stats_Window.uxml) — shown only while GRD runs,
+        // hidden otherwise (GRD disabled / non-GRD pipeline), mirroring the Rendering Profiler GRD card.
+        [CreateProperty] public DisplayStyle grdRowsDisplay => grdActive ? DisplayStyle.Flex : DisplayStyle.None;
 
         // FPS and Memory properties
         [CreateProperty] public string fps => m_FpsText;
@@ -109,6 +130,9 @@ namespace UnityEditor
         [CreateProperty] public string hybridBatcherDrawInfo => $"{UnityStats.hybridBatcherDrawCalls} draw calls ({UnityStats.hybridBatcherInstances} instances)";
         [CreateProperty] public string standardDrawInfo => $"{UnityStats.standardDrawCalls} draw calls ({UnityStats.standardInstances} instances)";
         [CreateProperty] public string standardInstancedDrawInfo => $"{UnityStats.standardInstancedDrawCalls} draw calls ({UnityStats.standardInstancedInstances} instances)";
+        [CreateProperty] public string grdUniqueMaterials => FormatCounts((int)m_GRDUniqueMaterialsRecorder.LastValue);
+        [CreateProperty] public string grdUniqueMeshes => FormatCounts((int)m_GRDUniqueMeshesRecorder.LastValue);
+        [CreateProperty] public string grdSingleInstanceBatches => FormatCounts((int)m_GRDSingleInstanceBatchesRecorder.LastValue);
         [CreateProperty] public string triangles => FormatCounts(UnityStats.triangles);
         [CreateProperty] public string vertices => FormatCounts(UnityStats.vertices);
         [CreateProperty] public string desiredTextureMemory => $"{Texture.desiredTextureMemory * k_BytesToMegabytes:F1} MB";
@@ -257,8 +281,12 @@ namespace UnityEditor
 
         public void Dispose()
         {
-            m_TotalMemoryRecorder.Dispose(); 
+            m_TotalMemoryRecorder.Dispose();
             m_GfxMemoryRecorder.Dispose();
+            m_GRDUniqueMaterialsRecorder.Dispose();
+            m_GRDUniqueMeshesRecorder.Dispose();
+            m_GRDSingleInstanceBatchesRecorder.Dispose();
+            m_GRDActiveRecorder.Dispose();
         }
     }
 

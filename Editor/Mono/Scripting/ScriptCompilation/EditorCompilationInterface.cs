@@ -332,9 +332,6 @@ namespace UnityEditor.Scripting.ScriptCompilation
         {
             var options = EditorScriptCompilationOptions.BuildingEmpty;
 
-            if (PlayerSettings.allowUnsafeCode)
-                options |= EditorScriptCompilationOptions.BuildingPredefinedAssembliesAllowUnsafeCode;
-
             if (PlayerSettings.UseDeterministicCompilation)
                 options |= EditorScriptCompilationOptions.BuildingUseDeterministicCompilation;
 

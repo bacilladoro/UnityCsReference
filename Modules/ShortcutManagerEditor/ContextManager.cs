@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Bindings;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.ShortcutManagement
 {
@@ -31,7 +32,7 @@ namespace UnityEditor.ShortcutManagement
         bool HasTag(string tag);
     }
 
-    class ContextManager : IContextManager
+    partial class ContextManager : IContextManager
     {
         class TagManager : ScriptableSingleton<TagManager>
         {
@@ -54,7 +55,9 @@ namespace UnityEditor.ShortcutManagement
 
         internal class GlobalContext {}
 
+        [NoAutoStaticsCleanup] // empty marker singleton, no user refs; safe to persist across reload
         public static readonly GlobalContext globalContext = new GlobalContext();
+        [NoAutoStaticsCleanup] // Type token of an internal marker type; safe to persist across reload
         public static readonly Type globalContextType = typeof(GlobalContext);
 
         WeakReference m_FocusedWindow = new WeakReference(null);
@@ -62,8 +65,10 @@ namespace UnityEditor.ShortcutManagement
         List<IShortcutContext> m_PriorityContexts = new List<IShortcutContext>();
 
         List<IShortcutContext> m_ToolContexts = new List<IShortcutContext>();
+        [AutoStaticsCleanupOnCodeReload]
         static Dictionary<Type, bool> s_IsPriorityContextCache = new Dictionary<Type, bool>();
 
+        [AutoStaticsCleanupOnCodeReload]
         public static Action onTagChange;
 
         #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.

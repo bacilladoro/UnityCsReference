@@ -590,6 +590,37 @@ namespace Unity.ProjectAuditor.Editor.UI
             }
         }
 
+        // Invoked whenever a module finishes during analysis. Updates the set of pending
+        // modules/categories and refreshes the summary views. Crucially, if the user is currently
+        // looking at a page whose data has just arrived (its module finished mid-analysis), it
+        // re-evaluates that page so the populated view replaces the "analysis running" prompt
+        // immediately, instead of only refreshing once the whole analysis completes. (UUM-144826)
+        void HandleModuleCompleted(string moduleName)
+        {
+            m_ViewManager.PendingModuleNames.Remove(moduleName);
+
+#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            var remainingModules = m_ProjectAuditor.GetModules().Where(m => m_ViewManager.PendingModuleNames.Contains(m.Name));
+            var remainingCategories = remainingModules.SelectMany(m => m.Categories).ToHashSet();
+#pragma warning restore UA2001
+            m_ViewManager.PendingCategories = remainingCategories;
+
+            MarkSummaryViewsDirty();
+
+            // If a page is currently showing the "analysis running" prompt, re-check whether its
+            // data has now arrived so it can switch to the populated view without waiting for the
+            // entire analysis to finish.
+            if (m_IsNonAnalyzedViewSelected)
+            {
+                var selectedPage = FindPage(m_SelectedNonAnalyzedPageId);
+                if (selectedPage != null)
+                {
+                    OnSelectedNonAnalyzedPage(selectedPage, false);
+                    Repaint();
+                }
+            }
+        }
+
         // Navigate to the page for a category, preferring one in the same top-level group as the
         // currently shown page (so e.g. the Upgrade summary's "Go to Code" lands on Upgrade > Code).
         internal void GotoCategory(IssueCategory category)
@@ -654,6 +685,14 @@ namespace Unity.ProjectAuditor.Editor.UI
                 m_IsNonAnalyzedViewSelected = true;
                 m_IsPendingAnalysisViewSelected = hasAnyPendingCategory;
                 m_SelectedNonAnalyzedPageId = selectedPage.id;
+            }
+            else if (m_IsNonAnalyzedViewSelected && m_SelectedNonAnalyzedPageId == selectedPage.id)
+            {
+                // This page now has data (e.g. its module finished mid-analysis), so stop overriding
+                // with the analyze / "analysis running" prompt and show the populated view instead of
+                // waiting for the whole analysis to finish. (UUM-144826)
+                m_IsNonAnalyzedViewSelected = false;
+                m_IsPendingAnalysisViewSelected = false;
             }
         }
 
@@ -757,57 +796,88 @@ namespace Unity.ProjectAuditor.Editor.UI
             {
                 var tabName = selectedPage.name;
 
-                using (new EditorGUILayout.HorizontalScope())
+                if (analysisPending)
                 {
-                    var content = analysisPending ? Contents.PendingAnalyzeInfoText : Contents.AnalyzeInfoText;
-                    var info = string.Format(content, tabName);
+                    EditorGUILayout.BeginHorizontal();
+                    GUILayout.FlexibleSpace();
+
+                    var boxWidth = Mathf.Min(650.0f, EditorGUIUtility.currentViewWidth - LayoutSize.kTreeViewWidth - 20.0f);
+                    EditorGUILayout.BeginVertical(EditorStyles.helpBox, GUILayout.Width(boxWidth));
+
+                    EditorGUILayout.BeginHorizontal();
+                    var info = string.Format(Contents.PendingAnalyzeInfoText, tabName);
+                    GUILayout.Label(EditorGUIUtility.GetHelpIcon(MessageType.Info), GUILayout.ExpandWidth(false));
+                    GUILayout.Space(5);
+                    GUILayout.Label(info, EditorStyles.wordWrappedLabel, GUILayout.ExpandWidth(true));
+                    EditorGUILayout.EndHorizontal();
+
+                    GUILayout.Space(5);
+
+                    EditorGUILayout.BeginHorizontal();
+                    GUILayout.FlexibleSpace();
+                    if (GUILayout.Button(Contents.OpenBackgroundTasks))
+                        Progress.ShowDetails(false);
+                    EditorGUILayout.EndHorizontal();
+
+                    EditorGUILayout.EndVertical();
+
+                    GUILayout.FlexibleSpace();
+                    EditorGUILayout.EndHorizontal();
+                }
+                else
+                {
+                    EditorGUILayout.BeginHorizontal();
+
+                    var info = string.Format(Contents.AnalyzeInfoText, tabName);
 
                     GUILayout.FlexibleSpace();
                     EditorGUILayout.HelpBox(info, MessageType.Info);
                     GUILayout.FlexibleSpace();
-                }
-                if (!analysisPending)
-                {
+
+                    EditorGUILayout.EndHorizontal();
+
                     GUILayout.Space(10);
 
-                    using (new EditorGUILayout.HorizontalScope())
+                    EditorGUILayout.BeginHorizontal();
+
+                    GUILayout.FlexibleSpace();
+                    GUI.enabled = !m_ViewManager.HasPendingCategories();
+
+                    if (GUILayout.Button(string.Format(Contents.AnalyzeButtonText, tabName), GUILayout.Width(200)))
                     {
-                        GUILayout.FlexibleSpace();
-                        GUI.enabled = !m_ViewManager.HasPendingCategories();
+                        bool validPreferences = true;
+                        if (selectedPage.id == PageId.Code)
+                            validPreferences = ValidateCodeAnalysisWithPopup();
 
-                        if (GUILayout.Button(string.Format(Contents.AnalyzeButtonText, tabName), GUILayout.Width(200)))
+                        if (validPreferences)
                         {
-                            bool validPreferences = true;
-                            if (selectedPage.id == PageId.Code)
-                                validPreferences = ValidateCodeAnalysisWithPopup();
-
-                            if (validPreferences)
-                            {
-                                var area = GetPageProjectArea(selectedPage.id);
-                                AuditCategories(area, selectedPage.AllCategories);
-                                OnSelectedNonAnalyzedPage(selectedPage, false);
-                            }
-						}
-						
-						GUI.enabled = true;
-                        GUILayout.FlexibleSpace();
+                            var area = GetPageProjectArea(selectedPage.id);
+                            AuditCategories(area, selectedPage.AllCategories);
+                            OnSelectedNonAnalyzedPage(selectedPage, false);
+                        }
                     }
+
+                    GUI.enabled = true;
+                    GUILayout.FlexibleSpace();
+
+                    EditorGUILayout.EndHorizontal();
 
                     if (selectedPage.id == PageId.Code)
                     {
                         const int k_SpacingHeight = 12;
 
-                        using (new EditorGUILayout.HorizontalScope())
+                        EditorGUILayout.BeginHorizontal();
+
+                        GUILayout.FlexibleSpace();
+                        using (new EditorGUILayout.VerticalScope(GUILayout.MaxWidth(350)))
                         {
-                            GUILayout.FlexibleSpace();
-                            using (new EditorGUILayout.VerticalScope(GUILayout.MaxWidth(350)))
-                            {
-                                GUILayout.Space(k_SpacingHeight);
-                                UserPreferences.CodeAnalysisGUI();
-                                GUILayout.Space(k_SpacingHeight);
-                            }
-                            GUILayout.FlexibleSpace();
+                            GUILayout.Space(k_SpacingHeight);
+                            UserPreferences.CodeAnalysisGUI();
+                            GUILayout.Space(k_SpacingHeight);
                         }
+                        GUILayout.FlexibleSpace();
+
+                        EditorGUILayout.EndHorizontal();
                     }
                 }
             }
@@ -894,7 +964,7 @@ namespace Unity.ProjectAuditor.Editor.UI
                         SyncTreeSelection();
                     }
 
-                    var rect = EditorGUILayout.GetControlRect(GUILayout.Width(190), GUILayout.ExpandHeight(true));
+                    var rect = EditorGUILayout.GetControlRect(GUILayout.Width(LayoutSize.kTreeViewWidth), GUILayout.ExpandHeight(true));
                     m_ViewSelectionTreeView.OnGUI(rect);
                 }
             }
@@ -1290,15 +1360,7 @@ namespace Unity.ProjectAuditor.Editor.UI
                 },
                 OnModuleCompleted = (moduleName, analysisResult, extraAnalysisTimeMs) =>
                 {
-                    m_ViewManager.PendingModuleNames.Remove(moduleName);
-
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
-                    var remainingModules = m_ProjectAuditor.GetModules().Where(m => m_ViewManager.PendingModuleNames.Contains(m.Name));
-                    var remainingCategories = remainingModules.SelectMany(m => m.Categories).ToHashSet();
-#pragma warning restore UA2001
-                    m_ViewManager.PendingCategories = remainingCategories;
-
-                    MarkSummaryViewsDirty();
+                    HandleModuleCompleted(moduleName);
                 },
                 OnCompleted = report =>
                 {
@@ -1384,15 +1446,7 @@ namespace Unity.ProjectAuditor.Editor.UI
                 },
                 OnModuleCompleted = (moduleName, analysisResult, extraAnalysisTimeMs) =>
                 {
-                    m_ViewManager.PendingModuleNames.Remove(moduleName);
-
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
-                    var remainingModules = m_ProjectAuditor.GetModules().Where(m => m_ViewManager.PendingModuleNames.Contains(m.Name));
-                    var remainingCategories = remainingModules.SelectMany(m => m.Categories).ToHashSet();
-#pragma warning restore UA2001
-                    m_ViewManager.PendingCategories = remainingCategories;
-
-                    MarkSummaryViewsDirty();
+                    HandleModuleCompleted(moduleName);
                 },
                 OnCompleted = report =>
                 {
@@ -2397,6 +2451,7 @@ namespace Unity.ProjectAuditor.Editor.UI
             public static readonly GUILayoutOption FilterOptionsContentsWidth = GUILayout.Width(kFilterContentsWidth);
             public static readonly GUILayoutOption FilterOptionsContentsHalfWidth = GUILayout.Width(kFilterContentsWidth / 2);
             public static readonly int FilterOptionsEnumWidth = 50;
+            public const float kTreeViewWidth = 190.0f;
         }
 
         static class Contents
@@ -2444,17 +2499,14 @@ To generate a report, select the project area, platform, and code to analyze the
 
             public static readonly GUIContent ShaderVariants = new GUIContent("Variants", "Inspect Shader Variants");
 
-            public static readonly string PendingAnalyzeInfoText = "{0} analysis is still in progress. Please wait until it has finished.";
-            public static readonly string AnalyzeInfoText = "{0} analysis is not yet included in this report. Run analysis now?";
-            public static readonly string AnalyzeButtonText = "Start {0} Analysis";
+            public static readonly string PendingAnalyzeInfoText = L10n.Tr("{0} analysis is still running in the background… (see more in Window > General > Progress)");
+            public static readonly string AnalyzeInfoText = L10n.Tr("{0} analysis is not yet included in this report. Run analysis now?");
+            public static readonly string AnalyzeButtonText = L10n.Tr("Start {0} Analysis");
 
-            public static readonly GUIContent ProjectAreaSelection =
-                new GUIContent("Project Areas", $"Select project areas to analyze.");
-
-            public static readonly GUIContent PlatformSelection =
-                new GUIContent("Platform", "Select the target platform.");
-            public static readonly GUIContent CompilationModeSelection =
-                new GUIContent("Compilation Mode", "Select the compilation mode.");
+            public static readonly GUIContent OpenBackgroundTasks = EditorGUIUtility.TrTextContent("Open Background Tasks");
+            public static readonly GUIContent ProjectAreaSelection = new GUIContent("Project Areas", "Select project areas to analyze.");
+            public static readonly GUIContent PlatformSelection = new GUIContent("Platform", "Select the target platform.");
+            public static readonly GUIContent CompilationModeSelection = new GUIContent("Compilation Mode", "Select the compilation mode.");
 
             static Contents()
             {

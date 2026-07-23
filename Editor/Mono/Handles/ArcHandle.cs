@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor.Snap;
 using UnityEngine;
 
@@ -15,9 +16,11 @@ namespace UnityEditor.IMGUI.Controls
 
         static readonly float s_DefaultRadiusHandleSize = 0.03f;
 
+        [NoAutoStaticsCleanup] // finalizer prunes stale entries by hash code; no user-assembly refs
         static readonly Dictionary<int, Quaternion> s_MostRecentValidAngleHandleOrientations =
             new Dictionary<int, Quaternion>();
 
+        [NoAutoStaticsCleanup] // transient draw-call state; reset to 0 at end of each draw
         // only used inside of DefaultAngleHandleDrawFunction to look up and store the most recent valid orientation per handle
         // done so that DefaultAngleHandleDrawFunction can be a static method, which makes angleHandleDrawFunction more usable by sub-classes
         static int s_CurrentlyDrawingAngleHandleHash;

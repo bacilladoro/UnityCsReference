@@ -28,17 +28,17 @@ namespace UnityEditor
 
         static class Texts
         {
-            public static GUIContent editInPlaymode = EditorGUIUtility.TrTextContent("Edit in Playmode");
-            public static GUIContent pitch = EditorGUIUtility.TrTextContent("Pitch");
-            public static GUIContent addEffect = EditorGUIUtility.TrTextContent("Add Effect");
-            public static GUIContent volume = EditorGUIUtility.TrTextContent("Volume");
-            public static GUIContent sendLevel = EditorGUIUtility.TrTextContent("Send level");
-            public static GUIContent bus = EditorGUIUtility.TrTextContent("Receive");
-            public static GUIContent none = EditorGUIUtility.TrTextContent("None");
-            public static GUIContent wet = EditorGUIUtility.TrTextContent("Wet", "Enables/disables wet/dry ratio on this effect. Note that this makes the DSP graph more complex and requires additional CPU and memory, so use it only when necessary.");
-            public static string dB = "dB";
-            public static string percentage = "%";
-            public static string cpuFormatString = " - CPU: {0:#0.00}%";
+            public static readonly GUIContent editInPlaymode = EditorGUIUtility.TrTextContent("Edit in Playmode");
+            public static readonly GUIContent pitch = EditorGUIUtility.TrTextContent("Pitch");
+            public static readonly GUIContent addEffect = EditorGUIUtility.TrTextContent("Add Effect");
+            public static readonly GUIContent volume = EditorGUIUtility.TrTextContent("Volume");
+            public static readonly GUIContent sendLevel = EditorGUIUtility.TrTextContent("Send level");
+            public static readonly GUIContent bus = EditorGUIUtility.TrTextContent("Receive");
+            public static readonly GUIContent none = EditorGUIUtility.TrTextContent("None");
+            public static readonly GUIContent wet = EditorGUIUtility.TrTextContent("Wet", "Enables/disables wet/dry ratio on this effect. Note that this makes the DSP graph more complex and requires additional CPU and memory, so use it only when necessary.");
+            public const string dB = "dB";
+            public const string percentage = "%";
+            public const string cpuFormatString = " - CPU: {0:#0.00}%";
         }
 
         public AudioMixerEffectView()

@@ -26,6 +26,10 @@ namespace UnityEditor.Search
         private VisualElement m_EditorContainer;
         private Editor[] m_Editors;
         private int m_EditorsHash = 0;
+        // SearchServiceItems this view materialized as editor targets. They have no other
+        // deterministic owner, so we dispose them in ResetEditors (main thread) instead of
+        // leaking them to a finalizer that can never run (their native peer keeps them alive).
+        private readonly List<SearchServiceItem> m_OwnedServiceItems = new List<SearchServiceItem>();
         private Action m_RefreshOff;
         private IVisualElementScheduledItem m_PreviewImageRefreshCallback;
         private IVisualElementScheduledItem m_ActionsRefreshCallback;
@@ -202,7 +206,7 @@ namespace UnityEditor.Search
 
             SetVisibleDetail(false);
 
-            SetupEditors(selection, showOptions);
+            var editorsChanged = SetupEditors(selection, showOptions);
 
             if (selectionCount == 0)
             {
@@ -248,7 +252,7 @@ namespace UnityEditor.Search
             }
 
             if (showOptions.HasAny(ShowDetailsOptions.Inspector))
-                DrawInspector(selection, showOptions);
+                DrawInspector(selection, showOptions, editorsChanged);
             else
                 m_EditorContainer.Clear();
 
@@ -465,8 +469,16 @@ namespace UnityEditor.Search
             return Utils.IsBuiltInResource(icon);
         }
 
-        private void DrawInspector(SearchSelection selection, ShowDetailsOptions showOptions)
+        private void DrawInspector(SearchSelection selection, ShowDetailsOptions showOptions, bool editorsChanged)
         {
+            // Selection/editors unchanged (e.g. a refresh caused by dragging a slider in the inspector):
+            // reuse the existing inspector elements so the in-progress IMGUI interaction is preserved.
+            if (!editorsChanged && m_EditorContainer.childCount > 0)
+            {
+                ShowElements(m_EditorContainer);
+                return;
+            }
+
             m_EditorContainer.Clear();
 
             if (m_Editors == null)
@@ -519,6 +531,7 @@ namespace UnityEditor.Search
                     targetItem.name = item.label ?? item.value.ToString();
                     targetItem.item = item;
                     targets.Add(targetItem);
+                    m_OwnedServiceItems.Add(targetItem);
                 }
             }
 
@@ -551,6 +564,16 @@ namespace UnityEditor.Search
             }
             m_Editors = null;
             m_EditorsHash = 0;
+
+            // Dispose the SearchServiceItems we materialized as targets (after the editors
+            // that referenced them are gone). Disposal destroys them on the main thread and
+            // evicts them from their SearchItem's object cache.
+            if (m_OwnedServiceItems.Count > 0)
+            {
+                foreach (var serviceItem in m_OwnedServiceItems)
+                    serviceItem?.Dispose();
+                m_OwnedServiceItems.Clear();
+            }
         }
 
         private bool GetTargetsFromSearchItem(SearchItem item, List<UnityEngine.Object> targets)
@@ -576,6 +599,11 @@ namespace UnityEditor.Search
             {
                 targets.Add(itemObject);
 
+                // Track default-provider wrappers we own so ResetEditors can dispose them;
+                // real assets/components from other providers must not be destroyed here.
+                if (itemObject is SearchServiceItem serviceItem)
+                    m_OwnedServiceItems.Add(serviceItem);
+
                 if (item.provider.id == "asset")
                 {
                     var importer = AssetImporter.GetAtPath(item.id);
@@ -586,6 +614,13 @@ namespace UnityEditor.Search
 
             return true;
         }
+
+        #region TEST_API
+        internal void ForceRefresh()
+        {
+            Refresh();
+        }
+        #endregion
     }
 }
 

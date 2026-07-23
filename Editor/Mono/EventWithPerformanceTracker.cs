@@ -289,6 +289,11 @@ namespace UnityEditor
                 }
             }
         }
+
+        internal void Clear()
+        {
+            m_Delegate = null;
+        }
     }
 
     static class EventWithPerformanceTracker
@@ -420,6 +425,12 @@ namespace UnityEditor
             }
 
             return new Invoker(ref m_Delegates);
+        }
+
+        internal void Clear()
+        {
+            m_CachedDelegate = null;
+            m_Delegates = default;
         }
 
         internal readonly struct Invoker

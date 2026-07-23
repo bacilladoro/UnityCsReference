@@ -78,6 +78,7 @@ namespace UnityEngine
 
     partial class CircleCollider2D
     {
+        ///<summary>The center point of the collider in local space.</summary>
         [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
         [Obsolete("CircleCollider2D.center has been obsolete. Use CircleCollider2D.offset instead (UnityUpgradable) -> offset", true)]
         public Vector2 center { get => throw new NotSupportedException(); set => throw new NotSupportedException(); }
@@ -85,6 +86,7 @@ namespace UnityEngine
 
     partial class BoxCollider2D
     {
+        ///<summary>The center point of the collider in local space.</summary>
         [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
         [Obsolete("BoxCollider2D.center has been obsolete. Use BoxCollider2D.offset instead (UnityUpgradable) -> offset", true)]
         public Vector2 center { get => throw new NotSupportedException(); set => throw new NotSupportedException(); }
@@ -92,6 +94,9 @@ namespace UnityEngine
 
     partial class Joint2D
     {
+        ///<summary>Can the joint collide with the other Rigidbody2D object to which it is attached?</summary>
+        ///<seealso cref="Rigidbody2D" />
+        ///<seealso cref="connectedBody" />
         [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
         [Obsolete("Joint2D.collideConnected has been obsolete. Use Joint2D.enableCollision instead (UnityUpgradable) -> enableCollision", true)]
         public bool collideConnected { get => throw new NotSupportedException(); set => throw new NotSupportedException(); }
@@ -99,6 +104,7 @@ namespace UnityEngine
 
     partial class AreaEffector2D
     {
+        ///<exclude />
         [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
         [Obsolete("AreaEffector2D.forceDirection has been obsolete. Use AreaEffector2D.forceAngle instead (UnityUpgradable) -> forceAngle", true)]
         public float forceDirection { get => throw new NotSupportedException(); set => throw new NotSupportedException(); }
@@ -136,18 +142,28 @@ namespace UnityEngine
 
     partial class PlatformEffector2D
     {
+        ///<summary>Whether to use one-way collision behaviour or not.</summary>
+        ///<remarks>Various behaviour associated with 2D platforms are provided by this effector such as allowing colliders to pass-through the effector colliders in one-direction (one-way) as well as controller whether friction or bounce should be applied.</remarks>
         [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
         [Obsolete("PlatformEffector2D.oneWay has been obsolete. Use PlatformEffector2D.useOneWay instead (UnityUpgradable) -> useOneWay", true)]
         public bool oneWay { get => throw new NotSupportedException(); set => throw new NotSupportedException(); }
 
+        ///<summary>Whether friction should be used on the platform sides or not.</summary>
+        ///<remarks>This is useful to stop friction slowing a <see cref="Collider2D" /> when in contact with a vertical surface when a force is being applied to keep the <see cref="Collider2D" /> in contact with the surface.  The "sides" are defined as the edges perpendicular to the "top" surface(s) in local-space.</remarks>
         [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
         [Obsolete("PlatformEffector2D.sideFriction has been obsolete. Use PlatformEffector2D.useSideFriction instead (UnityUpgradable) -> useSideFriction", true)]
         public bool sideFriction { get => throw new NotSupportedException(); set => throw new NotSupportedException(); }
 
+        ///<summary>Whether bounce should be used on the platform sides or not.</summary>
+        ///<remarks>This is useful to stop bouncing of a <see cref="Collider2D" /> when in contact with a vertical surface.  The "sides" are defined as the edges perpendicular to the "top" surface(s) in local-space.</remarks>
         [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
         [Obsolete("PlatformEffector2D.sideBounce has been obsolete. Use PlatformEffector2D.useSideBounce instead (UnityUpgradable) -> useSideBounce", true)]
         public bool sideBounce { get => throw new NotSupportedException(); set => throw new NotSupportedException(); }
 
+        ///<summary>The angle variance centered on the sides of the platform.  Zero angle only matches sides 90-degree to the platform "top".</summary>
+        ///<remarks>Increasing thesideAngleVariance allows the definition of what is a "side" to be expanded beyond the surfaces perpendicular to the platform "top".  For instance, if the <see cref="Effector2D" /> source was a <see cref="CircleCollider2D" /> then the sides could be set to an arc on either side of the circle.</remarks>
+        ///<seealso cref="sideBounce" />
+        ///<seealso cref="sideFriction" />
         [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
         [Obsolete("PlatformEffector2D.sideAngleVariance has been obsolete. Use PlatformEffector2D.sideArc instead (UnityUpgradable) -> sideArc", true)]
         public float sideAngleVariance { get => throw new NotSupportedException(); set => throw new NotSupportedException(); }
@@ -161,21 +177,35 @@ namespace UnityEngine
         [StaticAccessor("GetPhysics2DSettings()")]
         extern public static bool autoSyncTransforms { get; set; }
 
+        ///<summary>Set the raycasts to either detect or not detect Triggers.</summary>
+        ///<remarks>A Collider can be set up to act as a trigger which will detect other Colliders entering its volume but won't physically collide with them. Often, it is desirable to avoid detecting trigger Colliders with raycasts because they don't represent solid objects. This property lets you choose whether or not raycasts should detect triggers.</remarks>
+        ///<seealso cref="Collider2D.isTrigger" />
+        ///<seealso cref="Raycast" />
         [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
         [Obsolete("Physics2D.raycastsHitTriggers is obsolete. Use Physics2D.queriesHitTriggers instead. (UnityUpgradable) -> queriesHitTriggers", true)]
         public static bool raycastsHitTriggers { get => throw new NotSupportedException(); set => throw new NotSupportedException(); }
 
+        ///<summary>Do ray/line casts that start inside a Collider(s) detect those Collider(s)?</summary>
+        ///<remarks>When performing a ray/line cast, the start point can begin inside a Collider.  When this occurs, this property controls whether these Colliders are returned or not.  When set to true, such Colliders are returned.</remarks>
+        ///<seealso cref="Raycast" />
+        ///<seealso cref="Linecast" />
         [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
         [Obsolete("Physics2D.raycastsStartInColliders is obsolete. Use Physics2D.queriesStartInColliders instead. (UnityUpgradable) -> queriesStartInColliders", true)]
         public static bool raycastsStartInColliders { get => throw new NotSupportedException(); set => throw new NotSupportedException(); }
 
+        ///<summary>Set whether to continue or stop the proccesing of collision callbacks if any of the objects involved in the collision are deleted.</summary>
+        ///<remarks>During a collision callback, if either a Collider2D or Rigidbody2D that is taking part in that particular callback is deleted then this property controls whether callbacks will continue for this contact or not.</remarks>
         [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
         [Obsolete("Physics2D.deleteStopsCallbacks is obsolete.(UnityUpgradable) -> changeStopsCallbacks", true)]
         public static bool deleteStopsCallbacks { get => throw new NotSupportedException(); set => throw new NotSupportedException(); }
 
+        ///<summary>Set whether the reporting of collisions callbacks immediately stops if any of the objects involved in the collision are deleted or moved.</summary>
+        ///<remarks>During a collision callback, if either a Collider2D or Rigidbody2D that is taking part in that particular callback is deleted or moved then this property controls whether callbacks will continue for this contact or not.</remarks>
         [Obsolete("Physics2D.changeStopsCallbacks is obsolete and will always return false.", true)]
         public static bool changeStopsCallbacks { get => throw new NotSupportedException(); set => throw new NotSupportedException(); }
 
+        ///<summary>This property is obsolete.  You should use <see cref="defaultContactOffset" /> instead.</summary>
+        ///<seealso cref="defaultContactOffset" />
         [Obsolete("Physics2D.minPenetrationForPenalty is obsolete. Use Physics2D.defaultContactOffset instead. (UnityUpgradable) -> defaultContactOffset", true)]
         public static float minPenetrationForPenalty { get => throw new NotSupportedException(); set => throw new NotSupportedException(); }
 
@@ -183,6 +213,13 @@ namespace UnityEngine
         [Obsolete("Physics2D.velocityThreshold is obsolete. Use Physics2D.bounceThreshold instead. (UnityUpgradable) -> bounceThreshold", true)]
         public static float velocityThreshold { get => throw new NotSupportedException(); set => throw new NotSupportedException(); }
 
+        ///<summary>Set whether the physics should be simulated automatically or not.</summary>
+        ///<remarks>By default, physics is updated every <see cref="Time.fixedDeltaTime" /> during the play mode. It happens automatically as part of the regular game loop.
+        ///
+        ///However, there are cases where being able to advance physics manually is needed. One particular example example could be networked physics where rewinding time back and applying all the player input is required up on receiving data from the authoritative server.
+        ///
+        ///To control the physics simulation manually, disable the automatic simulation first and then use <see cref="Physics2D.Simulate" /> to advance time. Note that <c>FixedUpdate</c> will still be called at the rate defined by <see cref="Time.fixedDeltaTime" />, but the physics simulation will no longer be advanced automatically.</remarks>
+        ///<seealso cref="Physics2D.Simulate" />
         [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
         [Obsolete("Physics2D.autoSimulation is obsolete. Use Physics2D.simulationMode instead.", true)]
         public static bool autoSimulation { get => throw new NotSupportedException(); set => throw new NotSupportedException(); }

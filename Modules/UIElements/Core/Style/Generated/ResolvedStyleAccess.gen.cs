@@ -43,6 +43,7 @@ namespace UnityEngine.UIElements
         public float borderTopWidth => ve.layoutNode.LayoutBorderTop;
         public float bottom => ve.layoutNode.LayoutBottom;
         public Color color => ve.computedStyle.color;
+        public float columnGap => ve.computedStyle.columnGap.value;
         public DisplayStyle display => ve.computedStyle.display;
         public IEnumerable<FilterFunction> filter => ve.computedStyle.rareData.Read().filter.ToManaged();
         public StyleFloat flexBasis => new StyleFloat(ve.layoutNode.ComputedFlexBasis);
@@ -71,6 +72,7 @@ namespace UnityEngine.UIElements
         public Position position => ve.computedStyle.position;
         public float right => ve.layoutNode.LayoutRight;
         public Rotate rotate => ve.computedStyle.rotate;
+        public float rowGap => ve.computedStyle.rowGap.value;
         public Scale scale => ve.computedStyle.scale;
         public TextOverflow textOverflow => ve.computedStyle.textOverflow;
         public TextShadow textShadow => ve.computedStyle.textShadow;
@@ -160,6 +162,8 @@ namespace UnityEngine.UIElements
 
         Color IResolvedStyle.color => resolvedStyle.color;
 
+        float IResolvedStyle.columnGap => resolvedStyle.columnGap;
+
         DisplayStyle IResolvedStyle.display => resolvedStyle.display;
 
         IEnumerable<FilterFunction> IResolvedStyle.filter => resolvedStyle.filter;
@@ -215,6 +219,8 @@ namespace UnityEngine.UIElements
         float IResolvedStyle.right => resolvedStyle.right;
 
         Rotate IResolvedStyle.rotate => resolvedStyle.rotate;
+
+        float IResolvedStyle.rowGap => resolvedStyle.rowGap;
 
         Scale IResolvedStyle.scale => resolvedStyle.scale;
 

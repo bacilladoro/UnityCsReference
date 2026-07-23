@@ -11,6 +11,7 @@ using UnityEditor.Toolbars;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
+using Unity.Scripting.LifecycleManagement;
 using static UnityEditor.CameraPreviewUtils;
 
 namespace UnityEditor
@@ -319,6 +320,7 @@ namespace UnityEditor
         readonly string k_NoCameraDisplayLabel = L10n.Tr("No camera selected");
         const string k_ClipUIShaderKeyword = "CLIP_UV";
 
+        [NoAutoStaticsCleanup] // Registered via RegisterResourceForCleanupOnDomainReload and destroyed on reload; the lazy '== null' getter rebuilds it on next access (a destroyed UnityEngine.Object compares == null).
         static Material s_PreviewMaterial = null;
         
         Material previewMaterial

@@ -8,6 +8,7 @@ using System.IO;
 using UnityEngine;
 using UnityEngine.Bindings;
 using UnityEngine.Scripting;
+using Unity.Scripting.LifecycleManagement;
 using Attribute = System.Attribute;
 using Event = UnityEngine.Event;
 
@@ -25,7 +26,7 @@ namespace UnityEditor.ShortcutManagement
 
     [InitializeOnLoad]
     [VisibleToOtherModules("UnityEditor.UIBuilderModule", "UnityEditor.GraphToolkitModule", "UnityEditor.UIToolkitAuthoringModule")]
-    static class ShortcutIntegration
+    static partial class ShortcutIntegration
     {
         const string k_DeleteID = "Main Menu/Edit/Delete";
         const string k_IgnoreWhenPlayModeFocused = "GameView.IgnoreWhenPlayModeFocused";
@@ -49,6 +50,7 @@ namespace UnityEditor.ShortcutManagement
             }
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         private static ShortcutController s_Instance;
         public static ShortcutController instance
         {
@@ -59,6 +61,7 @@ namespace UnityEditor.ShortcutManagement
             }
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         private static bool s_Enabled;
         internal static bool enabled
         {
@@ -99,6 +102,7 @@ namespace UnityEditor.ShortcutManagement
             }
 
         }
+        [NoAutoStaticsCleanup] // user-preference bool mirrored from EditorPrefs; safe to persist across reload
         internal static bool s_IgnoreWhenPlayModeFocused;
 
         [RequiredByNativeCode]
@@ -107,7 +111,8 @@ namespace UnityEditor.ShortcutManagement
         [RequiredByNativeCode]
         static bool HasModifiers(EventModifiers modifiers) => Event.current?.modifiers == modifiers;
 
-        static ShortcutIntegration()
+        [OnCodeLoaded]
+        static void Initialize()
         {
             // There is cases where the ShortcutIntegration was not requested even after the project was initialized, such as running tests.
             EditorApplication.delayCall += EnsureShortcutsAreInitialized;

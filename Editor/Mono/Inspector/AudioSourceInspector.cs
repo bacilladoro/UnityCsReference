@@ -6,6 +6,7 @@ using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine.Audio;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -68,12 +69,13 @@ namespace UnityEditor
         const float EPSILON = 0.0001f;
 
 
-        static CurveEditorSettings m_CurveEditorSettings = new CurveEditorSettings();
-        internal static Color kRolloffCurveColor  = new Color(0.90f, 0.30f, 0.20f, 1.0f);
-        internal static Color kSpatialCurveColor = new Color(0.25f, 0.70f, 0.20f, 1.0f);
-        internal static Color kSpreadCurveColor   = new Color(0.25f, 0.55f, 0.95f, 1.0f);
-        internal static Color kLowPassCurveColor  = new Color(0.80f, 0.25f, 0.90f, 1.0f);
-        internal static Color kReverbZoneMixCurveColor = new Color(0.70f, 0.70f, 0.20f, 1.0f);
+        [NoAutoStaticsCleanup] // shared curve editor presentation settings, no user-code refs; safe to persist
+        static readonly CurveEditorSettings m_CurveEditorSettings = new CurveEditorSettings();
+        internal static readonly Color kRolloffCurveColor  = new Color(0.90f, 0.30f, 0.20f, 1.0f);
+        internal static readonly Color kSpatialCurveColor = new Color(0.25f, 0.70f, 0.20f, 1.0f);
+        internal static readonly Color kSpreadCurveColor   = new Color(0.25f, 0.55f, 0.95f, 1.0f);
+        internal static readonly Color kLowPassCurveColor  = new Color(0.80f, 0.25f, 0.90f, 1.0f);
+        internal static readonly Color kReverbZoneMixCurveColor = new Color(0.70f, 0.70f, 0.20f, 1.0f);
 
         internal bool[] m_SelectedCurves = System.Array.Empty<bool>();
 
@@ -83,28 +85,28 @@ namespace UnityEditor
 
         internal static class Styles
         {
-            public static GUIStyle labelStyle = "ProfilerBadge";
-            public static GUIContent rolloffLabel =  EditorGUIUtility.TrTextContent("Volume Rolloff", "Which type of rolloff curve to use");
-            public static string controlledByCurveLabel = "Controlled by curve";
-            public static GUIContent audioGeneratorLabel = EditorGUIUtility.TrTextContent("Audio Generator", $"The Audio Generator object played by the {nameof(AudioSource)}, which can be assets like {nameof(AudioClip)}, {nameof(AudioRandomContainer)} or scripting {nameof(IAudioGenerator)} assets / components. Can be undefined if the {nameof(AudioSource)} is generating a live stream of audio via OnAudioFilterRead.");
-            public static GUIContent panStereoLabel = EditorGUIUtility.TrTextContent("Stereo Pan", "Only valid for Mono and Stereo AudioClips. Mono sounds will be panned at constant power left and right. Stereo sounds will have each left/right value faded up and down according to the specified pan value.");
-            public static GUIContent spatialBlendLabel = EditorGUIUtility.TrTextContent("Spatial Blend", "Sets how much this AudioSource is treated as a 3D source. 3D sources are affected by spatial position and spread. If 3D Pan Level is 0, all spatial attenuation is ignored.");
-            public static GUIContent reverbZoneMixLabel = EditorGUIUtility.TrTextContent("Reverb Zone Mix", "Sets how much of the signal this AudioSource is mixing into the global reverb associated with the zones. [0, 1] is a linear range (like volume) while [1, 1.1] lets you boost the reverb mix by 10 dB.");
-            public static GUIContent dopplerLevelLabel = EditorGUIUtility.TrTextContent("Doppler Level", "Specifies how much the pitch is changed based on the relative velocity between AudioListener and AudioSource.");
-            public static GUIContent spreadLabel = EditorGUIUtility.TrTextContent("Spread", "Sets the spread of a 3d sound in speaker space");
-            public static GUIContent outputMixerGroupLabel = EditorGUIUtility.TrTextContent("Output", "Set whether the sound should play through an Audio Mixer first or directly to the Audio Listener");
-            public static GUIContent volumeLabel = EditorGUIUtility.TrTextContent("Volume", "Sets the overall volume of the sound.");
-            public static GUIContent pitchLabel = EditorGUIUtility.TrTextContent("Pitch", "Sets the frequency of the sound. Use this to slow down or speed up the sound.");
-            public static GUIContent priorityLabel = EditorGUIUtility.TrTextContent("Priority", "Sets the priority of the source. Note that a sound with a larger priority value will more likely be stolen by sounds with smaller priority values.");
-            public static GUIContent spatializeLabel = EditorGUIUtility.TrTextContent("Spatialize", "Enables or disables custom spatialization for the AudioSource.");
-            public static GUIContent spatializePostEffectsLabel = EditorGUIUtility.TrTextContent("Spatialize Post Effects", "Determines if the custom spatializer is applied before or after the effect filters attached to the AudioSource. This flag only has an effect if the spatialize flag is enabled on the AudioSource.");
-            public static GUIContent priorityLeftLabel = EditorGUIUtility.TrTextContent("High");
-            public static GUIContent priorityRightLabel = EditorGUIUtility.TrTextContent("Low");
-            public static GUIContent spatialLeftLabel = EditorGUIUtility.TrTextContent("2D");
-            public static GUIContent spatialRightLabel = EditorGUIUtility.TrTextContent("3D");
-            public static GUIContent panLeftLabel = EditorGUIUtility.TrTextContent("Left");
-            public static GUIContent panRightLabel = EditorGUIUtility.TrTextContent("Right");
-            public static string xAxisLabel = L10n.Tr("Distance");
+            public static readonly GUIStyle labelStyle = "ProfilerBadge";
+            public static readonly GUIContent rolloffLabel =  EditorGUIUtility.TrTextContent("Volume Rolloff", "Which type of rolloff curve to use");
+            public const string controlledByCurveLabel = "Controlled by curve";
+            public static readonly GUIContent audioGeneratorLabel = EditorGUIUtility.TrTextContent("Audio Generator", $"The Audio Generator object played by the {nameof(AudioSource)}, which can be assets like {nameof(AudioClip)}, {nameof(AudioRandomContainer)} or scripting {nameof(IAudioGenerator)} assets / components. Can be undefined if the {nameof(AudioSource)} is generating a live stream of audio via OnAudioFilterRead.");
+            public static readonly GUIContent panStereoLabel = EditorGUIUtility.TrTextContent("Stereo Pan", "Only valid for Mono and Stereo AudioClips. Mono sounds will be panned at constant power left and right. Stereo sounds will have each left/right value faded up and down according to the specified pan value.");
+            public static readonly GUIContent spatialBlendLabel = EditorGUIUtility.TrTextContent("Spatial Blend", "Sets how much this AudioSource is treated as a 3D source. 3D sources are affected by spatial position and spread. If 3D Pan Level is 0, all spatial attenuation is ignored.");
+            public static readonly GUIContent reverbZoneMixLabel = EditorGUIUtility.TrTextContent("Reverb Zone Mix", "Sets how much of the signal this AudioSource is mixing into the global reverb associated with the zones. [0, 1] is a linear range (like volume) while [1, 1.1] lets you boost the reverb mix by 10 dB.");
+            public static readonly GUIContent dopplerLevelLabel = EditorGUIUtility.TrTextContent("Doppler Level", "Specifies how much the pitch is changed based on the relative velocity between AudioListener and AudioSource.");
+            public static readonly GUIContent spreadLabel = EditorGUIUtility.TrTextContent("Spread", "Sets the spread of a 3d sound in speaker space");
+            public static readonly GUIContent outputMixerGroupLabel = EditorGUIUtility.TrTextContent("Output", "Set whether the sound should play through an Audio Mixer first or directly to the Audio Listener");
+            public static readonly GUIContent volumeLabel = EditorGUIUtility.TrTextContent("Volume", "Sets the overall volume of the sound.");
+            public static readonly GUIContent pitchLabel = EditorGUIUtility.TrTextContent("Pitch", "Sets the frequency of the sound. Use this to slow down or speed up the sound.");
+            public static readonly GUIContent priorityLabel = EditorGUIUtility.TrTextContent("Priority", "Sets the priority of the source. Note that a sound with a larger priority value will more likely be stolen by sounds with smaller priority values.");
+            public static readonly GUIContent spatializeLabel = EditorGUIUtility.TrTextContent("Spatialize", "Enables or disables custom spatialization for the AudioSource.");
+            public static readonly GUIContent spatializePostEffectsLabel = EditorGUIUtility.TrTextContent("Spatialize Post Effects", "Determines if the custom spatializer is applied before or after the effect filters attached to the AudioSource. This flag only has an effect if the spatialize flag is enabled on the AudioSource.");
+            public static readonly GUIContent priorityLeftLabel = EditorGUIUtility.TrTextContent("High");
+            public static readonly GUIContent priorityRightLabel = EditorGUIUtility.TrTextContent("Low");
+            public static readonly GUIContent spatialLeftLabel = EditorGUIUtility.TrTextContent("2D");
+            public static readonly GUIContent spatialRightLabel = EditorGUIUtility.TrTextContent("3D");
+            public static readonly GUIContent panLeftLabel = EditorGUIUtility.TrTextContent("Left");
+            public static readonly GUIContent panRightLabel = EditorGUIUtility.TrTextContent("Right");
+            public static readonly string xAxisLabel = L10n.Tr("Distance");
         }
 
         Vector3 GetSourcePos(Object target)

@@ -72,6 +72,7 @@ namespace UnityEditor.AdaptivePerformance.UI.Editor
             AddToClassList("usage-dial__background-image");
             Init(m_Value, m_ThresholdYellowPercentage, m_ThresholdRedPercentage, true);
             RegisterCallback<CustomStyleResolvedEvent>(OnCustomStyleResolved);
+            RegisterCallback<DetachFromPanelEvent>(OnDetachFromPanel);
             generateVisualContent = GenerateVisualContent;
         }
 
@@ -90,9 +91,9 @@ namespace UnityEditor.AdaptivePerformance.UI.Editor
         }
 
         /// <summary>
-        /// Finalizer destorys the dial texture if still allocated.
+        /// Destroys the dial texture when the dial leaves the panel.
         /// </summary>
-        ~UsageDial()
+        void OnDetachFromPanel(DetachFromPanelEvent evt)
         {
             if (m_Texture)
                 UnityEngine.Object.DestroyImmediate(m_Texture);

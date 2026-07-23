@@ -6,6 +6,7 @@ using UnityEngine;
 using UnityEditorInternal;
 using System;
 using UnityEditor.Callbacks;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -41,6 +42,7 @@ namespace UnityEditor
         [NonSerialized] GameViewSize m_Remote = null;
         [NonSerialized] Vector2 m_LastRemoteScreenSize = new Vector2(-1, -1);
         [NonSerialized] int m_ChangeID = 0;
+        [NoAutoStaticsCleanup] // re-initialized in OnEnable after reload; stale value is harmless for the brief gap
         [NonSerialized] static GameViewSizeGroupType s_GameViewSizeGroupType;
 
         public GameViewSizeGroupType currentGroupType

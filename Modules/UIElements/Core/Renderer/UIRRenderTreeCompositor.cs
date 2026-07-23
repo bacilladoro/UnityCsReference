@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Pool;
 
@@ -383,6 +384,7 @@ namespace UnityEngine.UIElements.UIR
         }
 
 
+        [NoAutoStaticsCleanup] // pre-allocated scratch array; infrastructure
         static Vector4[] s_UVRects = new Vector4[1];
 
         static readonly int s_UnityUIE_UVRectId = Shader.PropertyToID("unity_uie_UVRect");
@@ -526,6 +528,7 @@ namespace UnityEngine.UIElements.UIR
             public int uvRectId;
         }
 
+        [NoAutoStaticsCleanup] // shader property ID cache; no user type references
         static readonly Dictionary<string, InputBindingIds> s_InputBindingIds = new();
 
         static InputBindingIds GetInputBindingIds(string name)

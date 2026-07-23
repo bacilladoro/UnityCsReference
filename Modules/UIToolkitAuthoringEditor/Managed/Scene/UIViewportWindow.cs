@@ -81,6 +81,7 @@ partial class UIViewportWindow : EditorWindow
     UIViewport m_Viewport;
 
     PreviewThemeState m_ThemeState;
+    PanelSettings m_PanelSettings;
     UxmlCodePreview m_UxmlPreview;
     UssCodePreview m_UssPreview;
 
@@ -242,10 +243,12 @@ partial class UIViewportWindow : EditorWindow
         m_UxmlPreview.Asset = stage.EditedVisualTreeAsset;
         m_UssPreview.Asset = GetActiveStyleSheetQuery.Get() ?? stage.EditedVisualTreeAsset.GetAllReferencedStyleSheets().FirstOrDefault();
         UICommandQueue.RegisterHandler<ActiveStyleSheetChangedMessage>(ActiveStyleSheetChanged);
+        UICommandQueue.RegisterHandler<GetCanvasThemeQuery>(GetCanvasThemeRequest);
     }
 
     void SetupThemeMenu(PanelSettings panelSettings, ThemeStyleSheet selectedTheme)
     {
+        m_PanelSettings = panelSettings;
         m_Viewport.ThemeMenu.ThemeSelected += OnThemeMenuThemeSelected;
         m_Viewport.ThemeMenu.SelectedTheme = selectedTheme;
         m_Viewport.ThemeMenu.PanelSettings = panelSettings;
@@ -264,6 +267,8 @@ partial class UIViewportWindow : EditorWindow
 
     internal void ClearThemeMenu()
     {
+        m_PanelSettings = null;
+
         if (m_Viewport?.ThemeMenu != null)
         {
             m_Viewport.ThemeMenu.ThemeSelected -= OnThemeMenuThemeSelected;
@@ -286,6 +291,7 @@ partial class UIViewportWindow : EditorWindow
         m_UxmlPreview.Asset = null;
         m_UssPreview.Asset = null;
         UICommandQueue.UnregisterHandler<ActiveStyleSheetChangedMessage>(ActiveStyleSheetChanged);
+        UICommandQueue.UnregisterHandler<GetCanvasThemeQuery>(GetCanvasThemeRequest);
     }
 
     static float GetPixelsPerPoint(VisualElement element)
@@ -297,5 +303,11 @@ partial class UIViewportWindow : EditorWindow
     void ActiveStyleSheetChanged(in CommandContext context)
     {
         m_UssPreview.Asset = ((ActiveStyleSheetChangedMessage)context.Command).StyleSheet;
+    }
+
+    void GetCanvasThemeRequest(in CommandContext context)
+    {
+        var theme = m_Canvas?.PanelElement?.ThemeStyleSheet ?? m_PanelSettings?.themeStyleSheet;
+        GetCanvasThemeQuery.QueryPayload.Execute(CommandSources.Viewport, theme);
     }
 }

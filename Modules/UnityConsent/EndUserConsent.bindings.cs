@@ -31,7 +31,7 @@ namespace UnityEngine.UnityConsent
         public extern static void SetConsentState(ConsentState consentState);
 
         /// <summary>
-        /// Occurs when the consent state of the user changes.
+        /// Occurs when the consent state of the user changes. The argument is the new consent state.
         /// </summary>
         public static event Action<ConsentState> consentStateChanged;
 

@@ -62,8 +62,11 @@ namespace Unity.GraphToolkit.Editor
                 case StateModel:
                     ui = new State();
                     break;
-                case VariableNodeModel:
-                    ui = new VariableNodeView();
+                case VariableNodeModel variableNode:
+                    if (variableNode.Mode == VariableNodeMode.Set)
+                        ui = new SetVariableNodeView();
+                    else
+                        ui = new VariableNodeView();
                     break;
                 case ISingleInputPortNodeModel:
                 case ISingleOutputPortNodeModel:

@@ -16,6 +16,7 @@ partial class StyleRuleHeader : UISelectionObjectHeader
 {
     public static readonly BindingId RuleProperty = nameof(Rule);
     public static readonly BindingId RuleNameProperty = nameof(RuleName);
+    public static readonly BindingId IsReadOnlyProperty = nameof(IsReadOnly);
 
     public new const string UssClass = "unity-style-rule-header";
     public const string RuleNameUssClass = UssClass + "__rule-name";
@@ -32,6 +33,7 @@ partial class StyleRuleHeader : UISelectionObjectHeader
 
     private TextField m_RuleName;
     private StyleRule m_Rule;
+    private bool m_IsReadOnly;
 
     public InspectorSearchField SearchField { get; }
 
@@ -73,6 +75,20 @@ partial class StyleRuleHeader : UISelectionObjectHeader
                 RuleName = s_Exporter.ToUssString(m_Rule.styleSheet, m_Rule.complexSelectors, StyleSheetNodeTypeHandler.s_ExportOptions);
             }
             NotifyPropertyChanged(RuleProperty);
+        }
+    }
+
+    [CreateProperty]
+    public bool IsReadOnly
+    {
+        get => m_IsReadOnly;
+        set
+        {
+            if (m_IsReadOnly == value)
+                return;
+            m_IsReadOnly = value;
+            m_RuleName.SetEnabled(!value);
+            NotifyPropertyChanged(IsReadOnlyProperty);
         }
     }
 

@@ -4,6 +4,7 @@
 
 using System;
 using System.Linq;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -313,6 +314,7 @@ namespace UnityEditor.Experimental.GraphView
             return rect;
         }
 
+        [NoAutoStaticsCleanup] // geometry scratch buffer; Vector3[] holds only unmanaged value-type elements, no managed refs that could pin user assemblies
         private static Vector3[] s_CachedRect = new Vector3[4];
 
         private void OnGenerateVisualContent(MeshGenerationContext mgc)

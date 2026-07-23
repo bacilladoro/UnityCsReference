@@ -57,6 +57,11 @@ namespace UnityEngine
         [NativeMethod(Name = "GetEntityIdStoreBlockCommittedTable", IsFreeFunction = true, IsThreadSafe = true)]
         public static extern unsafe void* GetEntityIdStoreBlockCommittedTable();
 
+        // Address of the committed-index bound the fast-path reader gates slot
+        // reads on (native baselib::atomic<UInt32>). null on the page-table path.
+        [NativeMethod(Name = "GetEntityIdStoreCommittedIndexBoundAddress", IsFreeFunction = true, IsThreadSafe = true)]
+        public static extern unsafe void* GetEntityIdStoreCommittedIndexBoundAddress();
+
         [NativeMethod(Name = "EntityIdStorePlatformSupportsVirtualMemory", IsFreeFunction = true, IsThreadSafe = true)]
         public static extern bool EntityIdStorePlatformSupportsVirtualMemory();
 
@@ -72,7 +77,7 @@ namespace UnityEngine
 
     // Managed view of the native EntityIdStore.
     //
-    // Layout MUST stay in sync with Runtime/BaseClasses/EntityIdStore.cpp:
+    // Layout MUST stay in sync with Runtime/BaseClasses/EntityIdStore.{h,cpp}:
     //   - EntitySlot: 16 bytes, ulong versionAndChunk + IntPtr nativeObjectPtr.
     //   - versionAndChunk packing: [chunkIndex:32 | indexInChunk:8 | version:24].
     //   - EntityId packing: [Version:24 | TypeId:12 | Index:28]. See EntityID.h.
@@ -90,7 +95,7 @@ namespace UnityEngine
     // EntityIdStoreBindings and cached in the ContextData SharedStatic.
     internal unsafe partial class EntityIdStore
     {
-        // Mirrors native EntitySlot in Runtime/BaseClasses/EntityIdStore.cpp.
+        // Mirrors native EntitySlot in Runtime/BaseClasses/EntityIdStore.h.
         // Reading versionAndChunk and nativeObjectPtr as plain values is safe on
         // x86/arm64: the native side uses baselib::atomic only for memory ordering;
         // it has the same layout as the underlying type.
@@ -156,7 +161,8 @@ namespace UnityEngine
             public uint  WordsPerBlock;
             public ulong* AllocatedBits; // null on page-table path
             public ulong* ReservedBits;  // null on page-table path and in player builds
-            public byte*  BlockCommitted;// null on page-table / on-demand-commit paths
+            public byte*  BlockCommitted;// allocator-side commit gating; null on page-table path
+            public uint*  CommittedIndexBound; // read-side gate: one past the committed index prefix; null on page-table path
             // Raw store pointer: EntitySlot* (VM path) or Block** (page-table path).
             public void*  NativeStore;
             // Zeroed sentinel slot: version 0 never matches any live entity.
@@ -189,6 +195,7 @@ namespace UnityEngine
             ctx.AllocatedBits = (ulong*)EntityIdStoreBindings.GetEntityIdStoreAllocatedBits();
             ctx.ReservedBits  = (ulong*)EntityIdStoreBindings.GetEntityIdStoreReservedBits();
             ctx.BlockCommitted= (byte*)EntityIdStoreBindings.GetEntityIdStoreBlockCommittedTable();
+            ctx.CommittedIndexBound = (uint*)EntityIdStoreBindings.GetEntityIdStoreCommittedIndexBoundAddress();
             ctx.NativeStore              = EntityIdStoreBindings.GetEntityIdAllocatorStore();
             ctx.NullSlot                 = default;
             ctx.OffsetOfGCHandleInObject = EntityIdStoreBindings.GetOffsetOfGCHandleInCPlusPlusObject();
@@ -203,7 +210,7 @@ namespace UnityEngine
 
         // Returns a reference to the slot for the given entity index, or to a
         // process-wide zeroed sentinel if the slot is on an uncommitted page.
-        // Mirrors native EntitySlot& GetSlot(UInt32) in EntityIdStore.cpp; the
+        // Mirrors native EntityIdStore_GetSlot(UInt32) in EntityIdStore.h; the
         // sentinel keeps the call sites branch-free and lets the version check
         // act as the single validation step.
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -212,15 +219,21 @@ namespace UnityEngine
             ref ContextData ctx = ref s_Context.Data;
             if (ctx.PlatformSupportsVirtualMemory)
             {
-                uint blockIndex = entityIndex >> ctx.BlockShift;
-                if (Volatile.Read(ref ctx.BlockCommitted[blockIndex]) == 0)
+                // Committed blocks form a contiguous index prefix, so a single
+                // bound check replaces the per-block committed-flag lookup.
+                // Volatile.Read is the acquire that pairs with the native
+                // committer's release stores — see EntityIdStore_GetSlot.
+                if (entityIndex >= Volatile.Read(ref *ctx.CommittedIndexBound))
                     return ref ctx.NullSlot;
                 return ref ((EntitySlot*)ctx.NativeStore)[entityIndex];
             }
             else
             {
-                EntitySlot** blockTable = (EntitySlot**)ctx.NativeStore;
-                EntitySlot* slots = blockTable[entityIndex >> ctx.BlockShift];
+                // Volatile.Read pairs with native CommitBlock's release publish
+                // of the block pointer, so a non-null entry implies the block's
+                // zeroed contents are visible — mirrors native's acquire load.
+                EntitySlot* slots = (EntitySlot*)Volatile.Read(
+                    ref ((IntPtr*)ctx.NativeStore)[entityIndex >> ctx.BlockShift]);
                 if (slots == null)
                     return ref ctx.NullSlot;
                 return ref slots[entityIndex & ctx.BlockMask];
@@ -277,7 +290,10 @@ namespace UnityEngine
         {
             if (entity.Version == 0) return false;
             ref EntitySlot slot = ref GetSlot(entity.Index);
-            return SlotGetVersion(Volatile.Read(ref slot.versionAndChunk)) == entity.Version;
+            // Plain read (native uses relaxed): GetSlot's acquire read of the
+            // bound / block pointer keeps it ordered, and version bits sit in
+            // the low 32-bit half so a torn read still yields a published version.
+            return SlotGetVersion(slot.versionAndChunk) == entity.Version;
         }
 
         // Overwrites the version stored in an entity's slot — used by deserialization.
@@ -295,19 +311,19 @@ namespace UnityEngine
         public unsafe static void* GetNativeObject(EntityId entity)
         {
             ref EntitySlot slot = ref GetSlot(entity.Index);
-            uint expectedVersion = entity.Version;
 
-            // Version seqlock matching native GetNativePtr. C# has no acquire
-            // fence or relaxed atomic load, so all three are acquire loads
-            // (Volatile.Read) instead of native's acquire/relaxed mix; the extra
-            // ordering is free on x86 and a cheap ldar on ARM64, and far lighter
-            // than the full StoreLoad fence Thread.MemoryBarrier() would emit.
-            ulong v1 = Volatile.Read(ref slot.versionAndChunk);
+            // Mirrors native GetNativePtr: slot versions only move forward, so
+            // an allocator-issued version that matches after the pointer load
+            // also matched before it. Volatile.Read on the pointer is an
+            // acquire load — it orders the version load after itself and pairs
+            // with native SetNativePtr's release store.
             IntPtr ptr = Volatile.Read(ref slot.nativeObjectPtr);
-            ulong v2 = Volatile.Read(ref slot.versionAndChunk);
+            // Plain read (native uses relaxed): the acquire read above keeps it
+            // ordered. Version bits sit in the low 32-bit half, so a torn read
+            // on 32-bit platforms still yields a published version.
+            ulong vac = slot.versionAndChunk;
 
-            if ((uint)(v1 & k_SlotVersionMask) != expectedVersion ||
-                (uint)(v2 & k_SlotVersionMask) != expectedVersion)
+            if ((uint)(vac & k_SlotVersionMask) != entity.Version)
                 return null;
 
             return (void*)ptr;

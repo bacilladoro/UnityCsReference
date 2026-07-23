@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.Scripting;
 using UnityEditor.UIElements;
@@ -43,12 +44,15 @@ namespace UnityEditor.PackageManager.UI
 
     [VisibleToOtherModules("UnityEditor.BuildProfileModule")]
     [EditorWindowTitle(title = "Package Manager", icon = "Package Manager")]
-    internal class PackageManagerWindow : EditorWindow
+    internal partial class PackageManagerWindow : EditorWindow
     {
-        private static bool s_IsInitializationFrame = true;
-        static PackageManagerWindow()
+        [AutoStaticsCleanupOnCodeReload]
+        private static bool s_IsInitializationFrameDone;
+
+        [OnCodeLoaded]
+        static void Initialize()
         {
-            EditorApplication.delayCall += () => s_IsInitializationFrame = false;
+            EditorApplication.delayCall += () => s_IsInitializationFrameDone = true;
             Events.registeredPackages += OnRegisteredPackages;
         }
 
@@ -58,7 +62,8 @@ namespace UnityEditor.PackageManager.UI
         }
 
         public static PackageManagerWindow instance => s_EnabledInstances.Count > 0 ? s_EnabledInstances[0] : null;
-        private static readonly List<PackageManagerWindow> s_EnabledInstances = new ();
+        [AutoStaticsCleanupOnCodeReload]
+        private static List<PackageManagerWindow> s_EnabledInstances = new ();
 
         private PackageManagerWindowRoot m_Root;
 
@@ -277,7 +282,7 @@ namespace UnityEditor.PackageManager.UI
             // (right after domain reload, for example), and show the PackageManager window immediately will cause the creation
             // of multiple Package Manager windows. As a result we want to delay opening until the initialization frame is over.
             // This is an issue with Editor Windows in general and a ticket has been created (UUM-139988)
-            if (s_IsInitializationFrame)
+            if (!s_IsInitializationFrameDone)
             {
                 EditorApplication.delayCall += () => ShowWindow(postOpenWindowAction);
             }

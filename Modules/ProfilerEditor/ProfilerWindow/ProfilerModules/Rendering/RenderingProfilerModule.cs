@@ -25,7 +25,7 @@ namespace UnityEditorInternal.Profiling
             public static readonly GUIContent noFrameDebugger = EditorGUIUtility.TrTextContent("Frame Debugger", "Open Frame Debugger (Current frame needs to be selected)");
         }
 
-        internal enum ChartMode { Default, PipelineTiming, Coverage, InstanceCounts }
+        internal enum ChartMode { Default, PipelineTiming, Coverage, InstanceCounts, BatchStats }
 
         static readonly string[] k_ChartModeNames =
         {
@@ -33,6 +33,7 @@ namespace UnityEditorInternal.Profiling
             L10n.Tr("GRD Pipeline"),
             L10n.Tr("GRD Coverage"),
             L10n.Tr("GRD Instances"),
+            L10n.Tr("GRD Batches"),
         };
 
         const int k_DefaultOrderIndex = 2;
@@ -74,6 +75,14 @@ namespace UnityEditorInternal.Profiling
             new ProfilerCounterData() { m_Name = GRDCounterNames.k_LODGroupCulled, m_Category = GRDCounterNames.k_CategoryName },
             new ProfilerCounterData() { m_Name = GRDCounterNames.k_SmallMeshCulled, m_Category = GRDCounterNames.k_CategoryName },
             new ProfilerCounterData() { m_Name = GRDCounterNames.k_OtherCulled, m_Category = GRDCounterNames.k_CategoryName },
+        };
+
+        static readonly ProfilerCounterData[] k_GRDBatchCounters =
+        {
+            new ProfilerCounterData() { m_Name = GRDCounterNames.k_BatchCount, m_Category = GRDCounterNames.k_CategoryName },
+            new ProfilerCounterData() { m_Name = GRDCounterNames.k_UniqueMaterials, m_Category = GRDCounterNames.k_CategoryName },
+            new ProfilerCounterData() { m_Name = GRDCounterNames.k_UniqueMeshes, m_Category = GRDCounterNames.k_CategoryName },
+            new ProfilerCounterData() { m_Name = GRDCounterNames.k_SingleInstanceBatches, m_Category = GRDCounterNames.k_CategoryName },
         };
 
         [SerializeField] ChartMode m_ChartMode = ChartMode.Default;
@@ -146,6 +155,7 @@ namespace UnityEditorInternal.Profiling
                 ChartMode.PipelineTiming => new List<ProfilerCounterData>(k_GRDPipelineTimingCounters),
                 ChartMode.Coverage => new List<ProfilerCounterData>(k_GRDCoverageCounters),
                 ChartMode.InstanceCounts => new List<ProfilerCounterData>(k_GRDInstanceCounters),
+                ChartMode.BatchStats => new List<ProfilerCounterData>(k_GRDBatchCounters),
                 _ => new List<ProfilerCounterData>(k_DefaultRenderAreaCounterNames),
             };
             SetCounters(counters, CollectAllGRDCounters());
@@ -168,10 +178,12 @@ namespace UnityEditorInternal.Profiling
         static List<ProfilerCounterData> CollectAllGRDCounters()
         {
             var list = new List<ProfilerCounterData>(
-                k_GRDPipelineTimingCounters.Length + k_GRDCoverageCounters.Length + k_GRDInstanceCounters.Length);
+                k_GRDPipelineTimingCounters.Length + k_GRDCoverageCounters.Length
+                + k_GRDInstanceCounters.Length + k_GRDBatchCounters.Length);
             list.AddRange(k_GRDPipelineTimingCounters);
             list.AddRange(k_GRDCoverageCounters);
             list.AddRange(k_GRDInstanceCounters);
+            list.AddRange(k_GRDBatchCounters);
             return list;
         }
     }

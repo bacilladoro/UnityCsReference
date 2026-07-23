@@ -248,7 +248,6 @@ namespace UnityEngine
         /// Sets the cursor position to be at the end of the current IME item being previewing in the text.
         /// When generateVisualContent is invoked this cursor position will be returned. Any changes to the text will revert the cursor back to the original position.
         /// </summary>
-        /// <param name="cursor"></param>
         public void EnableCursorPreviewState(string compositionString)
         {
             compositionString ??= string.Empty;
@@ -266,7 +265,7 @@ namespace UnityEngine
         }
 
         /// <summary>
-        /// Restores the cursor back to its original position after previewing the IME string cursor position with <see cref="SetCursorPreviewState(int)"/>
+        /// Restores the cursor back to its original position after previewing the IME string cursor position with <see cref="EnableCursorPreviewState"/>.
         /// </summary>
         public void RestoreCursorState()
         {

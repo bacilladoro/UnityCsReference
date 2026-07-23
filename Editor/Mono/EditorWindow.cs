@@ -80,6 +80,7 @@ namespace UnityEditor
 
         internal virtual bool liveReloadPreferenceDefault => false;
         internal virtual BindingLogLevel defaultBindingLogLevel => BindingLogLevel.All;
+        internal virtual bool ShowGenericMenuWhenRestricted() => false;
         internal bool isUIToolkitWindow => m_UIRootElement != null && m_UIRootElement.childCount > 0;
 
         [HideInInspector]
@@ -1512,7 +1513,9 @@ namespace UnityEditor
                 viewDataKey = rootName,
                 renderHints = RenderHints.ClipWithScissors
             };
-            root.pseudoStates |= PseudoStates.Root;
+            // The theme stylesheet is also applied at the panel level (see DefaultEditorWindowBackend),
+            // but it is kept here on the window content root as well: existing packages rely on
+            // rootVisualElement always owning the editor theme stylesheet (e.g. reading styleSheets[0]).
             UIElementsEditorUtility.AddDefaultEditorStyleSheets(root);
             root.style.overflow = Overflow.Hidden;
             return root;

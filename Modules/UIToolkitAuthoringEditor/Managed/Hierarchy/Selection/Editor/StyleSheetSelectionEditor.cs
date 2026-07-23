@@ -38,11 +38,17 @@ class StyleSheetSelectionEditor : UnityEditor.Editor
 
     public override VisualElement CreateInspectorGUI()
     {
-        var inspector = new StyleSheetInspector() { StyleSheet = Target.StyleSheet };
+        var inspector = new StyleSheetInspector() { StyleSheet = Target.StyleSheet, IsReadOnly = Target.IsReadOnly };
         inspector.SetBinding(StyleSheetInspector.StyleSheetProperty, new DataBinding
         {
             dataSource = Target,
             dataSourcePath = StyleSheetSelection.StyleSheetProperty,
+            bindingMode = BindingMode.ToTarget
+        });
+        inspector.SetBinding(StyleSheetInspector.IsReadOnlyProperty, new DataBinding
+        {
+            dataSource = Target,
+            dataSourcePath = StyleSheetSelection.IsReadOnlyProperty,
             bindingMode = BindingMode.ToTarget
         });
         return inspector;

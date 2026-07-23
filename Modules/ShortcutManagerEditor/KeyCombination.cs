@@ -8,6 +8,8 @@ using System.Text;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Bindings;
+using System.Collections.Immutable;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.ShortcutManagement
 {
@@ -25,7 +27,8 @@ namespace UnityEditor.ShortcutManagement
         public KeyCode keyCode => Directory.IsKeyCodeSupported(m_KeyCode) ? m_KeyCode : KeyCode.None;
         public ShortcutModifiers modifiers => m_Modifiers;
 
-        static Dictionary<KeyCode, string> s_KeyCodeToMenuItemKeyCodeString = new Dictionary<KeyCode, string>()
+        [NoAutoStaticsCleanup] // immutable keycode→menu-string lookup, never mutated after init; safe to persist across reload
+        static readonly ImmutableDictionary<KeyCode, string> s_KeyCodeToMenuItemKeyCodeString = new Dictionary<KeyCode, string>()
         {
             { KeyCode.LeftArrow, "LEFT" },
             { KeyCode.UpArrow, "UP" },
@@ -80,18 +83,20 @@ namespace UnityEditor.ShortcutManagement
             { KeyCode.Mouse4, "M4" },
             { KeyCode.Mouse5, "M5" },
             { KeyCode.Mouse6, "M6" },
-        };
+        }.ToImmutableDictionary();
 
-        static Dictionary<string, KeyCode> s_MenuItemKeyCodeStringToKeyCode;
+        [NoAutoStaticsCleanup] // immutable reverse lookup built once in static ctor; safe to persist across reload
+        static ImmutableDictionary<string, KeyCode> s_MenuItemKeyCodeStringToKeyCode;
 
         static KeyCombination()
         {
             // Populate s_MenuItemKeyCodeStringToKeyCode by reversing s_KeyCodeToMenuItemKeyCodeString
-            s_MenuItemKeyCodeStringToKeyCode = new Dictionary<string, KeyCode>(s_KeyCodeToMenuItemKeyCodeString.Count);
+            var menuItemKeyCodeStringToKeyCode = new Dictionary<string, KeyCode>(s_KeyCodeToMenuItemKeyCodeString.Count);
             foreach (var entry in s_KeyCodeToMenuItemKeyCodeString)
             {
-                s_MenuItemKeyCodeStringToKeyCode.Add(entry.Value, entry.Key);
+                menuItemKeyCodeStringToKeyCode.Add(entry.Value, entry.Key);
             }
+            s_MenuItemKeyCodeStringToKeyCode = menuItemKeyCodeStringToKeyCode.ToImmutableDictionary();
         }
 
         public KeyCombination(KeyCode keyCode, ShortcutModifiers shortcutModifiers = ShortcutModifiers.None)
@@ -381,7 +386,8 @@ namespace UnityEditor.ShortcutManagement
                 builder.Append(keyCode.ToString());
         }
 
-        static Dictionary<KeyCode, string> s_KeyCodeNamesMacOS = new Dictionary<KeyCode, string>
+        [NoAutoStaticsCleanup] // immutable keycode→symbol lookup, never mutated after init; safe to persist across reload
+        static readonly ImmutableDictionary<KeyCode, string> s_KeyCodeNamesMacOS = new Dictionary<KeyCode, string>
         {
             { KeyCode.Backspace, "⌫" },
             { KeyCode.Tab, "⇥" },
@@ -396,9 +402,10 @@ namespace UnityEditor.ShortcutManagement
             { KeyCode.End, "↘" },
             { KeyCode.PageUp, "⇞" },
             { KeyCode.PageDown, "⇟" },
-        };
+        }.ToImmutableDictionary();
 
-        static Dictionary<KeyCode, string> s_KeyCodeNamesNotMacOS = new Dictionary<KeyCode, string>
+        [NoAutoStaticsCleanup] // immutable keycode→name lookup, never mutated after init; safe to persist across reload
+        static readonly ImmutableDictionary<KeyCode, string> s_KeyCodeNamesNotMacOS = new Dictionary<KeyCode, string>
         {
             { KeyCode.Return, "Enter" },
             { KeyCode.Escape, "Esc" },
@@ -409,9 +416,10 @@ namespace UnityEditor.ShortcutManagement
             { KeyCode.LeftArrow, "Left Arrow" },
             { KeyCode.PageUp, "Page Up" },
             { KeyCode.PageDown, "Page Down" },
-        };
+        }.ToImmutableDictionary();
 
-        static Dictionary<KeyCode, string> s_KeyCodeNamesCommon = new Dictionary<KeyCode, string>
+        [NoAutoStaticsCleanup] // immutable keycode→symbol lookup, never mutated after init; safe to persist across reload
+        static readonly ImmutableDictionary<KeyCode, string> s_KeyCodeNamesCommon = new Dictionary<KeyCode, string>
         {
             { KeyCode.Exclaim, "!" },
             { KeyCode.DoubleQuote, "\"" },
@@ -481,10 +489,11 @@ namespace UnityEditor.ShortcutManagement
             { KeyCode.Mouse4, "Mouse 4"},
             { KeyCode.Mouse5, "Mouse 5"},
             { KeyCode.Mouse6, "Mouse 6"},
-        };
+        }.ToImmutableDictionary();
 
-        internal static readonly KeyCode[] k_MouseKeyCodes = new KeyCode[7]
-        {
+        // immutable mouse-button keycodes; baked into read-only data, no static state to clean up
+        internal static ReadOnlySpan<KeyCode> k_MouseKeyCodes =>
+        [
             KeyCode.Mouse0,
             KeyCode.Mouse1,
             KeyCode.Mouse2,
@@ -492,9 +501,10 @@ namespace UnityEditor.ShortcutManagement
             KeyCode.Mouse4,
             KeyCode.Mouse5,
             KeyCode.Mouse6
-        };
+        ];
 
-        internal static readonly Dictionary<KeyCode, EventModifiers> k_KeyCodeToEventModifiers = new()
+        [NoAutoStaticsCleanup] // immutable keycode→modifier lookup, never mutated after init; safe to persist across reload
+        internal static readonly ImmutableDictionary<KeyCode, EventModifiers> k_KeyCodeToEventModifiers = new Dictionary<KeyCode, EventModifiers>()
         {
             { KeyCode.None, EventModifiers.None},
             { KeyCode.LeftAlt, EventModifiers.Alt},
@@ -505,7 +515,7 @@ namespace UnityEditor.ShortcutManagement
             { KeyCode.RightCommand, EventModifiers.Command},
             { KeyCode.LeftShift, EventModifiers.Shift},
             { KeyCode.RightShift, EventModifiers.Shift}
-        };
+        }.ToImmutableDictionary();
 
         static bool TryFormatKeycode(KeyCode code, StringBuilder builder)
         {

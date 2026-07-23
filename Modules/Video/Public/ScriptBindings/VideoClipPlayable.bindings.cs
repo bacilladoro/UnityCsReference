@@ -14,6 +14,8 @@ using UnityObject = UnityEngine.Object;
 
 namespace UnityEngine.Experimental.Video
 {
+    ///<summary>An implementation of <see cref="IPlayable" /> that controls playback of a <see cref="VideoClip" />.</summary>
+    ///<remarks>NOTE: You can use <see cref="PlayableExtensions" /> methods with VideoClipPlayable objects.</remarks>
     [NativeHeader("Modules/Video/Public/ScriptBindings/VideoClipPlayable.bindings.h")]
     [NativeHeader("Modules/Video/Public/Director/VideoClipPlayable.h")]
     [NativeHeader("Modules/Video/Public/VideoClip.h")]
@@ -24,6 +26,12 @@ namespace UnityEngine.Experimental.Video
     {
         PlayableHandle m_Handle;
 
+        ///<summary>Creates a <see cref="VideoClipPlayable" /> in the <see cref="PlayableGraph" />.</summary>
+        ///<param name="graph">The <see cref="PlayableGraph" /> object that will own the <see cref="VideoClipPlayable" />.</param>
+        ///<param name="looping">Indicates if <see cref="VideoClip" /> loops when it reaches the end.</param>
+        ///<param name="clip">
+        ///  <see cref="VideoClip" /> used to produce textures in the <see cref="PlayableGraph" />.</param>
+        ///<returns>A <see cref="VideoClipPlayable" /> linked to the <see cref="PlayableGraph" />.</returns>
         public static VideoClipPlayable Create(PlayableGraph graph, VideoClip clip, bool looping)
         {
             var handle = CreateHandle(graph, clip, looping);
@@ -52,52 +60,62 @@ namespace UnityEngine.Experimental.Video
             m_Handle = handle;
         }
 
+        ///<exclude />
         public PlayableHandle GetHandle()
         {
             return m_Handle;
         }
 
+        ///<exclude />
         public static implicit operator Playable(VideoClipPlayable playable)
         {
             return new Playable(playable.GetHandle());
         }
 
+        ///<exclude />
         public static explicit operator VideoClipPlayable(Playable playable)
         {
             return new VideoClipPlayable(playable.GetHandle());
         }
 
+        ///<exclude />
         public bool Equals(VideoClipPlayable other)
         {
             return GetHandle() == other.GetHandle();
         }
 
 
+        ///<exclude />
         public VideoClip GetClip()
         {
             return GetClipInternal(ref m_Handle);
         }
 
+        ///<exclude />
         public void SetClip(VideoClip value)
         {
             SetClipInternal(ref m_Handle, value);
         }
 
+        ///<exclude />
         public bool GetLooped()
         {
             return GetLoopedInternal(ref m_Handle);
         }
 
+        ///<exclude />
         public void SetLooped(bool value)
         {
             SetLoopedInternal(ref m_Handle, value);
         }
 
+        ///<exclude />
         public bool IsPlaying()
         {
             return GetIsPlayingInternal(ref m_Handle);
         }
 
+        ///<exclude />
         public double GetStartDelay()
         {
             return GetStartDelayInternal(ref m_Handle);
@@ -109,6 +127,7 @@ namespace UnityEngine.Experimental.Video
             SetStartDelayInternal(ref m_Handle, value);
         }
 
+        ///<exclude />
         public double GetPauseDelay()
         {
             return GetPauseDelayInternal(ref m_Handle);
@@ -126,6 +145,7 @@ namespace UnityEngine.Experimental.Video
             SetPauseDelayInternal(ref m_Handle, value);
         }
 
+        ///<exclude />
         public void Seek(double startTime, double startDelay)
         {
             Seek(startTime, startDelay, 0);

@@ -14,11 +14,12 @@ using UnityEditor;
 using UnityEditor.Build;
 using UnityEditor.Modules;
 using UnityEditor.UnityLinker;
+using Unity.Scripting.LifecycleManagement;
 using Debug = UnityEngine.Debug;
 
 namespace UnityEditorInternal
 {
-    internal class AssemblyStripper
+    internal partial class AssemblyStripper
     {
         /// <summary>
         /// Escapes XML special characters to prevent XML parsing errors.
@@ -204,6 +205,7 @@ namespace UnityEditorInternal
             return path;
         }
 
+        [NoAutoStaticsCleanup] // lazy cache of a native UnityType descriptor (FindTypeByName), stable across code reloads
         private static UnityType s_GameManagerTypeInfo = null;
         internal static UnityType GameManagerTypeInfo
         {
@@ -368,6 +370,7 @@ namespace UnityEditorInternal
                 => m_ForceIncludes.Exists(i => string.Equals(i, moduleName));
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<IPreStrippingModuleAdder> onCollectIncludedModules;
 
         static void CollectIncludedAndExcludedModules(out List<string> forceInclude, out List<string> forceExclude)

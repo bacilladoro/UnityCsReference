@@ -10,6 +10,7 @@ using UnityEngine;
 using UnityEngine.Scripting;
 using UnityEngine.Bindings;
 using UnityEngine.Rendering;
+using Unity.Scripting.LifecycleManagement;
 using uei = UnityEngine.Internal;
 
 using OpaqueSortMode = UnityEngine.Rendering.OpaqueSortMode;
@@ -562,8 +563,11 @@ namespace UnityEngine
 
         public delegate void CameraCallback(Camera cam);
 
+        [AutoStaticsCleanupOnCodeReload]
         public static CameraCallback onPreCull;
+        [AutoStaticsCleanupOnCodeReload]
         public static CameraCallback onPreRender;
+        [AutoStaticsCleanupOnCodeReload]
         public static CameraCallback onPostRender;
 
         [RequiredByNativeCode]

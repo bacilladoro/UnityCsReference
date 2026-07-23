@@ -55,11 +55,14 @@ namespace UnityEditor.UIElements
             {
                 base.OnCreate(model);
 
+                UIElementsEditorUtility.AddDefaultEditorStyleSheets(m_Panel.visualTree);
+                m_Panel.visualTree.style.unityEditorTextRenderingMode = EditorTextSettings.GetEditorTextRenderingMode();
+                m_Panel.visualTree.style.unityTextGenerator = new StyleEnum<TextGeneratorType>(EditorTextSettings.GetEditorTextGeneratorType());
+
                 var rootViewClass = editorWindowModel?.rootViewClassName;
                 if (!string.IsNullOrEmpty(rootViewClass))
                 {
                     m_Panel.visualTree.AddToClassList(rootViewClass);
-                    m_Panel.visualTree.usageHints |= UsageHints.LargePixelCoverage;
                 }
 
                 m_LiveReloadVisualTreeAssetTracker = new EditorWindowVisualTreeAssetTracker(this);
@@ -354,12 +357,6 @@ namespace UnityEditor.UIElements
 
                 if (rootElement.GetProperty(k_InitializedWindowPropertyName) != null)
                     return;
-
-                //we make sure styles have been applied
-                UIElementsEditorUtility.AddDefaultEditorStyleSheets(rootElement);
-                rootElement.style.unityEditorTextRenderingMode = EditorTextSettings.GetEditorTextRenderingMode();
-
-                rootElement.style.unityTextGenerator = new StyleEnum<TextGeneratorType>(EditorTextSettings.GetEditorTextGeneratorType());
 
                 rootElement.SetProperty(k_InitializedWindowPropertyName, true);
 

@@ -9,7 +9,7 @@ namespace UnityEditor.PackageManager
         FullTrust,
         LimitedTrust,
         Untrusted,
-        OutOfTrust,
-        Unchecked
+        Unchecked,
+        OutOfTrust
     }
 }

@@ -170,6 +170,7 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("Unity.Modules.Core.CoreTests.Tests.Runtime")]
 [assembly: InternalsVisibleTo("Unity.Modules.Core.TouchScreenKeyboard.Tests.Common")]
 [assembly: InternalsVisibleTo("Assembly-CSharp-testable")]
+[assembly: InternalsVisibleTo("Unity.Modules.Core.Mono.Tests.Entities")]
 [assembly: InternalsVisibleTo("PlaymodeTests")]
 [assembly: InternalsVisibleTo("ContentBuildLoadPreview")]
 [assembly: InternalsVisibleTo("Unity.CrossModule.PlayMode.Tests.Runtime")]
@@ -191,6 +192,7 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("Unity.2D.Common.Editor")]
 [assembly: InternalsVisibleTo("Unity.2D.Sprite.Editor")]
 [assembly: InternalsVisibleTo("Unity.2D.Sprite.EditorTests")]
+[assembly: InternalsVisibleTo("Unity.Modules.SpriteAtlas.Tests.Editor")]
 [assembly: InternalsVisibleTo("Universal2DGraphicsTests")]
 [assembly: InternalsVisibleTo("Unity.UI.Builder.Editor")]
 [assembly: InternalsVisibleTo("UnityEditor.UIBuilderModule")]
@@ -282,6 +284,7 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("Unity.Modules.PlayableGraph.Tests.Editor")]
 [assembly: InternalsVisibleTo("Unity.Modules.PlayableGraph.Tests")]
 [assembly: InternalsVisibleTo("Unity.Modules.GI.RealTimeGI.Tests.Editor")]
+[assembly: InternalsVisibleTo("Unity.Modules.GI.BakedGI.EnterPlaymodeOptions.Tests.Editor")]
 [assembly: InternalsVisibleTo("Unity.Modules.GI.API.EditorBakeWithAdditiveScene.Tests.Editor")]
 [assembly: InternalsVisibleTo("Unity.Modules.GI.RealTimeGI.Tests.Runtime")]
 [assembly: InternalsVisibleTo("Unity.Modules.GI.SceneView.Tests.Editor")]
@@ -304,9 +307,6 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("Unity.Modules.SceneTemplateEditor.Tests.Editor")]
 // Tests/SRPTests/Projects/MultipleSRP_Tests - needed for DiagnosticSwitch class
 [assembly: InternalsVisibleTo("Unity.RenderPipelines.Multiple_SRP.EditorTests")]
-
-// Workspace/Serialization/UnityDataModel/WorkspaceProject
-[assembly: InternalsVisibleTo("UDMInternalWorkspaceProject")]
 
 // DataModel Tests assemblies
 [assembly: InternalsVisibleTo("TestCodeAssembly")]

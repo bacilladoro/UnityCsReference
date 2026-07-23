@@ -52,12 +52,17 @@ namespace Unity.U2D.Physics
         public UInt64 int64Value { readonly get => m_Int64; set => m_Int64 = value; }
 
         /// <summary>
+        /// A custom <see cref="UnityEngine.Vector3Int"/>.
+        /// </summary>
+        public Vector3Int vector3IntValue { readonly get => m_Vector3Int; set => m_Vector3Int = value; }
+
+        /// <summary>
         /// A custom <see cref="System.Boolean"/>.
         /// </summary>
         public bool boolValue { readonly get => m_Bool; set => m_Bool = value; }
 
         /// <undoc/>
-        public override readonly string ToString() => $"object={objectValue}, physicsMask={physicsMaskValue}, float={floatValue}, int={intValue}, int64={int64Value}, bool={boolValue}";
+        public override readonly string ToString() => $"object={objectValue}, physicsMask={physicsMaskValue}, float={floatValue}, int={intValue}, int64={int64Value}, vector3Int={vector3IntValue}, bool={boolValue}";
 
         #region Internal
 
@@ -66,6 +71,7 @@ namespace Unity.U2D.Physics
         [SerializeField] internal float m_Float;
         [SerializeField] internal int m_Int;
         [SerializeField] internal UInt64 m_Int64;
+        [SerializeField] internal Vector3Int m_Vector3Int;
         [SerializeField] internal bool m_Bool;
 
         #endregion

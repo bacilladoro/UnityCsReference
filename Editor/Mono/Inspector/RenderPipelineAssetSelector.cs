@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.Rendering;
 using Object = UnityEngine.Object;
@@ -50,7 +51,9 @@ namespace UnityEditor
             }
         }
 
+        [NoAutoStaticsCleanup] // transient selector callback state, safe to persist
         private static bool s_ObjectSelectorClosed = false;
+        [NoAutoStaticsCleanup] // transient selector callback state, safe to persist
         private static Object s_LastPickedObject = null;
 
         /// <summary>

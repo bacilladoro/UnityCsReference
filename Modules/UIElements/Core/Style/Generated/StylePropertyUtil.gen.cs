@@ -17,6 +17,7 @@ namespace UnityEngine.UIElements.StyleSheets
     internal static partial class StylePropertyUtil
     {
         public const int k_GroupOffset = 16;
+        internal const int k_SerializationLayoutHash = 1931025077;
 
         internal static readonly Dictionary<string, StylePropertyId> s_NameToId = new Dictionary<string, StylePropertyId>()
         {
@@ -146,6 +147,10 @@ namespace UnityEngine.UIElements.StyleSheets
                 StylePropertyId.Color
             },
                         {
+                "column-gap",
+                StylePropertyId.ColumnGap
+            },
+                        {
                 "cursor",
                 StylePropertyId.Cursor
             },
@@ -184,6 +189,10 @@ namespace UnityEngine.UIElements.StyleSheets
                         {
                 "font-size",
                 StylePropertyId.FontSize
+            },
+                        {
+                "gap",
+                StylePropertyId.Gap
             },
                         {
                 "height",
@@ -276,6 +285,10 @@ namespace UnityEngine.UIElements.StyleSheets
                         {
                 "rotate",
                 StylePropertyId.Rotate
+            },
+                        {
+                "row-gap",
+                StylePropertyId.RowGap
             },
                         {
                 "scale",
@@ -559,6 +572,10 @@ namespace UnityEngine.UIElements.StyleSheets
                 "color"
             },
                         {
+                StylePropertyId.ColumnGap,
+                "column-gap"
+            },
+                        {
                 StylePropertyId.Cursor,
                 "cursor"
             },
@@ -597,6 +614,10 @@ namespace UnityEngine.UIElements.StyleSheets
                         {
                 StylePropertyId.FontSize,
                 "font-size"
+            },
+                        {
+                StylePropertyId.Gap,
+                "gap"
             },
                         {
                 StylePropertyId.Height,
@@ -689,6 +710,10 @@ namespace UnityEngine.UIElements.StyleSheets
                         {
                 StylePropertyId.Rotate,
                 "rotate"
+            },
+                        {
+                StylePropertyId.RowGap,
+                "row-gap"
             },
                         {
                 StylePropertyId.Scale,
@@ -972,6 +997,10 @@ namespace UnityEngine.UIElements.StyleSheets
                 "color"
             },
                         {
+                "column-gap",
+                "columnGap"
+            },
+                        {
                 "cursor",
                 "cursor"
             },
@@ -1010,6 +1039,10 @@ namespace UnityEngine.UIElements.StyleSheets
                         {
                 "font-size",
                 "fontSize"
+            },
+                        {
+                "gap",
+                "gap"
             },
                         {
                 "height",
@@ -1102,6 +1135,10 @@ namespace UnityEngine.UIElements.StyleSheets
                         {
                 "rotate",
                 "rotate"
+            },
+                        {
+                "row-gap",
+                "rowGap"
             },
                         {
                 "scale",
@@ -1385,6 +1422,10 @@ namespace UnityEngine.UIElements.StyleSheets
                 "color"
             },
                         {
+                "columnGap",
+                "column-gap"
+            },
+                        {
                 "cursor",
                 "cursor"
             },
@@ -1423,6 +1464,10 @@ namespace UnityEngine.UIElements.StyleSheets
                         {
                 "fontSize",
                 "font-size"
+            },
+                        {
+                "gap",
+                "gap"
             },
                         {
                 "height",
@@ -1515,6 +1560,10 @@ namespace UnityEngine.UIElements.StyleSheets
                         {
                 "rotate",
                 "rotate"
+            },
+                        {
+                "rowGap",
+                "row-gap"
             },
                         {
                 "scale",
@@ -1670,7 +1719,7 @@ namespace UnityEngine.UIElements.StyleSheets
             }
                 };
 
-        internal static readonly HashSet<StylePropertyId> s_AnimatableProperties = new HashSet<StylePropertyId>(new[] { StylePropertyId.AlignContent, StylePropertyId.AlignItems, StylePropertyId.AlignSelf, StylePropertyId.All, StylePropertyId.AspectRatio, StylePropertyId.BackdropFilter, StylePropertyId.BackgroundColor, StylePropertyId.BackgroundImage, StylePropertyId.BackgroundPosition, StylePropertyId.BackgroundPositionX, StylePropertyId.BackgroundPositionY, StylePropertyId.BackgroundRepeat, StylePropertyId.BackgroundSize, StylePropertyId.BorderBottomColor, StylePropertyId.BorderBottomLeftRadius, StylePropertyId.BorderBottomRightRadius, StylePropertyId.BorderBottomWidth, StylePropertyId.BorderColor, StylePropertyId.BorderLeftColor, StylePropertyId.BorderLeftWidth, StylePropertyId.BorderRadius, StylePropertyId.BorderRightColor, StylePropertyId.BorderRightWidth, StylePropertyId.BorderTopColor, StylePropertyId.BorderTopLeftRadius, StylePropertyId.BorderTopRightRadius, StylePropertyId.BorderTopWidth, StylePropertyId.BorderWidth, StylePropertyId.Bottom, StylePropertyId.Color, StylePropertyId.Cursor, StylePropertyId.Filter, StylePropertyId.Flex, StylePropertyId.FlexBasis, StylePropertyId.FlexDirection, StylePropertyId.FlexGrow, StylePropertyId.FlexShrink, StylePropertyId.FlexWrap, StylePropertyId.FontSize, StylePropertyId.Height, StylePropertyId.JustifyContent, StylePropertyId.Left, StylePropertyId.LetterSpacing, StylePropertyId.Margin, StylePropertyId.MarginBottom, StylePropertyId.MarginLeft, StylePropertyId.MarginRight, StylePropertyId.MarginTop, StylePropertyId.MaxHeight, StylePropertyId.MaxWidth, StylePropertyId.MinHeight, StylePropertyId.MinWidth, StylePropertyId.Opacity, StylePropertyId.Overflow, StylePropertyId.Padding, StylePropertyId.PaddingBottom, StylePropertyId.PaddingLeft, StylePropertyId.PaddingRight, StylePropertyId.PaddingTop, StylePropertyId.Position, StylePropertyId.Right, StylePropertyId.Rotate, StylePropertyId.Scale, StylePropertyId.TextOverflow, StylePropertyId.TextShadow, StylePropertyId.Top, StylePropertyId.TransformOrigin, StylePropertyId.Translate, StylePropertyId.UnityBackgroundImageTintColor, StylePropertyId.UnityBackgroundScaleMode, StylePropertyId.UnityFont, StylePropertyId.UnityFontDefinition, StylePropertyId.UnityFontStyleAndWeight, StylePropertyId.UnityMaterial, StylePropertyId.UnityOverflowClipBox, StylePropertyId.UnityParagraphSpacing, StylePropertyId.UnitySliceBottom, StylePropertyId.UnitySliceLeft, StylePropertyId.UnitySliceRight, StylePropertyId.UnitySliceScale, StylePropertyId.UnitySliceTop, StylePropertyId.UnitySliceType, StylePropertyId.UnityTextAlign, StylePropertyId.UnityTextOutline, StylePropertyId.UnityTextOutlineColor, StylePropertyId.UnityTextOutlineWidth, StylePropertyId.UnityTextOverflowPosition, StylePropertyId.Visibility, StylePropertyId.WhiteSpace, StylePropertyId.Width, StylePropertyId.WordSpacing });
+        internal static readonly HashSet<StylePropertyId> s_AnimatableProperties = new HashSet<StylePropertyId>(new[] { StylePropertyId.AlignContent, StylePropertyId.AlignItems, StylePropertyId.AlignSelf, StylePropertyId.All, StylePropertyId.AspectRatio, StylePropertyId.BackdropFilter, StylePropertyId.BackgroundColor, StylePropertyId.BackgroundImage, StylePropertyId.BackgroundPosition, StylePropertyId.BackgroundPositionX, StylePropertyId.BackgroundPositionY, StylePropertyId.BackgroundRepeat, StylePropertyId.BackgroundSize, StylePropertyId.BorderBottomColor, StylePropertyId.BorderBottomLeftRadius, StylePropertyId.BorderBottomRightRadius, StylePropertyId.BorderBottomWidth, StylePropertyId.BorderColor, StylePropertyId.BorderLeftColor, StylePropertyId.BorderLeftWidth, StylePropertyId.BorderRadius, StylePropertyId.BorderRightColor, StylePropertyId.BorderRightWidth, StylePropertyId.BorderTopColor, StylePropertyId.BorderTopLeftRadius, StylePropertyId.BorderTopRightRadius, StylePropertyId.BorderTopWidth, StylePropertyId.BorderWidth, StylePropertyId.Bottom, StylePropertyId.Color, StylePropertyId.ColumnGap, StylePropertyId.Cursor, StylePropertyId.Filter, StylePropertyId.Flex, StylePropertyId.FlexBasis, StylePropertyId.FlexDirection, StylePropertyId.FlexGrow, StylePropertyId.FlexShrink, StylePropertyId.FlexWrap, StylePropertyId.FontSize, StylePropertyId.Gap, StylePropertyId.Height, StylePropertyId.JustifyContent, StylePropertyId.Left, StylePropertyId.LetterSpacing, StylePropertyId.Margin, StylePropertyId.MarginBottom, StylePropertyId.MarginLeft, StylePropertyId.MarginRight, StylePropertyId.MarginTop, StylePropertyId.MaxHeight, StylePropertyId.MaxWidth, StylePropertyId.MinHeight, StylePropertyId.MinWidth, StylePropertyId.Opacity, StylePropertyId.Overflow, StylePropertyId.Padding, StylePropertyId.PaddingBottom, StylePropertyId.PaddingLeft, StylePropertyId.PaddingRight, StylePropertyId.PaddingTop, StylePropertyId.Position, StylePropertyId.Right, StylePropertyId.Rotate, StylePropertyId.RowGap, StylePropertyId.Scale, StylePropertyId.TextOverflow, StylePropertyId.TextShadow, StylePropertyId.Top, StylePropertyId.TransformOrigin, StylePropertyId.Translate, StylePropertyId.UnityBackgroundImageTintColor, StylePropertyId.UnityBackgroundScaleMode, StylePropertyId.UnityFont, StylePropertyId.UnityFontDefinition, StylePropertyId.UnityFontStyleAndWeight, StylePropertyId.UnityMaterial, StylePropertyId.UnityOverflowClipBox, StylePropertyId.UnityParagraphSpacing, StylePropertyId.UnitySliceBottom, StylePropertyId.UnitySliceLeft, StylePropertyId.UnitySliceRight, StylePropertyId.UnitySliceScale, StylePropertyId.UnitySliceTop, StylePropertyId.UnitySliceType, StylePropertyId.UnityTextAlign, StylePropertyId.UnityTextOutline, StylePropertyId.UnityTextOutlineColor, StylePropertyId.UnityTextOutlineWidth, StylePropertyId.UnityTextOverflowPosition, StylePropertyId.Visibility, StylePropertyId.WhiteSpace, StylePropertyId.Width, StylePropertyId.WordSpacing });
 
         internal static readonly Dictionary<StylePropertyId, UsageHints> s_AnimatableWithUsageHintProperties = new Dictionary<StylePropertyId, UsageHints>()
         {
@@ -1790,6 +1839,8 @@ namespace UnityEngine.UIElements.StyleSheets
             VersionChangeType.Styles | VersionChangeType.Layout,
             /*StylePropertyId.Color*/
             VersionChangeType.Styles | VersionChangeType.StyleSheet | VersionChangeType.Color,
+            /*StylePropertyId.ColumnGap*/
+            VersionChangeType.Styles | VersionChangeType.Layout,
             /*StylePropertyId.Cursor*/
             VersionChangeType.Styles | VersionChangeType.Styles,
             /*StylePropertyId.Display*/
@@ -1810,6 +1861,8 @@ namespace UnityEngine.UIElements.StyleSheets
             VersionChangeType.Styles | VersionChangeType.Layout,
             /*StylePropertyId.FontSize*/
             VersionChangeType.Styles | VersionChangeType.StyleSheet | VersionChangeType.Layout | VersionChangeType.Repaint,
+            /*StylePropertyId.Gap*/
+            VersionChangeType.Styles,
             /*StylePropertyId.Height*/
             VersionChangeType.Styles | VersionChangeType.Layout,
             /*StylePropertyId.JustifyContent*/
@@ -1856,6 +1909,8 @@ namespace UnityEngine.UIElements.StyleSheets
             VersionChangeType.Styles | VersionChangeType.Layout,
             /*StylePropertyId.Rotate*/
             VersionChangeType.Styles | VersionChangeType.Transform,
+            /*StylePropertyId.RowGap*/
+            VersionChangeType.Styles | VersionChangeType.Layout,
             /*StylePropertyId.Scale*/
             VersionChangeType.Styles | VersionChangeType.Transform,
             /*StylePropertyId.TextOverflow*/
@@ -2676,6 +2731,8 @@ namespace UnityEngine.UIElements.StyleSheets
                     return id == StylePropertyId.BorderTopWidth || id == StylePropertyId.BorderRightWidth || id == StylePropertyId.BorderBottomWidth || id == StylePropertyId.BorderLeftWidth;
                 case StylePropertyId.Flex:
                     return id == StylePropertyId.FlexGrow || id == StylePropertyId.FlexShrink || id == StylePropertyId.FlexBasis;
+                case StylePropertyId.Gap:
+                    return id == StylePropertyId.RowGap || id == StylePropertyId.ColumnGap;
                 case StylePropertyId.Margin:
                     return id == StylePropertyId.MarginTop || id == StylePropertyId.MarginRight || id == StylePropertyId.MarginBottom || id == StylePropertyId.MarginLeft;
                 case StylePropertyId.Padding:

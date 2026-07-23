@@ -9,26 +9,22 @@ using UnityEngine.Scripting;
 
 namespace UnityEngine.Identifiers
 {
+    ///<summary>Provides information about the current game and its Player session through unique identifiers.</summary>
+    ///<remarks>For example, you can use this information to tie diagnostic information to a Player session.</remarks>
     [NativeHeader("Modules/Identifiers/Identifiers.h")]
     public static class Identifiers
     {
+        ///<summary>Returns the installation ID for this Unity game.</summary>
         public static string installationId => GetInstallationId();
 
-        /// <summary>
-        /// Raised when <see cref="userId"/> changes value. The argument is the new value.
-        /// Subscribers are notified after the value is changed.
-        /// </summary>
+        ///<summary>Raised when <see cref="userId"/> changes value. The argument is the new value of userId. Subscribers are notified after the value is changed.</summary>
         public static event Action<string> userIdChanged;
 
         internal const int MaxUserIdLength = 1024;
 
-        /// <summary>
-        /// Gets or sets a user identifier supplied by the developer, typically the player's
-        /// id in a third-party identity provider.
-        /// </summary>
-        /// <exception cref="ArgumentOutOfRangeException">
-        /// Thrown when the assigned value exceeds 1024 characters.
-        /// </exception>
+        ///<summary>Gets or sets a user identifier supplied by the developer, typically the player's id in a third-party identity provider.</summary>
+        ///<remarks>The value persists across game sessions.</remarks>
+        ///<exception cref="ArgumentOutOfRangeException">Thrown when the assigned value exceeds 1024 characters.</exception>
         public static string userId
         {
             get => GetUserId();

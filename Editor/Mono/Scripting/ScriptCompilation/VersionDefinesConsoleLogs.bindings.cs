@@ -3,26 +3,25 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
-using System.Collections.Generic;
-using UnityEditorInternal;
+using UnityEngine;
 using UnityEngine.Bindings;
 
 namespace UnityEditor.Scripting.ScriptCompilation
 {
     interface IVersionDefinesConsoleLogs
     {
-        void LogVersionDefineError(TargetAssembly targetAssembly, ExpressionNotValidException validationError);
+        void LogVersionDefineError(EntityId assetEntityId, ExpressionNotValidException validationError);
         void ClearVersionDefineErrors();
     }
 
     [NativeHeader("Editor/Src/ScriptCompilation/VersionDefinesConsoleLogs.h")]
     class VersionDefinesConsoleLogs : IVersionDefinesConsoleLogs
     {
-        public void LogVersionDefineError(TargetAssembly targetAssembly, ExpressionNotValidException validationError)
+        // assetEntityId associates the console message with the asmdef so double-clicking selects it in the
+        // Project window. It may be EntityId.None (e.g. in batch mode), which the native side tolerates.
+        public void LogVersionDefineError(EntityId assetEntityId, ExpressionNotValidException validationError)
         {
-            var asset = AssetDatabase.LoadAssetAtPath<AssemblyDefinitionAsset>(EditorCompilationInterface.Instance.FindCustomTargetAssemblyFromTargetAssembly(targetAssembly).FilePath);
-            var instanceID = asset.GetEntityId();
-            InternalLogVersionDefineError(validationError, instanceID);
+            InternalLogVersionDefineError(validationError, assetEntityId);
         }
 
         public void ClearVersionDefineErrors()

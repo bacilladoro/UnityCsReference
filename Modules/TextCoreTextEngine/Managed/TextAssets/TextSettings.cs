@@ -41,7 +41,7 @@ namespace UnityEngine.TextCore.Text
 
         /// <summary>
         /// The relative path to a Resources folder in the project where the text system will look to load font assets.
-        /// The default location is "Resources/Fonts & Materials".
+        /// The default location is "Resources/Fonts &amp; Materials".
         /// </summary>
         public string defaultFontAssetPath
         {
@@ -78,23 +78,54 @@ namespace UnityEngine.TextCore.Text
         [SerializeField]
         protected int m_MissingCharacterUnicode;
 
+        // TextCore Only
         internal List<FontAsset> fallbackOSFontAssets
         {
             [VisibleToOtherModules("UnityEngine.UIElementsModule")]
             get
             {
-                if (m_FallbackOSFontAssets == null)
+                if (!m_FallbackOSFontAssetsInitialized)
                 {
-                    m_FallbackOSFontAssets = GetOSFontAssetList();
+                    m_FallbackOSFontAssets ??= new List<FontAsset>();
+                    m_FallbackOSFontAssets.AddRange(GetOSFontAssetList());
+                    m_FallbackOSFontAssetsInitialized = true;
                 }
                 return m_FallbackOSFontAssets;
             }
         }
 
-        [SerializeField]
+        // Runtime cache, persisted by EditorTextSettings.
         List<FontAsset> m_FallbackOSFontAssets;
+        bool m_FallbackOSFontAssetsInitialized;
 
-        internal bool isFallbackOSFontAssetsInitialized => m_FallbackOSFontAssets != null;
+        static List<FontAsset> s_GlobalOSFallbackFontAssets;
+        static int s_GlobalOSFallbackVersion;
+
+        internal static void RegisterGlobalOSFallback(FontAsset fontAsset)
+        {
+            if (fontAsset == null)
+                return;
+            s_GlobalOSFallbackFontAssets ??= new List<FontAsset>();
+            if (!s_GlobalOSFallbackFontAssets.Contains(fontAsset))
+            {
+                s_GlobalOSFallbackFontAssets.Add(fontAsset);
+                s_GlobalOSFallbackVersion++;
+            }
+        }
+
+        internal static void SetGlobalOSFallbackStore(List<FontAsset> store)
+        {
+            if (store == null)
+                return;
+            s_GlobalOSFallbackFontAssets = store;
+            s_GlobalOSFallbackVersion++;
+        }
+
+        internal bool isFallbackOSFontAssetsInitialized
+        {
+            [VisibleToOtherModules("UnityEngine.UIElementsModule")]
+            get => m_FallbackOSFontAssetsInitialized;
+        }
 
         static FontAsset s_RuntimeDefault;
 
@@ -112,9 +143,9 @@ namespace UnityEngine.TextCore.Text
             return fallbackFontAssets;
         }
 
-        /// <summary>
-        /// Determines if OpenType Font Features should be retrieved at runtime from the source font file.
-        /// </summary>
+        // <summary>
+        // Determines if OpenType Font Features should be retrieved at runtime from the source font file.
+        // </summary>
         // public bool getFontFeaturesAtRuntime
         // {
         //     get { return m_GetFontFeaturesAtRuntime; }
@@ -252,13 +283,27 @@ namespace UnityEngine.TextCore.Text
                 s_GlobalSpriteAsset = Resources.Load<SpriteAsset>("Sprite Assets/Default Sprite Asset");
         }
 
+        void OnDisable()
+        {
+            DestroyNativeTextSettings();
+        }
+
         void OnDestroy()
         {
-            if (m_NativeTextSettings != IntPtr.Zero)
-            {
-                DestroyNativeObject(m_NativeTextSettings, MarshalledUnityObject.MarshalNotNull(this));
-            }
+            DestroyNativeTextSettings();
         }
+
+        void DestroyNativeTextSettings()
+        {
+            if (m_NativeTextSettings == IntPtr.Zero)
+                return;
+
+            DestroyNativeObject(m_NativeTextSettings, MarshalledUnityObject.MarshalNotNull(this));
+            m_NativeTextSettings = IntPtr.Zero;
+        }
+
+        // When false, this instance's font assets are created unloadable so Unity reclaims them once it's gone.
+        internal virtual bool persistsFontAssetCaches => false;
 
         protected void InitializeFontReferenceLookup()
         {
@@ -301,8 +346,19 @@ namespace UnityEngine.TextCore.Text
         // Internal for testing purposes
         internal Dictionary<int, FontAsset> m_FontLookup;
 
-        [SerializeField]
+        // Runtime cache, persisted by EditorTextSettings.
         internal List<FontReferenceMap> m_FontReferences = new List<FontReferenceMap>();
+
+        // Editor-only: back the runtime caches with the editor's persisted lists.
+        internal void UsePersistedCaches(List<FontReferenceMap> fontReferences, List<FontAsset> osFallbacks, List<FontAsset> globalOSFallbacks)
+        {
+            m_FontReferences = fontReferences;
+            m_FallbackOSFontAssets = osFallbacks;
+            m_FallbackOSFontAssetsInitialized = osFallbacks is { Count: > 0 };
+            m_FontLookup = new Dictionary<int, FontAsset>();
+            InitializeFontReferenceLookup();
+            SetGlobalOSFallbackStore(globalOSFallbacks);
+        }
 
         [VisibleToOtherModules("UnityEngine.IMGUIModule", "UnityEngine.UIElementsModule")]
         internal FontAsset GetCachedFontAsset(Font font)
@@ -324,7 +380,9 @@ namespace UnityEngine.TextCore.Text
             if (TextGenerator.IsExecutingJob)
                 return null;
 
-            FontAsset fontAsset = FontAssetFactory.ConvertFontToFontAsset(font);
+            FontAsset fontAsset = IsLegacyRuntimeFont(font)
+                ? GetLegacyRuntimeFontAsset(font)
+                : FontAssetFactory.ConvertFontToFontAsset(font, persistsFontAssetCaches);
 
             if (fontAsset != null)
             {
@@ -335,10 +393,35 @@ namespace UnityEngine.TextCore.Text
             return fontAsset;
         }
 
+        const string k_LegacyRuntimeFontName = "LegacyRuntime";
+
+        static bool IsLegacyRuntimeFont(Font font) => font.name == k_LegacyRuntimeFontName;
+
+        FontAsset GetLegacyRuntimeFontAsset(Font font)
+        {
+            var osFallbacks = fallbackOSFontAssets;
+            if (osFallbacks is not { Count: > 0 })
+                return FontAssetFactory.ConvertFontToFontAsset(font, persistsFontAssetCaches);
+
+            if (font.includeFontData)
+            {
+                var embeddedFontAsset = FontAssetFactory.ConvertFontToFontAsset(font, persistsFontAssetCaches);
+                if (embeddedFontAsset != null)
+                {
+                    embeddedFontAsset.fallbackFontAssetTable = new List<FontAsset>(osFallbacks);
+                    return embeddedFontAsset;
+                }
+            }
+
+            var mainFontAsset = osFallbacks[0];
+            mainFontAsset.fallbackFontAssetTable = osFallbacks.GetRange(1, osFallbacks.Count - 1);
+            return mainFontAsset;
+        }
+
         private List<FontAsset> GetOSFontAssetList()
         {
             var fonts = Font.GetOSFallbacks();
-            return FontAsset.CreateFontAssetOSFallbackList(fonts);
+            return FontAssetFactory.CreateFontAssetOSFallbackList(fonts, persistent: persistsFontAssetCaches);
         }
 
         [VisibleToOtherModules("UnityEngine.IMGUIModule", "UnityEngine.UIElementsModule")]
@@ -374,67 +457,73 @@ namespace UnityEngine.TextCore.Text
         IntPtr[] GetGlobalFallbacks()
         {
             List<IntPtr> globalFontAssetFallbacks = new List<IntPtr>();
-            fallbackFontAssets?.ForEach(fallback =>
+            if (fallbackFontAssets != null)
             {
-                if (fallback == null)
-                    return;
-                if (fallback.atlasPopulationMode == AtlasPopulationMode.Static && fallback.characterTable.Count > 0)
+                foreach (var fallback in fallbackFontAssets)
                 {
-                    Debug.LogWarning($"Advanced text system cannot use static font asset {fallback.name} as fallback.");
-                    return;
-                }
-                globalFontAssetFallbacks.Add(fallback.nativeFontAsset);
-            });
-
-            emojiFallbackTextAssets?.ForEach(fallback =>
-            {
-                if (fallback is FontAsset fontAsset)
-                {
-                    if (fontAsset.atlasPopulationMode == AtlasPopulationMode.Static && fontAsset.characterTable.Count > 0)
+                    if (fallback == null)
+                        continue;
+                    if (fallback.atlasPopulationMode == AtlasPopulationMode.Static && fallback.characterTable.Count > 0)
                     {
                         Debug.LogWarning($"Advanced text system cannot use static font asset {fallback.name} as fallback.");
-                        return;
+                        continue;
                     }
-                    globalFontAssetFallbacks.Add(fontAsset.nativeFontAsset);
+                    globalFontAssetFallbacks.Add(fallback.nativeFontAsset);
                 }
-            });
+            }
 
-            fallbackOSFontAssets?.ForEach(fallback =>
+            if (emojiFallbackTextAssets != null)
             {
-                if (fallback == null)
-                    return;
-                if (fallback.atlasPopulationMode == AtlasPopulationMode.Static && fallback.characterTable.Count > 0)
+                foreach (var fallback in emojiFallbackTextAssets)
                 {
-                    Debug.LogWarning($"Advanced text system cannot use static font asset {fallback.name} as fallback.");
-                    return;
+                    if (fallback is FontAsset fontAsset)
+                    {
+                        if (fontAsset.atlasPopulationMode == AtlasPopulationMode.Static && fontAsset.characterTable.Count > 0)
+                        {
+                            Debug.LogWarning($"Advanced text system cannot use static font asset {fallback.name} as fallback.");
+                            continue;
+                        }
+                        globalFontAssetFallbacks.Add(fontAsset.nativeFontAsset);
+                    }
                 }
-                globalFontAssetFallbacks.Add(fallback.nativeFontAsset);
-            });
+            }
 
-            emojiFallbackTextAssets?.ForEach(fallback =>
+            if (isFallbackOSFontAssetsInitialized && fallbackOSFontAssets != null)
             {
-                // emojiFallbackTextAssets could contain both FontAsset and SpriteAsset
-                if (fallback is FontAsset fontAsset)
+                foreach (var fallback in fallbackOSFontAssets)
                 {
-                    if (fontAsset == null)
-                        return;
-                    if (fontAsset.atlasPopulationMode == AtlasPopulationMode.Static && fontAsset.characterTable.Count > 0)
+                    if (fallback == null)
+                        continue;
+                    if (fallback.atlasPopulationMode == AtlasPopulationMode.Static && fallback.characterTable.Count > 0)
                     {
                         Debug.LogWarning($"Advanced text system cannot use static font asset {fallback.name} as fallback.");
-                        return;
+                        continue;
                     }
-                    globalFontAssetFallbacks.Add(fontAsset.nativeFontAsset);
+                    globalFontAssetFallbacks.Add(fallback.nativeFontAsset);
                 }
-            });
+            }
+
+            if (s_GlobalOSFallbackFontAssets != null)
+            {
+                foreach (var fallback in s_GlobalOSFallbackFontAssets)
+                {
+                    if (fallback == null)
+                        continue;
+                    globalFontAssetFallbacks.Add(fallback.nativeFontAsset);
+                }
+            }
 
             return globalFontAssetFallbacks.ToArray();
         }
 
         bool m_IsNativeTextSettingsDirty = true;
+        [VisibleToOtherModules("UnityEngine.UIElementsModule")]
         internal void SetNativeTextSettingsDirty()
         {
             m_IsNativeTextSettingsDirty = true;
         }
+
+        int m_GlobalOSFallbackVersionUploaded = -1;
 
         [VisibleToOtherModules("UnityEngine.UIElementsModule")]
         internal void UpdateNativeTextSettings()
@@ -443,11 +532,13 @@ namespace UnityEngine.TextCore.Text
             {
                 m_NativeTextSettings = CreateNativeObject(GetGlobalFallbacks(), MarshalledUnityObject.MarshalNotNull(this), GetEntityId());
                 m_IsNativeTextSettingsDirty = false;
+                m_GlobalOSFallbackVersionUploaded = s_GlobalOSFallbackVersion;
             }
-            else if (m_IsNativeTextSettingsDirty && m_NativeTextSettings != IntPtr.Zero)
+            else if ((m_IsNativeTextSettingsDirty || m_GlobalOSFallbackVersionUploaded != s_GlobalOSFallbackVersion) && m_NativeTextSettings != IntPtr.Zero)
             {
                 UpdateFallbacks(m_NativeTextSettings, GetGlobalFallbacks());
                 m_IsNativeTextSettingsDirty = false;
+                m_GlobalOSFallbackVersionUploaded = s_GlobalOSFallbackVersion;
             }
         }
 

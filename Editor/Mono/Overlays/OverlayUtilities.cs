@@ -11,6 +11,7 @@ using Unity.Collections;
 using UnityEditor.EditorTools;
 using UnityEngine;
 using UnityEngine.UIElements;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Overlays
 {
@@ -26,7 +27,7 @@ namespace UnityEditor.Overlays
         bool IsOverlaySupported(string overlayId);
     }
 
-    static class OverlayUtilities
+    static partial class OverlayUtilities
     {
         internal const string k_StyleCommon = "StyleSheets/Overlays/OverlayCommon.uss";
         internal const string k_StyleLight = "StyleSheets/Overlays/OverlayLight.uss";
@@ -39,7 +40,9 @@ namespace UnityEditor.Overlays
             public string overlayId;
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         static OverlayEditorWindowAssociation[] s_Overlays;
+        [AutoStaticsCleanupOnCodeReload]
         static readonly Dictionary<Type, List<Type>> s_OverlaysTypeAssociations = new Dictionary<Type, List<Type>>();
         internal const string nullWindowTypeErrorMsg = "{0} editor window type cannot be null.";
         // used by tests

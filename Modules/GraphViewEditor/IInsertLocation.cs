@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -10,6 +11,7 @@ namespace UnityEditor.Experimental.GraphView
 {
     internal struct InsertInfo
     {
+        [NoAutoStaticsCleanup] // null sentinel value; target=null so no ALC-pinning refs
         public static readonly InsertInfo nil = new InsertInfo { target = null, index = -1, localPosition = Vector2.zero };
         public VisualElement target;
         public int index;

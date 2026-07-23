@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor.Build.Content;
 using UnityEngine;
 using UnityEngine.Internal;
@@ -14,9 +15,11 @@ using Object = UnityEngine.Object;
 
 namespace UnityEditor
 {
-    internal static class AssetClipboardUtility
+    internal static partial class AssetClipboardUtility
     {
+        [AutoStaticsCleanupOnCodeReload]
         static HashSet<ObjectIdentifier> assetClipboard = new HashSet<ObjectIdentifier>();
+        [AutoStaticsCleanupOnCodeReload]
         static PerformedAction performedAction = PerformedAction.None;
         internal static void DuplicateSelectedAssets()
         {

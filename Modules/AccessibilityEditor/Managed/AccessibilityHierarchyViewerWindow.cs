@@ -13,7 +13,7 @@ namespace UnityEditor.Accessibility
     /// </summary>
     internal class AccessibilityHierarchyViewerWindow : EditorWindow
     {
-        private static string s_WindowTitle = "Accessibility Hierarchy Viewer";
+        private static readonly string s_WindowTitle = "Accessibility Hierarchy Viewer";
 
         private AccessibilityHierarchyViewModel m_ActiveHierarchyModel;
 

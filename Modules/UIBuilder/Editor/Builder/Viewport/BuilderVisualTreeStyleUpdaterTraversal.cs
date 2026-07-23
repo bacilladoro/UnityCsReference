@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine.UIElements;
+using Unity.Scripting.LifecycleManagement;
 
 namespace Unity.UI.Builder
 {
@@ -12,7 +13,8 @@ namespace Unity.UI.Builder
     {
         struct SavedContext
         {
-            public static SavedContext none = new SavedContext();
+            [NoAutoStaticsCleanup] // Immutable empty-value sentinel (default-valued struct); holds no references and is safe to persist across code reload.
+            public static readonly SavedContext none = new SavedContext();
             public List<StyleSheet> styleSheets;
             public StyleVariableContext variableContext;
         }

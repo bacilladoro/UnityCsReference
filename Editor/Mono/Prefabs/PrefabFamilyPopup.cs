@@ -8,6 +8,7 @@ using Object = UnityEngine.Object;
 using UnityEditor.SceneManagement;
 using System;
 using UnityEngine.Assertions;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -38,6 +39,7 @@ namespace UnityEditor
         IEnumerator<HierarchyIterator> m_Enumerator = null;
         const int k_MinIconSize = 20;
 
+        [NoAutoStaticsCleanup] // Tracks whether the popup is currently open; reset to false in OnClose, so a value-type flag that is safe to persist across reload.
         static bool s_Open = false;
         bool m_Debug = false;
 
@@ -62,16 +64,16 @@ namespace UnityEditor
 
         public static class Colors
         {
-            static Color header_l = new Color32(0xDF, 0xDF, 0xDF, 0xFF);
-            static Color header_d = new Color(0.5f, 0.5f, 0.5f, 0.2f);
+            static readonly Color header_l = new Color32(0xDF, 0xDF, 0xDF, 0xFF);
+            static readonly Color header_d = new Color(0.5f, 0.5f, 0.5f, 0.2f);
 
-            static Color[] rows_l = new Color[2]
+            static readonly Color[] rows_l = new Color[2]
             {
                 new Color32(0xC8, 0xC8, 0xC8, 0xFF),
                 new Color32(0xCE, 0xCE, 0xCE, 0xFF)
             };
 
-            static Color[] rows_d = new Color[2]
+            static readonly Color[] rows_d = new Color[2]
             {
                 new Color32(0x38, 0x38, 0x38, 0xFF),
                 new Color32(0x3E, 0x3E, 0x3E, 0xFF)
@@ -604,6 +606,7 @@ namespace UnityEditor
 
     static class PrefabAssetStateCache
     {
+        [NoAutoStaticsCleanup] // Persistent on-disk state cache keyed by GUID with no user-code references; safe to persist across reload.
         static StateCache<PrefabAssetInfo> s_StateCache = new StateCache<PrefabAssetInfo>("Library/StateCache/PrefabAssetInfo/");
 
         public static void SetState(string guid, PrefabAssetInfo obj)

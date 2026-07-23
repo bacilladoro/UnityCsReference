@@ -254,7 +254,7 @@ namespace UnityEditor
             {
                 return GetBuildPlayerOptions(askForBuildLocation, defaultBuildPlayerOptions, true);
             }
-            
+
             private static BuildPlayerOptions GetBuildPlayerOptions(bool askForBuildLocation, BuildPlayerOptions defaultBuildPlayerOptions, bool activeTarget)
             {
                 var options = defaultBuildPlayerOptions;
@@ -280,39 +280,60 @@ namespace UnityEditor
                     subtarget = EditorUserBuildSettings.GetSelectedSubtargetFor(buildTarget);
                 }
 
-                options.options = BuildProfileModuleUtil.GetBuildOptions(buildTarget, buildTargetGroup, string.Empty, options.options);
+                var buildPath = BuildProfile.GetActiveBuildProfile()?.GetComponent<BuildDestinationSettings>()?.buildPath ?? string.Empty;
+                var useBuildDestinationComponent = !string.IsNullOrEmpty(buildPath);
+
+                options.options = BuildProfileModuleUtil.GetBuildOptions(buildTarget, buildTargetGroup, buildPath, options.options);
+
+                if (useBuildDestinationComponent)
+                    buildPath = ResolveBuildLocation(buildPath, buildTarget, subtarget, options.options);
 
                 if ((options.options & BuildOptions.InstallInBuildFolder) == 0 &&
                     (options.options & BuildOptions.PatchPackage) == 0)
                 {
-                    if (askForBuildLocation && !PickBuildLocation(buildTargetGroup, buildTarget, subtarget, options.options, out updateExistingBuild))
-                        throw new BuildMethodException();
-
-                    var newLocation = EditorUserBuildSettings.GetBuildLocation(buildTarget);
-
-                    if (newLocation.Length == 0)
+                    if (useBuildDestinationComponent)
                     {
-                        throw new BuildMethodException("Build location for buildTarget " + buildTarget + " is not valid.");
-                    }
-
-                    if (!askForBuildLocation)
-                    {
-                        switch (BuildPipeline.BuildCanBeAppended(buildTarget, newLocation))
+                        if (!IsBuildPathValid(buildPath, out var msg))
                         {
-                            case CanAppendBuild.Unsupported:
-                                break;
-                            case CanAppendBuild.Yes:
-                                updateExistingBuild = true;
-                                break;
-                            case CanAppendBuild.No:
-                                if (!PickBuildLocation(buildTargetGroup, buildTarget, subtarget, options.options, out updateExistingBuild))
-                                    throw new BuildMethodException();
+                            EditorUtility.DisplayDialog("Invalid build path", msg, "OK");
+                            Debug.LogError($"Invalid build path: '{buildPath}'. {msg}");
+                            throw new BuildMethodException();
+                        }
 
-                                newLocation = EditorUserBuildSettings.GetBuildLocation(buildTarget);
-                                if (!BuildLocationIsValid(newLocation))
-                                    throw new BuildMethodException("Build location for buildTarget " + buildTarget + " is not valid.");
+                        if (BuildPipeline.BuildCanBeAppended(buildTarget, buildPath) == CanAppendBuild.Yes)
+                            updateExistingBuild = true;
+                    }
+                    else
+                    {
+                        if (askForBuildLocation && !PickBuildLocation(buildTargetGroup, buildTarget, subtarget, options.options, out updateExistingBuild))
+                            throw new BuildMethodException();
 
-                                break;
+                        var newLocation = EditorUserBuildSettings.GetBuildLocation(buildTarget);
+
+                        if (newLocation.Length == 0)
+                        {
+                            throw new BuildMethodException("Build location for buildTarget " + buildTarget + " is not valid.");
+                        }
+
+                        if (!askForBuildLocation)
+                        {
+                            switch (BuildPipeline.BuildCanBeAppended(buildTarget, newLocation))
+                            {
+                                case CanAppendBuild.Unsupported:
+                                    break;
+                                case CanAppendBuild.Yes:
+                                    updateExistingBuild = true;
+                                    break;
+                                case CanAppendBuild.No:
+                                    if (!PickBuildLocation(buildTargetGroup, buildTarget, subtarget, options.options, out updateExistingBuild))
+                                        throw new BuildMethodException();
+
+                                    newLocation = EditorUserBuildSettings.GetBuildLocation(buildTarget);
+                                    if (!BuildLocationIsValid(newLocation))
+                                        throw new BuildMethodException("Build location for buildTarget " + buildTarget + " is not valid.");
+
+                                    break;
+                            }
                         }
                     }
                 }
@@ -323,7 +344,7 @@ namespace UnityEditor
                 options.target = buildTarget;
                 options.subtarget = subtarget;
                 options.targetGroup = buildTargetGroup;
-                options.locationPathName = EditorUserBuildSettings.GetBuildLocation(buildTarget);
+                options.locationPathName = useBuildDestinationComponent ? buildPath : EditorUserBuildSettings.GetBuildLocation(buildTarget);
                 options.previousBuildReportDirectories = PostprocessBuildPlayer.GetPreviousContentBuildReportDirectories();
                 options.assetBundleManifestPath = PostprocessBuildPlayer.GetStreamingAssetsBundleManifestPath();
 
@@ -339,6 +360,24 @@ namespace UnityEditor
                 options.scenes = scenesList.ToArray(typeof(string)) as string[];
 
                 return options;
+            }
+
+            /// <summary>
+            /// Resolves the build location from build destination component in build profiles.
+            /// For folder-output platforms (empty extension), the path is returned unchanged.
+            /// For file-output platforms, if the provided path has the correct extension for the platform,
+            /// it is returned unchanged. Otherwise, the product name and correct extension are appended to the path.
+            /// </summary>
+            static string ResolveBuildLocation(string path, BuildTarget target, int subtarget, BuildOptions options)
+            {
+                string extension = PostprocessBuildPlayer.GetExtensionForBuildTarget(target, subtarget, options);
+                if (string.IsNullOrEmpty(extension))
+                    return path;
+
+                if (string.Equals(FileUtil.GetPathExtension(path), extension, StringComparison.OrdinalIgnoreCase))
+                    return path;
+
+                return Path.Combine(path, Paths.MakeValidFileName(PlayerSettings.productName) + '.' + extension);
             }
 
             private static bool PickBuildLocation(BuildTargetGroup targetGroup, BuildTarget target, int subtarget, BuildOptions options, out bool updateExistingBuild)

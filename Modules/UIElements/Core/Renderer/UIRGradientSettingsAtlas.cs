@@ -4,6 +4,7 @@
 
 using System;
 using Unity.Profiling;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEngine.UIElements.UIR
 {
@@ -12,8 +13,8 @@ namespace UnityEngine.UIElements.UIR
     /// </summary>
     class GradientSettingsAtlas : IDisposable
     {
-        static ProfilerMarker s_MarkerWrite = new ProfilerMarker(ProfilerCategory.UIToolkit, "UIR.GradientSettingsAtlas.Write");
-        static ProfilerMarker s_MarkerCommit = new ProfilerMarker(ProfilerCategory.UIToolkit, "UIR.GradientSettingsAtlas.Commit");
+        static readonly ProfilerMarker s_MarkerWrite = new ProfilerMarker(ProfilerCategory.UIToolkit, "UIR.GradientSettingsAtlas.Write");
+        static readonly ProfilerMarker s_MarkerCommit = new ProfilerMarker(ProfilerCategory.UIToolkit, "UIR.GradientSettingsAtlas.Commit");
 
         readonly int m_Length;
         readonly int m_ElemWidth;
@@ -23,6 +24,7 @@ namespace UnityEngine.UIElements.UIR
         BestFitAllocator m_Allocator;
         Texture2D m_Atlas; // Should be accessed through the property
         RawTexture m_RawAtlas;
+        [NoAutoStaticsCleanup] // monotonic counter for unique texture names; safe to persist
         static int s_TextureCounter;
 
         #region Dispose Pattern

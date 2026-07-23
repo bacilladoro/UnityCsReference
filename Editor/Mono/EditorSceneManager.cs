@@ -4,6 +4,7 @@
 
 using System;
 using System.Reflection;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.SceneManagement;
@@ -19,7 +20,9 @@ namespace UnityEditor.SceneManagement
 
     public sealed partial class EditorSceneManager : SceneManager
     {
+        [AutoStaticsCleanupOnCodeReload]
         internal static UnityAction<Scene, NewSceneMode> sceneWasCreated;
+        [AutoStaticsCleanupOnCodeReload]
         internal static UnityAction<Scene, OpenSceneMode> sceneWasOpened;
         public static event UnityAction<Scene, Scene> activeSceneChangedInEditMode
         {
@@ -27,6 +30,7 @@ namespace UnityEditor.SceneManagement
             remove => m_ActiveSceneChangedInEditModeEvent.Remove(value);
         }
 
+        [AutoStaticsCleanupOnCodeReload(CleanupStrategy = CleanupStrategy.Clear)]
         private static EventWithPerformanceTracker<UnityAction<Scene, Scene>> m_ActiveSceneChangedInEditModeEvent = new EventWithPerformanceTracker<UnityAction<Scene, Scene>>($"{nameof(EditorSceneManager)}.{nameof(activeSceneChangedInEditMode)}");
 
         private static void PlayModeStateChangedCallback(PlayModeStateChange state)
@@ -45,9 +49,13 @@ namespace UnityEditor.SceneManagement
             }
         }
 
-        static EditorSceneManager()
+        [OnCodeLoaded]
+        static void Initialize()
         {
             SceneManager.s_AllowLoadScene = true;
+            // Runs on every code reload, and playModeStateChanged is not cleared on reload, so deregister
+            // before registering to avoid accumulating duplicate subscriptions.
+            EditorApplication.playModeStateChanged -= PlayModeStateChangedCallback;
             EditorApplication.playModeStateChanged += PlayModeStateChangedCallback;
         }
 

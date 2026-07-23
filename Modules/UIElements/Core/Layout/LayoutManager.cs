@@ -227,6 +227,9 @@ internal class LayoutManager : IDisposable
     // Used in tests.
     public int NodeCapacity => m_Nodes.Capacity;
 
+    // Used in tests. Number of nodes still waiting to be recycled (and to have their ComputedStyle released).
+    internal int PendingRecycleNodeCount => m_NodesToFree.Count;
+
     internal static LayoutManager GetManager(int index)
         => (uint) index < s_Managers.Count ? s_Managers[index] : null;
 

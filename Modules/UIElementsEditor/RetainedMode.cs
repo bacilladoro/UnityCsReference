@@ -22,6 +22,7 @@ namespace UnityEditor
         {
             UIElementsIMGUIUtility.s_BeginContainerCallback = OnBeginContainer;
             UIElementsIMGUIUtility.s_EndContainerCallback = OnEndContainer;
+            UIElementsIMGUIUtility.s_FocusOutContainerCallback = OnFocusOutContainer;
 
             AssemblyReloadEvents.beforeAssemblyReload += OnBeforeAssemblyReload;
 
@@ -49,6 +50,11 @@ namespace UnityEditor
         static void OnEndContainer(IMGUIContainer c)
         {
             HandleUtility.EndHandles();
+        }
+
+        static void OnFocusOutContainer(IMGUIContainer c)
+        {
+            EditorGUI.CommitActiveDelayedTextField();
         }
 
         [RequiredByNativeCode]

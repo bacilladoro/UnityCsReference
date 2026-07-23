@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEngine.UIElements.StyleSheets;
@@ -12,7 +13,9 @@ namespace UnityEditor.Experimental.GraphView
 {
     public class Port : GraphElement
     {
+        [NoAutoStaticsCleanup] // CSS property key — immutable string handle, no ALC-pinning refs
         private static CustomStyleProperty<Color> s_PortColorProperty = new CustomStyleProperty<Color>("--port-color");
+        [NoAutoStaticsCleanup] // CSS property key — immutable string handle, no ALC-pinning refs
         private static CustomStyleProperty<Color> s_DisabledPortColorProperty = new CustomStyleProperty<Color>("--disabled-port-color");
 
         private static readonly Color s_DefaultColor = new Color(240 / 255f, 240 / 255f, 240 / 255f);

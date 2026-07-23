@@ -28,18 +28,5 @@ namespace UnityEngine.Networking
             return new UnityWebRequest(uri, UnityWebRequest.kHttpVerbGET, new DownloadHandlerAudioClip(uri, audioType, ambisonic), null);
         }
 
-
-        [System.Obsolete("MovieTexture is deprecated. Use VideoPlayer instead.", true)]
-        public static UnityWebRequest GetMovieTexture(string uri)
-        {
-            return null;
-        }
-
-        [System.Obsolete("MovieTexture is deprecated. Use VideoPlayer instead.", true)]
-        public static UnityWebRequest GetMovieTexture(Uri uri)
-        {
-            return null;
-        }
-
     }
 }

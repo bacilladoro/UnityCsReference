@@ -136,6 +136,28 @@ namespace UnityEngine.UIElements
             set { m_ContentHash = value; }
         }
 
+        [VisibleToOtherModules("UnityEditor.UIElementsModule")]
+        internal const string k_SerializationLayoutDependencyKey = "uitk/serialization-layout";
+
+        [VisibleToOtherModules("UnityEditor.UIElementsModule")]
+        internal static int currentSerializationLayoutHash => StylePropertyUtil.k_SerializationLayoutHash;
+
+        // Must default to 0: assets serialized before this field existed deserialize to 0 and are flagged.
+        [SerializeField]
+        private int m_SerializationLayoutHash;
+
+        [VisibleToOtherModules("UnityEditor.UIElementsModule")]
+        internal int serializationLayoutHash
+        {
+            get { return m_SerializationLayoutHash; }
+            set { m_SerializationLayoutHash = value; }
+        }
+
+        // Set once the serialization-layout stamp has been validated, so the (hot) use-time entry
+        // point only does real work the first time this sheet participates in style resolution.
+        [NonSerialized]
+        private bool m_SerializationLayoutChecked;
+
         [SerializeField]
         internal ScalableImage[] scalableImages = Array.Empty<ScalableImage>();
 
@@ -194,6 +216,37 @@ namespace UnityEngine.UIElements
             UIElementsUtility.MarkStyleSheetAsLoaded(this);
         }
 
+        // Validate the serialization-layout stamp the first time the sheet is actually used for
+        // styling. We deliberately do NOT validate on load/OnEnable: stylesheets are routinely loaded
+        // transiently before the asset pipeline has reimported and re-stamped them - during domain
+        // reload (e.g. SRP ResourceReloader resolving resource references) and during asset-import
+        // dependency gathering - which would produce false errors on every project upgrade. A sheet
+        // that is loaded but never applied cannot misalign any style id, so there is nothing to
+        // validate until it participates in style resolution.
+        [VisibleToOtherModules("UnityEditor.UIElementsModule")]
+        internal void EnsureSerializationLayoutChecked()
+        {
+            if (m_SerializationLayoutChecked)
+                return;
+            m_SerializationLayoutChecked = true;
+            CheckSerializationLayout();
+        }
+
+        [VisibleToOtherModules("UnityEditor.UIElementsModule")]
+        internal void CheckSerializationLayout()
+        {
+            // Skip the transient, not-yet-populated instance the importer creates before stamping it.
+            if (m_Rules == null || m_Rules.Length == 0)
+                return;
+
+            if (m_SerializationLayoutHash != currentSerializationLayoutHash)
+            {
+                Debug.LogError($"StyleSheet '{name}' was imported with an older serialization layout " +
+                    $"(stamp {m_SerializationLayoutHash}, expected {currentSerializationLayoutHash}) and cannot be used. " +
+                    "Reimport or re-save the asset to fix the issue.", this);
+            }
+        }
+
         internal virtual void OnDisable()
         {
             UIElementsUtility.MarkStyleSheetAsUnloaded(this);
@@ -241,6 +294,11 @@ namespace UnityEngine.UIElements
             if (!string.IsNullOrEmpty(selector))
                 rule.AddSelector(selector);
             InsertValueInArray(ref m_Rules, index, rule);
+            // Rules authored in memory resolve their property ids against the current StylePropertyId
+            // layout, so the sheet is current by construction. Stamp it here so code-built sheets are
+            // not mistaken for old serialized assets (whose rules come from deserialization and never
+            // pass through this path).
+            m_SerializationLayoutHash = currentSerializationLayoutHash;
             RequestRebuild();
             return rule;
         }

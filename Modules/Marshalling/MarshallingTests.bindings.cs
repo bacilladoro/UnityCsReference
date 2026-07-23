@@ -1524,6 +1524,32 @@ namespace UnityEngine
             public int IntValue;
         }
 
+        [NativeType(CodegenOptions.Custom, "CustomNativeMarshallingManagedStruct")]
+        public struct NonBlittableCustomStructPrivateFields
+        {
+            [NativeName("stringValue")]
+            private string m_StringValue;
+            [NativeName("intValue")]
+            private int m_IntValue;
+
+            public string StringValue { get => m_StringValue; set => m_StringValue = value; }
+            public int IntValue { get => m_IntValue; set => m_IntValue = value; }
+        }
+
+        [NativeAsStruct]
+        [StructLayout(LayoutKind.Sequential)]
+        [NativeType(CodegenOptions = CodegenOptions.Custom, IntermediateScriptingStructName = "CustomNativeMarshallingManagedClassNativeAsStruct")]
+        public class NonBlittableCustomClassNativeAsStructPrivateFields
+        {
+            [NativeName("stringValue")]
+            private string m_StringValue;
+            [NativeName("intValue")]
+            private int m_IntValue;
+
+            public string StringValue { get => m_StringValue; set => m_StringValue = value; }
+            public int IntValue { get => m_IntValue; set => m_IntValue = value; }
+        }
+
         [NativeMethod(ThrowsException = true)]
         public static extern void ParameterNonBlittableCustomStruct(NonBlittableCustomStruct param, string expectedString, int expectedInt);
         public static extern NonBlittableCustomStruct ReturnNonBlittableCustomStruct(string expectedString, int expectedInt);
@@ -1535,6 +1561,14 @@ namespace UnityEngine
         [NativeMethod(ThrowsException = true)]
         public static extern void ParameterNonBlittableCustomStructNoIntermediateType(NonBlittableCustomStructNoIntermediateType param, string expectedString, int expectedInt);
         public static extern NonBlittableCustomStructNoIntermediateType ReturnNonBlittableCustomStructNoIntermediateType(string expectedString, int expectedInt);
+
+        [NativeMethod(ThrowsException = true)]
+        public static extern void ParameterNonBlittableCustomStructPrivateFields(NonBlittableCustomStructPrivateFields param, string expectedString, int expectedInt);
+        public static extern NonBlittableCustomStructPrivateFields ReturnNonBlittableCustomStructPrivateFields(string expectedString, int expectedInt);
+
+        [NativeMethod(ThrowsException = true)]
+        public static extern void ParameterNonBlittableCustomClassNativeAsStructPrivateFields(NonBlittableCustomClassNativeAsStructPrivateFields param, string expectedString, int expectedInt);
+        public static extern NonBlittableCustomClassNativeAsStructPrivateFields ReturnNonBlittableCustomClassNativeAsStructPrivateFields(string expectedString, int expectedInt);
     }
 
     internal class BlittableNestedCollectionMarshallerTests

@@ -616,7 +616,7 @@ namespace UnityEditor.UIElements
 
         private bool IsElementVisible(VisualElement ve)
         {
-            return (ve.resolvedStyle.display == DisplayStyle.Flex);
+            return (ve.resolvedStyle.display != DisplayStyle.None);
         }
 
         internal static void SetElementVisible(VisualElement ve, bool visible)

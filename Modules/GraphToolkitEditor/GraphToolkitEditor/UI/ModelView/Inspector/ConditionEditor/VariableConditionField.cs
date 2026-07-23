@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -37,6 +38,11 @@ namespace Unity.GraphToolkit.Editor
         /// The USS class name added to the picker button.
         /// </summary>
         public static readonly string pickerUssClassName = ussClassName.WithUssElement("picker");
+
+        /// <summary>
+        /// The USS class name added when a compatible variable is being dragged over this field.
+        /// </summary>
+        public static readonly string dropHighlightUssClassName = ussClassName.WithUssModifier("drop-highlight");
 
         readonly RootView m_RootView;
         readonly GraphModel m_GraphModel;
@@ -76,6 +82,11 @@ namespace Unity.GraphToolkit.Editor
             Add(pickerButton);
 
             RegisterCallback<KeyDownEvent>(OnKeyDown);
+            RegisterCallback<DragEnterEvent>(OnDragEnter);
+            RegisterCallback<DragLeaveEvent>(OnDragLeave);
+            RegisterCallback<DragUpdatedEvent>(OnDragUpdated);
+            RegisterCallback<DragPerformEvent>(OnDragPerform);
+            RegisterCallback<DragExitedEvent>(OnDragExited);
         }
 
         /// <summary>
@@ -115,6 +126,54 @@ namespace Unity.GraphToolkit.Editor
 
             var position = new Vector2(worldBound.x, worldBound.yMax);
             VariableConditionPicker.Show(m_RootView, m_GraphModel, position, variable => variableChosen?.Invoke(variable));
+        }
+
+        VariableDeclarationModelBase GetCompatibleVariable()
+        {
+            var dragged = SelectionDropper.GetDraggedElements();
+            foreach (var model in dragged)
+            {
+                if (model is VariableDeclarationModelBase v && v.GraphModel == m_GraphModel)
+                    return v;
+            }
+            return null;
+        }
+
+        void OnDragEnter(DragEnterEvent evt)
+        {
+            if (GetCompatibleVariable() != null)
+                AddToClassList(dropHighlightUssClassName);
+        }
+
+        void OnDragLeave(DragLeaveEvent evt)
+        {
+            RemoveFromClassList(dropHighlightUssClassName);
+        }
+
+        void OnDragUpdated(DragUpdatedEvent evt)
+        {
+            if (GetCompatibleVariable() != null)
+            {
+                DragAndDrop.visualMode = DragAndDropVisualMode.Link;
+                evt.StopPropagation();
+            }
+        }
+
+        void OnDragPerform(DragPerformEvent evt)
+        {
+            var variable = GetCompatibleVariable();
+            if (variable == null)
+                return;
+
+            DragAndDrop.AcceptDrag();
+            RemoveFromClassList(dropHighlightUssClassName);
+            variableChosen?.Invoke(variable);
+            evt.StopPropagation();
+        }
+
+        void OnDragExited(DragExitedEvent evt)
+        {
+            RemoveFromClassList(dropHighlightUssClassName);
         }
     }
 }

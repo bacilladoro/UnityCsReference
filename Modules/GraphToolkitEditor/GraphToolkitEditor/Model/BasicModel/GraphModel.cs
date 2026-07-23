@@ -1863,9 +1863,10 @@ namespace Unity.GraphToolkit.Editor
         /// <param name="position">The position of the node to create.</param>
         /// <param name="guid">The guid to assign to the newly created item.</param>
         /// <param name="spawnFlags">The flags specifying how the node is to be spawned.</param>
+        /// <param name="mode">The mode of the created variable node.</param>
         /// <returns>The newly created variable node.</returns>
         public virtual VariableNodeModel CreateVariableNode(VariableDeclarationModelBase declarationModel,
-            Vector2 position, Hash128 guid = default, SpawnFlags spawnFlags = SpawnFlags.Default)
+            Vector2 position, Hash128 guid = default, SpawnFlags spawnFlags = SpawnFlags.Default, VariableNodeMode mode = VariableNodeMode.Get)
         {
             var nodeType = VariableNodeType;
             Debug.Assert(typeof(VariableNodeModel).IsAssignableFrom(nodeType));
@@ -1875,6 +1876,7 @@ namespace Unity.GraphToolkit.Editor
                 var variableNodeModel = n as VariableNodeModel;
                 Debug.Assert(variableNodeModel != null);
                 variableNodeModel.SetDeclarationModel(declarationModel);
+                variableNodeModel.InitializeMode(mode);
             });
 
             return CreateNode(nodeType, declarationModel.Title, position, guid, initializationCallback, spawnFlags) as VariableNodeModel;

@@ -35,6 +35,7 @@ namespace UnityEditor.Scripting
                 psi.RedirectStandardOutput = true;
                 psi.WorkingDirectory = workingDir;
                 psi.UseShellExecute = false;
+                psi.EnvironmentVariables["DOTNET_ROLL_FORWARD"] = "Major"; // Allow AssemblyUpdater.dll to run on a newer major .NET runtime if its target runtime is not installed.
             });
 
             assemblyUpdaterProcess.LogProcessStartInfo();

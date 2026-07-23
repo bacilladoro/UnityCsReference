@@ -337,7 +337,7 @@ namespace Unity.UI.Builder
         protected VisualElement CreateUxmlObjectAttributeRow(UxmlSerializedAttributeDescription attribute, string propertyPath)
         {
             var property = context.rootSerializedObject.FindProperty(propertyPath);
-            var labelText = StyleSheetUtility.ConvertDashToHuman(attribute.name);
+            var labelText = StyleSheetUtility.ConvertDashToHuman(attribute.name.ToKebabCase());
 
             if (attribute.isList)
             {

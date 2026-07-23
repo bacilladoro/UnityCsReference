@@ -83,6 +83,9 @@ namespace Unity.U2D.Physics
         UnityEngine.Object GetOwner();
 
         /// <undoc/>
+        UnityEngine.Object owner { get; }
+
+        /// <undoc/>
         bool isOwned { get; }
 
         /// <undoc/>
@@ -304,6 +307,12 @@ namespace Unity.U2D.Physics
         /// </summary>
         /// <returns>The owner object associated with this joint or NULL if no owner has been specified.</returns>
         public readonly UnityEngine.Object GetOwner() => PhysicsJoint_GetOwner(this);
+
+        /// <summary>
+        /// The owner object associated with this joint, or NULL if no owner has been specified.
+        /// This is a convenience property that returns the same value as <see cref="GetOwner"/>.
+        /// </summary>
+        public readonly UnityEngine.Object owner => GetOwner();
 
         /// <summary>
         /// Get if the joint is owned.

@@ -70,6 +70,8 @@ namespace Unity.UIToolkit.Editor
                     return StylePropertyRecordingChannel.Length1;
                 case StylePropertyId.Color:
                     return StylePropertyRecordingChannel.Color4;
+                case StylePropertyId.ColumnGap:
+                    return StylePropertyRecordingChannel.Length1;
                 case StylePropertyId.Cursor:
                     return StylePropertyRecordingChannel.Cursor3;
                 case StylePropertyId.Filter:
@@ -128,6 +130,8 @@ namespace Unity.UIToolkit.Editor
                     return StylePropertyRecordingChannel.Length1;
                 case StylePropertyId.Rotate:
                     return StylePropertyRecordingChannel.Rotate;
+                case StylePropertyId.RowGap:
+                    return StylePropertyRecordingChannel.Length1;
                 case StylePropertyId.Scale:
                     return StylePropertyRecordingChannel.Scale3;
                 case StylePropertyId.TextOverflow:

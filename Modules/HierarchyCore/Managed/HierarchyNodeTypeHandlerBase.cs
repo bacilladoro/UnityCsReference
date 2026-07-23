@@ -104,11 +104,6 @@ namespace Unity.Hierarchy
             m_CommandList = cmdList;
         }
 
-        ~HierarchyNodeTypeHandlerBase()
-        {
-            Dispose(false);
-        }
-
         /// <summary>
         /// Initializes this hierarchy node type handler.
         /// </summary>

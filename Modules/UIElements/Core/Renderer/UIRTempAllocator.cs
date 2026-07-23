@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEngine.UIElements.UIR
 {
@@ -33,6 +34,7 @@ namespace UnityEngine.UIElements.UIR
 
         static class StaticSafetyIds<T> where T : struct
         {
+            [NoAutoStaticsCleanup] // safety ID lazily initialized; value type counter
             public static int id;
         }
 

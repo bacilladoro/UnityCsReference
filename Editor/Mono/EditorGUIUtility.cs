@@ -1243,6 +1243,7 @@ namespace UnityEditor
             }
         }
 
+        [VisibleToOtherModules("UnityEditor.ProjectAuditorModule")]
         internal static Texture2D GetHelpIcon(MessageType type)
         {
             switch (type)

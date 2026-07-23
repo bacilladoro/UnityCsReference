@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
 using UnityObject = UnityEngine.Object;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.EditorTools
 {
@@ -22,7 +23,7 @@ namespace UnityEditor.EditorTools
         void SetToolOwner(Type ownerType);
     }
 
-    public abstract class EditorTool : ScriptableObject, IEditor, IHasToolOwner
+    public abstract partial class EditorTool : ScriptableObject, IEditor, IHasToolOwner
     {
         bool m_Active;
 
@@ -85,6 +86,7 @@ namespace UnityEditor.EditorTools
 
         public bool isHidden => m_Hidden;
 
+        [AutoStaticsCleanupOnCodeReload]
         internal static event Action<EditorTool> stateChanged;
 
         internal void Activate()

@@ -27,6 +27,10 @@ namespace UnityEditor.Build.Content
 
         public static extern string GetImportResultIDForMetaDataImport(GUID asset);
 
+        // Loads the FileWriteMetaData stored under a content-file metadata UDS hash (as returned by
+        // BuildArtifactMetadata.TypeSpecificMetadata) and returns it as JSON, or "" if none exists.
+        public static extern string FileWriteMetaDataToJson(Hash128 contentFileMetadataHash);
+
         public static extern bool MetaDataImportArtifactExists(GUID asset);
 
         public static extern bool BuildInstructionImportArtifactExists(GUID asset);

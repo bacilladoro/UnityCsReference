@@ -8,6 +8,7 @@ using System.Linq;
 using JetBrains.Annotations;
 using Unity.GraphToolkit.CSO;
 using UnityEngine;
+using UnityEngine.Pool;
 
 namespace Unity.GraphToolkit.Editor
 {
@@ -216,13 +217,13 @@ namespace Unity.GraphToolkit.Editor
             using (var graphUpdater = graphModelState.UpdateScope)
             using (var changeScope = graphModel.ChangeDescriptionScope)
             {
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
-                foreach (var model in command.Models.Where(m => m is VariableNodeModel || m is ConstantNodeModel))
-#pragma warning restore UA2001
+                foreach (var model in command.Models)
                 {
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
-                    var wireModels = graphModel.GetWiresForPort(model.OutputPort).ToList();
-#pragma warning restore UA2001
+                    if (model is not (VariableNodeModel { Mode: VariableNodeMode.Get } or ConstantNodeModel))
+                        continue;
+
+                    using var dispose = ListPool<WireModel>.Get(out var wireModels);
+                    wireModels.AddRange(graphModel.GetWiresForPort(model.OutputPort));
 
                     for (var i = 1; i < wireModels.Count; i++)
                     {
@@ -312,6 +313,68 @@ namespace Unity.GraphToolkit.Editor
                 {
                     model.SetDeclarationModel(command.Variable);
                 }
+                graphUpdater.MarkUpdated(changeScope.ChangeDescription);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Command to toggle whether variables are SetVariableNode or not.
+    /// </summary>
+    [UnityRestricted]
+    internal class ToggleSetVariableNodeCommand : UndoableCommand
+    {
+        /// <summary>
+        /// The variables to update.
+        /// </summary>
+        public IReadOnlyList<VariableNodeModel> VariableNodeModels;
+        /// <summary>
+        /// The mode to set on the variable nodes.
+        /// </summary>
+        public VariableNodeMode Mode;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ToggleSetVariableNodeCommand"/> class.
+        /// </summary>
+        public ToggleSetVariableNodeCommand()
+        {
+            UndoString = "Toggle Set Variable Node";
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ToggleSetVariableNodeCommand"/> class.
+        /// </summary>
+        /// <param name="mode">The mode to set on the variable nodes.</param>
+        /// <param name="variableNodeModels">The variables to update.</param>
+        public ToggleSetVariableNodeCommand(VariableNodeMode mode, IReadOnlyList<VariableNodeModel> variableNodeModels) : this()
+        {
+            VariableNodeModels = variableNodeModels;
+            Mode = mode;
+        }
+
+        /// <summary>
+        /// Default command handler.
+        /// </summary>
+        /// <param name="undoState">The undo state component.</param>
+        /// <param name="graphModelState">The graph model state component.</param>
+        /// <param name="command">The command.</param>
+        [UsedImplicitly]
+        public static void DefaultCommandHandler(UndoStateComponent undoState, GraphModelStateComponent graphModelState, ToggleSetVariableNodeCommand command)
+        {
+            if ((command.VariableNodeModels?.Count ?? 0) == 0)
+                return;
+
+            using (var undoStateUpdater = undoState.UpdateScope)
+            {
+                undoStateUpdater.SaveState(graphModelState);
+            }
+
+            using (var graphUpdater = graphModelState.UpdateScope)
+            using (var changeScope = graphModelState.GraphModel.ChangeDescriptionScope)
+            {
+                foreach (var variable in command.VariableNodeModels)
+                    variable.Mode = command.Mode;
+
                 graphUpdater.MarkUpdated(changeScope.ChangeDescription);
             }
         }

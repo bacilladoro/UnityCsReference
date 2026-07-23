@@ -11,12 +11,14 @@ using UnityEngine.Experimental;
 
 namespace UnityEngine.XR
 {
+    ///<summary>Information about an Input subsystem.</summary>
     [NativeHeader("Modules/XR/XRPrefix.h")]
     [NativeHeader("Modules/XR/Subsystems/Input/XRInputSubsystemDescriptor.h")]
     [UsedByNativeCode]
     [NativeConditional("ENABLE_XR")]
     public class XRInputSubsystemDescriptor : IntegratedSubsystemDescriptor<XRInputSubsystem>
     {
+        ///<summary>When true, will suppress legacy support for Daydream, Oculus, OpenVR, and Windows MR built directly into the Unity runtime from generating input. This is useful when adding an XRInputSubsystem that supports these devices.</summary>
         [NativeConditional("ENABLE_XR")]
         public extern bool disablesLegacyInput { get; }
 

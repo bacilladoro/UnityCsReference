@@ -12,7 +12,7 @@ using UnityEngine.Bindings;
 namespace UnityEditor
 {
     [VisibleToOtherModules("UnityEditor.GraphToolkitModule")]
-    internal partial class ColorPicker : EditorWindow
+    internal class ColorPicker : EditorWindow
     {
         private const string k_HeightPrefKey = "CPickerHeight";
         private const string k_ShowDefaultsPrefKey = "CPDefaultsShow";
@@ -144,7 +144,7 @@ namespace UnityEditor
                 return s_Instance;
             }
         }
-        [AutoStaticsCleanupOnCodeReload]
+        [NoAutoStaticsCleanup] // CoreModule not reloaded; no user code refs; native-backed EditorWindow instance survives; getter re-acquires if null
         static ColorPicker s_Instance;
 
         [NoAutoStaticsCleanup] // numeric keyboard control value, safe to persist

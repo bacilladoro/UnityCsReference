@@ -267,7 +267,6 @@ namespace UnityEditor
             public static readonly GUIContent editorAssembliesCompatibilityLevel_NET_Framework = EditorGUIUtility.TrTextContent(".NET Framework");
             public static readonly GUIContent editorAssembliesCompatibilityLevel_NET_Standard = EditorGUIUtility.TrTextContent(".NET Standard");
             public static readonly GUIContent scriptCompilationTitle = EditorGUIUtility.TrTextContent("Script Compilation");
-            public static readonly GUIContent allowUnsafeCode = EditorGUIUtility.TrTextContent("Allow 'unsafe' Code", "Allow compilation of unsafe code for predefined assemblies (Assembly-CSharp.dll, etc.)");
             public static readonly GUIContent useDeterministicCompilation = EditorGUIUtility.TrTextContent("Use Deterministic Compilation", "Compile with -deterministic compilation flag");
             public static readonly GUIContent activeInputHandling = EditorGUIUtility.TrTextContent("Active Input Handling*");
             public static readonly GUIContent[] activeInputHandlingOptions = new GUIContent[] { EditorGUIUtility.TrTextContent("Input Manager (Old)"), EditorGUIUtility.TrTextContent("Input System Package (New)"), SettingsContentNonSearchable.activeInputHandlingBoth };
@@ -305,7 +304,6 @@ namespace UnityEditor
         {
             public static readonly string scriptingDefineSymbolsModified             = L10n.Tr("Scripting define symbols setting modified");
             public static readonly string suppressCommonWarningsModified             = L10n.Tr("Suppress common warnings setting modified");
-            public static readonly string allowUnsafeCodeModified                    = L10n.Tr("Allow 'unsafe' code setting modified");
             public static readonly string apiCompatibilityLevelModified              = L10n.Tr("API Compatibility level modified");
             public static readonly string editorAssembliesCompatibilityLevelModified = L10n.Tr("Editor Assemblies Compatibility level modified");
             public static readonly string useDeterministicCompilationModified        = L10n.Tr("Use deterministic compilation modified");
@@ -413,7 +411,6 @@ namespace UnityEditor
         SerializedProperty m_EnableCrashReportAPI;
 
         SerializedProperty m_SuppressCommonWarnings;
-        SerializedProperty m_AllowUnsafeCode;
         SerializedProperty m_GCIncremental;
 
         SerializedProperty m_OverrideDefaultApplicationIdentifier;
@@ -531,7 +528,6 @@ namespace UnityEditor
         int serializedActiveInputHandler = 0;
         string[] serializedAdditionalCompilerArguments;
         bool serializedSuppressCommonWarnings = true;
-        bool serializedAllowUnsafeCode = false;
         string[] m_SerializedScriptingDefinesArray;
         bool serializedUseDeterministicCompilation;
 
@@ -1000,7 +996,6 @@ namespace UnityEditor
             m_EnableCrashReportAPI          = FindPropertyAssert("enableCrashReportAPI");
 
             m_SuppressCommonWarnings        = FindPropertyAssert("suppressCommonWarnings");
-            m_AllowUnsafeCode               = FindPropertyAssert("allowUnsafeCode");
             m_GCIncremental                 = FindPropertyAssert("gcIncremental");
             m_UseDeterministicCompilation   = FindPropertyAssert("useDeterministicCompilation");
             m_ScriptingBackend              = FindPropertyAssert("scriptingBackend");
@@ -1119,7 +1114,6 @@ namespace UnityEditor
             NamedBuildTarget namedBuildTarget = validPlatforms[selectedPlatform].namedBuildTarget;
             serializedActiveInputHandler = m_ActiveInputHandler.intValue;
             serializedSuppressCommonWarnings = m_SuppressCommonWarnings.boolValue;
-            serializedAllowUnsafeCode = m_AllowUnsafeCode.boolValue;
             serializedAdditionalCompilerArguments = GetAdditionalCompilerArgumentsForGroup(namedBuildTarget);
             var serializedScriptingDefines = GetScriptingDefineSymbolsForGroup(namedBuildTarget);
             m_SerializedScriptingDefinesArray = ScriptingDefinesHelper.ConvertScriptingDefineStringToArray(serializedScriptingDefines);
@@ -2178,7 +2172,7 @@ namespace UnityEditor
             if (availableDevices == null || availableDevices.Length < 2)
                 return;
 
-           
+
 
             string displayTitle = String.Empty;
             if (platformTitleContent != null)
@@ -2240,7 +2234,7 @@ namespace UnityEditor
 
                     if (currentDevice != selectedDevice)
                     {
-                        // Initialize the restart action as "Cancel" (has the value of "1" in the dialog) 
+                        // Initialize the restart action as "Cancel" (has the value of "1" in the dialog)
                         var doRestart = 1;
 
                         // if the first API listed after unchecking the automatic API checkbox is different from the stored value of the flag,
@@ -2260,7 +2254,7 @@ namespace UnityEditor
                                 "Changing editor graphics API",
                                 "You've changed the active graphics API. This requires a restart of the Editor.  Do you want to save the Scene when restarting?",
                                 "Save and Restart", "Cancel Changing API", "Discard Changes and Restart");
-  
+
                             if (doSaveScene != 1) // The selected option is "Save and Restart" (0) or "Discard Changes and Restart" (2)
                             {
                                 // both cases require a restart
@@ -2294,7 +2288,7 @@ namespace UnityEditor
                             // if restart = 0 (restart now), or 2 (restart later), we update the setting value.
                             Undo.RecordObject(target, SettingsContent.undoChangedGraphicsAPIString);
                             m_CurrentTarget.SetUseDefaultGraphicsAPIs_Internal(targetPlatform, toggledAutomatic);
-                            
+
                             // we need to update the APIs list when we toggle automatic graphics API
                             var apiList = (List<GraphicsDeviceType>)deviceList.list;
                             var apis = apiList.ToArray();
@@ -2304,7 +2298,7 @@ namespace UnityEditor
 
                             if (doRestart == 0)  // restart now
                             {
-                                
+
                                 EditorApplication.RequestCloseAndRelaunchWithCurrentArguments();
                                 GUIUtility.ExitGUI();
                             }
@@ -2325,7 +2319,7 @@ namespace UnityEditor
                     OnTargetObjectChangedDirectly();
                 }
             }
-           
+
             if (isAutoGraphicsAPITouched && selectedDevice != null && firstAPIDifferent && WillEditorUseFirstGraphicsAPI(targetPlatform) && IsActivePlayerSettingsEditor())
             {
                 string text = $"Auto Graphics API was changed, but requires an Editor restart to take Effect. The Editor will restart using {GraphicsDeviceTypeToString(targetPlatform, (GraphicsDeviceType)selectedDevice)}";
@@ -4006,26 +4000,36 @@ namespace UnityEditor
                         m_Il2CppStacktraceInformation.SetMapValue(platform.namedBuildTarget.TargetName, (int)newConfiguration);
                 }
 
-                bool gcIncrementalEnabled = BuildPipeline.IsFeatureSupported("ENABLE_SCRIPTING_GC_WBARRIERS", platform.defaultTarget);
-
-                using (new EditorGUI.DisabledScope(!gcIncrementalEnabled))
+                if (currentBackend == ScriptingImplementation.CoreCLR)
                 {
-                    var oldValue = m_GCIncremental.boolValue;
-                    EditorGUILayout.PropertyField(m_GCIncremental, SettingsContent.gcIncremental);
-                    if (m_GCIncremental.boolValue != oldValue)
+                    // Incremental GC is a Mono/Boehm GC feature and does not apply to the CoreCLR runtime,
+                    // so show the toggle unchecked and disabled without modifying the stored value.
+                    using (new EditorGUI.DisabledScope(true))
+                        EditorGUILayout.Toggle(SettingsContent.gcIncremental, false);
+                }
+                else
+                {
+                    bool gcIncrementalEnabled = BuildPipeline.IsFeatureSupported("ENABLE_SCRIPTING_GC_WBARRIERS", platform.defaultTarget);
+
+                    using (new EditorGUI.DisabledScope(!gcIncrementalEnabled))
                     {
-                        if (!IsActivePlayerSettingsEditor())
+                        var oldValue = m_GCIncremental.boolValue;
+                        EditorGUILayout.PropertyField(m_GCIncremental, SettingsContent.gcIncremental);
+                        if (m_GCIncremental.boolValue != oldValue)
                         {
-                            return;
+                            if (!IsActivePlayerSettingsEditor())
+                            {
+                                return;
+                            }
+                            // Give the user a chance to change mind and revert changes.
+                            if (ShouldRestartEditorToApplySetting())
+                            {
+                                m_GCIncremental.serializedObject.ApplyModifiedProperties();
+                                EditorApplication.delayCall += EditorApplication.RestartEditorAndRecompileScripts;
+                            }
+                            else
+                                m_GCIncremental.boolValue = oldValue;
                         }
-                        // Give the user a chance to change mind and revert changes.
-                        if (ShouldRestartEditorToApplySetting())
-                        {
-                            m_GCIncremental.serializedObject.ApplyModifiedProperties();
-                            EditorApplication.delayCall += EditorApplication.RestartEditorAndRecompileScripts;
-                        }
-                        else
-                            m_GCIncremental.boolValue = oldValue;
                     }
                 }
             }
@@ -4328,14 +4332,6 @@ namespace UnityEditor
             {
                 serializedSuppressCommonWarnings = m_SuppressCommonWarnings.boolValue;
                 SetReason(RecompileReason.suppressCommonWarningsModified);
-            }
-
-            // Allow unsafe code
-            EditorGUILayout.PropertyField(m_AllowUnsafeCode, SettingsContent.allowUnsafeCode);
-            if (serializedAllowUnsafeCode != m_AllowUnsafeCode.boolValue)
-            {
-                serializedAllowUnsafeCode = m_AllowUnsafeCode.boolValue;
-                SetReason(RecompileReason.allowUnsafeCodeModified);
             }
 
             // Use deterministic compliation

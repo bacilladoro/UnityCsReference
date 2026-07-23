@@ -46,6 +46,7 @@ namespace UnityEngine.UIElements
         private StylePropertyData<StyleFloat, float> m_BorderTopWidth = new(StylePropertyId.BorderTopWidth);
         private StylePropertyData<StyleLength, Length> m_Bottom = new(StylePropertyId.Bottom);
         private StylePropertyData<StyleColor, Color> m_Color = new(StylePropertyId.Color);
+        private StylePropertyData<StyleLength, Length> m_ColumnGap = new(StylePropertyId.ColumnGap);
         private StylePropertyData<StyleCursor, Cursor> m_Cursor = new(StylePropertyId.Cursor);
         private StylePropertyData<StyleEnum<DisplayStyle>, DisplayStyle> m_Display = new(StylePropertyId.Display);
         private StylePropertyData<StyleList<FilterFunction>, List<FilterFunction>> m_Filter = new(StylePropertyId.Filter);
@@ -76,6 +77,7 @@ namespace UnityEngine.UIElements
         private StylePropertyData<StyleEnum<Position>, Position> m_Position = new(StylePropertyId.Position);
         private StylePropertyData<StyleLength, Length> m_Right = new(StylePropertyId.Right);
         private StylePropertyData<StyleRotate, Rotate> m_Rotate = new(StylePropertyId.Rotate);
+        private StylePropertyData<StyleLength, Length> m_RowGap = new(StylePropertyId.RowGap);
         private StylePropertyData<StyleScale, Scale> m_Scale = new(StylePropertyId.Scale);
         private StylePropertyData<StyleEnum<TextOverflow>, TextOverflow> m_TextOverflow = new(StylePropertyId.TextOverflow);
         private StylePropertyData<StyleTextShadow, TextShadow> m_TextShadow = new(StylePropertyId.TextShadow);
@@ -117,6 +119,7 @@ namespace UnityEngine.UIElements
         private ShortHandStylePropertyData m_BorderRadius;
         private ShortHandStylePropertyData m_BorderWidth;
         private ShortHandStylePropertyData m_Flex;
+        private ShortHandStylePropertyData m_Gap;
         private ShortHandStylePropertyData m_Margin;
         private ShortHandStylePropertyData m_Padding;
         private ShortHandStylePropertyData m_Transition;
@@ -199,6 +202,9 @@ namespace UnityEngine.UIElements
 
         [CreateProperty]
         public StylePropertyData<StyleColor, Color> color => m_Color;
+
+        [CreateProperty]
+        public StylePropertyData<StyleLength, Length> columnGap => m_ColumnGap;
 
         [CreateProperty]
         public StylePropertyData<StyleCursor, Cursor> cursor => m_Cursor;
@@ -289,6 +295,9 @@ namespace UnityEngine.UIElements
 
         [CreateProperty]
         public StylePropertyData<StyleRotate, Rotate> rotate => m_Rotate;
+
+        [CreateProperty]
+        public StylePropertyData<StyleLength, Length> rowGap => m_RowGap;
 
         [CreateProperty]
         public StylePropertyData<StyleScale, Scale> scale => m_Scale;
@@ -469,6 +478,19 @@ namespace UnityEngine.UIElements
                 if (m_Flex == value)
                     return;
                 m_Flex = value;
+                Notify();
+            }
+        }
+
+        [CreateProperty]
+        public ShortHandStylePropertyData gap
+        {
+            get => m_Gap;
+            private set
+            {
+                if (m_Gap == value)
+                    return;
+                m_Gap = value;
                 Notify();
             }
         }
@@ -724,6 +746,13 @@ namespace UnityEngine.UIElements
                 Notify(nameof(color));
 
             notify = false;
+            notify |= SetInlineValue(ref m_ColumnGap, element.style.columnGap);
+            notify |= SetComputedValue(ref m_ColumnGap, element.computedStyle.columnGap);
+            notify |= ApplyContext(ref m_ColumnGap, in context);
+            if (notify)
+                Notify(nameof(columnGap));
+
+            notify = false;
             notify |= SetInlineValue(ref m_Cursor, element.style.cursor);
             notify |= SetComputedValue(ref m_Cursor, element.computedStyle.cursor);
             notify |= ApplyContext(ref m_Cursor, in context);
@@ -932,6 +961,13 @@ namespace UnityEngine.UIElements
             notify |= ApplyContext(ref m_Rotate, in context);
             if (notify)
                 Notify(nameof(rotate));
+
+            notify = false;
+            notify |= SetInlineValue(ref m_RowGap, element.style.rowGap);
+            notify |= SetComputedValue(ref m_RowGap, element.computedStyle.rowGap);
+            notify |= ApplyContext(ref m_RowGap, in context);
+            if (notify)
+                Notify(nameof(rowGap));
 
             notify = false;
             notify |= SetInlineValue(ref m_Scale, element.style.scale);
@@ -1184,6 +1220,7 @@ namespace UnityEngine.UIElements
             borderRadius = ComputeStyleProperty(StylePropertyId.BorderRadius, nameof(borderRadius), in context);
             borderWidth = ComputeStyleProperty(StylePropertyId.BorderWidth, nameof(borderWidth), in context);
             flex = ComputeStyleProperty(StylePropertyId.Flex, nameof(flex), in context);
+            gap = ComputeStyleProperty(StylePropertyId.Gap, nameof(gap), in context);
             margin = ComputeStyleProperty(StylePropertyId.Margin, nameof(margin), in context);
             padding = ComputeStyleProperty(StylePropertyId.Padding, nameof(padding), in context);
             transition = ComputeStyleProperty(StylePropertyId.Transition, nameof(transition), in context);

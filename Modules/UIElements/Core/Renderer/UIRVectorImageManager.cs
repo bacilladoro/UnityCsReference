@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using Unity.Profiling;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEngine.UIElements.UIR
 {
@@ -55,9 +56,10 @@ namespace UnityEngine.UIElements.UIR
 
     class VectorImageManager : IDisposable
     {
+        [NoAutoStaticsCleanup] // tracks live manager instances; infrastructure list
         public static List<VectorImageManager> instances = new List<VectorImageManager>(16);
-        static ProfilerMarker s_MarkerRegister = new ProfilerMarker(ProfilerCategory.UIToolkit, "UIR.VectorImageManager.Register");
-        static ProfilerMarker s_MarkerUnregister = new ProfilerMarker(ProfilerCategory.UIToolkit, "UIR.VectorImageManager.Unregister");
+        static readonly ProfilerMarker s_MarkerRegister = new ProfilerMarker(ProfilerCategory.UIToolkit, "UIR.VectorImageManager.Register");
+        static readonly ProfilerMarker s_MarkerUnregister = new ProfilerMarker(ProfilerCategory.UIToolkit, "UIR.VectorImageManager.Unregister");
 
         readonly AtlasBase m_Atlas;
 

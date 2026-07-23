@@ -4,6 +4,7 @@
 
 using UnityEngine;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -11,11 +12,13 @@ namespace UnityEditor
      * Fetching and caches preview images of asset store assets from the
      * asset store server
      */
-    internal sealed class AssetStorePreviewManager
+    internal sealed partial class AssetStorePreviewManager
     {
         private AssetStorePreviewManager() {} // disallow instantiation
 
+        [AutoStaticsCleanupOnCodeReload]
         static AssetStorePreviewManager s_SharedAssetStorePreviewManager = null;
+        [AutoStaticsCleanupOnCodeReload]
         static RenderTexture s_RenderTexture = null;
 
         static internal AssetStorePreviewManager Instance
@@ -69,6 +72,7 @@ namespace UnityEditor
         int m_ConvertedThisTick = 0;
         CachedAssetStoreImage m_DummyItem = new CachedAssetStoreImage();
 
+        [AutoStaticsCleanupOnCodeReload]
         static bool s_NeedsRepaint = false;
 
         static Dictionary<string, CachedAssetStoreImage> CachedAssetStoreImages

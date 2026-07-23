@@ -138,18 +138,6 @@ namespace Unity.U2D.Physics
         public bool autoBodyUpdateCallbacks { readonly get => m_AutoBodyUpdateCallbacks; set => m_AutoBodyUpdateCallbacks = value; }
 
         /// <summary>
-        /// Controls if shape contact callback targets are automatically called.
-        /// See <see cref="PhysicsWorld.SendContactCallbacks"/>.
-        /// </summary>
-        public bool autoContactCallbacks { readonly get => m_AutoContactCallbacks; set => m_AutoContactCallbacks = value; }
-
-        /// <summary>
-        /// Controls if shape trigger callback targets are automatically called.
-        /// See <see cref="PhysicsWorld.SendTriggerCallbacks"/>.
-        /// </summary>
-        public bool autoTriggerCallbacks { readonly get => m_AutoTriggerCallbacks; set => m_AutoTriggerCallbacks = value; }
-
-        /// <summary>
         /// Controls if joint threshold callback targets are automatically called.
         /// See <see cref="PhysicsWorld.SendJointThresholdCallbacks"/>.
         /// </summary>
@@ -303,8 +291,6 @@ namespace Unity.U2D.Physics
         [SerializeField] bool m_ContactFilterCallbacks;
         [SerializeField] bool m_PreSolveCallbacks;
         [SerializeField] bool m_AutoBodyUpdateCallbacks;
-        [SerializeField] bool m_AutoContactCallbacks;
-        [SerializeField] bool m_AutoTriggerCallbacks;
         [SerializeField] bool m_AutoJointThresholdCallbacks;
         [SerializeField] [Min(0.0f)] float m_BounceThreshold;
         [SerializeField] [Min(0.0f)] float m_ContactHitEventThreshold;

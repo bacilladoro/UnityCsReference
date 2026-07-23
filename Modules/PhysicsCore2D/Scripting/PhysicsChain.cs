@@ -265,6 +265,12 @@ namespace Unity.U2D.Physics
         public readonly UnityEngine.Object GetOwner() => PhysicsChain_GetOwner(this);
 
         /// <summary>
+        /// The owner object associated with this chain, or NULL if no owner has been specified.
+        /// This is a convenience property that returns the same value as <see cref="GetOwner"/>.
+        /// </summary>
+        public readonly UnityEngine.Object owner => GetOwner();
+
+        /// <summary>
         /// Get if the chain is owned.
         /// See <see cref="PhysicsChain.SetOwner(UnityEngine.Object)"/>.
         /// </summary>

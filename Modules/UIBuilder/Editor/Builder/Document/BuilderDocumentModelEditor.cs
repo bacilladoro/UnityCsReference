@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using JetBrains.Annotations;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine.UIElements;
@@ -14,7 +15,7 @@ namespace Unity.UI.Builder
     /// <summary>
     /// Provides a set of methods to manipulate the document model.
     /// </summary>
-    class BuilderDocumentModelEditor
+    partial class BuilderDocumentModelEditor
     {
         static readonly string k_BindingProperty = nameof(DataBinding.property);
         static readonly string k_BindingMode = nameof(DataBinding.bindingMode);
@@ -24,6 +25,7 @@ namespace Unity.UI.Builder
         static readonly string k_BindingUiToSourceConvertersString = nameof(DataBinding.uiToSourceConvertersString);
         static readonly string k_BindingSourceToUIConvertersString = nameof(DataBinding.sourceToUiConvertersString);
 
+        [AutoStaticsCleanupOnCodeReload]
         static readonly Dictionary<string, object> s_DataBindingValues = new()
         {
             { k_BindingDataSourcePathString, null },
@@ -34,6 +36,7 @@ namespace Unity.UI.Builder
             { k_BindingSourceToUIConvertersString, null }
         };
 
+        [NoAutoStaticsCleanup] // Scratch buffer always emptied via Clear() in a finally before the call returns; holds no references at rest, safe to persist.
         static readonly Dictionary<string, object> s_TempAllBindingValues = new();
 
         BuilderUxmlAttributesEditingContext m_UxmlEditingContext = new();

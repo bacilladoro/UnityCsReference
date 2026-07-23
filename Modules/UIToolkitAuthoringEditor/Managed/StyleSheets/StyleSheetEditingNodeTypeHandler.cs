@@ -31,19 +31,19 @@ internal class StyleSheetEditingNodeTypeHandler : StyleSheetNodeTypeHandler, IHi
         m_IsEnteringStagingMode = true;
     }
 
-    void FilterSelection(HierarchyView view, in SelectionContext selection, List<Node> styleNodes)
+    void FilterSelection(HierarchyView view, in SelectionContext selection, List<Node> styleNodes, bool excludeReadOnly = false)
     {
         for (var i = 0; i < selection.SelectionCount; ++i)
         {
             if (!Mappings.TryGetValue(selection.Selection[i], out var styleNode))
                 continue;
 
-            if (styleNode.Rule != null)
+            if (styleNode.Rule != null && (!excludeReadOnly || !styleNode.IsReadOnly))
                 styleNodes.Add(styleNode);
         }
     }
 
-    bool CanDoHierarchyOperation(HierarchyView view, in SelectionContext selection)
+    bool CanDoHierarchyOperation(HierarchyView view, in SelectionContext selection, bool requireEditable = false)
     {
         if (selection.Type != SelectionContext.SelectionType.All)
             return false;
@@ -53,7 +53,7 @@ internal class StyleSheetEditingNodeTypeHandler : StyleSheetNodeTypeHandler, IHi
             if (!Mappings.TryGetValue(selection.Selection[i], out var styleNode))
                 continue;
 
-            if (styleNode.Rule != null)
+            if (styleNode.Rule != null && (!requireEditable || !styleNode.IsReadOnly))
                 return true;
         }
 
@@ -131,6 +131,9 @@ internal class StyleSheetEditingNodeTypeHandler : StyleSheetNodeTypeHandler, IHi
             if (!Mappings.TryGetValue(node, out var styleNode))
                 return false;
 
+            if (styleNode.IsReadOnly)
+                return false;
+
             if (styleNode.Rule != null)
                 allStyleSheets = false; // Has a rule, so it's a selector
             else
@@ -149,6 +152,9 @@ internal class StyleSheetEditingNodeTypeHandler : StyleSheetNodeTypeHandler, IHi
 
         var firstNode = data.Nodes[0];
         if (!Mappings.TryGetValue(firstNode, out var firstStyleNode))
+            return;
+
+        if (firstStyleNode.IsGroup)
             return;
 
         if (firstStyleNode.Rule == null)
@@ -202,6 +208,19 @@ internal class StyleSheetEditingNodeTypeHandler : StyleSheetNodeTypeHandler, IHi
         return DragVisualMode.None;
     }
 
+    VisualTreeAsset EditedAsset =>
+        Window?.EditedAsset
+        ?? (UnityEditor.SceneManagement.StageUtility.GetCurrentStage() as VisualElementEditingStage)?.EditedVisualTreeAsset;
+
+    int GroupOffset => Window != null && Window.ParentStyleSheetCount > 0 ? 1 : 0;
+
+    bool TryResolveRootLevelDrop(in HierarchyNode parent, out bool intoInheritedGroup)
+    {
+        // Accept drops only at the root level, or on the group node itself (a shortcut to index 0).
+        intoInheritedGroup = parent != Hierarchy.Root && IsGroup(parent);
+        return parent == Hierarchy.Root || intoInheritedGroup;
+    }
+
     DragVisualMode HandleStyleSheetDrop(in HierarchyViewDragAndDropHandlingData data, bool performDrop)
     {
         var draggedStyleSheets = data.GetGenericData(DraggedStyleSheetsKey) as List<StyleSheet>;
@@ -210,15 +229,10 @@ internal class StyleSheetEditingNodeTypeHandler : StyleSheetNodeTypeHandler, IHi
             return DragVisualMode.None;
 
         // Stylesheets can only be dropped on Root, not on other stylesheets or selectors
-        if (data.Parent != Hierarchy.Root)
+        if (!TryResolveRootLevelDrop(data.Parent, out var intoInheritedGroup))
             return DragVisualMode.Rejected;
 
-        // Get the current VTA
-        var stage = UnityEditor.SceneManagement.StageUtility.GetCurrentStage();
-        if (stage is not VisualElementEditingStage uiStage)
-            return DragVisualMode.Rejected;
-
-        var vta = uiStage.EditedVisualTreeAsset;
+        var vta = EditedAsset;
         if (vta == null)
             return DragVisualMode.Rejected;
 
@@ -241,9 +255,10 @@ internal class StyleSheetEditingNodeTypeHandler : StyleSheetNodeTypeHandler, IHi
             sheetsToInsert.Add(styleSheet);
         }
 
+        var dropIndex = intoInheritedGroup ? 0 : Math.Clamp(data.ChildIndex - GroupOffset, 0, allStyleSheets.Count);
         // Calculate adjusted insertion index
-        var adjustedInsertIndex = data.ChildIndex;
-        for (var i = 0; i < data.ChildIndex && i < allStyleSheets.Count; i++)
+        var adjustedInsertIndex = dropIndex;
+        for (var i = 0; i < dropIndex && i < allStyleSheets.Count; i++)
         {
             if (draggedSheets.Contains(allStyleSheets[i]))
                 adjustedInsertIndex--;
@@ -275,6 +290,9 @@ internal class StyleSheetEditingNodeTypeHandler : StyleSheetNodeTypeHandler, IHi
 
         // Selectors can only be dropped on stylesheet root nodes
         if (parentStyleNode.Rule != null)
+            return DragVisualMode.Rejected;
+
+        if (parentStyleNode.IsReadOnly)
             return DragVisualMode.Rejected;
 
         if (!performDrop)
@@ -317,37 +335,22 @@ internal class StyleSheetEditingNodeTypeHandler : StyleSheetNodeTypeHandler, IHi
     DragVisualMode HandleExternalAssetDrop(in HierarchyViewDragAndDropHandlingData data, bool performDrop)
     {
         // Stylesheets can only be dropped on Root, not on other stylesheets or selectors
-        if (data.Parent != Hierarchy.Root)
+        if (!TryResolveRootLevelDrop(data.Parent, out var intoInheritedGroup))
             return DragVisualMode.Rejected;
 
-        // Filter for USS files only using pooled list
-        using var _ussFiles = ListPool<string>.Get(out var ussFiles);
-
+        // Collect the dropped USS assets, keeping each loaded sheet so it isn't reloaded below.
+        using var _dropped = ListPool<(string path, StyleSheet sheet)>.Get(out var droppedSheets);
         foreach (var path in data.Paths)
         {
-            if (string.IsNullOrEmpty(path))
-                continue;
-
-            var assetType = UnityEditor.AssetDatabase.GetMainAssetTypeAtPath(path);
-            if (typeof(StyleSheet).IsAssignableFrom(assetType))
-            {
-                var styleSheet = UnityEditor.AssetDatabase.LoadAssetAtPath<StyleSheet>(path);
-                if (styleSheet != null && !styleSheet.importedWithErrors)
-                {
-                    ussFiles.Add(path);
-                }
-            }
+            if (StyleSheetAssetUtilities.TryLoadValidStyleSheet(path, out var sheet))
+                droppedSheets.Add((path, sheet));
         }
 
-        if (ussFiles.Count == 0)
+        if (droppedSheets.Count == 0)
             return DragVisualMode.None;
 
-        // Add USS files to the current VTA
-        var stage = UnityEditor.SceneManagement.StageUtility.GetCurrentStage();
-        if (stage is not VisualElementEditingStage uiStage)
-            return DragVisualMode.Rejected;
-
-        var vta = uiStage.EditedVisualTreeAsset;
+        // Add USS files to the document currently being edited.
+        var vta = EditedAsset;
         if (vta == null)
             return DragVisualMode.Rejected;
 
@@ -355,33 +358,16 @@ internal class StyleSheetEditingNodeTypeHandler : StyleSheetNodeTypeHandler, IHi
             return DragVisualMode.Copy;
 
         var existingStyleSheets = vta.visualTreeNoAlloc?.stylesheets;
+        var insertIndex = intoInheritedGroup ? 0 : Math.Max(0, data.ChildIndex - GroupOffset);
 
-        // Calculate insertion index based on drop position
-        var insertIndex = data.ChildIndex;
-
-        // Add each USS file to the VTA at the specified position
-        foreach (var ussPath in ussFiles)
+        foreach (var (ussPath, styleSheet) in droppedSheets)
         {
-            var styleSheet = UnityEditor.AssetDatabase.LoadAssetAtPath<StyleSheet>(ussPath);
-
-            // Skip if this stylesheet is already referenced
+            // Skip sheets the document already references (avoid duplicates); the drop still reports Copy.
             if (existingStyleSheets != null && existingStyleSheets.Contains(styleSheet))
                 continue;
 
             AddStyleSheetCommand.Execute(CommandSources.StyleSheets, vta, ussPath, insertIndex);
-
-            var wasAdded = false;
-            foreach (var stylesheet in vta.stylesheets)
-            {
-                if (stylesheet != styleSheet)
-                    continue;
-
-                wasAdded = true;
-                break;
-            }
-
-            if (wasAdded && insertIndex > 0)
-                insertIndex++;
+            insertIndex++;
         }
 
         return DragVisualMode.Copy;
@@ -457,12 +443,12 @@ internal class StyleSheetEditingNodeTypeHandler : StyleSheetNodeTypeHandler, IHi
         if (isReadonly)
             return false;
 
-        return Mappings.TryGetValue(hierarchyNode, out var styleNode) && styleNode.Rule != null;
+        return Mappings.TryGetValue(hierarchyNode, out var styleNode) && styleNode.Rule != null && !styleNode.IsReadOnly;
     }
 
     bool IHierarchyEditorNodeTypeHandler.OnSetName(HierarchyView view, in HierarchyNode hierarchyNode, string name)
     {
-        if (!Mappings.TryGetValue(hierarchyNode, out var node))
+        if (!Mappings.TryGetValue(hierarchyNode, out var node) || node.IsReadOnly)
         {
             CommandList.SetDirty();
             return false;
@@ -498,13 +484,22 @@ internal class StyleSheetEditingNodeTypeHandler : StyleSheetNodeTypeHandler, IHi
 
     string IHierarchyEditorNodeTypeHandler.GetDisplayName(HierarchyView view, in HierarchyNode hierarchyNode)
     {
-        if (!Mappings.TryGetValue(hierarchyNode, out var styleNode) || !styleNode.StyleSheet)
+        if (!Mappings.TryGetValue(hierarchyNode, out var styleNode))
+            return "<null>";
+
+        if (styleNode.IsGroup)
+            return GroupNodeName;
+
+        if (!styleNode.StyleSheet)
             return "<null>";
 
         if (string.IsNullOrEmpty(styleNode.StyleSheet.name))
             return string.Empty;
 
-        return styleNode.Rule != null ? m_Exporter.ToUssString(styleNode.StyleSheet, styleNode.Rule.complexSelectors, s_ExportOptions) : $"{styleNode.StyleSheet.name}.uss";
+        if (styleNode.Rule != null)
+            return m_Exporter.ToUssString(styleNode.StyleSheet, styleNode.Rule.complexSelectors, s_ExportOptions);
+
+        return $"{styleNode.StyleSheet.name}.uss{OwnerSuffix(styleNode.OwningDocument)}";
     }
 
     bool IHierarchyEditorNodeTypeHandler.CanDuplicate(HierarchyView view)
@@ -513,7 +508,7 @@ internal class StyleSheetEditingNodeTypeHandler : StyleSheetNodeTypeHandler, IHi
             return false;
 
         using var memoryOwner = GetSelection(view, out var selection);
-        return CanDoHierarchyOperation(view, in selection);
+        return CanDoHierarchyOperation(view, in selection, requireEditable: true);
     }
 
     bool IHierarchyEditorNodeTypeHandler.OnDuplicate(HierarchyView view)
@@ -524,7 +519,7 @@ internal class StyleSheetEditingNodeTypeHandler : StyleSheetNodeTypeHandler, IHi
         using var memoryOwner = GetSelection(view, out var selection);
         using var _ = ListPool<Node>.Get(out var nodes);
 
-        FilterSelection(view, in selection, nodes);
+        FilterSelection(view, in selection, nodes, excludeReadOnly: true);
 
         if (nodes.Count == 0)
             return false;
@@ -563,7 +558,7 @@ internal class StyleSheetEditingNodeTypeHandler : StyleSheetNodeTypeHandler, IHi
             return false;
 
         using var memoryOwner = GetSelection(view, out var selection);
-        return CanDoHierarchyOperation(view, in selection);
+        return CanDoHierarchyOperation(view, in selection, requireEditable: true);
     }
 
     bool IHierarchyEditorNodeTypeHandler.OnDelete(HierarchyView view)
@@ -574,7 +569,7 @@ internal class StyleSheetEditingNodeTypeHandler : StyleSheetNodeTypeHandler, IHi
         using var memoryOwner = GetSelection(view, out var selection);
         using var _ = ListPool<Node>.Get(out var nodes);
 
-        FilterSelection(view, in selection, nodes);
+        FilterSelection(view, in selection, nodes, excludeReadOnly: true);
 
         if (nodes.Count == 0)
             return false;
@@ -596,6 +591,9 @@ internal class StyleSheetEditingNodeTypeHandler : StyleSheetNodeTypeHandler, IHi
         if (!Mappings.TryGetValue(node, out var styleNode) || styleNode.Rule == null)
             return true;
 
+        if (styleNode.IsReadOnly)
+            return true;
+
         view.BeginRename(in node);
         return true;
     }
@@ -603,6 +601,9 @@ internal class StyleSheetEditingNodeTypeHandler : StyleSheetNodeTypeHandler, IHi
     void IHierarchyEditorNodeTypeHandler.PopulateContextMenu(HierarchyView view, HierarchyViewItem item, DropdownMenu menu)
     {
         if (item == null)
+            return;
+
+        if (IsGroup(item.Node))
             return;
 
         if (Mappings.TryGetValue(item.Node, out _))

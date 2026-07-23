@@ -4,6 +4,7 @@
 
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEngine.UIElements
 {
@@ -81,6 +82,7 @@ namespace UnityEngine.UIElements
 
         internal const int maxTextures = 2048; // Ids from 0 to 2048 can be perfectly represented with float16.
 
+        [NoAutoStaticsCleanup] // singleton; infrastructure instance survives reload
         public static TextureRegistry instance { get; } = new TextureRegistry();
 
         public Texture GetTexture(TextureId id)

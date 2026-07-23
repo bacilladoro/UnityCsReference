@@ -4,6 +4,7 @@
 
 using System;
 using UnityEngine.Scripting;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -18,6 +19,7 @@ namespace UnityEditor
 
         // Triggered in response to SwitchActiveBuildTarget.
         [Obsolete("UnityEditor.activeBuildTargetChanged has been deprecated.Use UnityEditor.Build.IActiveBuildTargetChanged instead.")]
+        [AutoStaticsCleanupOnCodeReload]
         public static Action activeBuildTargetChanged;
 
 #pragma warning disable 0618

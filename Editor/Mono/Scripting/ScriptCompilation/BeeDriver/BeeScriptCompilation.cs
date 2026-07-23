@@ -191,7 +191,6 @@ namespace UnityEditor.Scripting.ScriptCompilation
                 Defines = a.Defines,
                 PrebuiltReferences = a.References,
                 References = references,
-                AllowUnsafeCode = a.CompilerOptions.AllowUnsafeCode,
                 RuleSet = a.CompilerOptions.RoslynAnalyzerRulesetPath,
                 LanguageVersion = a.CompilerOptions.LanguageVersion,
                 Analyzers = a.CompilerOptions.RoslynAnalyzerDllPaths,
@@ -224,7 +223,7 @@ namespace UnityEditor.Scripting.ScriptCompilation
         /// We return them as an array of arrays, so on the caller side you're still able to map a compilermessage to the noderesult where it originated from,
         /// which we need when invoking per assembly compilation callbacks.
         /// </summary>
-        public static CompilerMessage[][] ParseAllNodeResultsIntoCompilerMessages(BeeDriverResult.Message[] beeDriverMessages, NodeFinishedMessage[] nodeResults, EditorCompilation editorCompilation)
+        public static CompilerMessage[][] ParseAllNodeResultsIntoCompilerMessages(BeeDriverResult.Message[] beeDriverMessages, NodeFinishedMessage[] nodeResults)
         {
             // If there's any messages from the bee driver, we add one additional array to the result which contains all of the driver messages converted and augmented like the nodes messages arrays.
             bool hasBeeDriverMessages = beeDriverMessages.Length > 0;
@@ -248,7 +247,7 @@ namespace UnityEditor.Scripting.ScriptCompilation
             int nextResultToAugment = 0;
             while (totalErrors < 10 && nextResultToAugment < result.Length)
             {
-                UnitySpecificCompilerMessages.AugmentMessagesInCompilationErrorsWithUnitySpecificAdvice(result[nextResultToAugment], editorCompilation);
+                UnitySpecificCompilerMessages.AugmentMessagesInCompilationErrorsWithUnitySpecificAdvice(result[nextResultToAugment]);
 #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
                 totalErrors += result[nextResultToAugment].Count(m => m.type == CompilerMessageType.Error);
 #pragma warning restore UA2001

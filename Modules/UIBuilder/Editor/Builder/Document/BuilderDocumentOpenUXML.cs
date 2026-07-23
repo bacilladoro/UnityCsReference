@@ -9,6 +9,7 @@ using UnityEditor;
 using System;
 using System.IO;
 using System.Text;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor.UIElements;
 using UnityEngine.Pool;
 using UnityEngine.Serialization;
@@ -18,7 +19,7 @@ namespace Unity.UI.Builder
 {
     [Serializable]
     [ExtensionOfNativeClass]
-    class BuilderDocumentOpenUXML
+    partial class BuilderDocumentOpenUXML
     {
         //
         // Serialized Data
@@ -73,10 +74,15 @@ namespace Unity.UI.Builder
         // Used in tests
         internal bool isBackupSet => m_VisualTreeAssetBackup != null;
 
+        [AutoStaticsCleanupOnCodeReload]
         internal static Func<string, int> s_UnsavedChangesDialogCallback = PromptForUnsavedChanges;
+        [AutoStaticsCleanupOnCodeReload]
         internal static Action<string, string> s_WriteToDiskCallback = WriteToDisk;
+        [AutoStaticsCleanupOnCodeReload]
         internal static Func<string, string, string> s_SaveFileDialogCallback = DisplaySaveFileDialogForTempFile;
+        [NoAutoStaticsCleanup] // Monotonic temp-file name counter; persisting it just continues the sequence, never reset, safe across reload.
         internal static int s_UxmlTempFileCounter = 1;
+        [NoAutoStaticsCleanup] // Monotonic temp-file name counter; persisting it just continues the sequence, never reset, safe across reload.
         internal static int s_UssTempFileCounter = 1;
 
         public BuilderUXMLFileSettings fileSettings => m_FileSettings ?? (m_FileSettings = new BuilderUXMLFileSettings(visualTreeAsset));
@@ -891,6 +897,8 @@ namespace Unity.UI.Builder
 
         public void OnAfterBuilderDeserialize(VisualElement documentRootElement, bool restoringUnsavedChanges = false)
         {
+            visualTreeAsset?.inlineSheet?.RequestRebuild(StyleSheet.RebuildOptions.Synchronous);
+
             // Refresh StyleSheets.
             var styleSheetsUsed = visualTreeAsset.GetAllReferencedStyleSheets();
             while (m_OpenUSSFiles.Count < styleSheetsUsed.Count)

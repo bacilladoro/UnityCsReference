@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEngine.UIElements.StyleSheets;
@@ -172,8 +173,11 @@ namespace UnityEditor.Experimental.GraphView
                 }
             }
 
+            [NoAutoStaticsCleanup] // CSS property key — immutable string handle, no ALC-pinning refs
             private static CustomStyleProperty<float> s_SegmentSizeProperty = new CustomStyleProperty<float>("--segment-size");
+            [NoAutoStaticsCleanup] // CSS property key — immutable string handle, no ALC-pinning refs
             private static CustomStyleProperty<Color> s_SegmentColorProperty = new CustomStyleProperty<Color>("--segment-color");
+            [NoAutoStaticsCleanup] // CSS property key — immutable string handle, no ALC-pinning refs
             private static CustomStyleProperty<Color> s_DeleteSegmentColorProperty = new CustomStyleProperty<Color>("--delete-segment-color");
 
             float m_SegmentSize = 5f;
