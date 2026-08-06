@@ -28,6 +28,7 @@ namespace UnityEngine.Rendering
     }
 
     [RayTracingShaderHelpURLAttribute]
+    [NativeClass("RayTracingShader", PersistentTypeId = 0x313A45A1)]
     public sealed partial class RayTracingShader : Object
     {
         public extern float maxRecursionDepth { get; }

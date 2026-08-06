@@ -9,14 +9,15 @@ using UnityEngine.Bindings;
 using UnityEngine.UIElements;
 using UnityEditor;
 using Object = UnityEngine.Object;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditorInternal
 {
     [VisibleToOtherModules("UnityEditor.UIToolkitAuthoringModule")]
-    class AnimationPropertyContextualMenu
+    partial class AnimationPropertyContextualMenu
     {
-        // UI-framework-agnostic surface used by AnimationPropertyContextualMenu 
-        // Concrete adapters wrap the actual menu type (GenericMenu or DropdownMenu) 
+        // UI-framework-agnostic surface used by AnimationPropertyContextualMenu
+        // Concrete adapters wrap the actual menu type (GenericMenu or DropdownMenu)
         interface IMenuBuilder
         {
             // callback may be null when enabled is false; adapters must render a disabled entry.
@@ -24,18 +25,19 @@ namespace UnityEditorInternal
             void AppendSeparator();
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         public static AnimationPropertyContextualMenu Instance = new AnimationPropertyContextualMenu();
 
         IAnimationContextualResponder m_Responder;
 
-        private static GUIContent addKeyContent = EditorGUIUtility.TrTextContent("Add Key");
-        private static GUIContent updateKeyContent = EditorGUIUtility.TrTextContent("Update Key");
-        private static GUIContent removeKeyContent = EditorGUIUtility.TrTextContent("Remove Key");
-        private static GUIContent removeCurveContent = EditorGUIUtility.TrTextContent("Remove All Keys");
-        private static GUIContent goToPreviousKeyContent = EditorGUIUtility.TrTextContent("Go to Previous Key");
-        private static GUIContent goToNextKeyContent = EditorGUIUtility.TrTextContent("Go to Next Key");
-        private static GUIContent addCandidatesContent = EditorGUIUtility.TrTextContent("Key All Modified");
-        private static GUIContent addAnimatedContent = EditorGUIUtility.TrTextContent("Key All Animated");
+        private static readonly GUIContent addKeyContent = EditorGUIUtility.TrTextContent("Add Key");
+        private static readonly GUIContent updateKeyContent = EditorGUIUtility.TrTextContent("Update Key");
+        private static readonly GUIContent removeKeyContent = EditorGUIUtility.TrTextContent("Remove Key");
+        private static readonly GUIContent removeCurveContent = EditorGUIUtility.TrTextContent("Remove All Keys");
+        private static readonly GUIContent goToPreviousKeyContent = EditorGUIUtility.TrTextContent("Go to Previous Key");
+        private static readonly GUIContent goToNextKeyContent = EditorGUIUtility.TrTextContent("Go to Next Key");
+        private static readonly GUIContent addCandidatesContent = EditorGUIUtility.TrTextContent("Key All Modified");
+        private static readonly GUIContent addAnimatedContent = EditorGUIUtility.TrTextContent("Key All Animated");
 
         // for tests that match emitted items without re-translating the literals.
         internal static string AddKeyText => addKeyContent.text;

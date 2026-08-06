@@ -19,7 +19,7 @@ partial class AIDropdown : EditorToolbarDropdown
     {
         if (instance is null)
             instance = new AIDropdown();
-        return new MainToolbarCustom(() => instance);
+        return new MainToolbarCustomElement(() => instance);
     }
 
     PopupWindowContent m_Content;

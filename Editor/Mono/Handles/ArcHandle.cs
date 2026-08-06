@@ -92,10 +92,12 @@ namespace UnityEditor.IMGUI.Controls
             radiusHandleSizeFunction = DefaultRadiusHandleSizeFunction;
         }
 
+#pragma warning disable UA5000 // The Avoid Finalizer Analyzer produces compile errors for any new finalizers. This pre-existing finalizer declaration has been suppressed, but should be rewritten if possible.
         ~ArcHandle()
         {
             s_MostRecentValidAngleHandleOrientations.Remove(GetHashCode());
         }
+#pragma warning restore UA5000
 
         public void SetColorWithoutRadiusHandle(Color color, float fillColorAlpha)
         {

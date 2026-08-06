@@ -25,10 +25,12 @@ namespace UnityEditor.Experimental.Rendering
             m_Ptr = ptr;
         }
 
+#pragma warning disable UA5000 // The Avoid Finalizer Analyzer produces compile errors for any new finalizers. This pre-existing finalizer declaration has been suppressed, but should be rewritten if possible.
         ~ScriptableBakedReflectionSystemWrapper()
         {
             Dispose(false);
         }
+#pragma warning restore UA5000
 
         Hash128[] Internal_ScriptableBakedReflectionSystemWrapper_stateHashes
         {

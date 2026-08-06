@@ -4,16 +4,23 @@
 
 using System;
 using System.Linq;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 
 namespace UnityEditor
 {
-    public class PlayModeWindow
+    public partial class PlayModeWindow
     {
-        static Type s_SimulatorWindowType =
+        [AutoStaticsCleanupOnCodeReload]
+        static Type s_SimulatorWindowType; // must be re-resolved after each code reload, not before unloading
+
+        [OnCodeLoaded]
+        static void InitializeSimulatorWindowType()
+        {
 #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
-            PlayModeView.GetAvailableWindowTypes().Keys.FirstOrDefault(x => x.Name.Contains("SimulatorWindow"));
+            s_SimulatorWindowType = PlayModeView.GetAvailableWindowTypes().Keys.FirstOrDefault(x => x.Name.Contains("SimulatorWindow"));
 #pragma warning restore UA2001
+        }
 
         PlayModeWindow()
         {

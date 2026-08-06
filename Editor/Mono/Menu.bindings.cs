@@ -35,7 +35,6 @@ namespace UnityEditor
     public sealed partial class Menu
     {
         [AutoStaticsCleanupOnCodeReload]
-        [VisibleToOtherModules("UnityEditor.ShaderFoundryModule")]
         internal static event Action menuChanged;
 
         [NativeMethod("MenuController::SetChecked", true)]
@@ -82,11 +81,11 @@ namespace UnityEditor
         internal static extern ScriptingMenuItem[] GetMenuItems(string menuPath, bool includeSeparators, bool localized);
 
         [FreeFunction("MenuController::AddMenuItem")]
-        [VisibleToOtherModules("UnityEditor.ShaderFoundryModule", "UnityEditor.UIToolkitAuthoringModule")]
+        [VisibleToOtherModules("UnityEditor.UIToolkitAuthoringModule")]
         internal static extern void AddMenuItem(string name, string shortcut, bool @checked, int priority, System.Action execute, System.Func<bool> validate);
 
         [FreeFunction("MenuController::RemoveMenuItem")]
-        [VisibleToOtherModules("UnityEditor.ShaderFoundryModule", "UnityEditor.UIToolkitAuthoringModule")]
+        [VisibleToOtherModules("UnityEditor.UIToolkitAuthoringModule")]
         internal static extern void RemoveMenuItem(string name);
 
         [FreeFunction("MenuController::AddSeparator")]

@@ -127,7 +127,7 @@ namespace UnityEngine.UIElements
         /// <param name="panel">The panel to inspect.</param>
         /// <param name="boundElements">A list to contain the bound elements.</param>
         /// <remarks>
-        /// The <see cref="boundElements"/> list will only be added to.
+        /// The <paramref name="boundElements"/> list will only be added to.
         /// </remarks>
         public static void GetBoundElements(IPanel panel, List<VisualElement> boundElements)
         {

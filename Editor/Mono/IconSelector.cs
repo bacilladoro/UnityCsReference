@@ -3,10 +3,11 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using UnityEngine;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
-    internal class IconSelector : EditorWindow
+    internal partial class IconSelector : EditorWindow
     {
         public delegate void MonoScriptIconChangedCallback(MonoScript monoScript);
         class Styles
@@ -18,12 +19,16 @@ namespace UnityEditor
             public GUIStyle noneButton = "sv_iconselector_button";
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         static IconSelector s_IconSelector = null;
+        [NoAutoStaticsCleanup] // value-type popup close-time used to debounce reopen; safe to persist across reload
         static long s_LastClosedTime = 0;
+        [NoAutoStaticsCleanup] // value-type last-shown instance hash used to toggle the popup; safe to persist across reload
         static int s_LastInstanceHash = -1;
-        static int s_HashIconSelector = "IconSelector".GetHashCode();
+        static readonly int s_HashIconSelector = "IconSelector".GetHashCode();
+        [NoAutoStaticsCleanup] // lazy GUIStyle/GUIContent Styles holder; safe to persist across reload
         static Styles m_Styles;
-        static GUIContent s_Other = EditorGUIUtility.TrTextContent("Other...");
+        static readonly GUIContent s_Other = EditorGUIUtility.TrTextContent("Other...");
 
         Object m_TargetObject;
         Object[] m_TargetObjectList;

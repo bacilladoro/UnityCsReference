@@ -7,6 +7,7 @@ using System.Text;
 using System.Collections.Generic;
 using UnityEditor.Build.Profile.Elements;
 using UnityEngine.UIElements;
+using UnityEngine;
 
 namespace UnityEditor.Build.Profile.Handlers
 {
@@ -14,6 +15,7 @@ namespace UnityEditor.Build.Profile.Handlers
     {
         static readonly string k_Duplicate = L10n.Tr("Duplicate");
         static readonly string k_CopyToNewProfile = L10n.Tr("Copy To New Profile");
+        static readonly string k_DuplicateTo = L10n.Tr("Duplicate to {0}");
         static readonly string k_Rename = L10n.Tr("Rename");
         static readonly string k_Delete = L10n.Tr("Delete");
 
@@ -80,6 +82,25 @@ namespace UnityEditor.Build.Profile.Handlers
                             HandleDuplicateSelectedProfiles(duplicateClassic: false);
                         });
 
+                    if (!isMultipleSelection && targetProfile.isMultiTarget
+                        && BuildTargetDiscovery.TryGetSupportedPlatformGuids(targetProfile.platformGuid, out var supportedPlatformGuids))
+                    {
+                        foreach (var platformGuid in supportedPlatformGuids)
+                        {
+                            if (platformGuid == targetProfile.selectedPlatformGuid)
+                                continue;
+
+                            var displayName = BuildProfileModuleUtil.GetClassicPlatformDisplayName(platformGuid);
+                            var targetPlatformGuid = platformGuid;
+                            evt.menu.AppendAction(
+                                string.Format(k_DuplicateTo, displayName),
+                                action =>
+                                {
+                                    HandleDuplicateToOtherPlatform(targetProfile, targetPlatformGuid);
+                                });
+                        }
+                    }
+
                     evt.menu.AppendAction(
                         k_Rename,
                         action =>
@@ -111,6 +132,16 @@ namespace UnityEditor.Build.Profile.Handlers
                 return true;
             }
             return false;
+        }
+
+        void HandleDuplicateToOtherPlatform(BuildProfile sourceProfile, GUID targetPlatformGuid)
+        {
+            var duplicatedProfile = m_ProfileDataSource.DuplicateToOtherPlatform(sourceProfile, targetPlatformGuid);
+            if (duplicatedProfile == null)
+                return;
+
+            m_ProfileWindow.RepaintAndClearSelection();
+            SelectBuildProfileInView(duplicatedProfile, isClassic: false, shouldAppend: false);
         }
 
         internal void HandleDuplicateSelectedProfiles(bool duplicateClassic)

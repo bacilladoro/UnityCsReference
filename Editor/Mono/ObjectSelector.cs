@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
@@ -28,20 +29,20 @@ namespace UnityEditor
         public abstract void OnSelectionClosed(UnityObject selection);
     }
 
-    internal class ObjectSelector : EditorWindow
+    internal partial class ObjectSelector : EditorWindow
     {
         // Styles used in the object selector
         static class Styles
         {
-            public static GUIStyle smallStatus = "ObjectPickerSmallStatus";
-            public static GUIStyle largeStatus = "ObjectPickerLargeStatus";
-            public static GUIStyle tab = "ObjectPickerTab";
-            public static GUIStyle bottomResize = "WindowBottomResize";
-            public static GUIStyle previewBackground = "PopupCurveSwatchBackground"; // TODO: Make dedicated style
-            public static GUIStyle previewTextureBackground = "ObjectPickerPreviewBackground"; // TODO: Make dedicated style
+            public static readonly GUIStyle smallStatus = "ObjectPickerSmallStatus";
+            public static readonly GUIStyle largeStatus = "ObjectPickerLargeStatus";
+            public static readonly GUIStyle tab = "ObjectPickerTab";
+            public static readonly GUIStyle bottomResize = "WindowBottomResize";
+            public static readonly GUIStyle previewBackground = "PopupCurveSwatchBackground"; // TODO: Make dedicated style
+            public static readonly GUIStyle previewTextureBackground = "ObjectPickerPreviewBackground"; // TODO: Make dedicated style
 
-            public static GUIContent assetsTabLabel = EditorGUIUtility.TrTextContent("Assets");
-            public static GUIContent sceneTabLabel = EditorGUIUtility.TrTextContent("Scene");
+            public static readonly GUIContent assetsTabLabel = EditorGUIUtility.TrTextContent("Assets");
+            public static readonly GUIContent sceneTabLabel = EditorGUIUtility.TrTextContent("Scene");
 
             public static readonly GUIContent packagesVisibilityContent = EditorGUIUtility.TrIconContent("SceneViewVisibility", "Number of hidden packages, click to toggle packages visibility");
 
@@ -206,6 +207,7 @@ namespace UnityEditor
         AnimBool m_ShowWidePreview = new AnimBool();
         AnimBool m_ShowOverlapPreview = new AnimBool();
 
+        [NoAutoStaticsCleanup] // fixed lazy set of framework Events, no user references; safe to persist across reload
         static HashSet<Event> s_IMGUIPriorityKeyboardEvents;
 
         // Delayer for debouncing search inputs
@@ -239,6 +241,7 @@ namespace UnityEditor
         }
 
         // get an existing ObjectSelector or create one
+        [AutoStaticsCleanupOnCodeReload]
         static ObjectSelector s_SharedObjectSelector = null;
         public static ObjectSelector get
         {
@@ -266,6 +269,7 @@ namespace UnityEditor
 
         // used by AI-toolkit to inject UI elements when the window is shown.
         [UsedImplicitly]
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<EditorWindow> shown;
 
         // used by AI-toolkit to set the allowed types for the current object selector (if any).
@@ -342,6 +346,10 @@ namespace UnityEditor
         void OnEnable()
         {
             hideFlags = HideFlags.DontSave;
+
+            // UUM-144436: Cancel and close the picker before the reload instead of trying to resurrect a broken window.
+            AssemblyReloadEvents.beforeAssemblyReload += OnBeforeAssemblyReload;
+
             m_ShowOverlapPreview.valueChanged.AddListener(Repaint);
             m_ShowOverlapPreview.speed = 1.5f;
             m_ShowWidePreview.valueChanged.AddListener(Repaint);
@@ -377,6 +385,8 @@ namespace UnityEditor
         [UsedImplicitly]
         void OnDisable()
         {
+            AssemblyReloadEvents.beforeAssemblyReload -= OnBeforeAssemblyReload;
+
             NotifySelectorClosed(false);
             if (m_ListArea != null)
                 m_StartGridSize.value = m_ListArea.gridSize;
@@ -1096,6 +1106,18 @@ namespace UnityEditor
             }
             Event.current.Use();
             GUI.changed = true;
+        }
+
+        void OnBeforeAssemblyReload()
+        {
+            Undo.RevertAllDownToGroup(m_ModalUndoGroup);
+            m_ListArea?.InitSelection(Array.Empty<EntityId>());
+            m_ObjectTreeWithSearch.Clear();
+            SetSelectedInstanceID(EntityId.None);
+            m_SelectionCancelled = true;
+            m_EditedProperty = null;
+
+            Close();
         }
 
         internal void Cancel()

@@ -102,7 +102,7 @@ namespace UnityEditor.Build.Reporting
     /// <code source="../Tests/BuildReporting/Assets/Editor/ReferenceExamples/ContentSummary.cs"/>
     /// </example>
     [NativeHeader("Modules/BuildReportingEditor/Public/ContentSummary.h")]
-    [NativeClass("BuildReporting::ContentSummary")]
+    [NativeClass("BuildReporting::ContentSummary", PersistentTypeId = 0x13B4CAB2)]
     public sealed class ContentSummary : Object
     {
         private ContentSummary()

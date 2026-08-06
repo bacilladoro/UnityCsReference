@@ -17,51 +17,85 @@ using UnityEditor.Networking.PlayerConnection;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Collections;
 using UnityEngine.Bindings;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
     [EditorWindowTitle(title = "Console", useTypeNameAsIconName = true)]
     [VisibleToOtherModules("UnityEditor.GraphToolkitModule")]
-    internal class ConsoleWindow : EditorWindow, IHasCustomMenu
+    internal partial class ConsoleWindow : EditorWindow, IHasCustomMenu
     {
         [VisibleToOtherModules("UnityEditor.GraphToolkitModule")]
         internal delegate void EntryDoubleClickedDelegate(LogEntry entry);
+        [NoAutoStaticsCleanup] // user preference flag, safe to persist across reload
         private static bool s_StripLoggingCallstack;
+        [NoAutoStaticsCleanup] // user preference flag, safe to persist across reload
         private static bool m_UseMonospaceFont;
+        [NoAutoStaticsCleanup] // font loaded by fixed name, safe to persist across reload
         private static Font m_MonospaceFont;
+        [NoAutoStaticsCleanup] // font-size preference, safe to persist across reload
         private static int m_DefaultFontSize;
+        [AutoStaticsCleanupOnCodeReload]
         private static List<MethodInfo> s_MethodsToHideInCallstack = null;
+        [AutoStaticsCleanupOnCodeReload]
         private static Dictionary<MethodInfo, Regex> s_GenericMethodSignatureRegex = null;
+        [AutoStaticsCleanupOnCodeReload]
         private static bool m_ShouldSkipClearingConsoleAfterBuild = false;
 
         //TODO: move this out of here
         internal class Constants
         {
+            [NoAutoStaticsCleanup] // lazy styles-loaded gate; styles reload via EditorStyles, safe to persist
             private static bool ms_Loaded;
+            [NoAutoStaticsCleanup] // cached style line-count, safe to persist
             private static int ms_logStyleLineCount;
+            [NoAutoStaticsCleanup] // lazy shared GUIStyle, safe to persist
             public static GUIStyle Box;
+            [NoAutoStaticsCleanup] // lazy shared GUIStyle, safe to persist
             public static GUIStyle MiniButton;
+            [NoAutoStaticsCleanup] // lazy shared GUIStyle, safe to persist
             public static GUIStyle MiniButtonRight;
+            [NoAutoStaticsCleanup] // lazy shared GUIStyle, safe to persist
             public static GUIStyle LogStyle;
+            [NoAutoStaticsCleanup] // lazy shared GUIStyle, safe to persist
             public static GUIStyle WarningStyle;
+            [NoAutoStaticsCleanup] // lazy shared GUIStyle, safe to persist
             public static GUIStyle ErrorStyle;
+            [NoAutoStaticsCleanup] // lazy shared GUIStyle, safe to persist
             public static GUIStyle IconLogStyle;
+            [NoAutoStaticsCleanup] // lazy shared GUIStyle, safe to persist
             public static GUIStyle IconWarningStyle;
+            [NoAutoStaticsCleanup] // lazy shared GUIStyle, safe to persist
             public static GUIStyle IconErrorStyle;
+            [NoAutoStaticsCleanup] // lazy shared GUIStyle, safe to persist
             public static GUIStyle EvenBackground;
+            [NoAutoStaticsCleanup] // lazy shared GUIStyle, safe to persist
             public static GUIStyle OddBackground;
+            [NoAutoStaticsCleanup] // lazy shared GUIStyle, safe to persist
             public static GUIStyle MessageStyle;
+            [NoAutoStaticsCleanup] // lazy shared GUIStyle, safe to persist
             public static GUIStyle StatusError;
+            [NoAutoStaticsCleanup] // lazy shared GUIStyle, safe to persist
             public static GUIStyle StatusWarn;
+            [NoAutoStaticsCleanup] // lazy shared GUIStyle, safe to persist
             public static GUIStyle StatusLog;
+            [NoAutoStaticsCleanup] // lazy shared GUIStyle, safe to persist
             public static GUIStyle Toolbar;
+            [NoAutoStaticsCleanup] // lazy shared GUIStyle, safe to persist
             public static GUIStyle CountBadge;
+            [NoAutoStaticsCleanup] // lazy shared GUIStyle, safe to persist
             public static GUIStyle LogSmallStyle;
+            [NoAutoStaticsCleanup] // lazy shared GUIStyle, safe to persist
             public static GUIStyle WarningSmallStyle;
+            [NoAutoStaticsCleanup] // lazy shared GUIStyle, safe to persist
             public static GUIStyle ErrorSmallStyle;
+            [NoAutoStaticsCleanup] // lazy shared GUIStyle, safe to persist
             public static GUIStyle IconLogSmallStyle;
+            [NoAutoStaticsCleanup] // lazy shared GUIStyle, safe to persist
             public static GUIStyle IconWarningSmallStyle;
+            [NoAutoStaticsCleanup] // lazy shared GUIStyle, safe to persist
             public static GUIStyle IconErrorSmallStyle;
+            [NoAutoStaticsCleanup] // lazy shared GUIStyle, safe to persist
             public static GUIStyle ConsoleSearchNoResult;
 
             public static readonly GUIContent Clear = EditorGUIUtility.TrTextContent("Clear", "Clear console entries");
@@ -174,9 +208,13 @@ namespace UnityEditor
         //Make sure the minimum height of the panels can accomodate the cpmplete scroll bar icons
         SplitterState spl = SplitterState.FromRelative(new float[] {70, 30}, new float[] {60, 60}, null);
 
+        [NoAutoStaticsCleanup] // icons loaded by fixed name survive reload; gate safe to persist
         static bool ms_LoadedIcons = false;
+        [NoAutoStaticsCleanup] // icon loaded by fixed name, safe to persist across reload
         static internal Texture2D iconInfo, iconWarn, iconError;
+        [NoAutoStaticsCleanup] // icon loaded by fixed name, safe to persist across reload
         static internal Texture2D iconInfoSmall, iconWarnSmall, iconErrorSmall;
+        [NoAutoStaticsCleanup] // icon loaded by fixed name, safe to persist across reload
         static internal Texture2D iconInfoMono, iconWarnMono, iconErrorMono;
 
         int ms_LVHeight = 0;
@@ -267,6 +305,7 @@ namespace UnityEditor
             StripLoggingCallstack = 1 << 14,
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         static ConsoleWindow ms_ConsoleWindow = null;
         private string m_SearchText;
 
@@ -1442,12 +1481,16 @@ namespace UnityEditor
         }
 
         [VisibleToOtherModules("UnityEditor.GraphToolkitModule")]
+        [AutoStaticsCleanupOnCodeReload]
         internal static event EntryDoubleClickedDelegate entryWithManagedCallbackDoubleClicked;
 
+        [AutoStaticsCleanupOnCodeReload]
         internal static event Action activeEntryChanged;
 
         // Added two actions for AI Assistant team, extending console UI for their package (public channel: #ask-ai-assistant)
+        [AutoStaticsCleanupOnCodeReload]
         internal static event Action drawCustomToolbarGui;
+        [AutoStaticsCleanupOnCodeReload]
         internal static event Action<LogEntry> entryContextClicked;
 
         [UsedImplicitly, RequiredByNativeCode]

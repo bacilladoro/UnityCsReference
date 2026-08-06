@@ -178,11 +178,11 @@ namespace Unity.UIToolkit.Editor
                 case StyleBackground sb:
                     if (sb.keyword != StyleKeyword.Undefined)
                         return false;
-                    Background.To(sb.value, out var sbEntityId);
+                    Background.To(sb.value, out EntityId sbEntityId);
                     cs.ApplyPropertyAnimation(element, id, sbEntityId);
                     return true;
                 case Background bg:
-                    Background.To(bg, out var bgEntityId);
+                    Background.To(bg, out EntityId bgEntityId);
                     cs.ApplyPropertyAnimation(element, id, bgEntityId);
                     return true;
                 case StyleFont sfont:

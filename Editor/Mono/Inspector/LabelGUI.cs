@@ -11,10 +11,11 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Linq;
 using Object = UnityEngine.Object;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
-    internal class LabelGUI
+    internal partial class LabelGUI
     {
         HashSet<Object> m_CurrentAssetsSet;
         PopupList.InputData m_AssetLabels;
@@ -23,8 +24,9 @@ namespace UnityEditor
         bool m_ChangeWasAdd = false;
         bool m_IgnoreNextAssetLabelsChangedCall = false;
 
+        [AutoStaticsCleanupOnCodeReload]
         static Action<Object>  s_AssetLabelsForObjectChangedDelegates;
-        private static int s_MaxShownLabels = 10;
+        private static readonly int s_MaxShownLabels = 10;
 
         public void OnEnable()
         {

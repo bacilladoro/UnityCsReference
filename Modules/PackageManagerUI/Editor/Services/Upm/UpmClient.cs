@@ -111,12 +111,14 @@ namespace UnityEditor.PackageManager.UI.Internal
         private readonly IClientProxy m_ClientProxy;
         private readonly IApplicationProxy m_Application;
         private readonly IDateTimeProxy m_DateTimeProxy;
+        private readonly IProjectSettingsProxy m_SettingsProxy;
         public UpmClient(IUpmCache upmCache,
             IFetchStatusTracker fetchStatusTracker,
             IIOProxy ioProxy,
             IClientProxy clientProxy,
             IApplicationProxy applicationProxy,
-            IDateTimeProxy dateTimeProxy)
+            IDateTimeProxy dateTimeProxy,
+            IProjectSettingsProxy settingsProxy)
         {
             m_UpmCache = RegisterDependency(upmCache);
             m_FetchStatusTracker = RegisterDependency(fetchStatusTracker);
@@ -124,6 +126,7 @@ namespace UnityEditor.PackageManager.UI.Internal
             m_ClientProxy = RegisterDependency(clientProxy);
             m_Application = RegisterDependency(applicationProxy);
             m_DateTimeProxy = RegisterDependency(dateTimeProxy);
+            m_SettingsProxy = RegisterDependency(settingsProxy);
         }
 
         public void OnRegisteredPackages()
@@ -302,7 +305,7 @@ namespace UnityEditor.PackageManager.UI.Internal
 
        private bool FindTrustIssuePackagesAndShowPopUp(PackageCollection requestResult)
        {
-            var viewData = ActiveTrustWindow.CreateViewData(m_UpmCache, requestResult, addAndRemoveOperation.operationType, m_Application.shortUnityVersion);
+            var viewData = ActiveTrustWindow.CreateViewData(m_UpmCache, requestResult, addAndRemoveOperation.operationType, m_Application.shortUnityVersion, m_SettingsProxy.trustPolicyLevel);
             if (viewData != null)
                 return ActiveTrustWindow.Show(viewData) == ActiveTrustReturnValue.ProceedAnyway;
             return true;

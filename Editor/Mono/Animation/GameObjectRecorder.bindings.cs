@@ -25,6 +25,7 @@ namespace UnityEditor.Animations
     [NativeHeader("Editor/Src/Animation/GameObjectRecorder.h")]
     [NativeHeader("Modules/Animation/AnimationClip.h")]
     [NativeType]
+    [NativeClass("GameObjectRecorder", PersistentTypeId = 0x4B9842BC)]
     public class GameObjectRecorder : Object
     {
         readonly static CurveFilterOptions k_DefaultCurveFilterOptions = new CurveFilterOptions()

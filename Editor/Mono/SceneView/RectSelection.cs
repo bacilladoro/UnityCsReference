@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor.ShortcutManagement;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -11,7 +12,7 @@ using Object = UnityEngine.Object;
 namespace UnityEditor
 {
     // Handles picking/selection in the scene view (both "click" type and "drag-rect" type)
-    class RectSelection
+    partial class RectSelection
     {
         public enum SelectionType { Normal, Additive, Subtractive }
 
@@ -27,7 +28,9 @@ namespace UnityEditor
 
         readonly SceneViewPickingShortcutContext m_SceneViewPickingShortcutContext = new SceneViewPickingShortcutContext();
 
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action rectSelectionStarting = delegate { };
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action rectSelectionFinished = delegate { };
 
         bool m_IsNearestControl = false;

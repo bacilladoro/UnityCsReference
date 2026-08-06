@@ -15,11 +15,13 @@ namespace UnityEngine.TextCore.Text
     [VisibleToOtherModules("UnityEngine.IMGUIModule", "UnityEngine.UIElementsModule", "UnityEditor.QuickSearchModule")] //Search uses GetCursorPositionFromStringIndexUsingLineHeight
     internal partial class TextHandle
     {
+#pragma warning disable UA5000 // The Avoid Finalizer Analyzer produces compile errors for any new finalizers. This pre-existing finalizer declaration has been suppressed, but should be rewritten if possible.
         ~TextHandle()
         {
             RemoveFromTemporaryCache();
             RemoveFromPermanentCache();
         }
+#pragma warning restore UA5000
 
         [VisibleToOtherModules("UnityEngine.UIElementsModule")]
         internal static TextHandleTemporaryCache s_TemporaryCache = new TextHandleTemporaryCache();

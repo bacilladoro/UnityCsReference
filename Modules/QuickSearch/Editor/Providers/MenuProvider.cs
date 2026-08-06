@@ -82,8 +82,18 @@ namespace UnityEditor.Search.Providers
                 },
 
                 fetchThumbnail = (item, context) => Icons.shortcut,
-                fetchPropositions = (context, options) => FetchPropositions(context, options)
+                fetchPropositions = (context, options) => FetchPropositions(context, options),
+                fetchParentDescriptor = FetchParentDescriptor
             };
+        }
+
+        private static SearchItemParentDescriptor FetchParentDescriptor(SearchItem item, SearchContext context)
+        {
+            var lastSeparatorIndex = item.id.LastIndexOf('/');
+            if (lastSeparatorIndex < 0)
+                return default;
+
+            return new SearchItemParentDescriptor(item.id.Substring(0, lastSeparatorIndex), SearchItemParentType.TokenSeparatedId);
         }
 
         private static void OnMenuChanged()

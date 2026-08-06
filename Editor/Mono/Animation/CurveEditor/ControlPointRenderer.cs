@@ -4,6 +4,7 @@
 
 using UnityEngine;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -31,6 +32,7 @@ namespace UnityEditor
         const int kMaxVertices = 65000;
         const string kControlPointRendererMeshName = "ControlPointRendererMesh";
 
+        [NoAutoStaticsCleanup]
         private static Material s_Material;
         public static Material material
         {

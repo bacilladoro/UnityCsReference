@@ -139,7 +139,7 @@ namespace UnityEngine.UIElements.StyleSheets
         public static Ratio aspectRatio => s_InitialStyle.layoutData.Read().aspectRatio;
         public static ReadOnlySpan<UnmanagedFilterFunction> backdropFilter => s_InitialStyle.rareData.Read().backdropFilter;
         public static Color backgroundColor => s_InitialStyle.visualData.Read().backgroundColor;
-        public static EntityId backgroundImage => s_InitialStyle.visualData.Read().backgroundImage;
+        public static UnmanagedBackground backgroundImage => s_InitialStyle.visualData.Read().backgroundImage;
         public static BackgroundPosition backgroundPositionX => s_InitialStyle.visualData.Read().backgroundPositionX;
         public static BackgroundPosition backgroundPositionY => s_InitialStyle.visualData.Read().backgroundPositionY;
         public static BackgroundRepeat backgroundRepeat => s_InitialStyle.visualData.Read().backgroundRepeat;

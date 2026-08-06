@@ -8,6 +8,7 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEditor.UIElements;
 using Unity.Loading;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -15,6 +16,7 @@ namespace UnityEditor
     internal sealed class LoadableDrawer : PropertyDrawer
     {
         const string k_LoadableObjectIdPropertyName = "m_LoadableObjectId";
+        [NoAutoStaticsCleanup] // immutable reflection ctor-signature array of framework types (LoadableObjectId by-ref); no user-code refs, safe to persist
         static readonly Type[] k_LoadableObjectIdByRefCtorSignature = { typeof(LoadableObjectId).MakeByRefType() };
 
         // Override CreatePropertyGUI and OnGUI to support both UI tech.

@@ -7,6 +7,8 @@ using System.Collections.Generic;
 using UnityEngine.Bindings;
 using UnityEngine.Rendering;
 
+using Unity.Scripting.LifecycleManagement;
+
 using AmbientMode = UnityEngine.Rendering.AmbientMode;
 using ReflectionMode = UnityEngine.Rendering.DefaultReflectionMode;
 using uei = UnityEngine.Internal;
@@ -29,6 +31,7 @@ namespace UnityEngine
 
     [NativeHeader("Runtime/Camera/RenderSettings.h")]
     [NativeHeader("Runtime/Graphics/QualitySettingsTypes.h")]
+    [global::UnityEngine.NativeClass("RenderSettings", PersistentTypeId = 104)]
     [StaticAccessor("GetRenderSettings()", StaticAccessorType.Dot)]
     public sealed partial class RenderSettings : Object
     {
@@ -119,6 +122,7 @@ namespace UnityEngine
     }
 
     [NativeHeader("Runtime/Graphics/QualitySettings.h")]
+    [global::UnityEngine.NativeClass("QualitySettings", PersistentTypeId = 47)]
     [StaticAccessor("GetQualitySettings()", StaticAccessorType.Dot)]
     public sealed partial class QualitySettings : Object
     {
@@ -355,7 +359,9 @@ namespace UnityEngine
                 renderPipelineAssets.Add(GraphicsSettings.defaultRenderPipeline);
         }
 
-        static HashSet<Type> s_RenderPipelineAssetsTypes = new();
+        [AutoStaticsCleanupOnCodeReload]
+        static readonly HashSet<Type> s_RenderPipelineAssetsTypes = new();
+        [AutoStaticsCleanupOnCodeReload(CleanupStrategy = CleanupStrategy.Clear)]
         static List<RenderPipelineAsset> s_RenderPipelineAssets = new();
 
         internal static bool SamePipelineAssetsForPlatform(string buildTargetGroupName)

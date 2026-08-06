@@ -19,6 +19,7 @@ namespace UnityEditor.AssetImporters
     [UsedByNativeCode]
     [MovedFrom("UnityEditor.Experimental.AssetImporters")]
     [NativeHeader("Modules/AssetPipelineEditor/Public/ScriptedImporter.h")]
+    [NativeClass("ScriptedImporter", PersistentTypeId = 0x7C90B5B3)]
     public abstract class ScriptedImporter : AssetImporter
     {
         // Called by native code to invoke the import handling code of the specialized scripted importer class.

@@ -11,34 +11,53 @@ using UnityEngine;
 
 namespace UnityEngine.Analytics
 {
+    ///<exclude />
     public enum Gender
     {
+        ///<exclude />
         Male,
+        ///<exclude />
         Female,
+        ///<exclude />
         Unknown
     }
 
+    ///<exclude />
     [Flags]
     public enum AnalyticsEventPriority
     {
+        ///<exclude />
         FlushQueueFlag       = 1 << 0,
+        ///<exclude />
         CacheImmediatelyFlag = 1 << 1,
+        ///<exclude />
         AllowInStopModeFlag  = 1 << 2,
+        ///<exclude />
         SendImmediateFlag    = 1 << 3,
+        ///<exclude />
         NoCachingFlag        = 1 << 4,
+        ///<exclude />
         NoRetryFlag          = 1 << 5,
 
+        ///<exclude />
         NormalPriorityEvent                = 0,
+        ///<exclude />
         NormalPriorityEvent_WithCaching    = CacheImmediatelyFlag,
+        ///<exclude />
         NormalPriorityEvent_NoRetryNoCaching = NoCachingFlag | NoRetryFlag,
+        ///<exclude />
         HighPriorityEvent                  = FlushQueueFlag,
+        ///<exclude />
         HighPriorityEvent_InStopMode       = FlushQueueFlag | AllowInStopModeFlag,
+        ///<exclude />
         HighestPriorityEvent               = FlushQueueFlag | SendImmediateFlag,
+        ///<exclude />
         HighestPriorityEvent_NoRetryNoCaching = FlushQueueFlag | NoCachingFlag | NoRetryFlag
     }
 
     public static partial class Analytics
     {
+        ///<exclude />
         public static bool playerOptedOut
         {
             get
@@ -49,6 +68,7 @@ namespace UnityEngine.Analytics
             }
         }
 
+        ///<exclude />
         public static string eventUrl
         {
             get
@@ -59,6 +79,7 @@ namespace UnityEngine.Analytics
             }
         }
 
+        ///<exclude />
         public static string dashboardUrl
         {
             get
@@ -69,6 +90,7 @@ namespace UnityEngine.Analytics
             }
         }
 
+        ///<exclude />
         public static string configUrl
         {
             get
@@ -79,6 +101,7 @@ namespace UnityEngine.Analytics
             }
         }
 
+        ///<exclude />
         public static bool limitUserTracking
         {
             get
@@ -94,6 +117,7 @@ namespace UnityEngine.Analytics
             }
         }
 
+        ///<exclude />
         public static bool deviceStatsEnabled
         {
             get
@@ -109,6 +133,7 @@ namespace UnityEngine.Analytics
             }
         }
 
+        ///<exclude />
         public static bool enabled
         {
             get
@@ -124,6 +149,7 @@ namespace UnityEngine.Analytics
             }
         }
 
+        ///<exclude />
         public static AnalyticsResult FlushEvents()
         {
             if (!IsInitialized())
@@ -131,6 +157,7 @@ namespace UnityEngine.Analytics
             return FlushArchivedEvents() ? AnalyticsResult.Ok : AnalyticsResult.NotInitialized;
         }
 
+        ///<exclude />
         [Obsolete("SetUserId is no longer supported", true)]
         public static AnalyticsResult SetUserId(string userId)
         {
@@ -139,12 +166,14 @@ namespace UnityEngine.Analytics
             return AnalyticsResult.InvalidData;;
         }
 
+        ///<exclude />
         [Obsolete("SetUserGender is no longer supported", true)]
         public static AnalyticsResult SetUserGender(Gender gender)
         {
             return AnalyticsResult.InvalidData;;
         }
 
+        ///<exclude />
         [Obsolete("SetUserBirthYear is no longer supported", true)]
         public static AnalyticsResult SetUserBirthYear(int birthYear)
         {
@@ -157,16 +186,19 @@ namespace UnityEngine.Analytics
             return AnalyticsResult.InvalidData;
         }
 
+        ///<exclude />
         public static AnalyticsResult Transaction(string productId, decimal amount, string currency)
         {
             return Transaction(productId, amount, currency, null, null, false);
         }
 
+        ///<exclude />
         public static AnalyticsResult Transaction(string productId, decimal amount, string currency, string receiptPurchaseData, string signature)
         {
             return Transaction(productId, amount, currency, receiptPurchaseData, signature, false);
         }
 
+        ///<exclude />
         public static AnalyticsResult Transaction(string productId, decimal amount, string currency, string receiptPurchaseData, string signature, bool usingIAPService)
         {
             if (string.IsNullOrEmpty(productId))
@@ -182,6 +214,7 @@ namespace UnityEngine.Analytics
             return Transaction(productId, Convert.ToDouble(amount), currency, receiptPurchaseData, signature, usingIAPService);
         }
 
+        ///<exclude />
         public static AnalyticsResult CustomEvent(string customEventName)
         {
             if (string.IsNullOrEmpty(customEventName))
@@ -191,6 +224,7 @@ namespace UnityEngine.Analytics
             return SendCustomEventName(customEventName);
         }
 
+        ///<exclude />
         public static AnalyticsResult CustomEvent(string customEventName, Vector3 position)
         {
             if (string.IsNullOrEmpty(customEventName))
@@ -206,6 +240,7 @@ namespace UnityEngine.Analytics
             return result;
         }
 
+        ///<exclude />
         public static AnalyticsResult CustomEvent(string customEventName, IDictionary<string, object> eventData)
         {
             if (string.IsNullOrEmpty(customEventName))
@@ -228,6 +263,7 @@ namespace UnityEngine.Analytics
             return result;
         }
 
+        ///<exclude />
         public static AnalyticsResult EnableCustomEvent(string customEventName, bool enabled)
         {
             if (string.IsNullOrEmpty(customEventName))
@@ -237,6 +273,7 @@ namespace UnityEngine.Analytics
             return EnableCustomEventWithLimit(customEventName, enabled);
         }
 
+        ///<exclude />
         public static AnalyticsResult IsCustomEventEnabled(string customEventName)
         {
             if (string.IsNullOrEmpty(customEventName))
@@ -246,6 +283,7 @@ namespace UnityEngine.Analytics
             return IsCustomEventWithLimitEnabled(customEventName);
         }
 
+        ///<exclude />
         [MethodImpl(MethodImplOptions.NoInlining)]
         public static AnalyticsResult RegisterEvent(string eventName, int maxEventPerHour, int maxItems, string vendorKey = "", string prefix = "")
         {
@@ -254,6 +292,7 @@ namespace UnityEngine.Analytics
             return RegisterEvent(eventName, maxEventPerHour, maxItems, vendorKey, 1, prefix, n);
         }
 
+        ///<exclude />
         [MethodImpl(MethodImplOptions.NoInlining)]
         public static AnalyticsResult RegisterEvent(string eventName, int maxEventPerHour, int maxItems, string vendorKey, int ver, string prefix = "")
         {
@@ -271,6 +310,7 @@ namespace UnityEngine.Analytics
             return RegisterEventWithLimit(eventName, maxEventPerHour, maxItems, vendorKey, ver, prefix, assemblyInfo, true);
         }
 
+        ///<exclude />
         public static AnalyticsResult SendEvent(string eventName, object parameters, int ver = 1, string prefix = "")
         {
             if (string.IsNullOrEmpty(eventName))
@@ -282,6 +322,7 @@ namespace UnityEngine.Analytics
             return SendEventWithLimit(eventName, parameters, ver, prefix);
         }
 
+        ///<exclude />
         public static AnalyticsResult SetEventEndPoint(string eventName, string endPoint, int ver = 1, string prefix = "")
         {
             if (string.IsNullOrEmpty(eventName))
@@ -293,6 +334,7 @@ namespace UnityEngine.Analytics
             return SetEventWithLimitEndPoint(eventName, endPoint, ver, prefix);
         }
 
+        ///<exclude />
         public static AnalyticsResult SetEventPriority(string eventName, AnalyticsEventPriority eventPriority, int ver = 1, string prefix = "")
         {
             if (string.IsNullOrEmpty(eventName))
@@ -302,6 +344,7 @@ namespace UnityEngine.Analytics
             return SetEventWithLimitPriority(eventName, eventPriority, ver, prefix);
         }
 
+        ///<exclude />
         public static AnalyticsResult EnableEvent(string eventName, bool enabled, int ver = 1, string prefix = "")
         {
             if (string.IsNullOrEmpty(eventName))
@@ -311,6 +354,7 @@ namespace UnityEngine.Analytics
             return EnableEventWithLimit(eventName, enabled, ver, prefix);
         }
 
+        ///<exclude />
         public static AnalyticsResult IsEventEnabled(string eventName, int ver = 1, string prefix = "")
         {
             if (string.IsNullOrEmpty(eventName))

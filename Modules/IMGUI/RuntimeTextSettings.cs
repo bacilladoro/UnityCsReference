@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.TextCore.Text;
 
 namespace UnityEngine
@@ -9,8 +10,9 @@ namespace UnityEngine
     /// <summary>
     /// Represents text rendering settings for IMGUI runtime
     /// </summary>
-    internal class RuntimeTextSettings : TextSettings
+    internal partial class RuntimeTextSettings : TextSettings
     {
+        [AutoStaticsCleanupOnCodeReload]
         static RuntimeTextSettings s_DefaultTextSettings;
 
         internal static RuntimeTextSettings defaultTextSettings

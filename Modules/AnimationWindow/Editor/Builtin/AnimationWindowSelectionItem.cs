@@ -62,12 +62,12 @@ namespace UnityEditor.AnimationWindowBuiltin
             return animationWindowClips;
         }
 
-        public virtual IAnimationWindowClip CreateNewClip()
+        public virtual IAnimationWindowClip CreateNewClip(string suggestedName = null)
         {
             if (rootGameObject == null)
                 return null;
 
-            var animationClip = MecanimUtilities.CreateNewClip(rootGameObject.name);
+            var animationClip = MecanimUtilities.CreateNewClip(rootGameObject.name, suggestedName);
 
             if (animationClip != null)
             {
@@ -185,7 +185,7 @@ namespace UnityEditor.AnimationWindowBuiltin
         public int GetRefreshHash()
         {
             return new Hash128(
-                    (uint)nameof(AnimationWindowSelectionItem).GetHashCode(),
+                    (uint)GetType().GetHashCode(),
                     (uint)(animationClip != null ? animationClip.GetHashCode() : 0),
                     (uint)(rootGameObject != null ? rootGameObject.GetHashCode() : 0),
                     0u)
@@ -236,10 +236,6 @@ namespace UnityEditor.AnimationWindowBuiltin
             else if (selectedObject is Transform selectedTransform)
             {
                 return GetClosestAnimationPlayerComponentInParents(selectedTransform) == animationPlayer;
-            }
-            else if (animationClip != null && selectedObject is AnimationClip selectedClip)
-            {
-                return animationClip.GetHashCode() == selectedClip.GetHashCode();
             }
 
             return false;

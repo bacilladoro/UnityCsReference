@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Text;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEngine
 {
@@ -83,8 +84,12 @@ namespace UnityEngine
 
         static class EncodingUtility
         {
+            // Static table of BOM bytes / framework Encoding singletons — no user-code references, safe to persist.
+            [NoAutoStaticsCleanup]
             internal static readonly KeyValuePair<byte[], Encoding>[] encodingLookup;
 
+            // Framework Encoding instance — safe to persist across code reload.
+            [NoAutoStaticsCleanup]
             internal static readonly Encoding targetEncoding =
                 Encoding.GetEncoding(Encoding.UTF8.CodePage,
                     new EncoderReplacementFallback("�"),

@@ -13,6 +13,6 @@ namespace UnityEngine
     ///<seealso cref="ConfigurableJoint" />
     [RequireComponent(typeof(Rigidbody))]
     [NativeHeader("Modules/Physics/FixedJoint.h")]
-    [NativeClass("Unity::FixedJoint")]
+    [NativeClass("Unity::FixedJoint", PersistentTypeId = 138)]
     public class FixedJoint : Joint {}
 }

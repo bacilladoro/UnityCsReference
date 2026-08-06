@@ -4,13 +4,14 @@
 
 using System;
 using JetBrains.Annotations;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.Scripting;
 
 namespace UnityEditor.Experimental.Rendering
 {
     [RequiredByNativeCode]
-    public static class ScriptableBakedReflectionSystemSettings
+    public static partial class ScriptableBakedReflectionSystemSettings
     {
         public static IScriptableBakedReflectionSystem system
         {
@@ -57,6 +58,7 @@ namespace UnityEditor.Experimental.Rendering
             s_Instance.implementation = inSystem;
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         static ScriptableBakedReflectionSystemWrapper s_Instance = null;
 
         [UsedImplicitly, RequiredByNativeCode]

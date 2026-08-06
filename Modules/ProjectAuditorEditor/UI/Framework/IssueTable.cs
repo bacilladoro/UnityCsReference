@@ -683,11 +683,19 @@ namespace Unity.ProjectAuditor.Editor.UI.Framework
             return m_NumMatchingIssues;
         }
 
-        public int GetNumIgnoredIssues()
+        // Whether any issue is ignored but not suppressed. Suppressed issue types are re-ignored automatically on
+        // the next analysis, so only ignored-but-not-suppressed issues would lose their ignored state.
+        public bool HasIgnoredUnsuppressedIssues()
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
-            return m_TreeViewItemIssues.Count(item => item.Value.ReportItem.IsIgnored);
-#pragma warning restore UA2001
+            var suppressedDiagnostics = UserPreferences.BuildSuppressedDiagnosticsSet();
+            foreach (var item in m_TreeViewItemIssues)
+            {
+                var reportItem = item.Value.ReportItem;
+                if (reportItem.IsIgnored && !suppressedDiagnostics.Contains(reportItem.Id))
+                    return true;
+            }
+
+            return false;
         }
 
         public ReportItem[] GetSelectedReportItems()

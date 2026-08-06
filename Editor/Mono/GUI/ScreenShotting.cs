@@ -5,13 +5,17 @@
 using UnityEngine;
 using UnityEditor;
 using UnityEditorInternal;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
     internal class ScreenShots
     {
+        [NoAutoStaticsCleanup] // constant color value (public field, not made readonly to avoid API break); safe to persist
         public static Color kToolbarBorderColor = new Color(0.54f, 0.54f, 0.54f, 1f);
+        [NoAutoStaticsCleanup] // constant color value (public field, not made readonly to avoid API break); safe to persist
         public static Color kWindowBorderColor = new Color(0.51f, 0.51f, 0.51f, 1f);
+        [NoAutoStaticsCleanup] // within-frame screenshot flag, set then cleared during capture; safe to persist
         public static bool s_TakeComponentScreenshot = false;
 
         [MenuItem("Window/Internal/Screenshot/Set Window Size %&l", false, 1000, true, secondaryPriority = 1)]

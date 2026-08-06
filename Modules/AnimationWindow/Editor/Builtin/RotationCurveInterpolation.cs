@@ -6,6 +6,7 @@ using System;
 using UnityEngine;
 using UnityEditorInternal;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 
 using Mode = UnityEditor.RotationCurveInterpolation.Mode;
 
@@ -21,7 +22,7 @@ namespace UnityEditor.AnimationWindowBuiltin
             public bool allAreRotations;
         }
 
-        public static char[] kPostFix = { 'x', 'y', 'z', 'w' };
+        public static readonly char[] kPostFix = { 'x', 'y', 'z', 'w' };
 
         static char ExtractComponentCharacter(string name)
         {

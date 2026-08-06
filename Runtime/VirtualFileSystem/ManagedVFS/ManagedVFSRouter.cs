@@ -7,12 +7,13 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine.Bindings;
 using UnityEngine.Scripting;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEngine
 {
     [RequiredByNativeCode]
     [VisibleToOtherModules("UnityEngine.ContentLoadModule")]
-    internal static class ManagedVFSRouter
+    internal static partial class ManagedVFSRouter
     {
         struct Binding
         {
@@ -20,8 +21,11 @@ namespace UnityEngine
             public int handle;
         }
 
+        [AutoStaticsCleanupOnCodeReload] // values hold IManagedVFSFileHandler implementers; clear open-file bindings on reload so stale handlers don't pin the old ALC
         static readonly Dictionary<InternalManagedFileHandle, Binding> s_HandleToBinding = new Dictionary<InternalManagedFileHandle, Binding>();
+        [NoAutoStaticsCleanup] // monotonic handle counter; default 0 is the invalid-handle sentinel so it must not reset; safe to persist
         static int s_NextHandle = 1;
+        [NoAutoStaticsCleanup] // synchronization primitive; no user refs, safe to persist across code reload
         static readonly ReaderWriterLockSlim s_Lock = new ReaderWriterLockSlim();
 
         internal static InternalManagedFileHandle AllocateHandle(IManagedVFSFileHandler handler, int handle)

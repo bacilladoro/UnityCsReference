@@ -12,6 +12,7 @@ using UnityEngine.Internal;
 using UnityEngine.Scripting;
 using Unity.Loading.LowLevel;
 using System.Collections;
+using Unity.Scripting.LifecycleManagement;
 
 namespace Unity.Loading
 {
@@ -342,17 +343,17 @@ namespace Unity.Loading
             public bool isValid => value != 0;
         }
 
+        [NoAutoStaticsCleanup] // native queue disposed by [OnCodeUnloading] Shutdown and recreated by [OnCodeLoaded] Initialize
         private static LoadingResponseQueue s_ResultBuffer;
+        [NoAutoStaticsCleanup] // pending ops are completed and the dictionary cleared by [OnCodeUnloading] Shutdown, then recreated by [OnCodeLoaded] Initialize
         private static Dictionary<ulong, ObjectLoadOperationBase> s_PendingLoadOperations;
+        [NoAutoStaticsCleanup] // pending ops are completed and the dictionary cleared by [OnCodeUnloading] Shutdown, then recreated by [OnCodeLoaded] Initialize
         private static Dictionary<ulong, ObjectReleaseOperation> s_PendingReleaseOperations;
+        [NoAutoStaticsCleanup] // reset to false by [OnCodeUnloading] Shutdown so [OnCodeLoaded] Initialize re-runs after each code reload
         private static bool s_Initialized;
         private const int kResultsBatchSize = 32;
 
-        static ContentLoadingSystem()
-        {
-            Initialize();
-        }
-
+        [OnCodeLoaded]
         private static void Initialize()
         {
             if (!s_Initialized)
@@ -559,6 +560,7 @@ namespace Unity.Loading
             return true;
         }
 
+        [OnCodeUnloading]
         [RequiredByNativeCode(Optional = true)]
         static void Shutdown()
         {

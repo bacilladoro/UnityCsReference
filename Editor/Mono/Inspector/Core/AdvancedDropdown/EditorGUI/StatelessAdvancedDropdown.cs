@@ -12,12 +12,19 @@ namespace UnityEditor
     [AutoStaticsCleanupOnCodeReload]
     internal static partial class StatelessAdvancedDropdown
     {
+        [AutoStaticsCleanupOnCodeReload]
         private static AdvancedDropdownWindow s_Instance;
+        [AutoStaticsCleanupOnCodeReload]
         private static EditorWindow s_ParentWindow;
+        [AutoStaticsCleanupOnCodeReload]
         private static bool m_WindowClosed;
+        [AutoStaticsCleanupOnCodeReload]
         private static bool m_ShouldReturnValue;
+        [AutoStaticsCleanupOnCodeReload]
         private static int m_Result;
+        [AutoStaticsCleanupOnCodeReload]
         private static int s_CurrentControl;
+        [AutoStaticsCleanupOnCodeReload]
         private static MultiselectDataSource s_DataSource;
 
         private static void ResetAndCreateWindow()

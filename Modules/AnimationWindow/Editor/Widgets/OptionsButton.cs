@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using Unity.Timeline.Foundation.Time;
 using UnityEngine.UIElements;
+using Unity.Scripting.LifecycleManagement;
 
 using Unity.Timeline.Foundation.Widgets;
 using UnityEditorInternal;
@@ -20,6 +21,7 @@ namespace UnityEditor.Animations.AnimationWindow.Widgets
         const string k_FrameRateGroupName = "frameRate";
         const string k_GeneralOptionsGroupName = "generalOptions";
 
+        [NoAutoStaticsCleanup] // fixed frame-rate option list, no user-type references
         static readonly (string, float)[] k_AvailableFrameRates = new (string, float)[]
         {
             new ("Set Sample Rate/24", 24f),

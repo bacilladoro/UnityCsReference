@@ -10,7 +10,7 @@ namespace UnityEngine
     ///<remarks>They are an extended ball-socket joint which allows you to limit the joint on each axis.</remarks>
     [RequireComponent(typeof(Rigidbody))]
     [NativeHeader("Modules/Physics/CharacterJoint.h")]
-    [NativeClass("Unity::CharacterJoint")]
+    [NativeClass("Unity::CharacterJoint", PersistentTypeId = 144)]
     public partial class CharacterJoint : Joint
     {
         ///<summary>The secondary axis around which the joint can rotate.</summary>

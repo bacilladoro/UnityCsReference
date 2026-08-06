@@ -23,9 +23,9 @@ namespace UnityEditor
 
         private static class Styles
         {
-            public static GUIStyle label = "ControlLabel";
-            public static GUIStyle popup = "MiniPopup";
-            public static GUIStyle textField = "textField";
+            public static readonly GUIStyle label = "ControlLabel";
+            public static readonly GUIStyle popup = "MiniPopup";
+            public static readonly GUIStyle textField = "textField";
         }
 
         private bool m_ShowAssetBundleNameTextField = false;

@@ -5,6 +5,7 @@
 using System;
 using UnityEditor;
 using UnityEngine;
+using Unity.Scripting.LifecycleManagement;
 
 namespace Unity.Mathematics.Editor
 {
@@ -107,6 +108,7 @@ namespace Unity.Mathematics.Editor
         internal const float kSpacingSubLabel = 4;
         private const float kIndentPerLevel = 15;
         internal const float kPrefixPaddingRight = 2;
+        [NoAutoStaticsCleanup] // transient GUI indent level (int), resting value 0; safe to persist across code reload
         internal static int indentLevel = 0;
         private static readonly int s_FoldoutHash = "Foldout".GetHashCode();
 

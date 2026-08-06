@@ -7,15 +7,19 @@ using System.Threading;
 using System.Runtime.CompilerServices;
 using uei = UnityEngine.Internal;
 using UnityEngine.Bindings;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEngineInternal
 {
     [Unity.IL2CPP.CompilerServices.Il2CppEagerStaticClassConstruction]
     public partial struct MathfInternal
     {
+        [NoAutoStaticsCleanup] // fixed float denormal threshold constant; value type, safe to persist across code reload
         public static volatile float FloatMinNormal = 1.17549435E-38f;
+        [NoAutoStaticsCleanup] // fixed float denormal threshold constant; value type, safe to persist across code reload
         public static volatile float FloatMinDenormal = Single.Epsilon;
 
+        [NoAutoStaticsCleanup] // platform flush-to-zero capability fixed at startup; value type, safe to persist
         public static bool IsFlushToZeroEnabled = (FloatMinDenormal == 0);
     }
 }

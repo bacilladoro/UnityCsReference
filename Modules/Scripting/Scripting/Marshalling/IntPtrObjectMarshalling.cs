@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.Serialization;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Scripting;
 
 namespace UnityEngine.Bindings
@@ -16,7 +17,7 @@ namespace UnityEngine.Bindings
     // But the RequiredByNativeCodeMethods's are processed on the Mono backend so this class and those methods need to exist there, even though we
     // can't implement them and won't call them.
 
-    internal class IntPtrObjectMarshalling
+    internal partial class IntPtrObjectMarshalling
     {
         [RequiredByNativeCode]
         internal static object CreateDefault(IntPtr type, out IntPtr nativePointer)

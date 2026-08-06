@@ -3,13 +3,16 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using System.Collections.Generic;
 using Unity.ProjectAuditor.Editor.Core;
 using Unity.ProjectAuditor.Editor.Utils;
 using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEditor.Experimental;
+using UnityEditor.Search;
 using UnityEditorInternal;
 using UnityEngine;
+using UnityEngine.Search;
 
 namespace Unity.ProjectAuditor.Editor.UI.Framework
 {
@@ -105,11 +108,11 @@ namespace Unity.ProjectAuditor.Editor.UI.Framework
         [NoAutoStaticsCleanup]
         static GUIContent s_TempContent;
 
-        public static readonly GUIContent ClearSelection = new GUIContent("Clear Selection");
-        public static readonly GUIContent CopyRowToClipboard = new GUIContent("Copy Row(s) to Clipboard");
-        public static readonly GUIContent CopyCellToClipboard = new GUIContent("Copy Column Item(s) to Clipboard");
-        public static readonly GUIContent OpenIssue = new GUIContent("Open Issue");
-        public static readonly GUIContent OpenScriptReference = new GUIContent("Open Script Reference");
+        public static readonly GUIContent ClearSelection = EditorGUIUtility.TrTextContent("Clear Selection");
+        public static readonly GUIContent CopyRowToClipboard = EditorGUIUtility.TrTextContent("Copy Row(s) to Clipboard");
+        public static readonly GUIContent CopyCellToClipboard = EditorGUIUtility.TrTextContent("Copy Column Item(s) to Clipboard");
+        public static readonly GUIContent OpenIssue = EditorGUIUtility.TrTextContent("Open Issue");
+        public static readonly GUIContent OpenScriptReference = EditorGUIUtility.TrTextContent("Open Script Reference");
 
         internal class DropdownItem
         {
@@ -430,6 +433,8 @@ namespace Unity.ProjectAuditor.Editor.UI.Framework
                     return EditorGUIUtility.TrTextContentWithIcon(text, s_CriticalIcon);
                 case Severity.Error:
                     return EditorGUIUtility.TrTextContentWithIcon(text, k_ErrorIconName);
+                case Severity.None:
+                    return EditorGUIUtility.TrTextContentWithIcon(text, MessageType.None);
                 default:
                     return EditorGUIUtility.TrTextContentWithIcon("Unknown", MessageType.None);
             }
@@ -572,6 +577,14 @@ namespace Unity.ProjectAuditor.Editor.UI.Framework
 
             selectedIndex = EditorGUILayout.Popup(selectedIndex, ObsoleteLibrary.UnityVersions, GUILayout.Width(100));
             viewStates.upgradeTargetVersion = ObsoleteLibrary.UnityVersions[selectedIndex];
+        }
+
+        public static void SearchWindow(string providerId, string title)
+        {
+            var provider = SearchService.GetProvider(providerId);
+            var searchContext = SearchService.CreateContext(provider);
+            var viewState = new SearchViewState(searchContext, SearchViewFlags.TableView) { title = title };
+            var searchView = SearchService.ShowWindow(viewState);
         }
     }
 }

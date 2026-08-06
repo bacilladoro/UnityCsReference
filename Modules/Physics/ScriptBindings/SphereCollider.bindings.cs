@@ -12,6 +12,7 @@ namespace UnityEngine
     ///<seealso cref="PhysicsMaterial" />
     ///<seealso cref="Rigidbody" />
     [RequireComponent(typeof(Transform))]
+    [global::UnityEngine.NativeClass("SphereCollider", PersistentTypeId = 135)]
     [NativeHeader("Modules/Physics/SphereCollider.h")]
     public class SphereCollider : Collider
     {

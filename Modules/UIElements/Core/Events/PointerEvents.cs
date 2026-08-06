@@ -788,7 +788,6 @@ namespace UnityEngine.UIElements
         /// <summary>
         /// Converts touch or stylus azimuth and altitude to tilt
         /// </summary>
-        /// <param name="tilt">Angle relative to the X and Y axis, in radians. abs(tilt.y) must be &lt; pi/2</param>
         /// <returns>Azimuth angle as determined by tilt along x and y axese.</returns>
         private static Vector2 AzimuthAndAlitutudeToTilt(float altitude, float azimuth)
         {

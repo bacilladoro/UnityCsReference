@@ -101,10 +101,12 @@ namespace UnityEditor
             Repopulate(out needsReload);
         }
 
+#pragma warning disable UA5000 // The Avoid Finalizer Analyzer produces compile errors for any new finalizers. This pre-existing finalizer declaration has been suppressed, but should be rewritten if possible.
         ~SerializedPropertyDataStore()
         {
             Clear();
         }
+#pragma warning restore UA5000
 
         public bool Repopulate(out bool needsReload)
         {

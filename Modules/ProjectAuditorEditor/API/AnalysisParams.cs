@@ -31,8 +31,6 @@ namespace Unity.ProjectAuditor.Editor
         [SerializeField]
         SerializableEnum<BuildTarget> m_Platform;
 
-        string m_PlatformAsString;
-
         /// <summary>
         /// Analysis platform. The default platform is the currently active build target.
         /// </summary>
@@ -42,7 +40,6 @@ namespace Unity.ProjectAuditor.Editor
             set
             {
                 m_Platform = value;
-                m_PlatformAsString = m_Platform.ToString();
                 DiagnosticParams?.SetAnalysisPlatform(Platform);
             }
         }
@@ -117,8 +114,6 @@ namespace Unity.ProjectAuditor.Editor
 
         [NonSerialized]
         internal DependencyCrawler DependencyCrawler;
-
-        internal string PlatformAsString => m_PlatformAsString;
 
         /// <summary>
         /// AnalysisParams constructor.

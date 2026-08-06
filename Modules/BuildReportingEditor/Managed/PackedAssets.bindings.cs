@@ -40,7 +40,7 @@ namespace UnityEditor.Build.Reporting
     ///<seealso cref="Build.Reporting.PackedAssetInfo" />
     ///<seealso cref="Build.Reporting.ContentSummary" />
     [NativeHeader("Modules/BuildReportingEditor/Public/PackedAssets.h")]
-    [NativeClass("BuildReporting::PackedAssets")]
+    [NativeClass("BuildReporting::PackedAssets", PersistentTypeId = 1126)]
     public sealed class PackedAssets : Object
     {
         private const string fileObsoleteMessage = "Report file index is no longer available. To find the matching report file for a particular asset the recommended way is to do a filename lookup in the report.";

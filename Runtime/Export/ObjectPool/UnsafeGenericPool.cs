@@ -2,6 +2,8 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+using Unity.Scripting.LifecycleManagement;
+
 namespace UnityEngine.Pool
 {
     /// <summary>
@@ -11,10 +13,13 @@ namespace UnityEngine.Pool
     /// This pool doesn't do any of these comparison because we don't check if the stack already contains the element before releasing it.
     /// </summary>
     /// <typeparam name="T">Type of the objects in the pool.</typeparam>
-    public static class UnsafeGenericPool<T>
+    public static partial class UnsafeGenericPool<T>
         where T : class, new()
     {
-        // Object pool to avoid allocations.
+        // Object pool to avoid allocations. Cleared on code reload. Auto strategy resolves to Clear()
+        // for this readonly pool (neutron: CleanupStrategy.Clear, which can't be spelled here — the
+        // CleanupStrategy property is internal).
+        [AutoStaticsCleanupOnCodeReload]
         internal static readonly ObjectPool<T> s_Pool = new ObjectPool<T>(() => new T(), null, null, null, false);
 
         /// <summary>

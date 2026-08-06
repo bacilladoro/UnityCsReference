@@ -10,6 +10,7 @@ using UnityEngine.Bindings;
 namespace UnityEditor
 {
     [NativeHeader("Modules/AssetPipelineEditor/Public/PreviewImporter.h")]
+    [NativeClass("PreviewImporter", PersistentTypeId = 0x309881D4)]
     [ExcludeFromPreset]
     internal partial class PreviewImporter : AssetImporter
     {

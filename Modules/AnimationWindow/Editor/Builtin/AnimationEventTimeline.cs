@@ -17,14 +17,14 @@ namespace UnityEditor.AnimationWindowBuiltin
     {
         internal static class Styles
         {
-            public static GUIContent textAddEvent = EditorGUIUtility.TrTextContent("Add Animation Event");
-            public static GUIContent textDeleteEvents = EditorGUIUtility.TrTextContent("Delete Animation Events");
-            public static GUIContent textDeleteEvent = EditorGUIUtility.TrTextContent("Delete Animation Event");
-            public static GUIContent textCopyEvents = EditorGUIUtility.TrTextContent("Copy Animation Events");
-            public static GUIContent textPasteEvents = EditorGUIUtility.TrTextContent("Paste Animation Events");
+            public static readonly GUIContent textAddEvent = EditorGUIUtility.TrTextContent("Add Animation Event");
+            public static readonly GUIContent textDeleteEvents = EditorGUIUtility.TrTextContent("Delete Animation Events");
+            public static readonly GUIContent textDeleteEvent = EditorGUIUtility.TrTextContent("Delete Animation Event");
+            public static readonly GUIContent textCopyEvents = EditorGUIUtility.TrTextContent("Copy Animation Events");
+            public static readonly GUIContent textPasteEvents = EditorGUIUtility.TrTextContent("Paste Animation Events");
 
-            public static GUIContent eventMarker = EditorGUIUtility.IconContent("Animation.LargeEventMarker");
-            public static GUIContent eventMarkerMultiOverlay = EditorGUIUtility.IconContent("Animation.LargeEventMarker.MultiOverlay");
+            public static readonly GUIContent eventMarker = EditorGUIUtility.IconContent("Animation.LargeEventMarker");
+            public static readonly GUIContent eventMarkerMultiOverlay = EditorGUIUtility.IconContent("Animation.LargeEventMarker.MultiOverlay");
         }
 
         // Event clustering data structure for grouping events at the same time

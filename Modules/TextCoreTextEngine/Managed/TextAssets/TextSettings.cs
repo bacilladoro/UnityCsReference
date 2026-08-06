@@ -457,6 +457,17 @@ namespace UnityEngine.TextCore.Text
         IntPtr[] GetGlobalFallbacks()
         {
             List<IntPtr> globalFontAssetFallbacks = new List<IntPtr>();
+
+            // nativeFontAsset is Zero when native creation failed (e.g. missing source font)
+            void AddNativeFallback(FontAsset fallback)
+            {
+                var nativeFallback = fallback.nativeFontAsset;
+                if (nativeFallback != IntPtr.Zero)
+                    globalFontAssetFallbacks.Add(nativeFallback);
+                else
+                    globalFontAssetFallbacks.AddRange(fallback.GetFallbacks());
+            }
+
             if (fallbackFontAssets != null)
             {
                 foreach (var fallback in fallbackFontAssets)
@@ -468,7 +479,7 @@ namespace UnityEngine.TextCore.Text
                         Debug.LogWarning($"Advanced text system cannot use static font asset {fallback.name} as fallback.");
                         continue;
                     }
-                    globalFontAssetFallbacks.Add(fallback.nativeFontAsset);
+                    AddNativeFallback(fallback);
                 }
             }
 
@@ -483,7 +494,7 @@ namespace UnityEngine.TextCore.Text
                             Debug.LogWarning($"Advanced text system cannot use static font asset {fallback.name} as fallback.");
                             continue;
                         }
-                        globalFontAssetFallbacks.Add(fontAsset.nativeFontAsset);
+                        AddNativeFallback(fontAsset);
                     }
                 }
             }
@@ -499,7 +510,7 @@ namespace UnityEngine.TextCore.Text
                         Debug.LogWarning($"Advanced text system cannot use static font asset {fallback.name} as fallback.");
                         continue;
                     }
-                    globalFontAssetFallbacks.Add(fallback.nativeFontAsset);
+                    AddNativeFallback(fallback);
                 }
             }
 
@@ -509,7 +520,7 @@ namespace UnityEngine.TextCore.Text
                 {
                     if (fallback == null)
                         continue;
-                    globalFontAssetFallbacks.Add(fallback.nativeFontAsset);
+                    AddNativeFallback(fallback);
                 }
             }
 

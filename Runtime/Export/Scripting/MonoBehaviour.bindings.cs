@@ -16,6 +16,7 @@ namespace UnityEngine
     [RequiredByNativeCode]
     [ExtensionOfNativeClass]
     [NativeHeader("Runtime/Mono/MonoBehaviour.h")]
+    [global::UnityEngine.NativeClass("MonoBehaviour", PersistentTypeId = 114)]
     [NativeHeader("Runtime/Scripting/DelayedCallUtility.h")]
     public class MonoBehaviour : Behaviour
     {

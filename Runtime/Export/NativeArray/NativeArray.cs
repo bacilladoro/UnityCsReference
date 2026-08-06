@@ -15,6 +15,7 @@ using UnityEngine;
 using UnityEngine.Bindings;
 using UnityEngine.Internal;
 using UnityEngine.Scripting;
+using Unity.Scripting.LifecycleManagement;
 
 namespace Unity.Collections
 {
@@ -53,6 +54,7 @@ namespace Unity.Collections
         }
 
         // TODO: Use SharedStatic for burst compatible static id once we have typehash intrinsic for unity in burst 1.6.5 and 1.7.0
+        [NoAutoStaticsCleanup] // AtomicSafetyHandle static safety id is stable across code reload; re-registering would leak ids
         static int                        s_staticSafetyId;
 
         [BurstDiscard]

@@ -7,6 +7,7 @@ using UnityEditor;
 using System.Collections;
 using System.Collections.Generic;
 using System;
+using Unity.Scripting.LifecycleManagement;
 
 #pragma warning disable 649
 
@@ -40,6 +41,7 @@ namespace UnityEditor
 
         private bool advancedFoldout = false;
 
+        [NoAutoStaticsCleanup] // immutable bone-name lookup table built once at init, holds no user-code references
         private static readonly Dictionary<string, HumanBodyBones> boneMapping = new()
         {
             { "Pelvis", HumanBodyBones.Hips },

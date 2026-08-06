@@ -4,6 +4,7 @@
 
 using UnityEngine;
 using UnityEditor.Modules;
+using UnityEditor.Overlays;
 using UnityEditorInternal;
 using System.Collections.Generic;
 using System;
@@ -16,10 +17,11 @@ using UnityEngine.Analytics;
 using UnityEngine.UIElements;
 using UnityEditor.Experimental;
 using UnityEditor.SceneManagement;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
-    internal class PreferencesProvider : SettingsProvider
+    internal partial class PreferencesProvider : SettingsProvider
     {
         internal enum CodeOptimization
         {
@@ -85,8 +87,8 @@ namespace UnityEditor
             public static readonly GUIContent gameObjectIconMode = EditorGUIUtility.TrTextContent("GameObject Icons", "Controls how the new Hierarchy window replaces GameObject icons.");
             public static readonly GUIContent[] gameObjectIconModeOptions =
             {
-                EditorGUIUtility.TrTextContent("Use Components and Gizmos"),
-                EditorGUIUtility.TrTextContent("Use Components only"),
+                EditorGUIUtility.TrTextContent("Use components and custom icons"),
+                EditorGUIUtility.TrTextContent("Use components only"),
                 EditorGUIUtility.TrTextContent("Do not change GameObject icons"),
             };
             public static readonly GUIContent applicationFrameThrottling = EditorGUIUtility.TrTextContent("Frame Throttling (milliseconds)", "The number of milliseconds the Editor can idle between frames.");
@@ -146,7 +148,7 @@ By default, Windows will combine these under a single taskbar item.");
 
         class ColorsProperties
         {
-            public static readonly GUIContent userDefaults = EditorGUIUtility.TrTextContent("Use Defaults");
+            public static readonly GUIContent userDefaults = EditorGUIUtility.TrTextContent("Reset All to Default");
             public static readonly string lazyLoadingInfo = L10n.Tr("Some colors may not be available until you open their associated tool or window at least once.");
         }
 
@@ -165,6 +167,7 @@ By default, Windows will combine these under a single taskbar item.");
         {
             public static readonly GUIContent enableFilteringWhileSearching = EditorGUIUtility.TrTextContent("Enable filtering while searching", "If enabled, searching will cause non-matching items in the scene view to be greyed out");
             public static readonly GUIContent enableFilteringWhileLodGroupEditing = EditorGUIUtility.TrTextContent("Enable filtering while editing LOD groups", "If enabled, editing LOD groups will cause other objects in the scene view to be greyed out");
+            public static readonly GUIContent useGridColor = EditorGUIUtility.TrTextContent("Use axis colors on main grid axes", "If enabled, the grid will show the axis colors on the main axes");
             public static readonly GUIContent handlesLineThickness = EditorGUIUtility.TrTextContent("Line Thickness", "Thickness of manipulator tool handle lines");
             public static readonly GUIContent placementMode = EditorGUIUtility.TrTextContent("3D Placement Mode", "Select where newly created 3D objects are placed in the scene.");
             public static readonly GUIContent createObjectsAtWorldOrigin = EditorGUIUtility.TrTextContent("World Origin");
@@ -195,6 +198,7 @@ By default, Windows will combine these under a single taskbar item.");
 
         private bool m_ReopenLastUsedProjectOnStartup;
         private bool m_EnableEditorAnalytics;
+        [NoAutoStaticsCleanup] // nullable-bool snapshot of session-start analytics state, value-safe to persist across reload
         private static bool? s_OriginalEnableEditorAnalytics;
         private bool m_AutoSaveScenesBeforeBuilding;
         private ScriptChangesDuringPlayOptions m_ScriptCompilationDuringPlay;
@@ -230,6 +234,7 @@ By default, Windows will combine these under a single taskbar item.");
 
         private RefString m_ScriptEditorPath = new RefString("");
         private RefString m_ImageAppPath = new RefString("");
+        [NoAutoStaticsCleanup] // int index into diff-tool list, value-safe to persist across reload
         private static int m_DiffToolIndex;
 
         // how many menu items come before the actual list of languages
@@ -237,8 +242,10 @@ By default, Windows will combine these under a single taskbar item.");
         private const int k_LangListMenuOffset = 2;
 
         private string m_SelectedLanguage;
+        [NoAutoStaticsCleanup] // GUIContent[] language-name cache rebuilt on demand, safe to persist across reload
         private static GUIContent[] m_EditorLanguageNames;
         private bool m_EnableEditorLocalization;
+        [NoAutoStaticsCleanup] // enum-array of stable languages, value-safe to persist across reload
         private static SystemLanguage[] m_stableLanguages = { SystemLanguage.English };
         private bool m_EnableCompilerMessagesLocalization;
 
@@ -253,9 +260,12 @@ By default, Windows will combine these under a single taskbar item.");
 
         private string[] m_ScriptApps;
         private string[] m_ImageApps;
+        [NoAutoStaticsCleanup] // string[] diff-tool list rebuilt on demand, string-safe to persist across reload
         private static string[] m_DiffTools;
 
+        [NoAutoStaticsCleanup] // string custom diff-tool path loaded from EditorPrefs, safe to persist across reload
         private static string m_CustomDiffToolPath = "";
+        [NoAutoStaticsCleanup] // string[] custom diff-tool arguments loaded from EditorPrefs, safe to persist across reload
         private static string[] m_CustomDiffToolArguments = new[] {"", "", ""};
 
         private string m_noDiffToolsMessage = string.Empty;
@@ -318,6 +328,7 @@ By default, Windows will combine these under a single taskbar item.");
             }
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         internal static Action<bool> hideDeprecationWarningsChanged;
 
         internal static bool hideDeprecationWarnings
@@ -935,6 +946,7 @@ By default, Windows will combine these under a single taskbar item.");
         private void RevertColors()
         {
             PrefSettings.RevertAll<PrefColor>();
+            s_CachedColors = null;
         }
 
         private void ShowColors(string searchContext)
@@ -942,10 +954,7 @@ By default, Windows will combine these under a single taskbar item.");
             EditorGUILayout.HelpBox(ColorsProperties.lazyLoadingInfo, MessageType.Info);
             EditorGUILayout.Space();
 
-            if (s_CachedColors == null)
-            {
-                s_CachedColors = OrderPrefs(PrefSettings.Prefs<PrefColor>());
-            }
+            s_CachedColors = OrderPrefs(PrefSettings.Prefs<PrefColor>());
 
             var changedColor = false;
 
@@ -967,6 +976,8 @@ By default, Windows will combine these under a single taskbar item.");
                     foreach (KeyValuePair<string, PrefColor> kvp in category.Value)
                     {
                         var displayName = ObjectNames.NicifyVariableName(kvp.Key);
+                        EditorGUILayout.BeginHorizontal();
+
                         EditorGUI.BeginChangeCheck();
                         Color c = EditorGUILayout.ColorField(EditorGUIUtility.TempContent(displayName, $"Custom overlay color for windows of {displayName} type"), kvp.Value.Color);
                         if (EditorGUI.EndChangeCheck())
@@ -975,6 +986,28 @@ By default, Windows will combine these under a single taskbar item.");
                             PrefSettings.Set(kvp.Value.Name, kvp.Value);
                             changedColor = true;
                         }
+
+                        if (GUILayout.Button("Reset to Default", GUILayout.Width(120)))
+                        {
+                            if (kvp.Value.Name.StartsWith("Overlays Background/"))
+                            {
+                                var windowType = System.Type.GetType($"UnityEditor.{kvp.Key}, UnityEditor");
+                                if (windowType != null)
+                                {
+                                    OverlayPrefs.RevertToDefaultColor(windowType);
+                                    OverlayPrefs.DeleteOverlayKey(windowType);
+                                }
+                            }
+                            else
+                            {
+                                kvp.Value.ResetToDefault();
+                                PrefSettings.Set(kvp.Value.Name, kvp.Value);
+                            }
+                            s_CachedColors = null;
+                            changedColor = true;
+                        }
+
+                        EditorGUILayout.EndHorizontal();
                     }
                     EditorGUI.indentLevel--;
                 }
@@ -1013,6 +1046,9 @@ By default, Windows will combine these under a single taskbar item.");
             m_EnableConstrainProportionsScalingForNewObjects = EditorGUILayout.Toggle(SceneViewProperties.enableConstrainProportionsScalingForNewObjects, m_EnableConstrainProportionsScalingForNewObjects);
             AnnotationUtility.useInspectorExpandedState = EditorGUILayout.Toggle(SceneViewProperties.useInspectorExpandedStateContent, AnnotationUtility.useInspectorExpandedState);
             SceneView.s_PreferenceIgnoreAlwaysRefreshWhenNotFocused.value = EditorGUILayout.Toggle(SceneViewProperties.ignoreAlwaysRefreshWhenNotFocused, SceneView.s_PreferenceIgnoreAlwaysRefreshWhenNotFocused);
+
+            GUILayout.Label("Grid", EditorStyles.boldLabel);
+            SceneViewGrid.s_UseAxisColor.value = EditorGUILayout.Toggle(SceneViewProperties.useGridColor, SceneViewGrid.s_UseAxisColor.value);
 
             GUILayout.Label("Handles", EditorStyles.boldLabel);
             Handles.s_LineThickness.value = EditorGUILayout.IntSlider(SceneViewProperties.handlesLineThickness, (int)Handles.s_LineThickness.value, 1, 5);
@@ -1648,13 +1684,14 @@ By default, Windows will combine these under a single taskbar item.");
         }
     }
 
-    internal static class LoggingSettingsAnalytics
+    internal static partial class LoggingSettingsAnalytics
     {
         const string k_LoggingSettingEventName = "logging_setting_changed";
         const string k_LoggingJsonEventName = "logging_json_changed";
         const int k_MaxEventsPerHour = 100;
         const string k_VendorKey = "unity.logging";
         internal const bool DefaultLoggingFrameworkEnabled = true;
+        [AutoStaticsCleanupOnCodeReload]
         static Action<string, bool, bool> s_TestEventCallback;
 
         [Serializable]
@@ -1706,9 +1743,11 @@ By default, Windows will combine these under a single taskbar item.");
             }
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         static ILoggingSettingsAnalyticsService s_AnalyticsService;
 
-        static LoggingSettingsAnalytics()
+        [OnCodeLoaded]
+        static void Initialize()
         {
             if (!InternalEditorUtility.inBatchMode)
                 SetAnalyticsService(new LoggingSettingsEditorAnalyticsService());

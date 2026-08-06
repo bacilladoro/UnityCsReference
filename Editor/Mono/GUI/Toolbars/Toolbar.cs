@@ -107,6 +107,8 @@ namespace UnityEditor
         [EditorBrowsable(EditorBrowsableState.Never)]
         internal static readonly string editModeName = L10n.Tr("Edit Mode");
         [EditorBrowsable(EditorBrowsableState.Never)]
+        internal static readonly string menuItemSearchName = L10n.Tr("Add MenuItem shortcut");
+        [EditorBrowsable(EditorBrowsableState.Never)]
         internal static readonly string showAllName = L10n.Tr("Show All");
         [EditorBrowsable(EditorBrowsableState.Never)]
         internal static readonly string hideAllName = L10n.Tr("Hide All");
@@ -179,9 +181,10 @@ namespace UnityEditor
 
             overlayCanvas.presetChanged += OnPresetChanged;
 
-            // Setup initial save state
+            // Setup initial save state (menuItemPaths can be null alone, from an older preferences file)
             if (OverlayCanvasesData.instance.toolbarSaveState.overlays == null
-                || OverlayCanvasesData.instance.toolbarSaveState.overlays.Length == 0)
+                || OverlayCanvasesData.instance.toolbarSaveState.overlays.Length == 0
+                || OverlayCanvasesData.instance.toolbarSaveState.menuItemPaths == null)
             {
                 UpdateLatestSaveState();
             }
@@ -246,6 +249,14 @@ namespace UnityEditor
             editModeActive = !editModeActive;
         }
 
+        [AutoStaticsCleanupOnCodeReload]
+        internal static event Action menuItemSearchRequested;
+
+        void OpenMenuItemSearch()
+        {
+            menuItemSearchRequested?.Invoke();
+        }
+
         [NoAutoStaticsCleanup] // Scratch set of menu category paths, rebuilt (??= / Clear) each menu population; strings only, safe to persist.
         static HashSet<string> s_UsedMenuCategoryPaths;
         void PopulateMenuWithOverlays(AbstractGenericMenu dropdown, bool includeUtilityFunctions = true)
@@ -256,9 +267,12 @@ namespace UnityEditor
             foreach (var overlay in overlayCanvas.overlays)
             {
                 var mto = overlay as MainToolbarOverlay;
+                if (mto.createElementMethod == null)
+                    continue; // Dynamically-created overlay (e.g. a pinned menu item); not managed from this menu.
+
                 if (!mto.IsAvailable())
                     continue;
-                
+
                 overlays.Add((overlay, mto.createElementMethod.GetCustomAttribute<MainToolbarElementAttribute>()));
                 if (mto.createElementMethod.GetCustomAttribute<UnityOnlyMainToolbarPresetAttribute>() != null)
                     s_UnityOnlyOverlays.Add(overlay);
@@ -314,7 +328,7 @@ namespace UnityEditor
                 {
                     if (!s_UsedMenuCategoryPaths.Contains(path))
                         continue;
-                    
+
                     dropdown.AddSeparator($"{path}/");
                     dropdown.AddItem($"{path}/{showAllName}", false, () => MainToolbar.ShowAll(path));
                     dropdown.AddItem($"{path}/{hideAllName}", false, () => MainToolbar.HideAll(path));
@@ -328,7 +342,9 @@ namespace UnityEditor
             dropdown.AddSeparator("");
 
             PopulateMenuWithOverlays(dropdown);
+            dropdown.AddSeparator("");
 
+            dropdown.AddItem(menuItemSearchName, false, OpenMenuItemSearch);
             dropdown.AddSeparator("");
 
             OverlayPresetManager.GenerateMenu(dropdown, "Presets/", this, false, CheckIfCanvasChangedSinceLastPreset, new UnityOnlyToolbarPreset());

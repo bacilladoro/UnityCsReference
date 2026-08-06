@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEditorInternal;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -35,6 +36,7 @@ namespace UnityEditor
             new Color(0.1686274f, 0.1058823f, 0.0274509f, 1.0f),
         };
 
+        [NoAutoStaticsCleanup] // Static color gradient built from constant colors; holds no user refs, safe to persist.
         public static readonly Gradient kMeshLODColorGradient = new Gradient
         {
             colorKeys = new[]
@@ -118,15 +120,22 @@ namespace UnityEditor
             public readonly GUIContent m_LODSetToCameraLabel = EditorGUIUtility.TrTextContent("Set to Camera");
 
             public readonly GUIContent m_LODTransitionPercentageLabel = EditorGUIUtility.TrTextContent("Transition (% Screen Size)", "This value marks where LOD level transitions into a lower LOD level.");
+            [NoAutoStaticsCleanup] // Whitelisted GUIContent label; safe to persist across reload.
             public static GUIContent m_TriangleCountLabel = EditorGUIUtility.TrTextContent("Triangles");
+            [NoAutoStaticsCleanup] // Whitelisted GUIContent label; safe to persist across reload.
             public static GUIContent m_VertexCountLabel = EditorGUIUtility.TrTextContent("Vertices");
 
+            [NoAutoStaticsCleanup] // Whitelisted GUIContent label (its .text is overwritten per-frame); safe to persist.
             public static GUIContent m_DistanceInMetersLabel = EditorGUIUtility.TrTextContent("-", "The displayed distance depends on the current Scene View camera settings and might be different in Game View.");
 
+            [NoAutoStaticsCleanup] // Whitelisted GUIStyle wrapping an editor style; recreated with s_Styles on first access.
             public static GUIStyle m_InspectorTitlebarFlat;
 
+            [NoAutoStaticsCleanup] // Whitelisted GUIContent icon loaded by fixed name; asset survives reload.
             public static GUIContent m_BlueBorderTextureSelected = EditorGUIUtility.TrIconContent("AnimationRowOddSelected");
+            [NoAutoStaticsCleanup] // Whitelisted GUIContent icon loaded by fixed name; asset survives reload.
             public static GUIContent m_BlueBorderTextureNormal = EditorGUIUtility.TrIconContent("OL title act");
+            [NoAutoStaticsCleanup] // Whitelisted GUIContent label; safe to persist across reload.
             public static GUIContent m_MeshLodInfo = EditorGUIUtility.TrTextContent("Mesh LOD is active and has been applied to ");
 
             public GUIStyles()
@@ -136,6 +145,7 @@ namespace UnityEditor
             }
         }
 
+        [NoAutoStaticsCleanup] // Lazy GUIStyle/GUIContent cache loaded by fixed style/icon names; re-inits on first access, assets survive reload.
         private static GUIStyles s_Styles;
 
         public static GUIStyles Styles

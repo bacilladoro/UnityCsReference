@@ -8,12 +8,20 @@ using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
 using UnityEngine.Scripting;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEngine.Tilemaps
 {
+    ///<summary>Class passed onto Tiles when information is queried from the Tiles.</summary>
+    ///<remarks>This handles editor preview [tiles](xref:Tilemap-ScriptableTiles-TileBase) when painting on a <see cref="Tilemap" /> in Editor mode.</remarks>
     [RequiredByNativeCode]
     public class ITilemap
     {
+        // NOTE: s_Instance, createITilemap and createITilemapPriority should ideally be reset on code reload
+        // (createITilemap can point into reloadable editor code), but AutoStaticsCleanup codegen in this
+        // player-shipped module forces the Tilemap module into stripped player builds
+        // (TestStrippingDependencies). Persist as before until lifecycle registration is strip-safe.
+        [NoAutoStaticsCleanup] // see stripping note above
         internal static ITilemap s_Instance;
 
         internal Tilemap m_Tilemap;
@@ -24,6 +32,9 @@ namespace UnityEngine.Tilemaps
 
         internal ITilemap() { }
 
+        ///<summary>Initializes and returns an instance of <see cref="ITilemap" />.</summary>
+        ///<remarks>This will wrap the <see cref="Tilemap" /> parameter and is passed onto <see cref="Tile" />s when information is queried from the <see cref="Tile" />s.</remarks>
+        ///<param name="tilemap">The <see cref="Tilemap" /> to wrap.</param>
         public ITilemap(Tilemap tilemap)
         {
             if (tilemap == null)
@@ -31,6 +42,9 @@ namespace UnityEngine.Tilemaps
             m_Tilemap = tilemap;
         }
 
+        ///<summary>
+        ///  <see cref="Tilemap" /> can be implicitly converted to <see cref="ITilemap" />.</summary>
+        ///<param name="tilemap">The <see cref="Tilemap" /> to convert to <see cref="ITilemap" />.</param>
         public static implicit operator ITilemap(Tilemap tilemap)
         {
             return CreateInstanceFromTilemap(tilemap);
@@ -42,43 +56,95 @@ namespace UnityEngine.Tilemaps
         }
 
         // Tilemap
+        ///<summary>The origin of the Tilemap in cell position.</summary>
+        ///<remarks>Refer to <see cref="Tilemap" /> for more information.</remarks>
         public Vector3Int origin { get { return m_Tilemap.origin; } }
+        ///<summary>The size of the Tilemap in cells.</summary>
+        ///<remarks>Refer to <see cref="Tilemap" /> for more information.</remarks>
         public Vector3Int size { get { return m_Tilemap.size; } }
+        ///<summary>Returns the boundaries of the Tilemap in local space size.</summary>
+        ///<remarks>Refer to <see cref="Tilemap" /> for more information.</remarks>
         public Bounds localBounds { get { return m_Tilemap.localBounds; } }
+        ///<summary>Returns the boundaries of the Tilemap in cell size.</summary>
+        ///<remarks>Refer to <see cref="Tilemap" /> for more information.</remarks>
         public BoundsInt cellBounds { get { return m_Tilemap.cellBounds; } }
 
         // Tile
+        ///<summary>Gets the Sprite used in a Tile given the XYZ coordinates of a cell in the Tilemap.</summary>
+        ///<remarks>Refer to [Scriptable Tiles](xref:Tilemap-ScriptableTiles-TileBase) and [Tilemap](xref:class-Tilemap) for more information.</remarks>
+        ///<param name="position">Position of the Tile on the <see cref="Tilemap" />.</param>
+        ///<returns>Sprite at the XYZ coordinate.</returns>
         public virtual Sprite GetSprite(Vector3Int position)
         {
             return m_Tilemap.GetSprite(position);
         }
 
+        ///<summary>Gets the color of a Tile given the XYZ coordinates of a cell in the Tilemap.</summary>
+        ///<remarks>Refer to [Scriptable Tiles](xref:Tilemap-ScriptableTiles-TileBase) and [Tilemap](xref:class-Tilemap) for more information.</remarks>
+        ///<param name="position">Position of the Tile on the <see cref="Tilemap" />.</param>
+        ///<returns>Color of the <see cref="Tile" /> at the XYZ coordinate.</returns>
         public virtual Color GetColor(Vector3Int position)
         {
             return m_Tilemap.GetColor(position);
         }
 
+        ///<summary>Gets the transform matrix of a Tile given the XYZ coordinates of a cell in the Tilemap.</summary>
+        ///<remarks>Refer to [Scriptable Tiles](xref:Tilemap-ScriptableTiles-TileBase) and [Tilemap](xref:class-Tilemap) for more information.</remarks>
+        ///<param name="position">Position of the Tile on the <see cref="Tilemap" />.</param>
+        ///<returns>The transform matrix.</returns>
         public virtual Matrix4x4 GetTransformMatrix(Vector3Int position)
         {
             return m_Tilemap.GetTransformMatrix(position);
         }
 
+        ///<summary>Gets the Tile Flags of the Tile at the given position.</summary>
+        ///<remarks>Refer to <see cref="TileFlags" /> for more information.</remarks>
+        ///<param name="position">Position of the Tile on the <see cref="Tilemap" />.</param>
+        ///<returns>
+        ///  <see cref="TileFlags" /> from the <see cref="Tile" />.</returns>
         public virtual TileFlags GetTileFlags(Vector3Int position)
         {
             return m_Tilemap.GetTileFlags(position);
         }
 
         // Tile Assets
+        ///<summary>Gets the <see cref="Tile" /> at the given XYZ coordinates of a cell in the <see cref="Tilemap" />.</summary>
+        ///<remarks>Use this method to get the [Tile](xref:Tilemap-ScriptableTiles-TileBase) at the given XYZ coordinates of a cell in the [Tilemap](xref:class-Tilemap).</remarks>
+        ///<param name="position">Position of the Tile on the <see cref="Tilemap" />.</param>
+        ///<returns>
+        ///  <see cref="Tile" /> placed at the cell.</returns>
         public virtual TileBase GetTile(Vector3Int position)
         {
             return m_Tilemap.GetTile(position);
         }
 
+        ///<summary>Gets the <see cref="Tile" /> of type T at the given XYZ coordinates of a cell in the <see cref="Tilemap" />.</summary>
+        ///<remarks>Use this method to get the [Tile of type T](xref:Tilemap-ScriptableTiles-TileBase) at the given XYZ coordinates of a cell in the [Tilemap](xref:class-Tilemap).</remarks>
+        ///<param name="position">Position of the Tile on the <see cref="Tilemap" />.</param>
+        ///<returns>
+        ///  <see cref="Tile" /> of type T placed at the cell.</returns>
         public virtual T GetTile<T>(Vector3Int position) where T : TileBase
         {
             return m_Tilemap.GetTile<T>(position);
         }
 
+        ///<summary>Gets the EntityId of the <see cref="Tile" /> at the given xyz coordinates of a cell in the Tilemap.</summary>
+        ///<param name="position">The position of the <see cref="Tile" /> on the <see cref="Tilemap" />.</param>
+        ///<returns>EntityId of the <see cref="Tilemaps.TileBase" /> placed at the cell.</returns>
+        ///<example>
+        ///  <code><![CDATA[using UnityEngine;
+        ///using UnityEngine.Tilemaps;
+        ///
+        ///public static class TilemapExample
+        ///{
+        ///    public static void GetTileEntityIdExample(ITilemap tilemap, Vector3Int position, Tile tile)
+        ///    {
+        ///        tilemap.GetComponent<Tilemap>().SetTile(position, tile);
+        ///        var tileId = tilemap.GetTileEntityId(position);
+        ///        Debug.Log($"The ids for the Tile placed are equal ({(tileId == tile.GetEntityId()).ToString()})");
+        ///    }
+        ///}]]></code>
+        ///</example>
         public virtual EntityId GetTileEntityId(Vector3Int position)
         {
             return m_Tilemap.GetTileEntityId(position);
@@ -110,6 +176,9 @@ namespace UnityEngine.Tilemaps
             m_RefreshCount += newLength;
         }
 
+        ///<summary>Refreshes a Tile at the given XYZ coordinates of a cell in the :Tilemap.</summary>
+        ///<remarks>The [Tilemap](xref:class-Tilemap) will retrieve the rendering data, animation data and other data for the [Tile](xref:Tilemap-ScriptableTiles-TileBase) and update all relevant components.</remarks>
+        ///<param name="position">Position of the Tile on the <see cref="Tilemap" />.</param>
         public void RefreshTile(Vector3Int position)
         {
             if (m_AddToList)
@@ -120,6 +189,63 @@ namespace UnityEngine.Tilemaps
                 m_Tilemap.RefreshTile(position);
         }
 
+        ///<summary>Refreshes Tiles at the given xyz coordinates of cells in the <see cref="Tilemap" /> from the array.</summary>
+        ///<param name="positionArray">An array of positions of Tiles on the <see cref="Tilemap" /> to refresh.</param>
+        ///<example>
+        ///  <code><![CDATA[using Unity.Collections;
+        ///using UnityEngine;
+        ///using UnityEngine.Tilemaps;
+        ///
+        /// // Tile that displays a Sprite when it is alone and a different Sprite when it is orthogonally adjacent to the same NeighourTile
+        ///[CreateAssetMenu]
+        ///public class NeighbourTile : TileBase
+        ///{
+        ///    public Sprite spriteA;
+        ///    public Sprite spriteB;
+        ///
+        ///    public override void RefreshTile(Vector3Int position, ITilemap tilemap)
+        ///    {
+        ///        var refreshPositions = new NativeArray<Vector3Int>(5, Allocator.Temp);
+        ///        var i = 0;
+        ///        for (int yd = -1; yd <= 1; yd += 2)
+        ///        {
+        ///            Vector3Int location = new Vector3Int(position.x, position.y + yd, position.z);
+        ///            refreshPositions[i++] = location;
+        ///        }
+        ///        for (int xd = -1; xd <= 1; xd += 2)
+        ///        {
+        ///            Vector3Int location = new Vector3Int(position.x + xd, position.y, position.z);
+        ///            refreshPositions[i++] = location;
+        ///        }
+        ///        refreshPositions[i] = position;
+        ///        tilemap.RefreshTiles(refreshPositions);
+        ///    }
+        ///
+        ///    public override void GetTileData(Vector3Int position, ITilemap tilemap, ref TileData tileData)
+        ///    {
+        ///        tileData.sprite = spriteA;
+        ///        for (int yd = -1; yd <= 1; yd += 2)
+        ///        {
+        ///            Vector3Int location = new Vector3Int(position.x, position.y + yd, position.z);
+        ///            if (IsNeighbour(location, tilemap))
+        ///                tileData.sprite = spriteB;
+        ///        }
+        ///        for (int xd = -1; xd <= 1; xd += 2)
+        ///        {
+        ///            Vector3Int location = new Vector3Int(position.x + xd, position.y, position.z);
+        ///            if (IsNeighbour(location, tilemap))
+        ///                tileData.sprite = spriteB;
+        ///        }
+        ///    }
+        ///
+        ///    private bool IsNeighbour(Vector3Int position, ITilemap tilemap)
+        ///    {
+        ///        TileBase tile = tilemap.GetTile(position);
+        ///        return (tile != null && tile == this);
+        ///    }
+        ///}
+        ///]]></code>
+        ///</example>
         public void RefreshTiles(NativeArray<Vector3Int> positionArray)
         {
             if (m_AddToList)
@@ -133,6 +259,8 @@ namespace UnityEngine.Tilemaps
             }
         }
 
+        ///<summary>Returns the component of type <c>T</c> if the GameObject of the tile map has one attached, null if it doesn't.</summary>
+        ///<returns>The Component of type T to retrieve.</returns>
         public T GetComponent<T>()
         {
             if (typeof(T) == typeof(Tilemap))
@@ -142,7 +270,11 @@ namespace UnityEngine.Tilemaps
             return m_Tilemap.GetComponent<T>();
         }
 
+        // Holds a Func pointing into editor (reloadable) code; not cleaned on reload — see stripping note on s_Instance.
+        [NoAutoStaticsCleanup]
         private static Func<Tilemap, ITilemap> createITilemap;
+        // Paired priority gate for createITilemap; persists alongside it — see stripping note on s_Instance.
+        [NoAutoStaticsCleanup]
         private static int createITilemapPriority = 0;
 
         internal static int createPriority => createITilemapPriority;

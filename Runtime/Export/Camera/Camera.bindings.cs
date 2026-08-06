@@ -28,6 +28,7 @@ namespace UnityEngine
     [NativeHeader("Runtime/Misc/GameObjectUtility.h")]
     [NativeHeader("Runtime/Shaders/Shader.h")]
     [UsedByNativeCode]
+    [global::UnityEngine.NativeClass("Camera", PersistentTypeId = 20)]
     [RequireComponent(typeof(Transform))]
     public sealed partial class Camera : Behaviour
     {

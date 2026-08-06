@@ -32,8 +32,9 @@ namespace UnityEditor
             public static readonly GUIContent reflectionProbePickerIcon = EditorGUIUtility.TrIconContent("ReflectionProbeSelector");
             public static readonly GUIContent lightmapEmissiveLabelRealtimeGISupport = EditorGUIUtility.TrTextContent("Global Illumination", "Controls if the emission is Baked or Realtime.\n\nBaked only has effect in scenes where Baked Global Illumination is enabled.\n\nRealtime uses Realtime Global Illumination if enabled in the scene. Otherwise the emission won't light up other objects.");
             public static readonly GUIContent lightmapEmissiveLabel = EditorGUIUtility.TrTextContent("Global Illumination", "Controls if the emission is Baked or Realtime.\n\nBaked only has effect in scenes where Baked Global Illumination is enabled.\n\nRealtime won't light up other objects since Realtime Global Illumination is not supported.");
+
             public static readonly GUIContent[] lightmapEmissiveStrings = { EditorGUIUtility.TextContent("Realtime"), EditorGUIUtility.TrTextContent("Baked"), EditorGUIUtility.TrTextContent("None") };
-            public static readonly int[]  lightmapEmissiveValues = { (int)MaterialGlobalIlluminationFlags.RealtimeEmissive, (int)MaterialGlobalIlluminationFlags.BakedEmissive, (int)MaterialGlobalIlluminationFlags.None };
+            public static readonly int[]  lightmapEmissiveValues = { (int)MaterialGlobalIlluminationFlags.RealtimeIndirectEmission, (int)MaterialGlobalIlluminationFlags.BakedEmission, (int)MaterialGlobalIlluminationFlags.None };
             public static readonly string propBlockInfo = EditorGUIUtility.TrTextContent("MaterialPropertyBlock is used to modify these values").text;
 
             public static readonly string builtInDeprecated = L10n.Tr("Built-in (Deprecated)/");
@@ -2033,10 +2034,10 @@ namespace UnityEditor
         static MaterialGlobalIlluminationFlags GetGlobalIlluminationFlags(MaterialGlobalIlluminationFlags flags)
         {
             MaterialGlobalIlluminationFlags newFlags = MaterialGlobalIlluminationFlags.None;
-            if ((flags & MaterialGlobalIlluminationFlags.RealtimeEmissive) != 0)
-                newFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
-            else if ((flags & MaterialGlobalIlluminationFlags.BakedEmissive) != 0)
-                newFlags = MaterialGlobalIlluminationFlags.BakedEmissive;
+            if ((flags & MaterialGlobalIlluminationFlags.RealtimeIndirectEmission) != 0)
+                newFlags = MaterialGlobalIlluminationFlags.RealtimeIndirectEmission;
+            else if ((flags & MaterialGlobalIlluminationFlags.BakedEmission) != 0)
+                newFlags = MaterialGlobalIlluminationFlags.BakedEmission;
 
             return newFlags;
         }
@@ -2069,14 +2070,14 @@ namespace UnityEditor
             giFlags = (MaterialGlobalIlluminationFlags)EditorGUI.IntPopup(position, realtimeGISupported ? Styles.lightmapEmissiveLabelRealtimeGISupport : Styles.lightmapEmissiveLabel, (int)giFlags, Styles.lightmapEmissiveStrings, Styles.lightmapEmissiveValues);
             EditorGUI.showMixedValue = false;
 
-            // Apply flags. But only the part that this tool modifies (RealtimeEmissive, BakedEmissive, None)
+            // Apply flags. But only the part that this tool modifies (RealtimeIndirectEmission, BakedEmission, None)
             if (EditorGUI.EndChangeCheck())
             {
                 foreach (Material material in materials)
                 {
                     MaterialGlobalIlluminationFlags flags = material.globalIlluminationFlags;
 
-                    flags &= ~(MaterialGlobalIlluminationFlags.RealtimeEmissive | MaterialGlobalIlluminationFlags.BakedEmissive);
+                    flags &= ~(MaterialGlobalIlluminationFlags.RealtimeIndirectEmission | MaterialGlobalIlluminationFlags.BakedEmission);
                     flags |= giFlags;
 
                     material.globalIlluminationFlags = flags;
@@ -2093,8 +2094,8 @@ namespace UnityEditor
 
             var settings = Lightmapping.GetLightingSettingsOrDefaultsFallback();
 
-            MaterialGlobalIlluminationFlags defaultEnabled = settings.realtimeGI ? MaterialGlobalIlluminationFlags.RealtimeEmissive
-                : (settings.bakedGI ? MaterialGlobalIlluminationFlags.BakedEmissive : MaterialGlobalIlluminationFlags.None);
+            MaterialGlobalIlluminationFlags defaultEnabled = settings.realtimeGI ? MaterialGlobalIlluminationFlags.RealtimeIndirectEmission
+                : (settings.bakedGI ? MaterialGlobalIlluminationFlags.BakedEmission : MaterialGlobalIlluminationFlags.None);
 
             // Calculate isMixed
             bool enabled = materials[0].globalIlluminationFlags != MaterialGlobalIlluminationFlags.EmissiveIsBlack;
@@ -2140,10 +2141,10 @@ namespace UnityEditor
 
         public static MaterialGlobalIlluminationFlags FixupEmissiveFlag(Color col, MaterialGlobalIlluminationFlags flags)
         {
-            if ((flags & MaterialGlobalIlluminationFlags.BakedEmissive) != 0 && col.maxColorComponent == 0.0f) // flag black baked
+            if ((flags & MaterialGlobalIlluminationFlags.BakedEmission) != 0 && col.maxColorComponent == 0.0f) // flag black baked
                 flags |= MaterialGlobalIlluminationFlags.EmissiveIsBlack;
             else if (flags != MaterialGlobalIlluminationFlags.EmissiveIsBlack) // clear baked flag on everything else, unless it's explicity disabled
-                flags &= MaterialGlobalIlluminationFlags.AnyEmissive;
+                flags &= ~MaterialGlobalIlluminationFlags.EmissiveIsBlack;
             return flags;
         }
 
@@ -2157,7 +2158,7 @@ namespace UnityEditor
             Material[] materials = Array.ConvertAll(targets, (Object o) => { return (Material)o; });
 
             // Calculate isMixed
-            MaterialGlobalIlluminationFlags any_em = MaterialGlobalIlluminationFlags.AnyEmissive;
+            MaterialGlobalIlluminationFlags any_em = MaterialGlobalIlluminationFlags.RealtimeIndirectEmission | MaterialGlobalIlluminationFlags.RealtimeDirectEmission | MaterialGlobalIlluminationFlags.BakedEmission;
             MaterialGlobalIlluminationFlags giFlags = materials[0].globalIlluminationFlags & any_em;
             bool isMixed = false;
             for (int i = 1; i < materials.Length; i++)
@@ -2177,7 +2178,7 @@ namespace UnityEditor
             EditorGUI.indentLevel -= indent;
             EditorGUI.showMixedValue = false;
 
-            // Apply flags. But only the part that this tool modifies (RealtimeEmissive, BakedEmissive, None)
+            // Apply flags. But only the part that this tool modifies (RealtimeIndirectEmission, BakedEmission, None)
             RegisterPropertyChangeUndo("Emission Flags");
             bool applyFlags = EditorGUI.EndChangeCheck();
             foreach (Material mat in materials)

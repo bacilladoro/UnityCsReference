@@ -3,9 +3,9 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System.Linq;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using System.Collections.Generic;
-using Unity.Scripting.LifecycleManagement;
 
 // NOTE:
 // This file should only contain internal functions of the EditorGUI class
@@ -108,7 +108,9 @@ namespace UnityEditor
 
         static class Resizer
         {
+            [NoAutoStaticsCleanup] // transient resize start size; only valid during active resize drag
             static float s_StartSize;
+            [NoAutoStaticsCleanup] // transient mouse start position; only valid during active resize drag
             static Vector2 s_MouseDeltaReaderStartPos;
             internal static float Resize(Rect position, float size, float minSize, float maxSize, bool horizontal, out bool hasControl)
             {

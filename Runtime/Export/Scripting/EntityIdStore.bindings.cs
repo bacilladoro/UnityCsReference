@@ -429,9 +429,9 @@ namespace UnityEngine
         [BurstDiscard]
         static void ManagedSpinWait(int count) => Thread.SpinWait(count);
 
-        // Per-thread pre-allocated EntityId cache.  Mirrors C++ EntityIdThreadPool.
-        // Populate() bulk-allocates via AllocateEntityIds(); TakeEntityIds() hands
-        // IDs out one batch at a time with no global synchronisation.
+        // Per-thread EntityId cache. Mirrors C++ EntityIdThreadPool.
+        // GetOrCreateStorage() lazily allocates the backing storage; TakeEntityIds() fills a
+        // thread's slice on first use, then hands IDs out one batch at a time, no global sync.
         // Process-wide per-thread entity ID pool — the single SharedStatic instance.
         // Callers use EntityIdStore.Pool directly rather than going through EntityComponentStore.
         internal static readonly SharedStatic<EntityIdPool> Pool =
@@ -459,78 +459,104 @@ namespace UnityEngine
         {
             internal struct BurstStaticIdentifier { }
 
-            // 64-byte cache-line padding keeps two threads' hot fields on separate lines.
-            [StructLayout(LayoutKind.Sequential, Size = 64)]
             struct ArrayInfo
             {
                 public int m_AvailableCount;
                 public int m_NextIndex;
             }
 
-            ArrayInfo* m_Arrays;          // [MaxJobThreadCount], aligned to 64 B
-            EntityId*  m_EntityIds;       // flat buffer [k_PooledPerThread * MaxJobThreadCount]
+            IntPtr m_Storage; // [(ArrayInfo + EntityId x k_PooledPerThread) x MaxJobThreadCount]
 
-            internal const int k_PooledPerThread = 128; // matches C++ gEntitiesInBlock / 2
+            // 127 ids + an 8-byte ArrayInfo make each thread's slice exactly 1024 bytes, a whole
+            // number of cache lines at both 64- and 128-byte line sizes, so threads never share one.
+            internal const int k_PooledPerThread = 127;
 
-            public int NumberAllocated;
+            static long PerThreadByteSize => sizeof(ArrayInfo) + (long)k_PooledPerThread * sizeof(EntityId);
 
-            internal void Populate()
+            int m_Allocating;
+
+            internal byte* GetOrCreateStorage()
             {
-                int total = k_PooledPerThread * JobsUtility.MaxJobThreadCount;
-                NumberAllocated = total;
-                if (m_EntityIds != null) return;
-
-                m_EntityIds = (EntityId*)UnsafeUtility.Malloc(
-                    (long)total * sizeof(EntityId), UnsafeUtility.AlignOf<EntityId>(), Allocator.Persistent);
-                AllocateEntityIdsGlobal(m_EntityIds, total);
-
-                m_Arrays = (ArrayInfo*)UnsafeUtility.Malloc(
-                    (long)JobsUtility.MaxJobThreadCount * sizeof(ArrayInfo), 64, Allocator.Persistent);
-                for (int i = 0; i < JobsUtility.MaxJobThreadCount; i++)
+                // Only one thread should do the actual allocation
+                if (Interlocked.CompareExchange(ref m_Allocating, 1, 0) == 0)
                 {
-                    m_Arrays[i].m_NextIndex    = 0;
-                    m_Arrays[i].m_AvailableCount = k_PooledPerThread;
+                    // Skip allocation in the unlikely event that another thread beat us to it
+                    if (m_Storage == IntPtr.Zero)
+                    {
+                        long size = PerThreadByteSize * JobsUtility.MaxJobThreadCount;
+
+                        // Align to 128 (largest cache line we target; not JobsUtility.CacheLineSize,
+                        // which is 64) so each 1024-byte slice sits on its own lines — no false sharing.
+                        byte* storage = (byte*)UnsafeUtility.Malloc(size, 128, Allocator.Persistent);
+
+                        // Zero-init only: every thread starts with 0 available ids, so the first
+                        // TakeEntityIds on a thread is what allocates its ids — threads that never
+                        // take an id never allocate.
+                        UnsafeUtility.MemClear(storage, size);
+
+                        // This Volatile.Write ensures everything that precedes it gets written to memory,
+                        // we don't want the compiler or CPU to reorder stuff here.
+                        Volatile.Write(ref m_Storage, (IntPtr)storage);
+                    }
+
+                    Interlocked.Exchange(ref m_Allocating, 0);
+                    return (byte*)m_Storage;
                 }
+
+                // We're in the case where another thread was busy allocating,
+                // wait for it to complete. BlockSpinBackoff softens the spinloop.
+                // Volatile.Read is required because we want the pointer to be read at every
+                // iteration of the loop, not hoisted out of it.
+                int spin = 0;
+                IntPtr storagePtr;
+                while ((storagePtr = Volatile.Read(ref m_Storage)) == IntPtr.Zero)
+                    BlockSpinBackoff(ref spin);
+                return (byte*)storagePtr;
             }
 
             // Returns un-consumed pool IDs back to the store so their slots can be
             // reallocated. Must be called before world teardown to avoid leaking slots.
             // After Drain the pool has 0 available per thread; the next TakeEntityIds
             // call will naturally trigger an AllocateEntityIdsGlobal refill.
+            // Single-threaded before teardown, so plain reads of m_Storage are fine.
             internal void Drain()
             {
-                if (m_Arrays == null) return;
+                byte* storage = (byte*)m_Storage;
+                if (storage == null) return;
                 for (int i = 0; i < JobsUtility.MaxJobThreadCount; i++)
                 {
-                    int available = m_Arrays[i].m_AvailableCount;
+                    byte* threadSlice    = storage + i * PerThreadByteSize;
+                    ArrayInfo* info      = (ArrayInfo*)threadSlice;
+                    EntityId*  threadBuf = (EntityId*)(threadSlice + sizeof(ArrayInfo));
+                    int available = info->m_AvailableCount;
                     if (available > 0)
-                    {
-                        EntityId* threadBuf = m_EntityIds + k_PooledPerThread * i;
-                        ReleaseEntityIds(threadBuf + m_Arrays[i].m_NextIndex, available);
-                    }
-                    m_Arrays[i].m_NextIndex    = 0;
-                    m_Arrays[i].m_AvailableCount = 0;
+                        ReleaseEntityIds(threadBuf + info->m_NextIndex, available);
+                    info->m_NextIndex     = 0;
+                    info->m_AvailableCount = 0;
                 }
             }
 
             internal void Dispose()
             {
-                if (m_EntityIds == null) return;
-                UnsafeUtility.Free(m_Arrays,    Allocator.Persistent); m_Arrays    = null;
-                UnsafeUtility.Free(m_EntityIds, Allocator.Persistent); m_EntityIds = null;
+                if (m_Storage == IntPtr.Zero) return;
+                UnsafeUtility.Free((void*)m_Storage, Allocator.Persistent);
+                m_Storage = IntPtr.Zero;
             }
 
             // Hot path: LIFO pop from this thread's pool slice.
             // Falls back to AllocateEntityIds for the remainder and then refills.
             internal void TakeEntityIds(EntityId* outIds, int count)
             {
-                // Lazy populate — mirrors C++ GetOrCreateThreadPool(). DOTS pre-populates
-                // explicitly for warm-path perf; all other callers get it on first use.
-                if (m_EntityIds == null) Populate();
+                // Lazy allocate on first use — mirrors C++ GetOrCreateThreadPool().
+                // Note that reading m_Storage doesn't need a memory barrier, in the odd case
+                // we'd read a stale null the extra call to GetOrCreateStorage is harmless.
+                byte* storage = (byte*)m_Storage;
+                if (storage == null)
+                    storage = GetOrCreateStorage();
 
-                int threadIdx        = JobsUtility.ThreadIndex;
-                ArrayInfo* info      = m_Arrays + threadIdx;
-                EntityId*  threadBuf = m_EntityIds + k_PooledPerThread * threadIdx;
+                byte* threadSlice    = storage + (long)JobsUtility.ThreadIndex * PerThreadByteSize;
+                ArrayInfo* info      = (ArrayInfo*)threadSlice;
+                EntityId*  threadBuf = (EntityId*)(threadSlice + sizeof(ArrayInfo));
 
                 int available = info->m_AvailableCount;
                 if (available >= count)
@@ -560,7 +586,7 @@ namespace UnityEngine
         {
             bool hasChunk = chunkBits != 0 || firstIndexInChunk != 0;
             if (count < EntityIdPool.k_PooledPerThread && !hasChunk)
-                Pool.Data.TakeEntityIds(outIds, count);   // lazily populates on first call
+                Pool.Data.TakeEntityIds(outIds, count);   // lazily allocates on first call
             else
                 AllocateEntityIdsGlobal(outIds, count, chunkBits, firstIndexInChunk);
         }

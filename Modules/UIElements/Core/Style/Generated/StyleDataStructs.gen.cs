@@ -445,7 +445,7 @@ namespace UnityEngine.UIElements
         public Color borderLeftColor;
         public Color borderRightColor;
         public Color borderTopColor;
-        public EntityId backgroundImage;
+        public UnmanagedBackground backgroundImage;
         public BackgroundRepeat backgroundRepeat;
         public Length borderBottomLeftRadius;
         public Length borderBottomRightRadius;
@@ -463,16 +463,47 @@ namespace UnityEngine.UIElements
 
         public VisualData Copy()
         {
-            return this;
+            var data = new VisualData();
+            data.backgroundColor = backgroundColor;
+            data.backgroundImage.CopyFrom(backgroundImage);
+            data.backgroundPositionX = backgroundPositionX;
+            data.backgroundPositionY = backgroundPositionY;
+            data.backgroundRepeat = backgroundRepeat;
+            data.backgroundSize = backgroundSize;
+            data.borderBottomColor = borderBottomColor;
+            data.borderBottomLeftRadius = borderBottomLeftRadius;
+            data.borderBottomRightRadius = borderBottomRightRadius;
+            data.borderLeftColor = borderLeftColor;
+            data.borderRightColor = borderRightColor;
+            data.borderTopColor = borderTopColor;
+            data.borderTopLeftRadius = borderTopLeftRadius;
+            data.borderTopRightRadius = borderTopRightRadius;
+            data.opacity = opacity;
+            return data;
         }
 
         public void CopyFrom(ref VisualData other)
         {
-            this = other;
+            backgroundColor = other.backgroundColor;
+            backgroundImage.CopyFrom(other.backgroundImage);
+            backgroundPositionX = other.backgroundPositionX;
+            backgroundPositionY = other.backgroundPositionY;
+            backgroundRepeat = other.backgroundRepeat;
+            backgroundSize = other.backgroundSize;
+            borderBottomColor = other.borderBottomColor;
+            borderBottomLeftRadius = other.borderBottomLeftRadius;
+            borderBottomRightRadius = other.borderBottomRightRadius;
+            borderLeftColor = other.borderLeftColor;
+            borderRightColor = other.borderRightColor;
+            borderTopColor = other.borderTopColor;
+            borderTopLeftRadius = other.borderTopLeftRadius;
+            borderTopRightRadius = other.borderTopRightRadius;
+            opacity = other.opacity;
         }
 
         public void Dispose()
         {
+            backgroundImage.Dispose();
         }
 
         public static bool operator ==(VisualData lhs, VisualData rhs)

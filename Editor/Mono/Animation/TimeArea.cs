@@ -5,6 +5,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 using System.Globalization;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -21,6 +22,7 @@ namespace UnityEditor
 
         [SerializeField] private TickHandler m_VTicks;
 
+        [NoAutoStaticsCleanup]
         static readonly List<float> s_TickCache = new List<float>(1000);
 
         public TickHandler vTicks
@@ -52,6 +54,7 @@ namespace UnityEditor
             public GUIStyle playhead = "AnimationPlayHead";
         }
 
+        [NoAutoStaticsCleanup]
         static Styles2 timeAreaStyles;
 
         static void InitStyles()
@@ -277,7 +280,9 @@ namespace UnityEditor
             Cancel
         }
 
+        [NoAutoStaticsCleanup]
         static float s_OriginalTime;
+        [NoAutoStaticsCleanup]
         static float s_PickOffset;
 
         public TimeRulerDragMode BrowseRuler(Rect position, ref float time, float frameRate, bool pickAnywhere,

@@ -17,6 +17,7 @@ namespace UnityEngine
     ///<seealso cref="MeshCollider" />
     ///<seealso cref="PhysicsMaterial" />
     ///<seealso cref="Rigidbody" />
+    [global::UnityEngine.NativeClass("Collider", PersistentTypeId = 56)]
     [NativeHeader("Modules/Physics/Collider.h")]
     public partial class Collider : Component
     {

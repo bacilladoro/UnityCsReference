@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using UnityEngine;
+using Unity.Scripting.LifecycleManagement;
 using System;
 using System.IO;
 using UnityEditorInternal;
@@ -66,6 +67,7 @@ namespace UnityEditor
 
     public class ScriptableSingleton<T> : ScriptableObject where T : ScriptableObject
     {
+        [NoAutoStaticsCleanup] // ScriptableObject singleton reconstructed from backup on reload and re-linked in ctor; lazily recreated if null
         static T s_Instance;
 
         public static T instance

@@ -40,3 +40,4 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("Unity.TextMeshPro.Editor.Tests")]
 [assembly: InternalsVisibleTo("Unity.UIElements.EditorTests")]
 [assembly: InternalsVisibleTo("Assembly-CSharp-Editor-testable")]
+[assembly: InternalsVisibleTo("Unity.UIElements.EditorResources.EditorTests")]

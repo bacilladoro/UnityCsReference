@@ -23,6 +23,7 @@ namespace UnityEngine.UIElements
     [HelpURL("ui-systems/panel-renderer-component")]
     [AddComponentMenu("UI Toolkit/Panel Renderer (UI Toolkit)")]
     [NativeHeader("Modules/UIElements/Core/Native/Renderer/PanelRenderer.h")]
+    [NativeClass("PanelRenderer", PersistentTypeId = 0x731E9096)]
     [ExtensionOfNativeClass]
     public sealed partial class PanelRenderer : Renderer, IPanelComponent
     {
@@ -641,6 +642,12 @@ namespace UnityEngine.UIElements
                 parentUI.RemoveChild(this);
             else
                 panelSettings?.DetachPanelComponent(this);
+
+            // UUM-146244: If the PanelSettings was already destroyed DetachPanelComponent call above short-circuited
+            // and the root is still parented into the panel's visual tree. Detach it directly so the subsequent ReleaseResources
+            // check in OnPanelRendererCleanup doesn't throw.
+            if (m_RootVisualElement != null && m_RootVisualElement.parent != null)
+                m_RootVisualElement.RemoveFromHierarchy();
         }
 
         internal void ReactToHierarchyChanges()

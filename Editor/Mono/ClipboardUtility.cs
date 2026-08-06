@@ -4,21 +4,31 @@
 
 using System;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 namespace UnityEditor
 {
-    public static class ClipboardUtility
+    public static partial class ClipboardUtility
     {
+        [AutoStaticsCleanupOnCodeReload]
         public static Func<GameObject, bool> canCopyGameObject;
+        [AutoStaticsCleanupOnCodeReload]
         public static Func<GameObject, bool> canCutGameObject;
+        [AutoStaticsCleanupOnCodeReload]
         public static Func<GameObject, bool> canDuplicateGameObject;
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<GameObject[]> copyingGameObjects;
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<GameObject[]> cuttingGameObjects;
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<GameObject[]> duplicatingGameObjects;
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<GameObject[]> duplicatedGameObjects;
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<GameObject[]> rejectedGameObjects;
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<GameObject[]> pastedGameObjects;
 
         private static void FilterSelection(Func<GameObject, bool> filter)

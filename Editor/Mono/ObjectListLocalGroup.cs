@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEditor.VersionControl;
 using UnityEditorInternal;
@@ -18,12 +19,14 @@ namespace UnityEditor
         // 'iconRect' frame for the asset icon.
         // 'guid' asset being drawn.
         internal delegate void OnAssetIconDrawDelegate(Rect iconRect, string guid, bool isListMode);
+        [AutoStaticsCleanupOnCodeReload]
         internal static event OnAssetIconDrawDelegate postAssetIconDrawCallback = null;
 
         // 'drawRect' prescribed draw area after the asset label.
         // 'guid' asset being drawn.
         // return whether drawing occured (space will be redistributed if false)
         internal delegate bool OnAssetLabelDrawDelegate(Rect drawRect, string guid, bool isListMode);
+        [AutoStaticsCleanupOnCodeReload]
         internal static event OnAssetLabelDrawDelegate postAssetLabelDrawCallback = null;
 
         // Asset on local disk in project

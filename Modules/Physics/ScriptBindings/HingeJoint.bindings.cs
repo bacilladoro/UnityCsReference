@@ -14,7 +14,7 @@ namespace UnityEngine
     ///And a limit which constrains the joint angle.</remarks>
     [RequireComponent(typeof(Rigidbody))]
     [NativeHeader("Modules/Physics/HingeJoint.h")]
-    [NativeClass("Unity::HingeJoint")]
+    [NativeClass("Unity::HingeJoint", PersistentTypeId = 59)]
     public class HingeJoint : Joint
     {
         ///<summary>The motor will apply a force up to a maximum force to achieve the target velocity in degrees per second.</summary>

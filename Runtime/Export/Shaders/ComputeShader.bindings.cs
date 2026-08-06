@@ -15,6 +15,7 @@ namespace UnityEngine
     [UsedByNativeCode]
     [NativeHeader("Runtime/Graphics/RayTracing/RayTracingAccelerationStructure.h")]
     [NativeHeader("Runtime/Graphics/ShaderScriptBindings.h")]
+    [global::UnityEngine.NativeClass("ComputeShader", PersistentTypeId = 72)]
     [NativeHeader("Runtime/Shaders/ComputeShader.h")]
     public sealed partial class ComputeShader : Object
     {
@@ -25,6 +26,9 @@ namespace UnityEngine
         extern public int FindKernel(string name);
         [FreeFunction(Name = "ComputeShaderScripting::HasKernel", HasExplicitThis = true)]
         extern public bool HasKernel(string name);
+
+        [FreeFunction("ComputeShaderScripting::CreateFromCompiledData")] extern internal static ComputeShader CreateFromCompiledData(
+            byte[] compiledData);
 
         [FreeFunction(Name = "ComputeShaderScripting::SetValue<float>", HasExplicitThis = true)]
         extern public void SetFloat(int nameID, float val);

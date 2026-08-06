@@ -50,7 +50,7 @@ namespace UnityEditor
     // Editor drag & drop operations.
     [NativeHeader("Editor/Platform/Interface/DragAndDrop.h"),
      StaticAccessor("GetDragAndDrop()", StaticAccessorType.Dot)]
-    public class DragAndDrop
+    public partial class DragAndDrop
     {
         [AutoStaticsCleanupOnCodeReload]
         private static Hashtable s_GenericData;

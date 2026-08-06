@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor.Experimental;
 using UnityEditor.StyleSheets;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.IMGUI.Controls
 {
@@ -60,14 +61,23 @@ namespace UnityEditor.IMGUI.Controls
         // Styles
         internal static class Styles
         {
+            [NoAutoStaticsCleanup] // GUIStyle from named skin style; survives reload. public field, not made readonly (source-breaking)
             public static GUIStyle foldout = "IN Foldout";
+            [NoAutoStaticsCleanup] // GUIStyle from named skin style; survives reload. public field, not made readonly (source-breaking)
             public static GUIStyle insertion = "TV Insertion";
+            [NoAutoStaticsCleanup] // GUIStyle from named skin style; survives reload. public field, not made readonly (source-breaking)
             public static GUIStyle insertionRelativeToSibling = "TV InsertionRelativeToSibling";
+            [NoAutoStaticsCleanup] // GUIStyle from named skin style; survives reload. public field, not made readonly (source-breaking)
             public static GUIStyle ping = "TV Ping";
+            [NoAutoStaticsCleanup] // GUIStyle from named skin style; survives reload. public field, not made readonly (source-breaking)
             public static GUIStyle toolbarButton = "ToolbarButton";
+            [NoAutoStaticsCleanup] // GUIStyle from named skin style; survives reload. public field, not made readonly (source-breaking)
             public static GUIStyle lineStyle = "TV Line";
+            [NoAutoStaticsCleanup] // GUIStyle from named skin style; survives reload. public field, not made readonly (source-breaking)
             public static GUIStyle lineBoldStyle = "TV LineBold";
+            [NoAutoStaticsCleanup] // GUIStyle from named skin style; survives reload. public field, not made readonly (source-breaking)
             public static GUIStyle selectionStyle = "TV Selection";
+            [NoAutoStaticsCleanup] // GUIContent icon by fixed name; reassigned in derived DoIconAndName so cannot be readonly. public, safe to persist
             public static GUIContent content = new GUIContent(EditorGUIUtility.FindTexture(EditorResources.folderIconName));
         }
 

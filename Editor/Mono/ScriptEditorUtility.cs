@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using UnityEngine;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Scripting;
 using UnityEditor;
 using UnityEditor.Utils;
@@ -17,7 +18,7 @@ using Unity.CodeEditor;
 
 namespace UnityEditorInternal
 {
-    public class ScriptEditorUtility
+    public partial class ScriptEditorUtility
     {
         // Keep in sync with enum ScriptEditorType in ExternalEditor.h
         [Obsolete("This will be removed", false)]
@@ -37,6 +38,7 @@ namespace UnityEditorInternal
             public string Path;
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         static readonly List<Func<Installation[]>> k_PathCallbacks = new List<Func<Installation[]>>();
 
         [Obsolete("Use UnityEditor.ScriptEditor.Register()", true)]

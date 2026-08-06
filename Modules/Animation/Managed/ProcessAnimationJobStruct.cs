@@ -6,6 +6,7 @@
 using System;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs.LowLevel.Unsafe;
+using static Unity.Collections.LowLevel.Unsafe.BurstLike;
 
 namespace UnityEngine.Animations
 {
@@ -20,18 +21,19 @@ namespace UnityEngine.Animations
     internal struct ProcessAnimationJobStruct<T>
         where T : struct, IAnimationJob
     {
-        private static IntPtr jobReflectionData;
+        private static readonly SharedStatic<IntPtr> s_JobReflectionData =
+            SharedStatic<IntPtr>.GetOrCreate<ProcessAnimationJobStruct<T>>();
 
         public static IntPtr GetJobReflectionData()
         {
-            if (jobReflectionData == IntPtr.Zero)
+            if (s_JobReflectionData.Data == IntPtr.Zero)
             {
-                jobReflectionData = JobsUtility.CreateJobReflectionData(
+                s_JobReflectionData.Data = JobsUtility.CreateJobReflectionData(
                     typeof(T),
                     (ExecuteJobFunction)Execute);
             }
 
-            return jobReflectionData;
+            return s_JobReflectionData.Data;
         }
 
         public delegate void ExecuteJobFunction(ref T data, IntPtr animationStreamPtr, IntPtr unusedPtr, ref JobRanges ranges, int jobIndex);

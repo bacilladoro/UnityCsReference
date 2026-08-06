@@ -926,10 +926,16 @@ namespace UnityEngine
     public enum MaterialGlobalIlluminationFlags
     {
         None = 0,
+        [Obsolete("Renamed to: RealtimeIndirectEmission, please use that instead", false)]
         RealtimeEmissive = 1 << 0,
+        RealtimeIndirectEmission = 1 << 0,
+        [Obsolete("Renamed to: BakedEmission, please use that instead", false)]
         BakedEmissive = 1 << 1,
+        BakedEmission = 1 << 1,
         EmissiveIsBlack = 1 << 2,
-        AnyEmissive = RealtimeEmissive | BakedEmissive
+        RealtimeDirectEmission = 1 << 3,
+        [Obsolete("This enum no longer reflects all emissives please select all the emissive flags you want to use instead.", false)]
+        AnyEmissive = RealtimeEmissive | BakedEmissive,
     }
 
     // Match MaterialSerializedProperty on C++ side

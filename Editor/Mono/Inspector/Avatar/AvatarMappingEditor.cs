@@ -7,6 +7,7 @@ using UnityEditor;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditorInternal;
 using System.Linq;
 
@@ -25,7 +26,7 @@ namespace UnityEditor
     }
 
     [System.Serializable]
-    internal class AvatarMappingEditor : AvatarSubEditor
+    internal partial class AvatarMappingEditor : AvatarSubEditor
     {
         internal class Styles
         {
@@ -73,8 +74,9 @@ namespace UnityEditor
             public GUIStyle errorLabel = "AvatarMappingErrorLabel";
         }
 
-        internal static Styles styles { get { if (s_Styles == null) s_Styles = new Styles(); return s_Styles; } }
+        [AutoStaticsCleanupOnCodeReload]
         static Styles s_Styles;
+        internal static Styles styles => s_Styles ??= new();
 
         private SerializedProperty m_HumanBoneArray;
         private SerializedProperty m_Skeleton;
@@ -86,8 +88,11 @@ namespace UnityEditor
 
         [SerializeField]
         protected AvatarSetupTool.BoneWrapper[] m_Bones;
+        [NoAutoStaticsCleanup]
         internal static int s_SelectedBoneIndex = -1;
+        [NoAutoStaticsCleanup]
         internal static bool s_DirtySelection = false;
+        [NoAutoStaticsCleanup]
         internal static int s_KeyboardControl = 0;
         protected bool m_HasSkinnedMesh;
         bool m_IsBiped;

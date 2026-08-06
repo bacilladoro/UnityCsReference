@@ -33,10 +33,12 @@ namespace UnityEngine.LightTransport
             m_Ptr = ptr;
             m_OwnsPtr = false;
         }
+#pragma warning disable UA5000 // The Avoid Finalizer Analyzer produces compile errors for any new finalizers. This pre-existing finalizer declaration has been suppressed, but should be rewritten if possible.
         ~RadeonRaysContext()
         {
             Destroy();
         }
+#pragma warning restore UA5000
         public void Dispose()
         {
             Destroy();

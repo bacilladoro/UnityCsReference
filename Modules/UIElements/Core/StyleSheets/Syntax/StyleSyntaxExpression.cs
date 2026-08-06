@@ -57,6 +57,8 @@ namespace UnityEngine.UIElements.StyleSheets.Syntax
         Angle, //<angle>
         CustomIdent, // <custom-ident>
         Ratio, // <ratio>
+        LinearGradient, // <linear-gradient>
+        RadialGradient, // <radial-gradient>
     }
 
     // In order of precedence

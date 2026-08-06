@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -17,6 +18,7 @@ namespace UnityEditor.Build.Analysis
         private const int k_FrameCount = 12;
         private const long k_FrameIntervalMs = 80; // 12 frames ≈ one rotation per second
 
+        [NoAutoStaticsCleanup] // lazy cache of built-in editor spinner icons loaded by fixed name; the assets survive code reload and the field re-initialises on first access
         private static Texture[] s_Frames;
 
         private readonly Image m_Spinner;

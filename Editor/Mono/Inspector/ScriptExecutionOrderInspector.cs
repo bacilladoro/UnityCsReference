@@ -7,11 +7,12 @@ using UnityEditor.VersionControl;
 using System.Collections.Generic;
 using Object = UnityEngine.Object;
 using Unity.Collections;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
     [CustomEditor(typeof(MonoManager))]
-    internal class ScriptExecutionOrderInspector : Editor
+    internal partial class ScriptExecutionOrderInspector : Editor
     {
         /*
          * @TODO
@@ -74,8 +75,10 @@ namespace UnityEditor
         private MonoScript m_Edited = null;
         private List<MonoScript> m_CustomTimeScripts;
         private List<MonoScript> m_DefaultTimeScripts;
+        [NoAutoStaticsCleanup] // Empty placeholder MonoScript recreated lazily on first access; harmless to persist.
         private static MonoScript sDummyScript;
         private Vector2 m_Scroll = Vector2.zero;
+        [AutoStaticsCleanupOnCodeReload]
         private static readonly List<ScriptExecutionOrderInspector> m_Instances = new List<ScriptExecutionOrderInspector>();
 
         // Important that these 3 use data types that are serializable.
@@ -84,15 +87,15 @@ namespace UnityEditor
         private int[] m_AllOrders;
         private bool m_DirtyOrders = false;
 
-        private static int s_DropFieldHash = "DropField".GetHashCode();
+        private static readonly int s_DropFieldHash = "DropField".GetHashCode();
 
         public class Content
         {
-            public static GUIContent helpText = EditorGUIUtility.TrTextContent("Add scripts to the custom order and drag them to reorder.\n\nScripts in the custom order can execute before or after the default time and are executed from top to bottom. All other scripts execute at the default time in the order they are loaded.\n\n(Changing the order of a script may modify the meta data for more than one script.)");
-            public static GUIContent iconToolbarPlus = EditorGUIUtility.TrIconContent("Toolbar Plus", "Add script to custom order");
-            public static GUIContent iconToolbarMinus = EditorGUIUtility.TrIconContent("Toolbar Minus", "Remove script from custom order");
-            public static GUIContent defaultTimeContent = EditorGUIUtility.TrTextContent("Default Time", "All scripts not in the custom order are executed at the default time.");
-            public static GUIContent[] emptyMenuOptions = { EditorGUIUtility.TrTextContent("Empty") };
+            public static readonly GUIContent helpText = EditorGUIUtility.TrTextContent("Add scripts to the custom order and drag them to reorder.\n\nScripts in the custom order can execute before or after the default time and are executed from top to bottom. All other scripts execute at the default time in the order they are loaded.\n\n(Changing the order of a script may modify the meta data for more than one script.)");
+            public static readonly GUIContent iconToolbarPlus = EditorGUIUtility.TrIconContent("Toolbar Plus", "Add script to custom order");
+            public static readonly GUIContent iconToolbarMinus = EditorGUIUtility.TrIconContent("Toolbar Minus", "Remove script from custom order");
+            public static readonly GUIContent defaultTimeContent = EditorGUIUtility.TrTextContent("Default Time", "All scripts not in the custom order are executed at the default time.");
+            public static readonly GUIContent[] emptyMenuOptions = { EditorGUIUtility.TrTextContent("Empty") };
         }
 
         public static class Styles
@@ -709,10 +712,13 @@ namespace UnityEditor
         {
             public delegate void DrawElementDelegate(Rect r, object obj, bool dragging);
 
+            [NoAutoStaticsCleanup] // Within-drag transient index; unmanaged int, safe to persist across reload.
             private static int s_ReorderingDraggedElement;
+            [NoAutoStaticsCleanup] // Within-drag scratch buffer of unmanaged floats; reallocated at drag start.
             private static float[] s_ReorderingPositions;
+            [NoAutoStaticsCleanup] // Within-drag scratch buffer of unmanaged ints; reallocated at drag start.
             private static int[] s_ReorderingGoals;
-            private static int s_DragReorderGUIHash = "DragReorderGUI".GetHashCode();
+            private static readonly int s_DragReorderGUIHash = "DragReorderGUI".GetHashCode();
 
             private static bool IsDefaultTimeElement(MonoScript element)
             {

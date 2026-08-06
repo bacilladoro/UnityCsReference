@@ -6,13 +6,15 @@ using System.IO;
 using UnityEngine;
 using UnityEditorInternal;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
     internal partial class PresetLibraryEditor<T> where T : PresetLibrary
     {
-        class SettingsMenu
+        partial class SettingsMenu
         {
+            [AutoStaticsCleanupOnCodeReload]
             static PresetLibraryEditor<T> s_Owner;
 
             class ViewModeData

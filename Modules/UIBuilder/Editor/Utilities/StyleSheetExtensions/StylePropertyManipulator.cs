@@ -1009,7 +1009,12 @@ namespace Unity.UI.Builder
                     {
                         var varHandle = propertyHandles[++currentIndex];
                         if (varHandle.valueType != StyleValueType.Variable)
+                        {
+                            // Non-var() function (e.g. gradient) — skip its args so the outer walk
+                            // doesn't stumble on inner commas.
+                            currentIndex += argCount - 1;
                             return StylePropertyPart.Create();
+                        }
 
                         var variable = styleSheet.ReadVariable(varHandle);
                         using (var manipulator = ResolveVariable(element, styleSheet, styleRule, variable, isEditorExtensionMode))

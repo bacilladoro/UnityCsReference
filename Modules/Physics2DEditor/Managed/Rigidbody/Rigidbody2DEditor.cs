@@ -4,6 +4,7 @@
 
 using System.Collections.Generic;
 using System.Linq;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor.AnimatedValues;
 using UnityEngine;
 
@@ -11,7 +12,7 @@ namespace UnityEditor
 {
     [CustomEditor(typeof(Rigidbody2D))]
     [CanEditMultipleObjects]
-    internal class Rigidbody2DEditor : Editor
+    internal partial class Rigidbody2DEditor : Editor
     {
         SerializedProperty m_Simulated;
         SerializedProperty m_BodyType;
@@ -40,6 +41,9 @@ namespace UnityEditor
         static readonly GUIContent m_FreezePositionLabel = EditorGUIUtility.TrTextContent("Freeze Position");
         static readonly GUIContent m_FreezeRotationLabel = EditorGUIUtility.TrTextContent("Freeze Rotation");
 
+        // this is a cached collection (to avoid allocations on every frame) that can reference user defined Colliders.
+        // We don't care about its content, but we want to prevent references to user code here
+        [AutoStaticsCleanupOnCodeReload]
         static List<ContactPoint2D> m_Contacts = new List<ContactPoint2D>(64);
 
         private SavedBool m_ShowLayerOverridesFoldout;

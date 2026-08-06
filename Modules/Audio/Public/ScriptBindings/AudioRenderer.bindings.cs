@@ -11,19 +11,26 @@ using Unity.Collections.LowLevel.Unsafe;
 
 namespace UnityEngine
 {
+    ///<summary>Allow recording the main output of the game or specific groups in the AudioMixer.</summary>
     [NativeHeader("Modules/Audio/Public/ScriptBindings/AudioRenderer.bindings.h")]
     public class AudioRenderer
     {
+        ///<summary>Enters audio recording mode. After this Unity will output silence until <see cref="AudioRenderer.Stop" /> is called.</summary>
+        ///<returns>True if the engine was switched into output recording mode. False if it is already recording.</returns>
         public static bool Start()
         {
             return Internal_AudioRenderer_Start();
         }
 
+        ///<summary>Exits audio recording mode. After this audio output will be audible again.</summary>
+        ///<returns>True if the engine was recording when this function was called.</returns>
         public static bool Stop()
         {
             return Internal_AudioRenderer_Stop();
         }
 
+        ///<summary>Returns the number of samples available since the last time <see cref="AudioRenderer.Render" /> was called. This is dependent on the frame capture rate.</summary>
+        ///<returns>Number of samples available since last recorded frame.</returns>
         public static int GetSampleCountForCaptureFrame()
         {
             return Internal_AudioRenderer_GetSampleCountForCaptureFrame();
@@ -35,6 +42,9 @@ namespace UnityEngine
             return Internal_AudioRenderer_AddMixerGroupSink(mixerGroup, buffer.GetUnsafePtr(), buffer.Length, excludeFromMix);
         }
 
+        ///<summary>Performs the recording of the main output as well as any optional mixer groups that have been registered via <see cref="AudioRenderer.AddMixerGroupSink" />.</summary>
+        ///<param name="buffer">The buffer to write the sample data to.</param>
+        ///<returns>True if the recording succeeded.</returns>
         unsafe public static bool Render(NativeArray<float> buffer)
         {
             return Internal_AudioRenderer_Render(buffer.GetUnsafePtr(), buffer.Length);

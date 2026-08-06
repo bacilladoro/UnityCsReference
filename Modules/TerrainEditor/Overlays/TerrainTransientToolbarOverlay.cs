@@ -15,6 +15,7 @@ using System.Collections.Generic;
 using System;
 using System.Text.RegularExpressions;
 using Unity.Collections;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.TerrainTools
 {
@@ -35,10 +36,12 @@ namespace UnityEditor.TerrainTools
     }
 
     [Overlay(typeof(SceneView), "Terrain Tools", defaultDockPosition = DockPosition.Top, defaultDockZone = DockZone.LeftToolbar, defaultDockIndex = -1, group = OverlayAttribute.unityGroup)]
-    internal class TerrainTransientToolbarOverlay : ToolbarOverlay, ITransientOverlay, ICreateHorizontalToolbar, ICreateVerticalToolbar
+    internal partial class TerrainTransientToolbarOverlay : ToolbarOverlay, ITransientOverlay, ICreateHorizontalToolbar, ICreateVerticalToolbar
     {
         bool m_OverlaysPackageInstalled;
+        [AutoStaticsCleanupOnCodeReload] // holds a (possibly user-implemented) tool instance; drop on reload
         internal static ITerrainPaintToolWithOverlays s_LastSelectedTool;
+        [NoAutoStaticsCleanup] // value-type enum; last-selected category
         internal static TerrainTool s_LastSelectedTerrainCategory;
 
         // See also
@@ -77,6 +80,7 @@ namespace UnityEditor.TerrainTools
         }
 
 
+        [AutoStaticsCleanupOnCodeReload] // overlay instance; drop the stale one on reload (overlay system recreates it)
         internal static TerrainTransientToolbarOverlay s_TerrainTransientToolbarOverlay;
 
         // determines whether the toolbar should be visible or not
@@ -418,16 +422,22 @@ namespace UnityEditor.TerrainTools
             }
         }
 
-        static MenuItem s_SculptMode = new MenuItem("TerrainOverlays/ToolModeIcons/SculptMode_On.png", "TerrainOverlays/ToolModeIcons/SculptMode.png", "Sculpt Mode");
-        static MenuItem s_MaterialMode = new MenuItem("TerrainOverlays/ToolModeIcons/MaterialsMode_On.png", "TerrainOverlays/ToolModeIcons/MaterialsMode.png", "Materials Mode");
-        static MenuItem s_FoliageMode = new MenuItem("TerrainOverlays/ToolModeIcons/FoliageMode_On.png", "TerrainOverlays/ToolModeIcons/FoliageMode.png", "Foliage Mode");
-        static MenuItem s_NeighborMode = new MenuItem("TerrainOverlays/ToolModeIcons/NeighborTerrainsMode_On.png", "TerrainOverlays/ToolModeIcons/NeighborTerrainsMode.png", "Neighbor Terrains Mode");
-        static MenuItem s_CustomBrushesMode = new MenuItem("TerrainOverlays/ToolModeIcons/CustomBrushesMode_On.png", "TerrainOverlays/ToolModeIcons/CustomBrushesMode.png", "Custom Brushes Mode");
+        [NoAutoStaticsCleanup] // immutable menu config (icon paths/tooltip strings); no user refs
+        static readonly MenuItem s_SculptMode = new MenuItem("TerrainOverlays/ToolModeIcons/SculptMode_On.png", "TerrainOverlays/ToolModeIcons/SculptMode.png", "Sculpt Mode");
+        [NoAutoStaticsCleanup] // immutable menu config (icon paths/tooltip strings); no user refs
+        static readonly MenuItem s_MaterialMode = new MenuItem("TerrainOverlays/ToolModeIcons/MaterialsMode_On.png", "TerrainOverlays/ToolModeIcons/MaterialsMode.png", "Materials Mode");
+        [NoAutoStaticsCleanup] // immutable menu config (icon paths/tooltip strings); no user refs
+        static readonly MenuItem s_FoliageMode = new MenuItem("TerrainOverlays/ToolModeIcons/FoliageMode_On.png", "TerrainOverlays/ToolModeIcons/FoliageMode.png", "Foliage Mode");
+        [NoAutoStaticsCleanup] // immutable menu config (icon paths/tooltip strings); no user refs
+        static readonly MenuItem s_NeighborMode = new MenuItem("TerrainOverlays/ToolModeIcons/NeighborTerrainsMode_On.png", "TerrainOverlays/ToolModeIcons/NeighborTerrainsMode.png", "Neighbor Terrains Mode");
+        [NoAutoStaticsCleanup] // immutable menu config (icon paths/tooltip strings); no user refs
+        static readonly MenuItem s_CustomBrushesMode = new MenuItem("TerrainOverlays/ToolModeIcons/CustomBrushesMode_On.png", "TerrainOverlays/ToolModeIcons/CustomBrushesMode.png", "Custom Brushes Mode");
 
-        private static Texture2D s_SeparatorIcon =
+        static readonly Texture2D s_SeparatorIcon =
             EditorGUIUtility.LoadIcon("TerrainOverlays/SeparatorDot.png");
 
-        internal static MenuItem[] s_ModeMenu = { s_SculptMode, s_MaterialMode, s_FoliageMode, s_NeighborMode, s_CustomBrushesMode };
+        [NoAutoStaticsCleanup] // immutable menu config array (value-copies of the MenuItem structs); no user refs
+        internal static readonly MenuItem[] s_ModeMenu = { s_SculptMode, s_MaterialMode, s_FoliageMode, s_NeighborMode, s_CustomBrushesMode };
 
         int m_CurrCategoryIndex = 0;
         List<EditorToolbarToggle> m_MenuButtons = new List<EditorToolbarToggle>();

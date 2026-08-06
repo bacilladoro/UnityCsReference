@@ -11,6 +11,7 @@ namespace UnityEditor
 {
     [NativeHeader("Modules/AssetPipelineEditor/Public/MonoImporter.h")]
     [NativeHeader("Modules/AssetPipelineEditor/Public/MonoImporter.bindings.h")]
+    [global::UnityEngine.NativeClass("MonoImporter", PersistentTypeId = 1035)]
     [ExcludeFromPreset]
     public class MonoImporter : AssetImporter
     {

@@ -8,16 +8,18 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
 using System.Text;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
     // Class for storing state for mask menus so we can get the info back to OnGUI from the user selection
-    internal static class MaskFieldGUI
+    internal static partial class MaskFieldGUI
     {
         // Class for storing state for mask menus so we can get the info back to OnGUI from the user selection
-        private class MaskCallbackInfo
+        private partial class MaskCallbackInfo
         {
             // The global shared popup state
+            [AutoStaticsCleanupOnCodeReload]
             public static MaskCallbackInfo m_Instance;
 
             // Name of the command event sent from the popup menu to OnGUI when user has changed selection
@@ -168,9 +170,13 @@ namespace UnityEditor
             return mask;
         }
 
+        [NoAutoStaticsCleanup] // reusable buffer pool of value-type arrays, no user-type refs; safe to persist
         private static readonly List<string[]> s_OptionNames = new List<string[]>();
+        [NoAutoStaticsCleanup] // reusable buffer pool of value-type arrays, no user-type refs; safe to persist
         private static readonly List<int[]> s_OptionValues = new List<int[]>();
+        [NoAutoStaticsCleanup] // reusable buffer pool of value-type arrays, no user-type refs; safe to persist
         private static readonly List<int[]> s_SelectedOptions = new List<int[]>();
+        [NoAutoStaticsCleanup] // reusable scratch set of ints, no user-type refs; safe to persist
         private static readonly HashSet<int> s_SelectedOptionsSet = new HashSet<int>();
 
         private static T[] GetBuffer<T>(List<T[]> pool, int bufferLength)

@@ -129,10 +129,12 @@ namespace UnityEngine.VFX
             m_WrapEventAttribute = null;
         }
 
+#pragma warning disable UA5000 // The Avoid Finalizer Analyzer produces compile errors for any new finalizers. This pre-existing finalizer declaration has been suppressed, but should be rewritten if possible.
         ~VFXSpawnerState()
         {
             Release();
         }
+#pragma warning restore UA5000
 
         ///<exclude />
         public void Dispose()

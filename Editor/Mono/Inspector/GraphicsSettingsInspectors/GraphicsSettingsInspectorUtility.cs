@@ -14,10 +14,11 @@ using UnityEditor.UIElements.ProjectSettings;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.UIElements;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Inspector.GraphicsSettingsInspectors
 {
-    public static class GraphicsSettingsInspectorUtility
+    public static partial class GraphicsSettingsInspectorUtility
     {
         #region Localization
 
@@ -336,8 +337,11 @@ namespace UnityEditor.Inspector.GraphicsSettingsInspectors
         const string highlightableClass = "graphics-settings__highlightable";
         const string highlightableColorClass = "graphics-settings__highlightable--background-color";
 
+        [NoAutoStaticsCleanup] // transient event-depth counter reset to 0 at the start of each OpenAndScrollTo; a persisted value is harmless
         static int s_EventCounter;
+        [AutoStaticsCleanupOnCodeReload]
         static VisualElement s_SearchedElement;
+        [AutoStaticsCleanupOnCodeReload]
         static readonly List<Foldout> k_Foldouts = new();
 
         public static void OpenAndScrollTo(string propertyPath)

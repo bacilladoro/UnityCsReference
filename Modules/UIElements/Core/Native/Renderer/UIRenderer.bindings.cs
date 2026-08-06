@@ -16,6 +16,7 @@ namespace UnityEngine.UIElements
     /// the PanelSettings asset is configured in world-space.
     /// </summary>
     [NativeHeader("Modules/UIElements/Core/Native/Renderer/UIRenderer.h")]
+    [NativeClass("UIRenderer", PersistentTypeId = 0x731E9095)]
     public sealed class UIRenderer : Renderer
     {
         internal volatile List<CommandList>[] commandLists;

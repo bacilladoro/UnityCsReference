@@ -327,8 +327,7 @@ namespace UnityEngine.UIElements
             if (fa.nativeFontAsset == IntPtr.Zero)
                 return false;
             nativeSettings.textSettings = textSettings.nativeTextSettings;
-            // TODO: We should expose this to user. Possibly disable it by default.
-            nativeSettings.disableAdvancedFontFeatures = false;
+            nativeSettings.disableAdvancedFontFeatures = m_TextElement.panel?.contextType == ContextType.Editor;
             nativeSettings.richTextEnabled = m_TextElement.enableRichText;
             nativeSettings.hoveredTag = (HoveredTag)m_HoveredTag;
             nativeSettings.pixelsPerPointFixed64 = (int)Math.Round(GetPixelsPerPoint() * 64.0f);
@@ -364,6 +363,12 @@ namespace UnityEngine.UIElements
         {
             if (textGenerationInfo == IntPtr.Zero)
                 return;
+
+            if (NativeRichTextParser.GetLinkCount(textGenerationInfo) == 0)
+            {
+                m_Links = null;
+                return;
+            }
 
             var links = NativeRichTextParser.GetAllLinks(textGenerationInfo);
             m_Links = (links != null && links.Length > 0) ? links : null;
@@ -411,7 +416,10 @@ namespace UnityEngine.UIElements
 
             if (m_TextElement.panel.contextType == ContextType.Editor)
                 return GetICUAssetStaticFalback();
-            var asset = ((PanelSettings)(((RuntimePanel)m_TextElement.panel).ownerObject)).m_ICUDataAsset;
+            TextAsset asset = null;
+            var panelSettings = ((BaseRuntimePanel)m_TextElement.panel).GetLinkedPanelSettings();
+            if (panelSettings)
+                asset = panelSettings.m_ICUDataAsset;
 
             if (asset != null)
                 return asset;

@@ -137,7 +137,7 @@ namespace UnityEditor
 
             BuildProfileContext.activeProfile = buildProfile;
             var buildPlayerOptions = BuildProfileModuleUtil.GetBuildPlayerOptionsFromActiveProfile(
-                buildPlayerWithProfileOptions.locationPathName, buildPlayerWithProfileOptions.assetBundleManifestPath, buildPlayerWithProfileOptions.options);
+                buildPlayerWithProfileOptions.locationPathName, buildPlayerWithProfileOptions.assetBundleManifestPath, buildPlayerWithProfileOptions.options, buildPlayerWithProfileOptions.extraScriptingDefines);
             return BuildPlayer(buildPlayerOptions);
         }
 
@@ -774,6 +774,9 @@ namespace UnityEditor
         [FreeFunction("GetPlayerDataSessionId")]
         internal static extern string GetSessionIdForBuildTarget(BuildTarget target, int subtarget);
 
+        [FreeFunction("GetDataBuildDirtyInfoPath")]
+        internal static extern string GetBuildDirtyInfoForBuildTarget(BuildTarget target, int subtarget);
+
         ///<summary>Extract the CRC checksum for the given AssetBundle.</summary>
         ///<remarks>A 32-bit checksum is generated during the AssetBundle build process and recorded in the .manifest file and exposed by this method.</remarks>
         ///<param name="targetPath">Asset bundle path.</param>
@@ -881,7 +884,7 @@ namespace UnityEditor
             ApiCompatibilityLevel apiCompatibilityLevel)
         {
             if (scriptingBackend == ScriptingImplementation.CoreCLR)
-                return GetCoreCLRReferenceDirectories(target, namedTarget, buildOptions);
+                return GetCoreCLRReferenceDirectories();
 
             if (scriptingBackend == ScriptingImplementation.IL2CPP)
                 return IL2CPPUtils.GetIL2CPPReferenceDirectories(target, namedTarget, buildOptions, apiCompatibilityLevel);
@@ -889,21 +892,10 @@ namespace UnityEditor
             return GetMonoReferenceDirectories(target);
         }
 
-        static List<string> GetCoreCLRReferenceDirectories(BuildTarget target, NamedBuildTarget namedTarget, BuildOptions buildOptions)
+        static List<string> GetCoreCLRReferenceDirectories()
         {
-            var result = new List<string>();
-            result.Add(BCLExtensions.CoreCLRRuntimeDirectory());
-
-            string engineDirectory = GetPlaybackEngineDirectory(target, buildOptions, true);
-
-            var gotBuildTarget = BuildTargetDiscovery.TryGetBuildTarget(target, out var ibuildTarget);
-            if (!gotBuildTarget || ibuildTarget.ScriptingPlatformProperties == null)
-            {
-                throw new BuildFailedException("ScriptingPlatformProperties does not contain a target directory for CoreCLR.");
-            }
-            result.Add(Path.Combine(engineDirectory, ibuildTarget.ScriptingPlatformProperties.CoreCLRBCLDirectory, "CoreCLR/lib"));
-
-            return result;
+            // The architecture-specific BCL is resolved per architecture by the player build program.
+            return new List<string> { BCLExtensions.CoreCLRRuntimeDirectory() };
         }
 
         internal static string GetVariationDirectory(BuildTarget target, BuildOptions buildOptions)
@@ -1001,7 +993,7 @@ namespace UnityEditor
             try
             {
                 // Invoke BuildTimeAssetGeneration.GenerateAssets()
-                var buildTimeAssetGenerationClass = Type.GetType("UnityEditor.BuildTimeAssetGeneration, Assembly-CSharp-Editor-firstpass-testable, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null", true);
+                var buildTimeAssetGenerationClass = Type.GetType("UnityEditor.BuildTimeAssetGeneration, Unity.UIElements.EditorResources.Authoring, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null", true);
                 var generateAssetsMethod = buildTimeAssetGenerationClass.GetMethod("GenerateAssets", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
                 return (bool)generateAssetsMethod.Invoke(null, null);
             }

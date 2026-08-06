@@ -98,6 +98,9 @@ internal class VisualElementEditingStage : PreviewSceneStage, ISerializationCall
 
     internal void RequestRefresh()
     {
+        if (m_PanelElement == null)
+            return;
+
         // Process whatever changes we previously add before cloning to ensure everything is up to date.
         PanelElement.FrameUpdate();
         CloneTree();
@@ -178,7 +181,11 @@ internal class VisualElementEditingStage : PreviewSceneStage, ISerializationCall
 
         // This is temporary fix for domain issues that are very specific to timings.
         // TODO: [MP] Remove once we have the proper reload attributes for managed objects.
-        HierarchyWindow.RegisterNodeTypeHandler<VisualElementEditingNodeHandler>();
+        if (StageUtility.GetCurrentStage() == this)
+        {
+            HierarchyWindow.RegisterNodeTypeHandler<VisualElementEditingNodeHandler>();
+            TrackStagePanel();
+        }
         UICommandQueue.RegisterHandler<RequestHighlightsCommand>(OnHighlightsRequested);
         UICommandQueue.RegisterHandlerForCategory(CommandCategory.Styling, OnStylingChanged);
         UICommandQueue.GroupBegan += OnGroupBegan;
@@ -204,7 +211,9 @@ internal class VisualElementEditingStage : PreviewSceneStage, ISerializationCall
     protected internal override bool OnOpenStage()
     {
         m_PanelElement.PanelSettings = Context.PanelSettings;
+        TrackStagePanel();
         ReloadAssets();
+        CaptureCleanBaseline();
         RequestRefresh();
         return true;
     }
@@ -214,6 +223,7 @@ internal class VisualElementEditingStage : PreviewSceneStage, ISerializationCall
         if (stage != this)
             return;
 
+        UntrackStagePanel();
         m_PanelElement.subRootVisualElement.Clear();
     }
 
@@ -222,13 +232,19 @@ internal class VisualElementEditingStage : PreviewSceneStage, ISerializationCall
         if (StageUtility.GetCurrentStage() == this)
         {
             EditedVisualTreeAsset?.inlineSheet?.RequestRebuild(StyleSheet.RebuildOptions.Synchronous);
+            foreach (var styleSheet in EditedVisualTreeAsset.GetAllReferencedStyleSheets())
+            {
+                styleSheet.RequestRebuild(StyleSheet.RebuildOptions.Synchronous);
+            }
             UIElementsEditorUtility.ClearStyleCacheAfterUndoIfTracked(default);
+            ReloadAssets();
             CloneTree();
         }
     }
 
     protected override void OnCloseStage()
     {
+        UntrackStagePanel();
         m_PanelElement?.DestroyPanelPermanently();
         m_PanelElement = null;
         base.OnCloseStage();
@@ -237,12 +253,16 @@ internal class VisualElementEditingStage : PreviewSceneStage, ISerializationCall
     protected internal override void OnReturnToStage()
     {
         base.OnReturnToStage();
+        TrackStagePanel();
         ReimportAssets();
-        CloneTree();
+        RequestRefresh();
     }
 
     protected internal override GUIContent CreateHeaderContent()
     {
+        if (EditedVisualTreeAsset != null)
+            m_HeaderContent.text = EditedVisualTreeAsset.name;
+
         return m_HeaderContent;
     }
 
@@ -432,6 +452,11 @@ internal class VisualElementEditingStage : PreviewSceneStage, ISerializationCall
             if (IsAssetModified(EditedVisualTreeAsset))
             {
                 VisualTreeAsset.HarmonizeIds(EditedVisualTreeAsset);
+                // HarmonizeIds renumbers the document's element ids. The live tree still references the
+                // just-renumbered assets here, so re-file the selection registry's id-path caches before
+                // the re-clone below; otherwise the re-clone can't match the renumbered elements to their
+                // existing entries and the live selection (and its EntityId) is silently lost.
+                VisualElementSelectionRegistry.Instance?.ResyncStablePaths(m_PanelElement?.SubPanel);
                 var assetStr = VisualTreeAssetExporter.Default.ToUxmlString(EditedVisualTreeAsset);
                 succeeded &= WriteTextFileToDisk(assetPath, assetStr);
                 AssetDatabase.ImportAsset(assetPath);
@@ -440,6 +465,12 @@ internal class VisualElementEditingStage : PreviewSceneStage, ISerializationCall
             {
                 EditorUtility.ClearDirty(EditedVisualTreeAsset);
             }
+        }
+
+        if (succeeded)
+        {
+            ClearUndoForEditedAssets();
+            CaptureCleanBaseline();
         }
 
         ReloadAssets();
@@ -531,13 +562,30 @@ internal class VisualElementEditingStage : PreviewSceneStage, ISerializationCall
     private void ReloadAssets()
     {
         Context = VisualTreeAssetEditingContext.Reload(Context);
-        CaptureCleanBaseline();
     }
 
     private void ReimportAssets()
     {
         Context = VisualTreeAssetEditingContext.Reimport(Context);
         CaptureCleanBaseline();
+        ClearUndoForEditedAssets();
+    }
+
+    // Saving or reimporting reloads the edited VisualTreeAsset (and its inline sheet and referenced style sheets)
+    // from disk into new instances. Drop their undo/redo entries so a subsequent undo/redo cannot restore a
+    // pre-reload snapshot into the reloaded object. Mirrors UIBuilder's VisualTreeAsset/StyleSheet.ClearUndo.
+    private void ClearUndoForEditedAssets()
+    {
+        var vta = EditedVisualTreeAsset;
+        if (vta == null)
+            return;
+
+        Undo.ClearUndo(vta);
+        if (vta.inlineSheet != null)
+            Undo.ClearUndo(vta.inlineSheet);
+
+        foreach (var styleSheet in vta.GetAllReferencedStyleSheets())
+            Undo.ClearUndo(styleSheet);
     }
 
     protected internal override Hash128 GetHashForStateStorage()
@@ -660,6 +708,20 @@ internal class VisualElementEditingStage : PreviewSceneStage, ISerializationCall
     {
         if (m_PanelElement != null)
             m_PanelElement.ContentOverflowMode = overflow;
+    }
+
+    void TrackStagePanel()
+    {
+        var panel = m_PanelElement?.SubPanel;
+        if (panel != null)
+            VisualElementSelectionRegistry.Instance?.TrackStagePanel(this);
+    }
+
+    void UntrackStagePanel()
+    {
+        var panel = m_PanelElement?.SubPanel;
+        if (panel != null)
+            VisualElementSelectionRegistry.Instance?.UntrackStagePanel(this);
     }
 
     void OnHighlightsRequested(in CommandContext context)

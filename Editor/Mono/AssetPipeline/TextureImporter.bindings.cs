@@ -18,6 +18,7 @@ namespace UnityEditor
     [NativeHeader("Editor/Src/AssetPipeline/TextureImporting/TextureImporter.deprecated.h")]
     [NativeHeader("Editor/Src/AssetPipeline/TextureImporting/TextureImporterUtils.h")]
     [NativeHeader("Editor/Src/AssetPipeline/TextureImporting/TextureImporterPlatformSettingsUtils.h")]
+    [global::UnityEngine.NativeClass("TextureImporter", PersistentTypeId = 1006)]
     [NativeHeader("Editor/Src/EditorUserBuildSettings.h")]
     public sealed partial class TextureImporter : AssetImporter
     {

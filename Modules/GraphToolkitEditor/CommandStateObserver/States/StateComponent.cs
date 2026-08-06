@@ -88,10 +88,12 @@ namespace Unity.GraphToolkit.CSO
                 m_State.BeginChangeScope();
             }
 
+#pragma warning disable UA5000 // The Avoid Finalizer Analyzer produces compile errors for any new finalizers. This pre-existing finalizer declaration has been suppressed, but should be rewritten if possible.
             ~BaseUpdater()
             {
                 Dispose(false);
             }
+#pragma warning restore UA5000
 
             /// <inheritdoc/>
             public void Dispose()

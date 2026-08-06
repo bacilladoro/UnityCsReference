@@ -20,11 +20,15 @@ namespace UnityEngine.TerrainUtils
         EdgeAlignmentMismatch = 1 << 3,
     }
 
+    ///<summary>Specifies a set of 2D tile coordinates.</summary>
     public readonly struct TerrainTileCoord
     {
+        ///<summary>Tile X coordinate.</summary>
         public readonly int tileX;
+        ///<summary>Tile Z coordinate.</summary>
         public readonly int tileZ;
 
+        ///<exclude />
         public TerrainTileCoord(int tileX, int tileZ)
         {
             this.tileX = tileX;
@@ -32,8 +36,13 @@ namespace UnityEngine.TerrainUtils
         }
     }
 
+    ///<summary>Type for mapping 2D (X,Z) tile coordinates to a <see cref="Terrain" /> object.</summary>
     public class TerrainMap
     {
+        ///<summary>Retrieves the <see cref="Terrain" /> object corresponding to the tile coordinates (tileX,tileZ).</summary>
+        ///<param name="tileX">Tile X coordinate.</param>
+        ///<param name="tileZ">Tile Z coordinate.</param>
+        ///<returns>Returns a valid <see cref="Terrain" /> object if successful, null otherwise.</returns>
         public Terrain GetTerrain(int tileX, int tileZ)
         {
             Terrain result = null;
@@ -54,6 +63,12 @@ namespace UnityEngine.TerrainUtils
             }
         }
 
+        ///<summary>Creates a <see cref="TerrainMap" /> from the neighbors connected to the origin Terrain.</summary>
+        ///<remarks>Creates a <see cref="TerrainMap" /> of all the Terrain neighbors connected to the origin Terrain that pass the filter validation.</remarks>
+        ///<param name="originTerrain">Terrain that is given tile coordinate (0,0).</param>
+        ///<param name="filter">Filter to apply when populating the map. If null, no filter is applied.</param>
+        ///<param name="fullValidation">Validate the Terrain map. Default is true.</param>
+        ///<returns>The resulting Terrain map. Can return null when no Terrain objects pass the filter.</returns>
         static public TerrainMap CreateFromConnectedNeighbors(Terrain originTerrain, System.Predicate<Terrain> filter = null, bool fullValidation = true)
         {
             if (originTerrain == null)
@@ -100,6 +115,12 @@ namespace UnityEngine.TerrainUtils
 
         // create a terrain map of ALL terrains, by using only their placement to fit them to a grid
         // the position and size of originTerrain defines the grid alignment and origin.  if NULL, we use the first active terrain
+        ///<summary>Creates a <see cref="TerrainMap" /> from the positions of all active Terrains.</summary>
+        ///<remarks>Creates a <see cref="TerrainMap" /> of all the loaded Terrain objects that pass the filter validation.</remarks>
+        ///<param name="originTerrain">Defines the grid origin and size, as well as group id if no filter is specified.</param>
+        ///<param name="filter">Filter to be applied when populating the map. If null, the filter will fall back to matching terrains in the same group as the origin.</param>
+        ///<param name="fullValidation">Validate the Terrain map. Default is true.</param>
+        ///<returns>The resulting Terrain map. Can return null when no Terrain objects pass the filter.</returns>
         static public TerrainMap CreateFromPlacement(Terrain originTerrain, System.Predicate<Terrain> filter = null, bool fullValidation = true)
         {
             if ((Terrain.activeTerrains == null) || (Terrain.activeTerrains.Length == 0) || (originTerrain == null))
@@ -122,6 +143,13 @@ namespace UnityEngine.TerrainUtils
 
         // create a terrain map of ALL terrains, by using only their placement to fit them to a grid
         // the position and size of originTerrain defines the grid alignment and origin.  if NULL, we use the first active terrain
+        ///<summary>Creates a <see cref="TerrainMap" /> from the positions of all active Terrains.</summary>
+        ///<remarks>Creates a <see cref="TerrainMap" /> of all the loaded Terrain objects that pass the filter validation.</remarks>
+        ///<param name="gridOrigin">Origin of the grid.</param>
+        ///<param name="gridSize">Size of the grid. Typically takes the terrain size.x and size.z.</param>
+        ///<param name="filter">Filter to be applied when populating the map. If null, the filter will fall back to matching terrains in the same group as the origin.</param>
+        ///<param name="fullValidation">Validate the Terrain map. Default is true.</param>
+        ///<returns>The resulting Terrain map. Can return null when no Terrain objects pass the filter.</returns>
         static public TerrainMap CreateFromPlacement(Vector2 gridOrigin, Vector2 gridSize, System.Predicate<Terrain> filter = null, bool fullValidation = true)
         {
             if ((Terrain.activeTerrains == null) || (Terrain.activeTerrains.Length == 0))
@@ -162,8 +190,10 @@ namespace UnityEngine.TerrainUtils
         private TerrainMapStatusCode m_errorCode;
 
         private Dictionary<TerrainTileCoord, Terrain> m_terrainTiles;
+        ///<summary>Mapping from <see cref="TerrainTileCoord" /> to <see cref="Terrain" />.</summary>
         public Dictionary<TerrainTileCoord, Terrain> terrainTiles => m_terrainTiles;
 
+        ///<exclude />
         public TerrainMap()
         {
             m_errorCode = TerrainMapStatusCode.OK;
@@ -277,6 +307,7 @@ namespace UnityEngine.TerrainUtils
         }
     }
 
+    ///<summary>Provides a set of utility functions that are used by the terrain tools.</summary>
     [MovedFrom("UnityEngine.Experimental.TerrainAPI")]
     public static class TerrainUtility
     {
@@ -316,6 +347,9 @@ namespace UnityEngine.TerrainUtils
             return (groups.Count != 0) ? groups : null;
         }
 
+        ///<summary>Automatically connects neighboring terrains.</summary>
+        ///<remarks>It is possible to create separate groups of connected terrains by having each group have the same grouping ID.</remarks>
+        ///<seealso cref="Terrain.groupingID" />
         [RequiredByNativeCode]
         public static void AutoConnect()
         {

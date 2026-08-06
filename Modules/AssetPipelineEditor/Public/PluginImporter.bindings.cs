@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor.Callbacks;
 using UnityEditor.Modules;
 using UnityEditorInternal;
@@ -17,6 +18,7 @@ using UnityEngine.Scripting;
 namespace UnityEditor
 {
     [NativeHeader("Modules/AssetPipelineEditor/Public/PluginImporter.h")]
+    [global::UnityEngine.NativeClass("PluginImporter", PersistentTypeId = 1050)]
     [ExcludeFromPreset]
     public sealed partial class PluginImporter : AssetImporter
     {
@@ -142,7 +144,8 @@ namespace UnityEditor
         public delegate bool IncludeInBuildDelegate(string path);
 
         // this is implemented as a static map so that it can survive a garbage collection on the PluginImporter and not get lost
-        private static Dictionary<string, IncludeInBuildDelegate> s_includeInBuildDelegateMap = new Dictionary<string, IncludeInBuildDelegate>();
+        [AutoStaticsCleanupOnCodeReload]
+        private static readonly Dictionary<string, IncludeInBuildDelegate> s_includeInBuildDelegateMap = new Dictionary<string, IncludeInBuildDelegate>();
         public void SetIncludeInBuildDelegate(IncludeInBuildDelegate includeInBuildDelegate)
         {
             s_includeInBuildDelegateMap[assetPath] = includeInBuildDelegate;

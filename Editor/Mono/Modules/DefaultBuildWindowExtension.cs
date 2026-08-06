@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 
 namespace UnityEditor.Modules
@@ -15,6 +16,7 @@ namespace UnityEditor.Modules
             public static readonly GUIContent patchAndRun = EditorGUIUtility.TrTextContent("Patch And Run", "Compiles only the scripts, patches the previous build with the updated code, then runs the build.");
         }
 
+        [NoAutoStaticsCleanup] // lazy GUIContent Styles cache; content survives reload, re-inits on first access
         static private Styles m_Styles = null;
 
         internal Styles styles

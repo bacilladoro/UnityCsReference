@@ -239,6 +239,7 @@ namespace UnityEditor
         {
             [AutoStaticsCleanupOnCodeReload]
             // The global shared popup state
+            [AutoStaticsCleanupOnCodeReload]
             public static MaskCallbackInfo m_Instance;
 
             // Name of the command event sent from the popup menu to OnGUI when user has changed selection

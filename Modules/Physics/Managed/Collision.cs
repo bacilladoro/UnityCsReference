@@ -491,6 +491,11 @@ namespace UnityEngine
         ///<exclude />
         public Collision()
         {
+            Clear();
+        }
+
+        internal void Clear()
+        {
             m_Header = new ContactPairHeader();
             m_Pair = new ContactPair();
             m_Flipped = false;

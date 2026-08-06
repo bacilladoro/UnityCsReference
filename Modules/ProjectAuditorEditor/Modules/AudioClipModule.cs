@@ -113,6 +113,7 @@ namespace Unity.ProjectAuditor.Editor.Modules
             yield return null;
 
             var issues = new List<ReportItem>();
+            var platformString = analysisParams.Platform.ToString();
 
             foreach (var assetPath in assetPaths)
             {
@@ -125,7 +126,7 @@ namespace Unity.ProjectAuditor.Editor.Modules
                     continue;
                 }
 
-                var sampleSettings = audioImporter.GetOverrideSampleSettings(analysisParams.PlatformAsString);
+                var sampleSettings = audioImporter.GetOverrideSampleSettings(platformString);
                 var audioClip = AssetDatabase.LoadAssetAtPath<AudioClip>(assetPath);
                 var clipName = Path.GetFileNameWithoutExtension(assetPath);
 

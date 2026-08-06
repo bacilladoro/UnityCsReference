@@ -23,7 +23,7 @@ sealed class SceneOrientationGizmo : IMGUIOverlay
     const string k_ShowOrientationHeader = "overlay-show-orientation-header";
     const string k_ShowOrientationBackground = "overlay-show-orientation-background";
 
-    static Quaternion[] kDirectionRotations =
+    static readonly Quaternion[] kDirectionRotations =
     {
         Quaternion.LookRotation(new Vector3(-1, 0, 0)),
         Quaternion.LookRotation(new Vector3(0, -1, 0)),
@@ -33,10 +33,10 @@ sealed class SceneOrientationGizmo : IMGUIOverlay
         Quaternion.LookRotation(new Vector3(0, 0, 1)),
     };
 
-    internal static string[] kDirNames =
+    internal static readonly string[] kDirNames =
     { "Right", "Top", "Front", "Left", "Bottom", "Back", "Iso", "Persp", "2D" };
 
-    internal static string[] kMenuDirNames =
+    internal static readonly string[] kMenuDirNames =
     { "Free", "Right", "Top", "Front", "Left", "Bottom", "Back", "", "Perspective", "", "Show background" };
 
     static readonly GUIContent[] s_HandleAxisLabels =
@@ -106,12 +106,12 @@ sealed class SceneOrientationGizmo : IMGUIOverlay
 
     static class Styles
     {
-        public static GUIStyle viewLabelStyleLeftAligned = "SC ViewLabelLeftAligned";
-        public static GUIStyle viewLabelStyleCentered = "SC ViewLabelCentered";
-        public static GUIStyle viewAxisLabelStyle = "SC ViewAxisLabel";
-        public static GUIStyle lockStyle = "CenteredLabel";
-        public static GUIContent unlockedRotationIcon = EditorGUIUtility.TrIconContent("LockIcon", "Click to lock the rotation in the current direction.");
-        public static GUIContent lockedRotationIcon = EditorGUIUtility.TrIconContent("LockIcon-On", "Click to unlock the rotation.");
+        public static readonly GUIStyle viewLabelStyleLeftAligned = "SC ViewLabelLeftAligned";
+        public static readonly GUIStyle viewLabelStyleCentered = "SC ViewLabelCentered";
+        public static readonly GUIStyle viewAxisLabelStyle = "SC ViewAxisLabel";
+        public static readonly GUIStyle lockStyle = "CenteredLabel";
+        public static readonly GUIContent unlockedRotationIcon = EditorGUIUtility.TrIconContent("LockIcon", "Click to lock the rotation in the current direction.");
+        public static readonly GUIContent lockedRotationIcon = EditorGUIUtility.TrIconContent("LockIcon-On", "Click to unlock the rotation.");
     }
 
     struct BlendingScope : IDisposable

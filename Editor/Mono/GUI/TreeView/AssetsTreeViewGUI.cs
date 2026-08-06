@@ -12,16 +12,18 @@ using System.Collections.Generic;
 using UnityEditor.Experimental;
 using UnityEngine.Assertions;
 using static UnityEditor.AssetsTreeViewDataSource;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
-    internal class AssetsTreeViewGUI : TreeViewGUI<EntityId>
+    internal partial class AssetsTreeViewGUI : TreeViewGUI<EntityId>
     {
+        [NoAutoStaticsCleanup] // simple bool cache of VC connection state; re-read from VersionControlUtils on next InitStyles, safe to persist
         static bool s_VCEnabled;
         const float k_IconOverlayPadding = 7f;
 
-        internal static ScalableGUIContent s_OpenFolderIcon = new ScalableGUIContent(null, null, EditorResources.openedFolderIconName);
-        internal static ScalableGUIContent s_EmptyFolderIcon = new ScalableGUIContent(null, null, EditorResources.emptyFolderIconName);
+        internal static readonly ScalableGUIContent s_OpenFolderIcon = new ScalableGUIContent(null, null, EditorResources.openedFolderIconName);
+        internal static readonly ScalableGUIContent s_EmptyFolderIcon = new ScalableGUIContent(null, null, EditorResources.emptyFolderIconName);
 
         internal static Texture2D openFolderTexture
         {
@@ -42,11 +44,14 @@ namespace UnityEditor
         }
 
         internal delegate void OnAssetIconDrawDelegate(Rect iconRect, string guid);
+        [AutoStaticsCleanupOnCodeReload]
         internal static event OnAssetIconDrawDelegate postAssetIconDrawCallback = null;
 
         internal delegate bool OnAssetLabelDrawDelegate(Rect drawRect, string guid);
+        [AutoStaticsCleanupOnCodeReload]
         internal static event OnAssetLabelDrawDelegate postAssetLabelDrawCallback = null;
 
+        [NoAutoStaticsCleanup] // lazy cache of stable EntityId->GUID mappings (no user-type refs); asset GUIDs survive reload, safe to persist
         private static IDictionary<EntityId, string> s_GUIDCache = null;
         private readonly Action m_TreeViewRepaintAction;
 

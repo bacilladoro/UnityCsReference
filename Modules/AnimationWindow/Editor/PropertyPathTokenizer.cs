@@ -5,6 +5,7 @@
 using System;
 using System.Text;
 using UnityEngine.Pool;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditorInternal
 {
@@ -14,6 +15,7 @@ namespace UnityEditorInternal
     /// </summary>
     internal static class PropertyPathTokenizer
     {
+        [NoAutoStaticsCleanup]
         static ObjectPool<StringBuilder> s_stringBuilderPool = null;
         static readonly char[] s_slashSeparator = { '/' };
 

@@ -193,6 +193,7 @@ namespace UnityEngine
     // Note: This asset is immutable at runtime but is needed to ensure that the asset can be read in native code.
     // We don't use the UnityEditor namespace for it but we do only allow it's entries to be used in the editor.
     [NativeHeader("Runtime/Graphics/WebGPU/WebGPUDeviceFilterLists.h")]
+    [NativeClass("WebGPUDeviceFilterLists", PersistentTypeId = 0x1C57F0A8)]
     public sealed class WebGPUDeviceFilterLists : UnityEngine.Object
     {
         private static extern void Internal_CreateWebGPUDeviceFilterLists([Writable] WebGPUDeviceFilterLists obj, string name);

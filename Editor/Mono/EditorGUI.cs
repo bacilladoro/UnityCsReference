@@ -23,13 +23,13 @@ using PreviewMaterialType = UnityEditor.EditorGUIUtility.PreviewType;
 using System.Linq;
 using System.Reflection;
 using Unity.Profiling;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor.Rendering;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.UIElements;
 using UnityEditor.UIElements;
 using UnityEngine.Bindings;
 using Unity.Loading;
-using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -287,10 +287,14 @@ namespace UnityEditor
 
         static class Styles
         {
+            [NoAutoStaticsCleanup] // lazy-loaded Texture2D; null after reload is fine, re-loaded by LoadIcon
             public static Texture2D prefabOverlayAddedIcon = EditorGUIUtility.LoadIcon("PrefabOverlayAdded Icon");
+            [NoAutoStaticsCleanup] // lazy-loaded Texture2D; null after reload is fine, re-loaded by LoadIcon
             public static Texture2D prefabOverlayRemovedIcon = EditorGUIUtility.LoadIcon("PrefabOverlayRemoved Icon");
             public static readonly GUIStyle linkButton = "FloatFieldLinkButton";
+            [NoAutoStaticsCleanup] // lazy-loaded Texture2D; null after reload is fine, re-loaded by LoadIcon
             public static Texture2D repaintDot = EditorGUIUtility.LoadIcon("RepaintDot");
+            [NoAutoStaticsCleanup] // localized string; L10n is not runtime-state-dependent, safe to persist
             public static string revertPropertyValueIdenticalToSource = L10n.Tr("Revert (identical value to Prefab '{0}')");
         }
 
@@ -592,10 +596,13 @@ namespace UnityEditor
             }
         }
 
-        internal class RecycledTextEditor : TextEditor
+        internal partial class RecycledTextEditor : TextEditor
         {
+            [NoAutoStaticsCleanup]
             internal static bool s_ActuallyEditing = false; // internal so we can save this state.
+            [NoAutoStaticsCleanup]
             internal static bool s_EditingWasCompleted = false; // internal so we can save this state.
+            [NoAutoStaticsCleanup] // initialized to true; explicitly reset to true by EndEditing/BeginProperty, set to false only for selectable labels
             internal static bool s_AllowContextCutOrPaste = true; // e.g. selectable labels only allow for copying
             private long[] s_OriginalLongValues;
             private double[] s_OriginalDoubleValues;
@@ -705,6 +712,7 @@ namespace UnityEditor
             private const string CommitCommand = "DelayedControlShouldCommit";
 
             // Set when a control takes over the shared delayed editor; makes the following FocusOut skip its commit.
+            [NoAutoStaticsCleanup] // transient focus-commit skip flag; false default is correct after reload
             internal static bool s_SkipFocusOutCommit;
 
             private bool m_IgnoreBeginGUI = false;
@@ -4301,9 +4309,10 @@ namespace UnityEditor
         }
 
         // sealed partial class for storing state for popup menus so we can get the info back to OnGUI from the user selection
-        internal sealed class PopupCallbackInfo
+        internal sealed partial class PopupCallbackInfo
         {
             // The global shared popup state
+            [AutoStaticsCleanupOnCodeReload]
             public static PopupCallbackInfo instance = null;
 
             // Name of the command event sent from the popup menu to OnGUI when user has changed selection
@@ -6404,10 +6413,21 @@ namespace UnityEditor
             return true;
         }
 
+        // A missing script is fake-null but its native object still exists, so keep drawing its titlebar
+        // and Remove Component menu. A destroyed target has no native object and throws on access, so skip it. (UUM-146874)
+        internal static bool ShouldSkipInspectorTitlebar(Object target)
+        {
+            if (target != null)
+                return false;
+            if ((object)target == null)
+                return true;
+            return !Resources.EntityIdIsValid(target.GetEntityId());
+        }
+
         // Make an inspector-window-like titlebar.
         internal static void DoInspectorTitlebar(Rect position, int id, bool foldout, Object[] targetObjs, SerializedProperty enabledProperty, GUIStyle baseStyle)
         {
-            if (targetObjs[0] == null)
+            if (ShouldSkipInspectorTitlebar(targetObjs[0]))
                 return;
 
             GUIStyle textStyle = EditorStyles.inspectorTitlebarText;
@@ -7111,7 +7131,7 @@ namespace UnityEditor
             if (Highlighter.searchMode == HighlightSearchMode.PrefixLabel ||
                 Highlighter.searchMode == HighlightSearchMode.Auto)
             {
-                if (label != null) Highlighter.Handle(totalPosition, label.text);
+                if (label != null) Highlighter.Handle(Highlighter.scrollToMode && labelPosition.width > 0 ? labelPosition : totalPosition, label.text);
             }
 
             switch (Event.current.type)
@@ -9443,13 +9463,31 @@ namespace UnityEditor
             return PropertyFieldInternal(position, property, label, includeChildren);
         }
 
+        // Not partial: static nested partial classes produce a corrupt cctor PDB blob in the Unity Compiler
+        // when the Roslyn source generator adds a fragment with a DelegateAutoCleanup field initializer.
+        // Cleanup is registered manually below instead of via [AutoStaticsCleanupOnCodeReload].
+        [NoAutoStaticsCleanup]
         internal static class EnumNamesCache
         {
-            static Dictionary<Type, GUIContent[]> s_EnumTypeLocalizedGUIContents = new Dictionary<Type, GUIContent[]>();
-            static Dictionary<int, GUIContent[]> s_SerializedPropertyEnumLocalizedGUIContents = new Dictionary<int, GUIContent[]>();
-            static Dictionary<Type, bool> s_IsEnumTypeUsingFlagsAttribute = new Dictionary<Type, bool>();
-            static Dictionary<Type, string[]> s_SerializedPropertyEnumDisplayNames = new Dictionary<Type, string[]>();
-            static Dictionary<Type, string[]> s_SerializedPropertyEnumNames = new Dictionary<Type, string[]>();
+            static Dictionary<Type, GUIContent[]> s_EnumTypeLocalizedGUIContents = new();
+            static Dictionary<int, GUIContent[]> s_SerializedPropertyEnumLocalizedGUIContents = new();
+            static Dictionary<Type, bool> s_IsEnumTypeUsingFlagsAttribute = new();
+            static Dictionary<Type, string[]> s_SerializedPropertyEnumDisplayNames = new();
+            static Dictionary<Type, string[]> s_SerializedPropertyEnumNames = new();
+
+            [System.Runtime.CompilerServices.CompilerGenerated]
+            static void __AutoStaticsCleanup()
+            {
+                s_EnumTypeLocalizedGUIContents = new();
+                s_SerializedPropertyEnumLocalizedGUIContents = new();
+                s_IsEnumTypeUsingFlagsAttribute = new();
+                s_SerializedPropertyEnumDisplayNames = new();
+                s_SerializedPropertyEnumNames = new();
+            }
+
+            [System.Runtime.CompilerServices.CompilerGenerated]
+            static readonly UnityEngine.DelegateAutoCleanup __autoCleanup =
+                new(__AutoStaticsCleanup, typeof(Unity.Scripting.LifecycleManagement.CodeLoadedScope), "UnityEditor.EditorGUI+EnumNamesCache");
 
             internal static GUIContent[] GetEnumTypeLocalizedGUIContents(Type enumType, EnumData enumData)
             {
@@ -9538,10 +9576,23 @@ namespace UnityEditor
             }
         }
 
+        // Not partial: same compiler PDB bug as EnumNamesCache above.
+        [NoAutoStaticsCleanup]
         static class HelpButtonCache
         {
-            static Dictionary<Type, bool> s_TypeIsPartOfTargetAssembliesMap = new Dictionary<Type, bool>();
-            static Dictionary<Type, bool> s_ObjectHasHelp = new Dictionary<Type, bool>();
+            static Dictionary<Type, bool> s_TypeIsPartOfTargetAssembliesMap = new();
+            static Dictionary<Type, bool> s_ObjectHasHelp = new();
+
+            [System.Runtime.CompilerServices.CompilerGenerated]
+            static void __AutoStaticsCleanup()
+            {
+                s_TypeIsPartOfTargetAssembliesMap = new();
+                s_ObjectHasHelp = new();
+            }
+
+            [System.Runtime.CompilerServices.CompilerGenerated]
+            static readonly UnityEngine.DelegateAutoCleanup __autoCleanup =
+                new(__AutoStaticsCleanup, typeof(Unity.Scripting.LifecycleManagement.CodeLoadedScope), "UnityEditor.EditorGUI+HelpButtonCache");
 
             internal static bool HasHelpForObject(Object obj, bool monoBehaviourFallback)
             {

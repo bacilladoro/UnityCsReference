@@ -11,7 +11,7 @@ using Unity.Scripting.LifecycleManagement;
 
 namespace Unity.ProjectAuditor.Editor.Core
 {
-    class ObsoleteLibrary
+    static class ObsoleteLibrary
     {
 #pragma warning disable CS0649
 
@@ -40,7 +40,7 @@ namespace Unity.ProjectAuditor.Editor.Core
         [NoAutoStaticsCleanup] // Lazy cache populated from disk; code reload does not invalidate these
         static string[] s_UnityVersions;
 
-        public static Dictionary<string, ReportItem> LibraryDictionary
+        internal static IReadOnlyDictionary<string, ReportItem> LibraryDictionary
         {
             get
             {
@@ -50,7 +50,7 @@ namespace Unity.ProjectAuditor.Editor.Core
             }
         }
 
-        public static List<ReportItem> LibraryList
+        internal static IReadOnlyList<ReportItem> LibraryList
         {
             get
             {
@@ -62,12 +62,12 @@ namespace Unity.ProjectAuditor.Editor.Core
 
         // If the running Unity version is so new that we don't have any information about
         // future versions in our database, then this check will return false
-        public static bool HasAnyUpgradeVersions => UnityVersions.Length > 0;
+        internal static bool HasAnyUpgradeVersions => UnityVersions.Length > 0;
 
         // True if the issue is relevant when upgrading to the given target Unity version. Upgrade
         // issues match only when the target falls within their [MinVersion, MaxVersion) range (an
         // empty MaxVersion means "still applies in all later versions").
-        public static bool MatchesTargetVersion(ReportItem issue, string targetVersion)
+        internal static bool MatchesTargetVersion(ReportItem issue, string targetVersion)
         {
             if (!issue.IsUpgradeIssue || !HasAnyUpgradeVersions)
                 return true;
@@ -82,13 +82,13 @@ namespace Unity.ProjectAuditor.Editor.Core
             var since = issue.UpgradeProperties[(int)UpgradeProperties.MinVersion];
             var until = issue.UpgradeProperties[(int)UpgradeProperties.MaxVersion];
 
-            var sinceInt = Utility.VersionToInt(since);
+            var sinceInt = string.IsNullOrEmpty(since) ? int.MinValue : Utility.VersionToInt(since);
             var untilInt = string.IsNullOrEmpty(until) ? int.MaxValue : Utility.VersionToInt(until);
 
             return sinceInt <= targetVersionInt && untilInt > targetVersionInt;
         }
 
-        public static string[] UnityVersions
+        internal static string[] UnityVersions
         {
             get
             {
@@ -100,6 +100,9 @@ namespace Unity.ProjectAuditor.Editor.Core
 
         static void ReadFromDisk()
         {
+            if (!ProjectAuditorRulesPackage.IsInstalled)
+                throw new InvalidOperationException("Install the Project Auditor Rules package before using Project Auditor");
+
             var path = Path.Combine(ProjectAuditor.s_RulesDataPath, "ObsoleteDatabase.gen.json");
 
             // TEMP: support both paths while we migrate to new name
@@ -146,7 +149,7 @@ namespace Unity.ProjectAuditor.Editor.Core
             foreach (var version in uniqueVersions)
             {
                 var versionInt = Utility.VersionToInt(version);
-                if (versionInt > currentVersion)
+                if (versionInt >= currentVersion)
                     unityVersions.Add(version);
             }
 

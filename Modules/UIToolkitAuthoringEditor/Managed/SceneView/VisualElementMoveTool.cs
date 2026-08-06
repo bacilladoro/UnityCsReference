@@ -13,6 +13,7 @@ using UnityEngine.UIElements.StyleSheets;
 namespace Unity.UIToolkit.Editor
 {
     [EditorToolContext("VisualElement", targetType = typeof(VisualElementSelection))]
+    [Icon("Icons/Overlays/VisualElementToolContext.png")]
     sealed class VisualElementToolContext : EditorToolContext
     {
         protected override Type GetEditorToolType(Tool tool)

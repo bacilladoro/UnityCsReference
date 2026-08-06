@@ -14,12 +14,13 @@ using UnityEditor.StyleSheets;
 using UnityEditor.UIElements;
 using UnityEditorInternal;
 using UnityEngine;
+using Unity.Scripting.LifecycleManagement;
 using Object = UnityEngine.Object;
 
 namespace UnityEditor
 {
     [UnityEngine.Bindings.VisibleToOtherModules("UnityEditor.UIBuilderModule", "UnityEditor.UIToolkitAuthoringModule")]
-    internal class HostView : GUIView, IEditorWindowModel
+    internal partial class HostView : GUIView, IEditorWindowModel
     {
         static class Styles
         {
@@ -63,6 +64,7 @@ namespace UnityEditor
                 // Use an empty style to avoid the hover effect of normal buttons
                 public static readonly GUIStyle switchStyle = new GUIStyle();
 
+                [NoAutoStaticsCleanup] // immutable lookup table of GUIContent (no user references), built once and safe to persist across code reload
                 public static readonly Dictionary<DataMode, GUIContent> dataModeNameLabels =
                     new Dictionary<DataMode, GUIContent>
                     {
@@ -81,7 +83,9 @@ namespace UnityEditor
             }
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         internal static event Action<HostView> actualViewChanged;
+        [AutoStaticsCleanupOnCodeReload]
         internal static event Action<GenericMenu, EditorWindow> populateDefaultMenuItems;
 
         [SerializeField] private EditorWindow m_ActualView;
@@ -732,6 +736,7 @@ namespace UnityEditor
 
         protected virtual RectOffset GetBorderSize() { return m_BorderSize; }
 
+        [AutoStaticsCleanupOnCodeReload]
         private static WindowAction[] s_windowActions;
         private static WindowAction[] windowActions
         {
@@ -745,8 +750,10 @@ namespace UnityEditor
             }
         }
 
-        public static SVC<float> genericMenuLeftOffset = new SVC<float>("--window-generic-menu-left-offset", 20f);
-        public static SVC<float> genericMenuFloatingLeftOffset = new SVC<float>("--window-floating-generic-menu-left-offset", 20f);
+        [NoAutoStaticsCleanup] // style-value cache of a float; value type with no user references, safe to persist across code reload
+        public static readonly SVC<float> genericMenuLeftOffset = new SVC<float>("--window-generic-menu-left-offset", 20f);
+        [NoAutoStaticsCleanup] // style-value cache of a float; value type with no user references, safe to persist across code reload
+        public static readonly SVC<float> genericMenuFloatingLeftOffset = new SVC<float>("--window-floating-generic-menu-left-offset", 20f);
         internal static float GetGenericMenuLeftOffset(bool addFloatingWindowButtonsTopRight)
         {
             if (addFloatingWindowButtonsTopRight)

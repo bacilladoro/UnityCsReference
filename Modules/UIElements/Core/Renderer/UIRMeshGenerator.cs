@@ -30,6 +30,7 @@ namespace UnityEngine.UIElements.UIR
         public void DrawText(List<NativeSlice<Vertex>> vertices, List<NativeSlice<ushort>> indices, List<Material> materials, List<GlyphRenderMode> renderModes, bool usesPerGlyphTextCoreSettings = false);
         public void DrawText(string text, Vector2 pos, float fontSize, Color color, FontAsset font, bool useAdvanced = true);
         public void DrawRectangle(MeshGenerator.RectangleParams rectParams, DrawPhase phase = DrawPhase.Content);
+        public void DrawGradientRectangle(MeshGenerator.RectangleParams rectParams, VectorImage gradientVI, BackgroundGradient gradient, Rect gradientRect, DrawPhase phase = DrawPhase.Content);
         public void DrawBorder(MeshGenerator.BorderParams borderParams, DrawPhase phase = DrawPhase.Content);
         public void DrawVectorImage(VectorImage vectorImage, Vector2 offset, Angle rotationAngle, Vector2 scale, int userData = 0);
         public void DrawRectangleRepeat(MeshGenerator.RectangleParams rectParams, Rect totalRect, float scaledPixelsPerPoint, DrawPhase phase = DrawPhase.Content);
@@ -1070,6 +1071,41 @@ namespace UnityEngine.UIElements.UIR
             }
         }
 
+        // Rounded-rect tessellation + gradient fragment shader in one entry. The
+        // rectParams.texture must be the gradient's color atlas (from the baked VI);
+        // per-vertex UVs are rewritten inside the job so barycentric interpolation
+        // feeds the SVG-gradient shader's linear/radial math correctly.
+        public void DrawGradientRectangle(RectangleParams rectParams, VectorImage gradientVI, BackgroundGradient gradient, Rect gradientRect, DrawPhase phase = DrawPhase.Content)
+        {
+            if (rectParams.rect.width < UIRUtility.k_Epsilon || rectParams.rect.height < UIRUtility.k_Epsilon)
+                return;
+            if (gradientVI == null)
+                return;
+
+            using (k_MarkerDrawRectangle.Auto())
+            {
+                if (currentElement.panel.contextType == ContextType.Editor)
+                    rectParams.color *= rectParams.playmodeTintColor;
+
+                var jobParameters = new TessellationJobParameters { isBorderJob = false, phase = phase };
+                rectParams.ToNativeParams(out jobParameters.rectParams);
+                jobParameters.rectParams.texture = m_GCHandlePool.GetIntPtr(rectParams.texture);
+                jobParameters.gradientVI = m_GCHandlePool.GetIntPtr(gradientVI);
+                jobParameters.gradientUVs = new GradientUVParams
+                {
+                    type = gradient.type,
+                    angle = gradient.angle,
+                    position = gradient.position,
+                    size = gradient.size,
+                    rect = gradientRect,
+                };
+
+                m_MeshGenerationContext.InsertUnsafeMeshGenerationNode(out var unsafeNode);
+                jobParameters.node = unsafeNode;
+                m_TesselationJobParameters.Add(jobParameters);
+            }
+        }
+
         public void DrawBorder(BorderParams borderParams, DrawPhase phase = DrawPhase.Content)
         {
             using (k_MarkerDrawBorder.Auto())
@@ -1792,6 +1828,17 @@ namespace UnityEngine.UIElements.UIR
             m_GCHandlePool.ReturnAll();
         }
 
+        // Just the fields the UV-rewrite pass needs — no managed refs so
+        // TessellationJobParameters stays unmanaged.
+        internal struct GradientUVParams
+        {
+            public GradientType type;
+            public float angle;
+            public Vector2 position;
+            public BackgroundGradientSize size;
+            public Rect rect; // source rect for element-fraction computation
+        }
+
         struct TessellationJobParameters
         {
             public bool isBorderJob;
@@ -1799,6 +1846,12 @@ namespace UnityEngine.UIElements.UIR
             public MeshBuilderNative.NativeRectParams rectParams;
             public MeshGenerator.BorderParams borderParams;
             public UnsafeMeshGenerationNode node;
+            // Non-zero when the rect should be rendered as a gradient. Post-tessellation,
+            // per-vertex UVs are rewritten from element-fraction to gradient-parameter space
+            // and the entry is recorded as DrawGradients (which shares the SVG-gradient
+            // fragment path with existing corner-arc clipping).
+            public IntPtr gradientVI;
+            public GradientUVParams gradientUVs;
         }
         List<TessellationJobParameters> m_TesselationJobParameters = new(256);
 
@@ -1818,7 +1871,10 @@ namespace UnityEngine.UIElements.UIR
                 else
                 {
                     ref var rectParams = ref jobParams.rectParams;
-                    if (rectParams.vectorImage != IntPtr.Zero)
+                    if (jobParams.gradientVI != IntPtr.Zero)
+                        DrawGradientRectangle(jobParams.node, ref rectParams, ExtractHandle<Texture>(rectParams.texture),
+                            ExtractHandle<VectorImage>(jobParams.gradientVI), jobParams.gradientUVs, jobParams.phase);
+                    else if (rectParams.vectorImage != IntPtr.Zero)
                         DrawVectorImage(jobParams.node, ref rectParams, ExtractHandle<VectorImage>(rectParams.vectorImage), jobParams.phase);
                     else if (rectParams.sprite != IntPtr.Zero)
                         DrawSprite(jobParams.node, ref rectParams, ExtractHandle<Sprite>(rectParams.sprite), jobParams.phase);
@@ -1990,6 +2046,48 @@ namespace UnityEngine.UIElements.UIR
 
                     node.DrawMesh(vertices, indices, tex, textureOptions, phase);
                 }
+            }
+
+            // Tessellates a rounded rect (so we get arc-aa data on the vertices) then rewrites per-vertex UVs
+            // into gradient-parameter space.
+            void DrawGradientRectangle(UnsafeMeshGenerationNode node, ref MeshBuilderNative.NativeRectParams rectParams,
+                Texture tex, VectorImage gradientVI, GradientUVParams uvp, DrawPhase phase)
+            {
+                var meshData = MeshBuilderNative.MakeTexturedRect(ref rectParams);
+                if (meshData.vertexCount == 0 || meshData.indexCount == 0)
+                    return;
+
+                NativeSlice<Vertex> nativeVertices;
+                NativeSlice<UInt16> nativeIndices;
+                unsafe
+                {
+                    nativeVertices = UIRenderDevice.PtrToSlice<Vertex>((void*)meshData.vertices, meshData.vertexCount);
+                    nativeIndices = UIRenderDevice.PtrToSlice<UInt16>((void*)meshData.indices, meshData.indexCount);
+                }
+                if (nativeVertices.Length == 0 || nativeIndices.Length == 0)
+                    return;
+
+                allocator.AllocateTempMesh(nativeVertices.Length, nativeIndices.Length, out var vertices, out var indices);
+                indices.CopyFrom(nativeIndices);
+
+                float invW = uvp.rect.width > 1e-6f ? 1f / uvp.rect.width : 0f;
+                float invH = uvp.rect.height > 1e-6f ? 1f / uvp.rect.height : 0f;
+                bool radial = uvp.type == GradientType.Radial;
+
+                for (int i = 0; i < nativeVertices.Length; ++i)
+                {
+                    var v = nativeVertices[i];
+                    // Vertex position → element-fraction (with rect.min at (0,0), rect.max at (1,1)).
+                    var frac = new Vector2(
+                        (v.position.x - uvp.rect.xMin) * invW,
+                        (v.position.y - uvp.rect.yMin) * invH);
+                    v.uv = radial
+                        ? BackgroundGradientBaker.RadialUV(frac, uvp.position, uvp.size)
+                        : BackgroundGradientBaker.LinearUV(frac, uvp.angle);
+                    vertices[i] = v;
+                }
+
+                node.DrawGradientsInternal(vertices, indices, gradientVI, phase);
             }
 
             void DrawSprite(UnsafeMeshGenerationNode node, ref MeshBuilderNative.NativeRectParams rectParams, Sprite sprite, DrawPhase phase)

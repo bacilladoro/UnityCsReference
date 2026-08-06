@@ -4,6 +4,7 @@
 
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Bindings;
 using UnityEngine.Scripting;
 
@@ -12,12 +13,13 @@ namespace UnityEngine.Identifiers
     ///<summary>Provides information about the current game and its Player session through unique identifiers.</summary>
     ///<remarks>For example, you can use this information to tie diagnostic information to a Player session.</remarks>
     [NativeHeader("Modules/Identifiers/Identifiers.h")]
-    public static class Identifiers
+    public static partial class Identifiers
     {
         ///<summary>Returns the installation ID for this Unity game.</summary>
         public static string installationId => GetInstallationId();
 
         ///<summary>Raised when <see cref="userId"/> changes value. The argument is the new value of userId. Subscribers are notified after the value is changed.</summary>
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<string> userIdChanged;
 
         internal const int MaxUserIdLength = 1024;

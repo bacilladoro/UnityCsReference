@@ -5,6 +5,7 @@
 using UnityEngine;
 using UnityEngine.TerrainTools;
 using UnityEditor.ShortcutManagement;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.TerrainTools
 {
@@ -41,6 +42,7 @@ namespace UnityEditor.TerrainTools
             public readonly GUIContent flattenAll = EditorGUIUtility.TrTextContent("Flatten All", "If selected, it will traverse all neighbors and flatten them too");
         }
 
+        [NoAutoStaticsCleanup] // lazy GUIContent/GUIStyle styles holder; editor infra, no user refs
         private static Styles m_styles;
         private Styles GetStyles()
         {

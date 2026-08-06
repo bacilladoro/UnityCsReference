@@ -39,7 +39,7 @@ namespace UnityEditor
         {
             public static readonly GUIContent DSPBufferSizeInfo = EditorGUIUtility.TrTextContent("The requested buffer size ({0}) has been overridden to {1} by the operating system");
             public static readonly GUIContent EnhancedAudioFoundationInfo = EditorGUIUtility.TrTextContent("Enhanced will be used on Windows, macOS, Linux, iOS, Android (8.1 and later), XBOX Series X|S, XBOX One, PlayStation®5, and Nintendo Switch™. Other platforms will use Classic.");
-            public static readonly GUIContent PassthroughChannelLayoutInfo = EditorGUIUtility.TrTextContent("On Meta Quest devices, this layout is sent directly to the OS hardware spatialization instead of being down-mixed.");
+            public static readonly GUIContent PassthroughChannelLayoutInfo = EditorGUIUtility.TrTextContent("On Meta Quest devices, this layout is sent directly to the OS hardware spatialization instead of being down-mixed. On Windows, XBOX Series X|S, and XBOX One devices, this layout is sent directly to the OS hardware spatialization, if enabled by the end user in the platform's spatial sound settings.");
         }
 
         static readonly string[] k_AdditionalSearchKeywords =

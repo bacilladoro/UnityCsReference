@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.IO;
 using UnityEditorInternal;
+using Unity.Scripting.LifecycleManagement;
 
 // Description:
 // EditorApplicationLayout handles the GUI when playmode changes (on a high level).
@@ -22,9 +23,11 @@ using UnityEditorInternal;
 
 namespace UnityEditor
 {
-    internal class EditorApplicationLayout
+    internal partial class EditorApplicationLayout
     {
+        [AutoStaticsCleanupOnCodeReload]
         static private PlayModeView m_PlayModeView = null;
+        [NoAutoStaticsCleanup] // transient maximize handshake flag, cleared within the layout flow; safe to persist
         static private bool m_MaximizePending = false;
 
 

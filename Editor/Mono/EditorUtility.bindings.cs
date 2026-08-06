@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using Object = UnityEngine.Object;
 using UnityEngine.Bindings;
@@ -230,6 +231,7 @@ namespace UnityEditor
         }
 
         internal delegate void AudioMasterMuteWasUpdated(bool value);
+        [AutoStaticsCleanupOnCodeReload]
         internal static event AudioMasterMuteWasUpdated onAudioMasterMuteWasUpdated;
 
         internal static extern void LaunchBugReporter();

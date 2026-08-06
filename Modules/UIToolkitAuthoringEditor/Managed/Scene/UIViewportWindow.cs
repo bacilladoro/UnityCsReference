@@ -70,9 +70,26 @@ partial class UIViewportWindow : EditorWindow
 
     [Shortcut("UI Viewport/Fit Viewport", typeof(ShortcutContext), KeyCode.F)]
     static void OnFitViewportShortcut(ShortcutArguments args)
+        => RequestFramingCommand.Execute(CommandSources.Viewport, element: null, orientToFace: false);
+
+    void OnFramingRequested(in CommandContext context)
     {
-        var window = s_LastFocusedWindow ?? (s_OpenWindows.Count > 0 ? s_OpenWindows[0] : null);
-        window?.m_Viewport?.FitViewport();
+        if (context.Status != CommandExecutionStatus.Success || m_Viewport == null)
+            return;
+        var command = (RequestFramingCommand)context.Command;
+        if (command.Element != null)
+        {
+            // RequestFramingCommand is broadcast — ignore elements that don't live in this viewport's
+            // sub-panel, otherwise we'd read worldBound from a foreign panel and jump to bogus coords.
+            var subRoot = m_Canvas?.PanelElement?.subRootVisualElement;
+            if (command.Element.panel == null || command.Element.panel != subRoot?.panel)
+                return;
+            m_Viewport.FitViewport(command.Element);
+        }
+        else
+        {
+            m_Viewport.FitViewport();
+        }
     }
 
     [NonSerialized]
@@ -105,12 +122,16 @@ partial class UIViewportWindow : EditorWindow
         titleContent.image = UIResources.GetIconForType(typeof(UIViewportWindow), UIResources.RequestSize.Px16, GetPixelsPerPoint(rootVisualElement)).texture;
         StageNavigationManager.instance.afterSuccessfullySwitchedToStage += OnStageChanged;
         UIToolkitAuthoringSettings.EnableInSceneAuthoringChanged += OnEnableInSceneAuthoringChanged;
+        EditorApplication.projectChanged += OnProjectChanged;
         s_OpenWindows.Add(this);
+        UICommandQueue.RegisterHandler<RequestFramingCommand>(OnFramingRequested);
     }
 
     void OnDisable()
     {
         StageNavigationManager.instance.afterSuccessfullySwitchedToStage -= OnStageChanged;
+        EditorApplication.projectChanged -= OnProjectChanged;
+        UICommandQueue.UnregisterHandler<RequestFramingCommand>(OnFramingRequested);
         UIToolkitAuthoringSettings.EnableInSceneAuthoringChanged -= OnEnableInSceneAuthoringChanged;
         s_OpenWindows.Remove(this);
         if (s_LastFocusedWindow == this)
@@ -176,6 +197,20 @@ partial class UIViewportWindow : EditorWindow
             SetToolbarBreadcrumbs();
         else
             m_Viewport.ClearBreadcrumbs();
+    }
+
+    void OnProjectChanged()
+    {
+        if (m_Canvas == null)
+            return;
+
+        if (StageUtility.GetCurrentStage() is not VisualElementEditingStage stage)
+            return;
+
+        SetToolbarBreadcrumbs();
+
+        if (stage.EditedVisualTreeAsset != null)
+            m_Canvas.HeaderTitle = stage.EditedVisualTreeAsset.name + ".uxml";
     }
 
     void OnEnableInSceneAuthoringChanged(bool enabled)

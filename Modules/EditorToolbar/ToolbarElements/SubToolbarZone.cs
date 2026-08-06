@@ -17,7 +17,7 @@ namespace UnityEditor.Toolbars
         {
             foreach (SubToolbar subToolbar in Toolbar.subToolbars)
             {
-                yield return new MainToolbarCustom(() =>
+                yield return new MainToolbarCustomElement(() =>
                 {
                     var container = new IMGUIContainer();
                     container.style.width = subToolbar.Width;
@@ -95,7 +95,7 @@ namespace UnityEditor.Toolbars
         [MainToolbarElement(Toolbar.deprecatedElementsId, defaultDockPosition = MainToolbarDockPosition.Left, defaultDockIndex = 11)]
         static MainToolbarElement CreateSubToolbarZone()
         {
-            return new MainToolbarCustom(CreateToolbar);
+            return new MainToolbarCustomElement(CreateToolbar);
         }
 
         [MainToolbarElementAvailability(Toolbar.deprecatedElementsId)]

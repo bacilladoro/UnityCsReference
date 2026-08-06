@@ -15,6 +15,7 @@ using Unity.Profiling;
 using System.Runtime.CompilerServices;
 using System.Diagnostics;
 using System.Diagnostics.Contracts;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEngine.Rendering
 {
@@ -1031,6 +1032,7 @@ namespace UnityEngine.Rendering
         [FreeFunction("RenderingCommandBuffer_Bindings::ConfigureFoveatedRendering", HasExplicitThis = true)]
         extern public void ConfigureFoveatedRendering(IntPtr platformData);
 
+        [AutoStaticsCleanupOnCodeReload]
         static public bool ThrowOnSetRenderTarget = false;
 
         static void CheckThrowOnSetRenderTarget()

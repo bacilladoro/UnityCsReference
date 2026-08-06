@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEditor;
 
@@ -101,6 +102,7 @@ namespace UnityEditorInternal
             return FindIconForFile(fileName) ?? EditorGUIUtility.FindTexture(typeof(DefaultAsset));
         }
 
+        [NoAutoStaticsCleanup] // lazy GUIContent cache built from fixed-name LoadIcon assets; re-inits on first access after reload
         static GUIContent[] sStatusWheel;
 
         internal static GUIContent animatedProgressImage
@@ -605,6 +607,7 @@ namespace UnityEditorInternal
             view.SetShowGizmos(value);
         }
 
+        [NoAutoStaticsCleanup] // lazily loaded by fixed path (LoadRequired); self-heals via null-check on access
         private static Material blitSceneViewCaptureMat;
 
         [Obsolete("Use CaptureEditorWindow instead", false)]

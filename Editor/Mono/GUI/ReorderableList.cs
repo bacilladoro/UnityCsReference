@@ -13,12 +13,13 @@ using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using UnityEngine.Pool;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditorInternal
 {
     //TODO: better handling for serializedObjects with mixed values
     //TODO: make it not rely on GUILayout at all, so its safe to use under PropertyDrawers.
-    public class ReorderableList
+    public partial class ReorderableList
     {
         public delegate void HeaderCallbackDelegate(Rect rect);
         public delegate void FooterCallbackDelegate(Rect rect);
@@ -112,6 +113,7 @@ namespace UnityEditorInternal
         }
         internal bool m_PropertyCacheValid = false;
         PropertyCacheEntry[] m_PropertyCache = Array.Empty<PropertyCacheEntry>();
+        [AutoStaticsCleanupOnCodeReload]
         static List<string> m_OutdatedProperties = new List<string>();
 
         static string GetParentListPath(string propertyPath)
@@ -429,6 +431,7 @@ namespace UnityEditorInternal
                 EditorGUI.LabelField(rect, OverMaxMultiEditLimit(maxMultiEditElementCount), defaultLabel);
             }
         }
+        [NoAutoStaticsCleanup] // lazy GUIStyle/GUIContent defaults cache; re-created on first access, safe to persist
         static Defaults s_Defaults;
         public static Defaults defaultBehaviours
         {
@@ -441,6 +444,7 @@ namespace UnityEditorInternal
             }
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         static List<WeakReference<ReorderableList>> s_Instances = new List<WeakReference<ReorderableList>>();
         internal static void InvalidateExistingListCaches() => s_Instances.ForEach(list =>
         {

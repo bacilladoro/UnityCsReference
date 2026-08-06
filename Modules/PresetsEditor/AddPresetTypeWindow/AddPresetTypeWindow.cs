@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor.IMGUI.Controls;
 using UnityEngine;
 
@@ -15,6 +16,7 @@ namespace UnityEditor.Presets
         const string k_PresetTypeSearch = "PresetTypeSearchString";
         const int k_MaxWindowHeight = 395 - 80;
 
+        [NoAutoStaticsCleanup] // persists dropdown selection/expansion state across reloads by design
         static AdvancedDropdownState s_State = new AdvancedDropdownState();
 
         protected override bool setInitialSelectionPosition { get; } = false;

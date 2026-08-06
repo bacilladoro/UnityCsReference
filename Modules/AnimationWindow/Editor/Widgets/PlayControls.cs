@@ -9,6 +9,7 @@ using UnityEditor.ShortcutManagement;
 using UnityEditorInternal;
 using UnityEngine.UIElements;
 using UnityEditor.UIElements;
+using Unity.Scripting.LifecycleManagement;
 
 using FrameRate = Unity.Timeline.Foundation.Time.FrameRate;
 
@@ -20,11 +21,11 @@ namespace UnityEditor.Animations.AnimationWindow.Widgets
     {
         AnimationWindowState m_State;
 
-        public static string s_PlayContentTooltip = L10n.Tr("Play the animation clip ({0}).");
-        public static string s_PrevKeyContentTooltip = L10n.Tr("Go to previous keyframe ({0}).");
-        public static string s_NextKeyContentTooltip = L10n.Tr("Go to next keyframe ({0}).");
-        public static string s_FirstKeyContentTooltip = L10n.Tr("Go to the beginning of the animation clip ({0}).");
-        public static string s_LastKeyContentTooltip = L10n.Tr("Go to the end of the animation clip ({0}).");
+        public static readonly string s_PlayContentTooltip = L10n.Tr("Play the animation clip ({0}).");
+        public static readonly string s_PrevKeyContentTooltip = L10n.Tr("Go to previous keyframe ({0}).");
+        public static readonly string s_NextKeyContentTooltip = L10n.Tr("Go to next keyframe ({0}).");
+        public static readonly string s_FirstKeyContentTooltip = L10n.Tr("Go to the beginning of the animation clip ({0}).");
+        public static readonly string s_LastKeyContentTooltip = L10n.Tr("Go to the end of the animation clip ({0}).");
 
         internal new ToolbarToggle playToggle => base.playToggle;
 

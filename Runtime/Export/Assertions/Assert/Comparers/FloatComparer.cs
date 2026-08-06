@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 
 namespace UnityEngine.Assertions.Comparers
@@ -12,6 +13,7 @@ namespace UnityEngine.Assertions.Comparers
     {
         readonly float m_Error;
         readonly bool m_Relative;
+        [NoAutoStaticsCleanup] // immutable comparer holding only float/bool; safe to persist across code reload
         public static readonly FloatComparer s_ComparerWithDefaultTolerance = new FloatComparer(kEpsilon);
 
         public const float kEpsilon = 0.00001f;

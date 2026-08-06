@@ -20,7 +20,10 @@ namespace UnityEditor.PackageManager.UI.Internal
             L10n.Tr("scoped"),
             L10n.Tr("registries"),
             L10n.Tr("registry"),
-            L10n.Tr("dependencies")
+            L10n.Tr("dependencies"),
+            L10n.Tr("security"),
+            L10n.Tr("signature"),
+            L10n.Tr("trust"),
         };
 
         const string k_GeneralServicesTemplatePath = "UXML/PackageManager/PackageManagerProjectSettings.uxml";
@@ -32,6 +35,7 @@ namespace UnityEditor.PackageManager.UI.Internal
         internal static class StylesheetPath
         {
             public static readonly string scopedRegistriesSettings = "StyleSheets/PackageManager/ScopedRegistriesSettings.uss";
+            public static readonly string securitySettings = "StyleSheets/PackageManager/SecuritySettings.uss";
             public static readonly string projectSettings = "StyleSheets/PackageManager/PackageManagerProjectSettings.uss";
             public static readonly string stylesheetCommon = "StyleSheets/Extensions/base/common.uss";
             public static readonly string stylesheetDark = "StyleSheets/Extensions/base/dark.uss";
@@ -55,6 +59,7 @@ namespace UnityEditor.PackageManager.UI.Internal
                 var scrollView = new ScrollView();
                 scrollView.StretchToParentSize();
                 scrollView.AddStyleSheetPath(StylesheetPath.scopedRegistriesSettings);
+                scrollView.AddStyleSheetPath(StylesheetPath.securitySettings);
                 scrollView.AddStyleSheetPath(StylesheetPath.projectSettings);
                 scrollView.AddStyleSheetPath(EditorGUIUtility.isProSkin ? StylesheetPath.stylesheetDark : StylesheetPath.stylesheetLight);
                 scrollView.AddStyleSheetPath(EditorGUIUtility.isProSkin ? StylesheetPath.styleSheetPackageManagerDark : StylesheetPath.styleSheetPackageManagerLight);

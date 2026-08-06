@@ -8,6 +8,7 @@ using UnityEngine.Scripting;
 using UnityEngine.Scripting.APIUpdating;
 using UnityEngine.Playables;
 using UnityEngine;
+using Unity.Scripting.LifecycleManagement;
 
 using Object = UnityEngine.Object;
 
@@ -32,28 +33,37 @@ namespace UnityEditor
     [NativeHeader("Editor/Src/Animation/AnimationMode.bindings.h")]
     [NativeHeader("Editor/Src/Animation/EditorCurveBinding.bindings.h")]
     [NativeHeader("Editor/Src/Prefabs/PropertyModification.h")]
-    public class AnimationMode
+    public partial class AnimationMode
     {
+        [AutoStaticsCleanupOnCodeReload]
         static private bool s_InAnimationPlaybackMode = false;
+        [AutoStaticsCleanupOnCodeReload]
         static private bool s_InAnimationRecordMode = false;
 
+        [NoAutoStaticsCleanup] // GUIView subscribers survive fast code reload; clearing would break style refresh
         [VisibleToOtherModules("UnityEditor.UIToolkitAuthoringModule")]
         static internal event Action onAnimationRecordingStart;
+        [NoAutoStaticsCleanup]
         [VisibleToOtherModules("UnityEditor.UIToolkitAuthoringModule")]
         static internal event Action onAnimationRecordingStop;
+        [NoAutoStaticsCleanup]
         static internal event Action onAnimationPlaybackStart;
+        [NoAutoStaticsCleanup]
         static internal event Action onAnimationPlaybackStop;
+        [NoAutoStaticsCleanup]
         static internal event Action onAnimationSampleEnd;
+        [NoAutoStaticsCleanup]
         static internal event Action onAnimationModeStop;
 
-        static private PrefColor s_AnimatedPropertyColor = new PrefColor("Animation/Property Animated", 0.82f, 0.97f, 1.00f, 1.00f, 0.54f, 0.85f, 1.00f, 1.00f);
-        static private PrefColor s_RecordedPropertyColor = new PrefColor("Animation/Property Recorded", 1.00f, 0.60f, 0.60f, 1.00f, 1.00f, 0.50f, 0.50f, 1.00f);
-        static private PrefColor s_CandidatePropertyColor = new PrefColor("Animation/Property Candidate", 1.00f, 0.70f, 0.60f, 1.00f, 1.00f, 0.67f, 0.43f, 1.00f);
+        static private readonly PrefColor s_AnimatedPropertyColor = new PrefColor("Animation/Property Animated", 0.82f, 0.97f, 1.00f, 1.00f, 0.54f, 0.85f, 1.00f, 1.00f);
+        static private readonly PrefColor s_RecordedPropertyColor = new PrefColor("Animation/Property Recorded", 1.00f, 0.60f, 0.60f, 1.00f, 1.00f, 0.50f, 0.50f, 1.00f);
+        static private readonly PrefColor s_CandidatePropertyColor = new PrefColor("Animation/Property Candidate", 1.00f, 0.70f, 0.60f, 1.00f, 1.00f, 0.67f, 0.43f, 1.00f);
 
         static public Color animatedPropertyColor { get { return s_AnimatedPropertyColor; } }
         static public Color recordedPropertyColor { get { return s_RecordedPropertyColor; } }
         static public Color candidatePropertyColor { get { return s_CandidatePropertyColor; } }
 
+        [AutoStaticsCleanupOnCodeReload]
         static private AnimationModeDriver s_DummyDriver;
 
         static private AnimationModeDriver DummyDriver()

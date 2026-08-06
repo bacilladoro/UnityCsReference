@@ -160,7 +160,7 @@ namespace UnityEditor.AnimationWindowBuiltin
         private AnimationClipPlayable m_DefaultPosePlayable;
         private bool m_UsesPostProcessComponents = false;
 
-        private static ProfilerMarker s_ResampleAnimationMarker = new ProfilerMarker("AnimationWindowControl.ResampleAnimation");
+        private static readonly ProfilerMarker s_ResampleAnimationMarker = new ProfilerMarker("AnimationWindowControl.ResampleAnimation");
 
         public void Dispose()
         {

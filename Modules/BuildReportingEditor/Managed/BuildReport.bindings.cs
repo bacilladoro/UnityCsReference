@@ -27,7 +27,7 @@ namespace UnityEditor.Build.Reporting
     /// <seealso cref="Build.BuildReportSummary"/>
     [NativeHeader("NativeKernel/Time/DateTime.h")]
     [NativeHeader("Modules/BuildReportingEditor/Public/BuildReport.h")]
-    [NativeClass("BuildReporting::BuildReport")]
+    [NativeClass("BuildReporting::BuildReport", PersistentTypeId = 1125)]
     public sealed class BuildReport : Object
     {
         private BuildReport()
@@ -200,6 +200,8 @@ namespace UnityEditor.Build.Reporting
         internal extern void SetBuildGUID(GUID guid);
 
         internal extern void SetBuildSessionGUID(GUID guid);
+
+        internal extern void SetContentSourceBuildSessionGUID(GUID guid);
 
         internal void ReplaceAllFileEntries(IEnumerable<NPath> paths)
         {

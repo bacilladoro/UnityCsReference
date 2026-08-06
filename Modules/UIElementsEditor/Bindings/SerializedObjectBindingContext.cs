@@ -278,11 +278,13 @@ internal class SerializedObjectBindingContext
         else if (element is Label label && label.GetProperty(PropertyField.foldoutTitleBoundLabelProperty) != null)
         {
             // We bind to the given propertyPath but we only bind to its 'localizedDisplayName' state, not its value.
-            // This is a feature from IMGUI where the title of a Foldout will change if one of the child
-            // properties is named "Name" and its value changes.
+            // This is a feature from IMGUI where the title of a Foldout will change if its first serialized
+            // child field is a string and its value changes.
+            // Re-resolve by path: the property passed to the getter can be advanced past this element during a list refresh, and localizedDisplayName's fallback reads the iterator index. (UUM-147445)
+            var titlePath = prop.propertyPath;
             SerializedObjectBinding<string>.CreateBind(
                 label, this, prop,
-                p => p.localizedDisplayName,
+                p => (FindProperty(titlePath) ?? p).localizedDisplayName,
                 (p, v) => { },
                 SerializedPropertyHelper.ValueEquals<string>);
 

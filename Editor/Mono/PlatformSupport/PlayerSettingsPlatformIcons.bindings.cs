@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using System.Linq;
 using System.Collections.Generic;
 
@@ -200,6 +201,7 @@ namespace UnityEditor
 
     public class PlatformIconKind
     {
+        [NoAutoStaticsCleanup] // fixed sentinel instance; safe to persist across reload
         internal static readonly PlatformIconKind Any = new PlatformIconKind(-1, "Any", "", NamedBuildTarget.Unknown);
 
         internal int kind { get; private set; }

@@ -122,8 +122,9 @@ namespace UnityEditor.UIElements.StyleSheets
                 return null;
 
             // Built-in themes are cloned as sub-assets of this TSS with no independent GUID; keep the theme scheme.
-            if (styleSheetPath == targetPath && AssetDatabase.IsSubAsset(styleSheet))
-                return $"{ThemeRegistry.kThemeScheme}://{styleSheet.name}";
+            var themeUri = URIHelpers.MakeThemeImportUri(styleSheet, targetPath);
+            if (!string.IsNullOrEmpty(themeUri))
+                return themeUri;
 
             return URIHelpers.MakeAssetUri(styleSheet);
         }

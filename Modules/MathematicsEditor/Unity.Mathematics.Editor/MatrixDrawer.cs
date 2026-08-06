@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using UnityEditor;
 using UnityEngine;
+using Unity.Scripting.LifecycleManagement;
 
 namespace Unity.Mathematics.Editor
 {
@@ -35,9 +36,11 @@ namespace Unity.Mathematics.Editor
             return rows * EditorGUIUtility.singleLineHeight + (rows - 1) * EditorGUIUtility.standardVerticalSpacing;
         }
 
-        static ReadOnlyCollection<string> k_ColPropertyPaths =
+        [NoAutoStaticsCleanup] // fixed immutable string collection; no user refs, safe to persist across code reload
+        static readonly ReadOnlyCollection<string> k_ColPropertyPaths =
             new ReadOnlyCollection<string>(new[] { "c0", "c1", "c2", "c3" });
-        static ReadOnlyCollection<string> k_RowPropertyPaths =
+        [NoAutoStaticsCleanup] // fixed immutable string collection; no user refs, safe to persist across code reload
+        static readonly ReadOnlyCollection<string> k_RowPropertyPaths =
             new ReadOnlyCollection<string>(new[] { "x", "y", "z", "w" });
 
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)

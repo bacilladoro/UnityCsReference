@@ -8,7 +8,7 @@ using UnityEngine.Bindings;
 
 namespace UnityEngine.UIElements.Layout;
 
-[NativeHeader("Modules/UIElements/Core/Layout/Native/LayoutNative.h")]
+[NativeHeader("Modules/UIElements/Core/Layout/Native/LayoutModel.h")]
 [StructLayout(LayoutKind.Sequential)]
 struct LayoutCacheData
 {

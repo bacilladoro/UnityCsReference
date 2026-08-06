@@ -12,6 +12,7 @@ namespace UnityEditor.VFX
     [UsedByNativeCode]
     [NativeHeader("Modules/VFXEditor/Public/VisualEffectSubgraph.h")]
     [NativeHeader("VFXScriptingClasses.h")]
+    [NativeClass("VisualEffectSubgraph", PersistentTypeId = 0x3B4A7520)]
     internal abstract class VisualEffectSubgraph : VisualEffectObject
     {
     }
@@ -19,6 +20,7 @@ namespace UnityEditor.VFX
     [UsedByNativeCode]
     [NativeHeader("Modules/VFXEditor/Public/VisualEffectSubgraph.h")]
     [NativeHeader("VFXScriptingClasses.h")]
+    [NativeClass("VisualEffectSubgraphOperator", PersistentTypeId = 0x3B4A752B)]
     internal class VisualEffectSubgraphOperator : VisualEffectSubgraph
     {
         public const string Extension = ".vfxoperator";
@@ -34,6 +36,7 @@ namespace UnityEditor.VFX
     [UsedByNativeCode]
     [NativeHeader("Modules/VFXEditor/Public/VisualEffectSubgraph.h")]
     [NativeHeader("VFXScriptingClasses.h")]
+    [NativeClass("VisualEffectSubgraphBlock", PersistentTypeId = 0x3B4A752C)]
     internal class VisualEffectSubgraphBlock : VisualEffectSubgraph
     {
         public const string Extension = ".vfxblock";

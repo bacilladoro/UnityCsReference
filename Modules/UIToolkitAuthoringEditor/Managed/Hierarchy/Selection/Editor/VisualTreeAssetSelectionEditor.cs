@@ -49,4 +49,15 @@ internal class VisualTreeAssetSelectionEditor : UnityEditor.Editor
         inspector.SetBinding(VisualTreeAssetInspector.PanelSettingsProperty, panelSettingsBinding);
         return inspector;
     }
+
+    // Make Edit > Frame Selected / F frame the document's host GameObject in the SceneView (the uxml
+    // root node has no VisualElement of its own to measure).
+    public bool HasFrameBounds() => VisualElementSceneViewOverlay.IsAlive(Target.PanelComponent);
+
+    public UnityEngine.Bounds OnGetFrameBounds()
+    {
+        if (!VisualElementSceneViewOverlay.IsAlive(Target.PanelComponent))
+            return default;
+        return VisualElementSceneViewOverlay.FloorBounds(VisualElementSceneViewOverlay.GameObjectWorldBounds(Target.PanelComponent.gameObject));
+    }
 }

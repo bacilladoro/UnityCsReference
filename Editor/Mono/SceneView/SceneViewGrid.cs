@@ -17,7 +17,7 @@ namespace UnityEditor
 
         internal event Action<bool> gridVisibilityChanged = delegate(bool b) {};
         internal event Action<GridRenderAxis> gridRenderAxisChanged = delegate(GridRenderAxis axis) {};
-        
+
         internal event Action<bool> nearestPlaneToHandleModeChanged = delegate {};
 
         internal enum GridRenderAxis
@@ -74,20 +74,21 @@ namespace UnityEditor
             {
                 var gridSettings = GridSettings.instance;
                 DrawGridParameters parameters = default(DrawGridParameters);
-                
+
                 parameters.gridID = gridID;
                 parameters.pivot = offsetAlongAxis + Quaternion.Inverse(gridSettings.rotation) * gridSettings.position;
                 parameters.rotation = gridSettings.rotation;
                 parameters.color = color;
                 parameters.color.a = fade.faded * opacity;
                 parameters.size = size;
-                
+
                 return parameters;
             }
         }
 
-        internal static PrefColor kViewGridColor = new PrefColor("Scene/Grid", .5f, .5f, .5f, .4f);
-        static float k_AngleThresholdForOrthographicGrid = 0.15f;
+        internal static readonly PrefColor kViewGridColor = new PrefColor("Scene/Grid", .5f, .5f, .5f, .4f);
+        internal static readonly SavedBool s_UseAxisColor = new SavedBool("Scene/GridAxisColor", true);
+        static readonly float k_AngleThresholdForOrthographicGrid = 0.15f;
 
         [SerializeField]
         Grid xGrid = new Grid();
@@ -106,8 +107,8 @@ namespace UnityEditor
 
         [SerializeField]
         float m_gridOpacity = defaultGridOpacity;
-        
-        [SerializeField] 
+
+        [SerializeField]
         bool m_NearestPlaneToHandleMode;
 
         internal bool showGrid
@@ -138,7 +139,7 @@ namespace UnityEditor
                 gridRenderAxisChanged(value);
             }
         }
-        
+
         internal bool nearestPlaneToHandleMode
         {
             get => m_NearestPlaneToHandleMode;
@@ -148,7 +149,7 @@ namespace UnityEditor
                 {
                     if (!value)
                         SetAllGridsOffsetAlongAxis(Vector3.zero);
-                    
+
                     m_NearestPlaneToHandleMode = value;
                     nearestPlaneToHandleModeChanged?.Invoke(value);
                 }
@@ -177,13 +178,13 @@ namespace UnityEditor
             var handlePosInvalid = float.IsInfinity(Tools.handlePosition.x) &&
                                    float.IsInfinity(Tools.handlePosition.y) &&
                                    float.IsInfinity(Tools.handlePosition.z);
-            
+
             if (m_NearestPlaneToHandleMode && !handlePosInvalid)
             {
                 var gridSettings = GridSettings.instance;
                 var handlePosInv = Quaternion.Inverse(gridSettings.rotation) * (Tools.handlePosition - gridSettings.position);
                 var snapedHandlePosInv = Snapping.Snap(handlePosInv, gridSettings.gridSize);
-                
+
                 if (gridAxis == GridRenderAxis.X)
                     xGrid.offsetAlongAxis = new Vector3(snapedHandlePosInv.x, 0f, 0f);
                 else if (gridAxis == GridRenderAxis.Y)
@@ -225,7 +226,7 @@ namespace UnityEditor
             SetOffsetAlongAxis(GridRenderAxis.Y, Snapping.Snap(GetOffsetAlongAxis(GridRenderAxis.Y), GridSettings.instance.gridSize));
             SetOffsetAlongAxis(GridRenderAxis.Z, Snapping.Snap(GetOffsetAlongAxis(GridRenderAxis.Z), GridSettings.instance.gridSize));
         }
-        
+
         internal void SetAllGridsOffsetAlongAxis(Vector3 offset)
         {
             xGrid.offsetAlongAxis = offset;
@@ -242,7 +243,7 @@ namespace UnityEditor
             else if (axis == GridRenderAxis.Z)
                 zGrid.offsetAlongAxis = offset;
         }
-        
+
         // Used by ProBuilder package.
         internal Vector3 GetPivot(GridRenderAxis axis)
         {
@@ -319,30 +320,11 @@ namespace UnityEditor
             zGrid.fade.SkipFading();
         }
 
-        void ApplySnapConstraintsInPerspectiveMode()
+        void ApplySnapConstraints()
         {
-            switch (gridAxis)
-            {
-                case GridRenderAxis.X:
-                    ApplySnapContraintsOnXAxis();
-                    break;
-                case GridRenderAxis.Y:
-                    ApplySnapContraintsOnYAxis();
-                    break;
-                case GridRenderAxis.Z:
-                    ApplySnapContraintsOnZAxis();
-                    break;
-            }
-        }
-
-        void ApplySnapConstraintsInOrthogonalMode()
-        {
-            if (xGrid.fade.target)
-                ApplySnapContraintsOnXAxis();
-            if (yGrid.fade.target)
-                ApplySnapContraintsOnYAxis();
-            if (zGrid.fade.target)
-                ApplySnapContraintsOnZAxis();
+            if (xGrid.fade.target) ApplySnapContraintsOnXAxis();
+            if (yGrid.fade.target) ApplySnapContraintsOnYAxis();
+            if (zGrid.fade.target) ApplySnapContraintsOnZAxis();
         }
 
         void ApplySnapContraintsOnXAxis()
@@ -367,57 +349,61 @@ namespace UnityEditor
             float size, bool orthoMode)
         {
             UpdateGridsVisibility(rotation, orthoMode);
+            ApplySnapConstraints();
+
+            DrawGridParameters parameters = default(DrawGridParameters);
 
             if (orthoMode)
             {
-                ApplySnapConstraintsInOrthogonalMode();
-                return PrepareGridRenderOrthogonalMode(camera, pivot, rotation, size);
-            }
+                // Don't show orthographic grid at very shallow angles because it looks bad.
+                // It's normally already faded out by the managed animated fading values at this angle,
+                // but if it's orbited rapidly, it can end up at this angle faster than the fading has kicked in.
+                // For these cases hiding it abruptly looks better.
+                // The popping isn't noticable because the user is orbiting rapidly to begin with.
+                Vector3 direction = Quaternion.Inverse(GridSettings.instance.rotation) * camera.transform.TransformDirection(new Vector3(0, 0, 1));
 
-            ApplySnapConstraintsInPerspectiveMode();
-            return PrepareGridRenderPerspectiveMode(camera, pivot, rotation, size);
-        }
-
-        DrawGridParameters PrepareGridRenderPerspectiveMode(Camera camera, Vector3 pivot, Quaternion rotation,
-            float size)
-        {
-            DrawGridParameters parameters = default(DrawGridParameters);
-
-            switch (gridAxis)
-            {
-                case GridRenderAxis.X:
+                if (xGrid.fade.target && Mathf.Abs(direction.x) >= k_AngleThresholdForOrthographicGrid)
                     parameters = xGrid.PrepareGridRender(0, gridOpacity);
-                    break;
-                case GridRenderAxis.Y:
+                else if (yGrid.fade.target && Mathf.Abs(direction.y) >= k_AngleThresholdForOrthographicGrid)
                     parameters = yGrid.PrepareGridRender(1, gridOpacity);
-                    break;
-                case GridRenderAxis.Z:
+                else if (zGrid.fade.target && Mathf.Abs(direction.z) >= k_AngleThresholdForOrthographicGrid)
                     parameters = zGrid.PrepareGridRender(2, gridOpacity);
-                    break;
+            }
+            else
+            {
+                switch (gridAxis)
+                {
+                    case GridRenderAxis.X: parameters = xGrid.PrepareGridRender(0, gridOpacity); break;
+                    case GridRenderAxis.Y: parameters = yGrid.PrepareGridRender(1, gridOpacity); break;
+                    case GridRenderAxis.Z: parameters = zGrid.PrepareGridRender(2, gridOpacity); break;
+                }
             }
 
+            SetAxisColors(ref parameters);
             return parameters;
         }
 
-        DrawGridParameters PrepareGridRenderOrthogonalMode(Camera camera, Vector3 pivot, Quaternion rotation,
-            float size)
+        // _AxisColor1 is for the gridPos.x = 0 line; _AxisColor2 for gridPos.y = 0.
+        // The mapping from gridPos component to world axis depends on the grid plane:
+        //   gridID 0 (X/YZ): gridPos = local.yz → x=0 is Z axis, y=0 is Y axis
+        //   gridID 1 (Y/XZ): gridPos = local.zx → x=0 is X axis, y=0 is Z axis
+        //   gridID 2 (Z/XY): gridPos = local.xy → x=0 is Y axis, y=0 is X axis
+        static void SetAxisColors(ref DrawGridParameters parameters)
         {
-            Vector3 direction = Quaternion.Inverse(GridSettings.instance.rotation) * camera.transform.TransformDirection(new Vector3(0, 0, 1));
-            DrawGridParameters parameters = default(DrawGridParameters);
+            if (!s_UseAxisColor.value)
+                return;
 
-            // Don't show orthographic grid at very shallow angles because it looks bad.
-            // It's normally already faded out by the managed animated fading values at this angle,
-            // but if it's orbited rapidly, it can end up at this angle faster than the fading has kicked in.
-            // For these cases hiding it abruptly looks better.
-            // The popping isn't noticable because the user is orbiting rapidly to begin with.
-            if (xGrid.fade.target && Mathf.Abs(direction.x) >= k_AngleThresholdForOrthographicGrid)
-                parameters = xGrid.PrepareGridRender(0, gridOpacity);
-            else if (yGrid.fade.target && Mathf.Abs(direction.y) >= k_AngleThresholdForOrthographicGrid)
-                parameters = yGrid.PrepareGridRender(1, gridOpacity);
-            else if (zGrid.fade.target && Mathf.Abs(direction.z) >= k_AngleThresholdForOrthographicGrid)
-                parameters = zGrid.PrepareGridRender(2, gridOpacity);
+            parameters.useAxisColor = 1;
+            Color xColor = Handles.s_XAxisColor;
+            Color yColor = Handles.s_YAxisColor;
+            Color zColor = Handles.s_ZAxisColor;
 
-            return parameters;
+            switch (parameters.gridID)
+            {
+                case 0: parameters.axisColor1 = zColor; parameters.axisColor2 = yColor; break;
+                case 1: parameters.axisColor1 = xColor; parameters.axisColor2 = zColor; break;
+                case 2: parameters.axisColor1 = yColor; parameters.axisColor2 = xColor; break;
+            }
         }
 
         internal void Reset()

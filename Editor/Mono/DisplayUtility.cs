@@ -14,8 +14,8 @@ namespace UnityEditor
 {
     internal class DisplayUtility
     {
-        static string s_DisplayStr = "Display {0}";
-        private static GUIContent[] s_GenericDisplayNames =
+        static readonly string s_DisplayStr = "Display {0}";
+        private static readonly GUIContent[] s_GenericDisplayNames =
         {
             EditorGUIUtility.TextContent(string.Format(s_DisplayStr, 1)), EditorGUIUtility.TextContent(string.Format(s_DisplayStr, 2)),
             EditorGUIUtility.TextContent(string.Format(s_DisplayStr, 3)), EditorGUIUtility.TextContent(string.Format(s_DisplayStr, 4)),

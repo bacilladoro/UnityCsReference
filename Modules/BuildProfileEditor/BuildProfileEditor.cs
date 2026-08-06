@@ -19,9 +19,6 @@ namespace UnityEditor.Build.Profile
     {
         const string k_Uxml = "BuildProfile/UXML/BuildProfileEditor.uxml";
         const string k_PlatformSettingPropertyName = "m_PlatformBuildProfile";
-        const string k_AdditionalPlatformSettings = "m_AdditionalPlatformBuildSettings";
-        const string k_AdditionalPlatformSettingsPlatformGuid = "platformGuid";
-        const string k_AdditionalPlatformSettingsValue = "platformSettings";
         const string k_PlatformDeprecationHelpBox = "platform-deprecation-help-box";
         const string k_PlatformWarningHelpBox = "platform-warning-help-box";
         const string k_PlatformSettingsBaseRoot = "platform-settings-base-root";
@@ -42,11 +39,6 @@ namespace UnityEditor.Build.Profile
         const string k_AddSettingsButton = "bp-add-settings-button";
         const string k_SettingsFoldoutRoot = "bp-editor-settings-container";
         const string k_InsightSettingsFoldout = "insights-analytics-foldout";
-        const string k_PlatformSelectionSection = "platform-selection-section";
-        const string k_PlatformSelectionContainer = "platform-selection-container";
-        const string k_PlatformSelectionDeprecationHelpBox = "platform-selection-deprecation-help-box";
-        const string k_PlatformSelectionDropdown = "platform-selection-dropdown";
-        const string k_SwitchProfilePlatformButton = "switch-profile-platform-button";
 
         static readonly GUIContent s_Copy = EditorGUIUtility.TrTextContent("Copy");
         static readonly GUIContent s_Paste = EditorGUIUtility.TrTextContent("Paste");
@@ -60,9 +52,6 @@ namespace UnityEditor.Build.Profile
         VisualElement m_SettingsFoldoutRoot;
         BuildProfile m_Profile;
         AddSettingsDataProvider m_AddSettingsDataSource;
-        VisualElement m_PlatformSelectionSection;
-        VisualElement m_PlatformSelectionContainer;
-        SelectedPlatformDeprecationHelpBox m_SelectedPlatformDeprecationHelpBox;
         GUID m_SelectedPlatformGuid;
 
         public BuildProfileWindow parent { get; set; }
@@ -161,18 +150,12 @@ namespace UnityEditor.Build.Profile
                     sharedSettingsInfoHelpBox.text = profileInfoMessage;
             }
 
-            m_PlatformSelectionSection = root.Q<VisualElement>(k_PlatformSelectionSection);
-            m_PlatformSelectionContainer = root.Q<VisualElement>(k_PlatformSelectionContainer);
-            m_PlatformSelectionSection.Hide();
-            m_SelectedPlatformDeprecationHelpBox = new SelectedPlatformDeprecationHelpBox(
-                root.Q<HelpBox>(k_PlatformSelectionDeprecationHelpBox));
-
             BuildProfileModuleUtil.OnUpdateActiveEditors += this.OnUpdateEditorView;
 
             m_PlatformDeprecationHelpBox = new PlatformDeprecationHelpBox(platformDeprecationHelpBox);
             m_PlatformDeprecationHelpBox.Update(profile);
 
-            bool hasErrors = Util.UpdatePlatformRequirementsWarningHelpBox(noModuleFoundHelpBox, profile.platformGuid);
+            bool hasErrors = Util.UpdatePlatformRequirementsWarningHelpBox(noModuleFoundHelpBox, guid);
             isClassic = BuildProfileContext.IsClassicPlatformProfile(profile);
 
             if (!isClassic)
@@ -185,9 +168,6 @@ namespace UnityEditor.Build.Profile
                 sharedSettingsInfoHelpBox.buttonText = TrText.addBuildProfile;
                 sharedSettingsInfoHelpBox.onButtonClicked += () => PlatformDiscoveryWindow.ShowWindowAndSelectPlatform(profile.platformGuid);
             }
-
-            if (profile.isMultiTarget && (m_SDKExtension == null || m_SDKExtension.shouldShowPlatformSettings))
-                ShowProfilePlatformSelection();
 
             AddSceneList(root, profile);
 
@@ -252,7 +232,6 @@ namespace UnityEditor.Build.Profile
             root.Q<HelpBox>(k_CompilingWarningHelpBox).Hide();
             root.Q<Foldout>(k_BuildSettingsFoldout).Hide();
             root.Q<Button>(k_AddSettingsButton).Hide();
-            root.Q<VisualElement>(k_PlatformSelectionSection).Hide();
 
             sharedSettingsHelpbox.text = TrText.sharedSettingsSectionInfo;
 
@@ -380,82 +359,9 @@ namespace UnityEditor.Build.Profile
             }
         }
 
-        void ShowProfilePlatformSelection()
-        {
-            if (!m_Profile.TryGetSupportedIBuildTargets(out var installedPlatforms))
-            {
-                m_PlatformSelectionSection.Hide();
-                return;
-            }
-
-            if (m_Profile.selectedPlatformGuid.Empty())
-                m_Profile.selectedPlatformGuid = installedPlatforms[0].Guid;
-
-            SetUpPlatformSelectionDropdown();
-            SetUpSwitchProfilePlatformButton();
-            m_PlatformSelectionSection.Show();
-            m_SelectedPlatformDeprecationHelpBox.Update(m_Profile);
-
-            void SetUpPlatformSelectionDropdown()
-            {
-                var platformSelectionDropdown = m_PlatformSelectionContainer.Q<DropdownField>(k_PlatformSelectionDropdown);
-                platformSelectionDropdown.label = TrText.platformSelectionDropdown;
-                platformSelectionDropdown.choices.Clear();
-                var selectedIndex = 0;
-
-                for (var index = 0; index < installedPlatforms.Length; index++)
-                {
-                    var platform = installedPlatforms[index];
-                    var guid = platform.Guid;
-                    var displayName = BuildTargetDiscovery.BuildPlatformDisplayName(guid);
-                    platformSelectionDropdown.choices.Add(displayName);
-
-                    if (guid == m_Profile.selectedPlatformGuid)
-                        selectedIndex = index;
-                }
-
-                platformSelectionDropdown.index = selectedIndex;
-
-                platformSelectionDropdown.RegisterValueChangedCallback(_ =>
-                {
-                    var dropdownIndex = platformSelectionDropdown.index;
-                    if (dropdownIndex < 0 || dropdownIndex >= installedPlatforms.Length)
-                        return;
-
-                    var selectedGuid = installedPlatforms[dropdownIndex].Guid;
-                    if (m_Profile.selectedPlatformGuid != selectedGuid)
-                    {
-                        m_Profile.selectedPlatformGuid = selectedGuid;
-                        m_SelectedPlatformGuid = selectedGuid;
-                        BuildProfileModuleUtil.UpdateActiveEditors(m_Profile);
-                        RebuildBuildProfileEditor();
-                    }
-                });
-            }
-
-            void SetUpSwitchProfilePlatformButton()
-            {
-                var switchProfilePlatformButton = m_PlatformSelectionContainer.Q<Button>(k_SwitchProfilePlatformButton);
-                switchProfilePlatformButton.text = TrText.switchProfilePlatformButton;
-                switchProfilePlatformButton.clicked += () => parent?.OnActivateButtonClicked();
-
-                if (!m_Profile.IsActiveBuildProfileOrPlatform() || parent == null)
-                {
-                    switchProfilePlatformButton.Hide();
-                    return;
-                }
-
-                switchProfilePlatformButton.Show();
-                if (m_Profile.selectedPlatformGuid == m_Profile.activePlatformGuid)
-                    switchProfilePlatformButton.SetEnabled(false);
-                else
-                    switchProfilePlatformButton.SetEnabled(true);
-            }
-        }
-
         void ShowPlatformSettings(BuildProfile profile, VisualElement platformSettingsBaseRoot)
         {
-            var platformProperties = GetPlatformSettingsProperty(profile);
+            var platformProperties = serializedObject.FindProperty(k_PlatformSettingPropertyName);
 
             if (m_PlatformExtension == null)
                 return;
@@ -472,35 +378,6 @@ namespace UnityEditor.Build.Profile
             var settings = m_PlatformExtension.CreateSettingsGUI(
                 serializedObject, platformProperties, platformSettingsState);
             platformSettingsBaseRoot.Add(settings);
-        }
-
-        SerializedProperty GetPlatformSettingsProperty(BuildProfile profile)
-        {
-            var defaultPlatformSettings = serializedObject.FindProperty(k_PlatformSettingPropertyName);
-
-            if (!profile.isMultiTarget)
-                return defaultPlatformSettings;
-
-            var additionalPlatformSettings = serializedObject.FindProperty(k_AdditionalPlatformSettings);
-            if (additionalPlatformSettings == null || !additionalPlatformSettings.isArray)
-                return defaultPlatformSettings;
-
-            for (int index = 0; index < additionalPlatformSettings.arraySize; index++)
-            {
-                var entry = additionalPlatformSettings.GetArrayElementAtIndex(index);
-                var platformIdProperty = entry.FindPropertyRelative(k_AdditionalPlatformSettingsPlatformGuid);
-                if (platformIdProperty == null ||
-                    platformIdProperty.propertyType != SerializedPropertyType.GUID ||
-                    platformIdProperty.guidValue != profile.selectedPlatformGuid)
-                {
-                    continue;
-                }
-
-                var selectedPlatformSettings = entry.FindPropertyRelative(k_AdditionalPlatformSettingsValue);
-                return selectedPlatformSettings ?? defaultPlatformSettings;
-            }
-
-            return defaultPlatformSettings;
         }
 
         void ShowInsightsSettings(BuildProfile profile, VisualElement rootVisualElement, bool isClassic)

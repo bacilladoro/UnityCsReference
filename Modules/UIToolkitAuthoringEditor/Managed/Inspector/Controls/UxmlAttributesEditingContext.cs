@@ -216,8 +216,8 @@ class UxmlAttributesEditingContext : IDisposable
     /// <summary>
     /// Set the context
     /// </summary>
+    /// <param name="editedVisualTreeAsset">The VisualTreeAsset the uxml attributes are view or edited from</param>
     /// <param name="element">The VisualElement associated to the attributes to view or edit</param>
-    /// <param name="environment">The environment where the uxml attributes are view or edited</param>
     /// <param name="isReadOnly">Indicates whether the attributes are read-only</param>
     void SetInternal(VisualTreeAsset editedVisualTreeAsset, VisualElement element, bool isReadOnly)
     {
@@ -295,10 +295,6 @@ class UxmlAttributesEditingContext : IDisposable
                     Clear();
                     return;
                 }
-
-                visualTreeAsset.hideFlags = isReadOnly ? HideFlags.NotEditable : HideFlags.None;
-
-                // TODO : Restore the hideFlags after done
 
                 if (elementAsset.serializedData == null)
                 {

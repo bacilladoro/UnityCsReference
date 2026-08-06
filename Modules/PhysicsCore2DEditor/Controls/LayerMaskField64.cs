@@ -8,6 +8,7 @@ using System.Text;
 
 using UnityEditor;
 using UnityEngine;
+using Unity.Scripting.LifecycleManagement;
 
 namespace Unity.U2D.Physics.Editor
 {
@@ -25,8 +26,10 @@ namespace Unity.U2D.Physics.Editor
         const string k_Everything = "Everything";
         const string k_Mixed = "Mixed...";
 
-        // Reusable buffers for the per-frame summary; the popup takes its own copies.
+        // Reusable per-frame scratch buffers (the popup takes its own copies); repopulated on every Draw and hold no user-type references, so safe to persist across a code reload.
+        [NoAutoStaticsCleanup] // per-frame scratch buffer, repopulated every Draw, no user-type refs — safe to persist across a code reload
         static readonly List<string> s_Names = new List<string>(64);
+        [NoAutoStaticsCleanup] // per-frame scratch buffer, repopulated every Draw, no user-type refs — safe to persist across a code reload
         static readonly List<ulong> s_Masks = new List<ulong>(64);
 
         internal static void Draw(Rect position, GUIContent label, SerializedProperty bitMaskProperty, bool showAsPhysicsMask)

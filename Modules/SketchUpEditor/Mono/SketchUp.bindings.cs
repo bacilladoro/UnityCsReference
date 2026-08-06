@@ -49,6 +49,7 @@ namespace UnityEditor
         public static extern SketchUpNodeInfo[] GetNodesFromNativePtr(IntPtr nativePtr);
     }
 
+    [global::UnityEngine.NativeClass("SketchUpImporter", PersistentTypeId = 1124)]
     [NativeHeader("Modules/SketchUpEditor/SketchUpImporter.h")]
     public sealed partial class SketchUpImporter : ModelImporter
     {

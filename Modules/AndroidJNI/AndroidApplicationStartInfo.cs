@@ -7,415 +7,334 @@ using System.Collections.Generic;
 
 namespace UnityEngine.Android
 {
+    ///<summary>Options for the launch mode of an Android activity.</summary>
+    ///<remarks>Use this enum with the <see cref="IApplicationStartInfo.launchMode" /> property. For more information, refer to Android's documentation on &lt;a href="https://developer.android.com/reference/android/app/ApplicationStartInfo"&gt;ApplicationStartInfo&lt;/a&gt;.</remarks>
     public enum LaunchMode
     {
-        /// <summary>
-        /// <para>The standard "standard" launch mode of an activity, which can have multiple instances and can be instantiated in any task.</para>
-        /// <seealso href="https://developer.android.com/reference/android/app/ApplicationStartInfo#LAUNCH_MODE_STANDARD">developer.android.com</seealso>
-        /// </summary>
+        ///<summary>Mirrors <c>android:public static final int LAUNCH_MODE_STANDARD</c>.</summary>
+        ///<remarks>For more information, refer to Android's documentation on &lt;a href="https://developer.android.com/reference/android/app/ApplicationStartInfo#LAUNCH_MODE_STANDARD"&gt;LAUNCH_MODE_STANDARD&lt;/a&gt;.</remarks>
         Standard = 0,
 
-        /// <summary>
-        /// <para>The "singleTop" launch mode of an activity. If there is an existing instance of the activity class in the task that would handle the intent, the system routes the intent to that instance instead of creating a new instance.</para>
-        /// <seealso href="https://developer.android.com/reference/android/app/ApplicationStartInfo#LAUNCH_MODE_SINGLE_TOP">developer.android.com</seealso>
-        /// </summary>
+        ///<summary>Mirrors <c>android:public static final int LAUNCH_MODE_SINGLE_TOP</c>.</summary>
+        ///<remarks>For more information, refer to Android's documentation on &lt;a href="https://developer.android.com/reference/android/app/ApplicationStartInfo#LAUNCH_MODE_SINGLE_TOP"&gt;LAUNCH_MODE_SINGLE_TOP&lt;/a&gt;.</remarks>
         SingleTop = 1,
 
-        /// <summary>
-        /// <para>The "singleInstance" launch mode of an activity. The system creates the activity at the root of a new task and routes the intent to it. If the instance already exists, the system routes the intent to existing instance through a call to its onNewIntent() method, instead of creating a new instance.</para>
-        /// <seealso href="https://developer.android.com/reference/android/app/ApplicationStartInfo#LAUNCH_MODE_SINGLE_INSTANCE">developer.android.com</seealso>
-        /// </summary>
+        ///<summary>Mirrors <c>android:public static final int LAUNCH_MODE_SINGLE_INSTANCE</c>.</summary>
+        ///<remarks>For more information, refer to Android's documentation on &lt;a href="https://developer.android.com/reference/android/app/ApplicationStartInfo#LAUNCH_MODE_SINGLE_INSTANCE"&gt;LAUNCH_MODE_SINGLE_INSTANCE&lt;/a&gt;.</remarks>
         SingleInstance = 2,
 
-        /// <summary>
-        /// <para>The "singleTask" launch mode of an activity. The system creates a new task and instantiates the activity at the root of the new task. However, if an instance of the activity already exists in a separate task, the system routes the intent to the existing instance through a call to its onNewIntent() method, instead of creating a new instance.</para>
-        /// <seealso href="https://developer.android.com/reference/android/app/ApplicationStartInfo#LAUNCH_MODE_SINGLE_TASK">developer.android.com</seealso>
-        /// </summary>
+        ///<summary>Mirrors <c>android:public static final int LAUNCH_MODE_SINGLE_TASK</c>.</summary>
+        ///<remarks>For more information, refer to Android's documentation on &lt;a href="https://developer.android.com/reference/android/app/ApplicationStartInfo#LAUNCH_MODE_SINGLE_TASK"&gt;LAUNCH_MODE_SINGLE_TASK&lt;/a&gt;.</remarks>
         SingleTask = 3,
 
-        /// <summary>
-        /// <para>The "singleInstancePerTask" launch mode of an activity. The activity can only be running as the root activity of the task, but multiple instances of the task with this activity can be created.</para>
-        /// <seealso href="https://developer.android.com/reference/android/app/ApplicationStartInfo#LAUNCH_MODE_SINGLE_INSTANCE_PER_TASK">developer.android.com</seealso>
-        /// </summary>
+        ///<summary>Mirrors <c>android:public static final int LAUNCH_MODE_SINGLE_INSTANCE_PER_TASK</c>.</summary>
+        ///<remarks>For more information, refer to Android's documentation on &lt;a href="https://developer.android.com/reference/android/app/ApplicationStartInfo#LAUNCH_MODE_SINGLE_INSTANCE_PER_TASK"&gt;LAUNCH_MODE_SINGLE_INSTANCE_PER_TASK&lt;/a&gt;.</remarks>
         SingleInstancePerTask = 4
     }
 
+    ///<summary>Reason codes for an Android app process start.</summary>
+    ///<remarks>Use this enum with the <see cref="IApplicationStartInfo.reason" /> property.</remarks>
     public enum StartReason
     {
-        /// <summary>
-        /// <para>The process was started to handle an alarm.</para>
-        /// <seealso href="https://developer.android.com/reference/android/app/ApplicationStartInfo#START_REASON_ALARM">developer.android.com</seealso>
-        /// </summary>
+        ///<summary>Mirrors <c>android:public static final int START_REASON_ALARM</c>.</summary>
+        ///<remarks>For more information, refer to Android's documentation on &lt;a href="https://developer.android.com/reference/android/app/ApplicationStartInfo#START_REASON_ALARM"&gt;START_REASON_ALARM&lt;/a&gt;.</remarks>
         Alarm = 0,
 
-        /// <summary>
-        /// <para>The process was started to handle a backup.</para>
-        /// <seealso href="https://developer.android.com/reference/android/app/ApplicationStartInfo#START_REASON_BACKUP">developer.android.com</seealso>
-        /// </summary>
+        ///<summary>Mirrors <c>android:public static final int START_REASON_BACKUP</c>.</summary>
+        ///<remarks>For more information, refer to Android's documentation on &lt;a href="https://developer.android.com/reference/android/app/ApplicationStartInfo#START_REASON_BACKUP"&gt;START_REASON_BACKUP&lt;/a&gt;.</remarks>
         Backup = 1,
 
-        /// <summary>
-        /// <para>The process was started to handle a boot complete broadcast.</para>
-        /// <seealso href="https://developer.android.com/reference/android/app/ApplicationStartInfo#START_REASON_BOOT_COMPLETE">developer.android.com</seealso>
-        /// </summary>
+        ///<summary>Mirrors <c>android:public static final int START_REASON_BOOT_COMPLETE</c>.</summary>
+        ///<remarks>For more information, refer to Android's documentation on &lt;a href="https://developer.android.com/reference/android/app/ApplicationStartInfo#START_REASON_BOOT_COMPLETE"&gt;START_REASON_BOOT_COMPLETE&lt;/a&gt;.</remarks>
         BootComplete = 2,
 
-        /// <summary>
-        /// <para>The process was started to handle a broadcast.</para>
-        /// <seealso href="https://developer.android.com/reference/android/app/ApplicationStartInfo#START_REASON_BROADCAST">developer.android.com</seealso>
-        /// </summary>
+        ///<summary>Mirrors <c>android:public static final int START_REASON_BROADCAST</c>.</summary>
+        ///<remarks>For more information, refer to Android's documentation on &lt;a href="https://developer.android.com/reference/android/app/ApplicationStartInfo#START_REASON_BROADCAST"&gt;START_REASON_BROADCAST&lt;/a&gt;.</remarks>
         Broadcast = 3,
 
-        /// <summary>
-        /// <para>The process was started to handle a content provider.</para>
-        /// <seealso href="https://developer.android.com/reference/android/app/ApplicationStartInfo#START_REASON_CONTENT_PROVIDER">developer.android.com</seealso>
-        /// </summary>
+        ///<summary>Mirrors <c>android:public static final int START_REASON_CONTENT_PROVIDER</c>.</summary>
+        ///<remarks>For more information, refer to Android's documentation on &lt;a href="https://developer.android.com/reference/android/app/ApplicationStartInfo#START_REASON_CONTENT_PROVIDER"&gt;START_REASON_CONTENT_PROVIDER&lt;/a&gt;.</remarks>
         ContentProvider = 4,
 
-        /// <summary>
-        /// <para>The process was started to handle a job.</para>
-        /// <seealso href="https://developer.android.com/reference/android/app/ApplicationStartInfo#START_REASON_JOB">developer.android.com</seealso>
-        /// </summary>
+        ///<summary>Mirrors <c>android:public static final int START_REASON_JOB</c>.</summary>
+        ///<remarks>For more information, refer to Android's documentation on &lt;a href="https://developer.android.com/reference/android/app/ApplicationStartInfo#START_REASON_JOB"&gt;START_REASON_JOB&lt;/a&gt;.</remarks>
         Job = 5,
 
-        /// <summary>
-        /// <para>The process was started from the launcher.</para>
-        /// <seealso href="https://developer.android.com/reference/android/app/ApplicationStartInfo#START_REASON_LAUNCHER">developer.android.com</seealso>
-        /// </summary>
+        ///<summary>Mirrors <c>android:public static final int START_REASON_LAUNCHER</c>.</summary>
+        ///<remarks>For more information, refer to Android's documentation on &lt;a href="https://developer.android.com/reference/android/app/ApplicationStartInfo#START_REASON_LAUNCHER"&gt;START_REASON_LAUNCHER&lt;/a&gt;.</remarks>
         Launcher = 6,
 
-        /// <summary>
-        /// <para>The process was started from the launcher recents.</para>
-        /// <seealso href="https://developer.android.com/reference/android/app/ApplicationStartInfo#START_REASON_LAUNCHER_RECENTS">developer.android.com</seealso>
-        /// </summary>
+        ///<summary>Mirrors <c>android:public static final int START_REASON_LAUNCHER_RECENTS</c>.</summary>
+        ///<remarks>For more information, refer to Android's documentation on &lt;a href="https://developer.android.com/reference/android/app/ApplicationStartInfo#START_REASON_LAUNCHER_RECENTS"&gt;START_REASON_LAUNCHER_RECENTS&lt;/a&gt;.</remarks>
         LauncherRecents = 7,
 
-        /// <summary>
-        /// <para>The process was started for some other reason.</para>
-        /// <seealso href="https://developer.android.com/reference/android/app/ApplicationStartInfo#START_REASON_OTHER">developer.android.com</seealso>
-        /// </summary>
+        ///<summary>Mirrors <c>android:public static final int START_REASON_OTHER</c>.</summary>
+        ///<remarks>For more information, refer to Android's documentation on &lt;a href="https://developer.android.com/reference/android/app/ApplicationStartInfo#START_REASON_OTHER"&gt;START_REASON_OTHER&lt;/a&gt;.</remarks>
         Other = 8,
 
-        /// <summary>
-        /// <para>The process was started to handle a push.</para>
-        /// <seealso href="https://developer.android.com/reference/android/app/ApplicationStartInfo#START_REASON_PUSH">developer.android.com</seealso>
-        /// </summary>
+        ///<summary>Mirrors <c>android:public static final int START_REASON_PUSH</c>.</summary>
+        ///<remarks>For more information, refer to Android's documentation on &lt;a href="https://developer.android.com/reference/android/app/ApplicationStartInfo#START_REASON_PUSH"&gt;START_REASON_PUSH&lt;/a&gt;.</remarks>
         Push = 9,
 
-        /// <summary>
-        /// <para>The process was started to handle a service.</para>
-        /// <seealso href="https://developer.android.com/reference/android/app/ApplicationStartInfo#START_REASON_SERVICE">developer.android.com</seealso>
-        /// </summary>
+        ///<summary>Mirrors <c>android:public static final int START_REASON_SERVICE</c>.</summary>
+        ///<remarks>For more information, refer to Android's documentation on &lt;a href="https://developer.android.com/reference/android/app/ApplicationStartInfo#START_REASON_SERVICE"&gt;START_REASON_SERVICE&lt;/a&gt;.</remarks>
         Service = 10,
 
-        /// <summary>
-        /// <para>The process was started to handle a start activity.</para>
-        /// <seealso href="https://developer.android.com/reference/android/app/ApplicationStartInfo#START_REASON_START_ACTIVITY">developer.android.com</seealso>
-        /// </summary>
+        ///<summary>Mirrors <c>android:public static final int START_REASON_START_ACTIVITY</c>.</summary>
+        ///<remarks>For more information, refer to Android's documentation on &lt;a href="https://developer.android.com/reference/android/app/ApplicationStartInfo#START_REASON_START_ACTIVITY"&gt;START_REASON_START_ACTIVITY&lt;/a&gt;.</remarks>
         StartActivity = 11
     }
 
+    ///<summary>Options for the start type of an Android app.</summary>
+    ///<remarks>Use this enum with the <see cref="IApplicationStartInfo.startType" /> property.</remarks>
     public enum StartType
     {
-        /// <summary>
-        /// <para>Start type was not set.</para>
-        /// <seealso href="https://developer.android.com/reference/android/app/ApplicationStartInfo#START_TYPE_UNSET">developer.android.com</seealso>
-        /// </summary>
+        ///<summary>Mirrors <c>android:public static final int START_TYPE_UNSET</c>.</summary>
+        ///<remarks>For more information, refer to Android's documentation on &lt;a href="https://developer.android.com/reference/android/app/ApplicationStartInfo#START_TYPE_UNSET"&gt;START_TYPE_UNSET&lt;/a&gt;.</remarks>
         Unset = 0,
 
-        /// <summary>
-        /// <para>Cold start - the process was started from scratch.</para>
-        /// <seealso href="https://developer.android.com/reference/android/app/ApplicationStartInfo#START_TYPE_COLD">developer.android.com</seealso>
-        /// </summary>
+        ///<summary>Mirrors <c>android:public static final int START_TYPE_COLD</c>.</summary>
+        ///<remarks>For more information, refer to Android's documentation on &lt;a href="https://developer.android.com/reference/android/app/ApplicationStartInfo#START_TYPE_COLD"&gt;START_TYPE_COLD&lt;/a&gt;.</remarks>
         Cold = 1,
 
-        /// <summary>
-        /// <para>Warm start - the process was brought back from a stopped state.</para>
-        /// <seealso href="https://developer.android.com/reference/android/app/ApplicationStartInfo#START_TYPE_WARM">developer.android.com</seealso>
-        /// </summary>
+        ///<summary>Mirrors <c>android:public static final int START_TYPE_WARM</c>.</summary>
+        ///<remarks>For more information, refer to Android's documentation on &lt;a href="https://developer.android.com/reference/android/app/ApplicationStartInfo#START_TYPE_WARM"&gt;START_TYPE_WARM&lt;/a&gt;.</remarks>
         Warm = 2,
 
-        /// <summary>
-        /// <para>Hot start - the process was already running in the background.</para>
-        /// <seealso href="https://developer.android.com/reference/android/app/ApplicationStartInfo#START_TYPE_HOT">developer.android.com</seealso>
-        /// </summary>
+        ///<summary>Mirrors <c>android:public static final int START_TYPE_HOT</c>.</summary>
+        ///<remarks>For more information, refer to Android's documentation on &lt;a href="https://developer.android.com/reference/android/app/ApplicationStartInfo#START_TYPE_HOT"&gt;START_TYPE_HOT&lt;/a&gt;.</remarks>
         Hot = 3
     }
 
+    ///<summary>Options for the startup state of an Android app process.</summary>
+    ///<remarks>Use this enum with the <see cref="IApplicationStartInfo.startupState" /> property.</remarks>
     public enum StartupState
     {
-        /// <summary>
-        /// <para>The startup was started.</para>
-        /// <seealso href="https://developer.android.com/reference/android/app/ApplicationStartInfo#STARTUP_STATE_STARTED">developer.android.com</seealso>
-        /// </summary>
+        ///<summary>Mirrors <c>android:public static final int STARTUP_STATE_STARTED</c>.</summary>
+        ///<remarks>For more information, refer to Android's documentation on &lt;a href="https://developer.android.com/reference/android/app/ApplicationStartInfo#STARTUP_STATE_STARTED"&gt;STARTUP_STATE_STARTED&lt;/a&gt;.</remarks>
         Started = 0,
 
-        /// <summary>
-        /// <para>The startup encountered an error.</para>
-        /// <seealso href="https://developer.android.com/reference/android/app/ApplicationStartInfo#STARTUP_STATE_ERROR">developer.android.com</seealso>
-        /// </summary>
+        ///<summary>Mirrors <c>android:public static final int STARTUP_STATE_ERROR</c>.</summary>
+        ///<remarks>For more information, refer to Android's documentation on &lt;a href="https://developer.android.com/reference/android/app/ApplicationStartInfo#STARTUP_STATE_ERROR"&gt;STARTUP_STATE_ERROR&lt;/a&gt;.</remarks>
         Error = 1,
 
-        /// <summary>
-        /// <para>The first frame was drawn.</para>
-        /// <seealso href="https://developer.android.com/reference/android/app/ApplicationStartInfo#STARTUP_STATE_FIRST_FRAME_DRAWN">developer.android.com</seealso>
-        /// </summary>
+        ///<summary>Mirrors <c>android:public static final int STARTUP_STATE_FIRST_FRAME_DRAWN</c>.</summary>
+        ///<remarks>For more information, refer to Android's documentation on &lt;a href="https://developer.android.com/reference/android/app/ApplicationStartInfo#STARTUP_STATE_FIRST_FRAME_DRAWN"&gt;STARTUP_STATE_FIRST_FRAME_DRAWN&lt;/a&gt;.</remarks>
         FirstFrameDrawn = 2
     }
 
+    ///<summary>Options for the component type that started the app.</summary>
+    ///<remarks>Use this enum with the <see cref="IApplicationStartInfo.startComponent" /> property. Available on API level 36+.</remarks>
     public enum StartComponent
     {
-        /// <summary>
-        /// <para>The component that was started was an Activity.</para>
-        /// <seealso href="https://developer.android.com/reference/android/app/ApplicationStartInfo#START_COMPONENT_ACTIVITY">developer.android.com</seealso>
-        /// </summary>
+        ///<summary>Mirrors <c>android:public static final int START_COMPONENT_ACTIVITY</c>.</summary>
+        ///<remarks>For more information, refer to Android's documentation on &lt;a href="https://developer.android.com/reference/android/app/ApplicationStartInfo#START_COMPONENT_ACTIVITY"&gt;START_COMPONENT_ACTIVITY&lt;/a&gt;.</remarks>
         Activity = 1,
 
-        /// <summary>
-        /// <para>The component that was started was a Broadcast receiver.</para>
-        /// <seealso href="https://developer.android.com/reference/android/app/ApplicationStartInfo#START_COMPONENT_BROADCAST">developer.android.com</seealso>
-        /// </summary>
+        ///<summary>Mirrors <c>android:public static final int START_COMPONENT_BROADCAST</c>.</summary>
+        ///<remarks>For more information, refer to Android's documentation on &lt;a href="https://developer.android.com/reference/android/app/ApplicationStartInfo#START_COMPONENT_BROADCAST"&gt;START_COMPONENT_BROADCAST&lt;/a&gt;.</remarks>
         Broadcast = 2,
 
-        /// <summary>
-        /// <para>The component that was started was a Content provider.</para>
-        /// <seealso href="https://developer.android.com/reference/android/app/ApplicationStartInfo#START_COMPONENT_CONTENT_PROVIDER">developer.android.com</seealso>
-        /// </summary>
+        ///<summary>Mirrors <c>android:public static final int START_COMPONENT_CONTENT_PROVIDER</c>.</summary>
+        ///<remarks>For more information, refer to Android's documentation on &lt;a href="https://developer.android.com/reference/android/app/ApplicationStartInfo#START_COMPONENT_CONTENT_PROVIDER"&gt;START_COMPONENT_CONTENT_PROVIDER&lt;/a&gt;.</remarks>
         ContentProvider = 3,
 
-        /// <summary>
-        /// <para>The component that was started was a Service.</para>
-        /// <seealso href="https://developer.android.com/reference/android/app/ApplicationStartInfo#START_COMPONENT_SERVICE">developer.android.com</seealso>
-        /// </summary>
+        ///<summary>Mirrors <c>android:public static final int START_COMPONENT_SERVICE</c>.</summary>
+        ///<remarks>For more information, refer to Android's documentation on &lt;a href="https://developer.android.com/reference/android/app/ApplicationStartInfo#START_COMPONENT_SERVICE"&gt;START_COMPONENT_SERVICE&lt;/a&gt;.</remarks>
         Service = 4,
 
-        /// <summary>
-        /// <para>The component that was started was something else.</para>
-        /// <seealso href="https://developer.android.com/reference/android/app/ApplicationStartInfo#START_COMPONENT_OTHER">developer.android.com</seealso>
-        /// </summary>
+        ///<summary>Mirrors <c>android:public static final int START_COMPONENT_OTHER</c>.</summary>
+        ///<remarks>For more information, refer to Android's documentation on &lt;a href="https://developer.android.com/reference/android/app/ApplicationStartInfo#START_COMPONENT_OTHER"&gt;START_COMPONENT_OTHER&lt;/a&gt;.</remarks>
         Other = 5
     }
 
+    ///<summary>Timestamp types for <c>ApplicationStartInfo</c> startup data.</summary>
+    ///<remarks>Use these values as keys in the <see cref="IApplicationStartInfo.startupTimestamps" /> dictionary.</remarks>
     public enum StartTimestamp
     {
-        /// <summary>
-        /// <para>Clock monotonic timestamp of launch started.</para>
-        /// <seealso href="https://developer.android.com/reference/android/app/ApplicationStartInfo#START_TIMESTAMP_LAUNCH">developer.android.com</seealso>
-        /// </summary>
+        ///<summary>Mirrors <c>android:public static final int START_TIMESTAMP_LAUNCH</c>.</summary>
+        ///<remarks>For more information, refer to Android's documentation on &lt;a href="https://developer.android.com/reference/android/app/ApplicationStartInfo#START_TIMESTAMP_LAUNCH"&gt;START_TIMESTAMP_LAUNCH&lt;/a&gt;.</remarks>
         Launch = 0,
 
-        /// <summary>
-        /// <para>Clock monotonic timestamp of process fork.</para>
-        /// <seealso href="https://developer.android.com/reference/android/app/ApplicationStartInfo#START_TIMESTAMP_FORK">developer.android.com</seealso>
-        /// </summary>
+        ///<summary>Mirrors <c>android:public static final int START_TIMESTAMP_FORK</c>.</summary>
+        ///<remarks>For more information, refer to Android's documentation on &lt;a href="https://developer.android.com/reference/android/app/ApplicationStartInfo#START_TIMESTAMP_FORK"&gt;START_TIMESTAMP_FORK&lt;/a&gt;.</remarks>
         Fork = 1,
 
-        /// <summary>
-        /// <para>Clock monotonic timestamp of Application onCreate called.</para>
-        /// <seealso href="https://developer.android.com/reference/android/app/ApplicationStartInfo#START_TIMESTAMP_APPLICATION_ONCREATE">developer.android.com</seealso>
-        /// </summary>
+        ///<summary>Mirrors <c>android:public static final int START_TIMESTAMP_APPLICATION_ONCREATE</c>.</summary>
+        ///<remarks>For more information, refer to Android's documentation on &lt;a href="https://developer.android.com/reference/android/app/ApplicationStartInfo#START_TIMESTAMP_APPLICATION_ONCREATE"&gt;START_TIMESTAMP_APPLICATION_ONCREATE&lt;/a&gt;.</remarks>
         ApplicationOnCreate = 2,
 
-        /// <summary>
-        /// <para>Clock monotonic timestamp of bindApplication called.</para>
-        /// <seealso href="https://developer.android.com/reference/android/app/ApplicationStartInfo#START_TIMESTAMP_BIND_APPLICATION">developer.android.com</seealso>
-        /// </summary>
+        ///<summary>Mirrors <c>android:public static final int START_TIMESTAMP_BIND_APPLICATION</c>.</summary>
+        ///<remarks>For more information, refer to Android's documentation on &lt;a href="https://developer.android.com/reference/android/app/ApplicationStartInfo#START_TIMESTAMP_BIND_APPLICATION"&gt;START_TIMESTAMP_BIND_APPLICATION&lt;/a&gt;.</remarks>
         BindApplication = 3,
 
-        /// <summary>
-        /// <para>Clock monotonic timestamp of first frame drawn.</para>
-        /// <seealso href="https://developer.android.com/reference/android/app/ApplicationStartInfo#START_TIMESTAMP_FIRST_FRAME">developer.android.com</seealso>
-        /// </summary>
+        ///<summary>Mirrors <c>android:public static final int START_TIMESTAMP_FIRST_FRAME</c>.</summary>
+        ///<remarks>For more information, refer to Android's documentation on &lt;a href="https://developer.android.com/reference/android/app/ApplicationStartInfo#START_TIMESTAMP_FIRST_FRAME"&gt;START_TIMESTAMP_FIRST_FRAME&lt;/a&gt;.</remarks>
         FirstFrame = 4,
 
-        /// <summary>
-        /// <para>Clock monotonic timestamp of reportFullyDrawn called by application.</para>
-        /// <seealso href="https://developer.android.com/reference/android/app/ApplicationStartInfo#START_TIMESTAMP_FULLY_DRAWN">developer.android.com</seealso>
-        /// </summary>
+        ///<summary>Mirrors <c>android:public static final int START_TIMESTAMP_FULLY_DRAWN</c>.</summary>
+        ///<remarks>For more information, refer to Android's documentation on &lt;a href="https://developer.android.com/reference/android/app/ApplicationStartInfo#START_TIMESTAMP_FULLY_DRAWN"&gt;START_TIMESTAMP_FULLY_DRAWN&lt;/a&gt;.</remarks>
         FullyDrawn = 5,
 
-        /// <summary>
-        /// <para>Clock monotonic timestamp of initial renderthread frame.</para>
-        /// <seealso href="https://developer.android.com/reference/android/app/ApplicationStartInfo#START_TIMESTAMP_INITIAL_RENDERTHREAD_FRAME">developer.android.com</seealso>
-        /// </summary>
+        ///<summary>Mirrors <c>android:public static final int START_TIMESTAMP_INITIAL_RENDERTHREAD_FRAME</c>.</summary>
+        ///<remarks>For more information, refer to Android's documentation on &lt;a href="https://developer.android.com/reference/android/app/ApplicationStartInfo#START_TIMESTAMP_INITIAL_RENDERTHREAD_FRAME"&gt;START_TIMESTAMP_INITIAL_RENDERTHREAD_FRAME&lt;/a&gt;.</remarks>
         InitialRenderthreadFrame = 6,
 
-        /// <summary>
-        /// <para>Clock monotonic timestamp of surfaceflinger composition complete.</para>
-        /// <seealso href="https://developer.android.com/reference/android/app/ApplicationStartInfo#START_TIMESTAMP_SURFACEFLINGER_COMPOSITION_COMPLETE">developer.android.com</seealso>
-        /// </summary>
+        ///<summary>Mirrors <c>android:public static final int START_TIMESTAMP_SURFACEFLINGER_COMPOSITION_COMPLETE</c>.</summary>
+        ///<remarks>For more information, refer to Android's documentation on &lt;a href="https://developer.android.com/reference/android/app/ApplicationStartInfo#START_TIMESTAMP_SURFACEFLINGER_COMPOSITION_COMPLETE"&gt;START_TIMESTAMP_SURFACEFLINGER_COMPOSITION_COMPLETE&lt;/a&gt;.</remarks>
         SurfaceflingerCompositionComplete = 7,
 
-        /// <summary>
-        /// <para>The end of the range, beginning with 0, reserved for system timestamps.</para>
-        /// <seealso href="https://developer.android.com/reference/android/app/ApplicationStartInfo#START_TIMESTAMP_RESERVED_RANGE_SYSTEM">developer.android.com</seealso>
-        /// </summary>
+        ///<summary>Mirrors <c>android:public static final int START_TIMESTAMP_RESERVED_RANGE_SYSTEM</c>.</summary>
+        ///<remarks>For more information, refer to Android's documentation on &lt;a href="https://developer.android.com/reference/android/app/ApplicationStartInfo#START_TIMESTAMP_RESERVED_RANGE_SYSTEM"&gt;START_TIMESTAMP_RESERVED_RANGE_SYSTEM&lt;/a&gt;.</remarks>
         ReservedRangeSystem = 20,
 
-        /// <summary>
-        /// <para>The beginning of the range reserved for developer supplied timestamps.</para>
-        /// <seealso href="https://developer.android.com/reference/android/app/ApplicationStartInfo#START_TIMESTAMP_RESERVED_RANGE_DEVELOPER_START">developer.android.com</seealso>
-        /// </summary>
+        ///<summary>Mirrors <c>android:public static final int START_TIMESTAMP_RESERVED_RANGE_DEVELOPER_START</c>.</summary>
+        ///<remarks>For more information, refer to Android's documentation on &lt;a href="https://developer.android.com/reference/android/app/ApplicationStartInfo#START_TIMESTAMP_RESERVED_RANGE_DEVELOPER_START"&gt;START_TIMESTAMP_RESERVED_RANGE_DEVELOPER_START&lt;/a&gt;.</remarks>
         ReservedRangeDeveloperStart = 21,
 
-        /// <summary>
-        /// <para>The end of the range reserved for developer supplied timestamps.</para>
-        /// <seealso href="https://developer.android.com/reference/android/app/ApplicationStartInfo#START_TIMESTAMP_RESERVED_RANGE_DEVELOPER">developer.android.com</seealso>
-        /// </summary>
+        ///<summary>Mirrors <c>android:public static final int START_TIMESTAMP_RESERVED_RANGE_DEVELOPER</c>.</summary>
+        ///<remarks>For more information, refer to Android's documentation on &lt;a href="https://developer.android.com/reference/android/app/ApplicationStartInfo#START_TIMESTAMP_RESERVED_RANGE_DEVELOPER"&gt;START_TIMESTAMP_RESERVED_RANGE_DEVELOPER&lt;/a&gt;.</remarks>
         ReservedRangeDeveloper = 30
     }
 
-    /// <summary>
-    /// Interface for reading a historical Android application start record for this application.
-    /// </summary>
-    /// <remarks>
-    /// Use <see cref="ApplicationStartInfoProvider.GetHistoricalProcessStartReasons"/> to obtain instances of this interface.
-    /// Each instance describes one historical process start, including why the process was started,
-    /// how it was started (cold, warm, or hot), and timing milestones recorded during startup.
+    ///<summary>Mirrors <c>android:android.app.ApplicationStartInfo</c>.</summary>
+    ///<remarks>For more information, refer to Android's documentation on &lt;a href="https://developer.android.com/reference/android/app/ApplicationStartInfo"&gt;ApplicationStartInfo&lt;/a&gt;. Available on Android API 35+.
     ///
-    /// This API wraps the Android <c>ApplicationStartInfo</c> class, available on Android API level 35 and later.
-    /// On earlier API levels, <see cref="ApplicationStartInfoProvider.GetHistoricalProcessStartReasons"/> returns an empty array.
-    /// </remarks>
-    /// <example>
-    /// <code lang="cs"><![CDATA[
-    /// using UnityEngine;
-    /// using UnityEngine.Android;
-    ///
-    /// public class AppStartDiagnostics : MonoBehaviour
-    /// {
-    ///     void Start()
-    ///     {
-    ///         IApplicationStartInfo[] records = ApplicationStartInfoProvider.GetHistoricalProcessStartReasons(1);
-    ///         if (records.Length == 0)
-    ///         {
-    ///             Debug.Log("No start info available (requires Android API 35+).");
-    ///             return;
-    ///         }
-    ///
-    ///         IApplicationStartInfo info = records[0];
-    ///
-    ///         // Log core start properties.
-    ///         Debug.Log($"Process: {info.processName} (pid {info.pid})");
-    ///         Debug.Log($"Reason: {info.reason}, type: {info.startType}, state: {info.startupState}");
-    ///         Debug.Log($"Force-stopped before launch: {info.wasForceStopped}");
-    ///
-    ///         // Log the launch mode when the start was triggered by an activity launch.
-    ///         if (info.reason == StartReason.Launcher || info.reason == StartReason.StartActivity)
-    ///             Debug.Log($"Launch mode: {info.launchMode}");
-    ///
-    ///         // Calculate time to first frame; timestamps are clock-monotonic values in nanoseconds.
-    ///         if (info.startupTimestamps.TryGetValue(StartTimestamp.Launch, out long launchNs) &&
-    ///             info.startupTimestamps.TryGetValue(StartTimestamp.FirstFrame, out long firstFrameNs))
-    ///         {
-    ///             Debug.Log($"Time to first frame: {(firstFrameNs - launchNs) / 1_000_000} ms");
-    ///         }
-    ///     }
-    /// }
-    /// ]]></code>
-    /// </example>
+    ///Use <see cref="ApplicationStartInfoProvider.GetHistoricalProcessStartReasons" /> to obtain instances of this interface. Each instance describes one historical process start, including why the process was started, how it was started (cold, warm, or hot), and timing milestones recorded during startup.</remarks>
     public interface IApplicationStartInfo
     {
-        /// <summary>
-        /// <para>Return the process id of the process that was started.</para>
-        /// <seealso href="https://developer.android.com/reference/android/app/ApplicationStartInfo#getPid()">developer.android.com</seealso>
-        /// </summary>
-        /// <returns>int</returns>
+        ///<summary>Mirrors <c>android:android.app.ApplicationStartInfo getPid()</c> method.</summary>
+        ///<remarks>For more information, refer to Android's documentation on &lt;a href="https://developer.android.com/reference/android/app/ApplicationStartInfo#getPid()"&gt;getPid()&lt;/a&gt;.</remarks>
         int pid { get; }
 
-        /// <summary>
-        /// <para>Returns the defining kernel user identifier. This might differ from <c>getRealUid()</c> and <c>getPackageUid()</c>, if an external service has the <c>android:useAppZygote</c> set to <c>true</c> and is bound with the <c>Context.BIND_EXTERNAL_SERVICE</c> flag. In this case, this field is the kernel user identifier of the external service provider.</para>
-        /// <seealso href="https://developer.android.com/reference/android/app/ApplicationStartInfo#getDefiningUid()">developer.android.com</seealso>
-        /// </summary>
-        /// <returns>int</returns>
+        ///<summary>Mirrors <c>android:android.app.ApplicationStartInfo getDefiningUid()</c> method.</summary>
+        ///<remarks>For more information, refer to Android's documentation on &lt;a href="https://developer.android.com/reference/android/app/ApplicationStartInfo#getDefiningUid()"&gt;getDefiningUid()&lt;/a&gt;.</remarks>
         int definingUid { get; }
 
-        /// <summary>
-        /// <para>Similar to <c>getRealUid()</c>, this is the kernel user identifier assigned at the package installation time.</para>
-        /// <seealso href="https://developer.android.com/reference/android/app/ApplicationStartInfo#getPackageUid()">developer.android.com</seealso>
-        /// </summary>
-        /// <returns>int</returns>
+        ///<summary>Mirrors <c>android:android.app.ApplicationStartInfo getPackageUid()</c> method.</summary>
+        ///<remarks>For more information, refer to Android's documentation on &lt;a href="https://developer.android.com/reference/android/app/ApplicationStartInfo#getPackageUid()"&gt;getPackageUid()&lt;/a&gt;.</remarks>
         int packageUid { get; }
 
-        /// <summary>
-        /// <para>Returns the kernel user identifier the system uses for access control checks. It's typically the UID of the package where the component is running. In case of external services, <c>getDefiningUid()</c> is the same as the package UID of the component.</para>
-        /// <seealso href="https://developer.android.com/reference/android/app/ApplicationStartInfo#getRealUid()">developer.android.com</seealso>
-        /// </summary>
-        /// <returns>int</returns>
+        ///<summary>Mirrors <c>android:android.app.ApplicationStartInfo getRealUid()</c> method.</summary>
+        ///<remarks>For more information, refer to Android's documentation on &lt;a href="https://developer.android.com/reference/android/app/ApplicationStartInfo#getRealUid()"&gt;getRealUid()&lt;/a&gt;.</remarks>
         int realUid { get; }
 
-        /// <summary>
-        /// <para>Return the actual process name it was running with.</para>
-        /// <seealso href="https://developer.android.com/reference/android/app/ApplicationStartInfo#getProcessName()">developer.android.com</seealso>
-        /// </summary>
-        /// <returns>string</returns>
+        ///<summary>Mirrors <c>android:android.app.ApplicationStartInfo getProcessName()</c> method.</summary>
+        ///<remarks>For more information, refer to Android's documentation on &lt;a href="https://developer.android.com/reference/android/app/ApplicationStartInfo#getProcessName()"&gt;getProcessName()&lt;/a&gt;.</remarks>
         string processName { get; }
 
-        /// <summary>
-        /// <para>Return the reason code for why the process was started.</para>
-        /// <seealso href="https://developer.android.com/reference/android/app/ApplicationStartInfo#getReason()">developer.android.com</seealso>
-        /// </summary>
-        /// <returns>StartReason</returns>
+        ///<summary>Mirrors <c>android:android.app.ApplicationStartInfo getReason()</c> method.</summary>
+        ///<remarks>For more information, refer to Android's documentation on &lt;a href="https://developer.android.com/reference/android/app/ApplicationStartInfo#getReason()"&gt;getReason()&lt;/a&gt;.</remarks>
+        ///<seealso cref="StartReason" />
         StartReason reason { get; }
 
-        /// <summary>
-        /// <para>Returns the type of app start: cold, warm, or hot.</para>
-        /// <seealso href="https://developer.android.com/reference/android/app/ApplicationStartInfo#getStartType()">developer.android.com</seealso>
-        /// </summary>
-        /// <returns>StartType</returns>
+        ///<summary>Mirrors <c>android:android.app.ApplicationStartInfo getStartType()</c> method.</summary>
+        ///<remarks>For more information, refer to Android's documentation on &lt;a href="https://developer.android.com/reference/android/app/ApplicationStartInfo#getStartType()"&gt;getStartType()&lt;/a&gt;.</remarks>
+        ///<seealso cref="StartType" />
         StartType startType { get; }
 
-        /// <summary>
-        /// <para>Returns the startup state of the process at the time this record was captured.</para>
-        /// <seealso href="https://developer.android.com/reference/android/app/ApplicationStartInfo#getStartupState()">developer.android.com</seealso>
-        /// </summary>
-        /// <returns>StartupState</returns>
+        ///<summary>Mirrors <c>android:android.app.ApplicationStartInfo getStartupState()</c> method.</summary>
+        ///<remarks>For more information, refer to Android's documentation on &lt;a href="https://developer.android.com/reference/android/app/ApplicationStartInfo#getStartupState()"&gt;getStartupState()&lt;/a&gt;.</remarks>
+        ///<seealso cref="StartupState" />
         StartupState startupState { get; }
 
-        /// <summary>
-        /// <para>Return the launch mode that was used to start the activity, if this start was initiated with an activity launch; return 0 otherwise.</para>
-        /// <seealso href="https://developer.android.com/reference/android/app/ApplicationStartInfo#getLaunchMode()">developer.android.com</seealso>
-        /// </summary>
-        /// <returns>LaunchMode</returns>
+        ///<summary>Mirrors <c>android:android.app.ApplicationStartInfo getLaunchMode()</c> method.</summary>
+        ///<remarks>For more information, refer to Android's documentation on &lt;a href="https://developer.android.com/reference/android/app/ApplicationStartInfo#getLaunchMode()"&gt;getLaunchMode()&lt;/a&gt;.</remarks>
+        ///<seealso cref="LaunchMode" />
         LaunchMode launchMode { get; }
 
-        /// <summary>
-        /// <para>Returns the URI string representation of the intent used to launch the activity via <c>Intent.toUri(0)</c>. Returns null if this start was initiated with an activity launch.</para>
-        /// <seealso href="https://developer.android.com/reference/android/app/ApplicationStartInfo#getIntent()">developer.android.com</seealso>
-        /// </summary>
-        /// <returns>URI string of the launch Intent, or null if there was no intent.</returns>
+        ///<summary>Mirrors <c>android:android.app.ApplicationStartInfo getIntent()</c> method, returning the URI string representation of the launch intent via <c>Intent.toUri(0)</c>.</summary>
+        ///<remarks>For more information, refer to Android's documentation on &lt;a href="https://developer.android.com/reference/android/app/ApplicationStartInfo#getIntent()"&gt;getIntent()&lt;/a&gt;.
+        ///Returns null if there was no intent associated with this start.
+        ///
+        ///This property returns the intent as a URI string rather than an <c>AndroidJavaObject</c> to avoid keeping a native JNI handle alive beyond the lifetime of the <see cref="ApplicationStartInfoProvider.GetHistoricalProcessStartReasons" /> call. To reconstruct the original Android Intent from this URI, use &lt;a href="https://developer.android.com/reference/android/content/Intent#parseUri(java.lang.String,%20int)"&gt;Intent.parseUri&lt;/a&gt;.</remarks>
+        ///<example>
+        ///  <code><![CDATA[
+        ///using UnityEngine;
+        ///using UnityEngine.Android;
+        ///
+        ///public class ApplicationStartInfoExample : MonoBehaviour
+        ///{
+        ///    void PrintLaunchAction(IApplicationStartInfo info)
+        ///    {
+        ///        if (info.intentUri == null)
+        ///            return;
+        ///#if UNITY_ANDROID
+        ///        using var intentClass = new AndroidJavaClass("android.content.Intent");
+        ///        using var intent = intentClass.CallStatic<AndroidJavaObject>("parseUri", info.intentUri, 0);
+        ///        string action = intent.Call<string>("getAction");
+        ///        Debug.Log($"Launch action: {action}");
+        ///#endif
+        ///    }
+        ///}
+        ///]]></code>
+        ///</example>
         string intentUri { get; }
 
-        /// <summary>
-        /// <para>Return the timestamps collected using <see href="https://developer.android.com/reference/android/os/SystemClock#uptimeNanos()">SystemClock.uptimeNanos</see> during the startup of the application, keyed by <see cref="StartTimestamp"/> values. The system records a specific timestamp only if the conditions of the corresponding startup transition are met.</para>
-        /// <seealso href="https://developer.android.com/reference/android/app/ApplicationStartInfo#getStartupTimestamps()">developer.android.com</seealso>
-        /// </summary>
-        /// <returns>A read-only dictionary mapping <see cref="StartTimestamp"/> to clock-monotonic timestamp values in nanoseconds. This value cannot be null.</returns>
+        ///<summary>Mirrors <c>android:android.app.ApplicationStartInfo getStartupTimestamps()</c> method.</summary>
+        ///<remarks>For more information, refer to Android's documentation on &lt;a href="https://developer.android.com/reference/android/app/ApplicationStartInfo#getStartupTimestamps()"&gt;getStartupTimestamps()&lt;/a&gt;</remarks>
+        ///<seealso cref="StartTimestamp" />
         IReadOnlyDictionary<StartTimestamp, long> startupTimestamps { get; }
 
-        /// <summary>
-        /// <para>Return whether the process was in a force-stopped state when it started.</para>
-        /// <seealso href="https://developer.android.com/reference/android/app/ApplicationStartInfo#wasForceStopped()">developer.android.com</seealso>
-        /// </summary>
-        /// <returns>bool</returns>
+        ///<summary>Mirrors <c>android:android.app.ApplicationStartInfo wasForceStopped()</c> method.</summary>
+        ///<remarks>For more information, refer to Android's documentation on &lt;a href="https://developer.android.com/reference/android/app/ApplicationStartInfo#wasForceStopped()"&gt;wasForceStopped()&lt;/a&gt;.</remarks>
         bool wasForceStopped { get; }
 
-        /// <summary>
-        /// <para>Return the Android component type that triggered this process start. Available only on Android API level 36 and later.</para>
-        /// <seealso href="https://developer.android.com/reference/android/app/ApplicationStartInfo#getStartComponent()">developer.android.com</seealso>
-        /// </summary>
-        /// <returns>StartComponent. Returns <c>0</c> on API &lt; 36.</returns>
+        ///<summary>Mirrors <c>android:android.app.ApplicationStartInfo getStartComponent()</c> method.</summary>
+        ///<remarks>For more information, refer to Android's documentation on &lt;a href="https://developer.android.com/reference/android/app/ApplicationStartInfo#getStartComponent()"&gt;getStartComponent()&lt;/a&gt;. Available on API 36+. Returns 0 on earlier versions.</remarks>
+        ///<seealso cref="StartComponent" />
         StartComponent startComponent { get; }
     }
 
 
+    ///<summary>Provides access to Android's <c>ApplicationStartInfo</c> API.</summary>
+    ///<remarks>For more information, refer to Android's documentation on &lt;a href="https://developer.android.com/reference/android/app/ApplicationStartInfo"&gt;ApplicationStartInfo&lt;/a&gt;. Available on Android API 35+.
+    ///
+    ///Use <see cref="ApplicationStartInfoProvider.GetHistoricalProcessStartReasons" /> to retrieve <see cref="IApplicationStartInfo" /> records that describe why and how the application was started in recent launches.</remarks>
     public static class ApplicationStartInfoProvider
     {
-        /// <summary>
-        /// <para>Return the most recent historical process start records for this application, sorted from most recent to least recent.</para>
-        /// <seealso href="https://developer.android.com/reference/android/app/ActivityManager#getHistoricalProcessStartReasons(int)">developer.android.com</seealso>
-        /// </summary>
-        /// <param name="maxNum">The maximum number of records to return. Use <c>0</c> to return all available records.</param>
-        /// <returns>An array of <see cref="IApplicationStartInfo"/> records, sorted from most recent to least recent. Never <c>null</c>. Returns an empty array on Android API levels earlier than 35.</returns>
+        ///<summary>Returns a list of <c>ApplicationStartInfo</c> records containing the reasons for the most recent app starts.</summary>
+        ///<remarks>For more information, refer to Android's documentation on &lt;a href="https://developer.android.com/reference/android/app/ActivityManager#getHistoricalProcessStartReasons(int)"&gt;getHistoricalProcessStartReasons&lt;/a&gt;.
+        ///Available on Android API 35+. Returns an empty array on earlier versions.</remarks>
+        ///<param name="maxNum">The maximum number of results to be returned. Set this to 0 to ignore this parameter and return all matching records.</param>
+        ///<returns>An array of <see cref="IApplicationStartInfo" /> records matching the criteria, sorted in the order from most recent to least recent. Never null.</returns>
+        ///<example>
+        ///  <code><![CDATA[
+        ///using UnityEngine;
+        ///using UnityEngine.Android;
+        ///
+        ///public class AppStartDiagnostics : MonoBehaviour
+        ///{
+        ///    void Start()
+        ///    {
+        ///        IApplicationStartInfo[] records = ApplicationStartInfoProvider.GetHistoricalProcessStartReasons(1);
+        ///        if (records.Length == 0)
+        ///        {
+        ///            Debug.Log("No start info available (requires Android API 35+).");
+        ///            return;
+        ///        }
+        ///
+        ///        IApplicationStartInfo info = records[0];
+        ///
+        ///        // Log core start properties.
+        ///        Debug.Log($"Process: {info.processName} (pid {info.pid})");
+        ///        Debug.Log($"Reason: {info.reason}, type: {info.startType}, state: {info.startupState}");
+        ///        Debug.Log($"Force-stopped before launch: {info.wasForceStopped}");
+        ///
+        ///        // Log the launch mode when the start was triggered by an activity launch.
+        ///        if (info.reason == StartReason.Launcher || info.reason == StartReason.StartActivity)
+        ///            Debug.Log($"Launch mode: {info.launchMode}");
+        ///
+        ///        // Calculate time to first frame; timestamps are clock-monotonic values in nanoseconds.
+        ///        if (info.startupTimestamps.TryGetValue(StartTimestamp.Launch, out long launchNs) &&
+        ///            info.startupTimestamps.TryGetValue(StartTimestamp.FirstFrame, out long firstFrameNs))
+        ///        {
+        ///            Debug.Log($"Time to first frame: {(firstFrameNs - launchNs) / 1_000_000} ms");
+        ///        }
+        ///    }
+        ///}
+        ///]]></code>
+        ///</example>
         public static IApplicationStartInfo[] GetHistoricalProcessStartReasons(int maxNum = 0)
         {
             IApplicationStartInfo[] result = null;

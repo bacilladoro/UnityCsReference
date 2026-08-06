@@ -143,6 +143,7 @@ namespace UnityEngine
     // Note: This asset is immutable at runtime but is needed to ensure that the asset can be read in native code.
     // We don't use the UnityEditor namespace for it but we do only allow it's entries to be used in the editor.
     [NativeHeader("Runtime/Graphics/Vulkan/VulkanDeviceFilterLists.h")]
+    [NativeClass("VulkanDeviceFilterLists", PersistentTypeId = 0x67BAF230)]
     public sealed class VulkanDeviceFilterLists : UnityEngine.Object
     {
         private static extern void Internal_CreateVulkanDeviceFilterLists([Writable] VulkanDeviceFilterLists obj, string name);

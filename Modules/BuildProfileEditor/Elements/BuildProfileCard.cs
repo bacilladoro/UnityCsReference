@@ -56,6 +56,11 @@ namespace UnityEditor.Build.Profile.Elements
         /// </summary>
         public PreconfiguredSettingsVariant[] preconfiguredSettingsVariants { get; set; }
 
+        /// <summary>
+        /// Supported platform GUIDs for multi-target platforms. Empty for non-multi-target platforms.
+        /// </summary>
+        public GUID[] supportedPlatformGuids { get; set; }
+
         public BuildProfileCard()
         {
             displayName = string.Empty;
@@ -63,6 +68,7 @@ namespace UnityEditor.Build.Profile.Elements
             internalPackages = new PlatformPackageList();
             partnerPackages = new PlatformPackageList();
             preconfiguredSettingsVariants = Array.Empty<PreconfiguredSettingsVariant>();
+            supportedPlatformGuids = Array.Empty<GUID>();
             description = string.Empty;
             keyFeatures = string.Empty;
             resources = string.Empty;

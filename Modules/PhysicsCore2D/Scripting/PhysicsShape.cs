@@ -1955,6 +1955,17 @@ namespace Unity.U2D.Physics
         public readonly bool isOwned => PhysicsShape_IsOwned(this);
 
         /// <summary>
+        /// The group this shape belongs to.
+        /// A shape starts with no group and can be assigned a group once only; the group then cannot be changed for the lifetime of the shape.
+        /// Grouping marks the shape's contact and trigger begin/end events with whether they are the first or last event between the two groups involved.
+        /// </summary>
+        /// <remarks>
+        /// See <see cref="PhysicsWorld.CreateGroup"/> and <see cref="PhysicsWorld.eventGroupingAllowed"/>.
+        /// Attempting to assign an empty group, or assign to a shape that already has a group, produces a warning and leaves the shape unchanged.
+        /// </remarks>
+        public readonly PhysicsWorld.PhysicsGroup physicsGroup { get => PhysicsShape_GetPhysicsGroup(this); set => PhysicsShape_SetPhysicsGroup(this, value); }
+
+        /// <summary>
         /// Get/Set the <see cref="System.Object"/> that callbacks for this shape will be sent to.
         /// Care should be taken with any <see cref="System.Object"/> assigned as a callback target that isn't a <see cref="UnityEngine.Object"/> as this assignment will not in itself keep the object alive and can be garbage collected.
         /// To avoid this, you should have at least a single reference to the object in your code.

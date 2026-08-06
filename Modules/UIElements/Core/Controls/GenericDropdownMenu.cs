@@ -624,7 +624,7 @@ namespace UnityEngine.UIElements
         /// <remarks>
         /// The parent element that displays the menu:
         ///
-        ///- For Editor UI, the parent element is <see cref="EditorWindow.rootVisualElement"/>.
+        ///- For Editor UI, the parent element is <c>EditorWindow.rootVisualElement</c>.
         ///- For runtime UI, the parent element is <see cref="UIDocument.rootVisualElement"/>.
         ///
         /// The @@dropdownMenuSizeMode@@ parameter determines the width of the menu.

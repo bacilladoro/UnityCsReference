@@ -201,6 +201,64 @@ namespace UnityEditor.Toolbars
             window.overlayCanvas.ApplyPreset(new UnityOnlyToolbarPreset());
         }
 
+        // Indirection so Modules/EditorToolbar can supply the button without EditorModule referencing it.
+        [NoAutoStaticsCleanup] // Registered once via [InitializeOnLoadMethod].
+        internal static Func<string, MainToolbarElement> menuItemButtonFactory { get; set; }
+
+        internal const string menuItemOverlayIdPrefix = "Menu Items/";
+
+        // Returns null when menuPath no longer resolves to a real menu item, so no overlay is created at all.
+        internal static MainToolbarOverlay CreateMenuItemOverlay(string menuPath)
+        {
+            if (!Menu.MenuItemExists(menuPath))
+                return null;
+
+            var defaultOverlayAttrib = new OverlayAttribute();
+            var overlay = new MainToolbarOverlay();
+            overlay.createElementDelegate = () => menuItemButtonFactory?.Invoke(menuPath);
+            overlay.Initialize($"{menuItemOverlayIdPrefix}{menuPath}", menuPath.Replace(" ", ""), LastPathSegment(menuPath),
+                defaultOverlayAttrib.defaultSize, defaultOverlayAttrib.minSize, defaultOverlayAttrib.maxSize,
+                defaultOverlayAttrib.priority, defaultOverlayAttrib.group);
+
+            // Forces RestoreOverlay's displayed flip to actually happen (fresh overlays already default to true).
+            overlay.displayed = false;
+            return overlay;
+        }
+
+        static string LastPathSegment(string path)
+        {
+            var segments = path.Split('/', StringSplitOptions.RemoveEmptyEntries);
+            return segments[^1];
+        }
+
+        internal static void PinMenuItem(string menuPath)
+        {
+            if (!OverlayCanvasesData.instance.AddPinnedMenuItem(menuPath))
+                return; // already pinned - silent no-op
+
+            if (!windowExists)
+                return;
+
+            var overlay = CreateMenuItemOverlay(menuPath);
+            if (overlay != null)
+                window.overlayCanvas.Add(overlay);
+        }
+
+        internal static void UnpinMenuItem(string menuPath)
+        {
+            OverlayCanvasesData.instance.RemovePinnedMenuItem(menuPath);
+
+            if (windowExists && TryGetOverlay($"{menuItemOverlayIdPrefix}{menuPath}", out var overlay))
+                window.overlayCanvas.Remove(overlay);
+        }
+
+        // Used by MainToolbarOverlay's "Hide" action, which only has the overlay id on hand.
+        internal static void UnpinMenuItemByOverlayId(string overlayId)
+        {
+            if (overlayId.StartsWith(menuItemOverlayIdPrefix, StringComparison.Ordinal))
+                UnpinMenuItem(overlayId.Substring(menuItemOverlayIdPrefix.Length));
+        }
+
         internal static bool editModeEnabled
         {
             get => MainToolbarWindow.instance.editModeActive;
@@ -216,9 +274,13 @@ namespace UnityEditor.Toolbars
         readonly static SaveData[] m_EmptySave = Array.Empty<SaveData>();
         [NoAutoStaticsCleanup] // Shared zero-length empty array (Array.Empty); holds no references, safe to persist.
         readonly static DynamicPanelContainerData[] m_EmptyDynamicPanelContainerData = Array.Empty<DynamicPanelContainerData>();
+        [NoAutoStaticsCleanup] // Shared zero-length empty array (Array.Empty); holds no references, safe to persist.
+        readonly static string[] m_EmptyMenuItemPaths = Array.Empty<string>();
 
         public SaveData[] saveData => m_EmptySave;
         public DynamicPanelContainerData[] dynamicPanelContainerData => m_EmptyDynamicPanelContainerData;
+        // Unity Default never includes any pinned menu items.
+        public string[] menuItemPaths => m_EmptyMenuItemPaths;
         public Type targetWindowType => typeof(MainToolbarWindow);
 
         public bool CanApplyToWindow(Type windowType) => windowType == typeof(MainToolbarWindow);
@@ -228,12 +290,13 @@ namespace UnityEditor.Toolbars
             // Show only the unity defined clean subset of elements without any of the package defaults
             foreach (var overlay in canvas.overlays)
             {
+                var mtOverlay = overlay as MainToolbarOverlay;
+                if (mtOverlay != null && mtOverlay.createElementMethod == null)
+                    continue; // Defensive: ApplyPreset already removes all pins before this runs, since menuItemPaths is empty.
+
                 bool shouldShow = false;
-                if (overlay is MainToolbarOverlay mtOverlay && mtOverlay.createElementMethod.GetCustomAttribute<UnityOnlyMainToolbarPresetAttribute>() != null)
-                {
-                    var attr = mtOverlay.createElementMethod.GetCustomAttribute<MainToolbarElementAttribute>();
+                if (mtOverlay != null && mtOverlay.createElementMethod.GetCustomAttribute<UnityOnlyMainToolbarPresetAttribute>() != null)
                     shouldShow = true; // Every element tagged with UnityOnlyMainToolbarPreset should always start visible
-                }
 
                 overlay.displayed = shouldShow;
             }

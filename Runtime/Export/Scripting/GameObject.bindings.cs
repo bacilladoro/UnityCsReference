@@ -20,6 +20,7 @@ namespace UnityEngine
 {
     [ExcludeFromPreset]
     [UsedByNativeCode]
+    [global::UnityEngine.NativeClass("GameObject", PersistentTypeId = 1)]
     [NativeHeader("Runtime/Export/Scripting/GameObject.bindings.h")]
     public sealed partial class GameObject : Object
     {

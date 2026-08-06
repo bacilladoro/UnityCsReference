@@ -13,6 +13,7 @@ using Unity.Jobs;
 namespace UnityEngine.Rendering
 {
     [NativeHeader("Runtime/Graphics/GraphicsStateCollection.h")]
+    [NativeClass("GraphicsStateCollection", PersistentTypeId = 0x0351036A)]
     public sealed partial class GraphicsStateCollection : Object
     {
         public partial struct GraphicsState

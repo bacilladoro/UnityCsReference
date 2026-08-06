@@ -5,6 +5,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 using System.IO;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Animations
 {
@@ -181,8 +182,9 @@ namespace UnityEditor.Animations
             return true;
         }
 
+        [NoAutoStaticsCleanup] // last-used path hint for save dialog; safe to persist across reload
         internal static string s_LastPathUsedForNewClip;
-        internal static AnimationClip CreateNewClip(string gameObjectName)
+        internal static AnimationClip CreateNewClip(string gameObjectName, string suggestedName = null)
         {
             // Go forward with presenting user a save clip dialog
             string message = string.Format(L10n.Tr("Create a new animation for the game object '{0}':"), gameObjectName);
@@ -195,7 +197,8 @@ namespace UnityEditor.Animations
                     newClipDirectory = directoryPath;
                 }
             }
-            string newClipPath = EditorUtility.SaveFilePanelInProject(L10n.Tr("Create New Animation"), "New Animation", "anim", message, newClipDirectory);
+            string defaultName = string.IsNullOrWhiteSpace(suggestedName) ? L10n.Tr("New Animation") : suggestedName;
+            string newClipPath = EditorUtility.SaveFilePanelInProject(L10n.Tr("Create New Animation"), defaultName, "anim", message, newClipDirectory);
 
             // If user canceled or save path is invalid, we can't create a clip
             if (newClipPath == "")

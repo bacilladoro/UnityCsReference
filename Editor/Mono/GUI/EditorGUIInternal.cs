@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -17,6 +18,7 @@ namespace UnityEditor
             set { s_MixedToggleStyle = value; }
         }
 
+        [NoAutoStaticsCleanup] // lazy-loaded GUIStyle reference; null after reload is fine, re-loaded on next access
         private static GUIStyle s_MixedToggleStyle = EditorStyles.toggleMixed;
 
         const float kExposureSliderAbsoluteMax = 23.0f;

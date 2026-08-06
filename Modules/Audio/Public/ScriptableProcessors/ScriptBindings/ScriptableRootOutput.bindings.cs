@@ -29,7 +29,7 @@ namespace UnityEngine.Audio
         /// <remarks>
         /// The control side of a <see cref="ProcessorInstance"/> receives various callbacks from a <see cref="ControlContext"/>
         /// from the logical control thread.
-        /// You can annotate this with <see cref="Unity.Burst.BurstCompileAttribute"/> to have it compiled with Burst.
+        /// You can annotate this with <see cref="T:Unity.Burst.BurstCompileAttribute"/> to have it compiled with Burst.
         /// </remarks>
         /// <typeparam name="TRealtime">The tandem processing counterpart.</typeparam>
         /// <seealso cref="ProcessorInstance.IControl{TRealtime}"/>
@@ -62,7 +62,7 @@ namespace UnityEngine.Audio
         /// <remarks>
         /// The processing side of a <see cref="ProcessorInstance"/> receives various callbacks from a <see cref="RealtimeContext"/>
         /// from the logical processing thread.
-        /// You can annotate this with <see cref="Unity.Burst.BurstCompileAttribute"/> to have it compiled with Burst.
+        /// You can annotate this with <see cref="T:Unity.Burst.BurstCompileAttribute"/> to have it compiled with Burst.
         /// </remarks>
         /// <seealso cref="ProcessorInstance.IRealtime"/>
         [JobProducerType(typeof(IRootOutputProcessorExtensions.JobStruct<>))]

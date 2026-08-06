@@ -34,11 +34,13 @@ namespace UnityEditor
             m_Data = Internal_WaveformStreamerCreateUntyped(this, clip, start, duration, numOutputSamples, onNewWaveformData);
         }
 
+#pragma warning disable UA5000 // The Avoid Finalizer Analyzer produces compile errors for any new finalizers. This pre-existing finalizer declaration has been suppressed, but should be rewritten if possible.
         ~WaveformStreamer()
         {
             if (m_Data != IntPtr.Zero)
                 Internal_WaveformStreamerDestroy(m_Data);
         }
+#pragma warning restore UA5000
 
         internal static object CreateUntypedWaveformStreamer(AudioClip clip, double start, double duration,
             int numOutputSamples, Func<object, float[], int, bool> onNewWaveformData)

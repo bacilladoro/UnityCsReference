@@ -13,6 +13,7 @@ namespace UnityEngine
     [RequireComponent(typeof(Transform))]
     [NativeHeader("Modules/Grid/Public/GridMarshalling.h")]
     [NativeHeader("Modules/Grid/Public/Grid.h")]
+    [NativeClass("GridLayout", PersistentTypeId = 0x67E12204)]
     public partial class GridLayout : Behaviour
     {
         // Enums.

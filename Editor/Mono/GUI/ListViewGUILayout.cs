@@ -3,18 +3,20 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using UnityEngine;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
     /// *undocumented*
     internal class ListViewGUILayout
     {
-        static int layoutedListViewHash = "layoutedListView".GetHashCode();
+        static readonly int layoutedListViewHash = "layoutedListView".GetHashCode();
 
+        [NoAutoStaticsCleanup] // transient per-frame list-view state handle; safe to persist
         static ListViewState lvState = null;
 
-        static int listViewHash = "ListView".GetHashCode();
-        static int[] dummyWidths = new int[1];
+        static readonly int listViewHash = "ListView".GetHashCode();
+        static readonly int[] dummyWidths = new int[1];
 
         static public ListViewShared.ListViewElementsEnumerator ListView(ListViewState state, GUIStyle style, params GUILayoutOption[] options)
         {
@@ -53,6 +55,7 @@ namespace UnityEditor
             return DoListView(state, null, dragTitle);
         }
 
+        [NoAutoStaticsCleanup] // scratch Rect reused for layout, overwritten each use; safe to persist
         static Rect dummyRect = new Rect(0, 0, 1, 1);
 
         static private ListViewShared.ListViewElementsEnumerator DoListView(ListViewState state, int[] colWidths, string dragTitle)

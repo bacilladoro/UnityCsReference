@@ -11,11 +11,13 @@ using UnityEngine.UIElements;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
-    internal class UndoHistoryWindow : EditorWindow, IHasCustomMenu
+    internal partial class UndoHistoryWindow : EditorWindow, IHasCustomMenu
     {
+        [AutoStaticsCleanupOnCodeReload]
         static UndoHistoryWindow s_Instance;
         public static UndoHistoryWindow instance => s_Instance;
 
@@ -23,6 +25,7 @@ namespace UnityEditor
         const string k_StyleDark = "StyleSheets/UndoHistory/UndoHistoryDark.uss";
         const string k_StyleLight = "StyleSheets/UndoHistory/UndoHistoryLight.uss";
 
+        [NoAutoStaticsCleanup] // last-closed timestamp (long); value type, safe to persist across code reload
         static long s_LastClosedTime;
 
         List<HistoryItem> m_History = new List<HistoryItem>();

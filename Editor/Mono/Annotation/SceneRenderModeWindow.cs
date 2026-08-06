@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.Collections;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -84,13 +85,15 @@ namespace UnityEditor
     {
         static class Styles
         {
+            [NoAutoStaticsCleanup] // safe: lazily rebuilt GUI style cache, recreated on demand
             private static GUIStyle menuItem;
+            [NoAutoStaticsCleanup] // safe: lazily rebuilt GUI style cache, recreated on demand
             private static GUIStyle separator;
-            private static GUIContent debuggerLabel;
+            private static readonly GUIContent debuggerLabel = EditorGUIUtility.TrTextContent("Rendering Debugger...");
 
             public static GUIStyle s_MenuItem => menuItem ?? (menuItem = "MenuItem");
             public static GUIStyle s_Separator => separator ?? (separator = "sv_iconselector_sep");
-            public static GUIContent s_DebuggerLabel => debuggerLabel ??= EditorGUIUtility.TrTextContent("Rendering Debugger...");
+            public static GUIContent s_DebuggerLabel => debuggerLabel;
 
             private static readonly string kShadingMode = "Shading Mode";
             private static readonly string kMiscellaneous = "Miscellaneous";
@@ -101,6 +104,7 @@ namespace UnityEditor
 
             // Map all builtin DrawCameraMode entries
             // This defines the order in which the entries appear in the dropdown menu!
+            [NoAutoStaticsCleanup] // safe: immutable readonly table of builtin camera modes
             public static readonly SceneView.CameraMode[] sBuiltinCameraModes =
             {
                 new SceneView.CameraMode(DrawCameraMode.Textured, "Shaded", kShadingMode, false),

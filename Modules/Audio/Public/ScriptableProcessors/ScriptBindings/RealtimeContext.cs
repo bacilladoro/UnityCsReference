@@ -45,9 +45,8 @@ namespace UnityEngine.Audio
         /// In most use cases, you would not call this directly, but rather have the audio system call it for you.
         /// If you are yourself nesting a <see cref="GeneratorInstance"/> inside another <see cref="ProcessorInstance"/>, you would call this.
         /// </remarks>
-        /// <param name="context">
-        /// The <see cref="RealtimeContext"/> associated with this call. You either get this from your own callback,
-        /// or from <see cref="ControlContext.Manual.BeginMix"/>.
+        /// <param name="generatorInstance">
+        /// The <see cref="GeneratorInstance"/> to process.
         /// </param>
         /// <param name="args">
         /// Additional arguments passed along, which can be default-initialized.</param>
@@ -55,7 +54,7 @@ namespace UnityEngine.Audio
         /// The buffer the <see cref="GeneratorInstance"/> will put its processing result into.
         /// </param>
         /// <returns>
-        /// A <see cref="Result"/> struct indicating amongst other things how many frames were actually written into <paramref name="buffer"/>.
+        /// A <see cref="GeneratorInstance.Result"/> struct indicating amongst other things how many frames were actually written into <paramref name="buffer"/>.
         /// </returns>
         /// <seealso cref="System.Diagnostics.Process"/>
         public readonly GeneratorInstance.Result Process(GeneratorInstance generatorInstance, ChannelBuffer buffer, GeneratorInstance.Arguments args)

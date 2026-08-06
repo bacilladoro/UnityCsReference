@@ -6,6 +6,7 @@ using System;
 using UnityEditorInternal;
 using UnityEngine;
 using UnityEngine.Animations;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -58,6 +59,7 @@ namespace UnityEditor
             public GUIContent DefaultSourceName { get { return m_DefaultSourceName; } }
         }
 
+        [NoAutoStaticsCleanup]
         private static Styles s_Style;
 
         public void OnEnable()

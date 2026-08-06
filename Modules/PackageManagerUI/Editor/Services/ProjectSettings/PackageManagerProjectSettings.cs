@@ -115,6 +115,19 @@ namespace UnityEditor.PackageManager.UI.Internal
         private RegistryInfoDraft m_RegistryInfoDraft = new();
         public RegistryInfoDraft registryInfoDraft => m_RegistryInfoDraft;
 
+        // Stored in SessionState rather than serialized so the draft survives domain reloads
+        // but resets to the applied policy level when the editor is relaunched. When no draft
+        // has been set this session, the getter falls back to the applied policy level.
+        private const string k_TrustPolicyLevelDraftKey = "PackageManager.TrustPolicyLevelDraft";
+
+        public TrustPolicyLevel trustPolicyLevelDraft
+        {
+            get => (TrustPolicyLevel)SessionState.GetInt(k_TrustPolicyLevelDraftKey, (int)TrustPolicySettings.policyLevel);
+            set => SessionState.SetInt(k_TrustPolicyLevelDraftKey, (int)value);
+        }
+
+        public void ClearTrustPolicyLevelDraft() => SessionState.EraseInt(k_TrustPolicyLevelDraftKey);
+
         public void SelectRegistry(string name)
         {
             var registry = string.IsNullOrEmpty(name) ? null : scopedRegistries.FirstMatch(r => r.name == name);

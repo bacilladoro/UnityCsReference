@@ -14,7 +14,7 @@ using UnityEditor.Animations;
 namespace UnityEditor
 {
     // Representation of Script assets.
-    [NativeClass(null)]
+    [NativeClass(null, PersistentTypeId = 115)]
     [NativeHeader("Editor/Mono/MonoScript.bindings.h")]
     [ExcludeFromPreset]
     public class MonoScript : TextAsset

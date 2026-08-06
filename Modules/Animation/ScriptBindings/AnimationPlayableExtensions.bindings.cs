@@ -10,11 +10,13 @@ using UnityEngine.Playables;
 namespace UnityEngine.Animations
 {
     // Animated Properties are an extension because they rely on AnimationClip
+    ///<exclude />
     [NativeHeader("Modules/Animation/Director/AnimationPlayableExtensions.h")]
     [NativeHeader("Modules/Animation/AnimationClip.h")]
     [NativeHeader("Runtime/Director/Core/HPlayable.h")]
     public static class AnimationPlayableExtensions
     {
+        ///<exclude />
         public static void SetAnimatedProperties<U>(this U playable, AnimationClip clip)
             where U : struct, IPlayable
         {

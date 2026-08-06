@@ -11,6 +11,7 @@ using System.Linq;
 using UnityEngine.Networking.PlayerConnection;
 using UnityEditor.Networking.PlayerConnection;
 using System.Text;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -78,6 +79,7 @@ namespace UnityEditor
         }
 
         [ThreadStatic]
+        [NoAutoStaticsCleanup] // reusable per-thread scratch StringBuilder; no user refs, safe to persist across code reload
         static System.Text.StringBuilder s_LogBuilder;
 
         void LogMessage(MessageEventArgs messageEventArgs)

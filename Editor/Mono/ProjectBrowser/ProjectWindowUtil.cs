@@ -524,7 +524,7 @@ namespace UnityEditor
         }
 
         // Returns the path of currently selected folder. If multiple are selected, returns the first one.
-        [VisibleToOtherModules("UnityEditor.ShaderFoundryModule", "UnityEditor.UIToolkitAuthoringModule")]
+        [VisibleToOtherModules("UnityEditor.UIToolkitAuthoringModule")]
         internal static string GetActiveFolderPath()
         {
             ProjectBrowser projectBrowser = GetProjectBrowserIfExists();
@@ -950,7 +950,6 @@ namespace UnityEditor
             return content;
         }
 
-        [VisibleToOtherModules("UnityEditor.ShaderFoundryModule")]
         internal static Object CreateScriptAssetFromTemplate(string pathName, string resourceFile)
         {
             string content = File.ReadAllText(resourceFile);

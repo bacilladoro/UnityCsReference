@@ -36,6 +36,7 @@ namespace UnityEngine
     ///<seealso href="xref:class-MeshCollider">Collision Detection</seealso>
     [RequireComponent(typeof(Transform))]
     [NativeHeader("Modules/Physics/MeshCollider.h")]
+    [global::UnityEngine.NativeClass("MeshCollider", PersistentTypeId = 64)]
     [NativeHeader("Runtime/Graphics/Mesh/Mesh.h")]
     public partial class MeshCollider : Collider
     {

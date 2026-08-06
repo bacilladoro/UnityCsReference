@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 
 namespace UnityEditor
@@ -125,9 +126,13 @@ namespace UnityEditor
             }
         }
 
-        static UnityType[] ms_types;
-        static ReadOnlyCollection<UnityType> ms_typesReadOnly;
-        static Dictionary<int, UnityType> ms_idToType;
-        static Dictionary<string, UnityType> ms_nameToType;
+        [NoAutoStaticsCleanup] // Immutable native type table built once from Internal_GetAllTypes(); holds engine UnityType metadata (no user code), safe to persist across code reload.
+        static readonly UnityType[] ms_types;
+        [NoAutoStaticsCleanup] // Read-only view over ms_types; same immutable native type data, safe to persist across code reload.
+        static readonly ReadOnlyCollection<UnityType> ms_typesReadOnly;
+        [NoAutoStaticsCleanup] // Lookup over the immutable native type table (no user type keys/values); safe to persist across code reload.
+        static readonly Dictionary<int, UnityType> ms_idToType;
+        [NoAutoStaticsCleanup] // Lookup over the immutable native type table (no user type keys/values); safe to persist across code reload.
+        static readonly Dictionary<string, UnityType> ms_nameToType;
     }
 }

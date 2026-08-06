@@ -232,6 +232,59 @@ static class VisualElementReferenceTools
         return true;
     }
 
+    /// <summary>
+    /// Builds a stable, in-memory identity path for a live <see cref="VisualElement"/> by walking
+    /// its ancestors and collecting template-instance ids (scope separators) plus the leaf
+    /// <c>VisualElementAsset.id</c>. Unlike <see cref="TryCreateReference(VisualElement, out PanelRenderer, out AuthoringIdPath, bool)"/>
+    /// this never writes <c>authoring-id</c> attributes to disk: it relies purely on the in-memory
+    /// <c>VisualElementAsset.id</c>s.
+    /// </summary>
+    /// <param name="element">The element to identify.</param>
+    /// <param name="pathBuffer">A caller-owned buffer that receives the path ids (root to leaf). Cleared on entry.</param>
+    /// <returns>
+    /// <see langword="true"/> if a stable path could be produced (roots, or elements backed by a
+    /// <see cref="VisualElementAsset"/>); <see langword="false"/> for code-created/temporary elements.
+    /// </returns>
+    internal static bool TryGetInMemoryPath(VisualElement element, List<int> pathBuffer)
+    {
+        pathBuffer.Clear();
+
+        if (element == null)
+            return false;
+
+        // Panel-component roots use the reserved root id, matching the AuthoringIdPath convention.
+        if (element is IPanelComponentRootElement)
+        {
+            pathBuffer.Add(0);
+            return true;
+        }
+
+        var leafVea = element.visualElementAsset;
+        if (leafVea == null)
+            return false;
+
+        pathBuffer.Add(leafVea.id);
+
+        var current = element.parent;
+        while (current != null)
+        {
+            // Only template instances scope the id space; the clone root (either a panel-component
+            // root or a container with no backing asset) is the implicit scope boundary.
+            if (current is TemplateContainer template
+                && current is not IPanelComponentRootElement
+                && template.visualElementAsset != null)
+            {
+                pathBuffer.Add(template.visualElementAsset.id);
+            }
+
+            current = current.parent;
+        }
+
+        // Collected leaf-first; reverse to root-to-leaf order.
+        pathBuffer.Reverse();
+        return true;
+    }
+
     static void AddMissingAuthoringIds(List<VisualElementAsset> missingAuthoringIds)
     {
         if (missingAuthoringIds.Count == 0)

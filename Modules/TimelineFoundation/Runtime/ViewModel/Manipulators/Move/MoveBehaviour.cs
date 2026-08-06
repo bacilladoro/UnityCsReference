@@ -22,7 +22,6 @@ namespace Unity.Timeline.Foundation.ViewModel
         /// <summary>
         /// Use this method to prepare a insertion operation.
         /// </summary>
-        /// <param name="manipulationContext">Items to insert</param>
         /// <returns>Valid range for the insertion operation.</returns>
         protected virtual MoveManipulationResult BeginInsert() =>
             new MoveManipulationResult(false, true);

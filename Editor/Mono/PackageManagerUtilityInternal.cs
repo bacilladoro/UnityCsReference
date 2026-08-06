@@ -4,6 +4,7 @@
 
 using System;
 using System.Linq;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor.PackageManager;
 using UnityEngine.Scripting;
 
@@ -46,6 +47,7 @@ namespace UnityEditor
             return !IsHidden(package) && !package.hideInEditor;
         }
 
+        [NoAutoStaticsCleanup] // lazily-recomputed count; reset to -1 by native OnPackageManagerResolve, self-heals
         private static int s_HiddenPackagesCount = -1;
 
         /// <summary>

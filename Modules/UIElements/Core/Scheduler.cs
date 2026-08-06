@@ -21,7 +21,7 @@ namespace UnityEngine.UIElements
     public struct TimerState : IEquatable<TimerState>
     {
         /// <summary>
-        /// Start time in milliseconds, or last callback time for repeatable <see cref="IScheduledItem"/>.
+        /// Start time in milliseconds, or last callback time for repeatable <see cref="IVisualElementScheduledItem"/>.
         /// </summary>
         public long start { get; set; }
         /// <summary>

@@ -77,7 +77,7 @@ namespace UnityEngine
     ///<summary>The Cloth class provides an interface to cloth simulation physics.</summary>
     [RequireComponent(typeof(Transform), typeof(SkinnedMeshRenderer))]
     [NativeHeader("Modules/Cloth/Cloth.h")]
-    [NativeClass("Unity::Cloth")]
+    [NativeClass("Unity::Cloth", PersistentTypeId = 183)]
     public sealed partial class Cloth : Component
     {
         ///<summary>The current vertex positions of the cloth object.</summary>

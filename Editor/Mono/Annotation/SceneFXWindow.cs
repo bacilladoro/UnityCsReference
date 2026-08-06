@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -15,6 +16,7 @@ namespace UnityEditor
             public readonly GUIStyle menuItem = "MenuItem";
         }
 
+        [NoAutoStaticsCleanup] // safe: lazily rebuilt GUI styles cache, recreated on demand
         private static Styles s_Styles;
         private readonly SceneView m_SceneView;
 

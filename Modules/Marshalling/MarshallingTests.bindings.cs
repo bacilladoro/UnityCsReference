@@ -290,6 +290,7 @@ namespace UnityEngine
 
     [NativeHeader("Modules/Marshalling/MarshallingTests.h")]
     [ExcludeFromDocs]
+    [global::UnityEngine.NativeClass("MarshallingTestObject", PersistentTypeId = 900)]
     [StructLayout(LayoutKind.Sequential)]
     internal class MarshallingTestObject : Object
     {

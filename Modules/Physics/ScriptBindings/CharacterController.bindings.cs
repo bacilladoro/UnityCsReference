@@ -87,7 +87,7 @@ namespace UnityEngine
     [RequiredByNativeCode]
     public partial class ControllerColliderHit
     {
-        //[AutoStaticsCleanupOnCodeReload(CleanupStrategy = CleanupStrategy.Clear)]
+        [AutoStaticsCleanupOnCodeReload(CleanupStrategy = CleanupStrategy.Clear)]
         private static readonly ControllerColliderHit s_ReusableCollision = new ControllerColliderHit();
 
         internal CharacterController m_Controller;
@@ -299,6 +299,7 @@ namespace UnityEngine
     ///It will then carry out the movement but be constrained by collisions.</remarks>
     ///<seealso href="xref:class-CharacterController">Character Controller component</seealso>
     ///<seealso href="http://unity3d.com/learn/tutorials/modules/beginner/animation">Character animation examples</seealso>
+    [global::UnityEngine.NativeClass("CharacterController", PersistentTypeId = 143)]
     [NativeHeader("Modules/Physics/CharacterController.h")]
     public class CharacterController : Collider
     {

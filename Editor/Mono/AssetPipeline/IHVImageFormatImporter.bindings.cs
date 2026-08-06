@@ -16,6 +16,7 @@ namespace UnityEditor
         public bool isReadable { get {return false; } set {} }
     }
 
+    [global::UnityEngine.NativeClass("IHVImageFormatImporter", PersistentTypeId = 1055)]
     [NativeHeader("Editor/Src/AssetPipeline/TextureImporting/IHVImageFormatImporter.h")]
     public sealed class IHVImageFormatImporter : AssetImporter
     {

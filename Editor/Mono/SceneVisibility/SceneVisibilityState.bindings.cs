@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.Bindings;
@@ -12,12 +13,12 @@ using Object = UnityEngine.Object;
 
 namespace UnityEditor
 {
-    [NativeClass(null)]
+    [NativeClass(null, PersistentTypeId = 0x44D5F8DA)]
     [NativeHeader("Editor/Src/SceneVisibility/SceneVisibilityState.h")]
     [StaticAccessor("GetSceneVisibilityState()", StaticAccessorType.Dot)]
     [ExcludeFromObjectFactory]
     [ExcludeFromPreset]
-    internal class SceneVisibilityState : Object
+    internal partial class SceneVisibilityState : Object
     {
         [FreeFunction("GetSceneVisibilityState")]
         public static extern Object GetInstance();
@@ -72,6 +73,7 @@ namespace UnityEditor
         public static extern void ForceDataUpdate();
         public static extern void CleanTempScenes();
 
+        [AutoStaticsCleanupOnCodeReload]
         public static Action internalStructureChanged;
 
         [RequiredByNativeCode]

@@ -14,8 +14,8 @@ namespace UnityEditor
 {
     internal class AvatarMaskUtility
     {
-        private static string sHuman = "m_HumanDescription.m_Human";
-        private static string sBoneName = "m_BoneName";
+        private static readonly string sHuman = "m_HumanDescription.m_Human";
+        private static readonly string sBoneName = "m_BoneName";
 
         static public string[] GetAvatarHumanTransform(SerializedObject so, string[] refTransformsPath)
         {

@@ -12,6 +12,7 @@ using System;
 using Object = UnityEngine.Object;
 
 using RequiredByNativeCodeAttribute = UnityEngine.Scripting.RequiredByNativeCodeAttribute;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -266,20 +267,26 @@ namespace UnityEditor
         /* TODO_UNDO
            This can't be properly deprecated until all packages being tested through Katana that use the old callback have been updated to use the new callback.
         [Obsolete("Use Undo.undoRedoEvent instead which provides Undo Event information", false)] */
+        [AutoStaticsCleanupOnCodeReload]
         public static UndoRedoCallback undoRedoPerformed;
+        [AutoStaticsCleanupOnCodeReload]
         [Obsolete("Use m_UndoRedoEvent instead", false)]
         private static DelegateWithPerformanceTracker<UndoRedoCallback> m_UndoRedoPerformedEvent = new DelegateWithPerformanceTracker<UndoRedoCallback>($"{nameof(Undo)}.{nameof(undoRedoPerformed)}");
 
         // Undo event
         public delegate void UndoRedoEventCallback(in UndoRedoInfo undo);
 
+        [AutoStaticsCleanupOnCodeReload]
         public static UndoRedoEventCallback undoRedoEvent;
+        [AutoStaticsCleanupOnCodeReload]
         private static DelegateWithPerformanceTracker<UndoRedoEventCallback> m_UndoRedoEvent = new DelegateWithPerformanceTracker<UndoRedoEventCallback>($"{nameof(Undo)}.{nameof(undoRedoEvent)}");
 
         // Called when about to flush undo recording
         public delegate void WillFlushUndoRecord();
 
+        [AutoStaticsCleanupOnCodeReload]
         public static WillFlushUndoRecord willFlushUndoRecord;
+        [AutoStaticsCleanupOnCodeReload]
         private static DelegateWithPerformanceTracker<WillFlushUndoRecord> m_WillFlushUndoRecordEvent = new DelegateWithPerformanceTracker<WillFlushUndoRecord>($"{nameof(Undo)}.{nameof(willFlushUndoRecord)}");
 
         [StaticAccessor("GetPropertyUndoManager()", StaticAccessorType.Dot)]
@@ -292,7 +299,9 @@ namespace UnityEditor
 
         public delegate UndoPropertyModification[] PostprocessModifications(UndoPropertyModification[] modifications);
 
+        [AutoStaticsCleanupOnCodeReload]
         public static PostprocessModifications postprocessModifications;
+        [AutoStaticsCleanupOnCodeReload]
         private static DelegateWithPerformanceTracker<PostprocessModifications> m_PostprocessModificationsEvent = new DelegateWithPerformanceTracker<PostprocessModifications>($"{nameof(Undo)}.{nameof(postprocessModifications)}");
 
         [RequiredByNativeCode]

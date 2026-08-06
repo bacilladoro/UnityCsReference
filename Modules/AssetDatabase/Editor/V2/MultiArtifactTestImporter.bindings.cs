@@ -9,6 +9,7 @@ namespace UnityEditor.Experimental
 {
     // AssetImporter for importing ReferenceArtifactGenerator
     [NativeHeader("Modules/AssetDatabase/Editor/V2/MultiArtifactTestImporter.h")]
+    [NativeClass("MultiArtifactTestImporter", PersistentTypeId = 0x48E92AD4)]
     [ExcludeFromPreset]
     internal partial class MultiArtifactTestImporter : AssetImporter
     {

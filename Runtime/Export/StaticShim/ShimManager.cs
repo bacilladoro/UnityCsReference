@@ -4,15 +4,20 @@
 
 using System;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEngine
 {
-    internal class ShimManager
+    internal partial class ShimManager
     {
+        [AutoStaticsCleanupOnCodeReload]
         internal static Action ActiveShimChanged;
 
+        [AutoStaticsCleanupOnCodeReload]
         private static List<ScreenShimBase> s_ActiveScreenShim = new List<ScreenShimBase>(new [] { new ScreenShimBase() } );
+        [AutoStaticsCleanupOnCodeReload]
         private static List<SystemInfoShimBase> s_ActiveSystemInfoShim = new List<SystemInfoShimBase>(new [] { new SystemInfoShimBase() } );
+        [AutoStaticsCleanupOnCodeReload]
         private static List<ApplicationShimBase> s_ActiveApplicationShim = new List<ApplicationShimBase>(new [] { new ApplicationShimBase() } );
 
         internal static ScreenShimBase screenShim => s_ActiveScreenShim[^1];

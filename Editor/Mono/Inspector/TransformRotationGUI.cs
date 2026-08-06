@@ -22,7 +22,7 @@ namespace UnityEditor
         SerializedProperty m_Rotation;
         Object[] targets;
 
-        private static int s_FoldoutHash = "Foldout".GetHashCode();
+        private static readonly int s_FoldoutHash = "Foldout".GetHashCode();
         private static readonly GUIContent[] s_XYZLabels = {EditorGUIUtility.TextContent("X"), EditorGUIUtility.TextContent("Y"), EditorGUIUtility.TextContent("Z")};
 
         public void OnEnable(SerializedProperty m_Rotation, GUIContent label)

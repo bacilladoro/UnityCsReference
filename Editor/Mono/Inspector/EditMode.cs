@@ -5,6 +5,7 @@
 using System;
 using System.ComponentModel;
 using Unity.Collections.LowLevel.Unsafe;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEditor.EditorTools;
 using UnityEngine;
@@ -14,8 +15,8 @@ namespace UnityEditorInternal
     // TODO: We need to make the editMode state e.g a string so users are able to extend with new edit mode states
     // and so we still can serialize it (to survive assembly reloads)
 
-    [InitializeOnLoad]
-    public class EditMode
+    [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("CodeReloadSafety", "UAL0001:Unsealed Public Class", Justification = "Public API; sealing would be a breaking change")]
+    public partial class EditMode
     {
         internal static readonly EntityId k_OwnerIdNone = EntityId.None;
 
@@ -28,7 +29,8 @@ namespace UnityEditorInternal
         const string kOwnerStringKey = "EditModeOwner";
         const string kEditModeStringKey = "EditModeState";
 
-        static EditMode()
+        [OnCodeLoaded]
+        static void Initialize()
         {
             Debug.Assert(UnsafeUtility.SizeOf<EntityId>() == sizeof(ulong), "EntityId should be 8 bytes");
             ownerID = SessionState.GetEntityId(kOwnerStringKey, ownerID);
@@ -42,17 +44,23 @@ namespace UnityEditorInternal
         private const float k_SpaceBetweenLabelAndButton = 5;
 
         // todo Obsolete, use editModeEnded
+        [AutoStaticsCleanupOnCodeReload]
         public static OnEditModeStopFunc onEditModeEndDelegate;
         public delegate void OnEditModeStopFunc(Editor editor);
 
         // todo Obsolete, use editModeStarted
+        [AutoStaticsCleanupOnCodeReload]
         public static OnEditModeStartFunc onEditModeStartDelegate;
         public delegate void OnEditModeStartFunc(Editor editor, SceneViewEditMode mode);
 
+        [AutoStaticsCleanupOnCodeReload]
         internal static event Action<IToolModeOwner> editModeEnded;
+        [AutoStaticsCleanupOnCodeReload]
         internal static event Action<IToolModeOwner, SceneViewEditMode> editModeStarted;
 
+        [NoAutoStaticsCleanup] // owner EntityId is restored from SessionState on reload by Initialize(); persisting is harmless
         private static EntityId s_OwnerID;
+        [NoAutoStaticsCleanup] // edit-mode enum is restored from SessionState on reload by Initialize(); persisting is harmless
         private static SceneViewEditMode s_EditMode;
 
         public enum SceneViewEditMode

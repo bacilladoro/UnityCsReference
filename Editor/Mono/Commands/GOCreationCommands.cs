@@ -9,6 +9,7 @@ using UnityEngine.Bindings;
 using UnityEngine.Pool;
 using UnityEngine.SceneManagement;
 using UnityEngine.Video;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -21,6 +22,7 @@ namespace UnityEditor
             WorldOrigin,
             ScenePivot
         }
+        [NoAutoStaticsCleanup] // EditorPrefs-backed setting wrapper; holds no user-code references and must persist across reload to retain the preference.
         static SavedInt s_PlacementModePref = new SavedInt("Create3DObject.PlacementMode", 0);
         internal static PlacementMode s_PlacementMode
         {
@@ -28,6 +30,7 @@ namespace UnityEditor
             set => s_PlacementModePref.value = (int)value;
         }
 
+        [NoAutoStaticsCleanup] // EditorPrefs-backed setting wrapper; holds no user-code references and must persist across reload to retain the preference.
         static SavedBool s_PlacementPrefabSerializedPositionOnHierarchyPref = new SavedBool("Create3DObject.PlacementModePrefabSerializedPositionOnHierarchy", false);
         internal static bool s_PlacementUsePrefabSerializedPositionOnHierarchyDrop
         {
@@ -39,6 +42,7 @@ namespace UnityEditor
         // This is here because we can't pass Scenes around with the MenuCommand context. SceneHierarchy toggles this
         // flag when add object context menu items are invoked from a context click on Scene headers. If you make use of
         // this, be sure to return it's value to 'false' as soon as your operation is out of scope.
+        [NoAutoStaticsCleanup] // Transient within-scope flag set and restored to false by callers; unmanaged bool holding no user-code references, safe to persist across reload.
         internal static bool forcePlaceObjectsAtWorldOrigin;
 
         static bool placeObjectsAtWorldOrigin

@@ -72,11 +72,9 @@ namespace UnityEditor.UIElements
                     panelDebug.Render();
                 }
 
-                // TODO get rid of this when we wrap every GUIView inside IMGUIContainers
-                // here we pretend to use the repaint event
-                // in order to suspend to suspend OnGUI() processing on the native side
-                // since we've already run it if we have an IMGUIContainer
-                usesEvent = panel.IMGUIContainersCount > 0;
+                // The panel (including any IMGUIContainers) has already been rendered above,
+                // so the repaint is fully handled here.
+                usesEvent = true;
 
                 Camera.SetupCurrent(oldCam);
                 RenderTexture.active = oldRT;

@@ -22,6 +22,7 @@ namespace Unity.U2D.Physics
         [NativeMethod(Name = "PhysicsBody::SetBatchForce", IsThreadSafe = true)] extern internal static void PhysicsBody_SetBatchForce(ReadOnlySpan<PhysicsBody.BatchForce> batch);
         [NativeMethod(Name = "PhysicsBody::SetBatchImpulse", IsThreadSafe = true)] extern internal static void PhysicsBody_SetBatchImpulse(ReadOnlySpan<PhysicsBody.BatchImpulse> batch);
         [NativeMethod(Name = "PhysicsBody::SetBatchTransform", IsThreadSafe = true)] extern internal static void PhysicsBody_SetBatchTransform(ReadOnlySpan<PhysicsBody.BatchTransform> batch);
+        [NativeMethod(Name = "PhysicsBody::GetBatchTransformObjects")] extern internal static int PhysicsBody_GetBatchTransformObjects(ReadOnlySpan<PhysicsBody.BatchTransform> batch, Span<int> batchIndexMap, IntPtr transformAccessArrayIntPtr);
         [NativeMethod(Name = "PhysicsBody::GetBatchTransform", IsThreadSafe = true)] extern internal static PhysicsBuffer PhysicsBody_GetBatchTransform(ReadOnlySpan<PhysicsBody> bodies, Allocator allocator);
         [NativeMethod(Name = "PhysicsBody::WriteDefinition")] extern internal static void PhysicsBody_WriteDefinition(PhysicsBody body, PhysicsBodyDefinition definition, bool onlyExtendedProperties);
         [NativeMethod(Name = "PhysicsBody::ReadDefinition")] extern internal static PhysicsBodyDefinition PhysicsBody_ReadDefinition(PhysicsBody body);

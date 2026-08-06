@@ -18,6 +18,8 @@ namespace UnityEditor.Overlays
     {
         SaveData[] saveData { get; }
         DynamicPanelContainerData[] dynamicPanelContainerData { get; }
+        // Main toolbar menu items pinned by this preset; empty for windows with no menu-item concept.
+        string[] menuItemPaths { get; }
         Type targetWindowType { get; }
         bool CanApplyToWindow(Type windowType);
         void ApplyCustomData(OverlayCanvas canvas);
@@ -28,6 +30,7 @@ namespace UnityEditor.Overlays
     {
         public SaveData[] saveData => Array.Empty<SaveData>();
         public DynamicPanelContainerData[] dynamicPanelContainerData => Array.Empty<DynamicPanelContainerData>();
+        public string[] menuItemPaths => Array.Empty<string>();
         public Type targetWindowType => null;
 
         public bool CanApplyToWindow(Type windowType) => true;

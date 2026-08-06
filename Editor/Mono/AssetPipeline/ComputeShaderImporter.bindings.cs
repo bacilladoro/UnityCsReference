@@ -7,6 +7,7 @@ using UnityEngine.Bindings;
 
 namespace UnityEditor
 {
+    [global::UnityEngine.NativeClass("ComputeShaderImporter", PersistentTypeId = 1008)]
     [NativeHeader("Editor/Src/AssetPipeline/ComputeShaderImporter.h")]
     public sealed partial class ComputeShaderImporter : AssetImporter
     {

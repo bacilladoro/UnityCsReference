@@ -7,6 +7,7 @@ using System.Runtime.InteropServices;
 using UnityEngine;
 using UnityEngine.Bindings;
 using UnityEngine.Scripting;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEngine.U2D
 {
@@ -80,8 +81,9 @@ namespace UnityEngine.U2D
     [NativeHeader("Runtime/2D/SpriteAtlas/SpriteAtlasManager.h")]
     [NativeHeader("Runtime/2D/SpriteAtlas/SpriteAtlas.h")]
     [StaticAccessor("GetSpriteAtlasManager()", StaticAccessorType.Dot)]
-    public class SpriteAtlasManager
+    public partial class SpriteAtlasManager
     {
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<string, Action<SpriteAtlas>> atlasRequested = null;
 
         [RequiredByNativeCode]
@@ -95,6 +97,7 @@ namespace UnityEngine.U2D
             return false;
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<SpriteAtlas> atlasRegistered = null;
 
         [RequiredByNativeCode]
@@ -117,6 +120,7 @@ namespace UnityEngine.U2D
 
     [NativeHeader("Runtime/Graphics/SpriteFrame.h")]
     [NativeHeader("Runtime/2D/SpriteAtlas/SpriteAtlas.h")]
+    [NativeClass("SpriteAtlas", PersistentTypeId = 0x28F3FDEF)]
     public class SpriteAtlas : UnityEngine.Object
     {
         public SpriteAtlas() { Internal_Create(this); }

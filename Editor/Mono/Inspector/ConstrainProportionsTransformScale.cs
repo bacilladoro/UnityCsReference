@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using JetBrains.Annotations;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor.ShortcutManagement;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -12,9 +13,11 @@ namespace UnityEditor
     internal class ConstrainProportionsTransformScale
     {
         bool m_ConstrainProportionsScale;
+        [NoAutoStaticsCleanup] // transient GUI-preview flag set/read within a single inspector interaction; default value is harmless after reload
         internal static bool m_IsAnimationPreview;
         Vector3 m_InitialScale;
 
+        [NoAutoStaticsCleanup] // transient paste-in-progress flag reset per operation; safe to persist as default across reload
         static bool s_IsPropertyPaste;
 
         internal bool constrainProportionsScale { get => m_ConstrainProportionsScale; set => m_ConstrainProportionsScale = value; }

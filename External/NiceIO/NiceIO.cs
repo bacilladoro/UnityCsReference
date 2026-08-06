@@ -2169,7 +2169,16 @@ namespace NiceIO
                     using (var fs = new FileStream(handle, FileAccess.Read))
                     {
                         buffer = new byte[fs.Length];
-                        fs.Read(buffer, 0, buffer.Length);
+                        int offset = 0;
+                        while (offset < buffer.Length)
+                        {
+                            int read = fs.Read(buffer, offset, buffer.Length - offset);
+                            if (read == 0)
+                                break;
+                            offset += read;
+                        }
+                        if (offset < buffer.Length)
+                            throw new IOException($"Read fewer bytes than expected while reading all of {path}");
                     }
                 }
                 return buffer;

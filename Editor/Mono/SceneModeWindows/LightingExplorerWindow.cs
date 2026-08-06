@@ -8,6 +8,7 @@ using UnityEditor.Rendering;
 using Unity.Collections;
 using System.Linq;
 using System;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -24,7 +25,7 @@ namespace UnityEditor
     }
 
     [EditorWindowTitle(title = "Light Explorer", icon = "Lighting")]
-    internal class LightingExplorerWindow : EditorWindow
+    internal partial class LightingExplorerWindow : EditorWindow
     {
         LightingExplorerTab[] m_TableTabs;
         GUIContent[] m_TabTitles;
@@ -33,6 +34,7 @@ namespace UnityEditor
 
         System.Type m_CurrentSRPType = null;
         ILightingExplorerExtension m_CurrentLightingExplorerExtension = null;
+        [AutoStaticsCleanupOnCodeReload]
         static ILightingExplorerExtension s_DefaultLightingExplorerExtension = null;
 
         [MenuItem("Window/Rendering/Light Explorer", priority = 2, secondaryPriority = 1)]
@@ -98,7 +100,7 @@ namespace UnityEditor
                             return Selection.entityIds.Contains(mr.gameObject.GetEntityId());
 #pragma warning restore UA2001
                         }).SelectMany(meshRenderer => meshRenderer.sharedMaterials).Where((Material m) => {
-                                return m != null && (m.globalIlluminationFlags & MaterialGlobalIlluminationFlags.AnyEmissive) != 0;
+                            return m != null && (m.globalIlluminationFlags & (MaterialGlobalIlluminationFlags.RealtimeIndirectEmission | MaterialGlobalIlluminationFlags.BakedEmission)) != 0;
                             }).Select(m => m.GetEntityId()).Union(Selection.entityIds).Distinct().ToArray();
 
                         m_TableTabs[i].OnSelectionChange(selectedIds);

@@ -123,7 +123,7 @@ namespace Unity.UIToolkit.Editor
             return newUIClip;
         }
 
-        public virtual IAnimationWindowClip CreateNewClip()
+        public virtual IAnimationWindowClip CreateNewClip(string suggestedName = null)
         {
             return TryCreateAndAssignNewUIAnimationClip() != null ? clip : null;
         }

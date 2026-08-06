@@ -11,6 +11,7 @@ using Bee.BeeDriver;
 using Bee.BinLog;
 using NiceIO;
 using PlayerBuildProgramLibrary.Data;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor.Build;
 using UnityEditor.Build.Player;
 using UnityEditor.Build.Reporting;
@@ -25,9 +26,11 @@ using UnityEngine.Scripting;
 
 namespace UnityEditor.Modules
 {
-    internal abstract class BeeBuildPostprocessor : IBuildPostprocessor
+    internal abstract partial class BeeBuildPostprocessor : IBuildPostprocessor
     {
         protected BeeDriverResult BeeDriverResult { get; set; }
+
+        [NoAutoStaticsCleanup] // build-in-progress flag, always reset to false at build start; safe to persist across reload
         protected static bool isBuildingPlayer { get; set; }
 
         public static readonly string kBackupFolderPostfix = "_BackUpThisFolder_ButDontShipItWithYourGame";
@@ -35,6 +38,7 @@ namespace UnityEditor.Modules
         static readonly string kXrBootSettingsKey = "xr-boot-settings";
         public virtual ILaunchReport LaunchPlayer(BuildLaunchPlayerArgs args) => throw new NotSupportedException();
 
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<IPostStrippingModuleAdder> onAddModulesPostUnityLinker;
 
         public virtual void PostProcess(BuildPostProcessArgs args, out BuildProperties outProperties)
@@ -378,6 +382,9 @@ namespace UnityEditor.Modules
 
             if (CrashReportingSettings.canUploadReports)
                 additionalArgs.Add("--emit-source-mapping");
+
+            if (IsBuildOptionSet(args.report.summary.options, BuildOptions.EnableCodeCoverage))
+                additionalArgs.Add("--enable-code-coverage");
 
             var namedBuildTarget = GetNamedBuildTarget(args);
             var apiCompatibilityLevel = PlayerSettings.GetApiCompatibilityLevel(namedBuildTarget);

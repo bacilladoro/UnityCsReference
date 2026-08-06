@@ -8,6 +8,7 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using Object = UnityEngine.Object;
 using System.Globalization;
+using Unity.Scripting.LifecycleManagement;
 
 // RayTracingMode enum will be moved into UnityEngine.Rendering in the future.
 using RayTracingMode = UnityEngine.Experimental.Rendering.RayTracingMode;
@@ -487,6 +488,7 @@ namespace UnityEditor
             LODGUI.UpdateCameraFromLODSlider(renderer.bounds.center, sceneCamera, distance);
         }
 
+        [NoAutoStaticsCleanup] // Transient tooltip anchor Rect; unmanaged value, safe to persist across reload.
         internal static Rect s_ToolTipRect;
 
         private static readonly int m_LODSliderId = "LODSliderIDHash".GetHashCode();

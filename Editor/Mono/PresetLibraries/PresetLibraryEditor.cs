@@ -5,6 +5,7 @@
 using System.IO;
 using UnityEngine;
 using UnityEditorInternal;
+using Unity.Scripting.LifecycleManagement;
 using RenameOverlay = UnityEditor.RenameOverlay<int>;
 
 namespace UnityEditor
@@ -92,6 +93,7 @@ namespace UnityEditor
                 return styleName; // Implicit construction of GUIStyle
             }
         }
+        [NoAutoStaticsCleanup] // Lazy Styles cache of GUIStyle/GUIContent (whitelisted, asset-backed); safe to persist across code reload
         static Styles s_Styles;
 
         class DragState
@@ -872,9 +874,11 @@ namespace UnityEditor
                 EditorGUIUtility.PingObject(AssetDatabase.GetMainAssetEntityId(pathWithExtension));
         }
 
-        internal class PresetContextMenu
+        internal partial class PresetContextMenu
         {
+            [AutoStaticsCleanupOnCodeReload]
             static PresetLibraryEditor<T> s_Caller;
+            [NoAutoStaticsCleanup] // Transient context-menu selection index, set on each Show(); safe to persist across code reload
             static int s_PresetIndex;
 
             static internal void Show(bool isOpenForEdit, int presetIndex, object newPresetObject, PresetLibraryEditor<T> caller)

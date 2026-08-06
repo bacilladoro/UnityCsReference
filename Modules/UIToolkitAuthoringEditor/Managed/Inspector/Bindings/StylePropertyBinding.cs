@@ -370,7 +370,7 @@ sealed partial class StylePropertyBinding : CustomBinding, ITrackablePropertyPro
     //   1. <b>{blocked reason}</b>  - recording is active and this property cannot be recorded here.
     //   2. {affordance tooltip}     - echoes the affordance icon's current tooltip (Default Value,
     //                                 Inline Value, Inherited, Animation-driven/Recording/Candidate,
-    //                                 binding/variable details, ...). Independent from section 1 -
+    //                                 binding/variable details, ...). Independent of section 1 -
     //                                 a UXML-driven property that is also recording-blocked shows
     //                                 both the bold status AND its affordance line.
     //   3. UXML tooltip verbatim    - already carries its own bold "<b>USS property: name</b> ..."
@@ -380,7 +380,9 @@ sealed partial class StylePropertyBinding : CustomBinding, ITrackablePropertyPro
     // UXML tooltip and no affordance state lets the default tooltip flow continue undisturbed.
     static void OnTooltipEvent(TooltipEvent evt, CallbackContext ctx)
     {
-        evt.rect = ctx.element.worldBound;
+
+        if (evt.target is not VisualElement target || HasOwnLeafTooltip(target, ctx.element))
+            return;
 
         var sb = new System.Text.StringBuilder();
 
@@ -412,8 +414,22 @@ sealed partial class StylePropertyBinding : CustomBinding, ITrackablePropertyPro
         if (sb.Length == 0)
             return;
 
+
         evt.tooltip = sb.ToString();
+        evt.rect = ctx.element.worldBound;
         evt.StopImmediatePropagation();
+    }
+
+    // True when the hovered element - or anything between it and the field, exclusive - carries its own
+    // tooltip string
+    static bool HasOwnLeafTooltip(VisualElement target, VisualElement field)
+    {
+        for (var e = target; e != null && e != field; e = e.hierarchy.parent)
+        {
+            if (!string.IsNullOrEmpty(e.tooltip))
+                return true;
+        }
+        return false;
     }
 
     static string ComputeBlockedReason(VisualElement inspected, StylePropertyId id, StyleInspectorAnimationRecordingContext controller)

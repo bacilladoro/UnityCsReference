@@ -465,10 +465,10 @@ namespace UnityEditor
     {
         internal static class Styles
         {
-            internal static GUIStyle menuItem = new GUIStyle("MenuItem");
-            internal static GUIStyle menuItemMixed = new GUIStyle("MenuItemMixed");
-            internal static GUIStyle listEvenBg = "ObjectPickerResultsOdd";
-            internal static GUIStyle listOddBg = "ObjectPickerResultsEven";
+            internal static readonly GUIStyle menuItem = new GUIStyle("MenuItem");
+            internal static readonly GUIStyle menuItemMixed = new GUIStyle("MenuItemMixed");
+            internal static readonly GUIStyle listEvenBg = "ObjectPickerResultsOdd";
+            internal static readonly GUIStyle listOddBg = "ObjectPickerResultsEven";
 
             static Styles()
             {

@@ -59,7 +59,7 @@ namespace UnityEngine.UIElements
     }
 
     /// <summary>
-    /// Extra properties that can be used in <see cref="CallbackEventHandler.RegisterCallback{TEvent}(TEvent, UnityEngine.UIElements.CallbackOptions)"/>.
+    /// Extra properties that can be used in <see cref="CallbackEventHandler.RegisterCallback{TEventType}(EventCallback{TEventType}, UnityEngine.UIElements.CallbackOptions)"/>.
     /// </summary>
     [Flags]
     public enum CallbackOptions

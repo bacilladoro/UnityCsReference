@@ -9,6 +9,7 @@ using System.Runtime.InteropServices;
 using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEngine
 {
@@ -39,7 +40,7 @@ namespace UnityEngine
         ///using Unity.Jobs;
         ///using UnityEngine;
         ///
-        ///public class BounceScipt : MonoBehaviour
+        ///public class BounceScript : MonoBehaviour
         ///{
         ///    [SerializeField]
         ///    private float m_ImpulseMultiplier = 5f;
@@ -164,8 +165,10 @@ namespace UnityEngine
         ///}
         ///]]></code>
         ///</example>
+        [AutoStaticsCleanupOnCodeReload]
         public static event ContactEventDelegate ContactEvent;
 
+        [AutoStaticsCleanupOnCodeReload(CleanupStrategy = CleanupStrategy.Clear)]
         private static readonly Collision s_ReusableCollision = new Collision();
 
         static readonly ProfilerMarker s_ContactEventMarker = new ProfilerMarker("Physics.ContactEvent");

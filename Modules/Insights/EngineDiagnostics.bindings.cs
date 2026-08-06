@@ -4,6 +4,7 @@
 
 using System;
 using System.Diagnostics.CodeAnalysis;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Bindings;
 using UnityEngine.Internal;
 using UnityEngine.Scripting;
@@ -17,6 +18,7 @@ namespace Unity.EngineDiagnostics
         public static readonly bool IsEnabled = IsInsightsEnabled();
         static extern bool IsInsightsEnabled();
 
+        [NoAutoStaticsCleanup] // native sets this once at startup and native state survives code reload, so the managed value must persist to stay in sync
         public static bool IsInitialized
         {
             // So this warrants some explanations...

@@ -27,6 +27,7 @@ using UnityEngine.Rendering;
 using UnityEngine.SceneManagement;
 using UnityEngine.Serialization;
 using UnityEngine.UIElements;
+using Unity.Scripting.LifecycleManagement;
 using static UnityEditor.SceneViewMotion;
 using Component = UnityEngine.Component;
 using Object = UnityEngine.Object;
@@ -85,6 +86,7 @@ namespace UnityEditor
             }
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         static SceneView s_LastActiveSceneView;
 
         [RequiredByNativeCode]
@@ -134,8 +136,11 @@ namespace UnityEditor
                         legacyOverlay.showRequested = false;
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         public static Action<SceneView, SceneView> lastActiveSceneViewChanged;
 
+        // DoOnGUI takes care of it
+        [AutoStaticsCleanupOnCodeReload]
         static SceneView s_CurrentDrawingSceneView;
 
         public static SceneView lastActiveSceneView
@@ -169,10 +174,10 @@ namespace UnityEditor
         static readonly PrefColor kSceneViewSelectedChildrenOutline = new PrefColor("Scene/Selected Children Outline", 94.0f / 255.0f, 119.0f / 255.0f, 155.0f / 255.0f, 0.0f / 255.0f);
         static readonly PrefColor kSceneViewSelectedWire = new PrefColor("Scene/Wireframe Selected", 94.0f / 255.0f, 119.0f / 255.0f, 155.0f / 255.0f, 64.0f / 255.0f);
 
-        internal static Color kSceneViewFrontLight = new Color(0.769f, 0.769f, 0.769f, 1);
-        internal static Color kSceneViewUpLight = new Color(0.212f, 0.227f, 0.259f, 1);
-        internal static Color kSceneViewMidLight = new Color(0.114f, 0.125f, 0.133f, 1);
-        internal static Color kSceneViewDownLight = new Color(0.047f, 0.043f, 0.035f, 1);
+        internal static readonly Color kSceneViewFrontLight = new Color(0.769f, 0.769f, 0.769f, 1);
+        internal static readonly Color kSceneViewUpLight = new Color(0.212f, 0.227f, 0.259f, 1);
+        internal static readonly Color kSceneViewMidLight = new Color(0.114f, 0.125f, 0.133f, 1);
+        internal static readonly Color kSceneViewDownLight = new Color(0.047f, 0.043f, 0.035f, 1);
 
         const string k_StyleCommon = "StyleSheets/SceneView/SceneViewCommon.uss";
         const string k_StyleDark = "StyleSheets/SceneView/SceneViewDark.uss";
@@ -181,12 +186,13 @@ namespace UnityEditor
         public static Color selectedOutlineColor => kSceneViewSelectedOutline.Color;
         public bool isUsingSceneFiltering => UseSceneFiltering();
 
-        internal static SavedBool s_PreferenceIgnoreAlwaysRefreshWhenNotFocused = new SavedBool("SceneView.ignoreAlwaysRefreshWhenNotFocused", false);
-        internal static SavedBool s_PreferenceEnableFilteringWhileSearching = new SavedBool("SceneView.enableFilteringWhileSearching", true);
-        internal static SavedBool s_PreferenceEnableFilteringWhileLodGroupEditing = new SavedBool("SceneView.enableFilteringWhileLodGroupEditing", true);
+        internal static readonly SavedBool s_PreferenceIgnoreAlwaysRefreshWhenNotFocused = new SavedBool("SceneView.ignoreAlwaysRefreshWhenNotFocused", false);
+        internal static readonly SavedBool s_PreferenceEnableFilteringWhileSearching = new SavedBool("SceneView.enableFilteringWhileSearching", true);
+        internal static readonly SavedBool s_PreferenceEnableFilteringWhileLodGroupEditing = new SavedBool("SceneView.enableFilteringWhileLodGroupEditing", true);
 
-        internal static SavedFloat s_DrawModeExposure = new SavedFloat("SceneView.drawModeExposure", 0.0f);
-        private static SavedBool s_DrawBackfaceHighlights = new SavedBool("SceneView.drawBackfaceHighlights", false);
+        internal static readonly SavedFloat s_DrawModeExposure = new SavedFloat("SceneView.drawModeExposure", 0.0f);
+        private static readonly SavedBool s_DrawBackfaceHighlights = new SavedBool("SceneView.drawBackfaceHighlights", false);
+        [AutoStaticsCleanupOnCodeReload]
         internal static event Action<bool> onDrawBackfaceHighlightsChanged;
 
         [RequiredByNativeCode]
@@ -210,6 +216,7 @@ namespace UnityEditor
             }
         }
 
+        [NoAutoStaticsCleanup] // immutable lookup set populated once at init, safe to persist
         static readonly HashSet<DrawCameraMode> s_ShowExposureDrawCameraModes = new HashSet<DrawCameraMode>(new[]
         {
             DrawCameraMode.BakedEmissive, DrawCameraMode.BakedLightmap,
@@ -217,6 +224,7 @@ namespace UnityEditor
         });
         internal bool showExposureSettings => s_ShowExposureDrawCameraModes.Contains(this.cameraMode.drawMode);
 
+        [NoAutoStaticsCleanup] // immutable lookup set populated once at init, safe to persist
         static readonly HashSet<DrawCameraMode> s_ShowLightmapResolutionDrawCameraModes = new HashSet<DrawCameraMode>(new[]
         {
             DrawCameraMode.BakedEmissive, DrawCameraMode.RealtimeEmissive,
@@ -233,6 +241,7 @@ namespace UnityEditor
 
         internal bool showBackfaceHighlightsToggle => this.showLightmapResolutionToggle;
 
+        [NoAutoStaticsCleanup] // immutable lookup set populated once at init, safe to persist
         static readonly HashSet<DrawCameraMode> s_ShowInteractiveLightBakingToggleCameraModes = new HashSet<DrawCameraMode>(new[]
         {
             DrawCameraMode.BakedLightmap, DrawCameraMode.BakedDirectionality,
@@ -294,9 +303,12 @@ namespace UnityEditor
                 RepaintAll();
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         static List<Editor> s_ActiveEditors = new List<Editor>();
 
+        [NoAutoStaticsCleanup] // transient dirty flag, value at reload is irrelevant
         static bool s_ActiveEditorsDirty;
+        [NoAutoStaticsCleanup] // transient dirty flag, value at reload is irrelevant
         static bool s_SelectionCacheDirty;
 
         internal static IReadOnlyList<Editor> activeEditors
@@ -432,6 +444,7 @@ namespace UnityEditor
         internal const float k_MaxCameraFarClip = 1.844674E+19f;
         internal const float k_MinCameraNearClip = 1e-5f;
 
+        [AutoStaticsCleanupOnCodeReload]
         [NonSerialized]
         static ActiveEditorTracker s_SharedTracker;
 
@@ -464,12 +477,15 @@ namespace UnityEditor
         internal event Action<bool> sceneVisActiveChanged;
         internal event Action<bool> drawGizmosChanged;
         internal event Action<bool> modeChanged2D;
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<SceneView> onCameraCreated;
 
         // used by tests
         internal bool m_WasFocused = false;
 
+        [AutoStaticsCleanupOnCodeReload]
         static EntityId[] s_CachedParentRenderersForOutlining, s_CachedChildRenderersForOutlining;
+        [AutoStaticsCleanupOnCodeReload]
         static HashSet<EntityId> s_CachedChildRenderersForOutliningHashSet;
 
         [Serializable]
@@ -615,6 +631,7 @@ namespace UnityEditor
             set => m_isRotationLocked = value;
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         internal static List<CameraMode> userDefinedModes { get; } = new List<CameraMode>();
 
         [SerializeField]
@@ -637,6 +654,7 @@ namespace UnityEditor
             }
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         static SceneView s_AudioSceneView;
 
         [SerializeField]
@@ -672,16 +690,22 @@ namespace UnityEditor
         // Marked obsolete 2018-11-28
         [Obsolete("onSceneGUIDelegate has been deprecated. Use duringSceneGui instead.")]
         [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
+        [AutoStaticsCleanupOnCodeReload]
         public static OnSceneFunc onSceneGUIDelegate;
 #pragma warning restore 618
 
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<SceneView> beforeSceneGui;
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<SceneView> duringSceneGui;
 
+        [AutoStaticsCleanupOnCodeReload]
         internal static event Func<SceneView, VisualElement> addCustomVisualElementToSceneView;
 
         // Used for performance tests
+        [AutoStaticsCleanupOnCodeReload]
         internal static event Action<SceneView> onGUIStarted;
+        [AutoStaticsCleanupOnCodeReload]
         internal static event Action<SceneView> onGUIEnded;
 
         [Obsolete("Use cameraMode instead", false)]
@@ -793,6 +817,7 @@ namespace UnityEditor
             }
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         static List<Overlay> s_ActiveViewOverlays = new List<Overlay>();
 
         [Serializable]
@@ -1132,6 +1157,7 @@ namespace UnityEditor
         }
 
         // Keep dictionary static to share the search of containing packages of filtering types amongst all opened SceneViews
+        [AutoStaticsCleanupOnCodeReload]
         static Dictionary<Type, string> s_MapPackageNameToFilteringType = new();
         void CleanAdditionalSettingsOnPackageRemoval(PackageManager.PackageRegistrationEventArgs args)
         {
@@ -1222,7 +1248,9 @@ namespace UnityEditor
                 this.cursor = cursor;
             }
         }
+        [NoAutoStaticsCleanup] // transient per-frame cursor state, safe to persist
         private static MouseCursor s_LastCursor = MouseCursor.Arrow;
+        [NoAutoStaticsCleanup] // transient per-frame cursor rects, cleared during GUI, safe to persist
         private static readonly List<CursorRect> s_MouseRects = new List<CursorRect>();
 
         internal static void AddCursorRect(Rect rect, MouseCursor cursor)
@@ -1288,20 +1316,32 @@ namespace UnityEditor
 
         const float kDefaultPerspectiveFov = 60;
 
+        [AutoStaticsCleanupOnCodeReload]
         static ArrayList s_SceneViews = new ArrayList();
         public static ArrayList sceneViews { get { return s_SceneViews; } }
 
+        [AutoStaticsCleanupOnCodeReload]
         static List<Camera> s_AllSceneCameraList = new List<Camera>();
+        [AutoStaticsCleanupOnCodeReload]
         static Camera[] s_AllSceneCameras = Array.Empty<Camera>();
 
+        [NoAutoStaticsCleanup] // lazily-loaded shared material asset, safe to persist
         static Material s_AlphaOverlayMaterial;
+        [NoAutoStaticsCleanup] // lazily-loaded shared material asset, safe to persist
         static Material s_DeferredOverlayMaterial;
+        [NoAutoStaticsCleanup] // lazily-loaded shared shader asset, safe to persist
         static Shader s_ShowOverdrawShader;
+        [NoAutoStaticsCleanup] // lazily-loaded shared shader asset, safe to persist
         static Shader s_ShowMipsShader;
+        [NoAutoStaticsCleanup] // lazily-loaded shared shader asset, safe to persist
         static Shader s_ShowTextureStreamingShader;
+        [NoAutoStaticsCleanup] // lazily-loaded shared shader asset, safe to persist
         static Shader s_AuraShader;
+        [NoAutoStaticsCleanup] // lazily-loaded shared material asset, safe to persist
         static Material s_FadeMaterial;
+        [NoAutoStaticsCleanup] // lazily-loaded shared material asset, safe to persist
         static Material s_ApplyFilterMaterial;
+        [NoAutoStaticsCleanup] // lazily-loaded shared texture asset, safe to persist
         static Texture2D s_MipColorsTexture;
 
         // Handle Dragging of stuff over scene view
@@ -1310,20 +1350,20 @@ namespace UnityEditor
 
         internal static class Styles
         {
-            public static GUIContent toolsContent = EditorGUIUtility.TrIconContent("SceneViewTools", "Hide or show the Component Editor Tools panel in the Scene view.");
-            public static GUIContent lighting = EditorGUIUtility.TrIconContent("SceneviewLighting", "When toggled on, the Scene lighting is used. When toggled off, a light attached to the Scene view camera is used.");
-            public static GUIContent fx = EditorGUIUtility.TrIconContent("SceneviewFx", "Toggle skybox, fog, and various other effects.");
-            public static GUIContent audioPlayContent = EditorGUIUtility.TrIconContent("SceneviewAudio", "Toggle audio on or off.");
-            public static GUIContent gizmosContent = EditorGUIUtility.TrTextContent("Gizmos", "Toggle visibility of all Gizmos in the Scene view");
-            public static GUIContent gizmosDropDownContent = EditorGUIUtility.TrTextContent("", "Toggle the visibility of different Gizmos in the Scene view.");
-            public static GUIContent mode2DContent = EditorGUIUtility.TrIconContent("SceneView2D", "When toggled on, the Scene is in 2D view. When toggled off, the Scene is in 3D view.");
-            public static GUIContent gridXToolbarContent = EditorGUIUtility.TrIconContent("GridAxisX", "Toggle the visibility of the grid");
-            public static GUIContent gridYToolbarContent = EditorGUIUtility.TrIconContent("GridAxisY", "Toggle the visibility of the grid");
-            public static GUIContent gridZToolbarContent = EditorGUIUtility.TrIconContent("GridAxisZ", "Toggle the visibility of the grid");
-            public static GUIContent metalFrameCaptureContent = EditorGUIUtility.TrIconContent("FrameCapture", "Capture the current view and open in Xcode frame debugger");
-            public static GUIContent sceneVisToolbarButtonContent = EditorGUIUtility.TrIconContent("SceneViewVisibility", "Number of hidden objects, click to toggle scene visibility");
-            public static GUIStyle gizmoButtonStyle;
-            public static GUIContent sceneViewCameraContent = EditorGUIUtility.TrIconContent("SceneViewCamera", "Settings for the Scene view camera.");
+            public static readonly GUIContent toolsContent = EditorGUIUtility.TrIconContent("SceneViewTools", "Hide or show the Component Editor Tools panel in the Scene view.");
+            public static readonly GUIContent lighting = EditorGUIUtility.TrIconContent("SceneviewLighting", "When toggled on, the Scene lighting is used. When toggled off, a light attached to the Scene view camera is used.");
+            public static readonly GUIContent fx = EditorGUIUtility.TrIconContent("SceneviewFx", "Toggle skybox, fog, and various other effects.");
+            public static readonly GUIContent audioPlayContent = EditorGUIUtility.TrIconContent("SceneviewAudio", "Toggle audio on or off.");
+            public static readonly GUIContent gizmosContent = EditorGUIUtility.TrTextContent("Gizmos", "Toggle visibility of all Gizmos in the Scene view");
+            public static readonly GUIContent gizmosDropDownContent = EditorGUIUtility.TrTextContent("", "Toggle the visibility of different Gizmos in the Scene view.");
+            public static readonly GUIContent mode2DContent = EditorGUIUtility.TrIconContent("SceneView2D", "When toggled on, the Scene is in 2D view. When toggled off, the Scene is in 3D view.");
+            public static readonly GUIContent gridXToolbarContent = EditorGUIUtility.TrIconContent("GridAxisX", "Toggle the visibility of the grid");
+            public static readonly GUIContent gridYToolbarContent = EditorGUIUtility.TrIconContent("GridAxisY", "Toggle the visibility of the grid");
+            public static readonly GUIContent gridZToolbarContent = EditorGUIUtility.TrIconContent("GridAxisZ", "Toggle the visibility of the grid");
+            public static readonly GUIContent metalFrameCaptureContent = EditorGUIUtility.TrIconContent("FrameCapture", "Capture the current view and open in Xcode frame debugger");
+            public static readonly GUIContent sceneVisToolbarButtonContent = EditorGUIUtility.TrIconContent("SceneViewVisibility", "Number of hidden objects, click to toggle scene visibility");
+            public static readonly GUIStyle gizmoButtonStyle;
+            public static readonly GUIContent sceneViewCameraContent = EditorGUIUtility.TrIconContent("SceneViewCamera", "Settings for the Scene view camera.");
 
             static Styles()
             {
@@ -4355,7 +4395,9 @@ namespace UnityEditor
             }
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         private static EditorActionCache s_OnSceneGuiCache = new EditorActionCache("OnSceneGUI");
+        [AutoStaticsCleanupOnCodeReload]
         private static EditorActionCache s_OnPreSceneGuiCache = new EditorActionCache("OnPreSceneGUI");
 
         void CallOnSceneGUI()

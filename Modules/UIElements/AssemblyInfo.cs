@@ -36,6 +36,8 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("Unity.UIElements.EditorTests")]
 [assembly: InternalsVisibleTo("Unity.UIElements.TestComponents.Editor")]
 [assembly: InternalsVisibleTo("Assembly-CSharp-Editor-testable")]
+[assembly: InternalsVisibleTo("Unity.UIElements.EditorResources.Authoring")]
+[assembly: InternalsVisibleTo("Unity.UIElements.EditorResources.EditorTests")]
 [assembly: InternalsVisibleTo("Unity.UI.Builder.EditorTests")]
 [assembly: InternalsVisibleTo("Test.UILibraryVisibility")]
 [assembly: InternalsVisibleTo("Unity.UXMLReferenceGenerator.Bridge")]

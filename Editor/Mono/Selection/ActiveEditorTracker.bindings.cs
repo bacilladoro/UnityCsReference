@@ -77,7 +77,9 @@ namespace UnityEditor
 
         [FreeFunction(IsThreadSafe = true)]
         static extern void Internal_Dispose(ref IntPtr nativeHandle);
+#pragma warning disable UA5000 // The Avoid Finalizer Analyzer produces compile errors for any new finalizers. This pre-existing finalizer declaration has been suppressed, but should be rewritten if possible.
         ~ActiveEditorTracker() { Internal_Dispose(ref m_Property.m_IntPtr); }
+#pragma warning restore UA5000
 
         [FreeFunction]
         static extern void Internal_Destroy(ref IntPtr nativeHandle);

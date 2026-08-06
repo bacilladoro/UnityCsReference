@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Bindings;
 using UnityEngine.Scripting;
 
@@ -12,7 +13,7 @@ namespace UnityEngine.UnityConsent
     /// Provides methods and events to manage and track the user's consent state.
     /// </summary>
     [NativeHeader("Modules/UnityConsent/EndUserConsent.h")]
-    public static class EndUserConsent
+    public static partial class EndUserConsent
     {
         /// <summary>
         /// Retrieves the current consent state of the user.
@@ -33,6 +34,7 @@ namespace UnityEngine.UnityConsent
         /// <summary>
         /// Occurs when the consent state of the user changes. The argument is the new consent state.
         /// </summary>
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<ConsentState> consentStateChanged;
 
         [RequiredByNativeCode]

@@ -4,7 +4,6 @@
 
 using UnityEngine.Scripting;
 
-
 namespace UnityEngine.AdaptivePerformance
 {
     /// <summary>
@@ -338,6 +337,7 @@ namespace UnityEngine.AdaptivePerformance
             CurrentLevel++;
             OnLevelIncrease();
             OnLevel();
+            m_Indexer?.NotifyScalerLevelChanged(this);
         }
 
         internal void DecreaseLevel()
@@ -350,6 +350,7 @@ namespace UnityEngine.AdaptivePerformance
             CurrentLevel--;
             OnLevelDecrease();
             OnLevel();
+            m_Indexer?.NotifyScalerLevelChanged(this);
         }
 
         internal void Activate()

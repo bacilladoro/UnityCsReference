@@ -19,6 +19,7 @@ using UnityEditor.ShortcutManagement;
 
 using JSONObject = System.Collections.IDictionary;
 using UnityEngine.Scripting;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -63,8 +64,9 @@ namespace UnityEditor
     }
 
     [UsedImplicitly, ExcludeFromPreset, ScriptedImporter(version: 1, ext: "mode")]
-    class ModeDescriptorImporter : ScriptedImporter
+    partial class ModeDescriptorImporter : ScriptedImporter
     {
+        [AutoStaticsCleanupOnCodeReload]
         internal static bool allowExplicitModeRefresh { get; set; }
         public override void OnImportAsset(AssetImportContext ctx)
         {
@@ -89,7 +91,7 @@ namespace UnityEditor
     }
 
     [ExcludeFromDocs]
-    public static class ModeService
+    public static partial class ModeService
     {
         private struct ModeEntry
         {
@@ -127,8 +129,11 @@ namespace UnityEditor
         public static int modeCount => modes.Length;
 
         public static string currentId => currentIndex == -1 || modes.Length == 0 ? k_DefaultModeId : modes[currentIndex].id;
+        [AutoStaticsCleanupOnCodeReload]
         public static int currentIndex { get; private set; }
+        [AutoStaticsCleanupOnCodeReload]
         private static ModeEntry[] modes { get; set; } = Array.Empty<ModeEntry>();
+        [AutoStaticsCleanupOnCodeReload]
         internal static bool hasSwitchableModes { get; private set; }
         private static bool initialModeChanged
         {
@@ -136,9 +141,11 @@ namespace UnityEditor
             set => SessionState.SetBool(nameof(initialModeChanged), value);
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<ModeChangedArgs> modeChanged;
 
-        static ModeService()
+        [OnCodeLoaded]
+        static void Initialize()
         {
             Log("Initialize");
 

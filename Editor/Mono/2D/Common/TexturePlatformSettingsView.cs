@@ -5,6 +5,7 @@
 using System;
 using UnityEngine;
 using UnityEditor.U2D.Interface;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.U2D.Common
 {
@@ -54,6 +55,7 @@ namespace UnityEditor.U2D.Common
             }
         }
 
+        [NoAutoStaticsCleanup] // Lazy GUIContent cache loaded by fixed name; safe to persist across reloads.
         private static Styles s_Styles;
 
         public string buildPlatformTitle { get; set; }

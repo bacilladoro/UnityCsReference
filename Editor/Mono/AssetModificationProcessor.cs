@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Scripting;
@@ -21,7 +22,7 @@ namespace UnityEditor
     {
     }
 
-    internal class AssetModificationProcessorInternal
+    internal partial class AssetModificationProcessorInternal
     {
         static bool CheckArgumentTypes(Type[] types, MethodInfo method)
         {
@@ -80,6 +81,7 @@ namespace UnityEditor
         }
 
 #pragma warning disable 0618
+        [AutoStaticsCleanupOnCodeReload]
         static System.Collections.Generic.IEnumerable<System.Type> assetModificationProcessors = null;
         static System.Collections.Generic.IEnumerable<System.Type> AssetModificationProcessors
         {
@@ -324,9 +326,13 @@ namespace UnityEditor
             }
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         static MethodInfo[] s_CanOpenForEditMethods;
+        [AutoStaticsCleanupOnCodeReload]
         static MethodInfo[] s_LegacyCanOpenForEditMethods;
+        [AutoStaticsCleanupOnCodeReload]
         static MethodInfo[] s_IsOpenForEditMethods;
+        [AutoStaticsCleanupOnCodeReload]
         static MethodInfo[] s_LegacyIsOpenForEditMethods;
 
         static void GetOpenForEditMethods(bool canOpenForEditVariant, out MethodInfo[] methods, out MethodInfo[] legacyMethods)
@@ -577,6 +583,7 @@ namespace UnityEditor
             }
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         static MethodInfo[] s_MakeEditableMethods;
 
         static MethodInfo[] GetMakeEditableMethods()

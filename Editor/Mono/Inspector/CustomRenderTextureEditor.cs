@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.IO;
 using AnimatedBool = UnityEditor.AnimatedValues.AnimBool;
 using UnityEngine.Experimental.Rendering;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -47,6 +48,7 @@ namespace UnityEditor
             public readonly GUIContent[] cubemapFaces = { EditorGUIUtility.TextContent("+X"), EditorGUIUtility.TextContent("-X"), EditorGUIUtility.TextContent("+Y"), EditorGUIUtility.TextContent("-Y"), EditorGUIUtility.TrTextContent("+Z"), EditorGUIUtility.TrTextContent("-Z") };
         }
 
+        [NoAutoStaticsCleanup] // GUIContent/int-array-only lazy Styles cache; contents survive code reload
         static Styles s_Styles = null;
         private static Styles styles { get { if (s_Styles == null) s_Styles = new Styles(); return s_Styles; } }
 

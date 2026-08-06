@@ -7,13 +7,14 @@ using UnityEditor.StyleSheets;
 using UnityEngine;
 using UnityEngine.Bindings;
 using UnityEngine.Internal;
+using Unity.Scripting.LifecycleManagement;
 
 // See Style Guide in wiki for more information on editor styles.
 
 namespace UnityEditor
 {
     // Common GUIStyles used for EditorGUI controls.
-    public sealed class EditorStyles
+    public sealed partial class EditorStyles
     {
         internal const int kInspectorPaddingLeft = 8 + 10;
         internal const int kInspectorPaddingRight = 4;
@@ -419,10 +420,12 @@ namespace UnityEditor
         private Vector2 m_MiniKnobSize = new Vector2(29, 29);
 
         // the editor styles currently in use
+        [AutoStaticsCleanupOnCodeReload]
         internal static EditorStyles s_Current;
 
         // the list of editor styles to use
-        private static EditorStyles[] s_CachedStyles = { null, null };
+        [AutoStaticsCleanupOnCodeReload]
+        private static EditorStyles[] s_CachedStyles = new EditorStyles[] { null, null };
 
         [ExcludeFromDocs]
         public static GUIStyle FromUSS(string ussStyleRuleName, string ussInPlaceStyleOverride = null)

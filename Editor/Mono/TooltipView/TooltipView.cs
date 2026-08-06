@@ -6,10 +6,11 @@ using UnityEngine;
 using UnityEngine.Scripting;
 using UnityEngine.UIElements;
 using UnityEditor.UIElements;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
-    class TooltipView : GUIView
+    partial class TooltipView : GUIView
     {
         internal const float MAX_WIDTH = 300.0f;
 
@@ -22,8 +23,10 @@ namespace UnityEditor
         private GUIView hostView;
 
         internal static TooltipView S_guiView { get => s_guiView; }
+        [AutoStaticsCleanupOnCodeReload]
         static TooltipView s_guiView;
 
+        [NoAutoStaticsCleanup] // auto-close timer sentinel (double, defaults to PositiveInfinity via CancelAutoClose); safe to persist across code reload
         private static double s_AutoCloseAfterTime;
 
         protected override void OnEnable()

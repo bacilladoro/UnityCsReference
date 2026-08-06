@@ -184,6 +184,39 @@ namespace UnityEditor.AssetImporters
         [NativeName("DependsOnArtifact")]
         private extern void DependsOnArtifactInternalPath(string path);
 
+        public void DependsOnArtifact(Object artifact)
+        {
+            // An unassigned reference is either a true null or a Unity "fake null" (EntityId.None).
+            if (ReferenceEquals(artifact, null))
+                return;
+
+            var entityId = artifact.GetEntityId();
+            if (entityId == EntityId.None)
+                return;
+
+            if (!AssetDatabase.TryGetGUIDAndLocalFileIdentifier(entityId, out string guidString, out long _)
+                || !GUID.TryParse(guidString, out GUID guid))
+            {
+                return;
+            }
+
+            DependsOnArtifact(guid);
+        }
+
+        public void DependsOnArtifact<T>(LazyLoadReference<T> artifact) where T : Object
+        {
+            if (!artifact.isSet)
+                return;
+
+            if (!AssetDatabase.TryGetGUIDAndLocalFileIdentifier(artifact.entityId, out string guidString, out long _)
+                || !GUID.TryParse(guidString, out GUID guid))
+            {
+                return;
+            }
+
+            DependsOnArtifact(guid);
+        }
+
         public void DependsOnCustomDependency(string dependency)
         {
             if (string.IsNullOrEmpty(dependency))

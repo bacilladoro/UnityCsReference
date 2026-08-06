@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.TextCore;
 using UnityEngine.TextCore.Text;
 
@@ -18,15 +19,23 @@ namespace UnityEngine
         const float sTimeBetweenCleanupRuns = 30.0f;
         const int sNewHandlesBetweenCleanupRuns = 500;
 
+        [AutoStaticsCleanupOnCodeReload]
         internal static Func<Object> GetEditorTextSettings;
+        [AutoStaticsCleanupOnCodeReload]
         internal static Func<int, FontAsset, bool, FontAsset> GetBlurryFontAssetMapping;
+        [AutoStaticsCleanupOnCodeReload]
         internal static Func<TextGeneratorType> GetEditorTextGeneratorType;
 
+        [AutoStaticsCleanupOnCodeReload]
         private static TextSettings s_EditorTextSettings;
 
+        [NoAutoStaticsCleanup] // entries may be isCachedOnNative; native holds a reference until Internal_DestroyTextGenerator runs via ClearUnusedTextHandles(), so a blind reload wipe orphans the native generator
         private static Dictionary<int, IMGUITextHandle> textHandles = new ();
+        [NoAutoStaticsCleanup] // same native ownership as textHandles; cleared explicitly by ClearUnusedTextHandles(), not by reload
         private static LinkedList<TextHandleTuple> textHandlesTuple = new ();
+        [NoAutoStaticsCleanup] // cleanup timestamp; if stale after reload the time-delta goes negative and cleanup runs immediately (handled explicitly)
         private static float lastCleanupTime;
+        [NoAutoStaticsCleanup] // handle counter since last cleanup run; worst case triggers one extra cleanup pass after reload
         private static int newHandlesSinceCleanup = 0;
 
         internal bool isCachedOnNative = false;

@@ -8,10 +8,15 @@ using UnityEngine.SubsystemsImplementation;
 
 namespace UnityEngine
 {
+    ///<summary>Information about a subsystem that can be queried before creating a subsystem instance.
+    ///
+    ///This subsystem descriptor base-class is deprecated. If you are creating a new subsystem type, derive from <see cref="SubsystemDescriptorWithProvider" /> instead.</summary>
     [Obsolete("Use SubsystemDescriptorWithProvider instead.", false)]
     public abstract class SubsystemDescriptor : ISubsystemDescriptor
     {
+        ///<summary>A unique string that identifies the subsystem that this Descriptor can create.</summary>
         public string id { get; set; }
+        ///<summary>The System.Type of the subsystem implementation associated with this descriptor.</summary>
         public Type subsystemImplementationType { get; set; }
 
         ISubsystem ISubsystemDescriptor.Create() => CreateImpl();
@@ -19,6 +24,7 @@ namespace UnityEngine
     }
 
 #pragma warning disable CS0618
+    ///<exclude />
     [Obsolete("Use SubsystemDescriptorWithProvider<> instead.", false)]
     public class SubsystemDescriptor<TSubsystem> : SubsystemDescriptor
         where TSubsystem : Subsystem
@@ -26,6 +32,8 @@ namespace UnityEngine
     {
         internal override ISubsystem CreateImpl() => this.Create();
 
+        ///<summary>Creates a <see cref="Subsystem" /> from this descriptor.</summary>
+        ///<returns>Instance of subsystem.</returns>
         public TSubsystem Create()
         {
             TSubsystem subsystem = SubsystemManager.FindDeprecatedSubsystemByDescriptor(this) as TSubsystem;

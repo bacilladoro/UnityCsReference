@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using UnityEngine;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Bindings;
 
 namespace UnityEditor
@@ -13,6 +14,7 @@ namespace UnityEditor
         public partial struct SplashScreenLogo
         {
             private const float k_MinLogoTime = 2.0f;
+            [NoAutoStaticsCleanup] // built-in Unity splash sprite loaded by fixed path; asset survives reload
             private static Sprite s_UnityLogo;
             [NativeName("logo")]
             private Sprite m_Logo;

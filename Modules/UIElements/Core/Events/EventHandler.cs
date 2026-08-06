@@ -346,7 +346,7 @@ namespace UnityEngine.UIElements
         /// <summary>
         /// Executes logic after the callbacks registered on each element in the BubbleUp phase have been executed,
         /// unless the event propagation is stopped by one of the callbacks.
-        /// <see cref="EventBase{T}.PreventDefault"/>.
+        /// <see cref="EventBase.PreventDefault"/>.
         /// </summary>
         /// <remarks>
         /// This method is designed to be overriden by subclasses. Use it to implement event handling without
@@ -434,7 +434,7 @@ namespace UnityEngine.UIElements
         /// <summary>
         /// Executes logic after the callbacks registered on the event target have been executed,
         /// unless the event has been marked to prevent its default behaviour.
-        /// <see cref="EventBase{T}.PreventDefault"/>.
+        /// <see cref="EventBase.PreventDefault"/>.
         /// </summary>
         /// <remarks>
         /// This method is designed to be overriden by subclasses. Use it to implement event handling without

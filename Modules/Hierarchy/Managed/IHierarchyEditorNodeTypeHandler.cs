@@ -22,7 +22,8 @@ namespace Unity.Hierarchy
         bool OnPasteAsChild(HierarchyView view, bool keepWorldPos);
         bool CanSetName(HierarchyView view, in HierarchyNode node);
         bool OnSetName(HierarchyView view, in HierarchyNode node, string name);
-        string GetDisplayName(HierarchyView view, in HierarchyNode node);
+        // Return null to use the raw node name as it exists in native (fast no-alloc path). Override to decorate or replace the default node name.
+        string GetDisplayNameOverride(HierarchyView view, in HierarchyNode node) => null;
         bool CanDuplicate(HierarchyView view);
         bool OnDuplicate(HierarchyView view);
         bool CanDelete(HierarchyView view);

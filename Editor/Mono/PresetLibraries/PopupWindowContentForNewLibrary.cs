@@ -5,6 +5,7 @@
 using System;
 using UnityEditorInternal;
 using UnityEngine;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -25,6 +26,7 @@ namespace UnityEditor
             public GUIContent[] fileLocations = new[] {EditorGUIUtility.TrTextContent("Preferences Folder"), EditorGUIUtility.TrTextContent("Project Folder")};
             public PresetFileLocation[] fileLocationOrder = new[] { PresetFileLocation.PreferencesFolder, PresetFileLocation.ProjectFolder }; // must match order of fileLocations above
         }
+        [NoAutoStaticsCleanup] // Lazy Styles/Texts cache of GUIContent (whitelisted, asset-backed); safe to persist across code reload
         static Texts s_Texts;
 
         public PopupWindowContentForNewLibrary(Func<string, PresetFileLocation, string> createLibraryCallback)

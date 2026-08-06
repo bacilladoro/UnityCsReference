@@ -175,10 +175,11 @@ namespace UnityEngine.Accessibility
         /// <see cref="IAccessibilityNotificationDispatcher.SendScreenChanged"/> (with a @@null@@ parameter).
         /// </para>
         /// <para>
-        /// **Note**: Only the accessibility hierarchy for the application's main window is supported. Content displayed
-        /// on additional windows, such as on secondary displays, is not exposed to screen readers.
-        /// </para>
-        /// <para>
+        /// **Notes**:
+        ///\\
+        ///- Only the accessibility hierarchy for the application's main window is supported. Content displayed on additional windows, such as on secondary displays, is not exposed to screen readers.
+        ///- In the Unity Editor, where screen readers are not supported, this property accepts assignments even while the screen reader is off so that you can inspect it in the Accessibility Hierarchy Viewer (**Window** &gt; **Accessibility** &gt; **Hierarchy Viewer**) during Play mode.
+        ///\\
         /// **Warning**: Assigning a hierarchy builds its native representation, and setting this property to @@null@@
         /// tears it down. This has a non-trivial cost on the following platforms:
         ///\\

@@ -32,5 +32,8 @@ namespace UnityEditor
         public string assetBundleManifestPath { get; set; }
         ///<summary>Additional <see cref="BuildOptions" />, like whether to run the built player.</summary>
         public BuildOptions options { get; set; }
+        ///<summary>The additional preprocessor defines to specify while compiling assemblies for the Player.</summary>
+        ///<remarks> Unity appends these defines to the **Scripting Define Symbols** from both the build profile and the Player settings.</remarks>
+        public string[] extraScriptingDefines { get; set; }
     }
 }

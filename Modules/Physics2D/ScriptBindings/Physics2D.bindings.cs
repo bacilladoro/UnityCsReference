@@ -10,6 +10,7 @@ using System.Runtime.InteropServices;
 using UnityEngine.Bindings;
 using UnityEngine.Internal;
 using UnityEngine.SceneManagement;
+using Unity.Scripting.LifecycleManagement;
 using RequiredByNativeCodeAttribute = UnityEngine.Scripting.RequiredByNativeCodeAttribute;
 using UsedByNativeCodeAttribute = UnityEngine.Scripting.UsedByNativeCodeAttribute;
 using PhysicsBuffer2D = UnityEngine.PhysicsScripting2D.PhysicsBuffer2D;
@@ -5072,6 +5073,8 @@ namespace UnityEngine
 
         #region Editor
 
+        // Editor drag-helper scratch list: cleared at the start of every SetEditorDragMovement call, so no stale entries meaningfully persist across a code reload.
+        [NoAutoStaticsCleanup]
         private static List<Rigidbody2D> m_LastDisabledRigidbody2D = new List<Rigidbody2D>();
         internal static void SetEditorDragMovement(bool dragging, GameObject[] objs)
         {
@@ -7278,6 +7281,8 @@ namespace UnityEngine
         ///- <see cref="minNormalAngle" /> = <c>0.0f</c>
         ///- <see cref="maxNormalAngle" /> = <see cref="ContactFilter2D.NormalAngleUpperLimit" />.</remarks>
         public static ContactFilter2D noFilter => _noFilter;
+        // Immutable default-filter template; a value-type struct with no managed references, safe to persist across a code reload.
+        [NoAutoStaticsCleanup]
         private static ContactFilter2D _noFilter = new()
         {
             useTriggers = true,
@@ -8512,6 +8517,7 @@ namespace UnityEngine
     ///
     ///You can attach multiple <see cref="Collider2D" /> to a <see cref="Rigidbody2D" /> to detect collisions and provide a collision response when you set <see cref="Rigidbody2D.bodyType" /> to <see cref="RigidbodyType2D.Dynamic" />.</remarks>
     [NativeHeader("Modules/Physics2D/Public/Rigidbody2D.h")]
+    [global::UnityEngine.NativeClass("Rigidbody2D", PersistentTypeId = 50)]
     [RequireComponent(typeof(Transform))]
     public sealed partial class Rigidbody2D : Component
     {
@@ -8794,7 +8800,7 @@ namespace UnityEngine
             }
 
             ///<summary>Controls the maximum number of iterations to perform when determining how a <see cref="Rigidbody2D" /> will slide.</summary>
-            ///<remarks>When a <see cref="Rigidbody2D.Slide" /> occurs, each contact that is detected is counted as an interation. An attempt will be made to change direction in a new iteration only if the number of iterations hasn't yet reached the maximum number of iterations allowed.</remarks>
+            ///<remarks>When a <see cref="Rigidbody2D.Slide" /> occurs, each contact that is detected is counted as an iteration. An attempt will be made to change direction in a new iteration only if the number of iterations hasn't yet reached the maximum number of iterations allowed.</remarks>
             ///<seealso cref="Rigidbody2D.Slide" />
             ///<seealso cref="Rigidbody2D.SlideResults" />
             [field: SerializeField] public int maxIterations { get; set; }
@@ -8980,9 +8986,9 @@ namespace UnityEngine
         ///The slide behavior will occur using multiple iterations until one of two conditions are met:
         ///
         ///- The maximum number of iterations controlled by <see cref="Rigidbody2D.SlideMovement.maxIterations" /> has been reached.
-        ///- The reamining distance has reached zero (as defined by the magnitude of the <c>velocity</c> (speed) over the <c>deltaTime</c> specified).
+        ///- The remaining distance has reached zero (as defined by the magnitude of the <c>velocity</c> (speed) over the <c>deltaTime</c> specified).
         ///
-        ///When the slide movement is complete as defined above, any gravity behaviour requested will be handled if the provided <see cref="Rigidbody2D.SlideMovement.gravity" /> vector has a megnitude greater than zero. In this case, the <see cref="Rigidbody2D" /> is moved by the <see cref="Rigidbody2D.SlideMovement.gravity" /> scaled by the <c>deltaTime</c> specified. If the gravity movement causes a contact to be found, the <see cref="Rigidbody2D" /> is moved to that position.
+        ///When the slide movement is complete as defined above, any gravity behaviour requested will be handled if the provided <see cref="Rigidbody2D.SlideMovement.gravity" /> vector has a magnitude greater than zero. In this case, the <see cref="Rigidbody2D" /> is moved by the <see cref="Rigidbody2D.SlideMovement.gravity" /> scaled by the <c>deltaTime</c> specified. If the gravity movement causes a contact to be found, the <see cref="Rigidbody2D" /> is moved to that position.
         ///
         ///After this initial gravity movement,  another slide iteration may occur in an attempt to use all the remaining gravity movement. This extra gravity slide iteration (slippage) will only occur if the following conditions are all met:
         ///
@@ -10347,6 +10353,7 @@ namespace UnityEngine
     ///These collider components work with Unity's <see cref="Physics2D" /> system. They can be used with layers to optimize collision management and interactions. They also facilitate efficient overlap and raycast operations, such as <see cref="Physics2D.OverlapCircle" /> and <see cref="Physics2D.Raycast" />, for precise object detection. Unity debugging tools can be used to help visualize and refine colliders behaviors.</remarks>
     [RequireComponent(typeof(Transform))]
     [NativeHeader("Modules/Physics2D/Public/Collider2D.h")]
+    [global::UnityEngine.NativeClass("Collider2D", PersistentTypeId = 53)]
     [RequiredByNativeCode(Optional = true)]
     public partial class Collider2D : Behaviour
     {
@@ -11480,6 +11487,7 @@ Flip = 4 };
     ///
     ///When modifing the <see cref="CustomCollider2D" /> during Play mode, all assigned <see cref="PhysicsShape2D" /> and associated <see cref="Vector2">vertices</see> will be lost when exiting Play mode. This acts like any other <see cref="Collider2D" />.</remarks>
     [NativeHeader("Modules/Physics2D/Public/CustomCollider2D.h")]
+    [NativeClass("CustomCollider2D", PersistentTypeId = 0x3542D1C2)]
     public sealed partial class CustomCollider2D : Collider2D
     {
         // Gets the number of custom shapes this collider will generate.
@@ -12206,6 +12214,7 @@ Flip = 4 };
     ///<summary>Collider for 2D physics representing an circle.</summary>
     ///<seealso cref="BoxCollider2D" />
     ///<seealso cref="PolygonCollider2D" />
+    [global::UnityEngine.NativeClass("CircleCollider2D", PersistentTypeId = 58)]
     [NativeHeader("Modules/Physics2D/Public/CircleCollider2D.h")]
     public sealed partial class CircleCollider2D : Collider2D
     {
@@ -12217,6 +12226,7 @@ Flip = 4 };
 
     ///<summary>A capsule-shaped primitive collider.</summary>
     ///<remarks>Capsules are boxes with a semi-circle at each end.</remarks>
+    [global::UnityEngine.NativeClass("CapsuleCollider2D", PersistentTypeId = 70)]
     [NativeHeader("Modules/Physics2D/Public/CapsuleCollider2D.h")]
     public sealed partial class CapsuleCollider2D : Collider2D
     {
@@ -12235,6 +12245,7 @@ Flip = 4 };
     ///<seealso cref="BoxCollider2D" />
     ///<seealso cref="CircleCollider2D" />
     ///<seealso cref="PolygonCollider2D" />
+    [global::UnityEngine.NativeClass("EdgeCollider2D", PersistentTypeId = 68)]
     [NativeHeader("Modules/Physics2D/Public/EdgeCollider2D.h")]
     public sealed partial class EdgeCollider2D : Collider2D
     {
@@ -12306,6 +12317,7 @@ Flip = 4 };
     ///<seealso cref="CircleCollider2D" />
     ///<seealso cref="PolygonCollider2D" />
     ///<seealso cref="EdgeCollider2D" />
+    [global::UnityEngine.NativeClass("BoxCollider2D", PersistentTypeId = 61)]
     [NativeHeader("Modules/Physics2D/Public/BoxCollider2D.h")]
     public sealed partial class BoxCollider2D : Collider2D
     {
@@ -12332,6 +12344,7 @@ Flip = 4 };
     ///<seealso cref="BoxCollider2D" />
     ///<seealso cref="CircleCollider2D" />
     ///<seealso cref="EdgeCollider2D" />
+    [global::UnityEngine.NativeClass("PolygonCollider2D", PersistentTypeId = 60)]
     [NativeHeader("Modules/Physics2D/Public/PolygonCollider2D.h")]
     public sealed partial class PolygonCollider2D : Collider2D
     {
@@ -12579,6 +12592,7 @@ Flip = 4 };
     ///
     ///**NOTE**: This <see cref="Collider2D" /> cannot be disabled/enabled with the <see cref="Behaviour.enabled" /> property. Any changes to that property will be ignored.</remarks>
     [RequireComponent(typeof(Rigidbody2D))]
+    [global::UnityEngine.NativeClass("CompositeCollider2D", PersistentTypeId = 66)]
     [NativeHeader("Modules/Physics2D/Public/CompositeCollider2D.h")]
     public sealed partial class CompositeCollider2D : Collider2D
     {
@@ -12765,6 +12779,7 @@ Manual = 1 }
     ///<summary>Parent class for joints to connect Rigidbody2D objects.</summary>
     ///<seealso cref="AnchoredJoint2D" />
     [NativeHeader("Modules/Physics2D/Joint2D.h")]
+    [global::UnityEngine.NativeClass("Joint2D", PersistentTypeId = 230)]
     [RequireComponent(typeof(Transform), typeof(Rigidbody2D))]
     public partial class Joint2D : Behaviour
     {
@@ -12882,6 +12897,7 @@ Manual = 1 }
     ///<seealso cref="SliderJoint2D" />
     ///<seealso cref="SpringJoint2D" />
     ///<seealso cref="WheelJoint2D" />
+    [global::UnityEngine.NativeClass("AnchoredJoint2D", PersistentTypeId = 229)]
     [NativeHeader("Modules/Physics2D/AnchoredJoint2D.h")]
     public partial class AnchoredJoint2D : Joint2D
     {
@@ -12909,6 +12925,7 @@ Manual = 1 }
     ///<seealso cref="DistanceJoint2D" />
     ///<seealso cref="HingeJoint2D" />
     ///<seealso cref="SliderJoint2D" />
+    [global::UnityEngine.NativeClass("SpringJoint2D", PersistentTypeId = 231)]
     [NativeHeader("Modules/Physics2D/SpringJoint2D.h")]
     public sealed class SpringJoint2D : AnchoredJoint2D
     {
@@ -12943,6 +12960,7 @@ Manual = 1 }
     ///<seealso cref="HingeJoint2D" />
     ///<seealso cref="SliderJoint2D" />
     ///<seealso cref="SpringJoint2D" />
+    [global::UnityEngine.NativeClass("DistanceJoint2D", PersistentTypeId = 232)]
     [NativeHeader("Modules/Physics2D/DistanceJoint2D.h")]
     public sealed class DistanceJoint2D : AnchoredJoint2D
     {
@@ -12973,6 +12991,7 @@ Manual = 1 }
     ///You can control both the maximum force using <see cref="maxForce" /> and maximum torque using <see cref="maxTorque" />.  Because you can use very high force or torque limits, you can essentially reduce an objects movement to almost zero.
     ///
     ///A typical usage for this joint might be to simulate top-down surface friction or to simulate stiff rotation of an object.</remarks>
+    [global::UnityEngine.NativeClass("FrictionJoint2D", PersistentTypeId = 256)]
     [NativeHeader("Modules/Physics2D/FrictionJoint2D.h")]
     public sealed class FrictionJoint2D : AnchoredJoint2D
     {
@@ -12995,6 +13014,7 @@ Manual = 1 }
     ///<seealso cref="SliderJoint2D" />
     ///<seealso cref="SpringJoint2D" />
     ///<seealso cref="JointAngleLimits2D" />
+    [global::UnityEngine.NativeClass("HingeJoint2D", PersistentTypeId = 233)]
     [NativeHeader("Modules/Physics2D/HingeJoint2D.h")]
     public sealed class HingeJoint2D : AnchoredJoint2D
     {
@@ -13063,6 +13083,7 @@ Manual = 1 }
     ///<seealso cref="angularOffset" />
     ///<seealso cref="maxForce" />
     ///<seealso cref="maxTorque" />
+    [global::UnityEngine.NativeClass("RelativeJoint2D", PersistentTypeId = 254)]
     [NativeHeader("Modules/Physics2D/RelativeJoint2D.h")]
     public sealed class RelativeJoint2D : Joint2D
     {
@@ -13108,13 +13129,14 @@ Manual = 1 }
         extern public Vector2 target { get; }
     }
 
-    // The SliderJoint2D constrains the two connected rigid-bodies to have on degree of freedom: translation along a fixed axis.  Relative motion is prevented.
+    // The SliderJoint2D constrains the two connected rigid-bodies to have one degree of freedom: translation along a fixed axis.  Relative motion is prevented.
     ///<summary>Joint that restricts the motion of a <see cref="Rigidbody2D" /> object to a single line.</summary>
     ///<seealso cref="Rigidbody2D" />
     ///<seealso cref="DistanceJoint2D" />
     ///<seealso cref="HingeJoint2D" />
     ///<seealso cref="SpringJoint2D" />
     ///<seealso cref="JointTranslationLimits2D" />
+    [global::UnityEngine.NativeClass("SliderJoint2D", PersistentTypeId = 234)]
     [NativeHeader("Modules/Physics2D/SliderJoint2D.h")]
     public sealed class SliderJoint2D : AnchoredJoint2D
     {
@@ -13185,6 +13207,7 @@ Manual = 1 }
     ///The joint moves the body using a configurable spring that has a force limit.
     ///
     ///An example usage for this joint might be to enable <see cref="Collider2D" /> to be dragged, selecting an anchor point and moving the body to the position under the mouse.</remarks>
+    [global::UnityEngine.NativeClass("TargetJoint2D", PersistentTypeId = 257)]
     [NativeHeader("Modules/Physics2D/TargetJoint2D.h")]
     public sealed class TargetJoint2D : Joint2D
     {
@@ -13222,6 +13245,7 @@ Manual = 1 }
 
     // The FixedJoint2D welds two rigid-bodies together.
     ///<summary>Connects two <see cref="Rigidbody2D" /> together at their anchor points using a configurable spring.</summary>
+    [global::UnityEngine.NativeClass("FixedJoint2D", PersistentTypeId = 255)]
     [NativeHeader("Modules/Physics2D/FixedJoint2D.h")]
     public sealed class FixedJoint2D : AnchoredJoint2D
     {
@@ -13245,6 +13269,7 @@ Manual = 1 }
     // The WheelJoint2D constrains the two connected rigid-bodies along a local suspension axis and provides a spring to act as suspension with an optional motor to drive rotation.
     ///<summary>The wheel joint allows the simulation of wheels by providing a constraining suspension motion with an optional motor.</summary>
     ///<seealso cref="JointSuspension2D" />
+    [global::UnityEngine.NativeClass("WheelJoint2D", PersistentTypeId = 235)]
     [NativeHeader("Modules/Physics2D/WheelJoint2D.h")]
     public sealed class WheelJoint2D : AnchoredJoint2D
     {
@@ -13291,6 +13316,7 @@ Manual = 1 }
 
     // Base type for all 2D effectors.
     ///<summary>A base class for all 2D effectors.</summary>
+    [global::UnityEngine.NativeClass("Effector2D", PersistentTypeId = 248)]
     [NativeHeader("Modules/Physics2D/Effector2D.h")]
     public partial class Effector2D : Behaviour
     {
@@ -13316,6 +13342,7 @@ Manual = 1 }
     ///<remarks>When the source <see cref="Collider2D" /> is a trigger, the effector will apply forces whenever the target <see cref="Collider2D" /> overlaps the source.  When the source <see cref="Collider2D" /> isn't a trigger, the effector will apply forces whenever the target <see cref="Collider2D" /> is in contact with the source only.
     ///
     ///This effector is designed primarily to work with source <see cref="Collider2D" /> that are set as triggers so that target <see cref="Collider2D" /> can overlap the defined area.</remarks>
+    [global::UnityEngine.NativeClass("AreaEffector2D", PersistentTypeId = 249)]
     [NativeHeader("Modules/Physics2D/AreaEffector2D.h")]
     public partial class AreaEffector2D : Effector2D
     {
@@ -13353,6 +13380,7 @@ Manual = 1 }
     ///<remarks>When any <see cref="Collider2D" /> overlap the area defined by the effector, calculations are made to determine if they are below the <see cref="surfaceLevel" />.  If they are not, no forces are applied.  If they are then the effector will apply buoyancy forces in an attempt to move the <see cref="Collider2D" /> to the <see cref="surfaceLevel" /> i.e. they will float.
     ///
     ///This effector is designed primarily to work with <see cref="Collider2D" /> that are set as triggers so that <see cref="Collider2D" /> can overlap the defined area and have buoyancy forces applied to them.</remarks>
+    [global::UnityEngine.NativeClass("BuoyancyEffector2D", PersistentTypeId = 253)]
     [NativeHeader("Modules/Physics2D/BuoyancyEffector2D.h")]
     public partial class BuoyancyEffector2D : Effector2D
     {
@@ -13427,6 +13455,7 @@ Manual = 1 }
     ///<remarks>When the source <see cref="Collider2D" /> is a trigger, the effector will apply forces whenever the target <see cref="Collider2D" /> overlaps the source.  When the source <see cref="Collider2D" /> isn't a trigger, the effector will apply forces whenever the target <see cref="Collider2D" /> is in contact with the source only.
     ///
     ///This effector is designed primarily to work with source <see cref="Collider2D" /> that are set as triggers so that target <see cref="Collider2D" /> can overlap the defined area.</remarks>
+    [global::UnityEngine.NativeClass("PointEffector2D", PersistentTypeId = 250)]
     [NativeHeader("Modules/Physics2D/PointEffector2D.h")]
     public partial class PointEffector2D : Effector2D
     {
@@ -13466,6 +13495,7 @@ Manual = 1 }
 
     ///<summary>Applies "platform" behaviour such as one-way collisions etc.</summary>
     ///<remarks>When the source <see cref="Collider2D" /> is a trigger, the effector will apply forces whenever the target <see cref="Collider2D" /> overlaps the source.  When the source <see cref="Collider2D" /> isn't a trigger, the effector will apply forces whenever the target <see cref="Collider2D" /> is in contact with the source only.</remarks>
+    [global::UnityEngine.NativeClass("PlatformEffector2D", PersistentTypeId = 251)]
     [NativeHeader("Modules/Physics2D/PlatformEffector2D.h")]
     public partial class PlatformEffector2D : Effector2D
     {
@@ -13521,6 +13551,7 @@ Manual = 1 }
     ///<remarks>When the source <see cref="Collider2D" /> is a trigger, the effector will apply forces whenever the target <see cref="Collider2D" /> overlaps the source.  When the source <see cref="Collider2D" /> isn't a trigger, the effector will apply forces whenever the target <see cref="Collider2D" /> is in contact with the source only.
     ///
     ///This effector can be used to create constant speed elevators and moving surfaces.</remarks>
+    [global::UnityEngine.NativeClass("SurfaceEffector2D", PersistentTypeId = 252)]
     [NativeHeader("Modules/Physics2D/SurfaceEffector2D.h")]
     public partial class SurfaceEffector2D : Effector2D
     {
@@ -13556,6 +13587,7 @@ Manual = 1 }
 
     // A base type that provides constant physics behaviour support.
     ///<summary>A base type for 2D physics components that required a callback during FixedUpdate.</summary>
+    [global::UnityEngine.NativeClass("PhysicsUpdateBehaviour2D", PersistentTypeId = 246)]
     [NativeHeader("Modules/Physics2D/PhysicsUpdateBehaviour2D.h")]
     public partial class PhysicsUpdateBehaviour2D : Behaviour
     {
@@ -13566,6 +13598,7 @@ Manual = 1 }
     ///<remarks>This is equivalent of calling <see cref="Rigidbody2D.AddForce" />, <see cref="Rigidbody2D.AddRelativeForce" /> and <see cref="Rigidbody2D.AddTorque" /> each physics update.</remarks>
     ///<seealso cref="Rigidbody2D" />
     [NativeHeader("Modules/Physics2D/ConstantForce2D.h")]
+    [global::UnityEngine.NativeClass("ConstantForce2D", PersistentTypeId = 247)]
     [RequireComponent(typeof(Rigidbody2D))]
     public sealed partial class ConstantForce2D : PhysicsUpdateBehaviour2D
     {
@@ -13586,6 +13619,7 @@ Manual = 1 }
 
     ///<summary>Asset type that defines the surface properties of a <see cref="Collider2D" />.</summary>
     ///<remarks>When two <see cref="Collider2D" /> come into contact, the physics system uses both friction and bounciness if it needs to calculate a collision response.</remarks>
+    [global::UnityEngine.NativeClass("PhysicsMaterial2D", PersistentTypeId = 62)]
     [NativeHeader("Modules/Physics2D/Public/PhysicsMaterial2D.h")]
     public sealed partial class PhysicsMaterial2D : Object
     {

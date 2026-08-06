@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Internal;
 using UnityEngine.Bindings;
 
@@ -24,7 +25,7 @@ namespace UnityEngine
     [NativeConditional("ENABLE_ONSCREEN_KEYBOARD")]
     [NativeHeader("Runtime/Export/TouchScreenKeyboard/TouchScreenKeyboard.bindings.h")]
     [NativeHeader("Runtime/Input/KeyboardOnScreen.h")]
-    public class TouchScreenKeyboard
+    public partial class TouchScreenKeyboard
     {
         // The status of the on-screen keyboard
         public enum Status
@@ -75,10 +76,12 @@ namespace UnityEngine
         }
 
         //*undocumented*
+#pragma warning disable UA5000 // The Avoid Finalizer Analyzer produces compile errors for any new finalizers. This pre-existing finalizer declaration has been suppressed, but should be rewritten if possible.
         ~TouchScreenKeyboard()
         {
             Destroy();
         }
+#pragma warning restore UA5000
 
         //*undocumented*
         public TouchScreenKeyboard(string text, TouchScreenKeyboardType keyboardType, bool autocorrection, bool multiline, bool secure, bool alert, string textPlaceholder, int characterLimit)
@@ -131,6 +134,7 @@ namespace UnityEngine
         // Controls whether in-place text editing is allowed. On Android, a connected physical keyboard (e.g. a
         // game controller detected as a keyboard) can suppress the touch screen keyboard even when one is needed.
         // Use AlwaysDisallowed to force the touch screen keyboard to show regardless of connected peripherals.
+        [AutoStaticsCleanupOnCodeReload]
         public static InPlaceEditingBehavior inPlaceEditingBehavior { get; set; } = InPlaceEditingBehavior.Auto;
 
         public static bool isInPlaceEditingAllowed

@@ -614,7 +614,7 @@ namespace UnityEngine.UIElements
 
             notify = false;
             notify |= SetInlineValue(ref m_BackgroundImage, element.style.backgroundImage);
-            notify |= SetComputedValue(ref m_BackgroundImage, element.computedStyle.backgroundImage);
+            notify |= SetComputedValue(ref m_BackgroundImage, Background.From(element.computedStyle.backgroundImage));
             notify |= ApplyContext(ref m_BackgroundImage, in context);
             if (notify)
                 Notify(nameof(backgroundImage));

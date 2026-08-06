@@ -5,6 +5,7 @@
 using System;
 using Unity.Profiling;
 using Unity.Profiling.Editor;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.U2D.Profiling
 {
@@ -12,6 +13,8 @@ namespace UnityEditor.U2D.Profiling
     [ProfilerModuleMetadata("2D Tilemap", IconPath = "U2DEditor/TilemapProfiler/Icon/Tilemap@16.png")]
     class TilemapProfilerModule :ProfilerModule
     {
+        // Immutable profiler counter descriptors built once from constant marker names; no user-type references, safe to persist across a code reload.
+        [NoAutoStaticsCleanup]
         static readonly ProfilerCounterDescriptor[] k_Counters = new ProfilerCounterDescriptor[]
         {
             new ProfilerCounterDescriptor(TilemapProfilerMarkers.k_TilemapCounterName, ProfilerCategory.U2D),

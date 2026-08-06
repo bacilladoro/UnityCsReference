@@ -9,6 +9,8 @@ using UnityEngine.Playables;
 
 namespace UnityEngine.Animations
 {
+    ///<summary>A <see cref="IPlayableOutput" /> implementation that connects the <see cref="PlayableGraph" /> to an <see cref="Animator" /> in the Scene.</summary>
+    ///<remarks>**NOTE:** You can use <see cref="PlayableOutputExtensions" /> methods on AnimationPlayableOutput objects.</remarks>
     [NativeHeader("Modules/Animation/ScriptBindings/AnimationPlayableOutput.bindings.h")]
     [NativeHeader("Modules/Animation/Director/AnimationPlayableOutput.h")]
     [NativeHeader("Modules/Animation/Animator.h")]
@@ -20,6 +22,12 @@ namespace UnityEngine.Animations
     {
         private PlayableOutputHandle m_Handle;
 
+        ///<summary>Creates an <see cref="AnimationPlayableOutput" /> in the <see cref="PlayableGraph" />.</summary>
+        ///<remarks>The <see cref="Animator" /> plays the source <see cref="Playable" /> of the <see cref="AnimationPlayableOutput" />. This source Playable can be set with SetSourcePlayable.</remarks>
+        ///<param name="graph">The <see cref="PlayableGraph" /> that will contain the <see cref="AnimationPlayableOutput" />.</param>
+        ///<param name="name">The name of the output.</param>
+        ///<param name="target">The <see cref="Animator" /> that will process the <see cref="PlayableGraph" />.</param>
+        ///<returns>A new <see cref="AnimationPlayableOutput" /> attached to the <see cref="PlayableGraph" />.</returns>
         public static AnimationPlayableOutput Create(PlayableGraph graph, string name, Animator target)
         {
             PlayableOutputHandle handle;
@@ -43,31 +51,39 @@ namespace UnityEngine.Animations
             m_Handle = handle;
         }
 
+        ///<exclude />
         public static AnimationPlayableOutput Null
         {
             get { return new AnimationPlayableOutput(PlayableOutputHandle.Null); }
         }
 
+        ///<exclude />
         public PlayableOutputHandle GetHandle()
         {
             return m_Handle;
         }
 
+        ///<exclude />
         public static implicit operator PlayableOutput(AnimationPlayableOutput output)
         {
             return new PlayableOutput(output.GetHandle());
         }
 
+        ///<exclude />
         public static explicit operator AnimationPlayableOutput(PlayableOutput output)
         {
             return new AnimationPlayableOutput(output.GetHandle());
         }
 
+        ///<summary>Returns the <see cref="Animator" /> that plays the animation graph.</summary>
+        ///<returns>The targeted <see cref="Animator" />.</returns>
         public Animator GetTarget()
         {
             return InternalGetTarget(ref m_Handle);
         }
 
+        ///<summary>Sets the <see cref="Animator" /> that plays the animation graph.</summary>
+        ///<param name="value">The targeted <see cref="Animator" />.</param>
         public void SetTarget(Animator value)
         {
             InternalSetTarget(ref m_Handle, value);

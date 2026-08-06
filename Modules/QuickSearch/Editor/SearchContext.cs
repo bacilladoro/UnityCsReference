@@ -483,10 +483,12 @@ namespace UnityEditor.Search
         /// <summary>
         /// Search context finalizer.
         /// </summary>
+#pragma warning disable UA5000 // The Avoid Finalizer Analyzer produces compile errors for any new finalizers. This pre-existing finalizer declaration has been suppressed, but should be rewritten if possible.
         ~SearchContext()
         {
             Dispose(false);
         }
+#pragma warning restore UA5000
 
         /// <summary>
         /// Enable or disable a single provider.

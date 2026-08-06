@@ -15,7 +15,7 @@ using System.Collections.Generic;
 namespace UnityEngine
 {
     [RequiredByNativeCode]
-    [NativeClass("Unity::Component")]
+    [NativeClass("Unity::Component", PersistentTypeId = 2)]
     [NativeHeader("Runtime/Export/Scripting/Component.bindings.h")]
     public partial class Component : UnityEngine.Object
     {

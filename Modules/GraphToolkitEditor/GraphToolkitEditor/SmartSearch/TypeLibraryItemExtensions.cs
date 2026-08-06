@@ -53,6 +53,7 @@ namespace Unity.GraphToolkit.Editor
                     items.Add(classItem);
                 }
             }
+            items.Sort((a, b) => string.Compare(a.Name, b.Name, StringComparison.Ordinal));
             return new ItemLibraryDatabase(items);
         }
     }

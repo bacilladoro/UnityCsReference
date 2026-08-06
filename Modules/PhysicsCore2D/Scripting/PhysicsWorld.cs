@@ -802,6 +802,19 @@ namespace Unity.U2D.Physics
         public readonly NativeArray<PhysicsJoint> GetJoints(Allocator allocator = Unity.Collections.Allocator.Temp) => PhysicsWorld_GetJoints(this, allocator).ToNativeArray<PhysicsJoint>();
 
         /// <summary>
+        /// Get the <see cref="UnityEngine.Transform"/> that owns each <see cref="PhysicsBody"/>, <see cref="PhysicsShape"/> and <see cref="PhysicsJoint"/> in this world.
+        /// Only owners that are a <see cref="UnityEngine.Component"/> contribute a Transform, and each Transform is included only once.
+        /// This must be called from the main thread.
+        /// </summary>
+        /// <returns>The owned transform results as a <see cref="UnityEngine.Jobs.TransformAccessArray"/>. This must be disposed of after use otherwise leaks will occur.</returns>
+        public readonly unsafe TransformAccessArray GetOwnedTransforms()
+        {
+            var transforms = new TransformAccessArray(0);
+            PhysicsWorld_GetOwnedTransforms(this, new IntPtr(&transforms));
+            return transforms;
+        }
+
+        /// <summary>
         /// Create a PhysicsWorld using the <see cref="PhysicsWorldDefinition.defaultDefinition"/>.
         /// </summary>
         /// <returns>The created world.</returns>
@@ -880,7 +893,7 @@ namespace Unity.U2D.Physics
         /// </summary>
         /// <remarks>
         /// A snapshot restores the full simulation configuration, so these <see cref="PhysicsWorldDefinition"/> properties are taken from <paramref name="snapshot"/> and their values in <paramref name="definition"/> are ignored:
-        /// <see cref="PhysicsWorldDefinition.gravity"/>, <see cref="PhysicsWorldDefinition.bounceThreshold"/>, <see cref="PhysicsWorldDefinition.contactHitEventThreshold"/>, <see cref="PhysicsWorldDefinition.contactFrequency"/>, <see cref="PhysicsWorldDefinition.contactDamping"/>, <see cref="PhysicsWorldDefinition.contactSpeed"/>, <see cref="PhysicsWorldDefinition.contactRecycleDistance"/>, <see cref="PhysicsWorldDefinition.maximumLinearSpeed"/>, <see cref="PhysicsWorldDefinition.sleepingAllowed"/>, <see cref="PhysicsWorldDefinition.continuousAllowed"/> and <see cref="PhysicsWorldDefinition.capacity"/>.
+        /// <see cref="PhysicsWorldDefinition.gravity"/>, <see cref="PhysicsWorldDefinition.bounceThreshold"/>, <see cref="PhysicsWorldDefinition.contactHitEventThreshold"/>, <see cref="PhysicsWorldDefinition.contactFrequency"/>, <see cref="PhysicsWorldDefinition.contactDamping"/>, <see cref="PhysicsWorldDefinition.contactSpeed"/>, <see cref="PhysicsWorldDefinition.contactRecycleDistance"/>, <see cref="PhysicsWorldDefinition.maximumLinearSpeed"/>, <see cref="PhysicsWorldDefinition.sleepingAllowed"/>, <see cref="PhysicsWorldDefinition.continuousAllowed"/>, <see cref="PhysicsWorldDefinition.eventGroupingAllowed"/> and <see cref="PhysicsWorldDefinition.capacity"/>.
         /// All other <paramref name="definition"/> properties are applied normally, for example <see cref="PhysicsWorldDefinition.simulationWorkers"/> and <see cref="PhysicsWorldDefinition.simulationSubSteps"/>.
         /// To use a value other than the snapshot's, set the matching property on the returned world after this call.
         /// </remarks>
@@ -927,6 +940,43 @@ namespace Unity.U2D.Physics
         /// You should try to only use the specific properties you need rather than using this feature.
         /// </summary>
         public PhysicsWorldDefinition definition { get => PhysicsWorld_ReadDefinition(this); set => PhysicsWorld_WriteDefinition(this, value, false); }
+
+        /// <summary>
+        /// An abstract group identity that can be shared by a set of physics objects.
+        /// Each group is globally unique across all worlds.
+        /// </summary>
+        /// <remarks>
+        /// Create a group with <see cref="CreateGroup"/> and assign it with <see cref="PhysicsShape.physicsGroup"/>.
+        /// A default group has a <see cref="groupIndex"/> of zero, meaning no group.
+        /// </remarks>
+        [StructLayout(LayoutKind.Sequential)]
+        public readonly struct PhysicsGroup
+        {
+            /// <summary>
+            /// The group index.
+            /// The value is unique per group; a value of zero means no group.
+            /// </summary>
+            public UInt64 groupIndex => m_GroupIndex;
+
+            /// <undoc/>
+            public override string ToString() => $"GroupIndex={m_GroupIndex}";
+
+            #region Internal
+
+            private readonly UInt64 m_GroupIndex;
+
+            #endregion
+        }
+
+        /// <summary>
+        /// Create a new globally unique group.
+        /// Groups are created from a rolling index, so the first group created has a group index of one and a group index of zero always means no group.
+        /// </summary>
+        /// <remarks>
+        /// See <see cref="PhysicsGroup"/> and <see cref="PhysicsShape.physicsGroup"/>.
+        /// </remarks>
+        /// <returns>The new group.</returns>
+        public static PhysicsGroup CreateGroup() => PhysicsWorld_CreateGroup();
 
         /// <summary>
         /// Create an owner key.
@@ -1050,6 +1100,16 @@ namespace Unity.U2D.Physics
         /// The performance gain from disabling continuous collision is minor.
         /// </summary>
         public readonly bool continuousAllowed { get => PhysicsWorld_GetContinuousAllowed(this); set => PhysicsWorld_SetContinuousAllowed(this, value); }
+
+        /// <summary>
+        /// Controls if contact and trigger begin/end events for shapes assigned a group are marked as being the first or last event between the two groups involved.
+        /// This allows the many events produced between two groups of shapes to be reduced to a single begin and end, such as when treating multiple shapes as a single object.
+        /// The marking is only calculated for shapes assigned a group and only when a begin or end event is produced, so the cost of leaving this enabled is minor.
+        /// </summary>
+        /// <remarks>
+        /// See <see cref="PhysicsShape.physicsGroup"/> and <see cref="CreateGroup"/>.
+        /// </remarks>
+        public readonly bool eventGroupingAllowed { get => PhysicsWorld_GetEventGroupingAllowed(this); set => PhysicsWorld_SetEventGroupingAllowed(this, value); }
 
         /// <summary>
         /// Controls if contact filter callbacks will be called.
@@ -1443,7 +1503,6 @@ namespace Unity.U2D.Physics
 
         /// <summary>
         /// Send all current <see cref="PhysicsWorld.contactBeginEvents"/> and <see cref="PhysicsWorld.contactEndEvents"/> where either of the <see cref="PhysicsShape"/> involved are valid (see <see cref="PhysicsShape.isValid"/>) and have a callback target assigned (see <see cref="PhysicsShape.callbackTarget"/>).
-        /// These events will only be created if both of the shape pairs has <see cref="PhysicsShape.contactEvents"/> set to true.
         /// Only callback targets that implement <see cref="PhysicsCallbacks.IContactCallback"/> will be called.
         /// This is called automatically every simulation step.
         /// This must be called on the main thread.

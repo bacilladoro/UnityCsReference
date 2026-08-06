@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor.AssetImporters;
 using UnityEditor.Search;
 using UnityEngine;
@@ -74,14 +75,14 @@ namespace UnityEditor.Presets
     }
 #pragma warning restore 618
 
-    public class PresetSelector : EditorWindow
+    public partial class PresetSelector : EditorWindow
     {
         static class Style
         {
-            public static GUIStyle bottomBarBg = "ProjectBrowserBottomBarBg";
-            public static GUIStyle toolbarBack = "ObjectPickerToolbar";
-            public static GUIContent presetIcon = EditorGUIUtility.IconContent("Preset.Context");
-            public static GUIStyle selectedPathLabel = "Label";
+            public static readonly GUIStyle bottomBarBg = "ProjectBrowserBottomBarBg";
+            public static readonly GUIStyle toolbarBack = "ObjectPickerToolbar";
+            public static readonly GUIContent presetIcon = EditorGUIUtility.IconContent("Preset.Context");
+            public static readonly GUIStyle selectedPathLabel = "Label";
         }
 
         // Filter
@@ -105,6 +106,7 @@ namespace UnityEditor.Presets
         Object m_MainTarget;
 
         // get an existing ObjectSelector or create one
+        [AutoStaticsCleanupOnCodeReload]
         static PresetSelector s_SharedPresetSelector = null;
 #pragma warning disable 618
         PresetSelectorReceiver m_EventObject;

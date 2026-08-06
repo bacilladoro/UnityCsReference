@@ -10,6 +10,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor.Experimental;
 using UnityEditor.SceneManagement;
 using UnityEditor.StyleSheets;
@@ -71,6 +72,7 @@ namespace UnityEditor
             }
         }
 
+        [NoAutoStaticsCleanup] // registered with RegisterResourceForCleanupOnDomainReload — cleaned up by engine on domain reload, not UAL
         internal static Material s_GUITextureBlit2SRGBMaterial;
         internal static Material GUITextureBlit2SRGBMaterial
         {
@@ -88,6 +90,7 @@ namespace UnityEditor
             }
         }
 
+        [NoAutoStaticsCleanup] // registered with RegisterResourceForCleanupOnDomainReload — cleaned up by engine on domain reload, not UAL
         internal static Material s_GUITextureBlitSceneGUI;
         internal static Material GUITextureBlitSceneGUIMaterial
         {
@@ -104,24 +107,39 @@ namespace UnityEditor
             }
         }
 
+        [NoAutoStaticsCleanup] // per-draw-pass font state; -1 default (unset) is correct after reload
         internal static int s_FontIsBold = -1;
+        [NoAutoStaticsCleanup] // transient last-seen control ID; 0 default is correct after reload
         internal static int s_LastControlID = 0;
+        [NoAutoStaticsCleanup] // per-layout label width override; 0 means use default
         private static float s_LabelWidth = 0f;
 
+        [NoAutoStaticsCleanup] // lazy-loaded icon; null after reload is fine, re-loaded on next access
         private static ScalableGUIContent s_InfoIcon;
+        [NoAutoStaticsCleanup] // lazy-loaded icon; null after reload is fine, re-loaded on next access
         private static ScalableGUIContent s_WarningIcon;
+        [NoAutoStaticsCleanup] // lazy-loaded icon; null after reload is fine, re-loaded on next access
         private static ScalableGUIContent s_ErrorIcon;
 
+        [NoAutoStaticsCleanup] // lazy-loaded icon; null after reload is fine, re-loaded on next access
         private static ScalableGUIContent s_InfoSmallIcon;
+        [NoAutoStaticsCleanup] // lazy-loaded icon; null after reload is fine, re-loaded on next access
         private static ScalableGUIContent s_WarningSmallIcon;
+        [NoAutoStaticsCleanup] // lazy-loaded icon; null after reload is fine, re-loaded on next access
         private static ScalableGUIContent s_ErrorSmallIcon;
 
+        [NoAutoStaticsCleanup] // lazy-loaded GUIStyle; null after reload is fine, re-loaded on next access
         private static GUIStyle s_WhiteTextureStyle;
+        [NoAutoStaticsCleanup] // lazy-loaded GUIStyle; null after reload is fine, re-loaded on next access
         private static GUIStyle s_BasicTextureStyle;
 
+        [NoAutoStaticsCleanup] // GUIContent cache; re-populated on demand after reload
         static Hashtable s_TextGUIContents = new Hashtable();
+        [NoAutoStaticsCleanup] // GUIContent cache; re-populated on demand after reload
         static Hashtable s_GUIContents = new Hashtable();
+        [NoAutoStaticsCleanup] // GUIContent icon cache; re-populated on demand after reload
         static Hashtable s_IconGUIContents = new Hashtable();
+        [NoAutoStaticsCleanup] // skinned icon cache; re-populated on demand after reload
         static Hashtable s_SkinnedIcons = new Hashtable();
 
         private static readonly GUIContent s_ObjectContent = new GUIContent();
@@ -129,23 +147,27 @@ namespace UnityEditor
         private static readonly GUIContent s_Image = new GUIContent();
         private static readonly GUIContent s_TextImage = new GUIContent();
 
-        private static GUIContent s_SceneMismatch = TrTextContent("Scene mismatch (cross scene references not supported)");
-        private static GUIContent s_TypeMismatch = TrTextContent("Type mismatch");
+        private static readonly GUIContent s_SceneMismatch = TrTextContent("Scene mismatch (cross scene references not supported)");
+        private static readonly GUIContent s_TypeMismatch = TrTextContent("Type mismatch");
 
+        [NoAutoStaticsCleanup] // theme-defined style value; SVC is self-managing and safe to keep
         internal static readonly SVC<Color> kViewBackgroundColor = new SVC<Color>("view", StyleCatalogKeyword.backgroundColor, GetDefaultBackgroundColor);
 
         /// The current UI scaling factor for high-DPI displays. For instance, 2.0 on a retina display
 
         public new static float pixelsPerPoint => GUIUtility.pixelsPerPoint;
 
-        static EditorGUIUtility()
+        [OnCodeLoaded]
+        static void Initialize()
         {
             GUISkin.m_SkinChanged += SkinChanged;
             s_HasCurrentWindowKeyFocusFunc = HasCurrentWindowKeyFocus;
         }
 
         // this method gets called on right clicking a property regardless of GUI.enable value.
+        [AutoStaticsCleanupOnCodeReload]
         internal static event Action<GenericMenu, SerializedProperty> contextualPropertyMenu;
+        [AutoStaticsCleanupOnCodeReload]
         internal static event Action<Rect, SerializedProperty> beginProperty;
 
         internal static void BeginPropertyCallback(Rect totalRect, SerializedProperty property)
@@ -329,6 +351,7 @@ namespace UnityEditor
         }
 
         private delegate bool HeaderItemDelegate(Rect rectangle, UnityObject[] targets);
+        [AutoStaticsCleanupOnCodeReload]
         private static List<HeaderItemDelegate> s_EditorHeaderItemsMethods = null;
         internal static Rect DrawEditorHeaderItems(Rect rectangle, UnityObject[] targetObjs, float spacing = 0)
         {
@@ -532,7 +555,6 @@ namespace UnityEditor
         }
 
         // Get texture from managed type
-        [VisibleToOtherModules("UnityEditor.ShaderFoundryModule")]
         internal static Texture2D FindTexture(Type type)
         {
             return FindTextureByType(type);
@@ -707,6 +729,7 @@ namespace UnityEditor
         public static float singleLineHeight => EditorGUI.kSingleLineHeight;
         public static float standardVerticalSpacing => EditorGUI.kControlVerticalSpacing;
 
+        [NoAutoStaticsCleanup] // per-draw-pass slider label state; re-initialized before each use
         internal static SliderLabels sliderLabels = new SliderLabels();
 
         internal static GUIContent TextContent(string textAndTooltip)
@@ -813,6 +836,7 @@ namespace UnityEditor
             return LoadIconForSkin(name, skinIndex);
         }
 
+        [NoAutoStaticsCleanup] // constant list; content is fixed and never changes
         static readonly List<string> k_UserSideSupportedImageExtensions = new List<string> {".png"};
 
         // Attempts to load a higher resolution icon if needed
@@ -873,21 +897,35 @@ namespace UnityEditor
             return tex;
         }
 
-        internal static Texture2D LoadIconForSkin(string name, int in_SkinIndex)
+        [Unity.Scripting.LifecycleManagement.AutoStaticsCleanupOnCodeReload]
+        private static readonly Dictionary<(string, int), string> s_IconNamePerSkinCache = new(32);
+
+        internal static string GetIconNameForSkin(string name, int in_SkinIndex)
         {
-            if (String.IsNullOrEmpty(name))
-                return null;
+            var key = (name, in_SkinIndex);
+            if (s_IconNamePerSkinCache.TryGetValue(key, out var cachedName))
+                return cachedName;
 
             if (in_SkinIndex == 0)
-                return LoadGeneratedIconOrNormalIcon(name);
+            {
+                s_IconNamePerSkinCache.Add(key, name);
+                return name;
+            }
 
-            //Remap file name for dark skin
             var newName = "d_" + Path.GetFileName(name);
             var dirName = Path.GetDirectoryName(name);
             if (!string.IsNullOrEmpty(dirName))
                 newName = $"{dirName}/{newName}";
+            s_IconNamePerSkinCache.Add(key, newName);
+            return newName;
+        }
 
-            Texture2D tex = LoadGeneratedIconOrNormalIcon(newName);
+        internal static Texture2D LoadIconForSkin(string name, int in_SkinIndex)
+        {
+            if (string.IsNullOrEmpty(name))
+                return null;
+
+            var tex = LoadGeneratedIconOrNormalIcon(GetIconNameForSkin(name, in_SkinIndex));
             if (!tex)
                 tex = LoadGeneratedIconOrNormalIcon(name);
             return tex;
@@ -896,7 +934,7 @@ namespace UnityEditor
         // Cache for icon paths from IconAttribute - avoids repeated reflection
         // Key is (Type, inherit) to handle both inherit=true and inherit=false cases correctly
         [Unity.Scripting.LifecycleManagement.AutoStaticsCleanupOnCodeReload]
-        private static readonly Dictionary<(Type, bool), string> s_IconPathCache = new Dictionary<(Type, bool), string>();
+        private static Dictionary<(Type, bool), string> s_IconPathCache = new Dictionary<(Type, bool), string>();
 
         [UsedByNativeCode]
         [VisibleToOtherModules("UnityEditor.UIToolkitAuthoringModule")]
@@ -1011,7 +1049,11 @@ namespace UnityEditor
             if (obj)
             {
                 s_ObjectContent.text = GetObjectNameWithInfo(obj);
-                s_ObjectContent.image = AssetPreview.GetMiniThumbnail(obj);
+                // for normal maps, share the decoded, cached icon the Project view uses
+                Texture icon = null;
+                if (obj is Texture tex && TextureUtil.IsNormalMapUsageMode(TextureUtil.GetUsageMode(tex)))
+                    icon = AssetDatabase.GetCachedIcon(AssetDatabase.GetAssetPath(obj));
+                s_ObjectContent.image = icon != null ? icon : AssetPreview.GetMiniThumbnail(obj);
             }
             else if (type != null)
             {
@@ -1460,9 +1502,11 @@ namespace UnityEditor
         // outside the rect of the control, rather than inside the rect.
         // This way the text of the foldout lines up with the labels of other controls.
         // hierarchyMode is primarily enabled for editors in the Inspector.
+        [NoAutoStaticsCleanup] // inspector layout mode; reset by Inspector before each editor draw
         public static bool hierarchyMode { get; set; } = false;
 
         // wideMode is used when the Inspector is wide and uses a more tidy and vertically compact layout for certain controls.
+        [NoAutoStaticsCleanup] // inspector layout mode; reset by Inspector before each editor draw
         public static bool wideMode { get; set; } = false;
 
         internal enum ComparisonViewMode
@@ -1472,6 +1516,7 @@ namespace UnityEditor
 
         // ComparisonViewMode is used when editors are drawn in the context of showing differences between different objects.
         // Controls that must not be used in this context can be hidden or disabled.
+        [NoAutoStaticsCleanup] // per-draw-pass comparison context; reset before each comparison view draw
         private static ComparisonViewMode s_ComparisonViewMode = ComparisonViewMode.None;
         internal static ComparisonViewMode comparisonViewMode
         {
@@ -1479,6 +1524,7 @@ namespace UnityEditor
             set { s_ComparisonViewMode = value; }
         }
 
+        [NoAutoStaticsCleanup] // per-draw-pass margin coordinate; set before each draw pass
         private static float s_LeftMarginCoord;
         internal static float leftMarginCoord
         {
@@ -1488,6 +1534,7 @@ namespace UnityEditor
 
         // Context width is used for calculating the label width for various editor controls.
         // In most cases the top level clip rect is a perfect context width.
+        [NoAutoStaticsCleanup] // per-draw-pass layout context stack; LockContextWidth/UnlockContextWidth manage lifetime
         private static Stack<float> s_ContextWidthStack = new Stack<float>(10);
 
         private static float CalcContextWidth()
@@ -1524,6 +1571,7 @@ namespace UnityEditor
             }
         }
 
+        [NoAutoStaticsCleanup] // per-draw-pass width override; -1 means no override (use default)
         private static float s_OverriddenViewWidth = -1f;
         public static float currentViewWidth
         {
@@ -1554,6 +1602,7 @@ namespace UnityEditor
             set { s_LabelWidth = value; }
         }
 
+        [NoAutoStaticsCleanup] // per-layout field width override; 0 means use default
         private static float s_FieldWidth = 0f;
         public static float fieldWidth
         {
@@ -1588,6 +1637,7 @@ namespace UnityEditor
         }
 
         [Obsolete("This field is no longer used by any builtin controls. If passing this field to GetControlID, explicitly use the FocusType enum instead.", false)]
+        [NoAutoStaticsCleanup] // obsolete public field; persists its legacy constant value across reload
         public static FocusType native = FocusType.Keyboard;
 
         internal static void SkinChanged()

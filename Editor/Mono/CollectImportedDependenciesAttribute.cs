@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Scripting;
 using static UnityEditor.AttributeHelper;
 using UnityEngine.Scripting.APIUpdating;
@@ -33,9 +34,11 @@ namespace UnityEditor.AssetImporters
         static string[] CollectImportedDependenciesSignature(string assetPath) { throw new InvalidOperationException(); }
     }
 
-    static class ImportedDependenciesApi
+    static partial class ImportedDependenciesApi
     {
+        [AutoStaticsCleanupOnCodeReload]
         static Dictionary<Type, string> s_ImportDependenciesHashStringMap = null;
+        [AutoStaticsCleanupOnCodeReload]
         static Dictionary<Type, MethodWithAttribute[]> s_ImportDependencyCallbackTypeMap = null;
 
         private static IEnumerable<MethodWithAttribute> GetImportedDependenciesCallbacksAndAttributesForImporter(Type importerType)

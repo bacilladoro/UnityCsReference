@@ -183,6 +183,7 @@ namespace UnityEngine.UIElements.UIR
             this.panel = panel;
             atlas = panel.atlas;
             vectorImageManager = new VectorImageManager(atlas);
+            backgroundGradientBaker = new BackgroundGradientBaker();
 
             // TODO: Share across all panels
             m_Compositor = new RenderTreeCompositor(this);
@@ -247,6 +248,9 @@ namespace UnityEngine.UIElements.UIR
 
                 vectorImageManager?.Dispose();
                 vectorImageManager = null;
+
+                backgroundGradientBaker?.Dispose();
+                backgroundGradientBaker = null;
 
                 shaderInfoAllocator.Dispose();
                 shaderInfoAllocator = null;
@@ -372,6 +376,8 @@ namespace UnityEngine.UIElements.UIR
                 // Commit new requests for atlases if any
                 atlas?.InvokeUpdateDynamicTextures(panel); // TODO: For a shared atlas + drawInCameras, postpone after all updates have occurred.
                 vectorImageManager?.Commit();
+                // Frame boundary — all Reset+Insert cycles are done.
+                backgroundGradientBaker?.PurgePending();
                 shaderInfoAllocator.IssuePendingStorageChanges();
 
                 device.OnFrameRenderingBegin();
@@ -412,7 +418,7 @@ namespace UnityEngine.UIElements.UIR
                     vectorImageManager?.atlas,
                     shaderInfoAllocator,
                     null,
-                    Vector2.zero,
+                    Rect.zero,
                     panel.scaledPixelsPerPoint,
                     true,
                     textureSlotCount,
@@ -501,7 +507,7 @@ namespace UnityEngine.UIElements.UIR
                 vectorImageManager?.atlas,
                 shaderInfoAllocator,
                 scissor,
-                new Vector2(bounds.xMin, bounds.yMin),
+                bounds,
                 pixelsPerPoint,
                 false,
                 textureSlotCount,
@@ -699,6 +705,7 @@ namespace UnityEngine.UIElements.UIR
         public BaseElementBuilder elementBuilder => m_VisualChangesProcessor.elementBuilder;
         internal AtlasBase atlas { get; private set; }
         internal VectorImageManager vectorImageManager { get; private set; }
+        internal BackgroundGradientBaker backgroundGradientBaker { get; private set; }
         internal TempMeshAllocatorImpl tempMeshAllocator { get; private set; }
         internal MeshWriteDataPool meshWriteDataPool { get; } = new();
         public EntryRecorder entryRecorder;
@@ -854,6 +861,7 @@ namespace UnityEngine.UIElements.UIR
                 if (!ReferenceEquals(current.data.vectorImage, null))
                 {
                     vectorImageManager.RemoveUser(current.data.vectorImage);
+                    backgroundGradientBaker.RemoveUser(current.data.vectorImage); // no-op for non-baker VIs
                     current.data.vectorImage = null;
                 }
                 else

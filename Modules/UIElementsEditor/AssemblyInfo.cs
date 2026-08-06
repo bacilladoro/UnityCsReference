@@ -7,6 +7,8 @@ using System.Runtime.CompilerServices;
 // OK: "friend" and test assemblies from the same product area, evolving in lockstep with this module
 
 [assembly: InternalsVisibleTo("Assembly-CSharp-Editor-testable")] // Performance Tests
+[assembly: InternalsVisibleTo("Unity.UIElements.EditorResources.Authoring")] // editor-resources authoring/generation tooling
+[assembly: InternalsVisibleTo("Unity.UIElements.EditorResources.EditorTests")] // editor-resources tests
 
 [assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")] // for Moq
 

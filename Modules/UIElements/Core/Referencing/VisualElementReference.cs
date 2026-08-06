@@ -69,7 +69,9 @@ public class VisualElementReference : IVisualElementReferenceHandler, IEquatable
         SetReference(renderer, path);
     }
 
+#pragma warning disable UA5000 // The Avoid Finalizer Analyzer produces compile errors for any new finalizers. This pre-existing finalizer declaration has been suppressed, but should be rewritten if possible.
     ~VisualElementReference() => Dispose(false);
+#pragma warning restore UA5000
 
     /// <summary>
     /// Sets the reference to point to the given document and path.

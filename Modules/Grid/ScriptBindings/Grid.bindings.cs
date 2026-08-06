@@ -9,6 +9,7 @@ namespace UnityEngine
     [RequireComponent(typeof(Transform))]
     [NativeHeader("Modules/Grid/Public/GridMarshalling.h")]
     [NativeHeader("Modules/Grid/Public/Grid.h")]
+    [NativeClass("Grid", PersistentTypeId = 0x094D1FCA)]
     public sealed partial class Grid : GridLayout
     {
         ///<summary>The size of each cell in the <see cref="Grid" />.</summary>

@@ -794,14 +794,17 @@ internal class StyleSheetsWindow : EditorWindow
         AddNewParentStyleSheets(parents);
 
         // Set and store the active stylesheet for the current visual tree asset
-        if (m_ActiveStyleSheetInVisualTreeAsset.TryGetValue(m_TrackedVTA, out var savedActive) && stylesheets.Contains(savedActive))
+        if (m_TrackedVTA)
         {
-            ActiveStyleSheet = savedActive;
-        }
-        else if ((ActiveStyleSheet == null || !stylesheets.Contains(ActiveStyleSheet)) && stylesheets.Count > 0)
-        {
-            ActiveStyleSheet = stylesheets[0];
-            m_ActiveStyleSheetInVisualTreeAsset[m_TrackedVTA] = ActiveStyleSheet;
+            if (m_ActiveStyleSheetInVisualTreeAsset.TryGetValue(m_TrackedVTA, out var savedActive) && stylesheets.Contains(savedActive))
+            {
+                ActiveStyleSheet = savedActive;
+            }
+            else if ((ActiveStyleSheet == null || !stylesheets.Contains(ActiveStyleSheet)) && stylesheets.Count > 0)
+            {
+                ActiveStyleSheet = stylesheets[0];
+                m_ActiveStyleSheetInVisualTreeAsset[m_TrackedVTA] = ActiveStyleSheet;
+            }
         }
 
         using var _editableHandle = ListPool<HierarchyNode>.Get(out var editableNodes);

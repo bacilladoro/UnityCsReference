@@ -14,6 +14,8 @@ namespace UnityEngine
         IntPtr ptr { get; set; }
     }
 
+    ///<summary>Information about a subsystem that can be queried before creating a subsystem instance.</summary>
+    ///<remarks>This describes a native-backed <see cref="IntegratedSubsystem" />. New subsystems should be managed-only; use <see cref="UnityEngine.SubsystemsImplementation.SubsystemWithProvider" /> and its descriptor instead.</remarks>
     [UsedByNativeCode("SubsystemDescriptorBase")]
     [StructLayout(LayoutKind.Sequential)]
     public abstract class IntegratedSubsystemDescriptor : ISubsystemDescriptorImpl
@@ -21,6 +23,7 @@ namespace UnityEngine
         [VisibleToOtherModules("UnityEngine.XRModule")]
         internal IntPtr m_Ptr;
 
+        ///<summary>A unique string that identifies the subsystem that this Descriptor can create.</summary>
         public string id => SubsystemDescriptorBindings.GetId(m_Ptr);
 
         IntPtr ISubsystemDescriptorImpl.ptr
@@ -33,6 +36,7 @@ namespace UnityEngine
         internal abstract ISubsystem CreateImpl();
     }
 
+    ///<exclude />
     [NativeHeader("Modules/Subsystems/SubsystemDescriptor.h")]
     [UsedByNativeCode("SubsystemDescriptor")]
     [StructLayout(LayoutKind.Sequential)]
@@ -44,6 +48,8 @@ namespace UnityEngine
             return this.Create();
         }
 
+        ///<summary>Creates a <see cref="Subsystem" /> from this descriptor.</summary>
+        ///<returns>Instance of subsystem.</returns>
         public TSubsystem Create()
         {
             IntPtr ptr = SubsystemDescriptorBindings.Create(m_Ptr);

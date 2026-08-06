@@ -17,10 +17,10 @@ namespace UnityEditor
     {
         static class Styles
         {
-            public static GUIContent UnityDude = EditorGUIUtility.IconContent("AvatarInspector/BodySIlhouette");
-            public static GUIContent PickingTexture = EditorGUIUtility.IconContent("AvatarInspector/BodyPartPicker");
+            public static readonly GUIContent UnityDude = EditorGUIUtility.IconContent("AvatarInspector/BodySIlhouette");
+            public static readonly GUIContent PickingTexture = EditorGUIUtility.IconContent("AvatarInspector/BodyPartPicker");
 
-            public static GUIContent[] BodyPart =
+            public static readonly GUIContent[] BodyPart =
             {
                 EditorGUIUtility.IconContent("AvatarInspector/MaskEditor_Root"),
                 EditorGUIUtility.IconContent("AvatarInspector/Torso"),
@@ -44,7 +44,7 @@ namespace UnityEditor
             };
         }
 
-        protected static Color[] m_MaskBodyPartPicker =
+        protected static readonly Color[] m_MaskBodyPartPicker =
         {
             new Color(255 / 255.0f,   144 / 255.0f,     0 / 255.0f), // root
             new Color(0 / 255.0f, 174 / 255.0f, 240 / 255.0f), // body
@@ -67,8 +67,8 @@ namespace UnityEditor
             new Color(101 / 255.0f,   101 / 255.0f, 101 / 255.0f), // hi
         };
 
-        static string sAvatarBodyMaskStr = "AvatarMask";
-        static int s_Hint = sAvatarBodyMaskStr.GetHashCode();
+        static readonly string sAvatarBodyMaskStr = "AvatarMask";
+        static readonly int s_Hint = sAvatarBodyMaskStr.GetHashCode();
 
         public static void Show(SerializedProperty bodyMask, int count)
         {
@@ -164,27 +164,27 @@ namespace UnityEditor
         private static class Styles
         {
             // Model Importer related options
-            public static GUIContent MaskDefinition = EditorGUIUtility.TrTextContent("Definition", "Choose between Create From This Model, Copy From Other Avatar. The first one creates a Mask for this file and the second one uses a Mask from another file to import animation.");
-            public static GUIContent[] MaskDefinitionOpt =
+            public static readonly GUIContent MaskDefinition = EditorGUIUtility.TrTextContent("Definition", "Choose between Create From This Model, Copy From Other Avatar. The first one creates a Mask for this file and the second one uses a Mask from another file to import animation.");
+            public static readonly GUIContent[] MaskDefinitionOpt =
             {
                 EditorGUIUtility.TrTextContent("Create From This Model", "Create a Mask based on the model from this file. For Humanoid rig all the human transforms are always imported and converted to muscle curve, thus they cannot be unchecked."),
                 EditorGUIUtility.TrTextContent("Copy From Other Mask", "Copy a Mask from another file to import animation clip."),
                 EditorGUIUtility.TrTextContent("None ", " Import Everything")
             };
-            public static GUIContent CopyFromOtherSource = EditorGUIUtility.TrTextContent("Source", "Select from which AvatarMask the animation should take the mask information");
-            public static GUIContent CreateMask = EditorGUIUtility.TrTextContent("Create Mask", "Create a new mask from this model avatar.");
+            public static readonly GUIContent CopyFromOtherSource = EditorGUIUtility.TrTextContent("Source", "Select from which AvatarMask the animation should take the mask information");
+            public static readonly GUIContent CreateMask = EditorGUIUtility.TrTextContent("Create Mask", "Create a new mask from this model avatar.");
 
             // Avatar mask options
-            public static GUIContent SelectAvatarReference = EditorGUIUtility.TrTextContent("Use skeleton from", "The selected avatar is never linked here and only used to populate the list of transform.");
-            public static GUIContent ImportAvatarReference = EditorGUIUtility.TrTextContent("Import skeleton", "Generates new transform data based on the selected avatar skeleton");
+            public static readonly GUIContent SelectAvatarReference = EditorGUIUtility.TrTextContent("Use skeleton from", "The selected avatar is never linked here and only used to populate the list of transform.");
+            public static readonly GUIContent ImportAvatarReference = EditorGUIUtility.TrTextContent("Import skeleton", "Generates new transform data based on the selected avatar skeleton");
 
             // Avatar mask foldouts
-            public static GUIContent BodyMask = EditorGUIUtility.TrTextContent("Humanoid", "Define which body part are active. Also define which animation curves will be imported for an Animation Clip.");
-            public static GUIContent TransformMask = EditorGUIUtility.TrTextContent("Transform", "Define which transform are active. Also define which animation curves will be imported for an Animation Clip.");
+            public static readonly GUIContent BodyMask = EditorGUIUtility.TrTextContent("Humanoid", "Define which body part are active. Also define which animation curves will be imported for an Animation Clip.");
+            public static readonly GUIContent TransformMask = EditorGUIUtility.TrTextContent("Transform", "Define which transform are active. Also define which animation curves will be imported for an Animation Clip.");
 
             // TreeView columns
-            public static GUIContent TransformName = EditorGUIUtility.TrTextContent("Node Name");
-            public static GUIContent EnableName = EditorGUIUtility.TrTextContent("Use", "Maintain Alt/Option key to enable or disable all children");
+            public static readonly GUIContent TransformName = EditorGUIUtility.TrTextContent("Node Name");
+            public static readonly GUIContent EnableName = EditorGUIUtility.TrTextContent("Use", "Maintain Alt/Option key to enable or disable all children");
         }
 
         //Interpolation strings for foldout settings, both embedded and standalone.

@@ -157,6 +157,13 @@ namespace UnityEngine.UIElements
             set => ((INotifyValueChanged<string>) this).value = value;
         }
 
+        internal static int AvoidSurrogateSplit(ReadOnlySpan<char> text, int length)
+        {
+            if (length > 0 && char.IsHighSurrogate(text[length - 1]) && char.IsLowSurrogate(text[length]))
+                return length - 1;
+            return length;
+        }
+
         /// <summary>
         /// Sets the text content without allocating a managed string.
         /// </summary>
@@ -180,12 +187,38 @@ namespace UnityEngine.UIElements
             int length = text.Length;
             int maxLen = edition.maxLength;
             if (maxLen >= 0 && length > maxLen)
-                length = maxLen;
+                length = AvoidSurrogateSplit(text, maxLen);
 
             if (IsBufferEqualTo(text, length))
                 return;
 
             m_TextBuffer.CopyFrom(text, length);
+
+            ApplyBufferChange(length);
+        }
+
+        /// <summary>
+        /// Sets the text content from a UTF-8 encoded byte sequence without allocating a managed string.
+        /// </summary>
+        /// <remarks>
+        /// This method is slower than its UTF-16 counterparts since transcoding is unavoidable. Prefer using <see cref="SetText(ReadOnlySpan{char})"/> when possible.
+        /// </remarks>
+        /// <param name="utf8">The UTF-8 encoded bytes to set as the element's text content.</param>
+        public void SetTextUtf8(ReadOnlySpan<byte> utf8)
+        {
+            if (panel == null)
+            {
+                Debug.LogWarning("TextElement.SetTextUtf8() called while the element is not attached to a panel. Falling back to string allocation.");
+                this.text = utf8.IsEmpty ? string.Empty : Encoding.UTF8.GetString(utf8);
+                return;
+            }
+
+            int maxLen = edition.maxLength;
+
+            if (m_TextBuffer.MatchesUtf8(utf8, maxLen))
+                return;
+
+            int length = m_TextBuffer.CopyFromUtf8(utf8, maxLen);
 
             ApplyBufferChange(length);
         }
@@ -227,7 +260,12 @@ namespace UnityEngine.UIElements
             int length = sb.Length;
             int maxLen = edition.maxLength;
             if (maxLen >= 0 && length > maxLen)
+            {
                 length = maxLen;
+                // Don't split a surrogate pair at the truncation boundary.
+                if (length > 0 && char.IsHighSurrogate(sb[length - 1]) && char.IsLowSurrogate(sb[length]))
+                    length--;
+            }
 
             if (IsBufferEqualTo(sb, length))
                 return;
@@ -264,6 +302,32 @@ namespace UnityEngine.UIElements
                 SetText((ReadOnlySpan<char>)buffer.Slice(0, charsWritten));
             else
                 text = value.ToString();
+        }
+
+        /// <summary>
+        /// Pre-allocates the internal text buffer so that subsequent <see cref="SetText(ReadOnlySpan{char})"/>
+        /// (and related) calls of up to <paramref name="capacity"/> UTF-16 code units do not allocate.
+        /// </summary>
+        /// <remarks>
+        /// The buffer grows automatically on demand using a doubling strategy, so this method is never
+        /// required for correctness. Use it only to pay the allocation cost up front.
+        /// </remarks>
+        /// <param name="capacity">The minimum buffer capacity, in UTF-16 code units.</param>
+        public void EnsureTextCapacity(int capacity)
+        {
+            if (capacity < 0)
+                throw new ArgumentOutOfRangeException(nameof(capacity));
+
+            if (panel == null)
+            {
+                Debug.LogWarning("TextElement.EnsureTextCapacity() called while the element is not attached to a panel. Ignoring the capacity request.");
+                return;
+            }
+
+            if (capacity == 0)
+                return;
+
+            m_TextBuffer.EnsureCapacity(capacity, preserveContent: true);
         }
 
         bool IsBufferEqualTo(ReadOnlySpan<char> span, int length)

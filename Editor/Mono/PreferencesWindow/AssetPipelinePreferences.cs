@@ -6,6 +6,7 @@ using UnityEngine;
 using System;
 using System.Collections.Generic;
 using UnityEngine.UIElements;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -50,19 +51,27 @@ namespace UnityEditor
         const string kModeKey = "CacheServerMode";
         const string kDeprecatedEnabledKey = "CacheServerEnabled";
 
+        [NoAutoStaticsCleanup] // preference-loaded gate; re-read from EditorPrefs on demand, safe to persist across reload
         static bool s_CacheServerPrefsLoaded;
+        [NoAutoStaticsCleanup] // transient within-frame GUI change flag, safe to persist
         static bool s_HasPendingChanges;
         enum ConnectionState { Unknown, Success, Failure }
 
+        [NoAutoStaticsCleanup] // plain enum connection-status cache, safe to persist across reload
         static ConnectionState s_ConnectionState;
+        [NoAutoStaticsCleanup] // string cache-server IP loaded from EditorPrefs, safe to persist across reload
         static string s_CacheServer2IPAddress;
 
         enum CacheServer2Mode { Enabled, Disabled }
+        [NoAutoStaticsCleanup] // plain enum preference cache, safe to persist across reload
         static CacheServer2Mode s_CacheServer2Mode;
 
         public enum CacheServerMode { Local, Remote, Disabled }
+        [NoAutoStaticsCleanup] // plain enum preference cache, safe to persist across reload
         static CacheServerMode s_CacheServerMode;
+        [NoAutoStaticsCleanup] // bool preference cache loaded from EditorPrefs, safe to persist across reload
         static bool s_EnableCustomPath;
+        [NoAutoStaticsCleanup] // string cache path loaded from EditorPrefs, safe to persist across reload
         static string s_CachePath;
 
         public static bool IsCacheServerEnabled

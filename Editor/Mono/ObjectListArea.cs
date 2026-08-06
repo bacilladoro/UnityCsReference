@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEditor.VersionControl;
 using System.Collections.Generic;
@@ -85,6 +86,7 @@ namespace UnityEditor
         int m_SelectionOffset = 0;
 
         const float k_ListModeVersionControlOverlayPadding = 14f;
+        [NoAutoStaticsCleanup] // value-type version-control flag re-read from VersionControlUtils before use; safe to persist
         static bool s_VCEnabled = false;
 
         PingData m_Ping = new PingData();
@@ -150,6 +152,7 @@ namespace UnityEditor
         public System.Func<Rect, float> drawLocalAssetHeader { get {return m_DrawLocalAssetHeader; }  set {m_DrawLocalAssetHeader = value; }}
 
         // Debug
+        [NoAutoStaticsCleanup] // debug-only flag, value type; safe to persist across reload
         static internal bool s_Debug = false;
 
         public ObjectListArea(ObjectListAreaState state, EditorWindow owner, bool showNoneItem)

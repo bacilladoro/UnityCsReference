@@ -34,10 +34,81 @@ namespace Unity.UIToolkit.Editor
         {
             SceneView.duringSceneGui += OnSceneGUI;
             Selection.selectionChanged += OnSelectionChanged;
+            UICommandQueue.RegisterHandler<RequestFramingCommand>(OnFramingRequested);
 
             // Undo can rebuild the panel (live-reload after asset revert) and may fire transient
             // selection events; re-collect so the overlay doesn't disappear after Ctrl+Z.
             Undo.undoRedoPerformed += OnSelectionChanged;
+        }
+
+        static void OnFramingRequested(in CommandContext context)
+        {
+            if (context.Status != CommandExecutionStatus.Success)
+                return;
+            var command = (RequestFramingCommand)context.Command;
+            Frame(command.Element, command.OrientToFace);
+        }
+
+        // Frames the element (or the current UI selection when null) in the Scene view, optionally
+        // turning the camera to face the panel. A VisualElement has no transform of its own, so we
+        // frame its world-space footprint, resolving a staging clone back to its live scene instance.
+        static void Frame(VisualElement element, bool orientToFace)
+        {
+            var sceneView = SceneView.lastActiveSceneView;
+            if (sceneView == null)
+                return;
+
+            if (element == null)
+            {
+                FrameCurrentSelection(sceneView, orientToFace);
+                return;
+            }
+
+            // The document root (uxml node) has no footprint of its own — frame the whole UI by its host.
+            if (element is IPanelComponentRootElement { panelComponent: { } panelComponent })
+            {
+                if (IsAlive(panelComponent))
+                    FrameGameObject(sceneView, panelComponent.gameObject, orientToFace);
+                return;
+            }
+
+            if (TryGetFramableWorldBounds(element, out var bounds, out var hostTransform))
+                ApplyFraming(sceneView, bounds, hostTransform, orientToFace);
+        }
+
+        static void FrameCurrentSelection(SceneView sceneView, bool orientToFace)
+        {
+            switch (Selection.activeObject)
+            {
+                case VisualElementSelection { Element: { } element }:
+                    Frame(element, orientToFace);
+                    break;
+                case VisualTreeAssetSelection { PanelComponent: { } panelComponent } when IsAlive(panelComponent):
+                    FrameGameObject(sceneView, panelComponent.gameObject, orientToFace);
+                    break;
+            }
+        }
+
+        static void FrameGameObject(SceneView sceneView, GameObject gameObject, bool orientToFace)
+        {
+            if (gameObject == null)
+                return;
+            var bounds = FloorBounds(GameObjectWorldBounds(gameObject));
+            ApplyFraming(sceneView, bounds, gameObject.transform, orientToFace);
+        }
+
+        static void ApplyFraming(SceneView sceneView, Bounds bounds, Transform hostTransform, bool orientToFace)
+        {
+            if (orientToFace)
+            {
+                // Look head-on along the panel's normal (its front faces the host's +forward).
+                var rotation = Quaternion.LookRotation(hostTransform.forward, hostTransform.up);
+                sceneView.LookAt(bounds.center, rotation, bounds.extents.magnitude, sceneView.orthographic, instant: false);
+            }
+            else
+            {
+                sceneView.Frame(bounds, instant: false);
+            }
         }
 
         static readonly List<VisualElement> s_SelectedElements = new();
@@ -140,6 +211,116 @@ namespace Unity.UIToolkit.Editor
         {
             var rootElement = element.GetFirstAncestorOfType<IPanelComponentRootElement>();
             return rootElement?.panelComponent;
+        }
+
+        // Returns world-space, framing-ready bounds for an element, plus the host transform. Resolves a
+        // staging clone back to its live world-space scene instance, falls back to the host GameObject
+        // when element bounds aren't available, and floors the flat-quad bounds so SceneView.Frame
+        // doesn't dive in. Returns false when there is nothing framable in the scene.
+        internal static bool TryGetFramableWorldBounds(VisualElement element, out Bounds bounds, out Transform hostTransform)
+        {
+            bounds = default;
+            hostTransform = null;
+            if (element == null)
+                return false;
+
+            var sceneElement = element;
+            IPanelComponent panelComponent;
+
+            var stagePanel = (StageUtility.GetCurrentStage() as VisualElementEditingStage)?.GetAuthoringPanel();
+            if (stagePanel != null && element.panel == stagePanel)
+            {
+                // Editing-stage clone: map back to a live world-space scene instance by asset id.
+                if (!TryFindWorldSpaceSceneInstance(element, out sceneElement, out panelComponent))
+                    return false;
+            }
+            else
+            {
+                panelComponent = FindPanelComponentForElement(element);
+            }
+
+            if (!IsAlive(panelComponent))
+                return false;
+
+            var resolved = GetElementWorldBounds(sceneElement, panelComponent);
+            if (!IsUsableBounds(resolved))
+                resolved = GameObjectWorldBounds(panelComponent.gameObject);
+
+            bounds = FloorBounds(resolved);
+            hostTransform = panelComponent.gameObject.transform;
+            return true;
+        }
+
+        static bool TryFindWorldSpaceSceneInstance(VisualElement cloneElement, out VisualElement sceneElement, out IPanelComponent panelComponent)
+        {
+            sceneElement = null;
+            panelComponent = null;
+
+            var asset = cloneElement.visualElementAsset;
+            if (asset == null)
+                return false;
+
+            foreach (var (pc, match) in VisualElementToolUtility.EnumerateScenePanelInstancesOfAsset(asset))
+            {
+                sceneElement = match;
+                panelComponent = pc;
+                return true;
+            }
+            return false;
+        }
+
+        // Gives a flat/thin box volume so SceneView.Frame pulls back to a usable distance instead of
+        // diving in on the panel's zero-thickness axis, while staying centred on the target.
+        internal static Bounds FloorBounds(Bounds bounds)
+        {
+            var size = bounds.size;
+            var maxDim = Mathf.Max(size.x, Mathf.Max(size.y, size.z));
+            if (maxDim <= 0f)
+                maxDim = 1f;
+            var minExtent = maxDim * 0.5f;
+            bounds.size = new Vector3(
+                Mathf.Max(size.x, minExtent),
+                Mathf.Max(size.y, minExtent),
+                Mathf.Max(size.z, minExtent));
+            return bounds;
+        }
+
+        internal static Bounds GameObjectWorldBounds(GameObject gameObject)
+        {
+            var hasRenderer = false;
+            var bounds = new Bounds(gameObject.transform.position, Vector3.zero);
+            foreach (var renderer in gameObject.GetComponentsInChildren<Renderer>())
+            {
+                if (!hasRenderer)
+                {
+                    bounds = renderer.bounds;
+                    hasRenderer = true;
+                }
+                else
+                {
+                    bounds.Encapsulate(renderer.bounds);
+                }
+            }
+            return bounds;
+        }
+
+        // IPanelComponent is an interface, so a non-null managed reference can still wrap a destroyed
+        // Unity object (UIDocument/PanelRenderer). Unity's overloaded == detects the destroyed case;
+        // a reference-null check on the interface does not. Use this before touching .gameObject etc.
+        internal static bool IsAlive(IPanelComponent panelComponent)
+            => panelComponent is UnityEngine.Object obj ? obj != null : panelComponent != null;
+
+        static bool IsUsableBounds(Bounds b)
+        {
+            var c = b.center;
+            var s = b.size;
+            if (!float.IsFinite(c.x) || !float.IsFinite(c.y) || !float.IsFinite(c.z) ||
+                !float.IsFinite(s.x) || !float.IsFinite(s.y) || !float.IsFinite(s.z))
+                return false;
+            // GetElementWorldBounds' degenerate fallbacks are Bounds(zero, one) and Bounds(zero, zero).
+            if (c == Vector3.zero && (s == Vector3.one || s == Vector3.zero))
+                return false;
+            return true;
         }
 
         // For a clone element selected via a UXML editing stage, walks every scene panel that

@@ -4,6 +4,7 @@
 
 using System;
 using System.IO;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 
 namespace UnityEditor
@@ -15,6 +16,7 @@ namespace UnityEditor
         readonly string m_Header;
         readonly VerticalGrid m_Grid;
         readonly Action<string> m_EditButtonClickedCallback;
+        [NoAutoStaticsCleanup] // lazy GUIStyle built in OnInspectorGUI once EditorStyles is ready; holds no user-code refs, safe to persist
         private static GUIStyle s_EditButtonStyle;
         private float m_LastRepaintedWidth = -1f;
 

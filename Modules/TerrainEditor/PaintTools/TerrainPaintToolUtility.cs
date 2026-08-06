@@ -3,13 +3,15 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using UnityEngine;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.TerrainTools
 {
-    public class PaintTreesDetailsContext
+    public partial class PaintTreesDetailsContext
     {
+        [AutoStaticsCleanupOnCodeReload] // scratch buffer holding neighbor Terrain refs; re-allocated (refs dropped) on reload, fully repopulated each Create()
         static Terrain[] s_Nbrs = new Terrain[8];
-        static Vector2[] s_Uvs = new Vector2[8];
+        static readonly Vector2[] s_Uvs = new Vector2[8];
         Terrain[] m_Terrains = new Terrain[4];
         Vector2[] m_Uvs = new Vector2[4];
 

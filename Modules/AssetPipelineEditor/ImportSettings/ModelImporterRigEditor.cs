@@ -9,10 +9,11 @@ using System.IO;
 using Object = UnityEngine.Object;
 using UnityEditor.AssetImporters;
 using System.Linq;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
-    internal class ModelImporterRigEditor : BaseAssetImporterTabUI
+    internal partial class ModelImporterRigEditor : BaseAssetImporterTabUI
     {
         ModelImporter singleImporter { get { return targets[0] as ModelImporter; } }
 
@@ -60,6 +61,7 @@ namespace UnityEditor
         SerializedProperty m_AutoGenerateAvatarMappingIfUnspecified;
 #pragma warning restore 0649
 
+        [NoAutoStaticsCleanup] // simple persistent UI foldout state; safe to keep across reload
         private static bool importMessageFoldout = false;
 
         GUIContent[] m_RootMotionBoneList;
@@ -104,8 +106,8 @@ namespace UnityEditor
 
         static class Styles
         {
-            public static GUIContent AnimationType = EditorGUIUtility.TrTextContent("Animation Type", "The type of animation to support / import.");
-            public static GUIContent[] AnimationTypeOpt =
+            public static readonly GUIContent AnimationType = EditorGUIUtility.TrTextContent("Animation Type", "The type of animation to support / import.");
+            public static readonly GUIContent[] AnimationTypeOpt =
             {
                 EditorGUIUtility.TrTextContent("None", "No animation present."),
                 EditorGUIUtility.TrTextContent("Legacy", "Legacy animation system."),
@@ -113,10 +115,10 @@ namespace UnityEditor
                 EditorGUIUtility.TrTextContent("Humanoid", "Humanoid Mecanim animation system.")
             };
 
-            public static GUIContent SaveAvatar = EditorGUIUtility.TrTextContent("Save Avatar", "Saves the generated Avatar as a sub-asset.");
+            public static readonly GUIContent SaveAvatar = EditorGUIUtility.TrTextContent("Save Avatar", "Saves the generated Avatar as a sub-asset.");
 
-            public static GUIContent AnimLabel = EditorGUIUtility.TrTextContent("Generation", "Controls how animations are imported.");
-            public static GUIContent[] AnimationsOpt =
+            public static readonly GUIContent AnimLabel = EditorGUIUtility.TrTextContent("Generation", "Controls how animations are imported.");
+            public static readonly GUIContent[] AnimationsOpt =
             {
                 EditorGUIUtility.TrTextContent("Don't Import", "No animation or skinning is imported."),
                 EditorGUIUtility.TrTextContent("Store in Original Roots (Deprecated)", "Animations are stored in the root objects of your animation package (these might be different from the root objects in Unity)."),
@@ -125,28 +127,28 @@ namespace UnityEditor
                 EditorGUIUtility.TrTextContent("Store in Root (New)")
             };
 
-            public static GUIContent avatar = EditorGUIUtility.TrTextContent("Animator");
-            public static GUIContent configureAvatar = EditorGUIUtility.TrTextContent("Configure...");
+            public static readonly GUIContent avatar = EditorGUIUtility.TrTextContent("Animator");
+            public static readonly GUIContent configureAvatar = EditorGUIUtility.TrTextContent("Configure...");
 
-            public static GUIContent UpdateMuscleDefinitionFromSource = EditorGUIUtility.TrTextContent("Update", "Update the copy of the muscle definition from the source.");
-            public static GUIContent RootNode = EditorGUIUtility.TrTextContent("Root node", "Specify the root node used to extract the animation translation.");
+            public static readonly GUIContent UpdateMuscleDefinitionFromSource = EditorGUIUtility.TrTextContent("Update", "Update the copy of the muscle definition from the source.");
+            public static readonly GUIContent RootNode = EditorGUIUtility.TrTextContent("Root node", "Specify the root node used to extract the animation translation.");
 
-            public static GUIContent AvatarDefinition = EditorGUIUtility.TrTextContent("Avatar Definition", "Choose between Create From This Model or Copy From Other Avatar. The first one creates an Avatar for this file and the second one uses an Avatar from another file to import animation.");
+            public static readonly GUIContent AvatarDefinition = EditorGUIUtility.TrTextContent("Avatar Definition", "Choose between Create From This Model or Copy From Other Avatar. The first one creates an Avatar for this file and the second one uses an Avatar from another file to import animation.");
 
-            public static GUIContent SkinWeightsMode = EditorGUIUtility.TrTextContent("Skin Weights", "Control how many bone weights are imported.");
-            public static GUIContent[] SkinWeightsModeOpt =
+            public static readonly GUIContent SkinWeightsMode = EditorGUIUtility.TrTextContent("Skin Weights", "Control how many bone weights are imported.");
+            public static readonly GUIContent[] SkinWeightsModeOpt =
             {
                 EditorGUIUtility.TrTextContent("Standard (4 Bones)", "Import a maximum of 4 bones per vertex."),
                 EditorGUIUtility.TrTextContent("Custom", "Import a custom number of bones per vertex.")
             };
-            public static GUIContent MaxBonesPerVertex = EditorGUIUtility.TrTextContent("Max Bones/Vertex", "Number of bones that can affect each vertex.");
-            public static GUIContent MinBoneWeight = EditorGUIUtility.TrTextContent("Min Bone Weight", "Bone weights smaller than this value are rejected. The remaining weights are scaled to add up to 1.0.");
-            public static GUIContent OptimizeBones = EditorGUIUtility.TrTextContent("Strip Bones", "Only adds bones to SkinnedMeshRenderers that have skin weights assigned to them.");
+            public static readonly GUIContent MaxBonesPerVertex = EditorGUIUtility.TrTextContent("Max Bones/Vertex", "Number of bones that can affect each vertex.");
+            public static readonly GUIContent MinBoneWeight = EditorGUIUtility.TrTextContent("Min Bone Weight", "Bone weights smaller than this value are rejected. The remaining weights are scaled to add up to 1.0.");
+            public static readonly GUIContent OptimizeBones = EditorGUIUtility.TrTextContent("Strip Bones", "Only adds bones to SkinnedMeshRenderers that have skin weights assigned to them.");
 
-            public static GUIContent UpdateReferenceClips = EditorGUIUtility.TrTextContent("Update referenced clips", "Click on this button to update all the referenced clips matching this model. This will set all these clips to Copy From Other Avatar, set the source Avatar to this one and reimport all these files. See the documentation for EditorSettings.referenceClipsExactNaming for more details about how models are matched to referenced clips.");
+            public static readonly GUIContent UpdateReferenceClips = EditorGUIUtility.TrTextContent("Update referenced clips", "Click on this button to update all the referenced clips matching this model. This will set all these clips to Copy From Other Avatar, set the source Avatar to this one and reimport all these files. See the documentation for EditorSettings.referenceClipsExactNaming for more details about how models are matched to referenced clips.");
 
-            public static GUIContent ImportMessages = EditorGUIUtility.TrTextContent("Import Messages");
-            public static GUIContent ExtraExposedTransform = EditorGUIUtility.TrTextContent("Extra Transforms to Expose", "Select the list of transforms to expose in the optimized GameObject hierarchy.");
+            public static readonly GUIContent ImportMessages = EditorGUIUtility.TrTextContent("Import Messages");
+            public static readonly GUIContent ExtraExposedTransform = EditorGUIUtility.TrTextContent("Extra Transforms to Expose", "Select the list of transforms to expose in the optimized GameObject hierarchy.");
         }
 
         public ModelImporterRigEditor(AssetImporterEditor panelContainer)
@@ -552,8 +554,9 @@ With this option, this model will not create any avatar but only import animatio
         // Models using the Human animation type still need to be able to fetch their matching referenced clips
         // and the editor needs to react when referenced clips are imported. This is done through this asset
         // post-processor
-        class ReferencedClipsPostProcessor : AssetPostprocessor
+        partial class ReferencedClipsPostProcessor : AssetPostprocessor
         {
+            [AutoStaticsCleanupOnCodeReload]
             public static event Action<List<string>> ReferencedClipsChanged;
 
             static void OnPostprocessAllAssets(string[] importedAssets, string[] deletedAssets, string[] movedAssets, string[] movedFromAssetPaths, bool didDomainReload)

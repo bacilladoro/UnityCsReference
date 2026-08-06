@@ -4,6 +4,7 @@
 
 using UnityEngine;
 using UnityEngine.UIElements;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -39,7 +40,9 @@ namespace UnityEditor
         Vector2 m_LastWantedSize;
         Rect m_ActivatorRect;
         PopupLocation[] m_LocationPriorityOrder;
+        [NoAutoStaticsCleanup] // transient timestamp used to debounce reopening; safe to persist
         static double s_LastClosedTime;
+        [NoAutoStaticsCleanup] // transient activator rect for reopen positioning; safe to persist
         static Rect s_LastActivatorRect;
         VisualElement m_UserContent;
 

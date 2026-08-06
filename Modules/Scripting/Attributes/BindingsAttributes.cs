@@ -212,9 +212,6 @@ namespace UnityEngine.Bindings
     {
     }
 
-    [AttributeUsage(AttributeTargets.Parameter | AttributeTargets.ReturnValue)]
-    [VisibleToOtherModules]
-    [Obsolete("This attribute is not supported - consider using blittable types or supported marshaling - or if native code requires a ScriptingObjectPtr use [UnityMarshalAs(NativeType.ScriptingObjectPtr)]", error: true)]
     /// <summary>
     /// This attribute is no longer supported.  For GC safety types will be marshalled in some way
     /// If possible rely on the supported marshaling, or blittable types
@@ -222,6 +219,9 @@ namespace UnityEngine.Bindings
     /// If native code needs a GCHandle use GCHandle marshalling [UnityMarshalAs(NativeType.GCHandle, GCHandleOptions = /* See below docs for GCHandleOptions below */)]
     /// See https://internaldocs.unity.com/version/neutron/main/index.html or #devs-bindings for more information
     /// </summary>
+    [AttributeUsage(AttributeTargets.Parameter | AttributeTargets.ReturnValue)]
+    [VisibleToOtherModules]
+    [Obsolete("This attribute is not supported - consider using blittable types or supported marshaling - or if native code requires a ScriptingObjectPtr use [UnityMarshalAs(NativeType.ScriptingObjectPtr)]", error: true)]
     class UnmarshalledAttribute : Attribute, IBindingsAttribute
     {
         public UnmarshalledAttribute()
@@ -437,7 +437,7 @@ namespace UnityEngine.Bindings
     }
 
     /// <summary>
-    // Prevents the bindings generator from generating bindings method this is applied to.
+    /// Prevents the bindings generator from generating bindings method this is applied to.
     /// </summary>
     [AttributeUsage(AttributeTargets.Method, Inherited = false)]
     [VisibleToOtherModules]

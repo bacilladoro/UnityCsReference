@@ -88,14 +88,8 @@ namespace UnityEditor.PackageManager.UI.Internal
                 if (versions.imported != null)
                     return PackageState.Imported;
 
-                if (versions.importAvailable != null)
-                    return PackageState.ImportAvailable;
-
                 if (versions.installed != null)
                     return PackageState.Installed;
-
-                if (primary.HasTag(PackageTag.LegacyFormat))
-                    return PackageState.DownloadAvailable;
 
                 return PackageState.None;
             }

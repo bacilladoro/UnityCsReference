@@ -9,7 +9,6 @@ using Unity.Hierarchy;
 using Unity.Hierarchy.Editor;
 using UnityEditor;
 using UnityEditor.UIElements;
-using UnityEngine.Pool;
 using UnityEngine.UIElements;
 using System.IO;
 using Unity.Scripting.LifecycleManagement;
@@ -22,15 +21,13 @@ namespace Unity.UIToolkit.Editor;
 [UsedImplicitly]
 internal sealed partial class HierarchyVisualElementHandler : VisualElementNodeTypeHandler
 {
-    [OnCodeLoaded, UsedImplicitly]
-    private static void RegisterHierarchyHandlers()
-    {
-        HierarchyWindow.RegisterNodeTypeHandler<HierarchyVisualElementHandler>();
-    }
+    public const string NodeTypeName = "VisualElementHierarchyHandler";
 
     [InitializeOnLoadMethod, UsedImplicitly]
     private static void RegisterStageHandlers()
     {
+        if (StageUtility.GetCurrentStage() is MainStage)
+            HierarchyWindow.RegisterNodeTypeHandler<HierarchyVisualElementHandler>();
         StageNavigationManager.instance.stageChanging += OnStageWillChange;
     }
 
@@ -50,27 +47,47 @@ internal sealed partial class HierarchyVisualElementHandler : VisualElementNodeT
     private HierarchyGameObjectHandler m_GameObjectHandler;
 
     public HierarchyVisualElementHandler()
-        : base(new HierarchySelectionHandler())
     {
-        UIElementsRuntimeUtility.onCreatePanel += RegisterPanelIfEnabled;
-        UIElementsRuntimeUtility.onWillDestroyPanel += UnregisterPanelIfEnabled;
+        var registry = VisualElementSelectionRegistry.Instance;
+        if (registry != null)
+        {
+            registry.PanelTracked += RegisterPanel;
+            registry.PanelUntracked += UnregisterPanel;
+        }
+    }
 
-        UIToolkitAuthoringSettings.EnableInSceneAuthoringChanged += EnableHierarchyIntegration;
+    /// <inheritdoc cref="HierarchyNodeTypeHandlerBase.GetNodeTypeName"/>
+    public override string GetNodeTypeName()
+    {
+        return NodeTypeName;
     }
 
     protected override void Initialize()
     {
         base.Initialize();
         m_GameObjectHandler = Hierarchy.GetNodeTypeHandler<HierarchyGameObjectHandler>();
-        EnableHierarchyIntegration(UIToolkitAuthoringSettings.EnableInSceneUIAuthoring, false);
+
+        var registry = VisualElementSelectionRegistry.Instance;
+        if (registry != null)
+        {
+            // Register already tracked panels in case the registry was already initialized. That way, we won't
+            // process the same panel more than once.
+            var trackedPanels = registry.TrackedScenePanels;
+            for (var i = 0; i < trackedPanels.Count; ++i)
+                RegisterPanel(trackedPanels[i]);
+            registry.EnsureInitialized();
+        }
     }
 
     protected override void Dispose(bool disposing)
     {
         base.Dispose(disposing);
-        UIElementsRuntimeUtility.onCreatePanel -= RegisterPanelIfEnabled;
-        UIElementsRuntimeUtility.onWillDestroyPanel -= UnregisterPanelIfEnabled;
-        UIToolkitAuthoringSettings.EnableInSceneAuthoringChanged -= EnableHierarchyIntegration;
+        var registry = VisualElementSelectionRegistry.Instance;
+        if (registry != null)
+        {
+            registry.PanelTracked -= RegisterPanel;
+            registry.PanelUntracked -= UnregisterPanel;
+        }
     }
 
     protected override NodeCreationType ShouldCreateNode(VisualElement element)
@@ -78,6 +95,21 @@ internal sealed partial class HierarchyVisualElementHandler : VisualElementNodeT
         return element is PanelRootElement
             ? NodeCreationType.CreateChildren
             : base.ShouldCreateNode(element);
+    }
+
+    protected override bool TryGetScopeKey(VisualElement element, out string scopeKey)
+    {
+        scopeKey = null;
+
+        // Scene documents are scoped by their owning panel component: multiple documents in one
+        // panel (or two instances of the same UXML) must not collide on identical in-document paths.
+        var rootElement = element as IPanelComponentRootElement
+                          ?? element?.GetFirstAncestorOfType<IPanelComponentRootElement>();
+        if (rootElement?.panelComponent is not UnityEngine.Object componentObject || !componentObject)
+            return false;
+
+        scopeKey = GetGlobalObjectIdScopeKey(componentObject);
+        return !string.IsNullOrEmpty(scopeKey);
     }
 
     protected override string GetDisplayName(HierarchyView view, in HierarchyNode node, VisualElement target)
@@ -130,6 +162,10 @@ internal sealed partial class HierarchyVisualElementHandler : VisualElementNodeT
 
     protected override void PopulateContextMenu(HierarchyView view, in HierarchyNode node, VisualElement element, DropdownMenu menu)
     {
+        menu.AppendAction("Frame Selection", _ => RequestFramingCommand.Execute(CommandSources.Hierarchy, element, orientToFace: false));
+        menu.AppendAction("Frame and Align to View", _ => RequestFramingCommand.Execute(CommandSources.Hierarchy, element, orientToFace: true));
+        menu.AppendSeparator();
+
         IPanelComponent panelComponent;
         VisualTreeAsset vtaSource;
         VisualElementAsset vea;
@@ -261,61 +297,6 @@ internal sealed partial class HierarchyVisualElementHandler : VisualElementNodeT
         }
 
         return (vtAssets, instances);
-    }
-
-    private void EnableHierarchyIntegration(bool value)
-    {
-        EnableHierarchyIntegration(value, true);
-    }
-
-    private void EnableHierarchyIntegration(bool enabled, bool ping)
-    {
-        if (enabled)
-            RegisterExistingRuntimePanels(ping);
-        else
-            UnregisterAllPanels();
-    }
-
-    private void RegisterPanelIfEnabled(IRuntimePanel panel)
-    {
-        if (UIToolkitAuthoringSettings.EnableInSceneUIAuthoring)
-            RegisterPanel((Panel)panel);
-    }
-
-    private void UnregisterPanelIfEnabled(IRuntimePanel panel)
-    {
-        if (UIToolkitAuthoringSettings.EnableInSceneUIAuthoring)
-            UnregisterPanel((Panel)panel);
-    }
-
-    private void RegisterExistingRuntimePanels(bool pingRoot = false)
-    {
-        using var listHandle = ListPool<Panel>.Get(out var panels);
-        UIElementsUtility.GetAllPanels(panels, ContextType.Player);
-        for (var i = 0; i < panels.Count; ++i)
-        {
-            if (panels[i] is BaseRuntimePanel panel)
-            {
-                // Although the Panel Element can create a runtime panel, we don't want them showing
-                // up in the main stage for now.
-                if (panel.ownerObject is PanelElement.PanelOwner)
-                    continue;
-                RegisterPanel(panel);
-
-                if (pingRoot)
-                {
-                    var selectionObject = panel.visualTree.Q<PanelRendererRootElement>()?.GetSelectionObject();
-                    if (selectionObject)
-                    {
-                        var id = selectionObject.GetEntityId();
-                        EditorApplication.delayCall += () => EditorGUIUtility.PingObject(id);
-                        pingRoot = false;
-                    }
-                }
-            }
-        }
-
-
     }
 
     private static void OnStageWillChange(Stage previousStage, Stage nextStage)

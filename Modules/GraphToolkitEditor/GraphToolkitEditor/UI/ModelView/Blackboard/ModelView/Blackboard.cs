@@ -888,14 +888,18 @@ namespace Unity.GraphToolkit.Editor
             var provider = BlackboardView.GetItemLibraryHelper().GetItemDatabaseProvider();
             if (provider is DefaultDatabaseProvider defaultProvider)
             {
-                var supportedTypes = defaultProvider.SupportedTypes;
+                var supportedTypes = defaultProvider.AvailableVariableTypes;
 
                 if (supportedTypes.Count > 0 &&
                     !typeHandle.IsCustomTypeHandle() &&
                     typeHandle == (Model as BlackboardContentModel)?.DefaultVariableInfos.TypeHandle &&
                     !supportedTypes.Contains(typeHandle.Resolve()))
                 {
-                    typeHandle = supportedTypes[0].GenerateTypeHandle();
+                    foreach (var supportedType in supportedTypes)
+                    {
+                        typeHandle = supportedType.GenerateTypeHandle();
+                        break;
+                    }
                 }
             }
 

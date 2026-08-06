@@ -21,6 +21,7 @@ namespace UnityEditor.Audio
 
     [NativeHeader("Editor/Src/Audio/Mixer/AudioMixerSnapshotController.h")]
     [NativeHeader("Modules/AudioEditor/ScriptBindings/AudioMixerSnapshotController.bindings.h")]
+    [global::UnityEngine.NativeClass("AudioMixerSnapshotController", PersistentTypeId = 245)]
     [HelpURL("class-AudioMixer")]
     internal class AudioMixerSnapshotController : AudioMixerSnapshot
     {

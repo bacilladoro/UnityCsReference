@@ -9,18 +9,82 @@ using UnityEngine.Scripting;
 
 namespace UnityEngine.Android
 {
-    /// <summary>
-    /// Mirrors https://developer.android.com/reference/android/view/WindowInsetsController instance.
-    /// </summary>
+    ///<summary>Provides control over the windows that generate insets.</summary>
+    ///<remarks>These windows represent the system UI elements for system bars, such as the status and navigation bars. Use this class to determine the current state of the system bars, control their visibility and behavior at runtime, allowing your application to make full use of the device screen space.</remarks>
+    ///<example>
+    ///  <code><![CDATA[using UnityEngine;
+    ///using UnityEngine.Android;
+    ///
+    ///public class AndroidInsets : MonoBehaviour
+    ///{
+    ///    public string GetInsetsVisibility(AndroidWindowInsets.Type type)
+    ///    {
+    ///        if (AndroidApplication.currentWindowInsets == null)
+    ///            return "Unknown";
+    ///        return AndroidApplication.currentWindowInsets.IsVisible(type) ? "Visible" : "Hidden";
+    ///    }
+    ///
+    ///    public void OnGUI()
+    ///    {
+    ///        var options = new[] { GUILayout.Height(100), GUILayout.ExpandWidth(true) };
+    ///        GUILayout.Space(100);
+    ///        GUILayout.Label($"Status Bars: {GetInsetsVisibility(AndroidWindowInsets.Type.StatusBars)}", options);
+    ///        GUILayout.Label($"Navigation Bars: {GetInsetsVisibility(AndroidWindowInsets.Type.NavigationBars)}", options);
+    ///
+    ///        var insets = AndroidApplication.currentWindowInsets;
+    ///        GUILayout.BeginHorizontal(GUILayout.Width(Screen.width));
+    ///        if (GUILayout.Button("Show Status Bars", options))
+    ///            insets.Show(AndroidWindowInsets.Type.StatusBars);
+    ///        if (GUILayout.Button("Hide Status Bars", options))
+    ///            insets.Hide(AndroidWindowInsets.Type.StatusBars);
+    ///        GUILayout.EndHorizontal();
+    ///
+    ///        GUILayout.BeginHorizontal(GUILayout.Width(Screen.width));
+    ///        if (GUILayout.Button("Show Navigation Bars", options))
+    ///            insets.Show(AndroidWindowInsets.Type.NavigationBars);
+    ///        if (GUILayout.Button("Hide Navigation Bars", options))
+    ///            insets.Hide(AndroidWindowInsets.Type.NavigationBars);
+    ///        GUILayout.EndHorizontal();
+    ///
+    ///        GUILayout.Label($"System Bars Behavior: {insets.GetSystemBarsBehavior()}", options);
+    ///        GUILayout.BeginHorizontal(GUILayout.Width(Screen.width));
+    ///        if (GUILayout.Button("Default", options))
+    ///            insets.SetSystemBarsBehavior(AndroidWindowInsets.SystemBarsBehavior.Default);
+    ///        if (GUILayout.Button("ShowTransientBarsBySwipe", options))
+    ///            insets.SetSystemBarsBehavior(AndroidWindowInsets.SystemBarsBehavior.ShowTransientBarsBySwipe);
+    ///        GUILayout.EndHorizontal();
+    ///    }
+    ///}
+    ///]]></code>
+    ///</example>
+    ///<seealso href="https://developer.android.com/develop/ui/compose/system/insets">About window insets (Android)</seealso>
     [NativeHeader("Modules/AndroidJNI/Public/AndroidWindowInsets.bindings.h")]
     [StaticAccessor("AndroidWindowInsets", StaticAccessorType.DoubleColon)]
     [RequiredByNativeCode]
     public class AndroidWindowInsets
     {
+        ///<summary>Options for specifying different types of system UI elements that generate window insets.</summary>
+        ///<remarks>Use this enum with <see cref="AndroidWindowInsets.Hide" />, <see cref="AndroidWindowInsets.IsVisible" />, and <see cref="AndroidWindowInsets.Show" /> methods to retrieve and modify the current state of the status bar, navigation bar, or both at runtime.</remarks>
+        ///<example>
+        ///  <code><![CDATA[using UnityEngine;
+        ///using UnityEngine.Android;
+        ///
+        ///public class Controller : MonoBehaviour
+        ///{
+        ///    public void Start()
+        ///    {
+        ///        AndroidApplication.currentWindowInsets.Show(AndroidWindowInsets.Type.StatusBars | AndroidWindowInsets.Type.NavigationBars);
+        ///    }
+        ///}]]></code>
+        ///</example>
         [Flags]
         public enum Type
         {
+            ///<summary>Represents the area of the screen the system status bar occupies at the top of the screen.</summary>
+            ///<remarks>This area displays information, such as time, battery level, and notifications amongst other system status information.</remarks>
             StatusBars = 1 << 0,
+            ///<summary>Represents the area of the screen the system navigation elements occupy.</summary>
+            ///<remarks>This area includes the gesture bar or the traditional navigation buttons.</remarks>
             NavigationBars = 1 << 1,
             /*
             CaptionBar = 1 << 2,
@@ -32,10 +96,29 @@ namespace UnityEngine.Android
             */
         }
 
+        ///<summary>Options for controlling the behavior of system bars, such as the status and navigation bars.</summary>
+        ///<remarks>These options determine how system gestures, such as swiping from screen edges, reveal the system bars when hidden. Use this enum with <see cref="AndroidWindowInsets.GetSystemBarsBehavior" /> and <see cref="AndroidWindowInsets.SetSystemBarsBehavior" /> methods to control the system bars behavior for your application window at runtime.</remarks>
+        ///<example>
+        ///  <code><![CDATA[using UnityEngine;
+        ///using UnityEngine.Android;
+        ///
+        ///public class Controller : MonoBehaviour
+        ///{
+        ///    public void Start()
+        ///    {
+        ///        AndroidApplication.currentWindowInsets.SetSystemBarsBehavior(AndroidWindowInsets.SystemBarsBehavior.ShowTransientBarsBySwipe);
+        ///    }
+        ///}]]></code>
+        ///</example>
         public enum SystemBarsBehavior : int
         {
+            ///<summary>The system bars behavior is undefined, for example, when running on unsupported Android versions, API 29 or earlier.</summary>
             Undefined = -1,
+            ///<summary>Reveals the system bars with system gestures, such as swiping from the edge of the screen where the bar is hidden.</summary>
+            ///<remarks>The system bars remain visible until those are hidden again by calling <see cref="Android.AndroidWindowInsets.Hide" />.</remarks>
             Default = 1,
+            ///<summary>Reveals the system bars temporarily with system gestures, such as swiping from the edge of the screen where the bar is hidden.</summary>
+            ///<remarks>These temporary system bars overlay app content, might have some transparency, and automatically hide after a short timeout.</remarks>
             ShowTransientBarsBySwipe = 2
         }
 
@@ -68,6 +151,27 @@ namespace UnityEngine.Android
 
         private static extern void InternalShow(Type type);
 
+        ///<summary>Displays a set of windows that generate insets on screen.</summary>
+        ///<remarks>Use this method to display the system bars, such as the status and navigation bars at runtime.
+        ///
+        ///
+        ///
+        ///The following code example demonstrates how to display both the status and navigation bars at runtime.</remarks>
+        ///<example>
+        ///  <code><![CDATA[using UnityEngine;
+        ///using UnityEngine.Android;
+        ///
+        ///public class Controller : MonoBehaviour
+        ///{
+        ///    public void Start()
+        ///    {
+        ///        AndroidApplication.currentWindowInsets.Show(AndroidWindowInsets.Type.NavigationBars | AndroidWindowInsets.Type.StatusBars);
+        ///    }
+        ///}]]></code>
+        ///</example>
+        ///<seealso cref="AndroidApplication.onWindowInsetsChanged" />
+        ///<seealso cref="AndroidApplication.currentWindowInsets" />
+        ///<seealso cref="Android.AndroidWindowInsets.Type">Type</seealso>
         public void Show(Type type)
         {
             InternalShow(type);
@@ -75,6 +179,23 @@ namespace UnityEngine.Android
 
         private static extern void InternalHide(Type type);
 
+        ///<summary>Hides a set of windows that generate insets.</summary>
+        ///<remarks>Use this method to hide the system bars, allowing your application to use the available screen space when in full-screen mode.</remarks>
+        ///<example>
+        ///  <code><![CDATA[using UnityEngine;
+        ///using UnityEngine.Android;
+        ///
+        ///public class Controller : MonoBehaviour
+        ///{
+        ///    public void Start()
+        ///    {
+        ///        AndroidApplication.currentWindowInsets.Hide(AndroidWindowInsets.Type.NavigationBars | AndroidWindowInsets.Type.StatusBars);
+        ///    }
+        ///}]]></code>
+        ///</example>
+        ///<seealso cref="AndroidApplication.onWindowInsetsChanged" />
+        ///<seealso cref="AndroidApplication.currentWindowInsets" />
+        ///<seealso cref="Android.AndroidWindowInsets.Type">Type</seealso>
         public void Hide(Type type)
         {
             InternalHide(type);
@@ -87,6 +208,23 @@ namespace UnityEngine.Android
             return InternalGetInsets(m_NativeHandle, type);
         }
 
+        ///<summary>Indicates whether a set of windows that might generate insets is currently visible on screen, regardless of whether they overlap with your application window.</summary>
+        ///<remarks>This method allows you to check whether the system UI elements for the status and navigation bars are currently visible or hidden on the screen.</remarks>
+        ///<example>
+        ///  <code><![CDATA[using UnityEngine;
+        ///using UnityEngine.Android;
+        ///
+        ///public class Controller : MonoBehaviour
+        ///{
+        ///    public void Start()
+        ///    {
+        ///        var insets = AndroidApplication.currentWindowInsets;
+        ///        Debug.Log("NavigationBars: " + insets.IsVisible(AndroidWindowInsets.Type.NavigationBars));
+        ///        Debug.Log("StatusBars: " + insets.IsVisible(AndroidWindowInsets.Type.StatusBars));
+        ///    }
+        ///}]]></code>
+        ///</example>
+        ///<seealso cref="Android.AndroidWindowInsets.Type">Type</seealso>
         public bool IsVisible(Type type)
         {
             var insets = GetInsets(type);
@@ -96,6 +234,23 @@ namespace UnityEngine.Android
 
         private static extern void InternalSetSystemBarsBehavior(int behavior);
 
+        ///<summary>Controls the behavior of system bars.</summary>
+        ///<remarks>This method allows you to configure how the system bars, such as the status and navigation bars, should respond to system gestures in your application.
+        ///
+        ///**Note:** Only supported on Android 11 (API 30) or later. Has no effect on Android 10 (API 29) or earlier versions.</remarks>
+        ///<example>
+        ///  <code><![CDATA[using UnityEngine;
+        ///using UnityEngine.Android;
+        ///
+        ///public class Controller : MonoBehaviour
+        ///{
+        ///    public void Start()
+        ///    {
+        ///        AndroidApplication.currentWindowInsets.SetSystemBarsBehavior(AndroidWindowInsets.SystemBarsBehavior.ShowTransientBarsBySwipe);
+        ///    }
+        ///}]]></code>
+        ///</example>
+        ///<seealso cref="Android.AndroidWindowInsets.SystemBarsBehavior">SystemBarsBehavior</seealso>
         public void SetSystemBarsBehavior(SystemBarsBehavior behavior)
         {
             InternalSetSystemBarsBehavior((int)behavior);
@@ -103,6 +258,20 @@ namespace UnityEngine.Android
 
         private static extern int InternalGetSystemBarsBehavior();
 
+        ///<summary>Retrieves the configured behavior of system bars, such as status and navigation bars.</summary>
+        ///<remarks>This behavior determines how system gestures reveal the system bars when hidden at runtime.</remarks>
+        ///<example>
+        ///  <code><![CDATA[using UnityEngine;
+        ///using UnityEngine.Android;
+        ///
+        ///public class Controller : MonoBehaviour
+        ///{
+        ///    public void Start()
+        ///    {
+        ///        Debug.Log("SystemBarsBehavior: " + AndroidApplication.currentWindowInsets.GetSystemBarsBehavior());
+        ///    }
+        ///}]]></code>
+        ///</example>
         public SystemBarsBehavior GetSystemBarsBehavior()
         {
             return (SystemBarsBehavior)InternalGetSystemBarsBehavior();

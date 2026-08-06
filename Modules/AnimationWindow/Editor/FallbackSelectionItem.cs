@@ -39,7 +39,7 @@ namespace UnityEditor
 
         public IAnimationWindowClip[] GetClips() => Array.Empty<IAnimationWindowClip>();
 
-        public IAnimationWindowClip CreateNewClip() => null;
+        public IAnimationWindowClip CreateNewClip(string suggestedName = null) => null;
 
         public bool InitializeSelection() =>
             MecanimUtilities.InitializeGameObjectForAnimation(gameObject);

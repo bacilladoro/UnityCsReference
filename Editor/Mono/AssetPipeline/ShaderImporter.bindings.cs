@@ -7,6 +7,7 @@ using UnityEngine.Bindings;
 
 namespace UnityEditor
 {
+    [global::UnityEngine.NativeClass("ShaderImporter", PersistentTypeId = 1007)]
     [NativeHeader("Editor/Src/AssetPipeline/ShaderImporter.h")]
     public sealed partial class ShaderImporter : AssetImporter
     {

@@ -13,7 +13,7 @@ namespace UnityEditorInternal
         private AnimationWindowCurve[] m_Curves;
         private List<AnimationWindowKeyframe> m_Keys;
 
-        public static GUIStyle dopekeyStyle = "Dopesheetkeyframe";
+        public static readonly GUIStyle dopekeyStyle = "Dopesheetkeyframe";
 
         public Rect position;
         public System.Type objectType;

@@ -33,6 +33,7 @@ namespace UnityEngine.UIElements
 
     [NativeHeader("Modules/UIElements/Core/Native/UIAnimationBinder.h")]
     [NativeHeader("Modules/UIElements/Core/Native/UIAnimationClip.h")]
+    [NativeClass("UIAnimationBinder", PersistentTypeId = 0x16C646DF)]
     [VisibleToOtherModules("UnityEditor.UIToolkitAuthoringModule")]
     internal sealed partial class UIAnimationBinder : Object, IValueAnimationUpdate
     {
@@ -63,7 +64,7 @@ namespace UnityEngine.UIElements
         /// <summary>
         /// Editor-only post-sample notification. Fired after every <see cref="SampleClipForEditor"/>
         /// call, exclusively from editor-side preview/seek paths (the runtime
-        /// <see cref="VisualTreeAnimationUpdater"/> playback path keeps using the bare
+        /// <see cref="VisualElementAnimationSystem"/> playback path keeps using the bare
         /// <see cref="SampleClip"/> extern, so players incur zero overhead).
         /// <para>
         /// Used by <c>VisualElementAnimationWindowController</c> to register every per-element

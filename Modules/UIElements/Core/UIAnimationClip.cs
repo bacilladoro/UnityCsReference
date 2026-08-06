@@ -18,6 +18,7 @@ namespace UnityEngine.UIElements
     /// </remarks>
     [NativeHeader("Modules/UIElements/Core/Native/UIAnimationClip.h")]
     [NativeHeader("Modules/UIElements/Core/Native/UIAnimationClip.bindings.h")]
+    [NativeClass("UIAnimationClip", PersistentTypeId = 0x175EDA4B)]
     public sealed class UIAnimationClip : Object
     {
         /// <summary>

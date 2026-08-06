@@ -11,6 +11,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Text;
 using System.Text.RegularExpressions;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEngine;
 using UnityEditor.Build.Reporting;
@@ -29,7 +30,9 @@ namespace UnityEditor
         [NonSerialized]
         public Thread m_listenerThread;
 
+        [NoAutoStaticsCleanup] // compiled Regex (whitelisted), immutable across reloads, holds no user-code refs
         public static Regex regex = new Regex(@"/unity/build-report/(?<reportid>\w+?)/(?<request>\w+)(?<args>(?:/\w*)+/?)?$");
+        [NoAutoStaticsCleanup] // compiled Regex (whitelisted), immutable across reloads, holds no user-code refs
         public static Regex regexArgs = new Regex(@"/(?<type>\w+?)(?:/(?<index>\w+?))?(?:/(?<method>\w+?))?$");
         public static BuildReport GetReport(string reportId)
         {

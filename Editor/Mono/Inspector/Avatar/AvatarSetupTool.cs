@@ -8,6 +8,7 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.Scripting;
 using Object = UnityEngine.Object;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -109,11 +110,11 @@ namespace UnityEditor
 
             public const int kIconSize = 19;
 
-            static Color kBoneValid = new Color(0, 0.75f, 0, 1.0f);
-            static Color kBoneInvalid = new Color(1.0f, 0.3f, 0.25f, 1.0f);
-            static Color kBoneInactive = Color.gray;
-            static Color kBoneSelected = new Color(0.4f, 0.7f, 1.0f, 1.0f);
-            static Color kBoneDrop = new Color(0.1f, 0.7f, 1.0f, 1.0f);
+            static readonly Color kBoneValid = new Color(0, 0.75f, 0, 1.0f);
+            static readonly Color kBoneInvalid = new Color(1.0f, 0.3f, 0.25f, 1.0f);
+            static readonly Color kBoneInactive = Color.gray;
+            static readonly Color kBoneSelected = new Color(0.4f, 0.7f, 1.0f, 1.0f);
+            static readonly Color kBoneDrop = new Color(0.1f, 0.7f, 1.0f, 1.0f);
             public void BoneDotGUI(Rect rect, Rect selectRect, int boneIndex, bool doClickSelect, bool doDragDrop, bool doDeleteKey, SerializedObject serializedObject, AvatarMappingEditor editor)
             {
                 int id = GUIUtility.GetControlID(FocusType.Passive, rect);
@@ -281,17 +282,18 @@ namespace UnityEditor
             }
         }
 
-        private static string sHuman = "m_HumanDescription.m_Human";
+        private static readonly string sHuman = "m_HumanDescription.m_Human";
 
-        internal static string sSkeleton = "m_HumanDescription.m_Skeleton";
-        internal static string sName = "m_Name";
-        internal static string sParentName = "m_ParentName";
-        internal static string sPosition = "m_Position";
-        internal static string sRotation = "m_Rotation";
-        internal static string sScale = "m_Scale";
-        internal static string sHumanName = "m_HumanName";
-        internal static string sBoneName = "m_BoneName";
+        internal static readonly string sSkeleton = "m_HumanDescription.m_Skeleton";
+        internal static readonly string sName = "m_Name";
+        internal static readonly string sParentName = "m_ParentName";
+        internal static readonly string sPosition = "m_Position";
+        internal static readonly string sRotation = "m_Rotation";
+        internal static readonly string sScale = "m_Scale";
+        internal static readonly string sHumanName = "m_HumanName";
+        internal static readonly string sBoneName = "m_BoneName";
 
+        [NoAutoStaticsCleanup]
         private static BonePoseData[] sBonePoses = new BonePoseData[]
         {
             new BonePoseData(Vector3.up, true, 15),  // Hips,

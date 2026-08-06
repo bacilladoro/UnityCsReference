@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEditor.TerrainTools;
 using UnityEngine.Rendering;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -520,6 +521,7 @@ namespace UnityEditor
             };
         }
 
+        [NoAutoStaticsCleanup] // lazy GUIContent/GUIStyle styles holder; editor infra, no user refs
         private static DetailWizardSharedStyles s_Styles = null;
 
         public static DetailWizardSharedStyles Instance

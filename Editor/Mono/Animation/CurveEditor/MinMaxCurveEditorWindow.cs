@@ -4,10 +4,11 @@
 
 using System;
 using UnityEngine;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
-    internal class MinMaxCurveEditorWindow : EditorWindow
+    internal partial class MinMaxCurveEditorWindow : EditorWindow
     {
         const int k_PresetsHeight = 46;
         const float k_WindowMinSize = 240;
@@ -18,9 +19,12 @@ namespace UnityEditor
         const float k_PresetSwatchSeperation = 5;
         const float k_PresetsDropdownButtonSize = 20;
 
+        [AutoStaticsCleanupOnCodeReload]
         static MinMaxCurveEditorWindow s_SharedMinMaxCurveEditor;
 
+        [AutoStaticsCleanupOnCodeReload]
         static CurveEditorWindow.Styles s_Styles;
+        static CurveEditorWindow.Styles Styles => s_Styles ??= new();
 
         CurveEditor m_CurveEditor;
 
@@ -48,6 +52,7 @@ namespace UnityEditor
         public AnimationCurve minCurve { get { return m_MinCurve; } }
         public AnimationCurve maxCurve { get { return m_MaxCurve; } }
 
+        [AutoStaticsCleanupOnCodeReload]
         public static string xAxisLabel { get; set; } = "time";
 
         public static bool visible
@@ -274,7 +279,7 @@ namespace UnityEditor
 
         void DrawPresetSwatchArea()
         {
-            GUI.Box(new Rect(0, position.height - k_PresetsHeight, position.width, k_PresetsHeight), "", s_Styles.curveSwatchArea);
+            GUI.Box(new Rect(0, position.height - k_PresetsHeight, position.width, k_PresetsHeight), "", Styles.curveSwatchArea);
             Color curveColor = m_Color;
             curveColor.a *= 0.6f;
             float yPos = position.height - k_PresetsHeight + (k_PresetsHeight - k_PresetSwatchHeight) * 0.5f;
@@ -287,7 +292,7 @@ namespace UnityEditor
                 {
                     Rect swatchRect = new Rect(k_PresetSwatchMargin + (k_PresetSwatchWidth + k_PresetSwatchSeperation) * i, yPos, k_PresetSwatchWidth, k_PresetSwatchHeight);
                     guiContent.tooltip = curveLibrary.GetName(i);
-                    if (GUI.Button(swatchRect, guiContent, s_Styles.curveSwatch))
+                    if (GUI.Button(swatchRect, guiContent, Styles.curveSwatch))
                     {
                         AnimationCurve max = m_CurveEditor.animationCurves[0].curve;
                         AnimationCurve min = m_CurveEditor.animationCurves.Length > 1 ? m_CurveEditor.animationCurves[1].curve : null;
@@ -352,9 +357,6 @@ namespace UnityEditor
                 m_MaxCurve = null;
             }
 
-            if (s_Styles == null)
-                s_Styles = new CurveEditorWindow.Styles();
-
             // Curve Editor
             m_CurveEditor.rect = GetCurveEditorRect();
             m_CurveEditor.hRangeLocked = Event.current.shift;
@@ -362,7 +364,7 @@ namespace UnityEditor
 
             GUI.changed = false;
 
-            GUI.Label(m_CurveEditor.drawRect, GUIContent.none, s_Styles.curveEditorBackground);
+            GUI.Label(m_CurveEditor.drawRect, GUIContent.none, Styles.curveEditorBackground);
             m_CurveEditor.OnGUI();
 
             DrawPresetSwatchArea();

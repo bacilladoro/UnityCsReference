@@ -14,6 +14,7 @@ namespace UnityEngine.UIElements
     [Serializable]
     public partial struct Background : IEquatable<Background>
     {
+        // EntityId-only round-trip for legacy call sites that don't carry gradient data.
         [VisibleToOtherModules("UnityEditor.UIToolkitAuthoringModule")]
         internal static Background From(in EntityId entityId)
         {
@@ -24,8 +25,19 @@ namespace UnityEngine.UIElements
         [VisibleToOtherModules("UnityEditor.UIToolkitAuthoringModule")]
         internal static void To(in Background background, out EntityId entityId)
         {
+            // Gradient-only backgrounds yield EntityId.None; the renderer bakes on demand.
             var obj = background.GetSelectedImage();
             entityId = obj?.GetEntityId() ?? EntityId.None;
+        }
+
+        // Compound-storage round-trip: reconstructs both the asset slot and the gradient metadata.
+        [VisibleToOtherModules("UnityEditor.UIToolkitAuthoringModule")]
+        internal static Background From(in UnmanagedBackground bg)
+        {
+            var result = FromObject(Resources.EntityIdToObject(bg.imageEntityId));
+            if (bg.gradient.Count > 0)
+                result.m_Gradient = bg.gradient[0].ToManaged();
+            return result;
         }
 
         [SerializeField]
@@ -44,6 +56,7 @@ namespace UnityEngine.UIElements
                 m_Sprite = null;
                 m_RenderTexture = null;
                 m_VectorImage = null;
+                m_Gradient = default;
             }
         }
 
@@ -63,6 +76,7 @@ namespace UnityEngine.UIElements
                 m_Sprite = value;
                 m_RenderTexture = null;
                 m_VectorImage = null;
+                m_Gradient = default;
             }
         }
 
@@ -82,6 +96,7 @@ namespace UnityEngine.UIElements
                 m_Sprite = null;
                 m_RenderTexture = value;
                 m_VectorImage = null;
+                m_Gradient = default;
             }
         }
 
@@ -101,6 +116,32 @@ namespace UnityEngine.UIElements
                 m_Sprite = null;
                 m_RenderTexture = null;
                 m_VectorImage = value;
+                m_Gradient = default;
+            }
+        }
+
+        [SerializeField]
+        BackgroundGradient m_Gradient;
+        /// <summary>
+        /// The color gradient to display as a background, mutually exclusive with the asset slots.
+        /// Setting an empty gradient (see <see cref="BackgroundGradient.IsEmpty"/>) clears the slot
+        /// without disturbing any assigned asset.
+        /// </summary>
+        public BackgroundGradient gradient
+        {
+            get { return m_Gradient; }
+            set
+            {
+                if (m_Gradient.Equals(value))
+                    return;
+                m_Gradient = value;
+                if (!value.IsEmpty())
+                {
+                    m_Texture = null;
+                    m_Sprite = null;
+                    m_RenderTexture = null;
+                    m_VectorImage = null;
+                }
             }
         }
 
@@ -114,6 +155,7 @@ namespace UnityEngine.UIElements
             m_Sprite = null;
             m_RenderTexture = null;
             m_VectorImage = null;
+            m_Gradient = default;
         }
 
         /// <summary>
@@ -154,6 +196,16 @@ namespace UnityEngine.UIElements
         public static Background FromVectorImage(VectorImage vi)
         {
             return new Background { vectorImage = vi };
+        }
+
+        /// <summary>
+        /// Creates a background from a <see cref="BackgroundGradient"/>.
+        /// </summary>
+        /// <param name="g">The gradient to use as a background. An empty gradient yields an empty background.</param>
+        /// <returns>A new background object.</returns>
+        public static Background FromGradient(BackgroundGradient g)
+        {
+            return new Background { gradient = g };
         }
 
         [VisibleToOtherModules("UnityEditor.UIToolkitAuthoringModule")]
@@ -199,12 +251,12 @@ namespace UnityEngine.UIElements
         }
 
         /// <summary>
-        /// Help verify whether an asset has been assigned or not.
+        /// Help verify whether an asset or gradient has been assigned or not.
         /// </summary>
-        /// <returns>True if no asset is assigned.</returns>
+        /// <returns>True if no asset and no gradient is assigned.</returns>
         public bool IsEmpty()
         {
-            return texture == null && sprite == null && vectorImage == null && renderTexture == null;
+            return texture == null && sprite == null && vectorImage == null && renderTexture == null && m_Gradient.IsEmpty();
         }
 
         /// <undoc/>
@@ -213,7 +265,8 @@ namespace UnityEngine.UIElements
             return lhs.texture == rhs.texture &&
                    lhs.sprite == rhs.sprite &&
                    lhs.renderTexture == rhs.renderTexture &&
-                   lhs.vectorImage == rhs.vectorImage;
+                   lhs.vectorImage == rhs.vectorImage &&
+                   lhs.m_Gradient.Equals(rhs.m_Gradient);
         }
 
         /// <undoc/>
@@ -259,11 +312,16 @@ namespace UnityEngine.UIElements
                 hashCode = hashCode * -1521134295 + renderTexture.GetHashCode();
             if (!ReferenceEquals(vectorImage, null))
                 hashCode = hashCode * -1521134295 + vectorImage.GetHashCode();
+            if (!m_Gradient.IsEmpty())
+                hashCode = hashCode * -1521134295 + m_Gradient.GetHashCode();
             return hashCode;
         }
 
         public override string ToString()
         {
+            // Gradient wins over the baked VectorImage: show the USS form, not the asset name.
+            if (!m_Gradient.IsEmpty())
+                return m_Gradient.ToString();
             if (texture != null)
                 return texture.ToString();
             if (sprite != null)

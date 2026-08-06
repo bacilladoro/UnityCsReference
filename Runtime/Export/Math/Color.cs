@@ -9,6 +9,7 @@ using UnityEngine.Scripting;
 using UnityEngine.Bindings;
 using System.Globalization;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEngine
 {
@@ -880,6 +881,7 @@ namespace UnityEngine
         #endregion
 
         internal static Dictionary<Color, string> defaultColorNames => m_defaultColorNames ??= InitializeColorNames();
+        [NoAutoStaticsCleanup] // lazy cache of fixed Color->name map; value-type keys/string values, no user refs, safe to persist
         static Dictionary<Color, string> m_defaultColorNames;
         static Dictionary<Color, string> InitializeColorNames()
         {

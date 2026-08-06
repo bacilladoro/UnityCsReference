@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using UnityEngine;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEditor.AssetPackage;
 using UnityEditorInternal;
@@ -13,7 +14,6 @@ using System.Text.RegularExpressions;
 using System.Linq;
 using System.IO;
 using UnityEditor.Web;
-using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -304,7 +304,7 @@ namespace UnityEditor
 
         internal string initialOpenURL;
 
-        [NoAutoStaticsCleanup]
+        [NoAutoStaticsCleanup] // singleton instance, lazily recreated on demand; safe to persist across reload
         private static AssetStoreContext s_Instance;
 
         // Some data is created through reflection in C++ and then

@@ -60,6 +60,7 @@ namespace UnityEngine
             m_Ptr = Init(this);
         }
 
+#pragma warning disable UA5000 // The Avoid Finalizer Analyzer produces compile errors for any new finalizers. This pre-existing finalizer declaration has been suppressed, but should be rewritten if possible.
         ~CullingGroup()
         {
             if (m_Ptr != IntPtr.Zero)
@@ -67,6 +68,7 @@ namespace UnityEngine
                 FinalizerFailure();
             }
         }
+#pragma warning restore UA5000
 
         [FreeFunction("CullingGroup_Bindings::Dispose", HasExplicitThis = true)]
         extern private void DisposeInternal();

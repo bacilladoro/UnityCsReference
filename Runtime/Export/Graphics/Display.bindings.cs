@@ -6,12 +6,13 @@ using System;
 using System.Collections;
 using UnityEngine.Bindings;
 using UnityEngine.Scripting;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEngine
 {
     [UsedByNativeCode]
     [NativeHeader("Runtime/Graphics/DisplayManager.h")]
-    public class Display
+    public partial class Display
     {
         internal IntPtr  nativeDisplay;
         internal Display()
@@ -158,10 +159,13 @@ namespace UnityEngine
             return vec;
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         public static Display[] displays    = new Display[1] { new Display() };
+        [AutoStaticsCleanupOnCodeReload]
         private static Display _mainDisplay = displays[0];
         public static Display   main        { get {return _mainDisplay; } }
 
+        [AutoStaticsCleanupOnCodeReload]
         private static int m_ActiveEditorGameViewTarget = 0;
 
         public static int activeEditorGameViewTarget  { get { return m_ActiveEditorGameViewTarget; } internal set { m_ActiveEditorGameViewTarget = value; } }
@@ -187,6 +191,7 @@ namespace UnityEngine
         }
 
         public delegate void DisplaysUpdatedDelegate();
+        [AutoStaticsCleanupOnCodeReload]
         public static event DisplaysUpdatedDelegate onDisplaysUpdated = null;
 
         [FreeFunction("UnityDisplayManager_DisplaySystemResolution")]

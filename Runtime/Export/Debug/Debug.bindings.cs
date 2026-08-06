@@ -11,6 +11,7 @@ using System.Diagnostics;
 using UnityEngine.Internal;
 using UnityEngine.Bindings;
 using UnityEngine.Scripting;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEngine
 {
@@ -55,10 +56,12 @@ namespace UnityEngine
     // Class containing methods to ease debugging while developing a game.
     public partial class Debug
     {
+        [NoAutoStaticsCleanup] // fixed fallback logger over native DebugLogHandler; no user-code refs, safe to persist
         // This logger is used by CallOverridenDebugHandler in case of an exception occurring
         // in the default s_Logger. This logger doesn't override ILogger.logHandler
         internal static readonly ILogger s_DefaultLogger = new Logger(new DebugLogHandler());
 
+        [AutoStaticsCleanupOnCodeReload]
         internal static ILogger s_Logger = new Logger(new DebugLogHandler());
         public static ILogger unityLogger => s_Logger;
 

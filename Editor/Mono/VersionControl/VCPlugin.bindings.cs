@@ -20,10 +20,12 @@ namespace UnityEditor.VersionControl
 
         internal ConfigField() {}
 
+#pragma warning disable UA5000 // The Avoid Finalizer Analyzer produces compile errors for any new finalizers. This pre-existing finalizer declaration has been suppressed, but should be rewritten if possible.
         ~ConfigField()
         {
             Dispose();
         }
+#pragma warning restore UA5000
 
         public void Dispose()
         {
@@ -72,10 +74,12 @@ namespace UnityEditor.VersionControl
 
         internal Plugin() {}
 
+#pragma warning disable UA5000 // The Avoid Finalizer Analyzer produces compile errors for any new finalizers. This pre-existing finalizer declaration has been suppressed, but should be rewritten if possible.
         ~Plugin()
         {
             Dispose();
         }
+#pragma warning restore UA5000
 
         public void Dispose()
         {

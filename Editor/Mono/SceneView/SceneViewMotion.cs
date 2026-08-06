@@ -3,13 +3,14 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor.AnimatedValues;
 using UnityEditor.ShortcutManagement;
 using UnityEngine;
 
 namespace UnityEditor
 {
-    class SceneViewMotion
+    partial class SceneViewMotion
     {
         const string k_TemporaryPanTool2D1 = "Scene View/2D Pan 1";
         const string k_TemporaryPanTool2D2 = "Scene View/2D Pan 2";
@@ -30,7 +31,8 @@ namespace UnityEditor
 
         bool m_Moving;
         public bool viewportsUnderMouse { get; set; }
-        static readonly CameraFlyModeContext s_CameraFlyModeContext = new CameraFlyModeContext();
+        [AutoStaticsCleanupOnCodeReload]
+        static CameraFlyModeContext s_CameraFlyModeContext = new CameraFlyModeContext();
 
         readonly SceneViewViewport m_SceneViewViewportContext = new SceneViewViewport();
         readonly SceneViewViewport2D m_SceneViewViewport2DContext = new SceneViewViewport2D();
@@ -40,6 +42,7 @@ namespace UnityEditor
         // used by Tests/EditModeAndPlayModeTests/SceneView/CameraFlyModeContextTests
         internal AnimVector3 m_FlySpeed = new AnimVector3(Vector3.zero);
 
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action viewToolActiveChanged;
 
         Vector3 m_Motion;
@@ -69,6 +72,7 @@ namespace UnityEditor
             get { return m_Drag; }
         }
 
+        [NoAutoStaticsCleanup] // transient view-tool interaction flag
         static bool s_ViewToolIsActive = false;
         public static bool viewToolIsActive => UpdateViewToolState();
 

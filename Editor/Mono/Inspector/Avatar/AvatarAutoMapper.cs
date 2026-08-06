@@ -6,6 +6,7 @@ using UnityEngine;
 using System;
 using System.Globalization;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -108,29 +109,30 @@ namespace UnityEditor
             public QueuedBone(Transform bone, int level) { this.bone = bone; this.level = level; }
         }
 
-        private static bool kDebug = false;
+        private static readonly bool kDebug = false;
 
-        private static string[] kShoulderKeywords = {"shoulder", "collar", "clavicle"};
-        private static string[] kUpperArmKeywords = {"up"};
-        private static string[] kLowerArmKeywords = {"lo", "fore", "elbow"};
-        private static string[] kHandKeywords = {"hand", "wrist"};
+        private static readonly string[] kShoulderKeywords = {"shoulder", "collar", "clavicle"};
+        private static readonly string[] kUpperArmKeywords = {"up"};
+        private static readonly string[] kLowerArmKeywords = {"lo", "fore", "elbow"};
+        private static readonly string[] kHandKeywords = {"hand", "wrist"};
 
-        private static string[] kUpperLegKeywords = {"up", "thigh"};
-        private static string[] kLowerLegKeywords = {"lo", "calf", "knee", "shin"};
-        private static string[] kFootKeywords = {"foot", "ankle"};
-        private static string[] kToeKeywords = {"toe", "!end", "!top", "!nub"};
+        private static readonly string[] kUpperLegKeywords = {"up", "thigh"};
+        private static readonly string[] kLowerLegKeywords = {"lo", "calf", "knee", "shin"};
+        private static readonly string[] kFootKeywords = {"foot", "ankle"};
+        private static readonly string[] kToeKeywords = {"toe", "!end", "!top", "!nub"};
 
-        private static string[] kNeckKeywords = {"neck"};
-        private static string[] kHeadKeywords = {"head"};
-        private static string[] kJawKeywords = {"jaw", "open", "!teeth", "!tongue", "!pony", "!braid", "!end", "!top", "!nub"};
-        private static string[] kEyeKeywords = {"eye", "ball", "!brow", "!lid", "!pony", "!braid", "!end", "!top", "!nub"};
+        private static readonly string[] kNeckKeywords = {"neck"};
+        private static readonly string[] kHeadKeywords = {"head"};
+        private static readonly string[] kJawKeywords = {"jaw", "open", "!teeth", "!tongue", "!pony", "!braid", "!end", "!top", "!nub"};
+        private static readonly string[] kEyeKeywords = {"eye", "ball", "!brow", "!lid", "!pony", "!braid", "!end", "!top", "!nub"};
 
-        private static string[] kThumbKeywords =        {"thu",          "!palm", "!wrist", "!end", "!top", "!nub"};
-        private static string[] kIndexFingerKeywords =  {"ind", "point", "!palm", "!wrist", "!end", "!top", "!nub"};
-        private static string[] kMiddleFingerKeywords = {"mid", "long",  "!palm", "!wrist", "!end", "!top", "!nub"};
-        private static string[] kRingFingerKeywords =   {"rin",          "!palm", "!wrist", "!end", "!top", "!nub"};
-        private static string[] kLittleFingerKeywords = {"lit", "pin",   "!palm", "!wrist", "!end", "!top", "!nub"};
+        private static readonly string[] kThumbKeywords =        {"thu",          "!palm", "!wrist", "!end", "!top", "!nub"};
+        private static readonly string[] kIndexFingerKeywords =  {"ind", "point", "!palm", "!wrist", "!end", "!top", "!nub"};
+        private static readonly string[] kMiddleFingerKeywords = {"mid", "long",  "!palm", "!wrist", "!end", "!top", "!nub"};
+        private static readonly string[] kRingFingerKeywords =   {"rin",          "!palm", "!wrist", "!end", "!top", "!nub"};
+        private static readonly string[] kLittleFingerKeywords = {"lit", "pin",   "!palm", "!wrist", "!end", "!top", "!nub"};
 
+        [NoAutoStaticsCleanup]
         private static BoneMappingItem[] s_MappingDataBody = new BoneMappingItem[]
         {
             new BoneMappingItem(-1,                                (int)HumanBodyBones.Hips,           1, 3, 0.0f, Side.None),
@@ -159,7 +161,8 @@ namespace UnityEditor
             new BoneMappingItem((int)HumanBodyBones.RightHand,     -3,     1, 2, 0.0f, new Vector3(3, 0, 1), Side.Right, true, false, kIndexFingerKeywords),
         };
 
-        private static BoneMappingItem[] s_LeftMappingDataHand = new BoneMappingItem[]
+        [NoAutoStaticsCleanup]
+        private static readonly BoneMappingItem[] s_LeftMappingDataHand = new BoneMappingItem[]
         {
             new BoneMappingItem(-2,                                        -1,                                         1, 2, 0.0f, Side.None),
 
@@ -182,7 +185,8 @@ namespace UnityEditor
             new BoneMappingItem((int)HumanBodyBones.LeftLittleIntermediate, (int)HumanBodyBones.LeftLittleDistal,       1, 1, 0.0f, Side.None, false, true),
         };
 
-        private static BoneMappingItem[] s_RightMappingDataHand = new BoneMappingItem[]
+        [NoAutoStaticsCleanup]
+        private static readonly BoneMappingItem[] s_RightMappingDataHand = new BoneMappingItem[]
         {
             new BoneMappingItem(-2,                                        -1,                                         1, 2, 0.0f, Side.None),
 
@@ -205,6 +209,7 @@ namespace UnityEditor
             new BoneMappingItem((int)HumanBodyBones.RightLittleIntermediate,   (int)HumanBodyBones.RightLittleDistal,      1, 1, 0.0f, Side.None, false, true),
         };
 
+        [NoAutoStaticsCleanup]
         private static bool s_DidPerformInit = false;
 
         private Dictionary<Transform, bool> m_ValidBones;

@@ -63,8 +63,7 @@ namespace Unity.ProjectAuditor.Editor
             }
 
             // ID must be exactly 7 characters, beginning with exactly 3 uppercase letters, followed by exactly 4 digits
-            if (id.Length != 7 || id[0] < 'A' || id[0] > 'Z' || id[1] < 'A' || id[1] > 'Z' || id[2] < 'A' || id[2] > 'Z' ||
-                id[3] < '0' || id[3] > '9' || id[4] < '0' || id[4] > '9' || id[5] < '0' || id[5] > '9' || id[6] < '0' || id[6] > '9')
+            if (!IsValidIdFormat(id))
             {
                 Debug.LogError("Invalid ID string supplied to DescriptorId");
                 m_AsInt = -1;
@@ -72,6 +71,18 @@ namespace Unity.ProjectAuditor.Editor
             }
 
             m_AsInt = HashDescriptorString(id);
+        }
+
+        // ID must be exactly 7 characters, beginning with exactly 3 uppercase letters, followed by exactly 4 digits
+        internal static bool IsValidIdFormat(string id)
+        {
+            if (id.Length != 7 || id[0] < 'A' || id[0] > 'Z' || id[1] < 'A' || id[1] > 'Z' || id[2] < 'A' || id[2] > 'Z' ||
+                id[3] < '0' || id[3] > '9' || id[4] < '0' || id[4] > '9' || id[5] < '0' || id[5] > '9' || id[6] < '0' || id[6] > '9')
+            {
+                return false;
+            }
+
+            return true;
         }
 
         /// <summary>

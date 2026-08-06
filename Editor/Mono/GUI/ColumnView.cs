@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -31,6 +32,7 @@ namespace UnityEditor
             public Texture2D categoryArrowIcon = EditorStyles.foldout.normal.background;
         }
 
+        [NoAutoStaticsCleanup] // lazy GUIStyle cache; re-created on first access, safe to persist
         private static Styles s_Styles;
         private readonly List<ListViewState> m_ListViewStates;
         private readonly List<int> m_CachedSelectedIndices;

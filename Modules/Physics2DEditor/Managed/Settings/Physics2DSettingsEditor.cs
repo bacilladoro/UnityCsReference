@@ -4,6 +4,7 @@
 
 using UnityEngine;
 using UnityEditorInternal;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -33,7 +34,9 @@ namespace UnityEditor
         const string Physics2DSettingsTabKey = UniqueSettingsKey + "Physics2DSettingsTabSelected";
 
         // Tab styles.
+        [NoAutoStaticsCleanup] // cached editor GUIStyle; safe to persist across code reload as it holds no user-code references
         static GUIStyle s_TabFirstStyle;
+        [NoAutoStaticsCleanup] // cached editor GUIStyle; safe to persist across code reload as it holds no user-code references
         static GUIStyle s_TabMiddleStyle;
 
         SerializedProperty m_ReuseCollisionCallbacks;

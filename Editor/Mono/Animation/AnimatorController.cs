@@ -7,16 +7,15 @@ using UnityEngine;
 using System.IO;
 using System.Collections.Generic;
 using RequiredByNativeCodeAttribute = UnityEngine.Scripting.RequiredByNativeCodeAttribute;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Animations
 {
-    [NativeClass(null)]
+    [NativeClass(null, PersistentTypeId = 91)]
     public sealed partial class AnimatorController : RuntimeAnimatorController
     {
         internal System.Action OnAnimatorControllerDirty;
 
-        internal static AnimatorController lastActiveController = null;
-        internal  static int lastActiveLayerIndex = 0;
         private const string kControllerExtension = "controller";
 
         internal PushUndoIfNeeded undoHandler = new PushUndoIfNeeded(true);

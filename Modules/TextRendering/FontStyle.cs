@@ -6,19 +6,19 @@ using System;
 
 namespace UnityEngine
 {
-    // Font Style applied to GUI Texts, Text Meshes or GUIStyles.
+    ///<summary>Font Style applied to GUI Texts, Text Meshes or GUIStyles.</summary>
     public enum FontStyle
     {
-        // No special style is applied.
+        ///<summary>No special style is applied.</summary>
         Normal = 0,
 
-        // Bold style applied to your texts.
+        ///<summary>Bold style applied to your texts.</summary>
         Bold = 1,
 
-        // Italic style applied to your texts.
+        ///<summary>Italic style applied to your texts.</summary>
         Italic = 2,
 
-        // Bold and Italic styles applied to your texts.
+        ///<summary>Bold and Italic styles applied to your texts.</summary>
         BoldAndItalic = 3,
     }
 }

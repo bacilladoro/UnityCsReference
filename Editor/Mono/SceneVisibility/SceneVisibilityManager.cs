@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor.SceneManagement;
 using UnityEditor.ShortcutManagement;
 using UnityEngine;
@@ -12,7 +13,7 @@ using Scene = UnityEngine.SceneManagement.Scene;
 
 namespace UnityEditor
 {
-    public class SceneVisibilityManager : ScriptableSingleton<SceneVisibilityManager>
+    public partial class SceneVisibilityManager : ScriptableSingleton<SceneVisibilityManager>
     {
         internal class ShortcutContext : IShortcutContext
         {
@@ -23,14 +24,19 @@ namespace UnityEditor
         }
 
 
+        [NoAutoStaticsCleanup] // re-registered with the shortcut context manager in Initialize on each code reload
         private static ShortcutContext s_ShortcutContext;
 
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action visibilityChanged;
 
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action pickingChanged;
 
+        [AutoStaticsCleanupOnCodeReload]
         internal static event Action<bool> currentStageIsIsolated;
 
+        [AutoStaticsCleanupOnCodeReload]
         private readonly static List<GameObject> m_RootBuffer = new List<GameObject>();
 
         internal bool enableSceneVisibility

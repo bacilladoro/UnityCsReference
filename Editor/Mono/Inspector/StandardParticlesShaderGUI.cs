@@ -40,56 +40,56 @@ namespace UnityEditor
 
         private static class Styles
         {
-            public static GUIContent albedoText = EditorGUIUtility.TrTextContent("Albedo", "Albedo (RGB) and Transparency (A).");
-            public static GUIContent alphaCutoffText = EditorGUIUtility.TrTextContent("Alpha Cutoff", "Threshold for alpha cutoff.");
-            public static GUIContent metallicMapText = EditorGUIUtility.TrTextContent("Metallic", "Metallic (R) and Smoothness (A).");
-            public static GUIContent smoothnessText = EditorGUIUtility.TrTextContent("Smoothness", "Smoothness value.");
-            public static GUIContent smoothnessScaleText = EditorGUIUtility.TrTextContent("Smoothness", "Smoothness scale factor.");
-            public static GUIContent normalMapText = EditorGUIUtility.TrTextContent("Normal Map", "Normal Map.");
-            public static GUIContent emissionText = EditorGUIUtility.TrTextContent("Color", "Emission (RGB).");
+            public static readonly GUIContent albedoText = EditorGUIUtility.TrTextContent("Albedo", "Albedo (RGB) and Transparency (A).");
+            public static readonly GUIContent alphaCutoffText = EditorGUIUtility.TrTextContent("Alpha Cutoff", "Threshold for alpha cutoff.");
+            public static readonly GUIContent metallicMapText = EditorGUIUtility.TrTextContent("Metallic", "Metallic (R) and Smoothness (A).");
+            public static readonly GUIContent smoothnessText = EditorGUIUtility.TrTextContent("Smoothness", "Smoothness value.");
+            public static readonly GUIContent smoothnessScaleText = EditorGUIUtility.TrTextContent("Smoothness", "Smoothness scale factor.");
+            public static readonly GUIContent normalMapText = EditorGUIUtility.TrTextContent("Normal Map", "Normal Map.");
+            public static readonly GUIContent emissionText = EditorGUIUtility.TrTextContent("Color", "Emission (RGB).");
 
-            public static GUIContent renderingMode = EditorGUIUtility.TrTextContent("Rendering Mode", "Determines the transparency and blending method for drawing the object to the screen.");
-            public static GUIContent[] blendNames = Array.ConvertAll(Enum.GetNames(typeof(BlendMode)), item => new GUIContent(item));
+            public static readonly GUIContent renderingMode = EditorGUIUtility.TrTextContent("Rendering Mode", "Determines the transparency and blending method for drawing the object to the screen.");
+            public static readonly GUIContent[] blendNames = Array.ConvertAll(Enum.GetNames(typeof(BlendMode)), item => new GUIContent(item));
 
-            public static GUIContent colorMode = EditorGUIUtility.TrTextContent("Color Mode", "Determines the blending mode between the particle color and the texture albedo.");
-            public static GUIContent[] colorNames = Array.ConvertAll(Enum.GetNames(typeof(ColorMode)), item => new GUIContent(item));
+            public static readonly GUIContent colorMode = EditorGUIUtility.TrTextContent("Color Mode", "Determines the blending mode between the particle color and the texture albedo.");
+            public static readonly GUIContent[] colorNames = Array.ConvertAll(Enum.GetNames(typeof(ColorMode)), item => new GUIContent(item));
 
-            public static GUIContent flipbookBlending = EditorGUIUtility.TrTextContent("Flip-Book Frame Blending", "Enables blending between the frames of animated texture sheets.");
-            public static GUIContent twoSidedEnabled = EditorGUIUtility.TrTextContent("Two Sided", "Render both front and back faces of the particle geometry.");
+            public static readonly GUIContent flipbookBlending = EditorGUIUtility.TrTextContent("Flip-Book Frame Blending", "Enables blending between the frames of animated texture sheets.");
+            public static readonly GUIContent twoSidedEnabled = EditorGUIUtility.TrTextContent("Two Sided", "Render both front and back faces of the particle geometry.");
 
-            public static GUIContent distortionEnabled = EditorGUIUtility.TrTextContent("Distortion", "Use a grab pass and normal map to simulate refraction.");
-            public static GUIContent distortionStrengthText = EditorGUIUtility.TrTextContent("Strength", "Distortion Strength.");
-            public static GUIContent distortionBlendText = EditorGUIUtility.TrTextContent("Blend", "Weighting between albedo and grab pass.");
+            public static readonly GUIContent distortionEnabled = EditorGUIUtility.TrTextContent("Distortion", "Use a grab pass and normal map to simulate refraction.");
+            public static readonly GUIContent distortionStrengthText = EditorGUIUtility.TrTextContent("Strength", "Distortion Strength.");
+            public static readonly GUIContent distortionBlendText = EditorGUIUtility.TrTextContent("Blend", "Weighting between albedo and grab pass.");
 
-            public static GUIContent softParticlesEnabled = EditorGUIUtility.TrTextContent("Soft Particles", "Fade out particle geometry when it gets close to the surface of objects written into the depth buffer.");
-            public static GUIContent softParticlesNearFadeDistanceText = EditorGUIUtility.TrTextContent("Near fade", "Soft Particles near fade distance.");
-            public static GUIContent softParticlesFarFadeDistanceText = EditorGUIUtility.TrTextContent("Far fade", "Soft Particles far fade distance.");
+            public static readonly GUIContent softParticlesEnabled = EditorGUIUtility.TrTextContent("Soft Particles", "Fade out particle geometry when it gets close to the surface of objects written into the depth buffer.");
+            public static readonly GUIContent softParticlesNearFadeDistanceText = EditorGUIUtility.TrTextContent("Near fade", "Soft Particles near fade distance.");
+            public static readonly GUIContent softParticlesFarFadeDistanceText = EditorGUIUtility.TrTextContent("Far fade", "Soft Particles far fade distance.");
 
-            public static GUIContent cameraFadingEnabled = EditorGUIUtility.TrTextContent("Camera Fading", "Fade out particle geometry when it gets close to the camera.");
-            public static GUIContent cameraNearFadeDistanceText = EditorGUIUtility.TrTextContent("Near fade", "Camera near fade distance.");
-            public static GUIContent cameraFarFadeDistanceText = EditorGUIUtility.TrTextContent("Far fade", "Camera far fade distance.");
+            public static readonly GUIContent cameraFadingEnabled = EditorGUIUtility.TrTextContent("Camera Fading", "Fade out particle geometry when it gets close to the camera.");
+            public static readonly GUIContent cameraNearFadeDistanceText = EditorGUIUtility.TrTextContent("Near fade", "Camera near fade distance.");
+            public static readonly GUIContent cameraFarFadeDistanceText = EditorGUIUtility.TrTextContent("Far fade", "Camera far fade distance.");
 
-            public static GUIContent emissionEnabled = EditorGUIUtility.TrTextContent("Emission");
+            public static readonly GUIContent emissionEnabled = EditorGUIUtility.TrTextContent("Emission");
 
-            public static GUIContent blendingOptionsText = EditorGUIUtility.TrTextContent("Blending Options");
-            public static GUIContent mainOptionsText = EditorGUIUtility.TrTextContent("Main Options");
-            public static GUIContent mapsOptionsText = EditorGUIUtility.TrTextContent("Maps");
-            public static GUIContent advancedText = EditorGUIUtility.TrTextContent("Advanced Options");
-            public static GUIContent requiredVertexStreamsText = EditorGUIUtility.TrTextContent("Required Vertex Streams");
+            public static readonly GUIContent blendingOptionsText = EditorGUIUtility.TrTextContent("Blending Options");
+            public static readonly GUIContent mainOptionsText = EditorGUIUtility.TrTextContent("Main Options");
+            public static readonly GUIContent mapsOptionsText = EditorGUIUtility.TrTextContent("Maps");
+            public static readonly GUIContent advancedText = EditorGUIUtility.TrTextContent("Advanced Options");
+            public static readonly GUIContent requiredVertexStreamsText = EditorGUIUtility.TrTextContent("Required Vertex Streams");
 
-            public static GUIContent streamPositionText = EditorGUIUtility.TrTextContent("Position (POSITION.xyz)");
-            public static GUIContent streamNormalText = EditorGUIUtility.TrTextContent("Normal (NORMAL.xyz)");
-            public static GUIContent streamColorText = EditorGUIUtility.TrTextContent("Color (COLOR.xyzw)");
-            public static GUIContent streamColorInstancedText = EditorGUIUtility.TrTextContent("Color (INSTANCED0.xyzw)");
-            public static GUIContent streamUVText = EditorGUIUtility.TrTextContent("UV (TEXCOORD0.xy)");
-            public static GUIContent streamUV2Text = EditorGUIUtility.TrTextContent("UV2 (TEXCOORD0.zw)");
-            public static GUIContent streamAnimBlendText = EditorGUIUtility.TrTextContent("AnimBlend (TEXCOORD1.x)");
-            public static GUIContent streamAnimFrameText = EditorGUIUtility.TrTextContent("AnimFrame (INSTANCED1.x)");
-            public static GUIContent streamTangentText = EditorGUIUtility.TrTextContent("Tangent (TANGENT.xyzw)");
+            public static readonly GUIContent streamPositionText = EditorGUIUtility.TrTextContent("Position (POSITION.xyz)");
+            public static readonly GUIContent streamNormalText = EditorGUIUtility.TrTextContent("Normal (NORMAL.xyz)");
+            public static readonly GUIContent streamColorText = EditorGUIUtility.TrTextContent("Color (COLOR.xyzw)");
+            public static readonly GUIContent streamColorInstancedText = EditorGUIUtility.TrTextContent("Color (INSTANCED0.xyzw)");
+            public static readonly GUIContent streamUVText = EditorGUIUtility.TrTextContent("UV (TEXCOORD0.xy)");
+            public static readonly GUIContent streamUV2Text = EditorGUIUtility.TrTextContent("UV2 (TEXCOORD0.zw)");
+            public static readonly GUIContent streamAnimBlendText = EditorGUIUtility.TrTextContent("AnimBlend (TEXCOORD1.x)");
+            public static readonly GUIContent streamAnimFrameText = EditorGUIUtility.TrTextContent("AnimFrame (INSTANCED1.x)");
+            public static readonly GUIContent streamTangentText = EditorGUIUtility.TrTextContent("Tangent (TANGENT.xyzw)");
 
-            public static GUIContent streamApplyToAllSystemsText = EditorGUIUtility.TrTextContent("Apply to Systems", "Apply the vertex stream layout to all Particle Systems using this material");
+            public static readonly GUIContent streamApplyToAllSystemsText = EditorGUIUtility.TrTextContent("Apply to Systems", "Apply the vertex stream layout to all Particle Systems using this material");
 
-            public static string undoApplyCustomVertexStreams = L10n.Tr("Apply custom vertex streams from material");
+            public static readonly string undoApplyCustomVertexStreams = L10n.Tr("Apply custom vertex streams from material");
         }
 
         MaterialProperty blendMode = null;

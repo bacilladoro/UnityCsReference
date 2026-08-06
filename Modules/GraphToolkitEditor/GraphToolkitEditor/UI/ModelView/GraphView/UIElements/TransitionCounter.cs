@@ -59,12 +59,11 @@ namespace Unity.GraphToolkit.Editor
 
                 if (manualCentering)
                 {
-                    // We need to wait for the layout to be updated before computing the position, because it uses resolvedStyle.
-                    schedule.Execute(() =>
-                    {
-                        style.position = Position.Absolute;
-                        UpdateLayout();
-                    }).ExecuteLater(0);
+                    style.position = Position.Absolute;
+                    style.left = 0;
+                    style.top = 0;
+                    style.width = Length.Percent(100);
+                    style.height = Length.Percent(100);
                 }
                 else
                 {
@@ -79,21 +78,10 @@ namespace Unity.GraphToolkit.Editor
             }
         }
 
-        public void UpdateLayout()
+        public void SetCenteringOffset(Vector2 offset)
         {
             if (style.position == Position.Absolute)
-            {
-                // Compute position of counter element
-                var offset = new Vector2(-resolvedStyle.height * 0.5f, 0);
-                var tr = (new Vector2(1, 0), new Vector2(0, 1), new Vector2(0, 0));
-                if (parent is TransitionArrow arrow)
-                    tr = arrow.GetContentTransform();
-
-                var position = MathUtils.Multiply2X3(tr, new Vector3(offset.x, offset.y, 1));
-
-                style.left = position.x - resolvedStyle.width * 0.5f;
-                style.top = position.y - resolvedStyle.height * 0.5f;
-            }
+                style.translate = new Translate(offset.x, offset.y);
         }
     }
 }

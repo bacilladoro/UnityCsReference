@@ -6,12 +6,16 @@ using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEngine
 {
     partial class Awaitable
     {
+        [AutoStaticsCleanupOnCodeReload]
         static SynchronizationContext _synchronizationContext;
+        // Main thread id is stable for the process across code reloads — safe to persist.
+        [NoAutoStaticsCleanup]
         static int _mainThreadId;
         internal static void SetSynchronizationContext(UnitySynchronizationContext synchronizationContext) {
             _synchronizationContext = synchronizationContext;

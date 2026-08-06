@@ -6,6 +6,7 @@ using UnityEngine;
 using UnityEditor;
 using UnityEngine.TerrainTools;
 using UnityEditor.ShortcutManagement;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.TerrainTools
 {
@@ -24,6 +25,7 @@ namespace UnityEditor.TerrainTools
             public readonly GUIContent direction = EditorGUIUtility.TrTextContent("Blur Direction", "Blur only up (1.0), only down (-1.0) or both (0.0)");
         }
 
+        [NoAutoStaticsCleanup] // lazy GUIContent/GUIStyle styles holder; editor infra, no user refs
         private static Styles m_styles;
         private Styles GetStyles()
         {

@@ -255,10 +255,12 @@ namespace UnityEditor
                 AssetDatabase.StartAssetEditing();
             }
 
+#pragma warning disable UA5000 // The Avoid Finalizer Analyzer produces compile errors for any new finalizers. This pre-existing finalizer declaration has been suppressed, but should be rewritten if possible.
             ~AssetEditingScope()
             {
                 Dispose(false);
             }
+#pragma warning restore UA5000
 
             public void Dispose()
             {
@@ -410,7 +412,7 @@ namespace UnityEditor
         [PreventExecutionInState(AssetDatabasePreventExecution.kCodeReload, PreventExecutionSeverity.PreventExecution_ManagedException, kPreventExecutionDuringCodeReloadHowToFixMsg)]
         extern public static string GetAssetPath(Object assetObject);
 
-        [System.Obsolete(@"Please use GetAssetPath(EntityId) with the EntityId parameter type instead.", true)]
+        [System.Obsolete(@"Please use GetAssetPath(Object) with the asset reference (e.g. GetAssetPath(myObject) instead of GetAssetPath(myObject.GetInstanceID())), or GetAssetPath(EntityId) with the EntityId parameter type instead.", true)]
         public static string GetAssetPath(int instanceID) { return GetAssetPathFromEntityId(instanceID); }
         public static string GetAssetPath(EntityId entityId) { return GetAssetPathFromEntityId(entityId); }
 

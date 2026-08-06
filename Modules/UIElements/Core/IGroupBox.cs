@@ -7,7 +7,7 @@ namespace UnityEngine.UIElements
     /// <summary>
     /// Interface for options that need to be handled together in a <see cref="IGroupBox"/>.
     /// Visual elements should inherit from this interface in order to be treated by the <see cref="IGroupManager"/>.
-    /// Make sure to call <see cref="GroupBoxUtility.RegisterGroupBoxOptionCallbacks"/> to register your option
+    /// Make sure to call <see cref="GroupBoxUtility.RegisterGroupBoxOption{T}"/> to register your option
     /// to panel events, and <see cref="GroupBoxUtility.OnOptionSelected"/> when it changes.
     /// </summary>
     internal interface IGroupBoxOption

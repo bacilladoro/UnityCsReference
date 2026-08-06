@@ -486,9 +486,25 @@ namespace UnityEditor
 
         extern internal static Shader[] GetShaderDependencies([NotNull] Shader shader);
 
-        [FreeFunction("ShaderUtil::GetCompiledData")] extern internal static byte[] GetCompiledData(
-            Shader s, BuildUsageTagSet buildUsageTags, BuildUsageTagGlobal globalUsageTag,
+        internal static byte[] GetCompiledData(
+            Shader shader, BuildUsageTagSet buildUsageTags, BuildUsageTagGlobal globalUsageTag,
+            BuildTargetSelection buildTarget, bool shouldIncludeAllVariants)
+        {
+            return Internal_GetCompiledDataForShader(
+                shader, buildUsageTags, globalUsageTag, buildTarget, shouldIncludeAllVariants);
+        }
+
+        internal static byte[] GetCompiledData(ComputeShader shader, BuildTargetSelection buildTarget)
+        {
+            return Internal_GetCompiledDataForComputeShader(shader, buildTarget);
+        }
+
+        [FreeFunction("ShaderUtil::GetCompiledDataForShader")] extern internal static byte[] Internal_GetCompiledDataForShader(
+            Shader shader, BuildUsageTagSet buildUsageTags, BuildUsageTagGlobal globalUsageTag,
             BuildTargetSelection buildTarget, bool shouldIncludeAllVariants);
+
+        [FreeFunction("ShaderUtil::GetCompiledDataForComputeShader")] extern internal static byte[] Internal_GetCompiledDataForComputeShader(
+            ComputeShader shader, BuildTargetSelection buildTarget);
 
         internal static MaterialProperty ExtractMaterialProperty(Shader shader, int propertyIndex, UnityEngine.Object[] materials, Material firstMaterial)
         {

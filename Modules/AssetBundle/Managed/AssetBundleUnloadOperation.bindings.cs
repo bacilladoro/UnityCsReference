@@ -13,14 +13,18 @@ using UnityEngineInternal;
 
 namespace UnityEngine
 {
+    ///<summary>Async unload operation for an <see cref="AssetBundle" />.</summary>
     [StructLayout(LayoutKind.Sequential)]
     [RequiredByNativeCode]
     [NativeHeader("Modules/AssetBundle/Public/AssetBundleUnloadOperation.h")]
     public class AssetBundleUnloadOperation : AsyncOperation
     {
+        ///<summary>Synchronously waits for the operation to complete.</summary>
+        ///<remarks>Call this function if you need to wait on the main thread until the <see cref="AssetBundleUnloadOperation" /> completes. When you call <c>WaitForCompletion</c>, the Unity runtime also waits for all other pending asynchronous operations to complete.</remarks>
         [NativeMethod("WaitForCompletion")]
         public extern void WaitForCompletion();
 
+        ///<exclude />
         public AssetBundleUnloadOperation() { }
 
         private AssetBundleUnloadOperation(IntPtr ptr) : base(ptr)

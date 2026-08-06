@@ -75,9 +75,11 @@ namespace Unity.UI.Builder
 
         string OnFormatSelectedValue(string formatValue)
         {
-            if (m_TypeOptions.Count > 0)
+            // Unknown popup entries (e.g. a non-Type "Gradient" option added by a
+            // subclass) are passed through without touching the ObjectField filter.
+            if (m_TypeOptions.Count > 0 && m_TypeOptions.TryGetValue(formatValue, out var t))
             {
-                m_ObjectField.objectType = m_TypeOptions[formatValue];
+                m_ObjectField.objectType = t;
                 if (!m_ObjectField.value) return formatValue;
                 if (!m_ObjectField.objectType.IsInstanceOfType(m_ObjectField.value))
                     m_ObjectField.value = null;

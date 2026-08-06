@@ -8,6 +8,7 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using Object = UnityEngine.Object;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditorInternal
 {
@@ -32,6 +33,7 @@ namespace UnityEditorInternal
         string m_PropertyPath = string.Empty;
         string m_PropertyPathArraySize = string.Empty;
 
+        [NoAutoStaticsCleanup] // Transient tooltip anchor Rect; unmanaged value, safe to persist across reload.
         internal static Rect s_ToolTipRect;
 
         int m_LastArraySize = -1;

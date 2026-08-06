@@ -115,6 +115,7 @@ namespace UnityEngine
     ///
     ///A common problem when starting out with Rigidbodies is that the game physics appears to run in "slow motion". This is actually due to the scale used for your models. The default gravity settings assume that one world unit corresponds to one metre of distance. With non-physical games, it doesn't make much difference if your models are all 100 units long but when using physics, they will be treated as very large objects. If a large scale is used for objects that are supposed to be small, they will appear to fall very slowly - the physics engine thinks they are very large objects falling over very large distances. With this in mind, be sure to keep your objects more or less at their scale in real life (so a car should be about 4 units = 4 metres, for example).</remarks>
     [RequireComponent(typeof(Transform))]
+    [global::UnityEngine.NativeClass("Rigidbody", PersistentTypeId = 54)]
     [NativeHeader("Modules/Physics/Rigidbody.h")]
     public partial class Rigidbody : Component
     {
@@ -838,6 +839,11 @@ namespace UnityEngine
         ///]]></code>
         ///</example>
         extern public void WakeUp();
+        //controls if rigidbody operations should automatically wake up the body. This causes "WakeUp" to be triggered which will reset any wakeCounter that was provided
+        //operations that can wakeup the body: Adding/Removing a shape, changing linear/angular velocity, setting gravity usage, changing constraints, changing mass properties
+        extern internal bool autoWake { get; set; }
+        //transient value returns 0 if the rigidbody has been disabled. Any value set to this property is only valid until the next WakeUp call issues by the Rigidbody
+        extern internal float wakeCounter { get; set; }
         ///<summary>Reset the center of mass of the rigidbody.</summary>
         ///<remarks>Computes the actual center of mass of the rigidbody from all the colliders attached, and stores it. After calling this function, the center of mass will get updated automatically after any modification to the rigidbody.</remarks>
         extern public void ResetCenterOfMass();

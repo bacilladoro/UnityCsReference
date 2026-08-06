@@ -36,6 +36,7 @@ namespace UnityEngine
 
     // Script interface for [[wiki:class-Light|light components]].
     [RequireComponent(typeof(Transform))]
+    [global::UnityEngine.NativeClass("Light", PersistentTypeId = 108)]
     [NativeHeader("Runtime/Export/Graphics/Light.bindings.h")]
     public sealed partial class Light : Behaviour
     {

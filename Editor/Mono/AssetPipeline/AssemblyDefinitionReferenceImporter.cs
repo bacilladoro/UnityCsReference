@@ -8,10 +8,12 @@ using UnityEngine;
 namespace UnityEditorInternal
 {
     [ExcludeFromPreset]
+    [NativeClass("AssemblyDefinitionReferenceImporter", PersistentTypeId = 0x118A83A3)]
     public sealed partial class AssemblyDefinitionReferenceImporter : AssetImporter
     {
     }
 
+    [NativeClass("AssemblyDefinitionReferenceAsset", PersistentTypeId = 0x277E3BD6)]
     public sealed partial class AssemblyDefinitionReferenceAsset : TextAsset
     {
         private AssemblyDefinitionReferenceAsset() {}

@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using System;
 using UnityEngine.Events;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEngine
 {
@@ -18,7 +19,7 @@ namespace UnityEngine
             this.order = order;
         }
     }
-    static class BeforeRenderHelper
+    static partial class BeforeRenderHelper
     {
         struct OrderBlock
         {
@@ -26,7 +27,8 @@ namespace UnityEngine
             internal UnityAction callback;
         }
 
-        static List<OrderBlock> s_OrderBlocks = new List<OrderBlock>();
+        [AutoStaticsCleanupOnCodeReload]
+        static readonly List<OrderBlock> s_OrderBlocks = new();
 
         static int GetUpdateOrder(UnityAction callback)
         {

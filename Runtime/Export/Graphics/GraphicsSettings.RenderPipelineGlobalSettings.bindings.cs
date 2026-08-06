@@ -6,11 +6,13 @@ using System;
 using UnityEngine.Bindings;
 using UnityEngine.Events;
 using UnityEngine.Scripting;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEngine.Rendering
 {
     public sealed partial class GraphicsSettings
     {
+        [AutoStaticsCleanupOnCodeReload]
         static internal event Action<IRenderPipelineGraphicsSettings, string> OnIRenderPipelineGraphicsSettingsChange;
         static internal void CallOnIRenderPipelineGraphicsSettingsChange(IRenderPipelineGraphicsSettings instance, string propertyName)
         {
@@ -18,6 +20,7 @@ namespace UnityEngine.Rendering
                 OnIRenderPipelineGraphicsSettingsChange?.Invoke(instance, propertyName);
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         internal static PropertyHelper<IRenderPipelineGraphicsSettings> s_PropertyHelper = new();
 
         public static void Subscribe<TChild>(Action<TChild, string> callback)

@@ -75,10 +75,6 @@ namespace Unity.GraphToolkit.Editor
 
                 m_LastCount = newCount;
             }
-            else if (visitor.ChangeHints.HasChange(ChangeHint.Layout))
-            {
-                m_Counter.UpdateLayout();
-            }
         }
     }
 }

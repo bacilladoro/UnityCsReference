@@ -87,7 +87,7 @@ namespace UnityEngine.UIElements
         }
 
         /// <summary>
-        /// Creates a <see cref="ButtonStripField"/> with all default properties. The <see cref="itemsSource"/>,
+        /// Creates a <see cref="ButtonStripField"/> with all default properties.
         /// </summary>
         public ButtonStripField() : base(null)
         {

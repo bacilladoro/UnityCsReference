@@ -150,6 +150,7 @@ namespace UnityEditor
             m_previewOpened = false;
         }
 
+#pragma warning disable UA5000 // The Avoid Finalizer Analyzer produces compile errors for any new finalizers. This pre-existing finalizer declaration has been suppressed, but should be rewritten if possible.
         ~PreviewRenderUtility()
         {
             if (m_Type != null)
@@ -162,6 +163,7 @@ namespace UnityEditor
                     "This can be caused by not calling Cleanup() (or its execution being interrupted) during the OnDisable of an Editor or an EditorWindow.");
             }
         }
+#pragma warning restore UA5000
 
         internal static void SetEnabledRecursive(GameObject go, bool enabled)
         {

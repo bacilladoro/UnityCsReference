@@ -63,8 +63,8 @@ namespace System.Diagnostics.CodeAnalysis
         /// Gets the signature of the member depended on.
         /// </summary>
         /// <remarks>
-        /// Either <see cref="MemberSignature"/> must be a valid string or <see cref="MemberTypes"/>
-        /// must not equal <see cref="DynamicallyAccessedMemberTypes.None"/>, but not both.
+        /// Either <see cref="MemberSignature"/> must be a valid string or <c>MemberTypes</c>
+        /// must not equal <c>DynamicallyAccessedMemberTypes.None</c>, but not both.
         /// </remarks>
         public string? MemberSignature { get; }
 

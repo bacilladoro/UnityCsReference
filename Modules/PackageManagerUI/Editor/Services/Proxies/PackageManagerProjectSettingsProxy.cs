@@ -16,7 +16,10 @@ namespace UnityEditor.PackageManager.UI.Internal
         event Action<bool> onSeeAllVersionsChanged;
         event Action<long> onLoadAssetsChanged;
         event Action onInitializationFinished;
+        event Action<TrustPolicyLevel> onTrustPolicyLevelChanged;
 
+        TrustPolicyLevel trustPolicyLevel { get; set; }
+        TrustPolicyLevel trustPolicyLevelDraft { get; set; }
         bool dismissPreviewPackagesInUse { get; set; }
         bool enablePreReleasePackages { get; set; }
         bool advancedSettingsExpanded { get; set; }
@@ -31,6 +34,7 @@ namespace UnityEditor.PackageManager.UI.Internal
         IReadOnlyList<RegistryInfo> scopedRegistries { get; }
         RegistryInfoDraft registryInfoDraft { get; }
 
+        void ClearTrustPolicyLevelDraft();
         void SetRegistries(RegistryInfo[] registries);
         bool AddRegistry(RegistryInfo registry);
         bool UpdateRegistry(string oldName, RegistryInfo newRegistry);
@@ -49,6 +53,27 @@ namespace UnityEditor.PackageManager.UI.Internal
         public event Action<bool> onSeeAllVersionsChanged = delegate {};
         public event Action<long> onLoadAssetsChanged = delegate {};
         public event Action onInitializationFinished = delegate {};
+        public event Action<TrustPolicyLevel> onTrustPolicyLevelChanged = delegate {};
+
+        public TrustPolicyLevel trustPolicyLevel
+        {
+            get => TrustPolicySettings.policyLevel;
+            set
+            {
+                if (value == TrustPolicySettings.policyLevel)
+                    return;
+                TrustPolicySettings.policyLevel = value;
+                onTrustPolicyLevelChanged?.Invoke(value);
+            }
+        }
+
+        public TrustPolicyLevel trustPolicyLevelDraft
+        {
+            get => PackageManagerProjectSettings.instance.trustPolicyLevelDraft;
+            set => PackageManagerProjectSettings.instance.trustPolicyLevelDraft = value;
+        }
+
+        public void ClearTrustPolicyLevelDraft() => PackageManagerProjectSettings.instance.ClearTrustPolicyLevelDraft();
 
         public bool dismissPreviewPackagesInUse
         {

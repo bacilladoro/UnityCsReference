@@ -161,6 +161,7 @@ namespace UnityEngine
     // Note: This asset is immutable at runtime but is needed to ensure that the asset can be read in native code.
     // We don't use the UnityEditor namespace for it but we do only allow it's entries to be used in the editor.
     [NativeHeader("Runtime/Graphics/D3D12/D3D12DeviceFilterLists.h")]
+    [NativeClass("D3D12DeviceFilterLists", PersistentTypeId = 0x6B31FE30)]
     [HelpURL("d3d12-device-filter-list-asset-reference")]
     public sealed class D3D12DeviceFilterLists : UnityEngine.Object
     {

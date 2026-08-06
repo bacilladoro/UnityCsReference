@@ -12,6 +12,7 @@ namespace UnityEngine.Playables
 {
     [NativeHeader("Modules/Director/PlayableDirector.h")]
     [NativeHeader("Runtime/Mono/MonoBehaviour.h")]
+    [global::UnityEngine.NativeClass("PlayableDirector", PersistentTypeId = 320)]
     [RequiredByNativeCode]
     public partial class PlayableDirector : Behaviour, IExposedPropertyTable
     {

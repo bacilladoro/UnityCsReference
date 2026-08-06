@@ -50,7 +50,8 @@ namespace UnityEditor.HardwareProfiles
             "HasBuggyDescriptorSetUpdateTemplate",
             "HasBuggyDebugUtilsLabels",
             "HasBuggyMSAAResolvePass",
-            "HasBuggyPSOSerialization"
+            "HasBuggyPSOSerialization",
+            "HasBuggySpecConstStore"
         };
 
         public virtual void DisableAll()

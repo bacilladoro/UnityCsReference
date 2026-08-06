@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using UnityEngine;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -23,6 +24,7 @@ namespace UnityEditor
             public GUIContent scaleContent = EditorGUIUtility.TrTextContent("Scale", "The local scaling of this GameObject relative to the parent.");
             public string floatingPointWarning = LocalizationDatabase.GetLocalizedString("Due to floating-point precision limitations, it is recommended to bring the world coordinates of the GameObject within a smaller range.");
         }
+        [NoAutoStaticsCleanup] // GUIContent/string-only lazy Contents cache; contents survive code reload
         static Contents s_Contents;
 
         public void OnEnable()

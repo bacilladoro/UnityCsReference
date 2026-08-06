@@ -19,6 +19,7 @@ using LT = UnityEngineInternal.LightmapType;
 namespace UnityEngine
 {
     [RequireComponent(typeof(Transform))]
+    [global::UnityEngine.NativeClass("Renderer", PersistentTypeId = 25)]
     [UsedByNativeCode]
     public partial class Renderer : Component
     {
@@ -225,6 +226,7 @@ namespace UnityEngine
         extern public LODGroup LODGroup { get; }
     }
 
+    [global::UnityEngine.NativeClass("TrailRenderer", PersistentTypeId = 96)]
     [NativeHeader("Runtime/Graphics/TrailRenderer.h")]
     public sealed partial class TrailRenderer : Renderer
     {
@@ -316,6 +318,7 @@ namespace UnityEngine
         extern private void AddPositionsWithNativeContainer(IntPtr positions, int length);
     }
 
+    [global::UnityEngine.NativeClass("LineRenderer", PersistentTypeId = 120)]
     [NativeHeader("Runtime/Graphics/LineRenderer.h")]
     public sealed partial class LineRenderer : Renderer
     {
@@ -383,6 +386,7 @@ namespace UnityEngine
         extern private int GetPositionsWithNativeContainer(IntPtr positions, int length);
     }
 
+    [global::UnityEngine.NativeClass("SkinnedMeshRenderer", PersistentTypeId = 137)]
     [NativeHeader("Runtime/Graphics/Mesh/SkinnedMeshRenderer.h"), RequiredByNativeCode /* used by VisualEffect, returns type */]
     public partial class SkinnedMeshRenderer : Renderer
     {
@@ -438,6 +442,7 @@ namespace UnityEngine
         internal extern unsafe bool Internal_RetrieveSkeletonPose(Span<Matrix4x4> outPoses);
     }
 
+    [global::UnityEngine.NativeClass("MeshRenderer", PersistentTypeId = 23)]
     [NativeHeader("Runtime/Graphics/Mesh/MeshRenderer.h")]
     public partial class MeshRenderer : Renderer
     {

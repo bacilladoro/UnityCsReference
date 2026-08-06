@@ -4,6 +4,7 @@
 
 using System;
 using System.Runtime.InteropServices;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Bindings;
 
 namespace UnityEngine
@@ -12,6 +13,7 @@ namespace UnityEngine
     [StructLayout(LayoutKind.Sequential)]
     public sealed partial class Event
     {
+        ///<exclude />
         public Event()
         {
             m_Ptr = Internal_Create(0);
@@ -23,6 +25,7 @@ namespace UnityEngine
         }
 
         // Copy an event
+        ///<exclude />
         public Event(Event other)
         {
             if (other == null)
@@ -30,6 +33,7 @@ namespace UnityEngine
             m_Ptr = Internal_Copy(other.m_Ptr);
         }
 
+#pragma warning disable UA5000 // The Avoid Finalizer Analyzer produces compile errors for any new finalizers. This pre-existing finalizer declaration has been suppressed, but should be rewritten if possible.
         ~Event()
         {
             if (m_Ptr != IntPtr.Zero)
@@ -38,6 +42,7 @@ namespace UnityEngine
                 m_Ptr = IntPtr.Zero;
             }
         }
+#pragma warning restore UA5000
 
         internal static void CleanupRoots()
         {
@@ -46,6 +51,7 @@ namespace UnityEngine
             s_MasterEvent = null;
         }
 
+        ///<exclude />
         [NonSerialized]
         internal IntPtr m_Ptr;
 
@@ -59,53 +65,218 @@ namespace UnityEngine
             }
         }
 
+        ///<exclude />
         [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
         [Obsolete("Use HandleUtility.GUIPointToWorldRay(Event.current.mousePosition);", true)]
         public Ray mouseRay { get { return new Ray(Vector3.up, Vector3.up); } set {}}
 
-        // Is Shift held down? (RO)
+        ///<summary>Is Shift held down? (RO)</summary>
+        ///<remarks>Returns true if any Shift key is held down.</remarks>
+        ///<example>
+        ///  <code><![CDATA[
+        ///using UnityEngine;
+        ///
+        ///public class Example : MonoBehaviour
+        ///{
+        ///    // Detects if the shift key was pressed
+        ///    void OnGUI()
+        ///    {
+        ///        Event e = Event.current;
+        ///        if (e.shift)
+        ///        {
+        ///            Debug.Log("Shift was pressed :O");
+        ///        }
+        ///    }
+        ///}
+        ///]]></code>
+        ///</example>
         public bool shift
         {
             get { return (modifiers & EventModifiers.Shift)  != 0; }
             set { if (!value) modifiers &= ~EventModifiers.Shift; else modifiers |= EventModifiers.Shift; }
         }
 
-        // Is Control key held down? (RO)
+        ///<summary>Is Control key held down? (RO)</summary>
+        ///<remarks>Returns true if any Control key is held down.</remarks>
+        ///<example>
+        ///  <code><![CDATA[
+        ///using UnityEngine;
+        ///
+        ///public class Example : MonoBehaviour
+        ///{
+        ///    void OnGUI()
+        ///    {
+        ///        Event e = Event.current;
+        ///        if (e.control)
+        ///        {
+        ///            Debug.Log("Control was pressed.");
+        ///        }
+        ///    }
+        ///}
+        ///]]></code>
+        ///</example>
         public bool control
         {
             get {return (modifiers & EventModifiers.Control)  != 0; }
             set { if (!value) modifiers &= ~EventModifiers.Control; else modifiers |= EventModifiers.Control; }
         }
 
-        // Is Alt/Option key held down? (RO)
+        ///<summary>Is Alt/Option key held down? (RO)</summary>
+        ///<remarks>On Windows, this returns true if any Alt key is held down. 
+        ///
+        ///On Mac, this returns true if any Option key is held down.</remarks>
+        ///<example>
+        ///  <code><![CDATA[
+        ///using UnityEngine;
+        ///
+        ///public class Example : MonoBehaviour
+        ///{
+        ///    // Prints Option or Alt key was pressed depending on the
+        ///    // platform where this script is running.
+        ///    void OnGUI()
+        ///    {
+        ///        Event e = Event.current;
+        ///        if (e.alt)
+        ///        {
+        ///            if (Application.platform == RuntimePlatform.OSXEditor)
+        ///            {
+        ///                Debug.Log("Option key was pressed");
+        ///            }
+        ///            else if (Application.platform == RuntimePlatform.WindowsEditor)
+        ///            {
+        ///                Debug.Log("Alt Key was pressed!");
+        ///            }
+        ///        }
+        ///    }
+        ///}
+        ///]]></code>
+        ///</example>
         public bool alt
         {
             get { return (modifiers & EventModifiers.Alt)  != 0; }
             set { if (!value) modifiers &= ~EventModifiers.Alt; else modifiers |= EventModifiers.Alt; }
         }
 
-        // Is Command/Windows key held down? (RO)
+        ///<summary>Is Command/Windows key held down? (RO)</summary>
+        ///<remarks>On Windows, this returns true if any Windows key is held down. 
+        ///
+        ///On Mac, this returns true if any Command key is held down.</remarks>
+        ///<example>
+        ///  <code><![CDATA[
+        ///using UnityEngine;
+        ///
+        ///public class Example : MonoBehaviour
+        ///{
+        ///    // Prints Command/Windows key was pressed depending on the
+        ///    // platform where this script is running.
+        ///    void OnGUI()
+        ///    {
+        ///        Event e = Event.current;
+        ///        if (e.command)
+        ///        {
+        ///            if (Application.platform == RuntimePlatform.OSXEditor)
+        ///            {
+        ///                Debug.Log("Command key was pressed");
+        ///            }
+        ///            else if (Application.platform == RuntimePlatform.WindowsEditor)
+        ///            {
+        ///                Debug.Log("Windows Key was pressed!");
+        ///            }
+        ///        }
+        ///    }
+        ///}
+        ///]]></code>
+        ///</example>
         public bool command
         {
             get { return (modifiers & EventModifiers.Command)  != 0; }
             set { if (!value) modifiers &= ~EventModifiers.Command; else modifiers |= EventModifiers.Command; }
         }
 
-        // Is Caps Lock on? (RO)
+        ///<summary>Is Caps Lock on? (RO)</summary>
+        ///<remarks>Returns true if Caps Lock is switched on.</remarks>
+        ///<example>
+        ///  <code><![CDATA[
+        ///using UnityEngine;
+        ///
+        ///public class Example : MonoBehaviour
+        ///{
+        ///    // Creates a Label and prints CapsLock on/off
+        ///    // depending on the state of the capslock key.
+        ///    void OnGUI()
+        ///    {
+        ///        Event e = Event.current;
+        ///        if (e.capsLock)
+        ///        {
+        ///            GUI.Label(new Rect(10, 10, 100, 20), "CapsLock on.");
+        ///        }
+        ///        else
+        ///        {
+        ///            GUI.Label(new Rect(10, 10, 100, 20), "CapsLock off.");
+        ///        }
+        ///    }
+        ///}
+        ///]]></code>
+        ///</example>
         public bool capsLock
         {
             get { return (modifiers & EventModifiers.CapsLock)  != 0; }
             set { if (!value) modifiers &= ~EventModifiers.CapsLock; else modifiers |= EventModifiers.CapsLock; }
         }
 
-        // Is the current keypress on the numeric keyboard? (RO)
+        ///<summary>Is the current keypress on the numeric keyboard? (RO)</summary>
+        ///<remarks>Use this flag to destinguish between main &amp; numeric keys.</remarks>
+        ///<example>
+        ///  <code><![CDATA[
+        ///using UnityEngine;
+        ///
+        ///public class Example : MonoBehaviour
+        ///{
+        ///    // Creates a Label and prints Numeric Key pad is on/off
+        ///    // depending on the state of the numlock key.
+        ///    void OnGUI()
+        ///    {
+        ///        Event e = Event.current;
+        ///        if (e.numeric)
+        ///        {
+        ///            GUI.Label(new Rect(10, 10, 150, 20), "Numeric Key pad is on");
+        ///        }
+        ///        else
+        ///        {
+        ///            GUI.Label(new Rect(10, 10, 150, 20), "Numeric Key pad is off");
+        ///        }
+        ///    }
+        ///}
+        ///]]></code>
+        ///</example>
         public bool numeric
         {
             get { return (modifiers & EventModifiers.Numeric)  != 0; }
             set { if (!value) modifiers &= ~EventModifiers.Numeric; else modifiers |= EventModifiers.Numeric; }
         }
 
-        // Is the current keypress a function key? (RO)
+        ///<summary>Is the current keypress a function key? (RO)</summary>
+        ///<remarks>Returns true if the current keypress is an arrow key, page up, page down, backspace, etc. key.
+        ///If this key needs special processing in order to work in text editing, <c>functionKey</c> is on.</remarks>
+        ///<example>
+        ///  <code><![CDATA[
+        ///using UnityEngine;
+        ///
+        ///public class Example : MonoBehaviour
+        ///{
+        ///    // Detects if a function Key was pressed. If a
+        ///    // function key was pressed, prints its key code.
+        ///    void OnGUI()
+        ///    {
+        ///        Event e = Event.current;
+        ///        if (e.functionKey)
+        ///        {
+        ///            Debug.Log("Pressed: " + e.keyCode);
+        ///        }
+        ///    }
+        ///}
+        ///]]></code>
+        ///</example>
         public bool functionKey => (modifiers & EventModifiers.FunctionKey)  != 0;
 
         // The magnitude of Event.delta that corresponds to exactly one tick of the scroll wheel.
@@ -116,6 +287,20 @@ namespace UnityEngine
         //
 
 
+        ///<summary>The current event that's being processed right now.</summary>
+        ///<example>
+        ///  <code><![CDATA[
+        ///using UnityEngine;
+        ///
+        ///public class Example : MonoBehaviour
+        ///{
+        ///    void OnGUI()
+        ///    {
+        ///        Debug.Log("Current detected event: " + Event.current);
+        ///    }
+        ///}
+        ///]]></code>
+        ///</example>
         public static Event current
         {
             get
@@ -133,17 +318,55 @@ namespace UnityEngine
                 Internal_SetNativeEvent(s_Current.m_Ptr);
             }
         }
+        [NoAutoStaticsCleanup] // owns a native event buffer (m_Ptr) registered via Internal_SetNativeEvent; GC-finalizing it while native holds the ptr is a use-after-free; CleanupRoots() handles app-quit
         static Event s_Current;
+        [NoAutoStaticsCleanup] // same ownership as s_Current; Internal_MakeMasterEventCurrent reuses it across reloads; CleanupRoots() handles app-quit
         static Event s_MasterEvent;
 
 
-        // Is this event a keyboard event? (RO)
+        ///<summary>Is this event a keyboard event? (RO)</summary>
+        ///<example>
+        ///  <code><![CDATA[
+        ///using UnityEngine;
+        ///
+        ///public class Example : MonoBehaviour
+        ///{
+        ///    // Detects any keyboard event
+        ///    void OnGUI()
+        ///    {
+        ///        Event e = Event.current;
+        ///        if (e.isKey)
+        ///        {
+        ///            Debug.Log("Detected a keyboard event!");
+        ///        }
+        ///    }
+        ///}
+        ///]]></code>
+        ///</example>
         public bool isKey
         {
             get { EventType t = type; return t == EventType.KeyDown || t == EventType.KeyUp; }
         }
 
-        // Is this event a mouse event? (RO)
+        ///<summary>Is this event a mouse event? (RO)</summary>
+        ///<example>
+        ///  <code><![CDATA[
+        ///using UnityEngine;
+        ///
+        ///public class Example : MonoBehaviour
+        ///{
+        ///    // Detects any mouse event
+        ///    void OnGUI()
+        ///    {
+        ///        Event e = Event.current;
+        ///        if (e.isMouse)
+        ///        {
+        ///            Debug.Log("Detected a mouse event!");
+        ///        }
+        ///    }
+        ///}
+        ///]]></code>
+        ///</example>
         public bool isMouse
         {
             get
@@ -160,6 +383,7 @@ namespace UnityEngine
         }
 
         // Is this event a scroll wheel event? (RO)
+        ///<exclude />
         public bool isScrollWheel
         {
             get { EventType t = type; return t == EventType.ScrollWheel; }
@@ -178,7 +402,42 @@ namespace UnityEngine
             }
         }
 
-        // Create a keyboard event.
+        ///<summary>Create a keyboard event.</summary>
+        ///<remarks>This is useful when you need to check if a certain key has been pressed - possibly with modifiers. The syntax for the key string is a key name
+        ///(same as in the Input Manager), optionally prefixed by any number of modifiers: 
+        ///
+        ///&amp; = Alternate, ^ = Control, % = Command/Windows key, # = Shift 
+        ///
+        ///Examples: &amp;f12 = Alternate + F12,    "^[0]" = Control + keypad0 .
+        ///
+        ///
+        ///See the [Input Manager](xref:class-InputManager) manual page for more information on key names.</remarks>
+        ///<param name="key">A string representing keyboard keys and modifiers.</param>
+        ///<returns>A new Event with <see cref="EventType.KeyDown" /> and the requested <see cref="KeyCode" /> and optional <see cref="EventModifiers" />.</returns>
+        ///<example>
+        ///  <code><![CDATA[
+        ///using UnityEngine;
+        ///
+        ///public class Example : MonoBehaviour
+        ///{
+        ///    // Detects if the Enter key was pressed
+        ///    void OnGUI()
+        ///    {
+        ///        GUILayout.Label("Press Enter To Start Game");
+        ///
+        ///        if (Event.current.Equals(Event.KeyboardEvent("[enter]")))
+        ///        {
+        ///            Application.LoadLevel(1);
+        ///        }
+        ///
+        ///        if (Event.current.Equals(Event.KeyboardEvent("return")))
+        ///        {
+        /// 		Debug.Log("I said enter, not return - try the keypad");
+        ///        }
+        ///    }
+        ///}
+        ///]]></code>
+        ///</example>
         public static Event KeyboardEvent(string key)
         {
             Event evt = new Event(0) {type = EventType.KeyDown};
@@ -348,7 +607,102 @@ namespace UnityEngine
             return "" + type;
         }
 
-        // Use this event.
+        ///<summary>Use this event.</summary>
+        ///<remarks>
+        ///  <para>Call this method when you've used an event. The event's type will be set to <see cref="EventType.Used" />, causing other GUI elements to ignore it.
+        ///
+        ///Events of type <see cref="EventType.Repaint" /> and <see cref="EventType.Layout" /> should not be used.
+        ///Attempting to call this method on such events will issue a warning.
+        ///
+        ///The following example demonstrates how events are consumed and used up. Copy this code into a script, and open the Example Window this sample creates from the Window menu.</para>
+        ///  <para>The following example demonstrates how handles such as <see cref="M:UnityEditor.Handles.PositionHandle" /> and <see cref="M:UnityEditor.Handles.FreeMoveHandle" /> might use events.</para>
+        ///</remarks>
+        ///<example>
+        ///  <code><![CDATA[using UnityEditor;
+        ///using UnityEngine;
+        ///
+        ///public class ExampleWindow : EditorWindow
+        ///{
+        ///    [MenuItem("Window/Show Example Window")]
+        ///    public static void ShowWindow()
+        ///    {
+        ///        GetWindow(typeof(ExampleWindow));
+        ///    }
+        ///
+        ///    private void OnGUI()
+        ///    {
+        ///        if (Event.current.type == EventType.MouseDown && Event.current.button == 0)
+        ///        {
+        ///            Debug.Log("Left clicked at: " + Event.current.mousePosition);
+        ///            // This if statement Uses up the current MouseDown event so that
+        ///            // subsequent code or GUI elements ignore this MouseDown event. 
+        ///            Event.current.Use();
+        ///        }
+        ///
+        ///        // This if statement does not check Event.current.button, but it only triggers
+        ///        // when Event.current.button is not 0 because the previous if statement will
+        ///        // Use up the MouseDown event if it is. 
+        ///        if (Event.current.type == EventType.MouseDown) 
+        ///        {
+        ///            Debug.Log("This only prints when we right click!");
+        ///            Event.current.Use();
+        ///        }
+        ///    }
+        ///}]]></code>
+        ///</example>
+        ///<example>
+        ///  <code><![CDATA[using UnityEditor;
+        ///using UnityEngine;
+        ///
+        ///public static class CustomHandle
+        ///{
+        ///    public static bool DoHandle(Vector3 worldpos, float size, float pickSize)
+        ///    {
+        ///        int id = GUIUtility.GetControlID(FocusType.Passive);
+        ///        Event evt = Event.current;
+        ///
+        ///        bool clicked = false;
+        ///
+        ///        switch (evt.GetTypeForControl(id))
+        ///        {
+        ///            case EventType.MouseDown:
+        ///                if (evt.button == 0 && HandleUtility.nearestControl == id)
+        ///                {
+        ///                    GUIUtility.hotControl = id;
+        ///
+        ///                    evt.Use(); // Using the MouseDown event
+        ///                    clicked = true;
+        ///                }
+        ///                break;
+        ///
+        ///            case EventType.MouseMove:
+        ///                HandleUtility.Repaint(); 
+        ///                evt.Use(); // Using the MouseMove event
+        ///                break;
+        ///
+        ///            case EventType.MouseUp:
+        ///                if (evt.button == 0 && HandleUtility.nearestControl == id)
+        ///                {
+        ///                    GUIUtility.hotControl = 0;
+        ///                    evt.Use(); // Using the MouseUp event
+        ///                }
+        ///                break;
+        ///
+        ///            case EventType.Layout:
+        ///                HandleUtility.AddControl(id, HandleUtility.DistanceToCircle(worldpos, pickSize));
+        ///                // Keep in mind Layout events should not be Used!
+        ///                break;
+        ///
+        ///            case EventType.Repaint:
+        ///                // Draw the handle here
+        ///                // Keep in mind Repaint events should not be Used!
+        ///                break;
+        ///        }
+        ///
+        ///        return clicked;
+        ///    }
+        ///}]]></code>
+        ///</example>
         public void Use()
         {
             if (type == EventType.Repaint || type == EventType.Layout)

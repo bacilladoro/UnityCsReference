@@ -28,11 +28,13 @@ namespace UnityEngine
 
         [Obsolete("'multiline' has been deprecated. Changes to this member will not be observed. Use 'isMultiline' instead.", true)]
         public bool multiline;
+        ///<exclude />
         public bool isMultiline
         { get => m_TextEditing.multiline; set => m_TextEditing.multiline = value; }
 
         [Obsolete("'hasHorizontalCursorPos' has been deprecated. Changes to this member will not be observed. Use 'hasHorizontalCursor' instead.", true)]
         public bool hasHorizontalCursorPos = false;
+        ///<exclude />
         public bool hasHorizontalCursor
         {
             get => m_TextSelecting.hasHorizontalCursorPos;
@@ -47,6 +49,7 @@ namespace UnityEngine
         [Obsolete("'revealCursor' has been deprecated. Changes to this member will not be observed. Use 'showCursor' instead.", true)]
         public bool revealCursor;
 
+        ///<exclude />
         public bool showCursor
         {
             get => m_TextSelecting.revealCursor;
@@ -63,6 +66,7 @@ namespace UnityEngine
             set => throw new NotImplementedException("Please use 'text' instead of 'content'");
         }
 
+        ///<exclude />
         public string text
         {
             get => m_TextEditing.text;
@@ -100,6 +104,7 @@ namespace UnityEngine
             get => style.padding.Remove(position);
         }
 
+        ///<exclude />
         public int cursorIndex
         {
             get => m_TextSelecting.cursorIndex;
@@ -112,6 +117,7 @@ namespace UnityEngine
             set => m_TextEditing.stringCursorIndex = value;
         }
 
+        ///<exclude />
         public int selectIndex
         {
             get => m_TextSelecting.selectIndex;
@@ -183,12 +189,14 @@ namespace UnityEngine
             m_HasFocus = false;
         }
 
+        ///<exclude />
         public bool HasClickedOnLink(Vector2 mousePosition, out string linkData)
         {
             var localMousePosition = mousePosition + scrollOffset;
             return m_TextHandle.HasClickedOnLink(localMousePosition - new Vector2(position.x, position.y), out linkData);
         }
 
+        ///<exclude />
         public bool HasClickedOnHREF(Vector2 mousePosition, out string href)
         {
             var localMousePosition = mousePosition + scrollOffset;
@@ -539,6 +547,7 @@ namespace UnityEngine
 
         public bool Paste() => m_TextEditing.Paste();
 
+        ///<exclude />
         public void DetectFocusChange()
         {
             OnDetectFocusChange();

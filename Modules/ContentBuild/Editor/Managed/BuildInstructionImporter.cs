@@ -8,6 +8,7 @@ using UnityEngine;
 namespace UnityEditor.Build.Content
 {
     [ExcludeFromPreset]
+    [NativeClass("BuildInstructionImporter", PersistentTypeId = 0x1805dbbd)]
     internal sealed partial class BuildInstructionImporter : AssetImporter
     {
     }

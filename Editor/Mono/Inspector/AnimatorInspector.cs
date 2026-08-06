@@ -9,6 +9,7 @@ using UnityEditor;
 using UnityEditorInternal;
 using UnityEditor.AnimatedValues;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -45,6 +46,7 @@ namespace UnityEditor
                 animatePhysics.tooltip = "Notify physics system of animated transforms.";
             }
         }
+        [NoAutoStaticsCleanup]
         static Styles styles;
 
         private void Init()

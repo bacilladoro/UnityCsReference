@@ -55,6 +55,24 @@ namespace Unity.U2D.Physics
         public PhysicsTransform localAnchorB { readonly get => m_LocalAnchorB; set => m_LocalAnchorB = value; }
 
         /// <summary>
+        /// When set, <see cref="localAnchorA"/> is recomputed from the bodies' current placement at create so both anchor frames coincide in world space.
+        /// </summary>
+        /// <remarks>
+        /// This removes the solver jolt from an inconsistent initial configuration.
+        /// It is applied at create only; the authored <see cref="localAnchorA"/> is ignored while this is set.
+        /// </remarks>
+        public bool autoAnchorA { readonly get => m_AutoAnchorA; set => m_AutoAnchorA = value; }
+
+        /// <summary>
+        /// When set, <see cref="localAnchorB"/> is recomputed from the bodies' current placement at create so both anchor frames coincide in world space.
+        /// </summary>
+        /// <remarks>
+        /// This removes the solver jolt from an inconsistent initial configuration.
+        /// It is applied at create only; the authored <see cref="localAnchorB"/> is ignored while this is set.
+        /// </remarks>
+        public bool autoAnchorB { readonly get => m_AutoAnchorB; set => m_AutoAnchorB = value; }
+
+        /// <summary>
         /// Enable/Disable unpinned mode where only Body A is affected and body B and its local anchor point is ignored.
         /// Body B must still be assigned so it is typical to assign a static ground body, preferably shared/reused.
         /// </summary>
@@ -155,6 +173,8 @@ namespace Unity.U2D.Physics
         PhysicsBody m_BodyB;
         [SerializeField] PhysicsTransform m_LocalAnchorA;
         [SerializeField] PhysicsTransform m_LocalAnchorB;
+        [SerializeField] bool m_AutoAnchorA;
+        [SerializeField] bool m_AutoAnchorB;
         [SerializeField] bool m_EnableUnpinned;
         [SerializeField] bool m_EnableSpring;
         [SerializeField] float m_SpringTargetAngle;

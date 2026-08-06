@@ -5,6 +5,7 @@
 using UnityEngine;
 using System;
 using RequiredByNativeCodeAttribute = UnityEngine.Scripting.RequiredByNativeCodeAttribute;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -19,6 +20,7 @@ namespace UnityEditor
                 selectionUndoRedoPerformed(redo ? UndoRedoType.Redo : UndoRedoType.Undo);
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         internal static event Action<UndoRedoType> selectionUndoRedoPerformed;
     }
 }

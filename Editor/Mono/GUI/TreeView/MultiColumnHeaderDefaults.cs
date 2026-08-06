@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using UnityEngine;
+using Unity.Scripting.LifecycleManagement;
 
 
 namespace UnityEditor.IMGUI.Controls
@@ -21,12 +22,16 @@ namespace UnityEditor.IMGUI.Controls
         {
             // Column header uses same colors as label, but slightly dimmed to let list items stand out more (similar to win 10)
             // Use middle alignment to ensure labels are aligned regardless of icon size
+            [NoAutoStaticsCleanup] // GUIStyle from named skin style; survives reload. public field, so not made readonly (source-breaking)
             public static GUIStyle columnHeader = "MultiColumnHeader";
+            [NoAutoStaticsCleanup] // GUIStyle from named skin style; survives reload. public field, so not made readonly (source-breaking)
             public static GUIStyle columnHeaderRightAligned = "MultiColumnHeaderRight";
+            [NoAutoStaticsCleanup] // GUIStyle from named skin style; survives reload. public field, so not made readonly (source-breaking)
             public static GUIStyle columnHeaderCenterAligned = "MultiColumnHeaderCenter";
+            [NoAutoStaticsCleanup] // GUIStyle from named skin style; survives reload. public field, so not made readonly (source-breaking)
             public static GUIStyle background = "MultiColumnTopBar"; // Use bar background with 1 pixel line at the bottom to let items have someting to clip against when scrolled
             // Arrow uses same colors as label (derived) aligned at top
-            internal static GUIStyle arrowStyle = "MultiColumnArrow";
+            internal static readonly GUIStyle arrowStyle = "MultiColumnArrow";
         }
     }
 }

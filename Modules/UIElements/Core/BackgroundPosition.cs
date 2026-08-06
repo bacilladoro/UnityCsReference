@@ -11,7 +11,7 @@ using UnityEngine.Bindings;
 namespace UnityEngine.UIElements
 {
     /// <summary>
-    /// Script interface for <see cref="VisualElement"/> background-position style property <see cref="IStyle.BackgroundPosition"/>.
+    /// Script interface for <see cref="VisualElement"/> background-position style property <see cref="IStyle.backgroundPositionX"/> and <see cref="IStyle.backgroundPositionY"/>.
     /// </summary>
     [Serializable]
     public partial struct BackgroundPosition : IEquatable<BackgroundPosition>

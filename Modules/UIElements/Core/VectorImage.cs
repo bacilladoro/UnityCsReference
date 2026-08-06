@@ -79,7 +79,7 @@ namespace UnityEngine.UIElements
     /// An asset that represents a vector image.
     /// </summary>
     /// <remarks>
-    /// VectorImage is an opaque type. You can't use it to author vector images. To author vector images, use the <see cref="Painter2D" /> or <see cref="Unity.VectorGraphics.Editor.SVGImporter"/> class.
+    /// VectorImage is an opaque type. You can't use it to author vector images. To author vector images, use the <see cref="Painter2D" /> or <c>Unity.VectorGraphics.Editor.SVGImporter</c> class.
     ///
     /// For more information, refer to [[wiki:ui-systems/work-with-vector-graphics|work with vector graphics]].
     /// </remarks>

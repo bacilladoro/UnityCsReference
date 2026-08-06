@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using UnityEngine;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -10,7 +11,9 @@ namespace UnityEditor
     {
         internal class VUMeter
         {
+            [NoAutoStaticsCleanup] // lazy texture loaded by fixed name via LoadIcon; asset survives reload, re-loaded on first access
             static Texture2D s_VerticalVUTexture;
+            [NoAutoStaticsCleanup] // lazy texture loaded by fixed name via LoadIcon; asset survives reload, re-loaded on first access
             static Texture2D s_HorizontalVUTexture;
             const float VU_SPLIT = 0.9f;
 

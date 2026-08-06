@@ -59,6 +59,17 @@ namespace Unity.U2D.Physics
         public static NativeArray<ChainSegmentGeometry> CreateSegments(ReadOnlySpan<Vector2> vertices, PhysicsTransform transform, bool isLoop, Unity.Collections.Allocator allocator = Unity.Collections.Allocator.Temp) => ChainSegmentGeometry_CreateSegments(vertices, transform, isLoop, allocator).ToNativeArray<ChainSegmentGeometry>();
 
         /// <summary>
+        /// Update an existing batch of <see cref="ChainSegmentGeometry"/> from a set of vertices, writing the results into the specified span in place.
+        /// This pairs with <see cref="CreateSegments"/>: it recalculates the same segment and ghost vertices, but reuses a caller-provided span rather than allocating a new one.
+        /// The span length must equal the segment count the vertices produce, which is the vertex count when <paramref name="isLoop"/> is true, otherwise the vertex count minus three.
+        /// </summary>
+        /// <param name="segments">The segment batch to update in place. Its length must equal the segment count the vertices produce.</param>
+        /// <param name="vertices">The vertices to recalculate the segments from.</param>
+        /// <param name="transform">The transform used to specify where the geometry is positioned.</param>
+        /// <param name="isLoop">Indicates a closed chain formed by connecting the first and last vertices specified. This changes how the vertices are interpreted.</param>
+        public static void UpdateSegments(Span<ChainSegmentGeometry> segments, ReadOnlySpan<Vector2> vertices, PhysicsTransform transform, bool isLoop) => ChainSegmentGeometry_UpdateSegments(segments, vertices, transform, isLoop);
+
+        /// <summary>
         /// Get the default Chain Segment.
         /// </summary>
         public static readonly ChainSegmentGeometry defaultGeometry = new()

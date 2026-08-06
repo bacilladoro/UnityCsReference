@@ -53,7 +53,7 @@ namespace UnityEngine.UIElements.StyleSheets
             },
                         {
                 "background-image",
-                "<resource> | <url> | none"
+                "<resource> | <url> | <linear-gradient> | <radial-gradient> | none"
             },
                         {
                 "background-position",

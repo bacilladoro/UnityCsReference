@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using UnityEngine;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -65,7 +66,8 @@ namespace UnityEditor
                 }
             }
         }
-        static Styles s_Styles;
+        [NoAutoStaticsCleanup] // Readonly eager init re-runs per ALC on code load, recreating the embedded programmatic Texture2D fresh.
+        static readonly Styles s_Styles = new();
 
         SerializedProperty m_AnchorMin;
         SerializedProperty m_AnchorMax;
@@ -73,9 +75,9 @@ namespace UnityEditor
         Vector2[,] m_InitValues;
 
         const int kTopPartHeight = 38;
-        static float[] kPivotsForModes = new float[] { 0, 0.5f, 1, 0.5f, 0.5f }; // Only for actual modes, not for Undefined.
-        static string[] kHLabels = new string[] { "custom", "left", "center", "right", "stretch", "%" };
-        static string[] kVLabels = new string[] { "custom", "top", "middle", "bottom", "stretch", "%" };
+        static readonly float[] kPivotsForModes = new float[] { 0, 0.5f, 1, 0.5f, 0.5f }; // Only for actual modes, not for Undefined.
+        static readonly string[] kHLabels = new string[] { "custom", "left", "center", "right", "stretch", "%" };
+        static readonly string[] kVLabels = new string[] { "custom", "top", "middle", "bottom", "stretch", "%" };
 
         public enum LayoutMode { Undefined = -1, Min = 0, Middle = 1, Max = 2, Stretch = 3 }
 
@@ -113,9 +115,6 @@ namespace UnityEditor
 
         public override void OnGUI(Rect rect)
         {
-            if (s_Styles == null)
-                s_Styles = new Styles();
-
             if (Event.current.type == EventType.KeyDown && Event.current.keyCode == KeyCode.Return)
                 editorWindow.Close();
 
@@ -392,9 +391,6 @@ namespace UnityEditor
 
         internal static void DrawLayoutMode(Rect position, LayoutMode hMode, LayoutMode vMode, bool doPivot, bool doPosition)
         {
-            if (s_Styles == null)
-                s_Styles = new Styles();
-
             Color oldColor = GUI.color;
 
             // Make parent size the largest possible square, but enforce it's an uneven number.

@@ -69,13 +69,19 @@ namespace UnityEngine.UIElements.StyleSheets
 
         private void AppendFunction()
         {
-            while (m_ParseIndex < m_PropertyValue.Length && m_PropertyValue[m_ParseIndex] != ')')
-            {
-                m_StringBuilder.Append(m_PropertyValue[m_ParseIndex]);
-                ++m_ParseIndex;
-            }
-
+            // Depth-tracked so inner functions (e.g. rgb() inside linear-gradient()) don't close the outer one.
+            int depth = 1;
             m_StringBuilder.Append(m_PropertyValue[m_ParseIndex]);
+            ++m_ParseIndex;
+            while (m_ParseIndex < m_PropertyValue.Length && depth > 0)
+            {
+                char c = m_PropertyValue[m_ParseIndex];
+                if (c == '(') ++depth;
+                else if (c == ')') --depth;
+                m_StringBuilder.Append(c);
+                if (depth > 0)
+                    ++m_ParseIndex;
+            }
         }
 
         private void EatSpace()

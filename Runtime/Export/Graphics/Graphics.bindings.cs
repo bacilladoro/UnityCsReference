@@ -16,6 +16,7 @@ using UnityEngine.Experimental.Rendering;
 using Unity.Collections;
 using Unity.Jobs;
 using System.Globalization;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEngine
 {
@@ -213,6 +214,45 @@ namespace UnityEngine
                 return -1;
 
             return ((ulong)numerator * other.denominator).CompareTo((ulong)denominator * other.numerator);
+        }
+
+        public override bool Equals(object obj)
+        {
+            return obj is RefreshRate other && Equals(other);
+        }
+
+        public override int GetHashCode()
+        {
+            // Equals compares ratios by cross-multiplication (e.g. 60/1 equals 120/2), so the
+            // hash must be computed from the reduced fraction for equal values to hash equally.
+            // All rates with a 0 denominator are equal to each other and share one hash.
+            if (denominator == 0)
+                return 0;
+
+            var gcd = Gcd(numerator, denominator);
+            return HashCode.Combine(numerator / gcd, denominator / gcd);
+        }
+
+        static uint Gcd(uint a, uint b)
+        {
+            while (b != 0)
+            {
+                (a, b) = (b, a % b);
+            }
+
+            return a;
+        }
+
+        [MethodImpl(MethodImplOptionsEx.AggressiveInlining)]
+        public static bool operator==(RefreshRate lhs, RefreshRate rhs)
+        {
+            return lhs.Equals(rhs);
+        }
+
+        [MethodImpl(MethodImplOptionsEx.AggressiveInlining)]
+        public static bool operator!=(RefreshRate lhs, RefreshRate rhs)
+        {
+            return !lhs.Equals(rhs);
         }
 
         public override string ToString()
@@ -1049,6 +1089,7 @@ namespace UnityEngine
 
     // Stores lightmaps of the scene.
     [NativeHeader("Runtime/Graphics/LightmapSettings.h")]
+    [global::UnityEngine.NativeClass("LightmapSettings", PersistentTypeId = 157)]
     [StaticAccessor("GetLightmapSettings()")]
     public sealed partial class LightmapSettings : Object
     {
@@ -1186,6 +1227,7 @@ namespace UnityEngine
     // Stores light probes for the scene.
     [StructLayout(LayoutKind.Sequential)]
     [UnityEngine.Scripting.RequiresEngineModule("Tetgen")]
+    [global::UnityEngine.NativeClass("LightProbes", PersistentTypeId = 258)]
     [NativeHeader("Runtime/Export/Graphics/Graphics.bindings.h")]
     public sealed partial class LightProbes : Object
     {
@@ -1202,6 +1244,7 @@ namespace UnityEngine
 
         extern static void Internal_Create([Writable] LightProbes self);
 
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action lightProbesUpdated;
         internal static void Internal_CallLightProbesUpdatedFunction()
         {
@@ -1209,6 +1252,7 @@ namespace UnityEngine
                 lightProbesUpdated();
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action tetrahedralizationCompleted;
         internal static void Internal_CallTetrahedralizationCompletedFunction()
         {
@@ -1216,6 +1260,7 @@ namespace UnityEngine
                 tetrahedralizationCompleted();
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action needsRetetrahedralization;
         internal static void Internal_CallNeedsRetetrahedralizationFunction()
         {
@@ -1431,7 +1476,7 @@ namespace UnityEngine
 
     [NativeHeader("Runtime/GfxDevice/HDROutputSettings.h")]
     [UsedByNativeCode]
-    public class HDROutputSettings
+    public partial class HDROutputSettings
     {
         private int m_DisplayIndex;
 
@@ -1443,7 +1488,9 @@ namespace UnityEngine
         [VisibleToOtherModules("UnityEngine.XRModule")]
         internal HDROutputSettings(int displayIndex) { this.m_DisplayIndex = displayIndex; }
 
+        [AutoStaticsCleanupOnCodeReload]
         public static HDROutputSettings[] displays = new HDROutputSettings[1] { new HDROutputSettings() };
+        [AutoStaticsCleanupOnCodeReload]
         private static HDROutputSettings _mainDisplay = displays[0];
         public static HDROutputSettings main { get { return _mainDisplay; } }
 

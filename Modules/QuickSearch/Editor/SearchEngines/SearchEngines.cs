@@ -37,10 +37,12 @@ namespace UnityEditor.Search
             m_SearchItemConverter = searchItemConverter;
         }
 
+#pragma warning disable UA5000 // The Avoid Finalizer Analyzer produces compile errors for any new finalizers. This pre-existing finalizer declaration has been suppressed, but should be rewritten if possible.
         ~SearchApiSession()
         {
             Dispose(false);
         }
+#pragma warning restore UA5000
 
         public void StopAsyncResults()
         {
@@ -92,10 +94,12 @@ namespace UnityEditor.Search
 
         public Dictionary<Guid, SearchApiSession> searchSessions = new Dictionary<Guid, SearchApiSession>();
 
+#pragma warning disable UA5000 // The Avoid Finalizer Analyzer produces compile errors for any new finalizers. This pre-existing finalizer declaration has been suppressed, but should be rewritten if possible.
         ~QuickSearchEngine()
         {
             Dispose(false);
         }
+#pragma warning restore UA5000
 
         public virtual void BeginSession(ISearchContext context)
         {

@@ -23,6 +23,7 @@ namespace UnityEngine
     [NativeHeader("Modules/ParticleSystem/ParticleSystemGeometryJob.h")]
     [NativeHeader("Modules/ParticleSystem/ScriptBindings/ParticleSystemScriptBindings.h")]
     [UsedByNativeCode]
+    [global::UnityEngine.NativeClass("ParticleSystem", PersistentTypeId = 198)]
     [RequireComponent(typeof(Transform))]
     public sealed partial class ParticleSystem : Component
     {

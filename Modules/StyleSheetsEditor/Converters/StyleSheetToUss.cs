@@ -12,6 +12,8 @@ using UnityEngine;
 using UnityEngine.Bindings;
 using UnityEngine.UIElements;
 [assembly: InternalsVisibleTo("Assembly-CSharp-Editor-testable")]
+[assembly: InternalsVisibleTo("Unity.UIElements.EditorResources.Authoring")]
+[assembly: InternalsVisibleTo("Unity.UIElements.EditorResources.EditorTests")]
 
 namespace UnityEditor.StyleSheets
 {

@@ -20,6 +20,10 @@ namespace UnityEngine.UIElements
         int? m_DeferredScrollToItemIndex;
         readonly Action m_PerformDeferredScrollToItem;
         private IVisualElementScheduledItem m_ScheduleDeferredScrollToItem;
+        int? m_DeferredHorizontalRevealIndex;
+        float? m_LastHorizontalRevealOffsetX;
+        readonly Action m_PerformDeferredHorizontalReveal;
+        IVisualElementScheduledItem m_ScheduleDeferredHorizontalReveal;
         IVisualElementScheduledItem m_ScrollScheduledItem;
         Action m_ScrollCallback;
 
@@ -95,6 +99,7 @@ namespace UnityEngine.UIElements
             m_ActiveItems = new List<T>();
             m_VisibleItemPredicateDelegate = VisibleItemPredicate;
             m_PerformDeferredScrollToItem = PerformDeferredScrollToItem;
+            m_PerformDeferredHorizontalReveal = PerformDeferredHorizontalReveal;
             m_ScrollCallback = OnScrollUpdate;
 
             // ScrollView sets this to true to support Absolute position. It causes issues with the scrollbars with animated reordering.
@@ -246,30 +251,47 @@ namespace UnityEngine.UIElements
         {
             ScrollToItemVertically(index);
             ScrollToItemHorizontally(index);
-
-            // The scroll may relayout the target; re-run via the deferred loop so the horizontal reveal uses its final laid-out position (-1 == last item).
-            if (index >= -1 && m_ScrollView.mode != ScrollViewMode.Vertical && IsContentContainerPanelDirtied())
-            {
-                m_DeferredScrollToItemIndex = index;
-                ScheduleDeferredScrollToItem();
-            }
         }
 
         protected abstract void ScrollToItemVertically(int index);
 
-        // Brings the start (left edge) of the item's content into view (e.g. a deeply indented TreeView row); re-run by the deferred scroll loop until the item is realized and laid out.
+        // Brings the start (left edge) of the item's content into view (e.g. a deeply indented TreeView row).
+        // The scroll relayouts the content and the item may not be realized yet, so it re-runs via a dedicated
+        // horizontal loop until the layout settles. That loop never re-runs the vertical scroll, so it can't
+        // force the list back to the target and block the user's vertical scrolling in an always-dirty panel
+        // like UI Builder. (UUM-147562)
         protected void ScrollToItemHorizontally(int index)
         {
             if (m_ScrollView.mode == ScrollViewMode.Vertical)
+            {
+                StopDeferredHorizontalReveal();
                 return;
+            }
 
             // -1 scrolls to the last item; resolve it so a deeply indented last row is revealed too.
-            if (index == -1)
-                index = itemsCount - 1;
-
-            if (index < 0)
+            var resolvedIndex = index == -1 ? itemsCount - 1 : index;
+            if (resolvedIndex < 0)
+            {
+                StopDeferredHorizontalReveal();
                 return;
+            }
 
+            RevealItemHorizontally(resolvedIndex);
+            m_LastHorizontalRevealOffsetX = m_ScrollView.scrollOffset.x;
+
+            if (IsContentContainerPanelDirtied())
+            {
+                m_DeferredHorizontalRevealIndex = index;
+                ScheduleDeferredHorizontalReveal();
+            }
+            else
+            {
+                StopDeferredHorizontalReveal();
+            }
+        }
+
+        void RevealItemHorizontally(int index)
+        {
             var target = m_CollectionView.GetRecycledItemFromIndex(index)?.bindableElement;
             if (target == null)
                 return;
@@ -360,8 +382,49 @@ namespace UnityEngine.UIElements
             }
         }
 
+        void ScheduleDeferredHorizontalReveal()
+        {
+            if (m_DeferredHorizontalRevealIndex == null)
+                return;
+
+            if (m_ScheduleDeferredHorizontalReveal == null)
+                m_ScheduleDeferredHorizontalReveal = m_CollectionView.schedule.Execute(m_PerformDeferredHorizontalReveal).Until(ShouldStopDeferredScrollTo);
+            else if (!m_ScheduleDeferredHorizontalReveal.isActive)
+                m_ScheduleDeferredHorizontalReveal.Resume();
+        }
+
+        void PerformDeferredHorizontalReveal()
+        {
+            if (m_DeferredHorizontalRevealIndex == null)
+            {
+                m_ScheduleDeferredHorizontalReveal.Pause();
+                return;
+            }
+
+            // Stop if the user scrolled horizontally since our last pass, so the reveal can't snap them
+            // back to the target on the next frame in an always-dirty panel. (UUM-147562)
+            if (m_LastHorizontalRevealOffsetX is { } last && !Mathf.Approximately(m_ScrollView.scrollOffset.x, last))
+            {
+                StopDeferredHorizontalReveal();
+                return;
+            }
+
+            ScrollToItemHorizontally(m_DeferredHorizontalRevealIndex.Value);
+        }
+
+        void StopDeferredHorizontalReveal()
+        {
+            m_DeferredHorizontalRevealIndex = null;
+            m_LastHorizontalRevealOffsetX = null;
+
+            if (m_ScheduleDeferredHorizontalReveal is { isActive: true })
+                m_ScheduleDeferredHorizontalReveal.Pause();
+        }
+
         void OnDetachFromPanelEvent(DetachFromPanelEvent evt)
         {
+            StopDeferredHorizontalReveal();
+
             if (m_ScrollScheduledItem?.isActive == true)
             {
                 m_ScrollScheduledItem.Pause();

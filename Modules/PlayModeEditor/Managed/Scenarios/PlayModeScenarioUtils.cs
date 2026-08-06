@@ -8,10 +8,11 @@ using System.IO;
 using UnityEngine.Assertions;
 using UnityEditor;
 using UnityEngine;
+using Unity.Scripting.LifecycleManagement;
 
 namespace Unity.PlayMode.Editor
 {
-    static class PlayModeScenarioUtils
+    static partial class PlayModeScenarioUtils
     {
         internal const string k_ConfigAssetsPath = "Assets/Settings/PlayMode";
         internal const int k_MaxScenarioConfigName = 64;
@@ -19,8 +20,10 @@ namespace Unity.PlayMode.Editor
         /// <summary>
         /// Will get invoked when a ScenarioConfig is added or removed.
         /// </summary>
+        [AutoStaticsCleanupOnCodeReload] // event: can hold delegates registered from user assemblies
         internal static event Action AssetsChanged;
 
+        [AutoStaticsCleanupOnCodeReload] // lazy cache of PlayModeScenario ScriptableObjects; must be rebuilt after code reload
         private static List<PlayModeScenario> s_AllConfigs;
 
         [Obsolete("Use PlayModeScenarioManager.RegisterScenarioType<T> instead.", false)]

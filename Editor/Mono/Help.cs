@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using Object = UnityEngine.Object;
 using System.Collections.Generic;
@@ -20,16 +21,19 @@ namespace UnityEditor
     public partial class Help
     {
         private const string k_MonoScriptReference = "file:///unity/ScriptReference/MonoBehaviour.html";
+        [NoAutoStaticsCleanup] // documentation URL string cache, no user types; rebuilt on demand
         private static Dictionary<string, string> m_UrlCache = new Dictionary<string, string>();
         private const string k_AbsoluteURI = "file:///unity/";
         private const string k_AbsoluteFileRef = "file:///";
         private const string k_ManualSection = "manual";
         private const string k_ApiSection = "api";
+        [NoAutoStaticsCleanup] // lazy base documentation URL string, rebuilt on demand via null-check
         private static string m_BaseDocumentationUrl;
+        [NoAutoStaticsCleanup] // redirect-manifest map loaded from redirect.json, no user types; rebuilt on demand
         private static Dictionary<string, object> m_LocalRedirectionMapping = new Dictionary<string, object>();
         private const string k_RedirectManifest = "redirect.json";
 
-        private static string[] k_DocRedirectServer =
+        private static readonly string[] k_DocRedirectServer =
         {
             "",
             "https://docs-redirects.test.it.unity3d.com",
@@ -38,9 +42,10 @@ namespace UnityEditor
             "https://docs-redirects.unity.com"
         };
 
-        internal static string k_AlphaReleaseNotesUrlBase = "https://unity3d.com/unity/alpha/";
-        internal static string k_BetaReleaseNotesUrlBase = "https://unity3d.com/unity/beta/";
-        internal static string k_ReleaseNotesUrlBase = "https://unity3d.com/unity/whats-new/";
+        internal static readonly string k_AlphaReleaseNotesUrlBase = "https://unity3d.com/unity/alpha/";
+        internal static readonly string k_BetaReleaseNotesUrlBase = "https://unity3d.com/unity/beta/";
+        internal static readonly string k_ReleaseNotesUrlBase = "https://unity3d.com/unity/whats-new/";
+        internal static readonly string k_ThirdPartyBookMark = "#third-party-notices";
 
         internal enum DocRedirectionServer
         {
@@ -341,6 +346,7 @@ namespace UnityEditor
 
         // Object types whose help filename don't map directly to their type name can use `RegisterHelpFileName()` to
         // register a custom help file name.
+        [AutoStaticsCleanupOnCodeReload]
         private static Dictionary<Type, string> m_ObjectTypeToHelpFileName = new Dictionary<Type, string>();
         internal static bool RegisterHelpFileName(Type type, string fileName)
         {
@@ -385,6 +391,13 @@ namespace UnityEditor
         {
             var releaseNotesUrl = GetReleaseNotesUrl(InternalEditorUtility.GetUnityVersionDigits(), InternalEditorUtility.GetUnityDisplayVersion());
             Application.OpenURL(releaseNotesUrl);
+        }
+
+        [UnityEngine.Scripting.RequiredByNativeCode]
+        internal static void OpenThirdPartyNotices()
+        {
+            var thirdPartyNoticesUrl = GetReleaseNotesUrl(InternalEditorUtility.GetUnityVersionDigits(), InternalEditorUtility.GetUnityDisplayVersion()) + k_ThirdPartyBookMark;
+            Application.OpenURL(thirdPartyNoticesUrl);
         }
 
         internal static string GetReleaseNotesUrl(string digitsOnlyVersion, string displayVersion)

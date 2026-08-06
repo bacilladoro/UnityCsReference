@@ -4,11 +4,12 @@
 
 using UnityEngine.Bindings;
 using UnityEngine.Internal;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEngine
 {
     [NativeHeader("Runtime/BaseClasses/TagManager.h")]
-    public struct SortingLayer
+    public partial struct SortingLayer
     {
         private int m_Id;
 
@@ -36,8 +37,11 @@ namespace UnityEngine
         public delegate void LayerCallback(SortingLayer layer);
         internal delegate void LayerChangedCallback();
 
+        [AutoStaticsCleanupOnCodeReload]
         public static LayerCallback onLayerAdded;
+        [AutoStaticsCleanupOnCodeReload]
         public static LayerCallback onLayerRemoved;
+        [AutoStaticsCleanupOnCodeReload]
         internal static LayerChangedCallback onLayerChanged;
 
         [FreeFunction("GetTagManager().GetSortingLayerIDs")]

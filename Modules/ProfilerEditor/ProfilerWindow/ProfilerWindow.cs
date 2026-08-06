@@ -913,6 +913,8 @@ namespace UnityEditor
             // Reset frame state
             m_LastFrameFromTick = FrameDataView.invalidOrCurrentFrameIndex;
             m_SelectedFrameRange = null;
+            SessionState.SetInt(k_FrameSelectionRangeStartKey, k_NoFrameSelectionSession);
+            SessionState.SetInt(k_FrameSelectionRangeEndKey, k_NoFrameSelectionSession);
             m_FrameCountLabelMinWidth = 0;
             foreach (var module in m_AllModules)
             {

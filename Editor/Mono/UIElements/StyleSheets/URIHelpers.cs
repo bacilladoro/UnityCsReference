@@ -72,6 +72,18 @@ namespace UnityEditor.UIElements.StyleSheets
             return u.ToString();
         }
 
+        public static string MakeThemeImportUri(Object imported, string ownerAssetPath)
+        {
+            if (!imported)
+                return null;
+
+            var importedPath = AssetDatabase.GetAssetPath(imported);
+            if (!string.IsNullOrEmpty(importedPath) && importedPath == ownerAssetPath && AssetDatabase.IsSubAsset(imported))
+                return $"{ThemeRegistry.kThemeScheme}://{imported.name}";
+
+            return null;
+        }
+
         public static string EncodeUri(string uri)
         {
             if (string.IsNullOrEmpty(uri)) return String.Empty;

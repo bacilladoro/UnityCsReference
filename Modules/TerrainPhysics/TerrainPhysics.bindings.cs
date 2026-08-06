@@ -12,6 +12,7 @@ namespace UnityEngine
     ///<seealso cref="PhysicsMaterial" />
     ///<seealso cref="Rigidbody" />
     [NativeHeader("Modules/TerrainPhysics/TerrainCollider.h")]
+    [global::UnityEngine.NativeClass("TerrainCollider", PersistentTypeId = 154)]
     [NativeHeader("Modules/Terrain/Public/TerrainData.h")]
     public class TerrainCollider : Collider
     {

@@ -21,8 +21,8 @@ namespace Unity.ProjectAuditor.Editor.Modules
             (
             PAA6000,
             "Texture requires Read/Write",
-            Areas.Quality,
-            "A GameObject requires access to the pixel data of this Texture on the CPU. Read/Write must be enabled on the Texture for this to work properly.",
+            Areas.Quality | Areas.Upgrade,
+            "A GameObject requires access to the pixel data of this Texture on the CPU. In future versions of Unity, the build process will no longer automatically enable Read/Write for Textures referenced by a Particle System Shape Module or by a Terrain Detail Prototype.",
             "Enable Read/Write in the Texture's import settings."
             )
         {
@@ -90,7 +90,7 @@ namespace Unity.ProjectAuditor.Editor.Modules
             registerDescriptor(k_SceneMeshReadWriteEnabledDescriptor);
         }
 
-        internal override void OnAnalysisStarted()
+        public override void OnAnalysisStarted()
         {
             m_VisitedAssets.Clear();
         }
@@ -218,7 +218,8 @@ namespace Unity.ProjectAuditor.Editor.Modules
                 context.GameObject.name
             )
             .WithSeverity(Severity.Major)
-            .WithLocation(AssetDatabase.GetAssetPath(texture));
+            .WithLocation(AssetDatabase.GetAssetPath(texture))
+            .WithUpgradeProperties("6000.5", null, null);
         }
 
         ReportItemBuilder CreateMeshIssue(Mesh mesh, GameObjectAnalysisContext context)

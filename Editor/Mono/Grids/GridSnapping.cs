@@ -3,13 +3,16 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 
 namespace UnityEditor
 {
-    static class GridSnapping
+    static partial class GridSnapping
     {
+        [AutoStaticsCleanupOnCodeReload]
         public static Func<Vector3, Vector3> snapPosition = null;
+        [AutoStaticsCleanupOnCodeReload]
         public static Func<bool> activeFunc = null;
 
         public static bool active

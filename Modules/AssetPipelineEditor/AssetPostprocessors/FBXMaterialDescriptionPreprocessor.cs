@@ -179,14 +179,14 @@ namespace UnityEditor.AssetImporters
                     SetMaterialTextureProperty("_EmissionMap", material, textureProperty);
                     material.SetColor("_EmissionColor", emissiveColor);
                     material.EnableKeyword("_EMISSION");
-                    material.globalIlluminationFlags |= MaterialGlobalIlluminationFlags.RealtimeEmissive;
+                    material.globalIlluminationFlags |= MaterialGlobalIlluminationFlags.RealtimeIndirectEmission;
                 }
                 else if (description.TryGetProperty("emission_color", out vectorProperty))
                 {
                     emissiveColor = vectorProperty * floatProperty;
                     material.SetColor("_EmissionColor", emissiveColor);
                     material.EnableKeyword("_EMISSION");
-                    material.globalIlluminationFlags |= MaterialGlobalIlluminationFlags.RealtimeEmissive;
+                    material.globalIlluminationFlags |= MaterialGlobalIlluminationFlags.RealtimeIndirectEmission;
                 }
             }
         }
@@ -272,7 +272,7 @@ namespace UnityEditor.AssetImporters
             if (description.TryGetProperty("emission", out floatProperty) && floatProperty > 0.0f)
             {
                 material.EnableKeyword("_EMISSION");
-                material.globalIlluminationFlags |= MaterialGlobalIlluminationFlags.RealtimeEmissive;
+                material.globalIlluminationFlags |= MaterialGlobalIlluminationFlags.RealtimeIndirectEmission;
 
                 Color emissiveColor = new Color(1.0f, 1.0f, 1.0f, 1.0f);
                 if (description.TryGetProperty("emissionColor", out textureProperty))
@@ -391,7 +391,7 @@ namespace UnityEditor.AssetImporters
             if (description.TryGetProperty("emission", out floatProperty) && floatProperty > 0.0f)
             {
                 material.EnableKeyword("_EMISSION");
-                material.globalIlluminationFlags |= MaterialGlobalIlluminationFlags.RealtimeEmissive;
+                material.globalIlluminationFlags |= MaterialGlobalIlluminationFlags.RealtimeIndirectEmission;
 
                 Color emissiveColor = new Color(1.0f, 1.0f, 1.0f, 1.0f);
                 if (description.TryGetProperty("emit_color_map", out textureProperty))
@@ -481,13 +481,13 @@ namespace UnityEditor.AssetImporters
                 SetMaterialTextureProperty("_EmissionMap", material, textureProperty);
                 material.SetColor("_EmissionColor", Color.white);
                 material.EnableKeyword("_EMISSION");
-                material.globalIlluminationFlags |= MaterialGlobalIlluminationFlags.RealtimeEmissive;
+                material.globalIlluminationFlags |= MaterialGlobalIlluminationFlags.RealtimeIndirectEmission;
             }
             else if (description.TryGetProperty("emit_color", out vectorProperty))
             {
                 material.SetColor("_EmissionColor", vectorProperty);
                 material.EnableKeyword("_EMISSION");
-                material.globalIlluminationFlags |= MaterialGlobalIlluminationFlags.RealtimeEmissive;
+                material.globalIlluminationFlags |= MaterialGlobalIlluminationFlags.RealtimeIndirectEmission;
             }
         }
 
@@ -700,7 +700,7 @@ namespace UnityEditor.AssetImporters
                     material.SetTextureOffset("_EmissionMap", uvOffset);
                     material.SetTextureScale("_EmissionMap", uvScale);
                     material.EnableKeyword("_EMISSION");
-                    material.globalIlluminationFlags |= MaterialGlobalIlluminationFlags.RealtimeEmissive;
+                    material.globalIlluminationFlags |= MaterialGlobalIlluminationFlags.RealtimeIndirectEmission;
                 }
 
                 if (description.HasAnimationCurve("emissive_intensity"))
@@ -722,7 +722,7 @@ namespace UnityEditor.AssetImporters
             {
                 if (vectorProperty.x > 0.0f || vectorProperty.y > 0.0f || vectorProperty.z > 0.0f)
                 {
-                    material.globalIlluminationFlags |= MaterialGlobalIlluminationFlags.RealtimeEmissive;
+                    material.globalIlluminationFlags |= MaterialGlobalIlluminationFlags.RealtimeIndirectEmission;
                     material.EnableKeyword("_EMISSION");
                 }
 
@@ -884,7 +884,7 @@ namespace UnityEditor.AssetImporters
                 if (description.TryGetProperty("EmissiveFactor", out floatProperty) && floatProperty > 0.0f)
                 {
                     material.EnableKeyword("_EMISSION");
-                    material.globalIlluminationFlags |= MaterialGlobalIlluminationFlags.RealtimeEmissive;
+                    material.globalIlluminationFlags |= MaterialGlobalIlluminationFlags.RealtimeIndirectEmission;
                 }
             }
             else if (
@@ -898,7 +898,7 @@ namespace UnityEditor.AssetImporters
                 if (floatProperty > 0.0f)
                 {
                     material.EnableKeyword("_EMISSION");
-                    material.globalIlluminationFlags |= MaterialGlobalIlluminationFlags.RealtimeEmissive;
+                    material.globalIlluminationFlags |= MaterialGlobalIlluminationFlags.RealtimeIndirectEmission;
                 }
             }
 

@@ -1094,6 +1094,13 @@ namespace UnityEditor.UIElements
         }
     }
 
+    // Stub — gradients aren't authored from UXML; converter exists only to silence codegen.
+    internal class BackgroundGradientAttributeConverter : UxmlAttributeConverter<BackgroundGradient>
+    {
+        public override BackgroundGradient FromString(string value) => default;
+        public override string ToString(BackgroundGradient value) => string.Empty;
+    }
+
     internal class BackgroundPositionAttributeConverter : UxmlAttributeConverter<BackgroundPosition>
     {
         public override BackgroundPosition FromString(string value)

@@ -18,6 +18,10 @@ namespace UnityEditor.Overlays
         [SerializeField, HideInInspector]
         DynamicPanelContainerData[] m_DynamicPanelContainerData;
 
+        // Null in preset files saved before this field existed; OnAfterDeserialize defaults it to empty.
+        [SerializeField, HideInInspector]
+        string[] m_MenuItemPaths;
+
         Type m_TargetType;
 
         public Type targetWindowType
@@ -38,6 +42,12 @@ namespace UnityEditor.Overlays
             set => m_DynamicPanelContainerData = value;
         }
 
+        public string[] menuItemPaths
+        {
+            get => m_MenuItemPaths;
+            set => m_MenuItemPaths = value;
+        }
+
         void OnEnable()
         {
             hideFlags = HideFlags.DontSave;
@@ -51,6 +61,7 @@ namespace UnityEditor.Overlays
         public void OnAfterDeserialize()
         {
             targetWindowType = Type.GetType(m_RawWindowType);
+            m_MenuItemPaths ??= Array.Empty<string>();
         }
 
         public void ApplyCustomData(OverlayCanvas canvas) {}

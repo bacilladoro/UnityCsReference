@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Bindings;
 using UnityEngine.Scripting;
 
@@ -76,7 +77,9 @@ namespace UnityEngine
         }
 
 
+        [AutoStaticsCleanupOnCodeReload] // all Next Frame callbacks are reset on code reload
         private static bool _nextFrameAndEndOfFrameWiredUp = false;
+        [AutoStaticsCleanupOnCodeReload]
         static CancellationTokenRegistration _nextFrameAndEndOfFrameWiredUpCTRegistration = default;
         static void EnsureDelayedCallWiredUp()
         {
@@ -97,7 +100,11 @@ namespace UnityEngine
             _endOfFrameAwaitables.Clear();
         }
 
+        // Container persists and is emptied via OnDelayedCallManagerCleared (wired through
+        // _nextFrameAndEndOfFrameWiredUp, which is reset on code reload) — safe to persist the list itself.
+        [NoAutoStaticsCleanup]
         private static readonly DoubleBufferedAwaitableList _nextFrameAwaitables = new();
+        [NoAutoStaticsCleanup]
         private static readonly DoubleBufferedAwaitableList _endOfFrameAwaitables = new();
 
         private struct AwaitableAndFrameIndex

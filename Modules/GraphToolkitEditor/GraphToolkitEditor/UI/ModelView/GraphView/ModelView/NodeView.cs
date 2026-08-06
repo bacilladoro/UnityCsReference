@@ -2,9 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
-using System;
 using System.Collections.Generic;
-using UnityEngine;
 using UnityEngine.UIElements;
 
 // ReSharper disable InconsistentNaming
@@ -12,10 +10,55 @@ using UnityEngine.UIElements;
 namespace Unity.GraphToolkit.Editor
 {
     /// <summary>
+    /// The generated view for a <see cref="Node"/>, exposed to <see cref="NodeView{T}"/> implementations
+    /// so they can add custom UI to the node.
+    /// </summary>
+    /// <remarks>
+    /// Allocate custom UI in <see cref="NodeView{T}.OnViewBuilt"/> and add it to <see cref="Root"/>. The
+    /// contents of <see cref="Root"/> are cleared whenever the node returns from being culled, so cache
+    /// your custom elements in fields and re-add them from <see cref="NodeView{T}.OnCullingChanged"/>
+    /// (when <c>cullingEnabled</c> is false).
+    /// </remarks>
+    /// <example>
+    /// <code lang="cs">
+    /// <![CDATA[
+    /// class MyNodeView : NodeView<MyNode>
+    /// {
+    ///     Label m_Label;
+    ///
+    ///     public override void OnViewBuilt()
+    ///     {
+    ///         m_Label = new Label($"Node: {Node.Title}");
+    ///         View.Root.Add(m_Label);
+    ///     }
+    ///
+    ///     public override void OnCullingChanged(bool cullingEnabled)
+    ///     {
+    ///         if (!cullingEnabled && m_Label != null)
+    ///             View.Root.Add(m_Label);
+    ///     }
+    /// }
+    /// ]]>
+    /// </code>
+    /// </example>
+    public interface INodeView
+    {
+        /// <summary>
+        /// The root <see cref="VisualElement"/> of the node, to which custom UI can be added.
+        /// </summary>
+        /// <remarks>
+        /// The contents of <c>Root</c> are cleared each time the node returns from being culled. Cache
+        /// any custom UI you allocated in <see cref="NodeView{T}.OnViewBuilt"/> and re-add it from
+        /// <see cref="NodeView{T}.OnCullingChanged"/> when <c>cullingEnabled</c> is false.
+        /// </remarks>
+        public VisualElement Root { get; }
+    }
+
+    /// <summary>
     /// UI for a <see cref="AbstractNodeModel"/>.
     /// </summary>
     [UnityRestricted]
-    internal class NodeView : GraphElement
+    class NodeView : GraphElement, INodeView
     {
         /// <summary>
         /// The USS class name added to a <see cref="NodeView"/>.
@@ -90,7 +133,9 @@ namespace Unity.GraphToolkit.Editor
         bool m_ShowToolbarButtons;
 
         List<NodeToolbarButton> m_NodeToolbarButtons = new List<NodeToolbarButton>();
-        public IReadOnlyList<NodeToolbarButton> NodeToolbarButtons => m_NodeToolbarButtons;
+        IUserNodeView m_UserBuilder;
+        internal IReadOnlyList<NodeToolbarButton> NodeToolbarButtons => m_NodeToolbarButtons;
+        public VisualElement Root => this;
 
         /// <summary>
         /// The editable title part used in the node, that will be in editing mode when the node is created.
@@ -108,6 +153,16 @@ namespace Unity.GraphToolkit.Editor
             PartList.AppendPart(HorizontalPortContainerPart.Create(portContainerPartName, Model, this, ussClassName));
         }
 
+        public override void BuildUITree()
+        {
+            if (NodeModel is Implementation.IUserNodeModelImp userNodeModel)
+            {
+                m_UserBuilder = GraphView.BuilderLookup.Build(userNodeModel.Node, this);
+            }
+
+            base.BuildUITree();
+        }
+
         /// <inheritdoc />
         protected override void BuildUI()
         {
@@ -118,6 +173,19 @@ namespace Unity.GraphToolkit.Editor
 
             RegisterCallback<MouseLeaveEvent>(OnMouseLeave);
             RegisterCallback<MouseEnterEvent>(OnMouseEnter);
+            RegisterCallback<AttachToPanelEvent>(AttachToPanel);
+        }
+
+        protected override void EnableCulling()
+        {
+            base.EnableCulling();
+            m_UserBuilder?.OnCullingChanged(true);
+        }
+
+        protected override void DisableCulling()
+        {
+            base.DisableCulling();
+            m_UserBuilder?.OnCullingChanged(false);
         }
 
         /// <inheritdoc />
@@ -138,6 +206,19 @@ namespace Unity.GraphToolkit.Editor
                 foreach (var b in NodeToolbarButtons)
                     nodeTitlePart.AddNodeToolbarButton(b);
             }
+
+            m_UserBuilder?.OnViewBuilt();
+        }
+
+        void AttachToPanel(AttachToPanelEvent evt)
+        {
+            m_UserBuilder?.OnViewAttached();
+        }
+
+        protected override void OnDetachedFromPanel(DetachFromPanelEvent evt)
+        {
+            base.OnDetachedFromPanel(evt);
+            m_UserBuilder?.OnViewDetached();
         }
 
         /// <summary>
@@ -328,6 +409,11 @@ namespace Unity.GraphToolkit.Editor
             {
                 UpdateButtonsLOD();
             }
+        }
+
+        internal override void PostSetElementLevelOfDetail(float zoom, GraphViewZoomMode newZoomMode, GraphViewZoomMode oldZoomMode)
+        {
+            m_UserBuilder?.OnViewLODChanged(zoom);
         }
 
         void UpdateButtonsLOD()

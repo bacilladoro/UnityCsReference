@@ -80,7 +80,7 @@ namespace UnityEngine.UIElements
     /// An enum used to qualify deferred mesh generation actions.
     /// </summary>
     /// <remarks>
-    /// See <see cref="MeshGenerationContext.DeferMeshGeneration"/>.
+    /// See <see cref="MeshGenerationContext.AddMeshGenerationCallback"/>.
     /// </remarks>
     enum MeshGenerationCallbackType
     {

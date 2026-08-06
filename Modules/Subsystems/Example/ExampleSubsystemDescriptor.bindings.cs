@@ -10,13 +10,18 @@ using System.Runtime.InteropServices;
 
 namespace UnityEngine.Subsystems
 {
+    ///<exclude />
     [NativeHeader("Modules/Subsystems/Example/ExampleSubsystemDescriptor.h")]
     [UsedByNativeCode]
     public class ExampleSubsystemDescriptor : IntegratedSubsystemDescriptor<ExampleSubsystem>
     {
+        ///<exclude />
         public extern bool supportsEditorMode { get; }
+        ///<exclude />
         public extern bool disableBackbufferMSAA { get; }
+        ///<exclude />
         public extern bool stereoscopicBackbuffer { get; }
+        ///<exclude />
         public extern bool usePBufferEGL { get; }
 
         internal static class BindingsMarshaller

@@ -4,6 +4,7 @@
 
 using System;
 using System.IO;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.Bindings;
 using UnityEngine.UIElements;
@@ -12,7 +13,7 @@ using UnityEngine.UIElements.Experimental;
 namespace UnityEditor.InsightsEditor;
 
 [VisibleToOtherModules]
-internal class InsightsEditorUtils
+internal partial class InsightsEditorUtils
 {
     public const string k_ProjectSettingsInfoBoxNodeName = "insights-project-settings-info";
 
@@ -21,6 +22,7 @@ internal class InsightsEditorUtils
 
     public const string k_UssClass_LinkCursor = "link-cursor";
 
+    [AutoStaticsCleanupOnCodeReload]
     public static event Action<bool> OnEngineDiagnosticsEnabledChanged;
 
     public static void NotifyEngineDiagnosticsSettingsChanged(bool enabled)

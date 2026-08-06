@@ -235,7 +235,7 @@ namespace UnityEngine.UIElements
         /// </summary>
         DynamicPostProcessing = 1 << 4,
         /// <summary>
-        /// Optimizes rendering of a <see cref="VisuaElement"/> that covers a large pixel area on screen.
+        /// Optimizes rendering of a <see cref="VisualElement"/> that covers a large pixel area on screen.
         /// </summary>
         /// <remarks>
         /// The renderer will break the batch and render this element using a specialized shader.
@@ -346,7 +346,6 @@ namespace UnityEngine.UIElements
         /// The context type of a Panel affects how it resolves certain styles and receives specific events.
         /// For example, drag-and-drop and command events are only sent to Editor-type Panels.
         /// </remarks>
-        /// <seealso cref="UIElements.DragAndDropEventBase{T}"/>
         /// <seealso cref="UIElements.CommandEventBase{T}"/>
         ContextType contextType { get; }
         /// <summary>
@@ -481,7 +480,6 @@ namespace UnityEngine.UIElements
         public abstract ScriptableObject ownerObject { get; protected set; }
         public abstract SavePersistentViewData saveViewData { get; set; }
         public abstract GetViewDataDictionary getViewDataDictionary { get; set; }
-        public abstract int IMGUIContainersCount { get; set; }
         public abstract FocusController focusController { get; set; }
 
         public abstract IMGUIContainer rootIMGUIContainer { get; set; }
@@ -1046,7 +1044,7 @@ namespace UnityEngine.UIElements
         }
 
         /// <summary>
-        /// True if is some text field in the panel is entering text. 
+        /// True if is some text field in the panel is entering text.
         /// </summary>
         internal event Action<bool> OnIsEnteringTextChanged = (isEnteringText) =>
         {
@@ -1369,7 +1367,7 @@ namespace UnityEngine.UIElements
         private IDebugPanelChangeReceiver m_PanelChangeReceiver;
 
         /// <summary>
-        /// Sets a custom <see cref="IPanelChangeReceiver"/> in the panelChangeReceiver setter to receive every change event.
+        /// Sets a custom <see cref="IDebugPanelChangeReceiver"/> in the panelChangeReceiver setter to receive every change event.
         /// This method is exclusively available in development builds and the Editor, as it serves as a debug feature that complements the profiling of an application.
         /// </summary>
         /// <remarks>
@@ -1403,8 +1401,6 @@ namespace UnityEngine.UIElements
         [Obsolete("Use the non-static TimeSinceStartupFunc instead")]
         [VisibleToOtherModules("UnityEditor.GraphToolkitModule")]
         internal static TimeMsFunction TimeSinceStartup { get; set; }
-
-        public override int IMGUIContainersCount { get; set; }
 
         public override IMGUIContainer rootIMGUIContainer { get; set; }
         internal override uint version
@@ -1927,6 +1923,8 @@ namespace UnityEngine.UIElements
 
             base.Dispose(disposing);
         }
+
+        protected internal virtual PanelSettings GetLinkedPanelSettings() => null;
 
         internal event Action drawsInCamerasChanged;
         void InvokeDrawsInCamerasChanged() { drawsInCamerasChanged?.Invoke(); }

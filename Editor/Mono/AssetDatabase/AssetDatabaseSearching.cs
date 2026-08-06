@@ -59,7 +59,7 @@ namespace UnityEditor
 #pragma warning restore UA2001
         }
 
-        [VisibleToOtherModules("UnityEditor.UIBuilderModule", "UnityEditor.ShaderFoundryModule")]
+        [VisibleToOtherModules("UnityEditor.UIBuilderModule")]
         internal static IEnumerable<HierarchyIterator> FindAllAssets(SearchFilter searchFilter)
         {
             var enumerator = EnumerateAllAssets(searchFilter);

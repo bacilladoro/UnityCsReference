@@ -6,25 +6,25 @@ using System;
 
 namespace UnityEngine
 {
-    // Scaling mode to draw textures with
+    ///<summary>Scaling mode to draw textures with.</summary>
     public enum ScaleMode
     {
-        // Stretches the texture to fill the complete rectangle passed in to GUI.DrawTexture
+        ///<summary>Stretches the texture to fill the complete rectangle passed in to GUI.DrawTexture.</summary>
         StretchToFill = 0,
-        // Scales the texture, maintaining aspect ratio, so it completely covers the /position/ rectangle passed to GUI.DrawTexture. If the texture is being draw to a rectangle with a different aspect ratio than the original, the image is cropped.
+        ///<summary>Scales the texture, maintaining aspect ratio, so it completely covers the <c>position</c> rectangle passed to GUI.DrawTexture. If the texture is being draw to a rectangle with a different aspect ratio than the original, the image is cropped.</summary>
         ScaleAndCrop = 1,
-        // Scales the texture, maintaining aspect ratio, so it completely fits withing the /position/ rectangle passed to GUI.DrawTexture.
+        ///<summary>Scales the texture, maintaining aspect ratio, so it completely fits withing the <c>position</c> rectangle passed to GUI.DrawTexture.</summary>
         ScaleToFit = 2
     }
 
-    // Used by GUIUtility.GetcontrolID to inform the UnityGUI system if a given control can get keyboard focus.
+    ///<summary>Used by GUIUtility.GetControlID to inform the IMGUI system if a given control can get keyboard focus. This allows the IMGUI system to give focus appropriately when a user presses tab for cycling between controls.</summary>
     public enum FocusType
     {
         [Obsolete("FocusType.Native now behaves the same as FocusType.Passive in all OS cases. (UnityUpgradable) -> Passive", false)]
         Native = 0,
-        // This is a proper keyboard control. It can have input focus on all platforms. Used for TextField and TextArea controls
+        ///<summary>This control can receive keyboard focus.</summary>
         Keyboard = 1,
-        // This control can never receive keyboard focus.
+        ///<summary>This control can not receive keyboard focus.</summary>
         Passive = 2
     }
 }

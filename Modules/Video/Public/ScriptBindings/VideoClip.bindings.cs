@@ -37,6 +37,7 @@ namespace UnityEngine.Video
     ///<seealso cref="UnityEngine.Video.VideoPlayer" />
     ///<seealso href="xref:class-VideoClip" />
     [RequiredByNativeCode]
+    [global::UnityEngine.NativeClass("VideoClip", PersistentTypeId = 329)]
     [NativeHeader("Modules/Video/Public/VideoClip.h")]
     public sealed class VideoClip : Object
     {

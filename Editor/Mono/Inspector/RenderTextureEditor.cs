@@ -6,6 +6,7 @@ using UnityEngine;
 using System;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -43,6 +44,7 @@ namespace UnityEditor
             public readonly int[] dimensionValues = { (int)UnityEngine.Rendering.TextureDimension.Tex2D, (int)UnityEngine.Rendering.TextureDimension.Tex2DArray, (int)UnityEngine.Rendering.TextureDimension.Cube, (int)UnityEngine.Rendering.TextureDimension.Tex3D };
         }
 
+        [NoAutoStaticsCleanup] // GUIContent/int-array-only lazy Styles cache; contents survive code reload
         static Styles s_Styles = null;
         private static Styles styles { get { if (s_Styles == null) s_Styles = new Styles(); return s_Styles; } }
 

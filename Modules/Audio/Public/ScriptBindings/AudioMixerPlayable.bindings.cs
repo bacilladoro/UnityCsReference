@@ -11,6 +11,8 @@ using UnityObject = UnityEngine.Object;
 
 namespace UnityEngine.Audio
 {
+    ///<summary>An implementation of <see cref="IPlayable" /> that controls an audio mixer.</summary>
+    ///<remarks>NOTE: You can use <see cref="PlayableExtensions" /> methods with AudioMixerPlayable objects.</remarks>
     [NativeHeader("Modules/Audio/Public/ScriptBindings/AudioMixerPlayable.bindings.h")]
     [NativeHeader("Modules/Audio/Public/Director/AudioMixerPlayable.h")]
     [NativeHeader("Runtime/Director/Core/HPlayable.h")]
@@ -20,6 +22,11 @@ namespace UnityEngine.Audio
     {
         PlayableHandle m_Handle;
 
+        ///<summary>Creates an <see cref="AudioMixerPlayable" /> in the <see cref="PlayableGraph" />.</summary>
+        ///<param name="graph">The <see cref="PlayableGraph" /> that will contain the new <see cref="AudioMixerPlayable" />.</param>
+        ///<param name="inputCount">The number of inputs that the mixer will update.</param>
+        ///<param name="normalizeInputVolumes">Obsolete. This parameter has no effect and will be removed.</param>
+        ///<returns>Returns a new <see cref="AudioMixerPlayable" /> linked to the <see cref="PlayableGraph" />.</returns>
         public static AudioMixerPlayable Create(PlayableGraph graph, int inputCount = 0, bool normalizeInputVolumes = false)
         {
             var handle = CreateHandle(graph, inputCount, normalizeInputVolumes);
@@ -47,21 +54,25 @@ namespace UnityEngine.Audio
             m_Handle = handle;
         }
 
+        ///<exclude />
         public PlayableHandle GetHandle()
         {
             return m_Handle;
         }
 
+        ///<exclude />
         public static implicit operator Playable(AudioMixerPlayable playable)
         {
             return new Playable(playable.GetHandle());
         }
 
+        ///<exclude />
         public static explicit operator AudioMixerPlayable(Playable playable)
         {
             return new AudioMixerPlayable(playable.GetHandle());
         }
 
+        ///<exclude />
         public bool Equals(AudioMixerPlayable other)
         {
             return GetHandle() == other.GetHandle();

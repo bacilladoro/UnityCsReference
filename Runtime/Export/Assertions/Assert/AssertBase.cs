@@ -6,6 +6,7 @@ using System;
 using System.Diagnostics;
 using UnityEngine;
 using System.ComponentModel;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEngine.Assertions
 {
@@ -14,6 +15,7 @@ namespace UnityEngine.Assertions
     {
         internal const string UNITY_ASSERTIONS = "UNITY_ASSERTIONS";
 
+        [NoAutoStaticsCleanup] // user-set config toggle (bool); safe to persist across code reload
         [Obsolete("Future versions of Unity are expected to always throw exceptions and not have this field.")]
         public static bool raiseExceptions = true;
 

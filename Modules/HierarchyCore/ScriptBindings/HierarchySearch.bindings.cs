@@ -83,13 +83,13 @@ namespace Unity.Hierarchy
         /// </summary>
         public string Value { get; set; }
 
-        #region Marked as obsolete warning in 6.6
+        #region Marked as obsolete error in 6.7
         /// <summary>
         /// Filter numerical value.
         /// </summary>
-        [Obsolete("Use Value instead", false)]
+        [Obsolete("Use Value instead", true)]
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public float NumValue { get; set; }
+        public float NumValue { get => throw null; set => throw null; }
         #endregion
 
         /// <summary>

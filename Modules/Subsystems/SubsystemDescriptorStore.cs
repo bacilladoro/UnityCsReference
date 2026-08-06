@@ -9,6 +9,7 @@ namespace UnityEngine.SubsystemsImplementation
 {
     public static partial class SubsystemDescriptorStore
     {
+        ///<exclude />
         public static void RegisterDescriptor(SubsystemDescriptorWithProvider descriptor)
         {
             descriptor.ThrowIfInvalid();

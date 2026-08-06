@@ -7,6 +7,7 @@ using UnityEditor;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.Bindings;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -46,6 +47,7 @@ namespace UnityEditor
             InitFromRelative(relativeSizes, null, null, 0);
         }
 
+        [NoAutoStaticsCleanup] // delegate bound to a static method in this assembly, no user-code refs; safe to persist
         static System.Converter<int, float> s_ConverterDelegate = CastIntToFloat;
         static float CastIntToFloat(int input) { return (float)input; }
 
@@ -340,7 +342,7 @@ namespace UnityEditor
     [VisibleToOtherModules("UnityEditor.BurstModule")]
     class SplitterGUILayout
     {
-        static int splitterHash = "Splitter".GetHashCode();
+        static readonly int splitterHash = "Splitter".GetHashCode();
 
         /// *undocumented*
         internal class GUISplitterGroup : GUILayoutGroup

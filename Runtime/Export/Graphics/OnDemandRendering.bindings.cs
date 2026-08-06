@@ -5,13 +5,15 @@
 using UnityEngine.Scripting;
 using UnityEngine.Bindings;
 using System;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEngine.Rendering
 {
     [RequiredByNativeCode]
-    public class OnDemandRendering
+    public partial class OnDemandRendering
     {
         // Default to 1. Render every frame.
+        [AutoStaticsCleanupOnCodeReload]
         private static int m_RenderFrameInterval = 1;
 
         public static bool willCurrentFrameRender

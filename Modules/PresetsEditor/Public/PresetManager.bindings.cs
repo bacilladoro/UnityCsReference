@@ -11,6 +11,7 @@ using UnityEngine.Bindings;
 namespace UnityEditor.Presets
 {
     [NativeHeader("Modules/PresetsEditor/Public/PresetManager.h")]
+    [NativeClass("PresetManager", PersistentTypeId = 0x52A42F1F)]
     internal class PresetManager : ProjectSettingsBase
     {
         internal extern void AddPresetType(PresetType presetType);

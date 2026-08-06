@@ -7,12 +7,14 @@ using System.Collections.Generic;
 using JetBrains.Annotations;
 using UnityEngine.Scripting;
 using UnityEngine.Scripting.APIUpdating;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.MPE
 {
     [MovedFrom("Unity.MPE")]
     public static partial class ChannelService
     {
+        [AutoStaticsCleanupOnCodeReload]
         internal static Dictionary<int, List<Action<int, byte[]>>> s_Handlers = new Dictionary<int, List<Action<int, byte[]>>>();
 
         public static Action GetOrCreateChannel(string channelName, Action<int, byte[]> handler)

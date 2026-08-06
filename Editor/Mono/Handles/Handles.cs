@@ -20,6 +20,9 @@ namespace UnityEditor
         public Quaternion   rotation;
         public Color        color;
         public Vector2      size;
+        public int          useAxisColor;
+        public Color        axisColor1;
+        public Color        axisColor2;
     }
 
     public sealed partial class Handles

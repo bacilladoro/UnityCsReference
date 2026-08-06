@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using UnityEngine;
+using Unity.Scripting.LifecycleManagement;
 
 using TangentMode = UnityEditor.AnimationUtility.TangentMode;
 
@@ -10,7 +11,9 @@ namespace UnityEditor
 {
     internal static class CurveUtility
     {
+        [NoAutoStaticsCleanup]
         private static Texture2D iconKey;
+        [NoAutoStaticsCleanup]
         private static Texture2D iconCurve;
 
         static readonly PrefColor kEulerXColor = new PrefColor("Animation/EulerX", 1.0f, 0.0f, 1.0f, 1.0f);

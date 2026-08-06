@@ -88,7 +88,7 @@ namespace Unity.ProjectAuditor.Editor.Core
         /// </summary>
         /// <param name="dependencies">The root DependencyNode of a dependency chain to add</param>
         /// <returns>The ReportItemBuilder object with the DependencyNode added</returns>
-        internal ReportItemBuilder WithDependencies(DependencyNode dependencies)
+        public ReportItemBuilder WithDependencies(DependencyNode dependencies)
         {
             m_Issue.Dependencies = dependencies;
             return this;

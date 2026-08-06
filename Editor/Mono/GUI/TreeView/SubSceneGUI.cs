@@ -7,15 +7,19 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using Unity.Scripting.LifecycleManagement;
 
-static class SubSceneGUI
+static partial class SubSceneGUI
 {
+    [AutoStaticsCleanupOnCodeReload]
     static Dictionary<GameObject, SceneHierarchyHooks.SubSceneInfo> m_SubSceneHeadersMap = new Dictionary<GameObject, SceneHierarchyHooks.SubSceneInfo>();
+    [AutoStaticsCleanupOnCodeReload]
     static Dictionary<Scene, SceneHierarchyHooks.SubSceneInfo> m_SceneToSubSceneMap = new Dictionary<Scene, SceneHierarchyHooks.SubSceneInfo>();
+    [AutoStaticsCleanupOnCodeReload]
     static Dictionary<SceneAsset, SceneHierarchyHooks.SubSceneInfo> m_SceneAssetToSubSceneMap = new Dictionary<SceneAsset, SceneHierarchyHooks.SubSceneInfo>();
     const int kMaxSubSceneIterations = 100;
-    static float s_HalfFoldoutWidth = 6f;
-    static float s_SubSceneHeaderIndentAdjustment = -2f;
+    static readonly float s_HalfFoldoutWidth = 6f;
+    static readonly float s_SubSceneHeaderIndentAdjustment = -2f;
 
     internal static void FetchSubSceneInfo()
     {
@@ -216,7 +220,9 @@ static class SubSceneGUI
     }
 
     // Temp cache for optimizing vertical line drawing
+    [AutoStaticsCleanupOnCodeReload]
     static SceneHierarchyHooks.SubSceneInfo s_LastSubSceneInfo;
+    [NoAutoStaticsCleanup] // plain Rect (unmanaged value type) recomputed each call; safe to persist
     static Rect s_LastRectCalculated;
 
     internal static Rect GetRectForVerticalLine(Rect rowRect, float baseIndent, float indentWidth, Scene scene)

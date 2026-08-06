@@ -10,6 +10,7 @@ using UnityEngine.Bindings;
 using UnityEngine.Scripting;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEngine
 {
@@ -41,7 +42,7 @@ namespace UnityEngine
 
     [NativeHeader("Runtime/Export/Resources/Resources.bindings.h")]
     [NativeHeader("Runtime/Misc/ResourceManagerUtility.h")]
-    internal static class ResourcesAPIInternal
+    internal static partial class ResourcesAPIInternal
     {
         [TypeInferenceRule(TypeInferenceRules.ArrayOfTypeReferencedByFirstArgument)]
         [FreeFunction("Resources_Bindings::FindObjectsOfTypeAll")]
@@ -68,7 +69,7 @@ namespace UnityEngine
         public extern static void UnloadAsset(Object assetToUnload);
 
         // Used by Entities to register InstanceIDs as roots during AssetGC
-        internal static class EntitiesAssetGC
+        internal static partial class EntitiesAssetGC
         {
             [FreeFunction("Resources_Bindings::MarkInstanceIDsAsRoot")]
             internal extern static void MarkInstanceIDsAsRoot(IntPtr instanceIDs, int count, IntPtr state);
@@ -77,6 +78,7 @@ namespace UnityEngine
             internal extern static void EnableEntitiesAssetGCCallback();
 
             internal delegate void AdditionalRootsHandlerDelegate(IntPtr state);
+            [AutoStaticsCleanupOnCodeReload]
             internal static AdditionalRootsHandlerDelegate AdditionalRootsHandler;
 
             internal static void RegisterAdditionalRootsHandler(AdditionalRootsHandlerDelegate newAdditionalRootsHandler)
@@ -99,12 +101,14 @@ namespace UnityEngine
         }
     }
 
-    public class ResourcesAPI
+    public partial class ResourcesAPI
     {
-        static ResourcesAPI s_DefaultAPI = new ResourcesAPI();
+        [NoAutoStaticsCleanup]
+        static readonly ResourcesAPI s_DefaultAPI = new ResourcesAPI(); // default fallback instance, never a user subclass; safe to persist across code reload
         // Internal code must use ActiveAPI over overrideAPI to properly fallback to default api handling
         internal static ResourcesAPI ActiveAPI => overrideAPI ?? s_DefaultAPI;
 
+        [AutoStaticsCleanupOnCodeReload]
         public static ResourcesAPI overrideAPI { get; set; }
 
         protected internal ResourcesAPI() {}

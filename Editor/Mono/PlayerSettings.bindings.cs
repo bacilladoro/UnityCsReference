@@ -417,7 +417,7 @@ namespace UnityEditor
     }
 
     // Player Settings is where you define various parameters for the final game that you will build in Unity. Some of these values are used in the Resolution Dialog that launches when you open a standalone game.
-    [NativeClass(null)]
+    [NativeClass(null, PersistentTypeId = 129)]
     [NativeHeader("Editor/Mono/PlayerSettings.bindings.h")]
     [NativeHeader("Runtime/Misc/BuildSettings.h")]
     [NativeHeader("Runtime/Misc/PlayerSettings.h")]
@@ -427,7 +427,9 @@ namespace UnityEditor
     {
         private PlayerSettings() { }
 
-        [AutoStaticsCleanupOnCodeReload]
+        // Lazily (re)created in GetSerializedObject(); reset to null on reload so it rebuilds on next access
+        // (the disposable SerializedObject has no field initializer for the generator to reassign after dispose).
+        [AutoStaticsCleanupOnCodeReload(CleanupStrategy = CleanupStrategy.ResetToDefaultValue)]
         private static SerializedObject _serializedObject;
 
         [FreeFunction("GetPlayerSettingsPtr")]
@@ -660,7 +662,7 @@ namespace UnityEditor
 
         // Defines if fullscreen games should darken secondary displays.
         [Obsolete("captureSingleScreen has been removed.", false)]
-        [NoAutoStaticsCleanup]
+        [NoAutoStaticsCleanup] // obsolete removed member; cleanup codegen would trip CS0619
         public static bool captureSingleScreen { get; set; }
 
         // Write a log file with debugging information.

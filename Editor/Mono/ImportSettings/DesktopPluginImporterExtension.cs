@@ -339,7 +339,7 @@ namespace UnityEditor
         }
 
         // Regex that matchers strings ending in ".so" or ".so.12" or ".so.4.7" and so on.
-        private static Regex LinuxLibraryRegex = new Regex(@"\.so(\.[0-9]+)*$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private static readonly Regex LinuxLibraryRegex = new Regex(@"\.so(\.[0-9]+)*$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         internal static bool IsLinuxLibrary(string assetPath)
         {
             return LinuxLibraryRegex.IsMatch(assetPath);

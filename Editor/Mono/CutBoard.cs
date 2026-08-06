@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,16 +13,21 @@ using Object = UnityEngine.Object;
 
 namespace UnityEditor
 {
-    internal static class CutBoard
+    internal static partial class CutBoard
     {
         internal static bool hasCutboardData { get { return m_GOCutboard != null && m_GOCutboard.Length > 0; } }
         internal static ReadOnlySpan<Transform> cutTransformsSpan => m_GOCutboard;
+        [AutoStaticsCleanupOnCodeReload]
         internal static event Action cleared;
 
+        [AutoStaticsCleanupOnCodeReload]
         private static Transform[] m_GOCutboard;
+        [AutoStaticsCleanupOnCodeReload]
         private static Object[] m_SelectedObjects;
+        [AutoStaticsCleanupOnCodeReload]
         private static HashSet<Transform> m_CutAffectedGOs = new HashSet<Transform>();
         private const string kCutAndPaste = "Cut And Paste";
+        [AutoStaticsCleanupOnCodeReload]
         private static Stage m_StageCutWasPerformedIn;
 
         internal static void CutGO()

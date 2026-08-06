@@ -347,24 +347,35 @@ namespace UnityEditor.UIElements.Debugger
             }
             else if (val is Background bgValue)
             {
-                // The background field can only be assigned the same type of background as it currently have?
-                // TODO: this should probably be changed to accept multiple type as input
-                ObjectField field;
-                if (bgValue.vectorImage != null)
-                    field = GetOrCreateObjectField<VectorImage>();
-                else if (bgValue.sprite != null)
-                    field = GetOrCreateObjectField<Sprite>();
-                else if (bgValue.renderTexture != null)
-                    field = GetOrCreateObjectField<RenderTexture>();
+                // Show USS text rather than the baked VectorImage asset name.
+                if (!bgValue.gradient.IsEmpty())
+                {
+                    Clear();
+                    var field = new TextField(m_PropertyName) { isReadOnly = true, value = bgValue.gradient.ToString() };
+                    Add(field);
+                    Add(m_SpecificityLabel);
+                }
                 else
-                    field = GetOrCreateObjectField<Texture2D>();
-                if (!IsFocused(field))
-                    field.SetValueWithoutNotify(
-                        bgValue.vectorImage != null ? (UnityEngine.Object)bgValue.vectorImage :
-                        (bgValue.sprite != null ? (UnityEngine.Object)bgValue.sprite :
-                            (bgValue.renderTexture != null ? (UnityEngine.Object)bgValue.renderTexture :
-                                (UnityEngine.Object)bgValue.texture)));
-                Add(m_SpecificityLabel);
+                {
+                    // The background field can only be assigned the same type of background as it currently have?
+                    // TODO: this should probably be changed to accept multiple type as input
+                    ObjectField field;
+                    if (bgValue.vectorImage != null)
+                        field = GetOrCreateObjectField<VectorImage>();
+                    else if (bgValue.sprite != null)
+                        field = GetOrCreateObjectField<Sprite>();
+                    else if (bgValue.renderTexture != null)
+                        field = GetOrCreateObjectField<RenderTexture>();
+                    else
+                        field = GetOrCreateObjectField<Texture2D>();
+                    if (!IsFocused(field))
+                        field.SetValueWithoutNotify(
+                            bgValue.vectorImage != null ? (UnityEngine.Object)bgValue.vectorImage :
+                            (bgValue.sprite != null ? (UnityEngine.Object)bgValue.sprite :
+                                (bgValue.renderTexture != null ? (UnityEngine.Object)bgValue.renderTexture :
+                                    (UnityEngine.Object)bgValue.texture)));
+                    Add(m_SpecificityLabel);
+                }
             }
             else if (val is Cursor cursorValue)
             {

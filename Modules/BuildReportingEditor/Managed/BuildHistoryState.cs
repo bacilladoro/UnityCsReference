@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor.Build.Reporting;
 using UnityEngine;
 
@@ -38,6 +39,7 @@ namespace UnityEditor.Build
             public BuildReportSummary Summary;
         }
 
+        [NoAutoStaticsCleanup] // one-time service singleton; caches disk state (no user-code refs), self-refreshes from disk
         private static BuildHistoryState s_Instance;
 
         public static BuildHistoryState Instance

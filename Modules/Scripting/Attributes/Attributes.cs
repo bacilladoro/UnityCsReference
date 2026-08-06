@@ -118,6 +118,8 @@ namespace UnityEngine
     {
         public string QualifiedNativeName { get; private set; }
         public string Declaration { get; private set; }
+        // Mirrors the value passed to IMPLEMENT_REGISTER_CLASS(Name, id) on the C++ side.
+        public int PersistentTypeId { get; set; }
 
         public NativeClassAttribute(string qualifiedCppName)
         {

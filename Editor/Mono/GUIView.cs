@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using System.Runtime.InteropServices;
 using UnityEngine;
 using UnityEngine.Scripting;
@@ -17,6 +18,7 @@ namespace UnityEditor
     [StructLayout(LayoutKind.Sequential)]
     internal partial class GUIView : View, IWindowModel
     {
+        [AutoStaticsCleanupOnCodeReload]
         internal static event Action<GUIView> positionChanged = null;
 
         int m_DepthBufferBits = 0;
@@ -60,10 +62,12 @@ namespace UnityEditor
         // This callback function allows to peek at events before they
         // are processed in order to clean any dangling state left after
         // an event was unexpectedly used.
+        [AutoStaticsCleanupOnCodeReload]
         internal static Action<EventType, KeyCode, EventModifiers> beforeEventProcessed;
 
         // Instead of allocating a new Event object every time
         // we reuse this instance and copy event data into it
+        [NoAutoStaticsCleanup] // reused Event buffer, no user references; safe to persist across reload
         private static Event m_Event = new Event();
 
         //This method uses the old way of resolving the panel but it should use the member data of the GUIView instead of being static
@@ -264,9 +268,6 @@ namespace UnityEditor
 
         protected virtual void OldOnGUI() {}
 
-        // Without leaving this in here for MonoBehaviour::DoGUI(), GetMethod(MonoScriptCache::kGUI) will return null.
-        // In that case, commands are not delegated (e.g., keyboard-based delete in Hierarchy/Project)
-        protected virtual void OnGUI() {}
 
         protected virtual void OnBackingScaleFactorChanged()
         {
@@ -370,6 +371,7 @@ namespace UnityEditor
             }
         }
 
+        [NoAutoStaticsCleanup] // this is readonly and initialized from a static method
         static readonly Action<TextElement, VersionChangeType> k_QueryIncrementVersion = IncrementVersion;
 
         static void IncrementVersion(TextElement te, VersionChangeType changeType)

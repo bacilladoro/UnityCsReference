@@ -105,10 +105,12 @@ namespace Unity.Hierarchy
             m_IsOwner = false;
         }
 
+#pragma warning disable UA5000 // The Avoid Finalizer Analyzer produces compile errors for any new finalizers. This pre-existing finalizer declaration has been suppressed, but should be rewritten if possible.
         ~HierarchyFlattened()
         {
             Dispose(false);
         }
+#pragma warning restore UA5000
 
         /// <summary>
         /// Disposes this object to release its memory.
@@ -318,12 +320,6 @@ namespace Unity.Hierarchy
             hierarchyFlattened.m_FlattenedNodes = new ReadOnlyNativeVector<HierarchyFlattenedNode>(flattenedNodesPtr, flattenedNodesCount);
             hierarchyFlattened.m_Version = version;
         }
-        #endregion
-
-        #region Marked as obsolete error in 6.6
-        [Obsolete("The Hierarchy property will be removed in the future, remove its usage from your code.", true)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public Hierarchy Hierarchy { get => throw null; }
         #endregion
     }
 }

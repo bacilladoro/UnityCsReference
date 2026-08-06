@@ -4,7 +4,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Threading;
 using UnityEngine.Scripting;
 
@@ -115,7 +114,7 @@ namespace UnityEngine
         }
 
         [RequiredByNativeCode]
-        private static bool ExecutePendingTasks(long millisecondsTimeout)
+        private static bool ExecutePendingTasks(uint millisecondsTimeout)
         {
             var context = SynchronizationContext.Current as UnitySynchronizationContext;
             if (context == null)
@@ -123,12 +122,12 @@ namespace UnityEngine
                 return true;
             }
 
-            var stopwatch = new Stopwatch();
-            stopwatch.Start();
+            var startTicks = Environment.TickCount;
 
             while (context.HasPendingTasks())
             {
-                if (stopwatch.ElapsedMilliseconds > millisecondsTimeout)
+                var elapsedMs = (uint)(Environment.TickCount - startTicks);
+                if (elapsedMs > millisecondsTimeout)
                 {
                     break;
                 }

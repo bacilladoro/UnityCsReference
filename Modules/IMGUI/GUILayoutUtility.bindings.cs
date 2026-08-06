@@ -6,9 +6,10 @@ using UnityEngine.Bindings;
 
 namespace UnityEngine
 {
-    // Utility functions for implementing and extending the GUILayout class.
+    ///<summary>Utility functions for implementing and extending the GUILayout class.</summary>
+    ///<remarks>Use this class to make your own GUI layouting code.</remarks>
     [NativeHeader("Modules/IMGUI/GUILayoutUtility.bindings.h")]
-    partial class GUILayoutUtility
+    public partial class GUILayoutUtility
     {
         private static extern Rect Internal_GetWindowRect(int windowID);
         private static extern void Internal_MoveWindow(int windowID, Rect r);

@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.TextCore;
 using UnityEngine.TextCore.Text;
 
@@ -11,6 +12,7 @@ namespace UnityEngine
 {
     internal partial class IMGUITextHandle : TextHandle
     {
+        [AutoStaticsCleanupOnCodeReload]
         internal static Func<Color> GetHyperlinkColor;
         internal int hashCode;
 
@@ -20,7 +22,9 @@ namespace UnityEngine
             return GetICUAssetStaticFalback();
         }
 
+        [NoAutoStaticsCleanup] // native settings struct reset by caller each render; holds no user-assembly refs
         internal static NativeTextGenerationSettings nativeSettingsIMGUI = new NativeTextGenerationSettings();
+        [NoAutoStaticsCleanup] // set to the current text string before each native call; overwritten every use
         static string s_IMGUICurrentText;
         NativeTextBuffer m_IMGUITextBuffer = NativeTextBuffer.CreateDomainScoped();
 
@@ -149,6 +153,12 @@ namespace UnityEngine
                 return;
             }
 
+            if (NativeRichTextParser.GetLinkCount(textGenerationInfo) == 0)
+            {
+                m_Links = null;
+                return;
+            }
+
             m_Links = NativeRichTextParser.GetAllLinks(textGenerationInfo);
         }
 
@@ -264,7 +274,9 @@ namespace UnityEngine
             return handle;
         }
 
+        [NoAutoStaticsCleanup] // scratch buffer of per-mesh element indices; all entries are plain ints, no user types
         static List<List<List<int>>> s_TextElementIndicesByMesh = new();
+        [NoAutoStaticsCleanup] // glyph fallback tracking keyed by EntityId and glyph index (value types only); no user-assembly refs
         static Dictionary<EntityId, HashSet<uint>> s_MissingGlyphsPerFontAsset = new();
         internal void ComputeMeshInfos(ref MeshInfoBindings[] meshInfos)
         {

@@ -5,13 +5,14 @@
 using System;
 using UnityEngine;
 using System.Linq;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
     /**
      * Internal class for handling the drawing of ShadowCascade splits GUI and user interaction.
      */
-    internal static class ShadowCascadeSplitGUI
+    internal static partial class ShadowCascadeSplitGUI
     {
         private const int kSliderbarTopMargin = 2;
         private const int kSliderbarHeight = 28;
@@ -48,12 +49,16 @@ namespace UnityEditor
                 m_LastCachedMousePosition = currentMousePos;
             }
         }
+        [NoAutoStaticsCleanup] // Within-drag transient state, nulled at drag end; holds no user-code refs.
         private static DragCache  s_DragCache;
 
         private static readonly int s_CascadeSliderId = "s_CascadeSliderId".GetHashCode();
 
+        [AutoStaticsCleanupOnCodeReload]
         private static SceneView s_RestoreSceneView;
+        [NoAutoStaticsCleanup] // Transient enum value used only while a drag restores the scene view; unmanaged.
         private static SceneView.CameraMode s_OldSceneDrawMode;
+        [NoAutoStaticsCleanup] // Transient bool used only while a drag restores the scene view; unmanaged.
         private static bool s_OldSceneLightingMode;
 
 

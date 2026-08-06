@@ -4,6 +4,7 @@
 
 using System;
 using UnityEngine;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -12,7 +13,9 @@ namespace UnityEditor
     /// </summary>
     class AnimationEventEditorState
     {
+        [NoAutoStaticsCleanup]
         static bool s_ShowOverloadedFunctionsDetails = true;
+        [NoAutoStaticsCleanup]
         static bool s_ShowDuplicatedFunctionsDetails = true;
 
         bool m_ShowOverloadedFunctionsDetails = s_ShowOverloadedFunctionsDetails;

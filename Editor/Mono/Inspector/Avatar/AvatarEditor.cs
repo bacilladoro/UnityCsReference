@@ -5,6 +5,7 @@
 using UnityEngine;
 using UnityEditor.SceneManagement;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -166,8 +167,9 @@ namespace UnityEditor
             public GUIContent reset = EditorGUIUtility.TrTextContent("Reset");
         }
 
-        static Styles styles { get { if (s_Styles == null) s_Styles = new Styles(); return s_Styles; } }
-        static Styles s_Styles;
+        static Styles styles => s_Styles;
+        [NoAutoStaticsCleanup]
+        static readonly Styles s_Styles = new();
 
         enum EditMode
         {
@@ -183,6 +185,7 @@ namespace UnityEditor
         private EditMode m_EditMode = EditMode.NotEditing;
         internal bool m_CameFromImportSettings = false;
         private bool m_SwitchToEditMode = false;
+        [NoAutoStaticsCleanup]
         internal static bool s_EditImmediatelyOnNextOpen = false;
 
         // These member are used when the avatar is part of an asset

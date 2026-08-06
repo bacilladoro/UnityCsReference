@@ -6,13 +6,15 @@ using System;
 using System.IO;
 using UnityEngine;
 using UnityEditor;
+using Unity.Scripting.LifecycleManagement;
 
 namespace Unity.U2D.Physics.Editor
 {
     [InitializeOnLoad]
-    static internal class PhysicsCore2DMenuItems
+    static internal partial class PhysicsCore2DMenuItems
     {
         internal const string k_CreatePhysicsCoreSettings2DMenuPath = "Assets/Create/2D/Physics (Core)/PhysicsCore Settings 2D";
+        [AutoStaticsCleanupOnCodeReload]
         static internal Action<EntityId, UnityEditor.ProjectWindowCallback.AssetCreationEndAction, string, Texture2D, string> StartNewAssetNameEditingDelegate = ProjectWindowUtil.StartNameEditingIfProjectWindowExists;
         const int k_PhysicsCoreSettings2DAssetMenuPriority = 70;
 

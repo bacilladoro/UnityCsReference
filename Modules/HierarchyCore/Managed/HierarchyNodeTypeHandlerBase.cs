@@ -348,11 +348,6 @@ namespace Unity.Hierarchy
         [RequiredByNativeCode]
         static string InvokeGetNodeTypeName(IntPtr handlePtr) => FromIntPtr(handlePtr).GetNodeTypeName();
 
-#pragma warning disable 618 // Remove this pragma once the corresponding public APIs below are removed
-        [RequiredByNativeCode]
-        static int InvokeGetNodeHashCode(IntPtr handlePtr, in HierarchyNode node) => FromIntPtr(handlePtr).GetNodeHashCode(in node);
-#pragma warning restore 618
-
         [RequiredByNativeCode]
         static int InvokeGetDefaultNodeFlags(IntPtr handlePtr, in HierarchyNode node, HierarchyNodeFlags defaultFlags) => (int)FromIntPtr(handlePtr).GetDefaultNodeFlags(in node, defaultFlags);
 
@@ -417,49 +412,15 @@ namespace Unity.Hierarchy
         static bool InvokeUndoRedoSupported(IntPtr handlePtr) => FromIntPtr(handlePtr).UndoRedoSupported();
         #endregion
 
-        #region Marked as obsolete error in 6.6
-        /// <summary>
-        /// Constructs a new <see cref="HierarchyNodeTypeHandlerBase"/>.
-        /// </summary>
-        [Obsolete("The constructor with a hierarchy parameter is obsolete and is no longer used. Remove the hierarchy parameter from your constructor.", true)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        protected HierarchyNodeTypeHandlerBase(Hierarchy hierarchy) => throw null;
-
-        /// <summary>
-        /// Disposes this hierarchy node type handler to free up resources.
-        /// </summary>
-        [Obsolete("The IDisposable interface is obsolete and no longer has any effect. Instances of handlers are owned and disposed by the hierarchy so they do not need to be disposed by user code.", true)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public void Dispose() => throw null;
-
-        /// <summary>
-        /// Callback that determines if pending changes from a registered node type handler need to be applied to the hierarchy. When the hierarchy is updated, `ChangesPending` is called on all registered node ype handlers. If they return true, then `IntegrateChanges` is called on them. If they return false, then `IntegrateChanges` is not called on them.
-        /// </summary>
-        /// <returns><see langword="true"/> if changes are pending, <see langword="false"/> otherwise.</returns>
-        [Obsolete("ChangesPending is obsolete, it is replaced by adding commands into the hierarchy node type handler's CommandList.", true)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        protected virtual bool ChangesPending() => throw null;
-
-        /// <summary>
-        /// Callback that determines if changes from an update need to be integrated into the hierarchy. `IntegrateChanges` is called after <see cref="ChangesPending"/> returns <see langword="true"/>. When the hierarchy is updated, `ChangesPending` is called on all registered node ype handlers. If they return true, then `IntegrateChanges` is called on them. If they return false, then `IntegrateChanges` is not called on them.
-        /// </summary>
-        /// <param name="cmdList">A hierarchy command list that can modify the hierarchy.</param>
-        /// <returns><see langword="true"/> if more invocations are needed to complete integrating changes, and <see langword="false"/> if the handler is done integrating changes.</returns>
-        [Obsolete("IntegrateChanges is obsolete, it is replaced by adding commands into the hierarchy node type handler's CommandList.", true)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        protected virtual bool IntegrateChanges(HierarchyCommandList cmdList) => throw null;
-        #endregion
-
-        #region Marked as obsolete warning in 6.6
+        #region Marked as obsolete error in 6.7
         /// <summary>
         /// Gets the hash code for the specified hierarchy node.
         /// </summary>
         /// <param name="node">The hierarchy node.</param>
         /// <returns>The node hash code.</returns>
-        [Obsolete("GetNodeHashCode is no longer used by HierarchyViewModelState serialization. Override GetUIDInfo/WriteUIDs/ReadUIDs instead.", false)]
+        [Obsolete("GetNodeHashCode is no longer used by HierarchyViewModelState serialization. Override GetUIDInfo/WriteUIDs/ReadUIDs instead.", true)]
         [EditorBrowsable(EditorBrowsableState.Never)]
-        [NativeMethod(IsThreadSafe = true, ThrowsException = true)]
-        public extern virtual int GetNodeHashCode(in HierarchyNode node);
+        public virtual int GetNodeHashCode(in HierarchyNode node) => throw null;
         #endregion
     }
 }

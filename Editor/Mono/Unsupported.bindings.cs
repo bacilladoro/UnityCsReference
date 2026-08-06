@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using System.Collections.Generic;
@@ -295,6 +296,7 @@ namespace UnityEditor
             return RenderSettings.GetRenderSettings();
         }
 
+        [NoAutoStaticsCleanup] // session-scoped bool toggle, no managed state requiring reset across reload
         private static bool s_registryValidationDisabled;
 
         public static bool IsRegistryValidationDisabled
@@ -308,6 +310,7 @@ namespace UnityEditor
             set { s_registryValidationDisabled = value; }
         }
 
+        [NoAutoStaticsCleanup] // value-type flag; safe to persist across reload
         private static bool s_packageTrustValidationDisabled;
 
         public static bool IsPackageTrustValidationDisabled

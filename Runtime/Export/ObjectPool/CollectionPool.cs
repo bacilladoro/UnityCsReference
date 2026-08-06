@@ -3,11 +3,15 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEngine.Pool
 {
-    public class CollectionPool<TCollection, TItem> where TCollection : class, ICollection<TItem>, new()
+    public partial class CollectionPool<TCollection, TItem> where TCollection : class, ICollection<TItem>, new()
     {
+        // Cleared on code reload. Auto strategy resolves to Clear() for this readonly pool (neutron:
+        // CleanupStrategy.Clear, which can't be spelled here — the CleanupStrategy property is internal).
+        [AutoStaticsCleanupOnCodeReload]
         internal static readonly ObjectPool<TCollection> s_Pool = new ObjectPool<TCollection>(() => new TCollection(), null, l => l.Clear());
 
         /// <summary>

@@ -6,6 +6,7 @@ using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Bindings;
 using UnityEngine.Internal;
 using UnityEngine.Scripting;
@@ -16,12 +17,16 @@ namespace UnityEngine
     [StructLayout(LayoutKind.Sequential)]
     [RequiredByNativeCode]
     [NativeHeader("Runtime/GameCode/AsyncInstantiate/AsyncInstantiateOperation.h")]
-    public class AsyncInstantiateOperation : AsyncOperation
+    public partial class AsyncInstantiateOperation : AsyncOperation
     {
+        // Reset on code reload to mirror the old domain-reload behaviour (AsyncInstantiateManager
+        // re-creates it only when domain reload is disabled): dispose the stale source and start fresh.
+        [AutoStaticsCleanupOnCodeReload]
         internal static CancellationTokenSource s_GlobalCancellation = new();
 
         internal Object[] m_Result;
         private CancellationToken m_CancellationToken;
+        private CancellationTokenSource m_LinkedCancellation;
 
         public Object[] Result { get { return m_Result; } }
 
@@ -43,7 +48,17 @@ namespace UnityEngine
 
         protected AsyncInstantiateOperation(IntPtr ptr, CancellationToken cancellationToken) : base(ptr)
         {
-            m_CancellationToken = CancellationTokenSource.CreateLinkedTokenSource(s_GlobalCancellation.Token, cancellationToken).Token;
+            if (ptr == IntPtr.Zero)
+                return;
+            m_LinkedCancellation = CancellationTokenSource.CreateLinkedTokenSource(s_GlobalCancellation.Token, cancellationToken);
+            m_CancellationToken = m_LinkedCancellation.Token;
+            completed += DisposeLinkedCancellation;
+        }
+
+        private void DisposeLinkedCancellation(AsyncOperation _)
+        {
+            m_LinkedCancellation?.Dispose();
+            m_LinkedCancellation = null;
         }
 
         public static float GetIntegrationTimeMS()

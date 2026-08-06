@@ -56,71 +56,71 @@ namespace UnityEditor
 
         static class Styles
         {
-            public static GUIContent MaterialLocation = EditorGUIUtility.TrTextContent("Location");
+            public static readonly GUIContent MaterialLocation = EditorGUIUtility.TrTextContent("Location");
 
-            public static GUIContent MaterialName = EditorGUIUtility.TrTextContent("Naming");
-            public static GUIContent[] MaterialNameOptMain =
+            public static readonly GUIContent MaterialName = EditorGUIUtility.TrTextContent("Naming");
+            public static readonly GUIContent[] MaterialNameOptMain =
             {
                 EditorGUIUtility.TrTextContent("By Base Texture Name"),
                 EditorGUIUtility.TrTextContent("From Model's Material"),
                 EditorGUIUtility.TrTextContent("Model Name + Model's Material"),
             };
-            public static GUIContent[] MaterialNameOptAll =
+            public static readonly GUIContent[] MaterialNameOptAll =
             {
                 EditorGUIUtility.TrTextContent("By Base Texture Name"),
                 EditorGUIUtility.TrTextContent("From Model's Material"),
                 EditorGUIUtility.TrTextContent("Model Name + Model's Material"),
                 EditorGUIUtility.TrTextContent("Texture Name or Model Name + Model's Material (Obsolete)"),
             };
-            public static GUIContent MaterialSearch = EditorGUIUtility.TrTextContent("Search");
-            public static GUIContent[] MaterialSearchOpt =
+            public static readonly GUIContent MaterialSearch = EditorGUIUtility.TrTextContent("Search");
+            public static readonly GUIContent[] MaterialSearchOpt =
             {
                 EditorGUIUtility.TrTextContent("Local Materials Folder"),
                 EditorGUIUtility.TrTextContent("Recursive-Up"),
                 EditorGUIUtility.TrTextContent("Project-Wide")
             };
 
-            public static GUIContent NoMaterialHelp = EditorGUIUtility.TrTextContent("Do not generate materials. Use Unity's default material instead.");
+            public static readonly GUIContent NoMaterialHelp = EditorGUIUtility.TrTextContent("Do not generate materials. Use Unity's default material instead.");
 
-            public static GUIContent ExternalMaterialHelpStart = EditorGUIUtility.TrTextContent("For each imported material, Unity first looks for an existing material named %MAT%.");
-            public static GUIContent[] ExternalMaterialNameHelp =
+            public static readonly GUIContent ExternalMaterialHelpStart = EditorGUIUtility.TrTextContent("For each imported material, Unity first looks for an existing material named %MAT%.");
+            public static readonly GUIContent[] ExternalMaterialNameHelp =
             {
                 EditorGUIUtility.TrTextContent("[BaseTextureName]"),
                 EditorGUIUtility.TrTextContent("[MaterialName]"),
                 EditorGUIUtility.TrTextContent("[ModelFileName]-[MaterialName]"),
                 EditorGUIUtility.TrTextContent("[BaseTextureName] or [ModelFileName]-[MaterialName] if no base texture can be found"),
             };
-            public static GUIContent[] ExternalMaterialSearchHelp =
+            public static readonly GUIContent[] ExternalMaterialSearchHelp =
             {
                 EditorGUIUtility.TrTextContent("Unity will look for it in the local Materials folder."),
                 EditorGUIUtility.TrTextContent("Unity will do a recursive-up search for it in all Materials folders up to the Assets folder."),
                 EditorGUIUtility.TrTextContent("Unity will search for it anywhere inside the Assets folder.")
             };
-            public static GUIContent ExternalMaterialHelpEnd = EditorGUIUtility.TrTextContent("If it doesn't exist, a new one is created in the local Materials folder.");
+            public static readonly GUIContent ExternalMaterialHelpEnd = EditorGUIUtility.TrTextContent("If it doesn't exist, a new one is created in the local Materials folder.");
 
-            public static GUIContent InternalMaterialHelp = EditorGUIUtility.TrTextContent("Materials are embedded inside the imported asset.");
+            public static readonly GUIContent InternalMaterialHelp = EditorGUIUtility.TrTextContent("Materials are embedded inside the imported asset.");
 
-            public static GUIContent MaterialAssignmentsHelp = EditorGUIUtility.TrTextContent("Material assignments can be remapped below.");
+            public static readonly GUIContent MaterialAssignmentsHelp = EditorGUIUtility.TrTextContent("Material assignments can be remapped below.");
 
-            public static GUIContent ExternalMaterialMappings = EditorGUIUtility.TrTextContent("Remapped Materials", "External materials to use for each embedded material.");
+            public static readonly GUIContent ExternalMaterialMappings = EditorGUIUtility.TrTextContent("Remapped Materials", "External materials to use for each embedded material.");
 
-            public static GUIContent NoMaterialMappingsHelp = EditorGUIUtility.TrTextContent("Re-import the asset to see the list of used materials.");
+            public static readonly GUIContent NoMaterialMappingsHelp = EditorGUIUtility.TrTextContent("Re-import the asset to see the list of used materials.");
 
-            public static GUIContent Textures = EditorGUIUtility.TrTextContent("Textures");
-            public static GUIContent ExtractEmbeddedTextures = EditorGUIUtility.TrTextContent("Extract Textures...", "Click on this button to extract the embedded textures.");
+            public static readonly GUIContent Textures = EditorGUIUtility.TrTextContent("Textures");
+            public static readonly GUIContent ExtractEmbeddedTextures = EditorGUIUtility.TrTextContent("Extract Textures...", "Click on this button to extract the embedded textures.");
 
-            public static GUIContent Materials = EditorGUIUtility.TrTextContent("Materials");
-            public static GUIContent ExtractEmbeddedMaterials = EditorGUIUtility.TrTextContent("Extract Materials...", "Click on this button to extract the embedded materials.");
+            public static readonly GUIContent Materials = EditorGUIUtility.TrTextContent("Materials");
+            public static readonly GUIContent ExtractEmbeddedMaterials = EditorGUIUtility.TrTextContent("Extract Materials...", "Click on this button to extract the embedded materials.");
 
-            public static GUIContent RemapOptions = EditorGUIUtility.TrTextContent("On Demand Remap");
-            public static GUIContent RemapMaterialsInProject = EditorGUIUtility.TrTextContent("Search and Remap", "Click on this button to search and remap the materials from the project.");
+            public static readonly GUIContent RemapOptions = EditorGUIUtility.TrTextContent("On Demand Remap");
+            public static readonly GUIContent RemapMaterialsInProject = EditorGUIUtility.TrTextContent("Search and Remap", "Click on this button to search and remap the materials from the project.");
 
-            public static GUIContent SRGBMaterialColor = EditorGUIUtility.TrTextContent("sRGB Albedo Colors", "Albedo colors in gamma space. Disable this for projects using linear color space.");
+            public static readonly GUIContent SRGBMaterialColor = EditorGUIUtility.TrTextContent("sRGB Albedo Colors", "Albedo colors in gamma space. Disable this for projects using linear color space.");
 
-            public static GUIContent SearchTexturesGlobally = EditorGUIUtility.TrTextContent("Search Textures Globally", "Legacy behavior. When enabled, textures are searched across the entire project if not found near the model. This can produce non-deterministic results when multiple textures share the same name.");
-            public static GUIContent SearchTexturesGloballyWarning = EditorGUIUtility.TrTextContent("Global texture search is legacy behavior and can produce non-deterministic results when multiple textures in the project share the same name.");
+            public static readonly GUIContent SearchTexturesGlobally = EditorGUIUtility.TrTextContent("Search Textures Globally", "Legacy behavior. When enabled, textures are searched across the entire project if not found near the model. This can produce non-deterministic results when multiple textures share the same name.");
+            public static readonly GUIContent SearchTexturesGloballyWarning = EditorGUIUtility.TrTextContent("Global texture search is legacy behavior and can produce non-deterministic results when multiple textures in the project share the same name.");
 
-            public static GUIContent MaterialCreationMode = EditorGUIUtility.TrTextContent("Material Creation Mode", "Select the method used to generate materials during the import process.");
+            public static readonly GUIContent MaterialCreationMode = EditorGUIUtility.TrTextContent("Material Creation Mode", "Select the method used to generate materials during the import process.");
         }
 
         public ModelImporterMaterialEditor(AssetImporterEditor panelContainer)

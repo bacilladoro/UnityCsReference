@@ -10,6 +10,7 @@ using Unity.Profiling;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Scripting;
+using Unity.Scripting.LifecycleManagement;
 
 using static Unity.U2D.Physics.Scripting2D;
 
@@ -20,17 +21,26 @@ namespace Unity.U2D.Physics
     static class PhysicsWorldRenderer
     {
         static readonly string s_RenderCommandBufferName = "PhysicsCore2D.PhysicsWorld.Renderer";
+        // Engine-internal renderer state. This class lives in an engine module (not reloadable user code) and holds no references to user code:
+        // the render callbacks point at its own methods and the resources are engine objects, all of which remain valid across a user-code reload.
+        // ShutdownRendering() (invoked by native code) is what disposes these, so they are safe to persist.
+        [NoAutoStaticsCleanup] // engine-internal init flag, no user-code reference — safe to persist across a code reload
         static bool s_IsInitialized = false;
+        [NoAutoStaticsCleanup] // engine-internal render-pipeline flag, no user-code reference — safe to persist across a code reload
         static bool s_UsingBIRP = false;
+        [NoAutoStaticsCleanup] // engine CommandBuffer disposed by ShutdownRendering (native), no user-code reference — safe to persist across a code reload
         static CommandBuffer s_RendererCommandBuffer = null;
+        [NoAutoStaticsCleanup] // engine drawer groups disposed by ShutdownRendering (native), no user-code reference — safe to persist across a code reload
         static DrawerGroup[] s_DrawerGroups = null;
+        [NoAutoStaticsCleanup] // engine Mesh destroyed by ShutdownRendering (native), no user-code reference — safe to persist across a code reload
         static Mesh s_RenderMesh = null;
 
-        static int s_ElementBufferShaderProperty = Shader.PropertyToID("element_buffer");
-        static int s_TransformPlaneShaderProperty = Shader.PropertyToID("transform_plane");
-        static int s_TransformPlaneMatrixShaderProperty = Shader.PropertyToID("transform_plane_matrix");
-        static int s_ThicknessShaderProperty = Shader.PropertyToID("thickness");
-        static int s_FillAlphaShaderProperty = Shader.PropertyToID("fillAlpha");
+        // Shader property IDs resolved once from fixed names and never reassigned; readonly unmanaged value types are auto-exempt.
+        static readonly int s_ElementBufferShaderProperty = Shader.PropertyToID("element_buffer");
+        static readonly int s_TransformPlaneShaderProperty = Shader.PropertyToID("transform_plane");
+        static readonly int s_TransformPlaneMatrixShaderProperty = Shader.PropertyToID("transform_plane_matrix");
+        static readonly int s_ThicknessShaderProperty = Shader.PropertyToID("thickness");
+        static readonly int s_FillAlphaShaderProperty = Shader.PropertyToID("fillAlpha");
 
         static readonly ProfilerMarker s_DrawWorldsMarker = new ProfilerMarker("PhysicsCore2D.DrawWorlds");
         static readonly ProfilerMarker s_DrawWorldsExecuteRenderCommandsBIRPMarker = new ProfilerMarker("PhysicsCore2D.DrawWorlds.ExecuteRenderCommands (BIRP)");

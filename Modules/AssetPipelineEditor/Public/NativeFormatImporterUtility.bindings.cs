@@ -5,17 +5,20 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.Bindings;
+using Debug = UnityEngine.Debug;
 using UnityObject = UnityEngine.Object;
 
 namespace UnityEditor
 {
     [InitializeOnLoad]
     [NativeHeader("Modules/AssetPipelineEditor/Public/NativeFormatImporter.h")]
-    internal static class NativeFormatImporterUtility
+    internal static partial class NativeFormatImporterUtility
     {
-        static NativeFormatImporterUtility()
+        [OnCodeLoaded]
+        static void Initialize()
         {
             foreach (var type in TypeCache.GetTypesWithAttribute<AssetFileNameExtensionAttribute>())
             {
@@ -40,6 +43,7 @@ namespace UnityEditor
 
         private const string k_DefaultExtension = "asset";
 
+        [AutoStaticsCleanupOnCodeReload]
         static readonly Dictionary<Type, string[]> s_RegisteredExtensionsByType = new Dictionary<Type, string[]>();
 
         internal static void RegisterExtensionForType(

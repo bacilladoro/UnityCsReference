@@ -315,7 +315,7 @@ namespace UnityEditor
             public string instructions = L10n.Tr("*standard install form hub");
             public string iconName = "BuildSettings.Editor";
             public string subtitle = string.Empty;
-            public string settingsDocsLink = string.Empty;
+            public string settingsDocsLink = null;
             public List<NameAndLink> nameAndLinkToShowUnderTitle = null;
             public string keyFeatures = string.Empty;
             public string resources = string.Empty;

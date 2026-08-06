@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEditor.AnimatedValues;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -19,10 +20,12 @@ namespace UnityEditor
         SerializedProperty m_Density;
         SerializedProperty m_SurfaceLevel;
 
+        [NoAutoStaticsCleanup] // foldout UI state shared across inspectors; safe to persist across code reload as it holds no user-code references
         static readonly AnimBool m_ShowDampingRollout = new AnimBool();
         SerializedProperty m_LinearDamping;
         SerializedProperty m_AngularDamping;
 
+        [NoAutoStaticsCleanup] // foldout UI state shared across inspectors; safe to persist across code reload as it holds no user-code references
         static readonly AnimBool m_ShowFlowRollout = new AnimBool();
         SerializedProperty m_FlowAngle;
         SerializedProperty m_FlowMagnitude;

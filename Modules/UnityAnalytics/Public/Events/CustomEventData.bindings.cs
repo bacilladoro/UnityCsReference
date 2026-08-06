@@ -28,10 +28,12 @@ namespace UnityEngine.Analytics
             m_Ptr = Internal_Create(this, name);
         }
 
+#pragma warning disable UA5000 // The Avoid Finalizer Analyzer produces compile errors for any new finalizers. This pre-existing finalizer declaration has been suppressed, but should be rewritten if possible.
         ~CustomEventData()
         {
             Destroy();
         }
+#pragma warning restore UA5000
 
         void Destroy()
         {

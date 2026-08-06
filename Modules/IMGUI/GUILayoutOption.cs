@@ -6,7 +6,14 @@ using System;
 
 namespace UnityEngine
 {
-    // Class internally used to pass layout options into [[GUILayout]] functions. You don't use these directly, but construct them with the layouting functions in the [[GUILayout]] class.
+    ///<summary>Class internally used to pass layout options into <see cref="GUILayout" /> functions. You don't use these directly, but construct them with the layouting functions in the <see cref="GUILayout" /> class.</summary>
+    ///<remarks>
+    ///  <see cref="GUILayout.MaxHeight" />, <see cref="GUILayout.ExpandWidth" />, <see cref="GUILayout.ExpandHeight" />.</remarks>
+    ///<seealso cref="GUILayout.Width" />
+    ///<seealso cref="GUILayout.Height" />
+    ///<seealso cref="GUILayout.MinWidth" />
+    ///<seealso cref="GUILayout.MaxWidth" />
+    ///<seealso cref="GUILayout.MinHeight" />
     public sealed class GUILayoutOption
     {
         internal enum Type
@@ -16,10 +23,13 @@ namespace UnityEngine
             alignStart, alignMiddle, alignEnd, alignJustify, equalSize, spacing
         }
         // *undocumented*
+        ///<exclude />
         internal Type type;
         // *undocumented*
+        ///<exclude />
         internal object value;
         // *undocumented*
+        ///<exclude />
         internal GUILayoutOption(Type type, object value)
         {
             this.type = type;

@@ -4,6 +4,7 @@
 
 using System;
 using System.Runtime.InteropServices;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Scripting;
 using UnityEngine.TextCore.Text;
 
@@ -15,6 +16,7 @@ namespace UnityEngine
     public sealed partial class GUIStyleState
     {
         // Pointer to the GUIStyleState INSIDE a GUIStyle.
+        ///<exclude />
         [NonSerialized]
         internal IntPtr m_Ptr;
 
@@ -22,6 +24,7 @@ namespace UnityEngine
         // If NULL, it means we own m_Ptr and need to delete it when this gets disposed
         readonly GUIStyle m_SourceStyle;
 
+        ///<exclude />
         public GUIStyleState()
         {
             m_Ptr = Init();
@@ -46,6 +49,7 @@ namespace UnityEngine
             return newState;
         }
 
+#pragma warning disable UA5000 // The Avoid Finalizer Analyzer produces compile errors for any new finalizers. This pre-existing finalizer declaration has been suppressed, but should be rewritten if possible.
         ~GUIStyleState()
         {
             if (m_SourceStyle == null)
@@ -54,18 +58,19 @@ namespace UnityEngine
                 m_Ptr = IntPtr.Zero;
             }
         }
+#pragma warning restore UA5000
     }
 
-    // How image and text is placed inside [[GUIStyle]].
+    ///<summary>How image and text is placed inside <see cref="GUIStyle" />.</summary>
     public enum ImagePosition
     {
-        // Image is to the left of the text.
+        ///<summary>Image is to the left of the text.</summary>
         ImageLeft = 0,
-        // Image is above the text.
+        ///<summary>Image is above the text.</summary>
         ImageAbove = 1,
-        // Only the image is displayed.
+        ///<summary>Only the image is displayed.</summary>
         ImageOnly = 2,
-        // Only the text is displayed.
+        ///<summary>Only the text is displayed.</summary>
         TextOnly = 3
     }
 
@@ -73,13 +78,13 @@ namespace UnityEngine
     [Serializable]
     public sealed partial class GUIStyle
     {
-        // Constructor for empty GUIStyle.
+        ///<summary>Constructor for empty GUIStyle.</summary>
         public GUIStyle()
         {
             m_Ptr = Internal_Create(this);
         }
 
-        // Constructs GUIStyle identical to given other GUIStyle.
+        ///<summary>Constructs GUIStyle identical to given other GUIStyle.</summary>
         public GUIStyle(GUIStyle other)
         {
             if (other == null)
@@ -90,6 +95,7 @@ namespace UnityEngine
             m_Ptr = Internal_Copy(this, other);
         }
 
+#pragma warning disable UA5000 // The Avoid Finalizer Analyzer produces compile errors for any new finalizers. This pre-existing finalizer declaration has been suppressed, but should be rewritten if possible.
         ~GUIStyle()
         {
             if (m_Ptr != IntPtr.Zero)
@@ -98,6 +104,7 @@ namespace UnityEngine
                 m_Ptr = IntPtr.Zero;
             }
         }
+#pragma warning restore UA5000
 
         //Called during Deserialization from cpp
         internal void InternalOnAfterDeserialize()
@@ -112,6 +119,7 @@ namespace UnityEngine
             m_OnFocused = GUIStyleState.ProduceGUIStyleStateFromDeserialization(this, GetStyleStatePtr(7));
         }
 
+        ///<exclude />
         [NonSerialized]
         internal IntPtr m_Ptr;
 
@@ -125,10 +133,27 @@ namespace UnityEngine
         string m_Name;
 
         // Internal callback used to override how gui styles are rendered.
+        [AutoStaticsCleanupOnCodeReload]
         internal static DrawHandler onDraw;
         // Cache StyleBlock ID
         internal int blockId;
 
+        ///<summary>The name of this GUIStyle. Used for getting them based on name.</summary>
+        ///<example>
+        ///  <code><![CDATA[
+        ///using UnityEngine;
+        ///
+        ///public class Example : MonoBehaviour
+        ///{
+        ///    // Prints the name of the style.
+        ///
+        ///    void OnGUI()
+        ///    {
+        ///        Debug.Log(GUI.skin.button.name);
+        ///    }
+        ///}
+        ///]]></code>
+        ///</example>
         public string name
         {
             get { return m_Name ?? (m_Name = rawName); }
@@ -139,7 +164,22 @@ namespace UnityEngine
             }
         }
 
-        // Rendering settings for when the component is displayed normally.
+        ///<summary>Rendering settings for when the component is displayed normally.</summary>
+        ///<example>
+        ///  <code><![CDATA[
+        ///using UnityEngine;
+        ///
+        ///public class Example : MonoBehaviour
+        ///{
+        ///    // Prints the text color that button is using.
+        ///
+        ///    void OnGUI()
+        ///    {
+        ///        Debug.Log(GUI.skin.button.normal.textColor);
+        ///    }
+        ///}
+        ///]]></code>
+        ///</example>
         public GUIStyleState normal
         {
             get
@@ -153,115 +193,319 @@ namespace UnityEngine
             set { AssignStyleState(0, value.m_Ptr); }
         }
 
-        // Rendering settings for when the mouse is hovering over the control
+        ///<summary>Rendering settings for when the mouse is hovering over the control.</summary>
+        ///<example>
+        ///  <code><![CDATA[
+        ///using UnityEngine;
+        ///
+        ///public class Example : MonoBehaviour
+        ///{
+        ///    // Prints the text color that button is using
+        ///    // when the mouse is hovering over a control
+        ///
+        ///    void OnGUI()
+        ///    {
+        ///        Debug.Log(GUI.skin.button.hover.textColor);
+        ///    }
+        ///}
+        ///]]></code>
+        ///</example>
         public GUIStyleState hover
         {
             get { return m_Hover ?? (m_Hover = GUIStyleState.GetGUIStyleState(this, GetStyleStatePtr(1))); }
             set { AssignStyleState(1, value.m_Ptr); }
         }
 
-        // Rendering settings for when the control is pressed down.
+        ///<summary>Rendering settings for when the control is pressed down.</summary>
+        ///<example>
+        ///  <code><![CDATA[
+        ///using UnityEngine;
+        ///
+        ///public class Example : MonoBehaviour
+        ///{
+        ///    // Assigns a texture to button for when the control
+        ///    // is pressed down
+        ///
+        ///    Texture2D aTexture;
+        ///
+        ///    void OnGUI()
+        ///    {
+        ///        if (!aTexture)
+        ///        {
+        ///            Debug.LogError("Assign a texture on the editor first");
+        ///            return;
+        ///        }
+        ///
+        ///        GUI.skin.button.active.background = aTexture;
+        ///    }
+        ///}
+        ///]]></code>
+        ///</example>
         public GUIStyleState active
         {
             get { return m_Active ?? (m_Active = GUIStyleState.GetGUIStyleState(this, GetStyleStatePtr(2))); }
             set { AssignStyleState(2, value.m_Ptr); }
         }
 
-        // Rendering settings for when the control is turned on.
+        ///<summary>Rendering settings for when the control is turned on.</summary>
+        ///<example>
+        ///  <code><![CDATA[
+        ///using UnityEngine;
+        ///
+        ///public class Example : MonoBehaviour
+        ///{
+        ///    void OnGUI()
+        ///    {
+        ///        GUI.skin.button.onNormal.textColor = Color.red;
+        ///    }
+        ///}
+        ///]]></code>
+        ///</example>
         public GUIStyleState onNormal
         {
             get { return m_OnNormal ?? (m_OnNormal = GUIStyleState.GetGUIStyleState(this, GetStyleStatePtr(4))); }
             set { AssignStyleState(4, value.m_Ptr); }
         }
 
-        // Rendering settings for when the control is turned on and the mouse is hovering it.
+        ///<summary>Rendering settings for when the control is turned on and the mouse is hovering it.</summary>
+        ///<example>
+        ///  <code><![CDATA[
+        ///using UnityEngine;
+        ///
+        ///public class Example : MonoBehaviour
+        ///{
+        ///    void OnGUI()
+        ///    {
+        ///        GUI.skin.button.onHover.textColor = Color.cyan;
+        ///    }
+        ///}
+        ///]]></code>
+        ///</example>
         public GUIStyleState onHover
         {
             get { return m_OnHover ?? (m_OnHover = GUIStyleState.GetGUIStyleState(this, GetStyleStatePtr(5))); }
             set { AssignStyleState(5, value.m_Ptr); }
         }
 
-        // Rendering settings for when the element is turned on and pressed down.
+        ///<summary>Rendering settings for when the element is turned on and pressed down.</summary>
+        ///<example>
+        ///  <code><![CDATA[
+        ///using UnityEngine;
+        ///
+        ///public class Example : MonoBehaviour
+        ///{
+        ///    // Sets the text color of button to yellow when an
+        ///    // element is turned on and pressed down.
+        ///    void OnGUI()
+        ///    {
+        ///        GUI.skin.button.onActive.textColor = Color.yellow;
+        ///    }
+        ///}
+        ///]]></code>
+        ///</example>
         public GUIStyleState onActive
         {
             get { return m_OnActive ?? (m_OnActive = GUIStyleState.GetGUIStyleState(this, GetStyleStatePtr(6))); }
             set { AssignStyleState(6, value.m_Ptr); }
         }
 
-        // Rendering settings for when the element has keyboard focus.
+        ///<summary>Rendering settings for when the element has keyboard focus.</summary>
+        ///<example>
+        ///  <code><![CDATA[
+        ///using UnityEngine;
+        ///
+        ///public class Example : MonoBehaviour
+        ///{
+        ///    void OnGUI()
+        ///    {
+        ///        GUI.skin.button.focused.textColor = Color.blue;
+        ///    }
+        ///}
+        ///]]></code>
+        ///</example>
         public GUIStyleState focused
         {
             get { return m_Focused ?? (m_Focused = GUIStyleState.GetGUIStyleState(this, GetStyleStatePtr(3))); }
             set { AssignStyleState(3, value.m_Ptr); }
         }
 
-        // Rendering settings for when the element has keyboard and is turned on.
+        ///<summary>Rendering settings for when the element has keyboard and is turned on.</summary>
+        ///<example>
+        ///  <code><![CDATA[
+        ///using UnityEngine;
+        ///
+        ///public class Example : MonoBehaviour
+        ///{
+        ///    void OnGUI()
+        ///    {
+        ///        GUI.skin.button.onFocused.textColor = Color.green;
+        ///    }
+        ///}
+        ///]]></code>
+        ///</example>
         public GUIStyleState onFocused
         {
             get { return m_OnFocused ?? (m_OnFocused = GUIStyleState.GetGUIStyleState(this, GetStyleStatePtr(7))); }
             set { AssignStyleState(7, value.m_Ptr); }
         }
 
-        // The borders of all background images.
+        ///<summary>The borders of all background images.</summary>
+        ///<remarks>This corresponds to the border settings for IMGUI elements. It only affects the rendering of the background image and has no effect on positioning.</remarks>
+        ///<example>
+        ///  <code><![CDATA[
+        ///using UnityEngine;
+        ///
+        ///public class Example : MonoBehaviour
+        ///{
+        ///    // Prints the left, right, top and down values of the GUIStyle border
+        ///
+        ///    RectOffset bdr;
+        ///    void OnGUI()
+        ///    {
+        ///        bdr = GUI.skin.button.border;
+        ///        Debug.Log("Left: " + bdr.left + " Right: " + bdr.right);
+        ///        Debug.Log("Top: " + bdr.top + " Bottom: " + bdr.bottom);
+        ///    }
+        ///}
+        ///]]></code>
+        ///</example>
         public RectOffset border
         {
             get { return m_Border ?? (m_Border = new RectOffset(this, GetRectOffsetPtr(0))); }
             set { AssignRectOffset(0, value.m_Ptr); }
         }
 
-        // The margins between elements rendered in this style and any other GUI elements
+        ///<summary>The margins between elements rendered in this style and any other GUI elements.</summary>
+        ///<remarks>This only has effect when using automatic layout ().</remarks>
+        ///<example>
+        ///  <code><![CDATA[
+        ///using UnityEngine;
+        ///
+        ///public class Example : MonoBehaviour
+        ///{
+        ///    // Prints the left, right, top and down values of the GUIStyle margin
+        ///
+        ///    RectOffset rctOff;
+        ///
+        ///    void OnGUI()
+        ///    {
+        ///        rctOff = GUI.skin.button.margin;
+        ///        Debug.Log("Left: " + rctOff.left + " Right: " + rctOff.right);
+        ///        Debug.Log("Top: " + rctOff.top + " Bottom: " + rctOff.bottom);
+        ///    }
+        ///}
+        ///]]></code>
+        ///</example>
+        ///<seealso cref="GUILayout" />
         public RectOffset margin
         {
             get { return m_Margin ?? (m_Margin = new RectOffset(this, GetRectOffsetPtr(1))); }
             set { AssignRectOffset(1, value.m_Ptr); }
         }
 
-        // Space from the edge of [[GUIStyle]] to the start of the contents.
+        ///<summary>Space from the edge of <see cref="GUIStyle" /> to the start of the contents.</summary>
+        ///<example>
+        ///  <code><![CDATA[
+        ///using UnityEngine;
+        ///
+        ///public class Example : MonoBehaviour
+        ///{
+        ///    // Prints the left, right, top and down values of the GUIStyle overflow
+        ///
+        ///    RectOffset rctOff;
+        ///
+        ///    void OnGUI()
+        ///    {
+        ///        rctOff = GUI.skin.button.padding;
+        ///        Debug.Log("Left: " + rctOff.left + " Right: " + rctOff.right);
+        ///        Debug.Log("Top: " + rctOff.top + " Bottom: " + rctOff.bottom);
+        ///    }
+        ///}
+        ///]]></code>
+        ///</example>
         public RectOffset padding
         {
             get { return m_Padding ?? (m_Padding = new RectOffset(this, GetRectOffsetPtr(2))); }
             set { AssignRectOffset(2, value.m_Ptr); }
         }
 
-        // Extra space to be added to the background image.
+        ///<summary>Extra space to be added to the background image.</summary>
+        ///<remarks>This is used if your image has a drop shadow and you want to extend the background image beyond the rectangles specified for gui elements that use this style.</remarks>
+        ///<example>
+        ///  <code><![CDATA[
+        ///using UnityEngine;
+        ///
+        ///public class Example : MonoBehaviour
+        ///{
+        ///    // Prints the left, right, top and down values of the GUIStyle overflow
+        ///
+        ///    RectOffset rctOff;
+        ///
+        ///    void OnGUI()
+        ///    {
+        ///        rctOff = GUI.skin.button.overflow;
+        ///        Debug.Log("Left: " + rctOff.left + " Right: " + rctOff.right);
+        ///        Debug.Log("Top: " + rctOff.top + " Bottom: " + rctOff.bottom);
+        ///    }
+        ///}
+        ///]]></code>
+        ///</example>
         public RectOffset overflow
         {
             get { return m_Overflow ?? (m_Overflow = new RectOffset(this, GetRectOffsetPtr(3))); }
             set { AssignRectOffset(3, value.m_Ptr); }
         }
 
-        // The height of one line of text with this style, measured in pixels.
+        ///<summary>The height of one line of text with this style, measured in pixels. (RO)</summary>
+        ///<example>
+        ///  <code><![CDATA[
+        ///using UnityEngine;
+        ///
+        ///public class Example : MonoBehaviour
+        ///{
+        ///    // Prints the lineHeight value.
+        ///
+        ///    void OnGUI()
+        ///    {
+        ///        Debug.Log(GUI.skin.button.lineHeight);
+        ///    }
+        ///}
+        ///]]></code>
+        ///</example>
         public float lineHeight => Mathf.Round(IMGUITextHandle.GetLineHeight(this));
 
-        // Draw plain GUIStyle without text nor image.
+        ///<summary>Draw this GUIStyle on to the screen, internal version.</summary>
+        ///<remarks>Draw plain GUIStyle without text nor image.</remarks>
         public void Draw(Rect position, bool isHover, bool isActive, bool on, bool hasKeyboardFocus)
         {
             Draw(position, GUIContent.none, -1, isHover, isActive, on, hasKeyboardFocus);
         }
 
-        // Draw the GUIStyle with a text string inside.
+        ///<summary>Draw the GUIStyle with a text string inside.</summary>
         public void Draw(Rect position, string text, bool isHover, bool isActive, bool on, bool hasKeyboardFocus)
         {
             Draw(position, GUIContent.Temp(text), -1, isHover, isActive, on, hasKeyboardFocus);
         }
 
-        // Draw the GUIStyle with an image inside. If the image is too large to fit within the content area of the style it is scaled down.
+        ///<summary>Draw the GUIStyle with an image inside. If the image is too large to fit within the content area of the style it is scaled down.</summary>
         public void Draw(Rect position, Texture image, bool isHover, bool isActive, bool on, bool hasKeyboardFocus)
         {
             Draw(position, GUIContent.Temp(image), -1, isHover, isActive, on, hasKeyboardFocus);
         }
 
-        // Draw the GUIStyle with text and an image inside. If the image is too large to fit within the content area of the style it is scaled down.
+        ///<summary>Draw the GUIStyle with text and an image inside. If the image is too large to fit within the content area of the style it is scaled down.</summary>
         public void Draw(Rect position, GUIContent content, bool isHover, bool isActive, bool on, bool hasKeyboardFocus)
         {
             Draw(position, content, -1, isHover, isActive, on, hasKeyboardFocus);
         }
 
+        ///<summary>Draw the GUIStyle with text and an image inside. If the image is too large to fit within the content area of the style it is scaled down.</summary>
         public void Draw(Rect position, GUIContent content, int controlID)
         {
             Draw(position, content, controlID, false, false, false, false);
         }
 
+        ///<summary>Draw the GUIStyle with text and an image inside. If the image is too large to fit within the content area of the style it is scaled down.</summary>
         public void Draw(Rect position, GUIContent content, int controlID, bool on)
         {
             Draw(position, content, controlID, false, false, on, false);
@@ -311,10 +555,11 @@ namespace UnityEngine
         }
 
 
+        [AutoStaticsCleanupOnCodeReload]
         // Does the ID-based Draw function show keyboard focus? Disabled by windows when they don't have keyboard focus
         internal static bool showKeyboardFocus = true;
 
-        // Draw this GUIStyle with selected content.
+        ///<summary>Draw this GUIStyle with selected content.</summary>
         public void DrawCursor(Rect position, GUIContent content, int controlID, int character)
         {
             Event e = Event.current;
@@ -380,13 +625,13 @@ namespace UnityEngine
                 firstSelectedCharacter, lastSelectedCharacter, drawSelectionAsComposition, GUI.skin.settings.selectionColor);
         }
 
-        // Draw this GUIStyle with selected content.
+        ///<summary>Draw this GUIStyle with selected content.</summary>
         public void DrawWithTextSelection(Rect position, GUIContent content, int controlID, int firstSelectedCharacter, int lastSelectedCharacter)
         {
             DrawWithTextSelection(position, content, controlID, firstSelectedCharacter, lastSelectedCharacter, false);
         }
 
-        // Get a named GUI style from the current skin.
+        ///<summary>Get a named GUI style from the current skin.</summary>
         public static implicit operator GUIStyle(string str)
         {
             if (GUISkin.current == null)
@@ -397,14 +642,31 @@ namespace UnityEngine
             return GUISkin.current.GetStyle(str);
         }
 
-        // Shortcut for an empty GUIStyle.
+        ///<summary>Shortcut for an empty GUIStyle.</summary>
+        ///<remarks>This style contains no decoration and just renders everything in the default font.</remarks>
+        ///<example>
+        ///  <code><![CDATA[
+        ///using UnityEngine;
+        ///
+        ///public class Example : MonoBehaviour
+        ///{
+        ///    void OnGUI()
+        ///    {
+        ///        // Make a button with no decoration
+        ///        GUI.Button(new Rect(0, 0, 250, 100), "Basic Button", GUIStyle.none);
+        ///    }
+        ///}
+        ///]]></code>
+        ///</example>
         public static GUIStyle none => s_None ?? (s_None = new GUIStyle());
+        [NoAutoStaticsCleanup] // lazy-cache empty GUIStyle sentinel; recreated on null check; no user types
         static GUIStyle s_None;
 
         // This is to be used only internally in tests. It will affect all of IMGUI.
+        [NoAutoStaticsCleanup] // test override flag; null (default) restores default behavior after reload
         internal static bool? useAdvancedText = null;
 
-        // Get the pixel position of a given string index.
+        ///<summary>Get the pixel position of a given string index.</summary>
         public Vector2 GetCursorPixelPosition(Rect position, GUIContent content, int cursorStringIndex)
         {
             Rect drawRect = position;
@@ -423,7 +685,8 @@ namespace UnityEngine
             return handle.GetHyperlinkRects(content);
         }
 
-        // Get the cursor position (indexing into contents.text) when the user clicked at cursorPixelPosition
+        ///<summary>Get the cursor position (indexing into contents.text) when the user clicked at cursorPixelPosition.</summary>
+        ///<remarks>This does not respect any images inside content.</remarks>
         public int GetCursorStringIndex(Rect position, GUIContent content, Vector2 cursorPixelPosition)
         {
             var handle = IMGUITextHandle.GetTextHandle(this, position, IMGUITextHandle.IsAdvancedTextEnabled() ? content.text : content.textWithWhitespace, Color.white, false);
@@ -431,13 +694,47 @@ namespace UnityEngine
             return handle.GetCursorIndexFromPosition(cursorPixelPosition);
         }
 
-        // Returns number of characters that can fit within width, returns -1 if fails due to missing font
+        ///<summary>Returns number of characters that can fit within width, returns -1 if fails due to missing font.</summary>
         internal int GetNumCharactersThatFitWithinWidth(string text, float width)
         {
             return IMGUITextHandle.GetTextHandle(this, new Rect(0, 0, width, 1), text, Color.white, false).GetNumCharactersThatFitWithinWidth(width);
         }
 
-        // Calculate the size of a some content if it is rendered with this style.
+        ///<summary>Calculate the size of some content if it is rendered with this style.</summary>
+        ///<remarks>This function does not take word wrapping into account. To do that, you
+        ///        need to determine the allocated width and then call <see cref="CalcHeight" /> to figure out
+        ///        the word wrapped height.</remarks>
+        ///<example>
+        ///  <code><![CDATA[
+        /// // Example for the GUIStyle.CalcSize
+        ///
+        ///using UnityEngine;
+        ///
+        ///public class CalcSizeExample : MonoBehaviour
+        ///{
+        ///    string s;
+        ///
+        ///    void Start()
+        ///    {
+        ///        s = "A string for GUIContent()";
+        ///    }
+        ///
+        ///    void OnGUI()
+        ///    {
+        ///        GUIContent content = new GUIContent(s);
+        ///
+        ///        GUIStyle style = GUI.skin.box;
+        ///        style.alignment = TextAnchor.MiddleCenter;
+        ///
+        ///        // Compute how large the button needs to be.
+        ///        Vector2 size = style.CalcSize(content);
+        ///
+        ///        // make the Box double sized
+        ///        GUI.Box(new Rect(10.0f, 10.0f, 2.0f * size.x, 2.0f * size.y), s);
+        ///    }
+        ///}
+        ///]]></code>
+        ///</example>
         public Vector2 CalcSize(GUIContent content)
         {
             return Internal_CalcSize(content);
@@ -454,7 +751,7 @@ namespace UnityEngine
             return size;
         }
 
-        // Calculate the size of an element formatted with this style, and a given space to content.
+        ///<summary>Calculate the size of an element formatted with this style, and a given space to content.</summary>
         public Vector2 CalcScreenSize(Vector2 contentSize)
         {
             return new Vector2(
@@ -463,7 +760,7 @@ namespace UnityEngine
             );
         }
 
-        // How tall this element will be when rendered with /content/ and a specific /width/.
+        ///<summary>How tall this element will be when rendered with <c>content</c> and a specific <c>width</c>.</summary>
         public float CalcHeight(GUIContent content, float width)
         {
             var height = Internal_CalcHeight(content, width);
@@ -475,9 +772,11 @@ namespace UnityEngine
             return IMGUITextHandle.GetTextHandle(this, padding.Remove(rect), content, Color.white).preferredSize;
         }
 
+        ///<exclude />
         public bool isHeightDependantOnWidth => fixedHeight == 0 && (wordWrap && imagePosition != ImagePosition.ImageOnly);
 
-        // Calculate the minimum and maximum widths for this style rendered with /content/.
+        ///<summary>Calculate the minimum and maximum widths for this style rendered with <c>content</c>.</summary>
+        ///<remarks>Used by <see cref="GUILayout" /> to handle word-wrapping elements correctly.</remarks>
         public void CalcMinMaxWidth(GUIContent content, out float minWidth, out float maxWidth)
         {
             Vector2 size = Internal_CalcMinMaxWidth(content);
@@ -485,6 +784,7 @@ namespace UnityEngine
             maxWidth = size.y;
         }
 
+        ///<exclude />
         public override string ToString()
         {
             return string.Format("GUIStyle '{0}'", name);
@@ -516,14 +816,14 @@ namespace UnityEngine
     }
 
 
-    // Different methods for how the GUI system handles text being too large to fit the rectangle allocated.
+    ///<summary>Different methods for how the GUI system handles text being too large to fit the rectangle allocated.</summary>
     public enum TextClipping
     {
-        // Text flows freely outside the element.
+        ///<summary>Text flows freely outside the element.</summary>
         Overflow = 0,
-        // Text gets clipped to be inside the element.
+        ///<summary>Text gets clipped to be inside the element.</summary>
         Clip = 1,
-        // Text gets truncated with dots to show it is too long
+        ///<summary>Text gets clipped to be inside the element and added ... at the end.</summary>
         Ellipsis = 2,
     }
 

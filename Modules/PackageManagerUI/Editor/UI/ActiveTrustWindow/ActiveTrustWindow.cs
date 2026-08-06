@@ -111,6 +111,7 @@ namespace UnityEditor.PackageManager.UI.Internal
             public string docUrl;
             public int windowWidth;
             public IList<SectionData> sections;
+            public bool blockedBySecuritySettings;
         }
 
         public static ActiveTrustReturnValue Show(ViewData data)
@@ -120,7 +121,7 @@ namespace UnityEditor.PackageManager.UI.Internal
             return ModalWindowContainer.ShowModal(content) ? content.returnValue : ActiveTrustReturnValue.Error;
         }
 
-        public static ViewData CreateViewData(IUpmCache upmCache, IEnumerable<PackageInfo> packages, OperationType operationType, string shortUnityVersion)
+        public static ViewData CreateViewData(IUpmCache upmCache, IEnumerable<PackageInfo> packages, OperationType operationType, string shortUnityVersion, TrustPolicyLevel trustPolicyLevel)
         {
             var invalidSignatureRows = new List<RowData>();
             var missingSignatureRows = new List<RowData>();
@@ -151,14 +152,22 @@ namespace UnityEditor.PackageManager.UI.Internal
             if (invalidSignatureRows.Count == 0 && missingSignatureRows.Count == 0 && limitedTrustRows.Count == 0)
                 return null;
 
+            var blockedHelpBoxText = L10n.Tr("Unity can't complete the operation because your security settings don't allow these packages.");
+
             var sections = new List<SectionData>();
             string windowTitle = null, helpBoxText = null, docUrl = null;
             HelpBoxMessageType messageType = default;
+            var blockedBySecuritySettings = false;
             if (invalidSignatureRows.Count > 0)
             {
-                var headerText = invalidSignatureRows.Count == 1
-                    ? L10n.Tr("This package has an invalid signature.")
-                    : string.Format(L10n.Tr("{0} packages have invalid signatures."), invalidSignatureRows.Count);
+                var invalidBlocked = IsBlocked(trustPolicyLevel, TrustAndSignature.UntrustedInvalidSignature);
+                var headerText = invalidBlocked
+                    ? SelectByCount(invalidSignatureRows.Count,
+                        L10n.Tr("This package has an invalid signature which can indicate unsafe or malicious content."),
+                        L10n.Tr("{0} packages have invalid signatures which can indicate unsafe or malicious content."))
+                    : SelectByCount(invalidSignatureRows.Count,
+                        L10n.Tr("This package has an invalid signature."),
+                        L10n.Tr("{0} packages have invalid signatures."));
                 sections.Add(new SectionData
                 {
                     headerText = headerText,
@@ -168,17 +177,21 @@ namespace UnityEditor.PackageManager.UI.Internal
                     hasTechnicalName = true
                 });
 
-                windowTitle = L10n.Tr("Invalid signature");
-                helpBoxText = L10n.Tr("These packages have an invalid signature which can indicate unsafe or malicious content. Remove these packages to reduce risk to your project.");
+                windowTitle = L10n.Tr("Invalid Signature");
+                helpBoxText = invalidBlocked
+                    ? blockedHelpBoxText
+                    : L10n.Tr("These packages have an invalid signature which can indicate unsafe or malicious content. Remove these packages to reduce risk to your project.");
                 messageType = HelpBoxMessageType.Error;
                 docUrl = $"https://docs.unity3d.com/{shortUnityVersion}/Documentation/Manual/upm-errors.html#pkg-invalid-sig";
+                blockedBySecuritySettings |= invalidBlocked;
             }
 
             if (missingSignatureRows.Count > 0)
             {
-                var headerText = missingSignatureRows.Count == 1
-                    ? L10n.Tr("This package is missing a signature.")
-                    : string.Format(L10n.Tr("{0} packages are missing a signature."), missingSignatureRows.Count);
+                var missingBlocked = IsBlocked(trustPolicyLevel, TrustAndSignature.UntrustedNoSignature);
+                var headerText = SelectByCount(missingSignatureRows.Count,
+                    L10n.Tr("This package is missing a signature."),
+                    L10n.Tr("{0} packages are missing a signature."));
                 sections.Add(new SectionData
                 {
                     headerText = headerText,
@@ -190,22 +203,26 @@ namespace UnityEditor.PackageManager.UI.Internal
 
                 if (windowTitle == null)
                 {
-                    windowTitle = L10n.Tr("Missing signature");
-                    helpBoxText = L10n.Tr("Unity can't verify these packages because they don't have a signature. Use signed packages to reduce risk to your project.");
+                    windowTitle = L10n.Tr("Missing Signature");
+                    helpBoxText = missingBlocked
+                        ? blockedHelpBoxText
+                        : L10n.Tr("Unity can't verify these packages because they don't have a signature. Use signed packages to reduce risk to your project.");
                     messageType = HelpBoxMessageType.Warning;
                     docUrl = $"https://docs.unity3d.com/{shortUnityVersion}/Documentation/Manual/upm-signature.html";
                 }
+                blockedBySecuritySettings |= missingBlocked;
             }
 
             if (limitedTrustRows.Count > 0)
             {
-                var headerText = limitedTrustRows.Count == 1
-                    ? L10n.Tr("This package is signed but not from official Unity sources.")
-                    : string.Format(L10n.Tr("{0} packages are signed but not from official Unity sources."), limitedTrustRows.Count);
+                var limitedBlocked = IsBlocked(trustPolicyLevel, TrustAndSignature.LimitedTrust);
+                var headerText = SelectByCount(limitedTrustRows.Count,
+                    L10n.Tr("This package is signed but not from official Unity sources."),
+                    L10n.Tr("{0} packages are signed but not from official Unity sources."));
                 sections.Add(new SectionData
                 {
                     headerText = headerText,
-                    icon = Icon.PackageOptionLarge,
+                    icon = limitedBlocked ? Icon.PackageWarningLarge : Icon.PackageOptionLarge,
                     rows = limitedTrustRows,
                     isOrgKnown = true,
                     hasTechnicalName = true
@@ -213,12 +230,22 @@ namespace UnityEditor.PackageManager.UI.Internal
 
                 if (windowTitle == null)
                 {
-                    windowTitle = L10n.Tr("Unofficial Unity source");
-                    helpBoxText = L10n.Tr("These packages are signed, but their publishers are not verified by Unity. Please ensure you understand where these packages originated from.");
-                    messageType = HelpBoxMessageType.Info;
+                    windowTitle = L10n.Tr("Unofficial Unity Source");
+                    helpBoxText = limitedBlocked
+                        ? SelectByCount(limitedTrustRows.Count,
+                            L10n.Tr("Unity can't complete the operation because this package is signed, but its publisher isn't verified by Unity. Your security settings don't allow packages from unrecognized publishers."),
+                            L10n.Tr("Unity can't complete the operation because these packages are signed, but their publishers aren't verified by Unity. Your security settings don't allow packages from unrecognized publishers."))
+                        : SelectByCount(limitedTrustRows.Count,
+                            L10n.Tr("This package is signed, but its publisher isn't verified by Unity. Ensure you understand where this package came from."),
+                            L10n.Tr("These packages are signed, but their publishers aren't verified by Unity. Ensure you understand where these packages came from."));
+                    messageType = limitedBlocked ? HelpBoxMessageType.Warning : HelpBoxMessageType.Info;
                     docUrl = $"https://docs.unity3d.com/{shortUnityVersion}/Documentation/Manual/upm-signature.html";
                 }
+                blockedBySecuritySettings |= limitedBlocked;
             }
+
+            if (blockedBySecuritySettings)
+                windowTitle = L10n.Tr("Security Conflict");
 
             var actionLabel = operationType == OperationType.Remove ? "Proceed" : operationType.ToString();
             return new ViewData
@@ -229,8 +256,38 @@ namespace UnityEditor.PackageManager.UI.Internal
                 actionLabel = actionLabel,
                 docUrl = docUrl,
                 windowWidth = k_WindowWidthWithTechnicalName,
-                sections = sections
+                sections = sections,
+                blockedBySecuritySettings = blockedBySecuritySettings
             };
+        }
+
+        internal static bool IsBlocked(TrustPolicyLevel trustPolicyLevel, TrustAndSignature trustAndSignature)
+        {
+            if (trustPolicyLevel == TrustPolicyLevel.AnyPackage)
+                return false;
+
+            switch (trustAndSignature)
+            {
+                case TrustAndSignature.UntrustedNoSignature:
+                case TrustAndSignature.UntrustedInvalidSignature:
+                    return true;
+
+                case TrustAndSignature.LimitedTrust:
+                    return trustPolicyLevel == TrustPolicyLevel.TrustedOnly;
+
+                case TrustAndSignature.NotApplicable:
+                case TrustAndSignature.FullTrustUnitySignature:
+                case TrustAndSignature.FullTrustValidSignature:
+                case TrustAndSignature.FullTrustNoSignature:
+                case TrustAndSignature.FullTrustBuiltInPackage:
+                default:
+                    return false;
+            }
+        }
+
+        private static string SelectByCount(int count, string singular, string plural)
+        {
+            return count == 1 ? singular : string.Format(plural, count);
         }
 
         public static ViewData CreateViewData(string packagePath, AssetOrigin origin, AssetPackageInfo assetPackageInfo, bool isReimport, string shortUnityVersion)
@@ -243,7 +300,7 @@ namespace UnityEditor.PackageManager.UI.Internal
             switch (trustAndSignature)
             {
                 case TrustAndSignature.UntrustedInvalidSignature:
-                    windowTitle = L10n.Tr("Invalid signature");
+                    windowTitle = L10n.Tr("Invalid Signature");
                     helpBoxText = L10n.Tr("These assets have an invalid signature which can indicate unsafe or malicious content. Remove this package to reduce risk to your project.");
                     messageType = HelpBoxMessageType.Error;
                     // AssetPackage reuses the UPM doc URLs as a placeholder; kept inline (not deduped into a shared helper)
@@ -253,7 +310,7 @@ namespace UnityEditor.PackageManager.UI.Internal
                     sectionIcon = Icon.PackageErrorLarge;
                     break;
                 case TrustAndSignature.UntrustedNoSignature:
-                    windowTitle = L10n.Tr("Missing signature");
+                    windowTitle = L10n.Tr("Missing Signature");
                     helpBoxText = L10n.Tr("Unity can't verify these assets because they don't have a signature. Use signed packages to reduce risk to your project.");
                     messageType = HelpBoxMessageType.Warning;
                     docUrl = $"https://docs.unity3d.com/{shortUnityVersion}/Documentation/Manual/upm-signature.html";
@@ -261,8 +318,8 @@ namespace UnityEditor.PackageManager.UI.Internal
                     sectionIcon = Icon.PackageWarningLarge;
                     break;
                 case TrustAndSignature.LimitedTrust:
-                    windowTitle = L10n.Tr("Unofficial Unity source");
-                    helpBoxText = L10n.Tr("This package is signed and distributed outside of Unity trusted sources. Please ensure you understand where this package originated from.");
+                    windowTitle = L10n.Tr("Unofficial Unity Source");
+                    helpBoxText = L10n.Tr("This package is signed, but its publisher isn't verified by Unity. Ensure you understand where this package came from.");
                     messageType = HelpBoxMessageType.Info;
                     docUrl = $"https://docs.unity3d.com/{shortUnityVersion}/Documentation/Manual/upm-signature.html";
                     sectionHeader = L10n.Tr("This package is signed but not from official Unity sources.");
@@ -295,7 +352,8 @@ namespace UnityEditor.PackageManager.UI.Internal
                 actionLabel = actionLabel,
                 docUrl = docUrl,
                 windowWidth = k_WindowWidthNoTechnicalName,
-                sections = [section]
+                sections = [section],
+                blockedBySecuritySettings = false
             };
         }
 
@@ -331,20 +389,28 @@ namespace UnityEditor.PackageManager.UI.Internal
 
                 readMoreButton.clicked += () => application.OpenURL(docUrl);
 
-                var cancelButton = new Button { text = L10n.Tr("Cancel") };
-                cancelButton.clicked += () =>
+                if (!data.blockedBySecuritySettings)
+                {
+                    var proceedAnywayButton = new Button { name = "proceedAnywayButton", text = string.Format(L10n.Tr("{0} Anyway"), actionLabel) };
+                    proceedAnywayButton.clicked += () =>
+                    {
+                        returnValue = ActiveTrustReturnValue.ProceedAnyway;
+                        container.Close();
+                    };
+                    buttonsContainer.Add(proceedAnywayButton);
+                }
+
+                var dismissButton = new Button
+                {
+                    name = data.blockedBySecuritySettings ? "okButton" : "cancelButton",
+                    text = data.blockedBySecuritySettings ? L10n.Tr("OK") : L10n.Tr("Cancel")
+                };
+                dismissButton.clicked += () =>
                 {
                     returnValue = ActiveTrustReturnValue.Cancel;
                     container.Close();
                 };
-                var proceedAnywayButton = new Button { name = "proceedAnywayButton", text = string.Format(L10n.Tr("{0} Anyway"), actionLabel) };
-                proceedAnywayButton.clicked += () =>
-                {
-                    returnValue = ActiveTrustReturnValue.ProceedAnyway;
-                    container.Close();
-                };
-                buttonsContainer.Add(proceedAnywayButton);
-                buttonsContainer.Add(cancelButton);
+                buttonsContainer.Add(dismissButton);
             }
 
             private void OnFirstLayout(GeometryChangedEvent evt)

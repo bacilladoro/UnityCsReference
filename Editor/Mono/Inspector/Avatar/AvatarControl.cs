@@ -5,6 +5,7 @@
 using UnityEngine;
 using System;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -89,8 +90,9 @@ namespace UnityEditor
             };
         }
 
-        static Styles styles { get { if (s_Styles == null) s_Styles = new Styles(); return s_Styles; } }
-        static Styles s_Styles;
+        static Styles styles => s_Styles;
+        [NoAutoStaticsCleanup]
+        static readonly Styles s_Styles = new();
 
         public enum BodyPartColor
         {
@@ -166,7 +168,8 @@ namespace UnityEditor
             }
         }
 
-        static Vector2[,] s_BonePositions = new Vector2[4, HumanTrait.BoneCount];
+        [NoAutoStaticsCleanup]
+        static readonly Vector2[,] s_BonePositions = new Vector2[4, HumanTrait.BoneCount];
 
         public static List<int> GetViewsThatContainBone(int bone)
         {

@@ -1988,7 +1988,7 @@ namespace UnityEngine.UIElements
                 var buffer = ArrayPool<byte>.Shared.Rent(count * sizeof(int));
                 try
                 {
-                    var span = MemoryMarshal.Cast<byte, int>(buffer);
+                    var span = MemoryMarshal.Cast<byte, int>(buffer.AsSpan());
                     var spanLength = 0;
                     foreach (var index in indices)
                     {

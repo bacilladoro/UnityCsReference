@@ -39,6 +39,7 @@ namespace UnityEngine
     [NativeHeader("Runtime/Graphics/LOD/LODGroup.h")]
     [NativeHeader("Runtime/Graphics/LOD/LODGroupManager.h")]
     [NativeHeader("Runtime/Graphics/LOD/LODUtility.h")]
+    [global::UnityEngine.NativeClass("LODGroup", PersistentTypeId = 205)]
     [StaticAccessor("GetLODGroupManager()", StaticAccessorType.Dot)]
     public class LODGroup : Component
     {

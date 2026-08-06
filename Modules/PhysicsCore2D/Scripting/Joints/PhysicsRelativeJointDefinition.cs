@@ -55,6 +55,24 @@ namespace Unity.U2D.Physics
         public PhysicsTransform localAnchorB { readonly get => m_LocalAnchorB; set => m_LocalAnchorB = value; }
 
         /// <summary>
+        /// When set, <see cref="localAnchorA"/> is recomputed from the bodies' current placement at create so both anchor frames coincide in world space.
+        /// </summary>
+        /// <remarks>
+        /// This removes the solver jolt from an inconsistent initial configuration.
+        /// It is applied at create only; the authored <see cref="localAnchorA"/> is ignored while this is set.
+        /// </remarks>
+        public bool autoAnchorA { readonly get => m_AutoAnchorA; set => m_AutoAnchorA = value; }
+
+        /// <summary>
+        /// When set, <see cref="localAnchorB"/> is recomputed from the bodies' current placement at create so both anchor frames coincide in world space.
+        /// </summary>
+        /// <remarks>
+        /// This removes the solver jolt from an inconsistent initial configuration.
+        /// It is applied at create only; the authored <see cref="localAnchorB"/> is ignored while this is set.
+        /// </remarks>
+        public bool autoAnchorB { readonly get => m_AutoAnchorB; set => m_AutoAnchorB = value; }
+
+        /// <summary>
 	    /// The desired linear velocity.
         /// </summary>
         public Vector2 linearVelocity { readonly get => m_LinearVelocity; set => m_LinearVelocity = value; }
@@ -157,6 +175,8 @@ namespace Unity.U2D.Physics
         PhysicsBody m_BodyB;
         [SerializeField] PhysicsTransform m_LocalAnchorA;
         [SerializeField] PhysicsTransform m_LocalAnchorB;
+        [SerializeField] bool m_AutoAnchorA;
+        [SerializeField] bool m_AutoAnchorB;
 
 	    [SerializeField] Vector2 m_LinearVelocity;
 	    [SerializeField] float m_AngularVelocity;

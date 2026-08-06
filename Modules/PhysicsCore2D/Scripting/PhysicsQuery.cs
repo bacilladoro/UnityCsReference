@@ -8,6 +8,7 @@ using System.Runtime.InteropServices;
 using Unity.Collections;
 using UnityEngine;
 using UnityEngine.Scripting.APIUpdating;
+using Unity.Scripting.LifecycleManagement;
 using static Unity.U2D.Physics.Scripting2D;
 
 namespace Unity.U2D.Physics
@@ -255,6 +256,8 @@ namespace Unity.U2D.Physics
             /// Create a default world mover input.
             /// </summary>
             public static WorldMoverInput defaultInput { get => s_WorldMoverInput; }
+            // Immutable default-input template; a value-type struct with no managed references, safe to persist across a code reload.
+            [NoAutoStaticsCleanup]
             static WorldMoverInput s_WorldMoverInput = new()
             {
                 geometry = CapsuleGeometry.defaultGeometry,

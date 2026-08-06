@@ -10,11 +10,13 @@ using UnityEditor.Rendering;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.UIElements;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Inspector.GraphicsSettingsInspectors
 {
-    internal class TierSettingsWindow : EditorWindow
+    internal partial class TierSettingsWindow : EditorWindow
     {
+        [AutoStaticsCleanupOnCodeReload]
         static TierSettingsWindow s_Instance;
 
 

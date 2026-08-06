@@ -8,21 +8,29 @@ using UnityEngine.Scripting;
 
 namespace UnityEngine.Analytics
 {
+    ///<exclude />
     [RequiredByNativeCode]
     public enum AnalyticsSessionState
     {
+        ///<exclude />
         kSessionStopped = 0,
+        ///<exclude />
         kSessionStarted = 1,
+        ///<exclude />
         kSessionPaused = 2,
+        ///<exclude />
         kSessionResumed = 3
     }
 
+    ///<exclude />
     [RequiredByNativeCode]
     [NativeHeader("UnityAnalyticsScriptingClasses.h")]
     [NativeHeader("Modules/UnityAnalytics/Public/UnityAnalytics.h")]
     public static partial class AnalyticsSessionInfo
     {
+        ///<exclude />
         public delegate void SessionStateChanged(AnalyticsSessionState sessionState, long sessionId, long sessionElapsedTime, bool sessionChanged);
+        ///<exclude />
         [AutoStaticsCleanupOnCodeReload] // holds user-registered session-state change handlers
         public static event SessionStateChanged sessionStateChanged;
 
@@ -34,18 +42,21 @@ namespace UnityEngine.Analytics
                 handler(sessionState, sessionId, sessionElapsedTime, sessionChanged);
         }
 
+        ///<exclude />
         public extern static AnalyticsSessionState sessionState
         {
             [NativeMethod("GetPlayerSessionState")]
             get;
         }
 
+        ///<exclude />
         public extern static long sessionId
         {
             [NativeMethod("GetPlayerSessionId")]
             get;
         }
 
+        ///<exclude />
         public extern static long sessionCount
         {
             [NativeMethod("GetPlayerSessionCount")]
@@ -53,24 +64,28 @@ namespace UnityEngine.Analytics
         }
 
 
+        ///<exclude />
         public extern static long sessionElapsedTime
         {
             [NativeMethod("GetPlayerSessionElapsedTime")]
             get;
         }
 
+        ///<exclude />
         public extern static bool sessionFirstRun
         {
             [NativeMethod("GetPlayerSessionFirstRun", false, true)]
             get;
         }
 
+        ///<exclude />
         public extern static string userId
         {
             [NativeMethod("GetUserId")]
             get;
         }
 
+        ///<exclude />
         public static string customUserId
         {
             get
@@ -86,6 +101,7 @@ namespace UnityEngine.Analytics
             }
         }
 
+        ///<exclude />
         public static string customDeviceId
         {
             get
@@ -101,7 +117,9 @@ namespace UnityEngine.Analytics
             }
         }
 
+        ///<exclude />
         public delegate void IdentityTokenChanged(string token);
+        ///<exclude />
         [AutoStaticsCleanupOnCodeReload] // holds user-registered identity-token change handlers
         public static event IdentityTokenChanged identityTokenChanged;
 
@@ -113,6 +131,7 @@ namespace UnityEngine.Analytics
                 handler(token);
         }
 
+        ///<exclude />
         public static string identityToken
         {
             get

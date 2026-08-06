@@ -202,7 +202,7 @@ namespace UnityEngine.UIElements
         }
 
         /// <summary>
-        /// Inverts the <see cref="BaseBoolField.value"/> property.
+        /// Inverts the <see cref="BaseField{TValueType}.value"/> property.
         /// </summary>
         /// <remarks>
         /// Override this method to change the logic of toggling the value in your subclass.

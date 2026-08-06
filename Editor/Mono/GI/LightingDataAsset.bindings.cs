@@ -10,6 +10,7 @@ using UnityEngine.SceneManagement;
 namespace UnityEditor
 {
     [NativeHeader("Editor/Src/GI/Enlighten/LightingDataAsset.h")]
+    [global::UnityEngine.NativeClass("LightingDataAsset", PersistentTypeId = 1120)]
     [ExcludeFromPreset]
     public sealed partial class LightingDataAsset : Object
     {

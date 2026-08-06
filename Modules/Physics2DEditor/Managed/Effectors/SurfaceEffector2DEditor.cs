@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEditor.AnimatedValues;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -21,6 +22,7 @@ namespace UnityEditor
         SerializedProperty m_SpeedVariation;
         SerializedProperty m_ForceScale;
 
+        [NoAutoStaticsCleanup] // foldout UI state shared across inspectors; safe to persist across code reload as it holds no user-code references
         static readonly AnimBool m_ShowOptionsRollout = new AnimBool();
         SerializedProperty m_UseContactForce;
         SerializedProperty m_UseFriction;

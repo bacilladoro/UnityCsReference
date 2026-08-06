@@ -16,7 +16,7 @@ namespace UnityEditor.IMGUI.Controls
         TreeViewAnimationInput<TIdentifier> m_Setup; // when null we are not animating
         bool m_InsideGUIClip;
         Rect m_CurrentClipRect;
-        static bool s_Debug = false;
+        static readonly bool s_Debug = false;
 
         public void BeginAnimating(TreeViewAnimationInput<TIdentifier> setup)
         {

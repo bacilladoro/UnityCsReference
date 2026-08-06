@@ -34,6 +34,7 @@ namespace UnityEngine.AI
     [MovedFrom("UnityEngine")]
     [NativeHeader("Modules/AI/Components/NavMeshAgent.bindings.h")]
     [NativeHeader("Modules/AI/NavMesh/NavMesh.bindings.h")]
+    [global::UnityEngine.NativeClass("NavMeshAgent", PersistentTypeId = 195)]
     [HelpURL("https://docs.unity3d.com/Packages/com.unity.ai.navigation@2.0/manual/NavMeshAgent.html")]
     public sealed class NavMeshAgent : Behaviour
     {

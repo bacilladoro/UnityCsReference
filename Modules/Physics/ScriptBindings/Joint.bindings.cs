@@ -13,7 +13,7 @@ namespace UnityEngine
     ///<seealso cref="FixedJoint" />
     ///<seealso cref="ConfigurableJoint" />
     [NativeHeader("Modules/Physics/Joint.h")]
-    [NativeClass("Unity::Joint")]
+    [NativeClass("Unity::Joint", PersistentTypeId = 57)]
     public class Joint : Component
     {
         ///<summary>A reference to another rigidbody this joint connects to.</summary>

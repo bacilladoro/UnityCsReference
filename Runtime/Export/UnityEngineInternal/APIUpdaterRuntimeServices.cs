@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.Assemblies;
 
@@ -48,7 +49,7 @@ In order to be able to build the game, replace this call (APIUpdaterRuntimeServi
 
 #pragma warning disable RS0030 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
 #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
-            candidateType = CurrentAssemblies.GetLoadedAssemblies().SelectMany(a => a.GetTypes()).SingleOrDefault(t => (t.Name == name || t.FullName == name) && typeof(Component).IsAssignableFrom(t));
+            candidateType = CurrentAssemblies.GetLoadedAssemblies().SelectMany(GetTypesFromAssembly).SingleOrDefault(t => (t.Name == name || t.FullName == name) && typeof(Component).IsAssignableFrom(t));
 #pragma warning restore RS0030
 #pragma warning restore UA2001
             if (candidateType != null)
@@ -59,6 +60,26 @@ In order to be able to build the game, replace this call (APIUpdaterRuntimeServi
 
             Debug.LogErrorFormat("[{1}] Component Type '{0}' not found.", name, sourceInfo);
             return null;
+        }
+
+        private static IEnumerable<Type> GetTypesFromAssembly(Assembly assembly)
+        {
+            try
+            {
+#pragma warning disable RS0030 // GetTypes is flagged by the Banned API Analyzer. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                return assembly.GetTypes();
+#pragma warning restore RS0030
+            }
+            catch (ReflectionTypeLoadException e)
+            {
+                var loaded = new List<Type>(e.Types.Length);
+                for (int i = 0; i < e.Types.Length; i++)
+                {
+                    if (e.Types[i] != null)
+                        loaded.Add(e.Types[i]);
+                }
+                return loaded;
+            }
         }
 
         private static bool IsMarkedAsObsolete(Type t)
@@ -81,6 +102,7 @@ In order to be able to build the game, replace this call (APIUpdaterRuntimeServi
             }
         }
 
+        [NoAutoStaticsCleanup] // only holds Component types from the engine assembly, which is not reloaded; keeping it avoids re-scanning GetTypes() on every code reload
         private static IList<Type> ComponentsFromUnityEngine;
         }
 }

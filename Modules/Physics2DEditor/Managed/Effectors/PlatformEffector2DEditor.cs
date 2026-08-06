@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEditor.AnimatedValues;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -23,6 +24,7 @@ namespace UnityEditor
         SerializedProperty m_UseOneWayGrouping;
         SerializedProperty m_SurfaceArc;
 
+        [NoAutoStaticsCleanup] // foldout UI state shared across inspectors; safe to persist across code reload as it holds no user-code references
         static readonly AnimBool m_ShowSidesRollout = new AnimBool();
         SerializedProperty m_UseSideFriction;
         SerializedProperty m_UseSideBounce;

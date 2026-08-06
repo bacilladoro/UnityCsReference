@@ -5,13 +5,15 @@
 using System;
 using System.IO;
 using UnityEngine;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
     [InitializeOnLoad]
-    static internal class Physics2DMenuItems
+    static internal partial class Physics2DMenuItems
     {
         internal const string k_CreatePhysicsMaterial2DMenuPath = "Assets/Create/2D/Physics Material 2D";
+        [AutoStaticsCleanupOnCodeReload]
         static internal Action<EntityId, ProjectWindowCallback.AssetCreationEndAction, string, Texture2D, string> StartNewAssetNameEditingDelegate = ProjectWindowUtil.StartNameEditingIfProjectWindowExists;
         const int k_PhysicsMaterial2DAssetMenuPriority = 13;
 

@@ -12,6 +12,7 @@ namespace UnityEngine
     ///<seealso cref="PhysicsMaterial" />
     ///<seealso cref="Rigidbody" />
     [RequireComponent(typeof(Transform))]
+    [global::UnityEngine.NativeClass("BoxCollider", PersistentTypeId = 65)]
     [NativeHeader("Modules/Physics/BoxCollider.h")]
     public partial class BoxCollider : Collider
     {

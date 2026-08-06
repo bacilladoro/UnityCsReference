@@ -70,6 +70,7 @@ namespace UnityEngine.SocialPlatforms.Impl
         protected Texture2D m_Image;
         string m_gameID;
 
+        ///<exclude />
         public UserProfile()
         {
             m_UserName = "Uninitialized";
@@ -80,10 +81,13 @@ namespace UnityEngine.SocialPlatforms.Impl
             m_Image = new Texture2D(32, 32);
         }
 
+        ///<exclude />
         public UserProfile(string name, string id, bool friend) : this(name, id, friend, UserState.Offline, new Texture2D(0, 0)) {}
 
+        ///<exclude />
         public UserProfile(string name, string id, bool friend, UserState state, Texture2D image) : this(name,  id, id, friend, state, image) {}
 
+        ///<exclude />
         public UserProfile(string name, string teamId, string gameId, bool friend, UserState state, Texture2D image)
         {
             m_UserName = name;
@@ -94,6 +98,7 @@ namespace UnityEngine.SocialPlatforms.Impl
             m_Image = image;
         }
 
+        ///<exclude />
         public override string ToString()
         {
             return id + " - " +
@@ -102,46 +107,61 @@ namespace UnityEngine.SocialPlatforms.Impl
                 state;
         }
 
+        ///<exclude />
         public void SetUserName(string name)
         {
             m_UserName = name;
         }
 
+        ///<exclude />
         public void SetUserID(string id)
         {
             m_ID = id;
         }
 
+        ///<exclude />
         public void SetLegacyUserID(string id)
         {
             m_legacyID = id;
         }
 
+        ///<exclude />
         public void SetUserGameID(string id)
         {
             m_gameID = id;
         }
 
+        ///<exclude />
         public void SetImage(Texture2D image)
         {
             m_Image = image;
         }
 
+        ///<exclude />
         public void SetIsFriend(bool value)
         {
             m_IsFriend = value;
         }
 
+        ///<exclude />
         public void SetState(UserState state)
         {
             m_State = state;
         }
 
+        ///<exclude />
         public string userName { get { return m_UserName; } }
+        ///<exclude />
         public string id { get { return m_ID; } }
 
         private const string legacyIdObsoleteMessage =
             @"legacyId returns playerID from GKPlayer, which became obsolete in iOS 12.4 . id returns playerID for devices running versions before iOS 12.4, and the newer teamPlayerID for later versions. Please use IUserProfile.id or UserProfile.id instead";
+        ///<summary>Returns the ID provided in the Apple GameKit by GKPlayer.playerID (deprecated and marked obsolete in iOS 12.4).</summary>
+        ///<remarks>For devices running iOS version 12.4 and later, <see cref="IUserProfile.id" /> returns &lt;a href="https://developer.apple.com/documentation/gamekit/gkplayer/3174857-teamplayerid?language=objc"&gt;GKPlayer.teamPlayerID&lt;/a&gt;.
+        ///
+        ///For devices running iOS version 12.3 and earlier, <see cref="IUserProfile.id" /> returns &lt;a href="https://developer.apple.com/documentation/gamekit/gkplayer/1521127-playerid?language=objc"&gt;GKPlayer.playerID&lt;/a&gt;.
+        ///
+        ///Use <see cref="IUserProfile.id" /> instead of <see cref="UserProfile.legacyId" />. Only use <see cref="UserProfile.legacyId" /> if you need to access &lt;a href="https://developer.apple.com/documentation/gamekit/gkplayer/1521127-playerid?language=objc"&gt;GKPlayer.playerID&lt;/a&gt; to migrate player data in your existing project.</remarks>
         [ObsoleteAttribute(legacyIdObsoleteMessage + " (UnityUpgradable) -> id", true)]
         public string legacyId
         {
@@ -150,9 +170,13 @@ namespace UnityEngine.SocialPlatforms.Impl
                 throw new NotSupportedException(legacyIdObsoleteMessage);
             }
         }
+        ///<exclude />
         public string gameId { get { return m_gameID; } }
+        ///<exclude />
         public bool isFriend { get { return m_IsFriend; } }
+        ///<exclude />
         public UserState state { get { return m_State; } }
+        ///<exclude />
         public Texture2D image { get { return m_Image; } }
     }
 
@@ -345,6 +369,7 @@ namespace UnityEngine.SocialPlatforms.Impl
     }
 
 
+    ///<exclude />
     [Obsolete("Leaderboard is deprecated and will be removed in a future release.", false)]
     public class Leaderboard : ILeaderboard
     {
@@ -404,6 +429,7 @@ namespace UnityEngine.SocialPlatforms.Impl
             m_LocalUserScore = score;
         }
 
+        ///<exclude />
         public void SetMaxRange(uint maxRange)
         {
             m_MaxRange = maxRange;
@@ -429,6 +455,7 @@ namespace UnityEngine.SocialPlatforms.Impl
         public Range range { get; set; }
         public TimeScope timeScope { get; set; }
         public IScore localUserScore { get { return m_LocalUserScore; } }
+        ///<exclude />
         public uint maxRange { get { return m_MaxRange; } }
         public IScore[] scores { get { return m_Scores; } }
         public string title { get { return m_Title; } }
@@ -439,6 +466,7 @@ namespace UnityEngine.SocialPlatforms
 {
     using UnityEngine.SocialPlatforms.Impl;
 
+    ///<exclude />
     [Obsolete("Local is deprecated and will be removed in a future release.", false)]
     public class Local : ISocialPlatform
     {
@@ -650,11 +678,13 @@ namespace UnityEngine.SocialPlatforms
             }
         }
 
+        ///<exclude />
         public void ShowAchievementsUI()
         {
             Debug.Log("ShowAchievementsUI not implemented");
         }
 
+        ///<summary>Show a default/system view of the games leaderboards.</summary>
         public void ShowLeaderboardUI()
         {
             Debug.Log("ShowLeaderboardUI not implemented");

@@ -8,12 +8,14 @@ using UnityEngine.Scripting;
 namespace UnityEngine
 {
     // These classes are only used by native code, and only here to prevent them from being stripped.
+    [NativeClass("LowerResBlitTexture", PersistentTypeId = 0x583d8c3f)]
     internal class LowerResBlitTexture : Object
     {
         [RequiredByNativeCode]
         internal void LowerResBlitTextureDontStripMe() {}
     }
 
+    [global::UnityEngine.NativeClass("PreloadData", PersistentTypeId = 150)]
     internal class PreloadData : Object
     {
         [RequiredByNativeCode]

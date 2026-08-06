@@ -15,8 +15,10 @@ using UnityEngine.UIElements;
 
 namespace Unity.UIToolkit.Editor;
 
-internal class VisualElementEditingNodeHandler : VisualElementNodeTypeHandler, IVisualElementEditingManager
+internal class VisualElementEditingNodeHandler : VisualElementNodeTypeHandler
 {
+    public const string NodeTypeName = "VisualElementStageHandler";
+
     [NonSerialized]
     private VisualElementEditingStage m_Stage;
     private Panel m_Panel;
@@ -27,10 +29,8 @@ internal class VisualElementEditingNodeHandler : VisualElementNodeTypeHandler, I
     Clipboard Clipboard => m_Stage?.Clipboard;
 
     public VisualElementEditingNodeHandler()
-        : base(new HierarchySelectionHandler())
     {
         isReadonly = false;
-        SelectionHandler.SetEditingManager(this);
     }
 
     protected override void Dispose(bool disposing)
@@ -62,6 +62,12 @@ internal class VisualElementEditingNodeHandler : VisualElementNodeTypeHandler, I
         }
     }
 
+    /// <inheritdoc cref="HierarchyNodeTypeHandlerBase.GetNodeTypeName"/>
+    public override string GetNodeTypeName()
+    {
+        return NodeTypeName;
+    }
+
     protected override void Initialize()
     {
         base.Initialize();
@@ -76,6 +82,7 @@ internal class VisualElementEditingNodeHandler : VisualElementNodeTypeHandler, I
         UICommandQueue.RegisterHandler<AddClassCommand>(OnClassAddedToElement);
 
         SetContextForEditing(stage.Context, stage.GetAuthoringPanel());
+        m_Stage.RequestRefresh();
     }
 
     void StageOnMainDocumentWasCloned(VisualElementEditingStage stage)
@@ -890,6 +897,40 @@ internal class VisualElementEditingNodeHandler : VisualElementNodeTypeHandler, I
         }
 
         return base.TryGetParentNode(element, out parentNode);
+    }
+
+    protected override bool TryGetScopeKey(VisualElement element, out string scopeKey)
+    {
+        scopeKey = null;
+
+        // The editing stage edits a single asset; scope by that asset (stable across reloads) plus
+        // the in-context sub-document chain so identical elements edited in different sub-document
+        // contexts of the same asset do not collide.
+        var context = Context;
+        if (context.RootVisualTreeAsset == null)
+            return false;
+
+        var assetKey = GetGlobalObjectIdScopeKey(context.RootVisualTreeAsset);
+        if (string.IsNullOrEmpty(assetKey))
+            return false;
+
+        var subDocumentPath = context.SubDocumentPath;
+        if (subDocumentPath is not { Length: > 0 })
+        {
+            scopeKey = assetKey;
+            return true;
+        }
+
+        using var _ = StringBuilderPool.Get(out var builder);
+        builder.Append(assetKey);
+        for (var i = 0; i < subDocumentPath.Length; ++i)
+        {
+            builder.Append(':');
+            builder.Append(subDocumentPath[i]?.id ?? 0);
+        }
+
+        scopeKey = builder.ToString();
+        return true;
     }
 
     protected override void Bind(HierarchyViewItem item, VisualElement element)

@@ -59,17 +59,17 @@ namespace UnityEditor
             public static Texture2D validDefineConstraint => EditorGUIUtility.pixelsPerPoint > 1 ? kValidDefineConstraintHighDpi : kValidDefineConstraint;
             public static Texture2D invalidDefineConstraint => EditorGUIUtility.pixelsPerPoint > 1 ? kInvalidDefineConstraintHighDpi : kInvalidDefineConstraint;
 
-            static string kCompatibleTextTitle = L10n.Tr("Define constraints are met.");
-            static string kIncompatibleTextTitle = L10n.Tr("One or more define constraints are invalid or not met.");
+            static readonly string kCompatibleTextTitle = L10n.Tr("Define constraints are met.");
+            static readonly string kIncompatibleTextTitle = L10n.Tr("One or more define constraints are invalid or not met.");
 
             public static string GetTitleTooltipFromDefineConstraintCompatibility(bool compatible)
             {
                 return compatible ? kCompatibleTextTitle : kIncompatibleTextTitle;
             }
 
-            static string kCompatibleTextIndividual = L10n.Tr("Define constraint is met.");
-            static string kIncompatibleTextIndividual = L10n.Tr("Define constraint is not met.");
-            static string kInvalidTextIndividual = L10n.Tr("Define constraint is invalid.");
+            static readonly string kCompatibleTextIndividual = L10n.Tr("Define constraint is met.");
+            static readonly string kIncompatibleTextIndividual = L10n.Tr("Define constraint is not met.");
+            static readonly string kInvalidTextIndividual = L10n.Tr("Define constraint is invalid.");
 
             public static string GetIndividualTooltipFromDefineConstraintStatus(DefineConstraintsHelper.DefineConstraintStatus status)
             {

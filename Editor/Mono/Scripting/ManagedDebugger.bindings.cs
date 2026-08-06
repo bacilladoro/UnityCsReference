@@ -6,13 +6,15 @@ using System;
 using UnityEngine.Bindings;
 using UnityEditor.Compilation;
 using UnityEngine.Scripting;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Scripting
 {
     [InitializeOnLoad]
     [NativeHeader("Editor/Src/Scripting/ManagedDebugger.h")]
-    public sealed class ManagedDebugger
+    public sealed partial class ManagedDebugger
     {
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<bool> debuggerAttached;
 
         public static bool isAttached
@@ -25,7 +27,8 @@ namespace UnityEditor.Scripting
             get { return IsEnabled(); }
         }
 
-        static ManagedDebugger()
+        [OnCodeLoaded]
+        static void Initialize()
         {
             SubscribeToCodeOptimizationChanged();
         }

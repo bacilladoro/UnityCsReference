@@ -118,10 +118,12 @@ namespace UnityEditor.Search
             GC.SuppressFinalize(this);
         }
 
+#pragma warning disable UA5000 // The Avoid Finalizer Analyzer produces compile errors for any new finalizers. This pre-existing finalizer declaration has been suppressed, but should be rewritten if possible.
         ~PropertyDatabaseLock()
         {
             Dispose(false);
         }
+#pragma warning restore UA5000
 
         void Dispose(bool disposed)
         {
@@ -627,10 +629,12 @@ namespace UnityEditor.Search
             }
         }
 
+#pragma warning disable UA5000 // The Avoid Finalizer Analyzer produces compile errors for any new finalizers. This pre-existing finalizer declaration has been suppressed, but should be rewritten if possible.
         ~PropertyDatabase()
         {
             Dispose(false);
         }
+#pragma warning restore UA5000
     }
 
     struct PropertyDatabaseView : IPropertyDatabaseView

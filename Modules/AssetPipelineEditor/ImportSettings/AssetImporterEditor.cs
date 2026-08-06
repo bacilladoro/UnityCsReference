@@ -13,6 +13,7 @@ using UnityEngine.Scripting.APIUpdating;
 using UnityEngine.UIElements;
 using UnityEditor.UIElements;
 using Unity.Collections;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.AssetImporters
 {
@@ -113,13 +114,13 @@ namespace UnityEditor.AssetImporters
 
         static partial class Styles
         {
-            public static string localizedTitleString = L10n.Tr("{0} Import Settings");
+            public static readonly string localizedTitleString = L10n.Tr("{0} Import Settings");
 
-            public static string applyButton = L10n.Tr("Apply");
-            public static string revertButton = L10n.Tr("Revert");
-            public static string unappliedSettingSingleAsset = L10n.Tr("Unapplied import settings for \'{0}\'");
-            public static string unappliedSettingMultipleAssets = L10n.Tr("Unapplied import settings for \'{0}\' files");
-            public static string unableToAppliedMessage = L10n.Tr("Your changes might contain errors and cannot be applied. \nYou can either \'Revert\' the changes, or hit \'Cancel\' to go back and fix the errors.");
+            public static readonly string applyButton = L10n.Tr("Apply");
+            public static readonly string revertButton = L10n.Tr("Revert");
+            public static readonly string unappliedSettingSingleAsset = L10n.Tr("Unapplied import settings for \'{0}\'");
+            public static readonly string unappliedSettingMultipleAssets = L10n.Tr("Unapplied import settings for \'{0}\' files");
+            public static readonly string unableToAppliedMessage = L10n.Tr("Your changes might contain errors and cannot be applied. \nYou can either \'Revert\' the changes, or hit \'Cancel\' to go back and fix the errors.");
         }
 
         // Target asset values, these are the main imported object Editor and targets.
@@ -755,8 +756,9 @@ namespace UnityEditor.AssetImporters
     }
 
     [MovedFrom("UnityEditor.Experimental.AssetImporters")]
-    internal class AssetImporterEditorPostProcessAsset : AssetPostprocessor
+    internal partial class AssetImporterEditorPostProcessAsset : AssetPostprocessor
     {
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<string, string> OnAssetbundleNameChanged;
 
         void OnPostprocessAssetbundleNameChanged(string assetPath, string oldName, string newName)
@@ -878,8 +880,8 @@ namespace UnityEditor.AssetImporters
     {
         static partial class Styles
         {
-            public static GUIContent ImporterSelection = EditorGUIUtility.TrTextContent("Importer");
-            public static string defaultImporterName = L10n.Tr("{0} (Default)");
+            public static readonly GUIContent ImporterSelection = EditorGUIUtility.TrTextContent("Importer");
+            public static readonly string defaultImporterName = L10n.Tr("{0} (Default)");
         }
 
         // Support for importer overrides

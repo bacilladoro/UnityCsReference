@@ -183,10 +183,12 @@ namespace Unity.Hierarchy
             QueryParser = new DefaultHierarchySearchQueryParser();
         }
 
+#pragma warning disable UA5000 // The Avoid Finalizer Analyzer produces compile errors for any new finalizers. This pre-existing finalizer declaration has been suppressed, but should be rewritten if possible.
         ~HierarchyViewModel()
         {
             Dispose(false);
         }
+#pragma warning restore UA5000
 
         /// <summary>
         /// Disposes this object and releases its memory.
@@ -987,156 +989,6 @@ namespace Unity.Hierarchy
             foreach (var handler in viewModel.m_Hierarchy.EnumerateNodeTypeHandlersBase())
                 handler.Internal_SearchBegin(viewModel.Query);
         }
-        #endregion
-
-        #region Marked as obsolete error in 6.6
-        [Obsolete("The Hierarchy property will be removed in the future, remove its usage from your code.", true)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public Hierarchy Hierarchy { get => throw null; }
-
-        [Obsolete("The HierarchyFlattened property will be removed in the future, remove its usage from your code.", true)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public HierarchyFlattened HierarchyFlattned { get => throw null; }
-
-        [Obsolete("SetFlags(node, flags, recurse) with a bool parameter is obsolete, please use SetFlags(node, flags) or SetFlags(node, flags, direction) instead.", true)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public void SetFlags(in HierarchyNode node, HierarchyNodeFlags flags, bool recurse) => throw null;
-
-        [Obsolete("ClearFlags(node, flags, recurse) with a bool parameter is obsolete, please use ClearFlags(node, flags) or ClearFlags(node, flags, direction) instead.", true)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public void ClearFlags(in HierarchyNode node, HierarchyNodeFlags flags, bool recurse) => throw null;
-
-        [Obsolete("ToggleFlags(node, flags, recurse) with a bool parameter is obsolete, please use ToggleFlags(node, flags) or ToggleFlags(node, flags, direction) instead.", true)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public void ToggleFlags(in HierarchyNode node, HierarchyNodeFlags flags, bool recurse) => throw null;
-
-        [Obsolete("HasAllFlags is obsolete, please use HasFlags instead.", true)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public bool HasAllFlags(HierarchyNodeFlags flags) => throw null;
-
-        [Obsolete("HasAllFlags is obsolete, please use HasFlags instead.", true)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public bool HasAllFlags(in HierarchyNode node, HierarchyNodeFlags flags) => throw null;
-
-        [Obsolete("HasAnyFlags is obsolete, please use HasFlags instead.", true)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public bool HasAnyFlags(HierarchyNodeFlags flags) => throw null;
-
-        [Obsolete("HasAnyFlags is obsolete, please use HasFlags instead.", true)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public bool HasAnyFlags(in HierarchyNode node, HierarchyNodeFlags flags) => throw null;
-
-        [Obsolete("HasAllFlagsCount is obsolete, HasFlagsCount instead.", true)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public int HasAllFlagsCount(HierarchyNodeFlags flags) => throw null;
-
-        [Obsolete("HasAnyFlagsCount is obsolete, HasFlagsCount instead.", true)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public int HasAnyFlagsCount(HierarchyNodeFlags flags) => throw null;
-
-        [Obsolete("DoesNotHaveAllFlags is obsolete, please use DoesNotHaveFlags instead.", true)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public bool DoesNotHaveAllFlags(HierarchyNodeFlags flags) => throw null;
-
-        [Obsolete("DoesNotHaveAllFlags is obsolete, please use DoesNotHaveFlags instead.", true)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public bool DoesNotHaveAllFlags(in HierarchyNode node, HierarchyNodeFlags flags) => throw null;
-
-        [Obsolete("DoesNotHaveAnyFlags is obsolete, please use DoesNotHaveFlags instead.", true)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public bool DoesNotHaveAnyFlags(HierarchyNodeFlags flags) => throw null;
-
-        [Obsolete("DoesNotHaveAnyFlags is obsolete, please use DoesNotHaveFlags instead.", true)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public bool DoesNotHaveAnyFlags(in HierarchyNode node, HierarchyNodeFlags flags) => throw null;
-
-        [Obsolete("DoesNotHaveAllFlagsCount is obsolete, please use DoesNotHaveFlagsCount instead.", true)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public int DoesNotHaveAllFlagsCount(HierarchyNodeFlags flags) => throw null;
-
-        [Obsolete("DoesNotHaveAnyFlagsCount is obsolete, please use DoesNotHaveFlagsCount instead.", true)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public int DoesNotHaveAnyFlagsCount(HierarchyNodeFlags flags) => throw null;
-
-        [Obsolete("GetNodesWithAllFlags is obsolete, please use GetNodesWithFlags instead.", true)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public int GetNodesWithAllFlags(HierarchyNodeFlags flags, Span<HierarchyNode> outNodes) => throw null;
-
-        [Obsolete("GetNodesWithAllFlags is obsolete, please use GetNodesWithFlags instead.", true)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public HierarchyNode[] GetNodesWithAllFlags(HierarchyNodeFlags flags) => throw null;
-
-        [Obsolete("GetNodesWithAnyFlags is obsolete, please use GetNodesWithFlags instead.", true)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public int GetNodesWithAnyFlags(HierarchyNodeFlags flags, Span<HierarchyNode> outNodes) => throw null;
-
-        [Obsolete("GetNodesWithAnyFlags is obsolete, please use GetNodesWithFlags instead.", true)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public HierarchyNode[] GetNodesWithAnyFlags(HierarchyNodeFlags flags) => throw null;
-
-        [Obsolete("EnumerateNodesWithAllFlags is obsolete, please use EnumerateNodesWithFlags instead.", true)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public HierarchyViewModelNodesEnumerable EnumerateNodesWithAllFlags(HierarchyNodeFlags flags) => throw null;
-
-        [Obsolete("EnumerateNodesWithAnyFlags is obsolete, please use EnumerateNodesWithFlags instead.", true)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public HierarchyViewModelNodesEnumerable EnumerateNodesWithAnyFlags(HierarchyNodeFlags flags) => throw null;
-
-        [Obsolete("GetIndicesWithAllFlags is obsolete, please use GetIndicesWithFlags instead.", true)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public int GetIndicesWithAllFlags(HierarchyNodeFlags flags, Span<int> outIndices) => throw null;
-
-        [Obsolete("GetIndicesWithAllFlags is obsolete, please use GetIndicesWithFlags instead.", true)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public int[] GetIndicesWithAllFlags(HierarchyNodeFlags flags) => throw null;
-
-        [Obsolete("GetIndicesWithAnyFlags is obsolete, please use GetIndicesWithFlags instead.", true)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public int GetIndicesWithAnyFlags(HierarchyNodeFlags flags, Span<int> outIndices) => throw null;
-
-        [Obsolete("GetIndicesWithAnyFlags is obsolete, please use GetIndicesWithFlags instead.", true)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public int[] GetIndicesWithAnyFlags(HierarchyNodeFlags flags) => throw null;
-
-        [Obsolete("GetNodesWithoutAllFlags is obsolete, please use GetNodesWithoutFlags instead.", true)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public int GetNodesWithoutAllFlags(HierarchyNodeFlags flags, Span<HierarchyNode> outNodes) => throw null;
-
-        [Obsolete("GetNodesWithoutAllFlags is obsolete, please use GetNodesWithoutFlags instead.", true)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public HierarchyNode[] GetNodesWithoutAllFlags(HierarchyNodeFlags flags) => throw null;
-
-        [Obsolete("GetNodesWithoutAnyFlags is obsolete, please use GetNodesWithoutFlags instead.", true)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public int GetNodesWithoutAnyFlags(HierarchyNodeFlags flags, Span<HierarchyNode> outNodes) => throw null;
-
-        [Obsolete("GetNodesWithoutAnyFlags is obsolete, please use GetNodesWithoutFlags instead.", true)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public HierarchyNode[] GetNodesWithoutAnyFlags(HierarchyNodeFlags flags) => throw null;
-
-        [Obsolete("EnumerateNodesWithoutAllFlags is obsolete, please use EnumerateNodesWithoutFlags instead.", true)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public HierarchyViewModelNodesEnumerable EnumerateNodesWithoutAllFlags(HierarchyNodeFlags flags) => throw null;
-
-        [Obsolete("EnumerateNodesWithoutAnyFlags is obsolete, please use EnumerateNodesWithoutFlags instead.", true)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public HierarchyViewModelNodesEnumerable EnumerateNodesWithoutAnyFlags(HierarchyNodeFlags flags) => throw null;
-
-        [Obsolete("GetIndicesWithoutAllFlags is obsolete, please use GetIndicesWithoutFlags instead.", true)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public int GetIndicesWithoutAllFlags(HierarchyNodeFlags flags, Span<int> outIndices) => throw null;
-
-        [Obsolete("GetIndicesWithoutAllFlags is obsolete, please use GetIndicesWithoutFlags instead.", true)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public int[] GetIndicesWithoutAllFlags(HierarchyNodeFlags flags) => throw null;
-
-        [Obsolete("GetIndicesWithoutAnyFlags is obsolete, please use GetIndicesWithoutFlags instead.", true)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public int GetIndicesWithoutAnyFlags(HierarchyNodeFlags flags, Span<int> outIndices) => throw null;
-
-        [Obsolete("GetIndicesWithoutAnyFlags is obsolete, please use GetIndicesWithoutFlags instead.", true)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public int[] GetIndicesWithoutAnyFlags(HierarchyNodeFlags flags) => throw null;
         #endregion
     }
 }

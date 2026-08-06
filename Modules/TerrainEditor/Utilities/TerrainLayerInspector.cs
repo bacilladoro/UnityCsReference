@@ -7,12 +7,13 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using DefaultFormat = UnityEngine.Experimental.Rendering.DefaultFormat;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
     [CustomEditor(typeof(TerrainLayer))]
     [CanEditMultipleObjects]
-    public sealed class TerrainLayerInspector : Editor
+    public sealed partial class TerrainLayerInspector : Editor
     {
         [MenuItem("Assets/Create/Terrain/Terrain Layer", secondaryPriority = 2)]
         private static void CreateDefaultTerrainLayer()
@@ -36,7 +37,8 @@ namespace UnityEditor
             public readonly GUIContent max = EditorGUIUtility.TrTextContent("Max", "The value when the texture channel is 1");
         }
 
-        private static Styles s_Styles = new Styles();
+        [NoAutoStaticsCleanup] // GUIContent/GUIStyle styles holder; editor infra, no user refs
+        private static readonly Styles s_Styles = new Styles();
 
         [SerializeField]
         Vector2 m_Pos;
@@ -321,11 +323,15 @@ namespace UnityEditor
             return GraphicsFormatUtility.HasAlphaChannel(GraphicsFormatUtility.GetGraphicsFormat(inTex.format, true));
         }
 
+        [AutoStaticsCleanupOnCodeReload] // holds dragged TerrainLayer asset refs; re-allocated empty on reload, repopulated each drag
         private static List<TerrainLayer> s_draggedLayersBuffer = new List<TerrainLayer>();
 
-        // State tracking for drag preview
+        // State tracking for drag preview — dropped on reload so no stale preview persists
+        [AutoStaticsCleanupOnCodeReload]
         private static Terrain s_previewTerrain = null;
+        [AutoStaticsCleanupOnCodeReload]
         private static TerrainLayer[] s_originalLayers = null;
+        [AutoStaticsCleanupOnCodeReload]
         private static bool s_previewApplied = false;
 
         internal void OnSceneDrag(SceneView sceneView, int index)

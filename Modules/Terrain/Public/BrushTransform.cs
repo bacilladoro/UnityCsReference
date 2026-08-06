@@ -13,17 +13,34 @@ namespace UnityEngine.TerrainTools
     // represents a linear 2D transform between brush UV space and some other target XY space
     //      xy = u * brushU + v * brushV + brushOrigin
     //      uv = x * targetX + y * targetY + targetOrigin
+    ///<summary>Represents a linear 2D transformation between brush UV space and a target XY space (typically this is a Terrain-local object space.)</summary>
+    ///<remarks>The BrushTransform represents a rectangular brush, with scale, rotation, and skew.
+    ///The brush is assumed to lie in the [0,1] range in brush UV space.
+    ///
+    ///The transform and its inverse are represented as follows:
+    ///
+    ///<c>xy = u * BrushTransform.brushU + v * BrushTransform.brushV + BrushTransform.brushOrigin</c><c>uv = x * BrushTransform.targetX + y * BrushTransform.targetY + BrushTransform.targetOrigin</c></remarks>
     [MovedFrom("UnityEngine.Experimental.TerrainAPI")]
     public struct BrushTransform
     {
+        ///<summary>(RO) Brush UV origin, in XY space.</summary>
         public Vector2 brushOrigin { get; }     // brush UV origin, in XY space
+        ///<summary>(RO) Brush U vector, in XY space.</summary>
         public Vector2 brushU { get; }          // brush U vector, in XY space
+        ///<summary>(RO) Brush V vector, in XY space.</summary>
         public Vector2 brushV { get; }          // brush V vector, in XY space
 
+        ///<summary>(RO) Target XY origin, in Brush UV space.</summary>
         public Vector2 targetOrigin { get; }    // XY origin, in brush UV space
+        ///<summary>(RO) Target X vector, in Brush UV space.</summary>
         public Vector2 targetX { get; }         // X vector, in brush UV space
+        ///<summary>(RO) Target Y vector, in Brush UV space.</summary>
         public Vector2 targetY { get; }         // Y vector, in brush UV space
 
+        ///<summary>Creates a BrushTransform.</summary>
+        ///<param name="brushOrigin">Origin of the brush, in target XY space.</param>
+        ///<param name="brushU">Brush U vector, in target XY space.</param>
+        ///<param name="brushV">Brush V vector, in target XY space.</param>
         public BrushTransform(Vector2 brushOrigin, Vector2 brushU, Vector2 brushV)
         {
             // invert the rotation matrix [BrushU, BrushV]
@@ -45,6 +62,8 @@ namespace UnityEngine.TerrainTools
             this.targetY = targetY;
         }
 
+        ///<summary>Get the axis-aligned bounding rectangle of the brush, in target XY space.</summary>
+        ///<returns>Bounding rectangle in target XY space.</returns>
         public Rect GetBrushXYBounds()           // get the XY bounding rectangle around the Brush [0,1] UV space
         {
             // compute all four corners of the brush [0,1] UV space
@@ -62,6 +81,9 @@ namespace UnityEngine.TerrainTools
             return Rect.MinMaxRect(minX, minY, maxX, maxY);
         }
 
+        ///<summary>Creates an axis-aligned BrushTransform from a rectangle.</summary>
+        ///<param name="brushRect">Brush rectangle, in target XY coordinates.</param>
+        ///<returns>BrushTransform describing the brush.</returns>
         public static BrushTransform FromRect(Rect brushRect)
         {
             Vector2 brushOrigin = brushRect.min;
@@ -70,11 +92,17 @@ namespace UnityEngine.TerrainTools
             return new BrushTransform(brushOrigin, brushU, brushV);
         }
 
+        ///<summary>Applies the transform to convert a target XY coordinate to Brush UV space.</summary>
+        ///<param name="targetXY">Point in target XY space.</param>
+        ///<returns>Point transformed to Brush UV space.</returns>
         public Vector2 ToBrushUV(Vector2 targetXY)
         {
             return targetXY.x * targetX + targetXY.y * targetY + targetOrigin;
         }
 
+        ///<summary>Applies the transform to convert a Brush UV coordinate to the target XY space.</summary>
+        ///<param name="brushUV">Brush UV coordinate to transform.</param>
+        ///<returns>Target XY coordinate.</returns>
         public Vector2 FromBrushUV(Vector2 brushUV)
         {
             return brushUV.x * brushU + brushUV.y * brushV + brushOrigin;

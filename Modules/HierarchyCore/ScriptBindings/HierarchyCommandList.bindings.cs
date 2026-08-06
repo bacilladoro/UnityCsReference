@@ -91,10 +91,12 @@ namespace Unity.Hierarchy
             m_IsOwner = false;
         }
 
+#pragma warning disable UA5000 // The Avoid Finalizer Analyzer produces compile errors for any new finalizers. This pre-existing finalizer declaration has been suppressed, but should be rewritten if possible.
         ~HierarchyCommandList()
         {
             Dispose(false);
         }
+#pragma warning restore UA5000
 
         /// <summary>
         /// Disposes the command list and releases its memory.
@@ -346,18 +348,6 @@ namespace Unity.Hierarchy
         #region Called from native
         [RequiredByNativeCode]
         static IntPtr CreateCommandList(IntPtr nativePtr) => GCHandle.ToIntPtr(GCHandle.Alloc(new HierarchyCommandList(nativePtr)));
-        #endregion
-
-        #region Marked as obsolete error in 6.6
-        /// <summary>
-        /// Sorts the child nodes of a hierarchy node by their sort index.
-        /// </summary>
-        /// <param name="node">The hierarchy node with child nodes to sort by their index.</param>
-        /// <param name="recurse">Whether to sort the child nodes recursively.</param>
-        /// <returns><see langword="true"/> if the command was appended to the list, <see langword="false"/> otherwise.</returns>
-        [Obsolete("SortChildren(node, recurse) with a bool parameter is obsolete, please use SortChildren(node) or SortChildrenRecursive(node) instead.", true)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public bool SortChildren(in HierarchyNode node, bool recurse) => throw null;
         #endregion
     }
 }

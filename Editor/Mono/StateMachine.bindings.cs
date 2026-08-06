@@ -47,6 +47,7 @@ namespace UnityEditor.Animations
     }
 
     [NativeHeader("Editor/Src/Animation/Transition.h")]
+    [global::UnityEngine.NativeClass("AnimatorTransitionBase", PersistentTypeId = 1111)]
     [NativeHeader("Modules/Animation/MecanimUtility.h")]
     public partial class AnimatorTransitionBase : Object
     {
@@ -94,6 +95,7 @@ namespace UnityEditor.Animations
 
     [NativeHeader("Editor/Src/Animation/Transition.h")]
     [NativeHeader("Editor/Src/Animation/StateMachine.bindings.h")]
+    [global::UnityEngine.NativeClass("AnimatorTransition", PersistentTypeId = 1109)]
     [HelpURL("StateMachineTransitions")]
     public class AnimatorTransition : AnimatorTransitionBase
     {
@@ -108,6 +110,7 @@ namespace UnityEditor.Animations
 
     [NativeHeader("Editor/Src/Animation/Transition.h")]
     [NativeHeader("Editor/Src/Animation/StateMachine.bindings.h")]
+    [global::UnityEngine.NativeClass("AnimatorStateTransition", PersistentTypeId = 1101)]
     [HelpURL("class-Transition")]
     public class AnimatorStateTransition : AnimatorTransitionBase
     {
@@ -149,6 +152,7 @@ namespace UnityEditor.Animations
 
     [NativeHeader("Editor/Src/Animation/StateMachine.h")]
     [NativeHeader("Editor/Src/Animation/StateMachine.bindings.h")]
+    [global::UnityEngine.NativeClass("AnimatorState", PersistentTypeId = 1102)]
     [NativeHeader("Editor/Src/Animation/StateMachineBehaviourScripting.h")]
     public sealed partial class AnimatorState : Object
     {
@@ -259,6 +263,7 @@ namespace UnityEditor.Animations
 
     [NativeHeader("Editor/Src/Animation/StateMachine.h")]
     [NativeHeader("Editor/Src/Animation/StateMachine.bindings.h")]
+    [global::UnityEngine.NativeClass("AnimatorStateMachine", PersistentTypeId = 1107)]
     [NativeHeader("Editor/Src/Animation/StateMachineBehaviourScripting.h")]
     public sealed partial class AnimatorStateMachine : Object
     {

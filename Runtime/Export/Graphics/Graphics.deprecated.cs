@@ -5,9 +5,10 @@
 using System;
 using System.Collections.Generic;
 using ShadowCastingMode = UnityEngine.Rendering.ShadowCastingMode;
-using LightProbeUsage   = UnityEngine.Rendering.LightProbeUsage;
-using uei               = UnityEngine.Internal;
+using LightProbeUsage = UnityEngine.Rendering.LightProbeUsage;
+using uei = UnityEngine.Internal;
 using UnityEngine.Rendering;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEngine
 {
@@ -110,6 +111,7 @@ namespace UnityEngine
 
         [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
         [Obsolete("Property showCursor has been deprecated. Use Cursor.visible instead (UnityUpgradable) -> UnityEngine.Cursor.visible", true)]
+        [NoAutoStaticsCleanup] // obsolete-error stub that can never be read or written; generated cleanup code could not reference it (CS0619)
         static public bool showCursor { get; set; }
     }
 
@@ -312,6 +314,7 @@ namespace UnityEditor.Experimental
     public partial class RenderSettings
     {
         [Obsolete("Use UnityEngine.Experimental.GlobalIllumination.useRadianceAmbientProbe instead. (UnityUpgradable) -> UnityEngine.Experimental.GlobalIllumination.RenderSettings.useRadianceAmbientProbe", true)]
+        [NoAutoStaticsCleanup] // obsolete-error stub that can never be read or written; generated cleanup code could not reference it (CS0619)
         public static bool useRadianceAmbientProbe { get; set; }
     }
 }

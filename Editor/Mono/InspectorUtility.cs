@@ -6,18 +6,22 @@ using UnityEngine.Bindings;
 using System;
 using Object = UnityEngine.Object;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Scripting;
 
 namespace UnityEditor
 {
-    internal class InspectorUtility
+    internal partial class InspectorUtility
     {
         internal delegate void LivePropertyOverrideCallback(SerializedObject serializedObject, bool isLiveUpdate);
         internal delegate bool LivePropertyChangedCallback(Object[] unityObject);
 
+        [AutoStaticsCleanupOnCodeReload]
         internal static Dictionary<Type, LivePropertyOverrideCallback> s_LivePropertyOverrideCallbacks = new Dictionary<Type, LivePropertyOverrideCallback>();
+        [AutoStaticsCleanupOnCodeReload]
         internal static Dictionary<Type, LivePropertyChangedCallback> s_LivePropertyChangedCallbacks = new Dictionary<Type, LivePropertyChangedCallback>();
 
+        [AutoStaticsCleanupOnCodeReload]
         static SerializedObject s_CachedSerializedObject = new SerializedObject(IntPtr.Zero);
 
         internal static void SetLivePropertyOverride(Type type, LivePropertyOverrideCallback callback)

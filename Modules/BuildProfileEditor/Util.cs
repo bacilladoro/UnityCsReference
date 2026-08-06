@@ -57,6 +57,7 @@ namespace UnityEditor.Build.Profile
 
         /// <summary>
         /// Returns whether the build profile's platform is deprecated via <see cref="BuildProfile.platformGuid"/>.
+        /// For multi-target build profiles, this will check the selected platform as well.
         /// </summary>
         internal static bool TryGetBuildProfileDeprecationPlatformGuid(BuildProfile profile, out GUID deprecatedPlatformGuid)
         {
@@ -65,32 +66,20 @@ namespace UnityEditor.Build.Profile
             if (profile == null)
                 return false;
 
-            if (!BuildProfileModuleUtil.BuildPlatformTryGetDeprecationMessage(profile.platformGuid, out _))
-                return false;
+            if (BuildProfileModuleUtil.BuildPlatformTryGetDeprecationMessage(profile.platformGuid, out _))
+            {
+                deprecatedPlatformGuid = profile.platformGuid;
+                return true;
+            }
 
-            deprecatedPlatformGuid = profile.platformGuid;
-            return true;
-        }
+            if (profile.isMultiTarget && !profile.selectedPlatformGuid.Empty()
+                && BuildProfileModuleUtil.BuildPlatformTryGetDeprecationMessage(profile.selectedPlatformGuid, out _))
+            {
+                deprecatedPlatformGuid = profile.selectedPlatformGuid;
+                return true;
+            }
 
-        /// <summary>
-        /// Returns whether the selected build platform for a multi-target profile is deprecated.
-        /// Skips when the profile platform already carries a deprecation warning to avoid duplicate banners.
-        /// </summary>
-        internal static bool TryGetSelectedBuildPlatformDeprecationGuid(BuildProfile profile, out GUID deprecatedPlatformGuid)
-        {
-            deprecatedPlatformGuid = default;
-
-            if (profile == null || !profile.isMultiTarget || profile.selectedPlatformGuid.Empty())
-                return false;
-
-            if (TryGetBuildProfileDeprecationPlatformGuid(profile, out _))
-                return false;
-
-            if (!BuildProfileModuleUtil.BuildPlatformTryGetDeprecationMessage(profile.selectedPlatformGuid, out _))
-                return false;
-
-            deprecatedPlatformGuid = profile.selectedPlatformGuid;
-            return true;
+            return false;
         }
 
         /// <summary>

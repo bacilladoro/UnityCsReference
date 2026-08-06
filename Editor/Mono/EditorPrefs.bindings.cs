@@ -3,18 +3,20 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using UnityEngine.Bindings;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Internal;
 
 namespace UnityEditor
 {
     // Stores and accesses Unity editor preferences.
     [NativeHeader("Runtime/Utilities/PlayerPrefs.h")]
-    public sealed class EditorPrefs
+    public sealed partial class EditorPrefs
     {
         // Sends events whenever EditorPrefs values are updated
         // NOTE: This is a quick solution for accessing editor prefs from background threads,
         //  long term solution is to make editor prefs read/writes threadsafe
         internal delegate void ValueWasUpdated(string key);
+        [AutoStaticsCleanupOnCodeReload]
         internal static event ValueWasUpdated onValueWasUpdated;
 
         // Sets the value of the preference identified by /key/.

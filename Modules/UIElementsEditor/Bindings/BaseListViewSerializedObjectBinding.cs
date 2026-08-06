@@ -10,10 +10,9 @@ using UnityEngine.UIElements;
 
 namespace UnityEditor.UIElements.Bindings
 {
+    // Internal reorder-only controller. External drops are handled by scrollView/foldout callbacks.
     class SerializedObjectListReorderableDragAndDropController : ListViewReorderableDragAndDropController
     {
-        private SerializedObjectList objectList => m_ListView.itemsSource as SerializedObjectList;
-
         public SerializedObjectListReorderableDragAndDropController(BaseListView baseListView)
             : base(baseListView) {}
 
@@ -230,12 +229,19 @@ namespace UnityEditor.UIElements.Bindings
         }
 
         protected SerializedObjectList m_DataList;
-        protected EventCallback<DragUpdatedEvent> m_DragUpdatedCallback;
+        protected EventCallback<DragUpdatedEvent> m_HeaderDragUpdatedCallback;
         protected EventCallback<DragPerformEvent> m_DragPerformCallback;
+        protected EventCallback<DragUpdatedEvent> m_ContentDragUpdatedCallback;
+        protected EventCallback<DragPerformEvent> m_ContentDragPerformCallback;
+        protected EventCallback<DragExitedEvent> m_ContentDragExitedCallback;
+        protected EventCallback<DragLeaveEvent> m_ContentDragLeaveCallback;
         protected EventCallback<SerializedObjectBindEvent> m_SerializedObjectBindEventCallback;
         protected Func<VisualElement> m_DefaultMakeItem;
         protected Action<VisualElement, int> m_DefaultBindItem;
         protected Action<VisualElement, int> m_DefaultUnbindItem;
+
+        VisualElement m_ExternalDropIndicator;
+        int m_LastDropIndex = -1;
 
         int m_ListViewArraySize;
 
@@ -251,8 +257,12 @@ namespace UnityEditor.UIElements.Bindings
         {
             m_DefaultMakeItem = MakeItem;
             m_DefaultUnbindItem = UnbindListViewItem;
-            m_DragUpdatedCallback = OnDragUpdated;
+            m_HeaderDragUpdatedCallback = OnHeaderDragUpdated;
             m_DragPerformCallback = OnDragPerform;
+            m_ContentDragUpdatedCallback = OnContentDragUpdated;
+            m_ContentDragPerformCallback = OnContentDragPerform;
+            m_ContentDragExitedCallback = OnContentDragExited;
+            m_ContentDragLeaveCallback = OnContentDragLeave;
             m_SerializedObjectBindEventCallback = SerializedObjectBindEventCallback;
         }
 
@@ -263,34 +273,251 @@ namespace UnityEditor.UIElements.Bindings
             evt.StopPropagation();
         }
 
-        void OnDragUpdated(DragUpdatedEvent evt)
+        void OnHeaderDragUpdated(DragUpdatedEvent evt)
         {
             ValidateObjectReferences(_ => DragAndDrop.visualMode = DragAndDropVisualMode.Copy);
         }
 
         void OnDragPerform(DragPerformEvent evt)
         {
+            HideDropIndicator();
+            bool inserted = false;
             ValidateObjectReferences(obj =>
             {
                 baseListView.viewController.AddItems(1);
                 m_DataList.ArrayProperty.GetArrayElementAtIndex(m_DataList.arraySize - 1).objectReferenceValue = obj;
-                m_DataList.ApplyChanges();
+                inserted = true;
             });
+            if (inserted)
+                m_DataList.ApplyChanges();
+        }
+
+        void OnContentDragUpdated(DragUpdatedEvent evt)
+        {
+            if (!IsArrayOfObjectReferences())
+                return;
+
+            var objReferences = DragAndDrop.objectReferences;
+            if (objReferences == null || objReferences.Length == 0)
+                return;
+
+            foreach (var obj in objReferences)
+            {
+                var validated = EditorGUI.ValidateObjectFieldAssignment(new[] { obj }, typeof(UnityEngine.Object), m_DataList.ArrayProperty, EditorGUI.ObjectFieldValidatorOptions.None);
+                if (validated != null)
+                {
+                    DragAndDrop.visualMode = DragAndDropVisualMode.Copy;
+                    var insertIndex = GetInsertIndexFromPosition(evt.mousePosition);
+                    UpdateDropIndicator(insertIndex);
+                    evt.StopPropagation();
+                    return;
+                }
+            }
+        }
+
+        void OnContentDragPerform(DragPerformEvent evt)
+        {
+            HideDropIndicator();
+
+            if (!IsArrayOfObjectReferences())
+                return;
+
+            var insertIndex = GetInsertIndexFromPosition(evt.mousePosition);
+            int insertOffset = 0;
+
+            var objReferences = DragAndDrop.objectReferences;
+            if (objReferences == null)
+                return;
+
+            foreach (var obj in objReferences)
+            {
+                var validated = EditorGUI.ValidateObjectFieldAssignment(new[] { obj }, typeof(UnityEngine.Object), m_DataList.ArrayProperty, EditorGUI.ObjectFieldValidatorOptions.None);
+                if (validated != null)
+                {
+                    InsertExternalObjectAtIndex(insertIndex + insertOffset, validated, applyChanges: false);
+                    insertOffset++;
+                }
+            }
+
+            if (insertOffset > 0)
+            {
+                m_DataList.ApplyChanges();
+                DragAndDrop.AcceptDrag();
+                evt.StopPropagation();
+            }
+        }
+
+        void OnContentDragExited(DragExitedEvent evt)
+        {
+            HideDropIndicator();
+        }
+
+        void OnContentDragLeave(DragLeaveEvent evt)
+        {
+            HideDropIndicator();
+        }
+
+        void UpdateDropIndicator(int insertIndex)
+        {
+            if (baseListView == null)
+                return;
+
+            if (m_ExternalDropIndicator == null)
+            {
+                m_ExternalDropIndicator = new VisualElement();
+                m_ExternalDropIndicator.AddToClassList(BaseVerticalCollectionView.dragHoverBarUssClassName);
+                m_ExternalDropIndicator.style.position = Position.Absolute;
+                m_ExternalDropIndicator.style.height = 2;
+                m_ExternalDropIndicator.pickingMode = PickingMode.Ignore;
+                baseListView.scrollView.contentViewport.Add(m_ExternalDropIndicator);
+            }
+
+            if (m_LastDropIndex == insertIndex)
+                return;
+            m_LastDropIndex = insertIndex;
+
+            float top = 0;
+            bool foundPosition = false;
+
+            if (m_DataList.Count == 0)
+            {
+                top = 0;
+                foundPosition = true;
+            }
+            else if (insertIndex >= m_DataList.Count)
+            {
+                // Inserting at end - try to get the last item's position
+                var lastItem = baseListView.GetRecycledItemFromIndex(m_DataList.Count - 1);
+                if (lastItem != null)
+                {
+                    var bounds = baseListView.scrollView.contentViewport.WorldToLocal(lastItem.rootElement.worldBound);
+                    top = bounds.yMax;
+                    foundPosition = true;
+                }
+            }
+            else
+            {
+                // Try to get the exact item position
+                var item = baseListView.GetRecycledItemFromIndex(insertIndex);
+                if (item != null)
+                {
+                    var bounds = baseListView.scrollView.contentViewport.WorldToLocal(item.rootElement.worldBound);
+                    top = bounds.yMin;
+                    foundPosition = true;
+                }
+            }
+
+            // Fallback for virtualized lists when target item isn't realized:
+            // use viewport edges to give directional feedback
+            if (!foundPosition)
+            {
+                var activeItems = baseListView.activeItems;
+                int? firstVisibleIndex = null;
+                int? lastVisibleIndex = null;
+                float firstVisibleTop = 0;
+                float lastVisibleBottom = 0;
+
+                foreach (var item in activeItems)
+                {
+                    if (firstVisibleIndex == null || item.index < firstVisibleIndex)
+                    {
+                        firstVisibleIndex = item.index;
+                        firstVisibleTop = baseListView.scrollView.contentViewport.WorldToLocal(item.rootElement.worldBound).yMin;
+                    }
+                    if (lastVisibleIndex == null || item.index > lastVisibleIndex)
+                    {
+                        lastVisibleIndex = item.index;
+                        lastVisibleBottom = baseListView.scrollView.contentViewport.WorldToLocal(item.rootElement.worldBound).yMax;
+                    }
+                }
+
+                if (firstVisibleIndex.HasValue && insertIndex < firstVisibleIndex.Value)
+                {
+                    // Target is above visible area - show at top
+                    top = firstVisibleTop;
+                }
+                else if (lastVisibleIndex.HasValue && insertIndex > lastVisibleIndex.Value)
+                {
+                    // Target is below visible area - show at bottom
+                    top = lastVisibleBottom;
+                }
+            }
+
+            m_ExternalDropIndicator.style.top = top;
+            m_ExternalDropIndicator.style.width = baseListView.localBound.width;
+            m_ExternalDropIndicator.style.visibility = Visibility.Visible;
+        }
+
+        void HideDropIndicator()
+        {
+            m_LastDropIndex = -1;
+            if (m_ExternalDropIndicator != null)
+                m_ExternalDropIndicator.style.visibility = Visibility.Hidden;
+        }
+
+        int GetInsertIndexFromPosition(Vector2 mousePosition)
+        {
+            if (baseListView == null || m_DataList == null)
+                return 0;
+
+            int count = m_DataList.Count;
+            if (count == 0)
+                return 0;
+
+            var activeItems = baseListView.activeItems;
+            foreach (var item in activeItems)
+            {
+                var itemBounds = item.rootElement.worldBound;
+                var midPoint = itemBounds.yMin + itemBounds.height / 2;
+
+                if (mousePosition.y < midPoint)
+                    return item.index;
+            }
+
+            return count;
         }
 
         void ValidateObjectReferences(Action<UnityEngine.Object> onValidated)
         {
+            if (!IsArrayOfObjectReferences())
+                return;
+
             var objReferences = DragAndDrop.objectReferences;
             foreach (var o in objReferences)
             {
                 var validatedObject = EditorGUI.ValidateObjectFieldAssignment(new[] { o }, typeof(UnityEngine.Object), m_DataList.ArrayProperty, EditorGUI.ObjectFieldValidatorOptions.None);
                 if (validatedObject != null)
-                {
                     onValidated.Invoke(validatedObject);
-                }
             }
 
             DragAndDrop.AcceptDrag();
+        }
+
+        bool IsArrayOfObjectReferences()
+        {
+            if (m_DataList?.ArrayProperty == null || m_DataList.ArrayProperty.arraySize == 0)
+                return m_DataList?.ArrayProperty?.arrayElementType?.StartsWith("PPtr<") == true;
+
+            return m_DataList.ArrayProperty.GetArrayElementAtIndex(0).propertyType == SerializedPropertyType.ObjectReference;
+        }
+
+        void InsertExternalObjectAtIndex(int index, UnityEngine.Object obj, bool applyChanges = true)
+        {
+            if (m_DataList?.ArrayProperty == null)
+                return;
+
+            m_DataList.ArrayProperty.InsertArrayElementAtIndex(index);
+            var element = m_DataList.ArrayProperty.GetArrayElementAtIndex(index);
+
+            if (element.propertyType != SerializedPropertyType.ObjectReference)
+            {
+                m_DataList.ArrayProperty.DeleteArrayElementAtIndex(index);
+                return;
+            }
+
+            element.objectReferenceValue = obj;
+            if (applyChanges)
+                m_DataList.ApplyChanges();
         }
 
         public override void OnRelease()
@@ -447,10 +674,12 @@ namespace UnityEditor.UIElements.Bindings
             }
 
             SetEditorViewController();
-            baseListView.SetDragAndDropController(new SerializedObjectListReorderableDragAndDropController(baseListView)
+
+            var controller = new SerializedObjectListReorderableDragAndDropController(baseListView)
             {
-                enableReordering = isReorderable,
-            });
+                enableReordering = isReorderable
+            };
+            baseListView.SetDragAndDropController(controller);
 
             baseListView.itemsSource = m_DataList;
             baseListView.SetupArraySizeField();
@@ -461,9 +690,14 @@ namespace UnityEditor.UIElements.Bindings
             var foldoutInput = baseListView.headerFoldout?.toggle?.visualInput;
             if (foldoutInput != null)
             {
-                foldoutInput.RegisterCallback(m_DragUpdatedCallback);
+                foldoutInput.RegisterCallback(m_HeaderDragUpdatedCallback);
                 foldoutInput.RegisterCallback(m_DragPerformCallback);
             }
+
+            baseListView.scrollView.RegisterCallback(m_ContentDragUpdatedCallback);
+            baseListView.scrollView.RegisterCallback(m_ContentDragPerformCallback);
+            baseListView.scrollView.RegisterCallback(m_ContentDragExitedCallback);
+            baseListView.scrollView.RegisterCallback(m_ContentDragLeaveCallback);
         }
 
         string OnValidateArraySize(string entered)
@@ -555,9 +789,21 @@ namespace UnityEditor.UIElements.Bindings
             var foldoutInput = baseListView.headerFoldout?.toggle?.visualInput;
             if (foldoutInput != null)
             {
-                foldoutInput.UnregisterCallback(m_DragUpdatedCallback);
+                foldoutInput.UnregisterCallback(m_HeaderDragUpdatedCallback);
                 foldoutInput.UnregisterCallback(m_DragPerformCallback);
             }
+
+            baseListView.scrollView.UnregisterCallback(m_ContentDragUpdatedCallback);
+            baseListView.scrollView.UnregisterCallback(m_ContentDragPerformCallback);
+            baseListView.scrollView.UnregisterCallback(m_ContentDragExitedCallback);
+            baseListView.scrollView.UnregisterCallback(m_ContentDragLeaveCallback);
+
+            if (m_ExternalDropIndicator != null)
+            {
+                m_ExternalDropIndicator.RemoveFromHierarchy();
+                m_ExternalDropIndicator = null;
+            }
+            m_LastDropIndex = -1;
 
             baseListView = null;
         }

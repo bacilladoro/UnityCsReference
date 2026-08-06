@@ -5,6 +5,7 @@
 using UnityEngine;
 using System;
 using UnityEditor.EditorTools;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -62,7 +63,7 @@ namespace UnityEditor
     // in the near future, we will be extending support for multiple snapping modes and this API will change.
     // ex, snap modes will likely be implemented as objects that can be registered to this class, making user-implemented
     // snapping behaviours possible.
-    public static class EditorSnapSettings
+    public static partial class EditorSnapSettings
     {
         static EditorSnapSettingsData instance
         {
@@ -143,12 +144,16 @@ namespace UnityEditor
         public static bool gridSnapActive => activeToolGridSnapEnabled && gridSnapEnabled && snapEnabled;
 
         // callback invoked when grid snapping is enabled or disabled
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action gridSnapEnabledChanged;
 
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action snapEnabledChanged;
-        
+
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action angleSnapEnabledChanged;
-        
+
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action scaleSnapEnabledChanged;
 
         internal static bool vertexSnapActive => HandleUtility.vertexDragging;
@@ -206,8 +211,11 @@ namespace UnityEditor
             }
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         internal static Action<Vector3> moveChanged;
+        [AutoStaticsCleanupOnCodeReload]
         internal static Action<float> rotateChanged;
+        [AutoStaticsCleanupOnCodeReload]
         internal static Action<float> scaleChanged;
 
         public static Vector3 move

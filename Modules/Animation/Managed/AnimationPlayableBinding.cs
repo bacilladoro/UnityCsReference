@@ -9,8 +9,13 @@ using UnityEngine.Playables;
 
 namespace UnityEngine.Animations
 {
+    ///<summary>A <see cref="PlayableBinding" /> that contains information representing an <see cref="AnimationPlayableOutput" />.</summary>
     public static class AnimationPlayableBinding
     {
+        ///<summary>Creates a <see cref="PlayableBinding" /> that contains information representing an <see cref="AnimationPlayableOutput" />.</summary>
+        ///<param name="name">The name of the AnimationPlayableOutput.</param>
+        ///<param name="key">A reference to a <see cref="UnityEngine.Object" /> that acts as a key for this binding.</param>
+        ///<returns>Returns a <see cref="PlayableBinding" /> that contains information that is used to create an <see cref="AnimationPlayableOutput" />.</returns>
         public static PlayableBinding Create(string name, UnityEngine.Object key)
         {
             return PlayableBinding.CreateInternal(name, key, typeof(Animator), CreateAnimationOutput);

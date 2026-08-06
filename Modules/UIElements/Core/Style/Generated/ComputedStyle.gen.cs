@@ -37,7 +37,7 @@ namespace UnityEngine.UIElements
         public Ratio aspectRatio => layoutData.Read().aspectRatio;
         public ReadOnlySpan<UnmanagedFilterFunction> backdropFilter => rareData.Read().backdropFilter;
         public Color backgroundColor => visualData.Read().backgroundColor;
-        public EntityId backgroundImage => visualData.Read().backgroundImage;
+        public UnmanagedBackground backgroundImage => visualData.Read().backgroundImage;
         public BackgroundPosition backgroundPositionX => visualData.Read().backgroundPositionX;
         public BackgroundPosition backgroundPositionY => visualData.Read().backgroundPositionY;
         public BackgroundRepeat backgroundRepeat => visualData.Read().backgroundRepeat;
@@ -238,7 +238,7 @@ namespace UnityEngine.UIElements
                         visualData.Write().backgroundColor = reader.ReadColor(0);
                         break;
                     case StylePropertyId.BackgroundImage:
-                        visualData.Write().backgroundImage = reader.ReadBackground(0);
+                        reader.ReadBackground(ref visualData.Write().backgroundImage, 0);
                         break;
                     case StylePropertyId.BackgroundPosition:
                         ShorthandApplicator.ApplyBackgroundPosition(reader, ref this);
@@ -795,7 +795,7 @@ namespace UnityEngine.UIElements
                         rareData.Write().backdropFilter.CopyFrom(sv.value as List<FilterFunction>);
                     break;
                 case StylePropertyId.BackgroundImage:
-                    visualData.Write().backgroundImage = sv.GetResource<UnityEngine.Object>()?.GetEntityId() ?? EntityId.None;
+                    visualData.Write().backgroundImage.CopyFromBoxed(sv.value);
                     break;
                 case StylePropertyId.Filter:
                     if (sv.keyword is StyleKeyword.Initial or StyleKeyword.Null)
@@ -1734,9 +1734,10 @@ namespace UnityEngine.UIElements
             switch (id)
             {
                 case StylePropertyId.BackgroundImage:
-                    if (visualData.Read().backgroundImage != newValue)
+                    if (visualData.Read().backgroundImage.imageEntityId != newValue)
                     {
-                        visualData.Write().backgroundImage = newValue;
+                        visualData.Write().backgroundImage.imageEntityId = newValue;
+                        visualData.Write().backgroundImage.gradient.Clear();
                         ve.IncrementVersion(VersionChangeType.Overflow | VersionChangeType.Repaint);
                     }
 
@@ -2049,7 +2050,7 @@ namespace UnityEngine.UIElements
             switch (id)
             {
                 case StylePropertyId.BackgroundImage:
-                    return visualData.Read().backgroundImage;
+                    return (EntityId)visualData.Read().backgroundImage;
                 case StylePropertyId.UnityFont:
                     return inheritedData.Read().unityFont;
                 case StylePropertyId.UnityFontDefinition:
@@ -2108,7 +2109,7 @@ namespace UnityEngine.UIElements
 
                 case StylePropertyId.BackgroundImage:
                 {
-                    return element.styleAnimation.Start(StylePropertyId.BackgroundImage, oldStyle.visualData.Read().backgroundImage, newStyle.visualData.Read().backgroundImage, durationMs, delayMs, easingCurve);
+                    return element.styleAnimation.Start(StylePropertyId.BackgroundImage, (EntityId)oldStyle.visualData.Read().backgroundImage, (EntityId)newStyle.visualData.Read().backgroundImage, durationMs, delayMs, easingCurve);
                 }
 
                 case StylePropertyId.BackgroundPosition:
@@ -3171,7 +3172,7 @@ namespace UnityEngine.UIElements
                 if (hasRunningAnimation ||
                     oldData.backgroundImage != newData.backgroundImage)
                 {
-                    result |= element.styleAnimation.Start(StylePropertyId.BackgroundImage, oldData.backgroundImage, newData.backgroundImage, durationMs, delayMs, easingCurve);
+                    result |= element.styleAnimation.Start(StylePropertyId.BackgroundImage, (EntityId)oldData.backgroundImage, (EntityId)newData.backgroundImage, durationMs, delayMs, easingCurve);
                 }
 
                 if (hasRunningAnimation ||
@@ -3780,9 +3781,9 @@ namespace UnityEngine.UIElements
 
                 case StylePropertyId.BackgroundImage:
                 {
-                    var from = computedStyle.visualData.Read().backgroundImage;
-                    var to = sv.keyword == StyleKeyword.Initial ? InitialStyle.backgroundImage : sv.GetResource<UnityEngine.Object>()?.GetEntityId() ?? EntityId.None;
-                    return element.styleAnimation.Start(StylePropertyId.BackgroundImage, from, to, durationMs, delayMs, easingCurve);
+                    var from = (EntityId)computedStyle.visualData.Read().backgroundImage;
+                    EntityId to; if  ( sv . keyword == StyleKeyword . Initial ) to  =  ( EntityId ) InitialStyle . backgroundImage ;  else  if  ( sv . value  is  Background  bg ) { Background . To ( bg ,  out  to ) ;  } else  { to  =  ( sv . value  as  UnityEngine . Object ) ? . GetEntityId ( ) ?? EntityId . None ;  }
+                    return element.styleAnimation.Start(StylePropertyId.BackgroundImage, (EntityId)from, (EntityId)to, durationMs, delayMs, easingCurve);
                 }
 
                 case StylePropertyId.Filter:

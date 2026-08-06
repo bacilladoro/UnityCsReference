@@ -4,6 +4,7 @@
 
 using Unity.Timeline.Foundation.Time;
 using UnityEditor;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditorInternal
 {
@@ -15,10 +16,15 @@ namespace UnityEditorInternal
         const string k_ShowFrameRate = "AnimationWindow.ShowFrameRate";
         const string k_EnableQueryBuilder = "AnimationWindow.EnableQueryBuilder";
 
+        [NoAutoStaticsCleanup]
         private static TimeFormat m_TimeFormat;
+        [NoAutoStaticsCleanup]
         private static bool m_FilterBySelection;
+        [NoAutoStaticsCleanup]
         private static bool m_ShowReadOnly;
+        [NoAutoStaticsCleanup]
         private static bool m_ShowFrameRate;
+        [NoAutoStaticsCleanup]
         private static bool m_EnableQueryBuilder;
 
         static AnimationWindowOptions()

@@ -11,6 +11,7 @@ using System.Runtime.InteropServices;
 
 namespace UnityEngine
 {
+    [global::UnityEngine.NativeClass("ShaderVariantCollection", PersistentTypeId = 200)]
     public sealed partial class ShaderVariantCollection : Object
     {
         public partial struct ShaderVariant

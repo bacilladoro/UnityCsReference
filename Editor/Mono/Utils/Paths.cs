@@ -16,7 +16,7 @@ namespace UnityEditor.Utils
     [VisibleToOtherModules("UnityEditor.UIBuilderModule")]
     internal static class Paths
     {
-        internal static char[] invalidFilenameChars;
+        internal static readonly char[] invalidFilenameChars;
         internal const int kMaxPathComponentLength = 255;
 
         static Paths()

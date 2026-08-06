@@ -118,7 +118,7 @@ namespace UnityEngine.UIElements
         /// these elements may not be interactable.
         /// </remarks>
         /// <remarks>
-        /// This option is better for performance than <see cref="AddAutoUpdatedBoudingBoxCollider"/>.
+        /// This option is better for performance than <see cref="ColliderUpdateMode.MatchBoundingBox"/>.
         /// </remarks>
         [InspectorName("Match 2-D document rect")]
         MatchDocumentRect = 2,
@@ -908,7 +908,7 @@ namespace UnityEngine.UIElements
         private IDebugPanelChangeReceiver m_PanelChangeReceiver = null;
 
         /// <summary>
-        /// Sets a custom <see cref="IPanelChangeReceiver"/> in the panelChangeReceiver setter to receive every change event.
+        /// Sets a custom <see cref="IDebugPanelChangeReceiver"/> in the panelChangeReceiver setter to receive every change event.
         /// This method is available only in development builds and the editor, as it is a debug feature to go along the profiling of an application.
         /// </summary>
         /// <remarks>

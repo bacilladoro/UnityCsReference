@@ -8,11 +8,13 @@ using UnityEditor;
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
-    class PopupWindowWithoutFocus : PopupWindow
+    partial class PopupWindowWithoutFocus : PopupWindow
     {
+        [AutoStaticsCleanupOnCodeReload]
         static PopupWindowWithoutFocus s_PopupWindowWithoutFocus;
         bool hasBeenFocused = false;
 

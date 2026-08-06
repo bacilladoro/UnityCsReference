@@ -6,13 +6,15 @@ using System;
 using UnityEngine;
 using System.Collections.Generic;
 using UnityEditorInternal;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
     [Serializable]
-    class AnimEditor : ScriptableObject
+    partial class AnimEditor : ScriptableObject
     {
         // Active Animation windows
+        [AutoStaticsCleanupOnCodeReload(CleanupStrategy = CleanupStrategy.Clear)]
         private static List<AnimEditor> s_AnimationWindows = new List<AnimEditor>();
         public static List<AnimEditor> GetAllAnimationWindows() { return s_AnimationWindows; }
         public bool stateDisabled => m_State.disabled;

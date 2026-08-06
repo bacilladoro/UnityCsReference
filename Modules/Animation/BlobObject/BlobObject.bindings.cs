@@ -95,8 +95,8 @@ namespace UnityEngine
     /// The reason behind this design is that reading the blob data is a very frequent and performance critical
     /// operation that must be as fast as possible, as opposed to updating the blob reference itself, which is must
     /// less frequent (loading/unloading the BlobObjects). So reading the blob data is made as fast as possible :
-    /// dereferencing & casting a data pointer, without going through an expensive operation of fetching the data
-    /// from a map (like dereferencing a PPtr<T>, especially with marshalling) or a double pointer.
+    /// dereferencing &amp; casting a data pointer, without going through an expensive operation of fetching the data
+    /// from a map (like dereferencing a PPtr&lt;T&gt;, especially with marshalling) or a double pointer.
     ///
     /// Note that FixedBlobObjetReferences are dynamically allocated (which has a performance cost) when used from
     /// a BlobObjectReference, but FixedObjectReferences can also be nested inside other BlobObjects blob data, which
@@ -137,10 +137,11 @@ namespace UnityEngine
 
     /// <summary>
     /// Unity Object storing a blob of contiguous bytes. The blob data can be retrieved and accessed in parallel bursted jobs through the <see cref="BlobObjectReference"/>
-    /// without doing any data copy, making it suited for performance critical operations and compatible with ECS (the blob data can be casted to a BlobAssetReference<>),
+    /// without doing any data copy, making it suited for performance critical operations and compatible with ECS (the blob data can be casted to a BlobAssetReference&lt;&gt;),
     /// while benefiting from Unity Object management (garbage collection, deduplication of BlobObjects referenced by the same MonoBehaviour, authoring in editor...).
     /// </summary>
     [NativeHeader("Modules/Animation/BlobObject/BlobObject.h")]
+    [NativeClass("BlobObject", PersistentTypeId = 0x2900FE3A)]
     [UsedByNativeCode]
     internal class BlobObject : Object
     {

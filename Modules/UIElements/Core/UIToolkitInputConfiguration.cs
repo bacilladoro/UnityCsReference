@@ -15,7 +15,7 @@ namespace UnityEngine.UIElements
         /// <summary>
         /// Use this method to activate one of the two input backends available for UIToolkit events at runtime.
         /// The new Input System compatible backend allows the Input System package to send its input to UI Toolkit
-        /// directly, removing the need for an <see cref="UnityEngine.EventSystems.EventSystem"/> in the user scene,
+        /// directly, removing the need for an <c>UnityEngine.EventSystems.EventSystem</c> in the user scene,
         /// and will automatically fall back to Input Manager input if the Input System package input isn't enabled in
         /// the Player Settings active input handling.
         /// Alternatively, use the legacy backend to always rely on Input Manager input only. In that case,
@@ -30,7 +30,7 @@ namespace UnityEngine.UIElements
         /// custom inspectors.
         /// </remarks>
         /// <remarks>
-        /// This method has no effect if there is an <see cref="UnityEngine.EventSystems.EventSystem"/> in the user
+        /// This method has no effect if there is an <c>UnityEngine.EventSystems.EventSystem</c> in the user
         /// scene. In that case, UI Toolkit runtime events will be provided by that EventSystem for as long as it
         /// remains enabled.
         /// </remarks>
@@ -58,7 +58,7 @@ namespace UnityEngine.UIElements
 
         /// <summary>
         /// The new Input System compatible backend allows the Input System package to send its input to UI Toolkit
-        /// directly, removing the need for an <see cref="UnityEngine.EventSystems.EventSystem"/> in the user scene.
+        /// directly, removing the need for an <c>UnityEngine.EventSystems.EventSystem</c> in the user scene.
         /// This option will use the Input System package is available, and the old Input Manager if not.
         /// </summary>
         InputSystemCompatibleBackend = Default,

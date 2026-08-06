@@ -286,6 +286,7 @@ namespace UnityEngine.Windows.WebCam
         private extern void Dispose_Internal();
 
         //-----------------------------------------------------------------
+#pragma warning disable UA5000 // The Avoid Finalizer Analyzer produces compile errors for any new finalizers. This pre-existing finalizer declaration has been suppressed, but should be rewritten if possible.
         ~PhotoCapture()
         {
             if (m_NativePtr != IntPtr.Zero)
@@ -294,6 +295,7 @@ namespace UnityEngine.Windows.WebCam
                 m_NativePtr = IntPtr.Zero;
             }
         }
+#pragma warning restore UA5000
 
         [NativeMethod(IsThreadSafe = true)]
         [NativeConditional("(PLATFORM_WIN || PLATFORM_WINRT) && !PLATFORM_XBOXONE")]
@@ -484,10 +486,12 @@ namespace UnityEngine.Windows.WebCam
         }
 
         //-----------------------------------------------------------------
+#pragma warning disable UA5000 // The Avoid Finalizer Analyzer produces compile errors for any new finalizers. This pre-existing finalizer declaration has been suppressed, but should be rewritten if possible.
         ~PhotoCaptureFrame()
         {
             Cleanup();
         }
+#pragma warning restore UA5000
 
         internal static class BindingsMarshaller
         {

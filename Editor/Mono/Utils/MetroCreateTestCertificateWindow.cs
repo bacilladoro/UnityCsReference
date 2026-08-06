@@ -7,11 +7,13 @@ using System.IO;
 using System.Text.RegularExpressions;
 using UnityEngine;
 using UnityEditor;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
     internal sealed class HorizontalLayout : IDisposable
     {
+        [NoAutoStaticsCleanup] // Stateless singleton layout helper; safe to persist across code reload.
         private static readonly HorizontalLayout instance = new HorizontalLayout();
 
         public static IDisposable DoLayout()
@@ -31,6 +33,7 @@ namespace UnityEditor
     }
     internal sealed class VerticalLayout : IDisposable
     {
+        [NoAutoStaticsCleanup] // Stateless singleton layout helper; safe to persist across code reload.
         private static readonly VerticalLayout instance = new VerticalLayout();
 
         public static IDisposable DoLayout()

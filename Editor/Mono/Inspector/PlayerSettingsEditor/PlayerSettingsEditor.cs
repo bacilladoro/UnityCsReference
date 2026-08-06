@@ -1602,6 +1602,13 @@ namespace UnityEditor
             EditorGUILayout.EndVertical();
         }
 
+        internal void ShowSection(int sectionIndex)
+        {
+            m_SelectedSection.value = sectionIndex;
+            for (int i = 0; i < m_SectionAnimators.Count; i++)
+                m_SectionAnimators[i].value = i == sectionIndex;
+        }
+
         public void ShowSharedNote()
         {
             GUILayout.Label(SettingsContentNonSearchable.sharedBetweenPlatformsInfo, EditorStyles.miniLabel);

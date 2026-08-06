@@ -14,7 +14,159 @@ using UnityEngine.Bindings;
 
 namespace UnityEngine
 {
-    // Helper class to generate form data to post to web servers using the [[WWW]] class.
+    ///<summary>Helper class to generate form data to post to web servers using the <see cref="UnityEngine.Networking.UnityWebRequest" /> or <see cref="T:UnityEngine.WWW" /> classes.</summary>
+    ///<remarks>
+    ///  <para>Here is a sample script that retrieves the high scores stored
+    ///in a table in an SQL database.</para>
+    ///  <para>Here is a sample Perl script that processes the high scores stored
+    ///in a table in an SQL database.</para>
+    ///</remarks>
+    ///<example>
+    ///  <code><![CDATA[
+    ///using UnityEngine;
+    ///using UnityEngine.Networking;
+    ///using System.Collections;
+    ///
+    ///public class WWWFormImage : MonoBehaviour
+    ///{
+    ///
+    ///    public string screenShotURL= "https://www.my-server.com/cgi-bin/screenshot.pl";
+    ///
+    ///    // Use this for initialization
+    ///    void Start()
+    ///    {
+    ///        StartCoroutine(UploadPNG());
+    ///    }
+    ///
+    ///    IEnumerator UploadPNG()
+    ///    {
+    ///        // We should only read the screen after all rendering is complete
+    ///        yield return new WaitForEndOfFrame();
+    ///
+    ///        // Create a texture the size of the screen, RGB24 format
+    ///        int width = Screen.width;
+    ///        int height = Screen.height;
+    ///        var tex = new Texture2D( width, height, TextureFormat.RGB24, false );
+    ///
+    ///        // Read screen contents into the texture
+    ///        tex.ReadPixels( new Rect(0, 0, width, height), 0, 0 );
+    ///        tex.Apply();
+    ///
+    ///        // Encode texture into PNG
+    ///        byte[] bytes = tex.EncodeToPNG();
+    ///        Destroy( tex );
+    ///
+    ///        // Create a Web Form
+    ///        WWWForm form = new WWWForm();
+    ///        form.AddField("frameCount", Time.frameCount.ToString());
+    ///        form.AddBinaryData("fileUpload", bytes, "screenShot.png", "image/png");
+    ///
+    ///        // Upload to a cgi script
+    ///        using (var w = UnityWebRequest.Post(screenShotURL, form))
+    ///        {
+    ///            yield return w.SendWebRequest();
+    ///            if (w.result != UnityWebRequest.Result.Success) {
+    ///                print(w.error);
+    ///            }
+    ///            else {
+    ///                print("Finished Uploading Screenshot");
+    ///            }
+    ///        }
+    ///    }
+    ///}
+    ///]]></code>
+    ///</example>
+    ///<example>
+    ///  <code><![CDATA[
+    ///using UnityEngine;
+    ///using UnityEngine.Networking;
+    ///using System.Collections;
+    ///
+    ///public class WWWFormScore : MonoBehaviour
+    ///{
+    ///    string highscore_url = "https://www.my-site.com/highscores.pl";
+    ///    string playName = "Player 1";
+    ///    int score = -1;
+    ///
+    ///    // Use this for initialization
+    ///    IEnumerator Start()
+    ///    {
+    ///        // Create a form object for sending high score data to the server
+    ///        WWWForm form = new WWWForm();
+    ///
+    ///        // Assuming the perl script manages high scores for different games
+    ///        form.AddField( "game", "MyGameName" );
+    ///
+    ///        // The name of the player submitting the scores
+    ///        form.AddField( "playerName", playName );
+    ///
+    ///        // The score
+    ///        form.AddField( "score", score );
+    ///
+    ///        // Create a download object
+    ///        var download = UnityWebRequest.Post(highscore_url, form);
+    ///
+    ///        // Wait until the download is done
+    ///        yield return download.SendWebRequest();
+    ///
+    ///        if (download.result != UnityWebRequest.Result.Success)
+    ///        {
+    ///            print( "Error downloading: " + download.error );
+    ///        }
+    ///        else
+    ///        {
+    ///            // show the highscores
+    ///            Debug.Log(download.downloadHandler.text);
+    ///        }
+    ///    }
+    ///}
+    ///]]></code>
+    ///</example>
+    ///<example nocheck="true">
+    ///  <code><![CDATA[#!/usr/bin/perl
+    ///# The SQL database needs to have a table called highscores
+    ///# that looks something like this:
+    ///#
+    ///#   CREATE TABLE highscores (
+    ///#     game varchar(255) NOT NULL,
+    ///#     player varchar(255) NOT NULL,
+    ///#     score integer NOT NULL
+    ///#   );
+    ///#
+    ///use strict;
+    ///use CGI;
+    ///use DBI;
+    ///
+    ///# Read form data etc.
+    ///my $cgi = new CGI;
+    ///
+    ///# The results from the high score script will be in plain text
+    ///print $cgi->header("text/plain");
+    ///
+    ///my $game = $cgi->param('game');
+    ///my $playerName = $cgi->param('playerName');
+    ///my $score = $cgi->param('score');
+    ///
+    ///exit 0 unless $game; # This parameter is required
+    ///
+    ///# Connect to a database
+    ///my $dbh = DBI->connect( 'DBI:mysql:databasename', 'username', 'password' )
+    ///    || die "Could not connect to database: $DBI::errstr";
+    ///
+    ///# Insert the player score if there are any
+    ///if( $playerName && $score) {
+    ///    $dbh->do( "insert into highscores (game, player, score) values(?,?,?)",
+    ///        undef, $game, $playerName, $score );
+    ///}
+    ///
+    ///# Fetch the high scores
+    ///my $sth = $dbh->prepare(
+    ///    'SELECT player, score FROM highscores WHERE game=? ORDER BY score desc LIMIT 10' );
+    ///$sth->execute($game);
+    ///while (my $r = $sth->fetchrow_arrayref) {
+    ///    print join(':',@$r),"\n"
+    ///}]]></code>
+    ///</example>
     public class WWWForm
     {
         private List<byte[]> formData; // <byte[]>
@@ -32,7 +184,10 @@ namespace UnityEngine
             }
         }
 
-        // Creates an empty WWWForm object.
+        ///<summary>Creates an empty WWWForm object.</summary>
+        ///<remarks>Use the <see cref="AddField" /> and <see cref="AddBinaryData" /> methods to insert data into the form.</remarks>
+        ///<seealso cref="UnityEngine.Networking.UnityWebRequest" />
+        ///<seealso cref="T:UnityEngine.WWW" />
         public WWWForm()
         {
             formData = new List<byte[]>();
@@ -53,13 +208,15 @@ namespace UnityEngine
             }
         }
 
-        // Add a simple field to the form.
+        ///<summary>Add a simple field to the form.</summary>
+        ///<remarks>Adds field <c>fieldName</c> with a given string value.</remarks>
         public void AddField(string fieldName, string value)
         {
             AddField(fieldName, value, Encoding.UTF8);
         }
 
-        // Add a simple field to the form.
+        ///<summary>Add a simple field to the form.</summary>
+        ///<remarks>Adds field <c>fieldName</c> with a given string value.</remarks>
         public void AddField(string fieldName, string value, Encoding e)
         {
             fieldNames.Add(fieldName);
@@ -68,7 +225,9 @@ namespace UnityEngine
             types.Add("text/plain; charset=\"" + e.WebName + "\"");
         }
 
-        // Adds a simple field to the form.
+        ///<summary>Adds a simple field to the form.</summary>
+        ///<remarks>Adds field <c>fieldName</c> with a given integer value. A conveinience for calling
+        ///AddField(fieldName, i.ToString).</remarks>
         public void AddField(string fieldName, int i)
         {
             AddField(fieldName, i.ToString());
@@ -88,7 +247,14 @@ namespace UnityEngine
             AddBinaryData(fieldName, contents, fileName, null);
         }
 
-        // Add binary data to the form.
+        ///<summary>Add binary data to the form.</summary>
+        ///<remarks>Use this function to upload files and images to a web server application.
+        ///Note that the data is read from the contents of byte array and not from a file.
+        ///The fileName parameter is for telling the server what filename to use when saving the uploaded file.
+        ///
+        ///If <c>mimeType</c> is not given and first 8 bytes of the data match PNG format header, then the
+        ///data is sent with "<c>image/png</c>" mimetype. Otherwise it is sent with "<c>application/octet-stream</c>"
+        ///mimetype.</remarks>
         public void AddBinaryData(string fieldName, byte[] contents, [DefaultValue("null")] string fileName, [DefaultValue("null")] string mimeType)
         {
             containsFiles = true;
@@ -116,7 +282,28 @@ namespace UnityEngine
             types.Add(mimeType);
         }
 
-        // (RO) Returns the correct request headers for posting the form using the [[WWW]] class.
+        ///<summary>(RO) Returns the correct request headers for posting the form using the <see cref="T:UnityEngine.WWW" /> class.</summary>
+        ///<remarks>This field only contains one header, /"Content-Type"/,
+        ///which is set to the correct mime type for the form: "<c>application/x-www-form-urlencoded</c>" for normal
+        ///forms and "<c>multipart/form-data</c>" for forms containing data added using <see cref="AddBinaryData" />.</remarks>
+        ///<example>
+        ///  <code><![CDATA[using System.Collections;
+        ///using System.Collections.Generic;
+        ///using UnityEngine;
+        ///
+        ///public class Example : MonoBehaviour {
+        ///
+        ///    IEnumerator Start () {
+        ///        Dictionary<string, string> headers = new Dictionary<string,string>();
+        ///        headers.Add("header-name", "header content");
+        ///        WWW www = new WWW("https://example.com", null, headers);
+        ///        yield return www;
+        ///        Debug.Log (www.text);
+        ///    }
+        ///
+        ///}
+        ///]]></code>
+        ///</example>
         public Dictionary<string, string> headers
         {
             get
@@ -140,7 +327,41 @@ namespace UnityEngine
         private static readonly byte[] ampersand = DefaultEncoding.GetBytes("&");
         private static readonly byte[] equal = DefaultEncoding.GetBytes("=");
 
-        // (RO) The raw data to pass as the POST request body when sending the form.
+        ///<summary>(RO) The raw data to pass as the POST request body when sending the form.</summary>
+        ///<remarks>Usually, you just pass the WWWForm object directly to the <see cref="T:UnityEngine.WWW" /> constructor, but you will
+        ///need this variable if you want to change the request headers sent to the web server.</remarks>
+        ///<example>
+        ///  <code><![CDATA[
+        ///using UnityEngine;
+        ///using System.Collections;
+        ///using System.Collections.Generic;
+        ///
+        ///public class ExampleClass : MonoBehaviour
+        ///{
+        ///    IEnumerator Start()
+        ///    {
+        ///        WWWForm form = new WWWForm();
+        ///        form.AddField( "name", "value" );
+        ///        Dictionary<string, string> headers = form.headers;
+        ///        byte[] rawData = form.data;
+        ///        string url = "www.myurl.com";
+        ///
+        ///        // Add a custom header to the request.
+        ///        // In this case a basic authentication to access a password protected resource.
+        ///        headers["Authorization"] = "Basic " + System.Convert.ToBase64String(
+        ///            System.Text.Encoding.ASCII.GetBytes("username:password"));
+        ///
+        ///        // Post a request to an URL with our custom headers
+        ///        using (WWW www = new WWW(url, rawData, headers))
+        ///        {
+        ///            yield return www;
+        ///            //.. process results from WWW request here...
+        ///        }
+        ///    }
+        ///}
+        ///]]></code>
+        ///</example>
+        ///<seealso cref="headers" />
         public byte[] data
         {
             get

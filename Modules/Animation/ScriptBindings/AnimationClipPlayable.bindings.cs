@@ -9,6 +9,8 @@ using UnityEngine.Playables;
 
 namespace UnityEngine.Animations
 {
+    ///<summary>A <see cref="T:UnityEngine.Playables.Playable" /> that controls an <see cref="AnimationClip" />.</summary>
+    ///<remarks>NOTE: You can use <see cref="PlayableExtensions" /> methods with AnimationClipPlayable objects.</remarks>
     [NativeHeader("Modules/Animation/ScriptBindings/AnimationClipPlayable.bindings.h")]
     [NativeHeader("Modules/Animation/Director/AnimationClipPlayable.h")]
     [StaticAccessor("AnimationClipPlayableBindings", StaticAccessorType.DoubleColon)]
@@ -17,6 +19,10 @@ namespace UnityEngine.Animations
     {
         PlayableHandle m_Handle;
 
+        ///<summary>Creates an <see cref="AnimationClipPlayable" /> in the <see cref="T:UnityEngine.Playables.PlayableGraph" />.</summary>
+        ///<param name="graph">The PlayableGraph object that will own the AnimationClipPlayable.</param>
+        ///<param name="clip">The AnimationClip that will be added in the PlayableGraph.</param>
+        ///<returns>A <see cref="AnimationClipPlayable" /> linked to the <see cref="T:UnityEngine.Playables.PlayableGraph" />.</returns>
         public static AnimationClipPlayable Create(PlayableGraph graph, AnimationClip clip)
         {
             var handle = CreateHandle(graph, clip);
@@ -43,46 +49,57 @@ namespace UnityEngine.Animations
             m_Handle = handle;
         }
 
+        ///<exclude />
         public PlayableHandle GetHandle()
         {
             return m_Handle;
         }
 
+        ///<exclude />
         public static implicit operator Playable(AnimationClipPlayable playable)
         {
             return new Playable(playable.GetHandle());
         }
 
+        ///<exclude />
         public static explicit operator AnimationClipPlayable(Playable playable)
         {
             return new AnimationClipPlayable(playable.GetHandle());
         }
 
+        ///<exclude />
         public bool Equals(AnimationClipPlayable other)
         {
             return GetHandle() == other.GetHandle();
         }
 
+        ///<summary>Returns the <see cref="AnimationClip" /> stored in the <see cref="AnimationClipPlayable" />.</summary>
         public AnimationClip GetAnimationClip()
         {
             return GetAnimationClipInternal(ref m_Handle);
         }
 
+        ///<summary>Returns the state of the ApplyFootIK flag.</summary>
         public bool GetApplyFootIK()
         {
             return GetApplyFootIKInternal(ref m_Handle);
         }
 
+        ///<summary>Sets the value of the ApplyFootIK flag.</summary>
+        ///<param name="value">The new value of the ApplyFootIK flag.</param>
         public void SetApplyFootIK(bool value)
         {
             SetApplyFootIKInternal(ref m_Handle, value);
         }
 
+        ///<summary>Returns the state of the ApplyPlayableIK flag.</summary>
         public bool GetApplyPlayableIK()
         {
             return GetApplyPlayableIKInternal(ref m_Handle);
         }
 
+        ///<summary>Requests <see cref="M:UnityEngine.MonoBehaviour.OnAnimatorIK" /> to be called on the animated GameObject.</summary>
+        ///<remarks>When OnAnimatorIK is called the layer index parameter will always be zero.</remarks>
         public void SetApplyPlayableIK(bool value)
         {
             SetApplyPlayableIKInternal(ref m_Handle, value);

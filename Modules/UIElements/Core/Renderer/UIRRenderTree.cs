@@ -102,10 +102,16 @@ namespace UnityEngine.UIElements.UIR
         RenderChainCommand m_FirstCommand; // Not necessarily the root command, which may not create any commands
         RenderData m_RootRenderData;
 
+        // Active backdrop-filters in this tree; iterated when a group transform moves to re-tessellate the
+        // ones nested under it (their UVs track the world transform). Maintained like the panel count. UI-5170.
+        HashSet<RenderData> m_BackdropFilterRenderDatas;
+
         public TextureId quadTextureId;
         public RectInt quadRect;
         public Rect quadUVRect;
-        
+        // Gamma-encoded quad (force-gamma); the parent samples it without re-encoding (UI-5094).
+        public bool quadIsGammaEncoded;
+
         public GCHandlePool m_GCHandlePool = new();
 
         internal RenderTreeManager renderTreeManager => m_RenderTreeManager;
@@ -141,6 +147,7 @@ namespace UnityEngine.UIElements.UIR
             m_DirtyTracker.owner = this;
 
             quadTextureId = TextureId.invalid;
+            quadIsGammaEncoded = false;
 
             parent = null;
             firstChild = null;
@@ -152,6 +159,8 @@ namespace UnityEngine.UIElements.UIR
             m_DirtyTracker.minDepths = new int[(int)RenderDataDirtyTypeClasses.Count];
             m_DirtyTracker.maxDepths = new int[(int)RenderDataDirtyTypeClasses.Count];
             m_DirtyTracker.Reset();
+
+            m_BackdropFilterRenderDatas ??= new HashSet<RenderData>(); // reused across pooled acquires (Reset clears it)
         }
 
         public void Reset()
@@ -161,6 +170,8 @@ namespace UnityEngine.UIElements.UIR
             parent = null;
             firstChild = null;
             nextSibling = null;
+
+            m_BackdropFilterRenderDatas?.Clear();
         }
 
         public void Dispose()
@@ -176,6 +187,7 @@ namespace UnityEngine.UIElements.UIR
 
             // Work
             m_RenderTreeManager.ResetGraphicEntries(renderData);
+            BackdropFilterHelper.ReleaseBackdropFilterResources(m_RenderTreeManager, renderData);
 
             // Recurse
             RenderData child = renderData.firstChild;
@@ -235,6 +247,35 @@ namespace UnityEngine.UIElements.UIR
         {
             Debug.Assert((m_AllowedDirtyClasses & AllowedClasses.Visuals) != 0);
             m_DirtyTracker.RegisterDirty(renderData, RenderDataDirtyTypes.Visuals | (hierarchical ? RenderDataDirtyTypes.VisualsHierarchy : 0), RenderDataDirtyTypeClasses.Visuals);
+        }
+
+        public void RegisterBackdropFilter(RenderData renderData)
+        {
+            m_BackdropFilterRenderDatas.Add(renderData);
+        }
+
+        public void UnregisterBackdropFilter(RenderData renderData)
+        {
+            m_BackdropFilterRenderDatas.Remove(renderData);
+        }
+
+        // Re-tessellate the backdrop-filters nested under the moved group (their world-derived UVs went stale).
+        // Testing each registered entry's group-ancestor chain is cheaper than walking the subtree. UI-5170.
+        public void RefreshBackdropFilterDescendantsOfGroup(RenderData group)
+        {
+            foreach (RenderData rd in m_BackdropFilterRenderDatas)
+            {
+                for (RenderData g = rd.groupTransformAncestor; g != null; g = g.groupTransformAncestor)
+                {
+                    if (g != group)
+                        continue;
+
+                    // Skip if already scheduled to regenerate this pass.
+                    if ((rd.dirtiedValues & (RenderDataDirtyTypes.Visuals | RenderDataDirtyTypes.VisualsHierarchy)) == 0)
+                        OnRenderDataVisualsChanged(rd, false);
+                    break;
+                }
+            }
         }
 
         public void ProcessChanges(ref ChainBuilderStats stats)

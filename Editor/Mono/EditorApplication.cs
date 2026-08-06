@@ -5,6 +5,7 @@
 using System;
 using System.IO;
 using System.Text;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.SceneManagement;
 using UnityEngine;
 using UnityEngine.Events;
@@ -72,7 +73,9 @@ namespace UnityEditor
 
     public sealed partial class EditorApplication
     {
+        [AutoStaticsCleanupOnCodeReload]
         internal static UnityAction projectWasLoaded;
+        [AutoStaticsCleanupOnCodeReload]
         internal static UnityAction editorApplicationQuit;
 
         [RequiredByNativeCode]
@@ -141,9 +144,12 @@ namespace UnityEditor
         public delegate void ProjectWindowItemByEntityIdCallback(EntityId entityId, Rect selectionRect);
 
         // Delegate for OnGUI events for every visible list item in the ProjectWindow.
+        [AutoStaticsCleanupOnCodeReload]
         public static ProjectWindowItemCallback projectWindowItemOnGUI;
         [Obsolete("projectWindowItemInstanceOnGUI is obsolete. Use projectWindowItemByEntityIdOnGUI instead.", true)]
+        [NoAutoStaticsCleanup] // obsolete (error): never assignable in source, always null, nothing to clean
         public static ProjectWindowItemInstanceCallback projectWindowItemInstanceOnGUI;
+        [AutoStaticsCleanupOnCodeReload]
         public static ProjectWindowItemByEntityIdCallback projectWindowItemByEntityIdOnGUI;
 
         // Can be used to ensure repaint of the ProjectWindow.
@@ -168,10 +174,13 @@ namespace UnityEditor
 
         // Delegate for OnGUI events for every visible list item in the HierarchyWindow.
         [Obsolete("hierarchyWindowItemOnGUI is obsolete. Use hierarchyWindowItemByEntityIdOnGUI instead.", true)]
+        [NoAutoStaticsCleanup] // obsolete (error): never assignable in source, always null, nothing to clean
         public static HierarchyWindowItemCallback hierarchyWindowItemOnGUI;
+        [AutoStaticsCleanupOnCodeReload]
         public static HierarchyWindowItemByEntityIdCallback hierarchyWindowItemByEntityIdOnGUI;
 
         // Delegate for refreshing hierarchies.
+        [AutoStaticsCleanupOnCodeReload]
         internal static CallbackFunction refreshHierarchy;
 
         // Can be used to ensure repaint of the HierarchyWindow.
@@ -181,6 +190,7 @@ namespace UnityEditor
         }
 
         // Delegate for dirtying hierarchy sorting.
+        [AutoStaticsCleanupOnCodeReload]
         internal static CallbackFunction dirtyHierarchySorting;
 
         public static void DirtyHierarchyWindowSorting()
@@ -195,11 +205,14 @@ namespace UnityEditor
         public delegate void SerializedPropertyCallbackFunction(GenericMenu menu, SerializedProperty property);
 
         // Delegate for generic updates.
+        [AutoStaticsCleanupOnCodeReload]
         public static CallbackFunction update;
 
+        [AutoStaticsCleanupOnCodeReload]
         private static DelegateWithPerformanceTracker<CallbackFunction> m_UpdateEvent = new DelegateWithPerformanceTracker<CallbackFunction>($"{nameof(EditorApplication)}.{nameof(update)}");
 
         [VisibleToOtherModules("UnityEditor.UIToolkitAuthoringModule")]
+        [AutoStaticsCleanupOnCodeReload]
         internal static event CallbackFunction tick;
 
         public static event Func<bool> wantsToQuit
@@ -207,6 +220,7 @@ namespace UnityEditor
             add => m_WantsToQuitEvent.Add(value);
             remove => m_WantsToQuitEvent.Remove(value);
         }
+        [AutoStaticsCleanupOnCodeReload]
         private static EventWithPerformanceTracker<Func<bool>> m_WantsToQuitEvent = new EventWithPerformanceTracker<Func<bool>>($"{nameof(EditorApplication)}.{nameof(wantsToQuit)}");
 
         public static event Action quitting
@@ -214,9 +228,12 @@ namespace UnityEditor
             add => m_QuittingEvent.Add(value);
             remove => m_QuittingEvent.Remove(value);
         }
+        [AutoStaticsCleanupOnCodeReload]
         private static EventWithPerformanceTracker<Action> m_QuittingEvent = new EventWithPerformanceTracker<Action>($"{nameof(EditorApplication)}.{nameof(quitting)}");
 
+        [AutoStaticsCleanupOnCodeReload]
         public static CallbackFunction delayCall;
+        [AutoStaticsCleanupOnCodeReload]
         private static DelegateWithPerformanceTracker<CallbackFunction> m_DelayCallEvent = new DelegateWithPerformanceTracker<CallbackFunction>($"{nameof(EditorApplication)}.{nameof(delayCall)}");
 
         [VisibleToOtherModules("UnityEditor.BurstModule", "UnityEditor.ProjectAuditorModule")]
@@ -244,9 +261,11 @@ namespace UnityEditor
             add => m_HierarchyChangedEvent.Add(value);
             remove => m_HierarchyChangedEvent.Remove(value);
         }
+        [AutoStaticsCleanupOnCodeReload]
         private static EventWithPerformanceTracker<Action> m_HierarchyChangedEvent = new EventWithPerformanceTracker<Action>($"{nameof(EditorApplication)}.{nameof(hierarchyChanged)}");
 
         [Obsolete("Use EditorApplication.hierarchyChanged")]
+        [AutoStaticsCleanupOnCodeReload]
         public static CallbackFunction hierarchyWindowChanged;
 
         public static event Action projectChanged
@@ -254,20 +273,27 @@ namespace UnityEditor
             add => m_ProjectChangedEvent.Add(value);
             remove => m_ProjectChangedEvent.Remove(value);
         }
+        [AutoStaticsCleanupOnCodeReload]
         private static EventWithPerformanceTracker<Action> m_ProjectChangedEvent = new EventWithPerformanceTracker<Action>($"{nameof(EditorApplication)}.{nameof(projectChanged)}");
 
         [Obsolete("Use EditorApplication.projectChanged")]
+        [AutoStaticsCleanupOnCodeReload]
         public static CallbackFunction projectWindowChanged;
 
+        [AutoStaticsCleanupOnCodeReload]
         public static CallbackFunction searchChanged;
 
+        [AutoStaticsCleanupOnCodeReload]
         internal static CallbackFunction assetLabelsChanged;
 
+        [AutoStaticsCleanupOnCodeReload]
         internal static CallbackFunction assetBundleNameChanged;
 
         [VisibleToOtherModules("UnityEditor.UIBuilderModule", "UnityEditor.GraphToolkitModule")]
+        [AutoStaticsCleanupOnCodeReload]
         internal static CallbackFunction fileMenuSaved;
 
+        [AutoStaticsCleanupOnCodeReload]
         internal static event Action frameAndRenameNewGameObject;
 
         [RequiredByNativeCode]
@@ -277,6 +303,7 @@ namespace UnityEditor
         }
 
         // Delegate for changed keyboard modifier keys.
+        [AutoStaticsCleanupOnCodeReload]
         public static CallbackFunction modifierKeysChanged;
 
         public static event Action<PauseState> pauseStateChanged
@@ -284,6 +311,7 @@ namespace UnityEditor
             add => m_PauseStateChangedEvent.Add(value);
             remove => m_PauseStateChangedEvent.Remove(value);
         }
+        [AutoStaticsCleanupOnCodeReload]
         private static EventWithPerformanceTracker<Action<PauseState>> m_PauseStateChangedEvent = new EventWithPerformanceTracker<Action<PauseState>>($"{nameof(EditorApplication)}.{nameof(pauseStateChanged)}");
 
         public static event Action<PlayModeStateChange> playModeStateChanged
@@ -291,6 +319,7 @@ namespace UnityEditor
             add => m_PlayModeStateChangedEvent.Add(value);
             remove => m_PlayModeStateChangedEvent.Remove(value);
         }
+        [AutoStaticsCleanupOnCodeReload]
         private static EventWithPerformanceTracker<Action<PlayModeStateChange>> m_PlayModeStateChangedEvent = new EventWithPerformanceTracker<Action<PlayModeStateChange>>($"{nameof(EditorApplication)}.{nameof(playModeStateChanged)}");
 
         [VisibleToOtherModules]
@@ -299,28 +328,41 @@ namespace UnityEditor
             add => m_EnterPlayModePreStartEvent.Add(value);
             remove => m_EnterPlayModePreStartEvent.Remove(value);
         }
+        [AutoStaticsCleanupOnCodeReload]
         private static EventWithPerformanceTracker<Action> m_EnterPlayModePreStartEvent = new EventWithPerformanceTracker<Action>($"{nameof(EditorApplication)}.{nameof(enterPlayModePreStart)}");
 
         [Obsolete("Use EditorApplication.playModeStateChanged and/or EditorApplication.pauseStateChanged")]
+        [AutoStaticsCleanupOnCodeReload]
         public static CallbackFunction playmodeStateChanged;
 
         // Global key up/down or mouse up/down/drag events that were not handled by anyone
         [VisibleToOtherModules("UnityEditor.UIToolkitAuthoringModule")]
+        [AutoStaticsCleanupOnCodeReload]
         internal static CallbackFunction globalEventHandler;
+        [AutoStaticsCleanupOnCodeReload]
         internal static CallbackFunction shortcutHelperBarEventHandler;
 
         // Returns true when the pressed keys are defined in the Trigger
+        [AutoStaticsCleanupOnCodeReload]
         internal static Func<bool> doPressedKeysTriggerAnyShortcut;
 
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<bool> focusChanged;
 
         // Windows were reordered
+        [AutoStaticsCleanupOnCodeReload]
         internal static CallbackFunction windowsReordered;
 
         // Global contextual menus for inspector values
+        [AutoStaticsCleanupOnCodeReload]
         public static SerializedPropertyCallbackFunction contextualPropertyMenu;
 
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<ApplicationTitleDescriptor> updateMainWindowTitle;
+
+        static readonly bool k_ShowScriptingBackendInTitle = Application.HasARGV("displayScriptingBackend");
+
+        const string k_ScriptingBackendName = "Mono";
 
         internal static string GetDefaultMainWindowTitle(ApplicationTitleDescriptor desc)
         {
@@ -360,6 +402,11 @@ namespace UnityEditor
             if (desc.codeCoverageEnabled)
             {
                 title += " " + L10n.Tr("[CODE COVERAGE]");
+            }
+
+            if (k_ShowScriptingBackendInTitle)
+            {
+                title += $" ({k_ScriptingBackendName})";
             }
 
             return title;

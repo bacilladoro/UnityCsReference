@@ -5,6 +5,7 @@
 using System;
 using System.Runtime.InteropServices;
 using UnityEngine;
+using UnityEngine.Jobs;
 using UnityEngine.Scripting.APIUpdating;
 using Unity.Collections;
 
@@ -807,6 +808,10 @@ namespace Unity.U2D.Physics
             /// </summary>
             public PhysicsTransform transform { readonly get => m_PhysicsTransform; set { m_PhysicsTransform = value; m_UsePosition = m_UseRotation = true; } }
 
+            // The set flags, used when writing poses so only what the caller set is written.
+            internal readonly bool usePosition => m_UsePosition;
+            internal readonly bool useRotation => m_UseRotation;
+
             #region Internal
 
             PhysicsBody m_PhysicsBody;
@@ -911,6 +916,148 @@ namespace Unity.U2D.Physics
         /// </summary>
         /// <param name="batch">The batch of bodies and values to set.</param>
         public static void SetBatchTransform(ReadOnlySpan<BatchTransform> batch) => PhysicsBody_SetBatchTransform(batch);
+
+        /// <summary>
+        /// Set the transform for a batch of <see cref="PhysicsBody"/> using a span of <see cref="PhysicsBody.BatchTransform"/>, optionally writing each pose to the <see cref="PhysicsBody.transformObject"/> of its body.
+        /// If invalid values are passed to the batch, they will simply be ignored.
+        /// When <paramref name="writePoses"/> is true, each pose set is also written to the <see cref="PhysicsBody.transformObject"/> of its body, without producing a <see cref="PhysicsEvents.TransformChangeEvent"/>.
+        /// Writing poses requires all the valid bodies in the batch to be in the same <see cref="PhysicsWorld"/> and each to have its own <see cref="PhysicsBody.transformObject"/> assigned, not shared with another body in the batch.
+        /// Invalid bodies in the batch are still simply ignored.
+        /// The <see cref="PhysicsWorld.transformWriteMode"/> and <see cref="PhysicsBody.transformWriteMode"/> do not control this explicit write, except that <see cref="PhysicsWorld.TransformWriteMode.Fast2D"/> selects the faster rotation write.
+        /// Writing poses must be done on the main thread.
+        /// </summary>
+        /// <param name="batch">The batch of bodies and values to set.</param>
+        /// <param name="writePoses">Whether to also write the poses to the <see cref="PhysicsBody.transformObject"/> of each body in the batch.</param>
+        /// <exception cref="ArgumentException">Thrown when <paramref name="writePoses"/> is true and the valid bodies in the batch are not all in the same <see cref="PhysicsWorld"/> or do not each have a unique <see cref="PhysicsBody.transformObject"/> assigned. Nothing is changed when this is thrown.</exception>
+        public static void SetBatchTransform(ReadOnlySpan<BatchTransform> batch, bool writePoses)
+        {
+            // Only write poses when requested, otherwise this is the plain batch transform set.
+            if (!writePoses)
+            {
+                PhysicsBody_SetBatchTransform(batch);
+                return;
+            }
+
+            SetBatchTransformWritePoses(batch);
+        }
+
+        // Set the body poses for the batch and write each pose to the transform object of its body.
+        // The gather validates the batch and fills the transform-access-array without changing any state, so a throw here leaves everything untouched.
+        static unsafe void SetBatchTransformWritePoses(ReadOnlySpan<BatchTransform> batch)
+        {
+            if (batch.IsEmpty)
+                return;
+
+            // Gather the transform objects to write, densely packed, with a map recording the batch item each packed transform came from.
+            // An invalid body contributes no transform, so the packed count can be smaller than the batch.
+            var transformAccessArray = new TransformAccessArray(batch.Length);
+            var batchIndexMap = new NativeArray<int>(batch.Length, Allocator.Temp, NativeArrayOptions.UninitializedMemory);
+
+            var writeCount = PhysicsBody_GetBatchTransformObjects(batch, batchIndexMap.AsSpan(), new IntPtr(&transformAccessArray));
+            if (writeCount < 0)
+            {
+                batchIndexMap.Dispose();
+                transformAccessArray.Dispose();
+                throw new ArgumentException("The batch cannot write poses. All valid bodies must be in the same world and each must have its own transformObject assigned, not shared with another body in the batch.", nameof(batch));
+            }
+
+            // Set the body poses.
+            PhysicsBody_SetBatchTransform(batch);
+
+            // With nothing to write (no valid body with a transform) the body poses are still set, but there is no transform work.
+            if (writeCount == 0)
+            {
+                batchIndexMap.Dispose();
+                transformAccessArray.Dispose();
+                return;
+            }
+
+            // The world configuration is per-world and every written body shares one world, so read it from the first written body.
+            var batchWorld = batch[batchIndexMap[0]].physicsBody.world;
+            var transformPlane = batchWorld.transformPlane;
+            var transformPlaneCustom = batchWorld.transformPlaneCustom;
+            var fastWrite2D = batchWorld.transformWriteMode == PhysicsWorld.TransformWriteMode.Fast2D;
+
+            // Compact the poses to write into an array aligned 1:1 with the packed transform-access-array.
+            var poses = new NativeArray<BatchTransform>(writeCount, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
+            for (var i = 0; i < writeCount; ++i)
+                poses[i] = batch[batchIndexMap[i]];
+
+            batchIndexMap.Dispose();
+
+            // Write the poses to the transforms.
+            new WriteBatchPosesJob
+            {
+                batch = poses,
+                transformPlane = transformPlane,
+                transformPlaneCustom = transformPlaneCustom,
+                fastWrite2D = fastWrite2D
+            }.Schedule(transformAccessArray).Complete();
+
+            // We're finished so dispose.
+            poses.Dispose();
+            transformAccessArray.Dispose();
+        }
+
+        /// <undoc/>
+        struct WriteBatchPosesJob : IJobParallelForTransform
+        {
+            [ReadOnly] public NativeArray<BatchTransform> batch;
+            [ReadOnly] public PhysicsWorld.TransformPlane transformPlane;
+            [ReadOnly] public PhysicsWorld.TransformPlaneCustom transformPlaneCustom;
+            [ReadOnly] public bool fastWrite2D;
+
+            public void Execute(int index, TransformAccess transformAccess)
+            {
+                // Skip if the transform is no longer valid.
+                if (!transformAccess.isValid)
+                    return;
+
+                // Fetch the batch item.
+                var batchItem = batch[index];
+
+                // Mirror the native pose set, which ignores a component that was not set or holds an invalid value.
+                // Without this an invalid component would build a non-finite pose and the transform write would drop the whole pose, losing the valid component too.
+                var itemPosition = batchItem.position;
+                var itemRotation = batchItem.rotation;
+                var usePosition = batchItem.usePosition && float.IsFinite(itemPosition.x) && float.IsFinite(itemPosition.y);
+                var useRotation = batchItem.useRotation && itemRotation.isValid;
+
+                // Skip if the item set nothing valid.
+                if (!usePosition && !useRotation)
+                    return;
+
+                // Fetch the current transform pose, used as both the plane reference and the value for anything the item did not set.
+                transformAccess.GetPositionAndRotation(out var currentPosition, out var currentRotation);
+
+                Vector3 newPosition;
+                Quaternion newRotation;
+
+                // Handle non-custom plane projection.
+                if (transformPlane != PhysicsWorld.TransformPlane.Custom)
+                {
+                    // Calculate the pose as per the selected TransformPlane.
+                    newPosition = usePosition ? PhysicsMath.ToPosition3D(position: itemPosition, reference: currentPosition, transformPlane: transformPlane) : currentPosition;
+                    newRotation = useRotation ?
+                        (fastWrite2D ?
+                            PhysicsMath.ToRotationFast3D(angle: itemRotation.radians, transformPlane: transformPlane) :
+                            PhysicsMath.ToRotationSlow3D(angle: itemRotation.radians, reference: currentRotation, transformPlane: transformPlane)) :
+                        currentRotation;
+                }
+                else
+                {
+                    // Custom plane projection.
+                    // The projected position and rotation are independent so only what the item set is applied.
+                    var physicsTransform = batchItem.transform;
+                    transformPlaneCustom.PlaneProjection(in physicsTransform, out var projectedPosition, out var projectedRotation);
+                    newPosition = usePosition ? projectedPosition : currentPosition;
+                    newRotation = useRotation ? projectedRotation : currentRotation;
+                }
+
+                // Set the transform pose.
+                PhysicsWorld.SetTransformAccess(ref transformAccess, ref newPosition, ref newRotation);
+            }
+        }
 
         /// <summary>
         /// Get the transform for a batch of <see cref="PhysicsBody"/>.
@@ -1239,7 +1386,9 @@ namespace Unity.U2D.Physics
 
         /// <summary>
         /// Treat this body as high speed object that performs continuous collision detection against dynamic and kinematic bodies, but not other high speed bodies.
-        /// Fast collision bodies should be used sparingly. They are not a solution for general dynamic-versus-dynamic continuous collision.
+        /// Fast collision bodies should be used sparingly, not because they are slow but because everything using fast collisions does not work well.
+        /// They are not a solution for general dynamic-versus-dynamic continuous collision.
+        /// They also may interfere with joint constraints.
         /// </summary>
         public readonly bool fastCollisionsAllowed { get => PhysicsBody_GetFastCollisionsAllowed(this); set => PhysicsBody_SetFastCollisionsAllowed(this, value); }
 

@@ -35,10 +35,12 @@ namespace UnityEditorInternal
             GC.SuppressFinalize(this);
         }
 
+#pragma warning disable UA5000 // The Avoid Finalizer Analyzer produces compile errors for any new finalizers. This pre-existing finalizer declaration has been suppressed, but should be rewritten if possible.
         ~ProfilerFrameDataIterator()
         {
             FreeNativeResources();
         }
+#pragma warning restore UA5000
 
         [NativeMethod("GetNext")]
         public extern bool Next(bool enterChildren);

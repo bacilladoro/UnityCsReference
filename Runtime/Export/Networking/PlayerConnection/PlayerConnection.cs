@@ -7,12 +7,14 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using UnityEngine.Events;
 using UnityEngine.Scripting;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEngine.Networking.PlayerConnection
 {
     [Serializable]
-    public class PlayerConnection : ScriptableObject, IEditorPlayerConnection
+    public partial class PlayerConnection : ScriptableObject, IEditorPlayerConnection
     {
+        [AutoStaticsCleanupOnCodeReload]
         internal static IPlayerEditorConnectionNative connectionNative;
 
         [SerializeField]
@@ -23,6 +25,7 @@ namespace UnityEngine.Networking.PlayerConnection
 
         private bool m_IsInitilized;
 
+        [AutoStaticsCleanupOnCodeReload]
         private static PlayerConnection s_Instance;
         public static PlayerConnection instance
         {

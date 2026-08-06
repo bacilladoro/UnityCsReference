@@ -37,6 +37,7 @@ namespace UnityEditor
     }
 
     [HelpURL("UIE-font-asset-landing")]
+    [global::UnityEngine.NativeClass("TrueTypeFontImporter", PersistentTypeId = 1042)]
     [NativeHeader("Modules/TextRenderingEditor/TrueTypeFontImporter.h")]
     public sealed class TrueTypeFontImporter : AssetImporter
     {

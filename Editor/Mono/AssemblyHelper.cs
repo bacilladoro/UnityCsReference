@@ -20,13 +20,19 @@ using UnityEngine.Scripting.APIUpdating;
 using UnityEditor.Scripting;
 using UnityEngine.Bindings;
 using Unity.Collections;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
     [VisibleToOtherModules("UnityEditor.BurstModule")]
-    internal class AssemblyHelper
+    internal partial class AssemblyHelper
     {
-        static Dictionary<string, bool> managedToDllType = new Dictionary<string, bool>();
+        // Cache of IsDotNetDll(path) results; cleared on code reload so a DLL replaced at the same path is
+        // re-evaluated (matches neutron).
+        [AutoStaticsCleanupOnCodeReload]
+        static readonly Dictionary<string, bool> managedToDllType = new Dictionary<string, bool>();
+        // Stateless singleton helper (holds only IO abstractions) — safe to persist across code reload.
+        [NoAutoStaticsCleanup]
         static BuildPlayerDataExtractor m_BuildPlayerDataExtractor = new BuildPlayerDataExtractor();
 
         public static bool IsUnityEngineModule(AssemblyDefinition assembly)

@@ -27,6 +27,62 @@ namespace UnityEngine.Networking
         public Task<HttpResponseMessage> SendAsync(HttpRequestMessage httpRequest, CancellationToken cancellationToken);
     }
 
+    ///<summary>An <c>HttpMessageHandler</c> that can be used with <c>HttpClient</c> to perform web requests using <see cref="UnityWebRequest" />.</summary>
+    ///<remarks>
+    ///  <para>
+    ///    <c>UnityHttpMessageHandler</c> enables sending web requests to HTTP servers using the standard <c>HttpClient</c>. This allows the use of libraries that expect to use <c>HttpClient</c>, but allow the developer to replace the underlying <c>HttpMessageHandler</c> that <c>HttpClient</c> uses. The request and response streams can be used to stream data for uploading and downloading, respectively.</para>
+    ///  <para>
+    ///    <c>UnityHttpMessageHandler</c> can be used with <c>GrpcChannel</c> to make gRPC calls.</para>
+    ///  <para>In a basic use case, <c>UnityHttpMessageHandler</c> can be used with <c>HttpClient</c> to make HTTP requests.</para>
+    ///</remarks>
+    ///<example nocheck="true">
+    ///  <code><![CDATA[using UnityEngine;
+    ///using System.Net.Http;
+    ///using UnityEngine.Networking;
+    ///using Grpc.Core;
+    ///using Grpc.Net.Client;
+    ///
+    ///public class GrpcChannelFactory
+    ///{
+    ///    public static GrpcChannel CreateGrpcChannel()
+    ///    {
+    ///        var httpHandler = new UnityEngine.Networking.UnityHttpMessageHandler()
+    ///        var channel = GrpcChannel.ForAddress("https://www.my-server.com", new GrpcChannelOptions
+    ///        {
+    ///            HttpHandler = httpHandler
+    ///        });
+    ///        return channel;
+    ///    }
+    ///}]]></code>
+    ///</example>
+    ///<example>
+    ///  <code><![CDATA[
+    ///using UnityEngine;
+    ///using System.Net.Http;
+    ///using UnityEngine.Networking;
+    ///
+    ///public class MyBehaviour : MonoBehaviour
+    ///{
+    ///    void Start()
+    ///    {
+    ///        DoRequestAsync();
+    ///    }
+    ///
+    ///    async void DoRequestAsync()
+    ///    {
+    ///        HttpClient client = new HttpClient(new UnityEngine.Networking.UnityHttpMessageHandler());
+    ///        var request = new HttpRequestMessage(HttpMethod.Get, "https://www.my-server.com");
+    ///        var response = await client.SendAsync(request);
+    ///
+    ///        var status = response.StatusCode;
+    ///        var content = await response.Content.ReadAsStringAsync(); // content will contain the HTTP response body
+    ///
+    ///        // Show results as text
+    ///        Debug.Log(content);
+    ///    }
+    ///}
+    ///]]></code>
+    ///</example>
     public sealed class UnityHttpMessageHandler : HttpMessageHandler
     {
         private static readonly string ContentTypeHeaderKey = "Content-Type";
@@ -35,9 +91,42 @@ namespace UnityEngine.Networking
         private HttpMessageHandler _underlyingHttpMessageHandler = null;
         private bool _underlyingMessageHandlerOwnsCertificateHandler = false;
 
+        ///<summary>Force the version of HTTP used when making web requests with <see cref="UnityHttpMessageHandler" />.</summary>
+        ///<remarks>
+        ///  <para>Setting this property to <c>HttpForcedVersion.NotForced</c> causes <see cref="UnityHttpMessageHandler" /> to use standard negotiation with the server to determine the HTTP version to use.
+        ///
+        ///Using other values causes <see cref="UnityHttpMessageHandler" /> to force the web requests to a particular version of HTTP even if insecure HTTP is being used.
+        ///
+        ///Default value: <c>HttpForcedVersion.NotForced</c>.</para>
+        ///  <para>Demonstrating how to force web requests to HTTP/2 using <c>UnityHttpMessageHandler</c>.</para>
+        ///</remarks>
+        ///<example>
+        ///  <code><![CDATA[
+        ///using UnityEngine.Networking;
+        ///
+        ///public class HttpForcedVersionExample
+        ///{
+        ///    public static UnityEngine.Networking.UnityHttpMessageHandler MakeHttpHandlerWithForcedHttp2()
+        ///    {
+        ///        var httpHandler = new UnityEngine.Networking.UnityHttpMessageHandler()
+        ///        {
+        ///            HttpForcedVersion = HttpForcedVersion.HTTP2
+        ///        };
+        ///        return httpHandler;
+        ///    }
+        ///}
+        ///]]></code>
+        ///</example>
         public HttpForcedVersion HttpForcedVersion { get; set; } = HttpForcedVersion.NotForced;
+        ///<summary>Holds a reference to a <see cref="CertificateHandler" /> object, which manages certificate validation for the underlying <see cref="UnityWebRequest" /> that this <see cref="UnityHttpMessageHandler" /> creates.</summary>
+        ///<remarks>Setting this property to <c>null</c> makes the platform use the default certificate validation, which validates certificates against a root certificate authority store (most commonly Operating System store).
+        ///
+        ///Not all platforms support certificate validation callbacks. Refer to <see cref="CertificateHandler" /> for a list of supported platforms.
+        ///
+        ///Default value: <c>null</c>.</remarks>
         public CertificateHandler CertificateHandler { get; set; } = null;
 
+        ///<summary>Creates a <c>UnityHttpMessageHandler</c> with the default options.</summary>
         public UnityHttpMessageHandler() : base()
         {
             if (s_underlyingHttpHandlerFactory != null)
@@ -52,6 +141,10 @@ namespace UnityEngine.Networking
             s_underlyingHttpHandlerFactory = factory;
         }
 
+        ///<summary>Send an HTTP request as an asynchronous operation.</summary>
+        ///<param name="httpRequest">The HTTP request message to send.</param>
+        ///<param name="cancellationToken">The cancellation token to cancel operation.</param>
+        ///<returns>The task object representing the asynchronous operation.</returns>
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage httpRequest, CancellationToken cancellationToken)
         {
             if (_underlyingHttpMessageHandler != null && _underlyingHttpMessageHandler is IUnityHttpMessageHandler unityHandler)

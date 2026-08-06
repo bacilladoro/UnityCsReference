@@ -31,6 +31,7 @@ namespace UnityEngine
     }
 
     [NativeHeader("Runtime/Graphics/Mesh/SpriteRenderer.h")]
+    [global::UnityEngine.NativeClass("SpriteRenderer", PersistentTypeId = 212)]
     [RequireComponent(typeof(Transform))]
     public sealed partial class SpriteRenderer : Renderer
     {

@@ -5,10 +5,11 @@
 using UnityEngine;
 using UnityEditorInternal;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
-    internal class LayerVisibilityWindow : EditorWindow
+    internal partial class LayerVisibilityWindow : EditorWindow
     {
         private class Styles
         {
@@ -42,10 +43,13 @@ namespace UnityEditor
         const string k_LayerVisible = "Show/Hide Layer";
         const string k_LayerPickable = "Toggle Pickable status this Layer. Non-Pickable items cannot be selected in the Scene View.";
 
+        [AutoStaticsCleanupOnCodeReload]
         private static LayerVisibilityWindow s_LayerVisibilityWindow;
+        [NoAutoStaticsCleanup] // safe: timestamp guard, intentionally persisted across reloads
         private static long s_LastClosedTime;
         const long k_JustClosedPeriod = 400;
 
+        [NoAutoStaticsCleanup] // safe: lazily rebuilt GUI styles cache, recreated on demand
         private static Styles s_Styles;
         private List<string> s_LayerNames;
         private List<int> s_LayerMasks;

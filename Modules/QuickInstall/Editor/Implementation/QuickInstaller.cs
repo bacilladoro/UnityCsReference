@@ -6,6 +6,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.Collections.Generic;
 using System.Reflection;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEditor.PackageManager;
 using UnityEditor.PackageManager.Requests;
@@ -20,8 +21,7 @@ namespace UnityEditor.QuickInstall
     /// pages) and analytics should be enabled. The QuickInstaller then automatically manages install detection,
     /// UI visibility, and event tracking on behalf of the package.
     /// </summary>
-    [InitializeOnLoad]
-    internal class QuickInstaller
+    internal partial class QuickInstaller
     {
         enum InitializeState
         {
@@ -31,8 +31,15 @@ namespace UnityEditor.QuickInstall
             Failed
         }
 
+        // Resets to NotStarted on code reload so Initialize() re-runs the one-time registration: the editor event
+        // subscriptions below are dropped on reload and must be re-established.
+        [AutoStaticsCleanupOnCodeReload]
         static InitializeState s_Initialized = InitializeState.NotStarted;
+        // Cleared on code reload: installers re-register via their own [OnCodeLoaded] hooks, so the registries must be
+        // empty first to avoid duplicate-key Add and to drop the previous load's installer instances.
+        [AutoStaticsCleanupOnCodeReload]
         static readonly Dictionary<string, QuickInstaller> s_InstallersByPackageName = new();
+        [AutoStaticsCleanupOnCodeReload]
         static readonly Dictionary<string, QuickInstaller> s_InstallersByAssemblyName = new();
         static IEnumerable<QuickInstaller> s_Installers => s_InstallersByPackageName.Values;
 
@@ -49,11 +56,12 @@ namespace UnityEditor.QuickInstall
             set => EditorUserSettings.SetConfigValue($"QuickInstaller_{m_Config.PackageName}_installRecorded", value.ToString());
         }
 
-        static QuickInstaller()
+        [OnCodeLoaded]
+        static void Initialize()
         {
             if (s_Initialized != InitializeState.NotStarted)
                 return;
-            
+
             s_Initialized = InitializeState.InProgress;
             EditorApplication.update += CreatePackageListHandler();
             PackageManager.Events.registeredPackages += OnPackagesRegistered;

@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Bindings;
 using UnityEngine.Scripting.APIUpdating;
 
@@ -17,6 +18,7 @@ namespace UnityEngine
             return (shiftPressed ? 4 : 1) * (altPressed ? .25f : 1);
         }
 
+        [NoAutoStaticsCleanup] // transient drag-axis bool recomputed on each drag, safe to persist across code reloads
         static bool s_UseYSign = false;
 
         public static float NiceDelta(Vector2 deviceDelta, float acceleration)

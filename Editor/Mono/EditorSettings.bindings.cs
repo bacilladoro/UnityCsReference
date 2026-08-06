@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using System.Linq;
 using UnityEngine.Bindings;
 using Object = UnityEngine.Object;
@@ -75,8 +76,9 @@ namespace UnityEditor
 
     [NativeHeader("Editor/Src/EditorSettings.h")]
     [NativeHeader("Editor/Src/VersionControlSettings.h")]
+    [global::UnityEngine.NativeClass("EditorSettings", PersistentTypeId = 159)]
     [NativeHeader("Editor/Src/EditorUserSettings.h")]
-    public sealed class EditorSettings : Object
+    public sealed partial class EditorSettings : Object
     {
         internal enum Bc7TextureCompressor
         {
@@ -200,12 +202,6 @@ namespace UnityEditor
 
         [StaticAccessor("GetEditorSettings()", StaticAccessorType.Dot)]
         public static extern bool asyncShaderCompilation { get; set; }
-
-        [StaticAccessor("GetEditorSettings()", StaticAccessorType.Dot)]
-        public static extern bool blockShaders { get; set; }
-        [VisibleToOtherModules("UnityEditor.ShaderFoundryModule")]
-        [StaticAccessor("GetEditorSettings()", StaticAccessorType.Dot)]
-        internal static extern bool unlockBlockShaders { get; set; }
 
         [StaticAccessor("GetEditorSettings()", StaticAccessorType.Dot)]
         public static bool cachingShaderPreprocessor { get { return true; } set {} }
@@ -369,6 +365,7 @@ namespace UnityEditor
         }
 
         [VisibleToOtherModules]
+        [AutoStaticsCleanupOnCodeReload]
         internal static Action useLegacyHierarchyChanged;
 
         [StaticAccessor("GetEditorSettings()", StaticAccessorType.Dot)]

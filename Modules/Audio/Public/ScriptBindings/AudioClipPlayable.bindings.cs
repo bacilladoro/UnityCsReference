@@ -12,6 +12,8 @@ using UnityObject = UnityEngine.Object;
 
 namespace UnityEngine.Audio
 {
+    ///<summary>An implementation of <see cref="IPlayable" /> that controls an <see cref="AudioClip" />.</summary>
+    ///<remarks>NOTE: You can use <see cref="PlayableExtensions" /> methods with AudioClipPlayable objects.</remarks>
     [NativeHeader("Modules/Audio/Public/ScriptBindings/AudioClipPlayable.bindings.h")]
     [NativeHeader("Modules/Audio/Public/Director/AudioClipPlayable.h")]
     [NativeHeader("Runtime/Director/Core/HPlayable.h")]
@@ -21,6 +23,11 @@ namespace UnityEngine.Audio
     {
         PlayableHandle m_Handle;
 
+        ///<summary>Creates an <see cref="AudioClipPlayable" /> in the <see cref="PlayableGraph" />.</summary>
+        ///<param name="graph">The <see cref="PlayableGraph" /> that will contain the new <see cref="AudioClipPlayable" />.</param>
+        ///<param name="clip">The <see cref="AudioClip" /> that will be added in the <see cref="PlayableGraph" />.</param>
+        ///<param name="looping">True if the clip should loop, false otherwise.</param>
+        ///<returns>A <see cref="AudioClipPlayable" /> linked to the <see cref="PlayableGraph" />.</returns>
         public static AudioClipPlayable Create(PlayableGraph graph, AudioClip clip, bool looping)
         {
             var handle = CreateHandle(graph, clip, looping);
@@ -49,42 +56,50 @@ namespace UnityEngine.Audio
             m_Handle = handle;
         }
 
+        ///<exclude />
         public PlayableHandle GetHandle()
         {
             return m_Handle;
         }
 
+        ///<exclude />
         public static implicit operator Playable(AudioClipPlayable playable)
         {
             return new Playable(playable.GetHandle());
         }
 
+        ///<exclude />
         public static explicit operator AudioClipPlayable(Playable playable)
         {
             return new AudioClipPlayable(playable.GetHandle());
         }
 
+        ///<exclude />
         public bool Equals(AudioClipPlayable other)
         {
             return GetHandle() == other.GetHandle();
         }
 
 
+        ///<exclude />
         public AudioClip GetClip()
         {
             return GetClipInternal(ref m_Handle);
         }
 
+        ///<exclude />
         public void SetClip(AudioClip value)
         {
             SetClipInternal(ref m_Handle, value);
         }
 
+        ///<exclude />
         public bool GetLooped()
         {
             return GetLoopedInternal(ref m_Handle);
         }
 
+        ///<exclude />
         public void SetLooped(bool value)
         {
             SetLoopedInternal(ref m_Handle, value);
@@ -134,11 +149,13 @@ namespace UnityEngine.Audio
             SetSpatialBlendInternal(ref m_Handle, value);
         }
 
+        ///<exclude />
         public bool IsChannelPlaying()
         {
             return GetIsChannelPlayingInternal(ref m_Handle);
         }
 
+        ///<exclude />
         public double GetStartDelay()
         {
             return GetStartDelayInternal(ref m_Handle);
@@ -149,6 +166,7 @@ namespace UnityEngine.Audio
             SetStartDelayInternal(ref m_Handle, value);
         }
 
+        ///<exclude />
         public double GetPauseDelay()
         {
             return GetPauseDelayInternal(ref m_Handle);
@@ -166,11 +184,13 @@ namespace UnityEngine.Audio
             SetPauseDelayInternal(ref m_Handle, value);
         }
 
+        ///<exclude />
         public void Seek(double startTime, double startDelay)
         {
             Seek(startTime, startDelay, 0);
         }
 
+        ///<exclude />
         public void Seek(double startTime, double startDelay, [DefaultValue("0")] double duration)
         {
             SetStartDelayInternal(ref m_Handle, startDelay);

@@ -16,12 +16,11 @@ namespace Unity.GraphToolkit.Editor.Implementation
         Dictionary<Type, ItemLibraryDatabaseBase[]> m_ContextDatabases = new();
         ItemLibraryDatabaseBase[] m_GraphDatabases;
 
-        public override IReadOnlyList<Type> SupportedTypes => ((GraphModelImp)GraphModel).SupportedTypes;
+        public override IReadOnlyCollection<Type> AvailableVariableTypes => ((GraphModelImp)GraphModel).AvailableVariableTypes;
 
         public PublicDatabaseProviderImp(GraphModel graphModel)
-            : base(graphModel)
-        {
-        }
+            : base(graphModel) {}
+
         public override IReadOnlyList<ItemLibraryDatabaseBase> GetGraphElementsDatabases(BlackboardContentModel blackboardModel = null)
         {
             m_GraphDatabases ??= new ItemLibraryDatabaseBase[2];
@@ -79,10 +78,11 @@ namespace Unity.GraphToolkit.Editor.Implementation
         {
             var db = new GraphElementItemDatabase(GraphModel);
 
-            db.AddConstants(((GraphModelImp)GraphModel).SupportedTypes);
+            db.AddConstants(((GraphModelImp)GraphModel).AvailableConstantTypes);
 
             return db;
         }
+
         void AddNodes(GraphElementItemDatabase db)
         {
             foreach (var nodeType in ((GraphModelImp)GraphModel).SupportedNodes)

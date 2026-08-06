@@ -8,6 +8,7 @@ using System.Globalization;
 using System.Text;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Bindings;
 using UnityEngine.Pool;
 using UnityEngine.Scripting.APIUpdating;
@@ -115,9 +116,11 @@ namespace UnityEngine
             void Step() { state = unchecked(state * Multiplier64 + increment); }
         }
 
+        [NoAutoStaticsCleanup] // PcgRandom is an unmanaged value-type RNG state, safe to persist across code reloads
         static PcgRandom s_Random = new PcgRandom(0);
 
-        static Dictionary<string, Operator> s_Operators = new Dictionary<string, Operator>
+        [NoAutoStaticsCleanup] // immutable operator lookup table, safe to persist across code reloads
+        static readonly Dictionary<string, Operator> s_Operators = new Dictionary<string, Operator>
         {
             {"-", new Operator(Op.Sub, 2, 2, Associativity.Left)},
             {"+", new Operator(Op.Add, 2, 2, Associativity.Left)},

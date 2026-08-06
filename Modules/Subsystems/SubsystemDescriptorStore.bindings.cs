@@ -8,6 +8,8 @@ using UnityEngine.Scripting;
 
 namespace UnityEngine.SubsystemsImplementation
 {
+    ///<summary>Registration entry point for subsystems to register their descriptor.</summary>
+    ///<remarks>This is typically for use in platform-support packages.</remarks>
     [NativeHeader("Modules/Subsystems/SubsystemManager.h")]
     public static partial class SubsystemDescriptorStore
     {

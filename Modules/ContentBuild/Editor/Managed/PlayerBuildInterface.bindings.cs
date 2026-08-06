@@ -8,6 +8,7 @@ using System.Runtime.InteropServices;
 using UnityEngine.Bindings;
 using UnityEngine.Scripting;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Build.Player
 {
@@ -84,8 +85,9 @@ namespace UnityEditor.Build.Player
     }
 
     [NativeHeader("Modules/ContentBuild/Editor/Public/PlayerBuildInterface.h")]
-    public static class PlayerBuildInterface
+    public static partial class PlayerBuildInterface
     {
+        [AutoStaticsCleanupOnCodeReload]
         public static Func<IEnumerable<string>> ExtraTypesProvider;
 
         [FreeFunction(Name = "BuildPipeline::CompilePlayerScripts")]

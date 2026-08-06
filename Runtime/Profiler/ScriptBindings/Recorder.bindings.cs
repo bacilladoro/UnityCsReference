@@ -46,11 +46,13 @@ namespace UnityEngine.Profiling
                 m_RecorderGPU = new ProfilerRecorder(handle, 1, s_RecorderDefaultOptions | ProfilerRecorderOptions.GpuRecorder);
         }
 
+#pragma warning disable UA5000 // The Avoid Finalizer Analyzer produces compile errors for any new finalizers. This pre-existing finalizer declaration has been suppressed, but should be rewritten if possible.
         ~Recorder()
         {
             m_RecorderCPU.Dispose();
             m_RecorderGPU.Dispose();
         }
+#pragma warning restore UA5000
 
         public static Recorder Get(string samplerName)
         {

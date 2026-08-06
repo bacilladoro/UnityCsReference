@@ -21,16 +21,21 @@ namespace Unity.GraphToolkit.Editor
     /// To create a custom node, derive from <see cref="Node"/>, define its input and output ports using a port builder in <see cref="OnDefinePorts"/>,
     /// and define its <see cref="INodeOption"/>s in <see cref="OnDefineOptions"/>.
     ///
+    /// To customize the <see cref="UnityEngine.UIElements.VisualElement"/> generated for a node, derive from
+    /// <see cref="NodeView{T}"/> with your node type as the type argument, and add custom UI in the lifecycle
+    /// callbacks it exposes.
+    ///
     /// This class is used in combination with other types like <see cref="INode"/>, <see cref="IPort"/>, and <see cref="Graph"/>
     /// to construct and manage node-based workflows.
     ///
     /// See also:
-    /// 
+    ///
     ///- <see cref="INode"/> for the interface this class implements
     ///- <see cref="ContextNode"/> and <see cref="BlockNode"/> for composition patterns
     ///- <see cref="IVariableNode"/> for how to work with variable-based nodes
     ///- <see cref="ISubgraphNode"/> for how to work with subgraph-based nodes
-    /// 
+    ///- <see cref="NodeView{T}"/> for customizing the node's UI
+    ///
     /// </remarks>
     [Serializable]
     public abstract partial class Node : INode

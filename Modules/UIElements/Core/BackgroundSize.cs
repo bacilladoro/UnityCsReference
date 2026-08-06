@@ -10,7 +10,7 @@ using UnityEngine.Assertions;
 namespace UnityEngine.UIElements
 {
     /// <summary>
-    /// Script interface for <see cref="VisualElement"/> background-size style property <see cref="IStyle.BackgroundSize"/>.
+    /// Script interface for <see cref="VisualElement"/> background-size style property <see cref="IStyle.backgroundSize"/>.
     /// </summary>
     [Serializable]
     public partial struct BackgroundSize : IEquatable<BackgroundSize>

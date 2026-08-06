@@ -5,6 +5,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 using UnityEditorInternal;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -42,7 +43,9 @@ namespace UnityEditor
                 (int)GradientMode.Fixed
             };
         }
+        [NoAutoStaticsCleanup] // lazy GUIStyle/GUIContent cache; re-created on first access, safe to persist
         static Styles s_Styles;
+        [NoAutoStaticsCleanup] // lazy checker texture guarded by == null; re-created on first access, safe to persist
         static Texture2D s_BackgroundTexture;
 
         public class Swatch

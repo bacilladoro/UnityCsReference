@@ -4,11 +4,14 @@
 
 using System;
 using System.ComponentModel;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
     public static partial class PhysicsVisualizationSettings
     {
+        // No cleanup due to being deprecated and causing CS0619 on generated code
+        [NoAutoStaticsCleanup]
         [EditorBrowsable(EditorBrowsableState.Never)]
         [Obsolete("Enum PhysicsVisualizationSettings.FilterWorkflow has been deprecated.", true)]
         public static FilterWorkflow filterWorkflow { get; set; }

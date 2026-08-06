@@ -5,6 +5,7 @@
 using System;
 using UnityEngine;
 using UnityEngine.Animations;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -38,6 +39,7 @@ namespace UnityEditor
             public GUIContent FreezeAxes { get { return m_TranslationAxes; } }
         }
 
+        [NoAutoStaticsCleanup]
         private static Styles s_Style;
 
         public void OnEnable()

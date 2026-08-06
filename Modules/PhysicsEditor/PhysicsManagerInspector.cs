@@ -10,11 +10,13 @@ using UnityEngine.Assertions;
 using UnityEditor.UIElements;
 using System.Runtime.CompilerServices;
 using IPhysicsProjectSettingsECSInspectorExtension = UnityEditorInternal.IPhysicsProjectSettingsECSInspectorExtension;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
-    class PhysicsManagerInspector
+    partial class PhysicsManagerInspector
     {
+        [AutoStaticsCleanupOnCodeReload]
         public static IPhysicsProjectSettingsECSInspectorExtension EcsExtension = null;
 
         static class AssetPath
@@ -59,7 +61,8 @@ namespace UnityEditor
             
             const string dropDownTooltipBase = "Changing this value to another SDK integration has the potential to change the behavior of your physics Components. \nTweaking your physics simulation might be necessary due to behavior differences between different physics SDKs.";
 
-            public static string backendInfo = EditorGUIUtility.TrTempContent("Description: {0}\nSDK version: {1}.{2}.{3}\n Integration version: {4}.{5}.{6}").text; 
+            [NoAutoStaticsCleanup] // immutable format string set once at init, holds no user-code references
+            public static string backendInfo = EditorGUIUtility.TrTempContent("Description: {0}\nSDK version: {1}.{2}.{3}\n Integration version: {4}.{5}.{6}").text;
         }
 
         static SerializedObject LoadGameManagerAssetAtPath(string path)

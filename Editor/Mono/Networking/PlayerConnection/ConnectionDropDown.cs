@@ -12,21 +12,22 @@ using UnityEngine;
 using TreeView = UnityEditor.IMGUI.Controls.TreeView<int>;
 using TreeViewItem = UnityEditor.IMGUI.Controls.TreeViewItem<int>;
 using TreeViewState = UnityEditor.IMGUI.Controls.TreeViewState<int>;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Networking.PlayerConnection
 {
     internal static class ConnectionUIHelper
     {
-        private static string portPattern = @":\d{4,}";
-        private static string ipPattern = @"@\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3}";
-        private static string localHostPattern = @" (Localhost prohibited)";
+        private static readonly string portPattern = @":\d{4,}";
+        private static readonly string ipPattern = @"@\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3}";
+        private static readonly string localHostPattern = @" (Localhost prohibited)";
         public static readonly string kDevices = L10n.Tr("Devices");
 
         internal static class Content
         {
-            public static string PlayerLogging = L10n.Tr("Player Logging");
-            public static string FullLog = L10n.Tr("Full Log [Developer Mode Only]");
-            public static string Logging = L10n.Tr("Logging");
+            public static readonly string PlayerLogging = L10n.Tr("Player Logging");
+            public static readonly string FullLog = L10n.Tr("Full Log [Developer Mode Only]");
+            public static readonly string Logging = L10n.Tr("Logging");
         }
 
         public static string GetToolbarContent(string connectionName, GUIStyle style, int maxWidth)
@@ -221,7 +222,7 @@ namespace UnityEditor.Networking.PlayerConnection
             Unknown
         }
 
-        internal static string[] ConnectionMajorGroupLabels =
+        internal static readonly string[] ConnectionMajorGroupLabels =
         {
             "Editor",
             "Logging",
@@ -585,29 +586,32 @@ namespace UnityEditor.Networking.PlayerConnection
 
     internal class ConnectionDropDownStyles
     {
-        internal static float searchFieldPadding = 12f;
-        internal static float searchFieldVerticalSpacing = 12f;
+        internal static readonly float searchFieldPadding = 12f;
+        internal static readonly float searchFieldVerticalSpacing = 12f;
 
-        internal static GUIStyle sConnectionTrouble = "MenuItem";
-        internal static GUIStyle sTVLine = "TV Line";
+        internal static readonly GUIStyle sConnectionTrouble = "MenuItem";
+        internal static readonly GUIStyle sTVLine = "TV Line";
 
         internal static readonly Color SeparatorColor = new Color(0.5f, 0.5f, 0.5f, 0.5f);
-        internal static int ToggleRectWidth = 16;
-        internal static float SeparatorLineWidth = 1f;
-        internal static float SeparatorVerticalPadding = 2f;
-        public static float troubleShootBtnPadding = 10f;
+        internal static readonly int ToggleRectWidth = 16;
+        internal static readonly float SeparatorLineWidth = 1f;
+        internal static readonly float SeparatorVerticalPadding = 2f;
+        public static readonly float troubleShootBtnPadding = 10f;
     }
 
-    internal class ConnectionTreeViewWindow : PopupWindowContent
+    internal partial class ConnectionTreeViewWindow : PopupWindowContent
     {
         private ConnectionTreeView m_connectionTreeView;
         private SearchField m_SearchField;
 
         private ConnectionDropDownMultiColumnHeader multiColumnHeader;
         private IConnectionStateInternal state;
+        [AutoStaticsCleanupOnCodeReload]
         private static MultiColumnHeaderState multiColumnHeaderState;
+        [AutoStaticsCleanupOnCodeReload]
         private static TreeViewState treeViewState;
         private List<ConnectionDropDownItem> connectionItems;
+        [AutoStaticsCleanupOnCodeReload]
         private static bool firstOpen = true;
         float loggingVerticalPadding = 3f;
         float searchToLoggingPadding = 8f;
@@ -636,16 +640,16 @@ namespace UnityEditor.Networking.PlayerConnection
 
         static class Content
         {
-            private static GUIStyle style = MultiColumnHeader.DefaultStyles.columnHeader;
-            public static GUIContent PlayerName = new GUIContent("Player Name");
-            public static float PlayerNameMinWidth = 165;
-            public static GUIContent ProjectName = new GUIContent("Product Name");
-            public static float ProjectNameMinWidth = style.CalcSize(ProjectName).x;
-            public static GUIContent IP = new GUIContent("IP");
-            public static float IPMinWidth = style.CalcSize(GUIContent.Temp("00000")).x;
-            public static GUIContent Port = new GUIContent("Port");
-            public static float PortMinWidth = style.CalcSize(GUIContent.Temp("00000")).x;
-            public static GUIContent TroubleShoot = new GUIContent("Troubleshoot Connection Issues");
+            private static readonly GUIStyle style = MultiColumnHeader.DefaultStyles.columnHeader;
+            public static readonly GUIContent PlayerName = new GUIContent("Player Name");
+            public static readonly float PlayerNameMinWidth = 165;
+            public static readonly GUIContent ProjectName = new GUIContent("Product Name");
+            public static readonly float ProjectNameMinWidth = style.CalcSize(ProjectName).x;
+            public static readonly GUIContent IP = new GUIContent("IP");
+            public static readonly float IPMinWidth = style.CalcSize(GUIContent.Temp("00000")).x;
+            public static readonly GUIContent Port = new GUIContent("Port");
+            public static readonly float PortMinWidth = style.CalcSize(GUIContent.Temp("00000")).x;
+            public static readonly GUIContent TroubleShoot = new GUIContent("Troubleshoot Connection Issues");
         }
 
         void ClosePopUp()

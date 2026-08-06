@@ -34,6 +34,14 @@ namespace UnityEditorInternal
         [UnityEngine.SerializeField]
         public DynamicModuleDependencies[] dynamicModuleDependencies;
 
+        /// <summary>
+        /// ManagedCapture config JSON string supplied by the Editor at build time (Option D2).
+        /// When non-null it drives ManagedCapture injection; this is the only mechanism for
+        /// supplying the config.
+        /// </summary>
+        [UnityEngine.SerializeField]
+        public string managedCaptureConfig;
+
         [System.Serializable]
         public class SerializedTypeData
         {

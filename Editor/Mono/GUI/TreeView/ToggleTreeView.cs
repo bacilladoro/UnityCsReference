@@ -28,7 +28,7 @@ internal class ToggleTreeView<T> : TreeView where T : ToggleTreeViewItem, new()
         public static readonly GUIContent filterSelected = new GUIContent(EditorGUIUtility.FindTexture("FilterSelectedOnly"), "Filter selected only");
     }
 
-    static string s_Regex = "(?:(.*) |^)(s:)(false|true)(?: (.*)|$)";
+    static readonly string s_Regex = "(?:(.*) |^)(s:)(false|true)(?: (.*)|$)";
 
     Func<T> m_RebuildRoot;
     List<TreeViewItem> m_DefaultRows;

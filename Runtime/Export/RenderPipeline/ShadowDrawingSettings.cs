@@ -20,6 +20,7 @@ namespace UnityEngine.Rendering
         ShadowSplitData m_SplitData;
         ShadowObjectsFilter m_ObjectsFilter;
         BatchCullingProjectionType m_ProjectionType;
+        int m_SortShadowcastersByRenderQueue;
 
         public CullingResults cullingResults
         {
@@ -75,6 +76,12 @@ namespace UnityEngine.Rendering
             set { m_ProjectionType = value; }
         }
 
+        public bool sortShadowcastersByRenderQueue
+        {
+            get { return m_SortShadowcastersByRenderQueue != 0; }
+            set { m_SortShadowcastersByRenderQueue = value ? 1 : 0; }
+        }
+
         public ShadowDrawingSettings(CullingResults cullingResults, int lightIndex)
         {
             m_CullingResults = cullingResults;
@@ -86,6 +93,7 @@ namespace UnityEngine.Rendering
             m_SplitData.shadowCascadeBlendCullingFactor = 1f;
             m_ObjectsFilter = ShadowObjectsFilter.AllObjects;
             m_ProjectionType = BatchCullingProjectionType.Unknown;
+            m_SortShadowcastersByRenderQueue = 0;
         }
 
         [Obsolete("ShadowDrawingSettings(CullingResults, int, BatchCullingProjectionType) is deprecated. Use ShadowDrawingSettings(CullingResults, int) instead.")]
@@ -103,7 +111,8 @@ namespace UnityEngine.Rendering
                 && m_SplitData.Equals(other.m_SplitData)
                 && m_UseRenderingLayerMaskTest.Equals(other.m_UseRenderingLayerMaskTest)
                 && m_BatchLayerMask == other.m_BatchLayerMask
-                && m_ObjectsFilter.Equals(other.m_ObjectsFilter);
+                && m_ObjectsFilter.Equals(other.m_ObjectsFilter)
+                && m_SortShadowcastersByRenderQueue.Equals(other.m_SortShadowcastersByRenderQueue);
         }
 
         public override bool Equals(object obj)
@@ -123,6 +132,7 @@ namespace UnityEngine.Rendering
                 hashCode = (hashCode * 397) ^ (int)m_BatchLayerMask;
                 hashCode = (hashCode * 397) ^ m_SplitData.GetHashCode();
                 hashCode = (hashCode * 397) ^ (int)m_ObjectsFilter;
+                hashCode = (hashCode * 397) ^ m_SortShadowcastersByRenderQueue;
                 return hashCode;
             }
         }

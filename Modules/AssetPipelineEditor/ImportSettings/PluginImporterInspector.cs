@@ -41,9 +41,9 @@ namespace UnityEditor
             public static readonly GUIContent kPlatformSettings = EditorGUIUtility.TrTextContent("Platform settings");
             public static readonly GUIContent kInformation = EditorGUIUtility.TrTextContent("Information");
 
-            static string kCompatibleTextIndividual = L10n.Tr("Define constraint is compatible.");
-            static string kIncompatibleTextIndividual = L10n.Tr("Define constraint is incompatible.");
-            static string kInvalidTextIndividual = L10n.Tr("Define constraint is invalid.");
+            static readonly string kCompatibleTextIndividual = L10n.Tr("Define constraint is compatible.");
+            static readonly string kIncompatibleTextIndividual = L10n.Tr("Define constraint is incompatible.");
+            static readonly string kInvalidTextIndividual = L10n.Tr("Define constraint is invalid.");
 
             // This is used to make everything in reorderable list elements centered vertically.
             public const int kCenterHeightOffset = 1;
@@ -58,8 +58,8 @@ namespace UnityEditor
             public static Texture2D validDefineConstraint => EditorGUIUtility.pixelsPerPoint > 1 ? kValidDefineConstraintHighDpi : kValidDefineConstraint;
             public static Texture2D invalidDefineConstraint => EditorGUIUtility.pixelsPerPoint > 1 ? kInvalidDefineConstraintHighDpi : kInvalidDefineConstraint;
 
-            static string kCompatibleTextTitle = L10n.Tr("Define constraints are compatible.");
-            static string kIncompatibleTextTitle = L10n.Tr("One or more define constraints are invalid or incompatible.");
+            static readonly string kCompatibleTextTitle = L10n.Tr("Define constraints are compatible.");
+            static readonly string kIncompatibleTextTitle = L10n.Tr("One or more define constraints are invalid or incompatible.");
 
             public static string GetTitleTooltipFromDefineConstraintCompatibility(bool compatible)
             {

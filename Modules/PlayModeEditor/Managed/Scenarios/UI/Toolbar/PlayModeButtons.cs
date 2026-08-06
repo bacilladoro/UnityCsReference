@@ -9,16 +9,19 @@ using UnityEditor.Toolbars;
 using UnityEngine;
 using UnityEngine.UIElements;
 using static UnityEditor.Toolbars.Playbar;
+using Unity.Scripting.LifecycleManagement;
 
 namespace Unity.PlayMode.Editor;
 
-static class PlayModeButtons
+static partial class PlayModeButtons
 {
     const string k_ElementId = "Play Mode Controls";
 
+    [AutoStaticsCleanupOnCodeReload] // delegate field: re-registered by [OnCodeLoaded] after each reload
     internal static Action RefreshToolbarCallback;
 
-    static PlayModeButtons()
+    [OnCodeLoaded]
+    static void Initialize()
     {
         RefreshToolbarCallback = RefreshToolbar;
 
@@ -33,6 +36,7 @@ static class PlayModeButtons
         };
     }
 
+    [NoAutoStaticsCleanup] // re-entrancy guard: set and restored within the same call frame
     private static bool s_IsRefreshing;
 
     static void RefreshToolbar()

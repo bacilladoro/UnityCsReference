@@ -96,9 +96,11 @@ namespace UnityEngine
         public delegate void AdvertisingIdentifierCallback(string advertisingId, bool trackingEnabled, string errorMsg);
 
         public delegate void LowMemoryCallback();
+        [AutoStaticsCleanupOnCodeReload]
         public static event LowMemoryCallback lowMemory;
 
         public delegate void MemoryUsageChangedCallback(in ApplicationMemoryUsageChange usage);
+        [AutoStaticsCleanupOnCodeReload]
         public static event MemoryUsageChangedCallback memoryUsageChanged;
 
         [RequiredByNativeCode]
@@ -138,7 +140,9 @@ namespace UnityEngine
         // Use this delegate type with RegisterLogCallback to monitor what gets logged.
         public delegate void LogCallback(string condition, string stackTrace, LogType type);
 
+        [AutoStaticsCleanupOnCodeReload]
         private static LogCallback s_LogCallbackHandler;
+        [AutoStaticsCleanupOnCodeReload]
         private static LogCallback s_LogCallbackHandlerThreaded;
 
         public static event LogCallback logMessageReceived
@@ -185,6 +189,7 @@ namespace UnityEngine
                 threadedHandler(logString, stackTrace, type);
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         internal static AdvertisingIdentifierCallback OnAdvertisingIdentifierCallback;
 
         internal static void InvokeOnAdvertisingIdentifierCallback(string advertisingId, bool trackingEnabled)
@@ -321,14 +326,19 @@ namespace UnityEngine
             }
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<bool> focusChanged;
 
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<string> deepLinkActivated;
 
+        [AutoStaticsCleanupOnCodeReload]
         public static event Func<bool> wantsToQuit;
 
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action quitting;
 
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action unloading;
 
         [RequiredByNativeCode]
@@ -352,6 +362,7 @@ namespace UnityEngine
             return true;
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         private static CancellationTokenSource s_currentCancellationTokenSource = new CancellationTokenSource();
         public static CancellationToken exitCancellationToken => s_currentCancellationTokenSource.Token;
 
@@ -471,6 +482,7 @@ namespace UnityEngine
             }
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         private static volatile LogCallback s_RegisterLogCallbackDeprecated;
 
         [System.Obsolete("Use SceneManager.sceneCountInBuildSettings")]

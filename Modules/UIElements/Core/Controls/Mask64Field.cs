@@ -578,7 +578,7 @@ namespace UnityEngine.UIElements
         /// Initializes and returns an instance of Mask64Field.
         /// </summary>
         /// <param name="choices">A list of choices to populate the field.</param>
-        /// <param name="defaultValue">The initial mask value for this field.</param>
+        /// <param name="defaultMask">The initial mask value for this field.</param>
         /// <param name="formatSelectedValueCallback">A callback to format the selected value. Unity calls this method automatically when a new value is selected in the field.</param>
         /// <param name="formatListItemCallback">The initial mask value this field should use. Unity calls this method automatically when displaying choices for the field.</param>
         public Mask64Field(List<string> choices, UInt64 defaultMask, Func<string, string> formatSelectedValueCallback = null, Func<string, string> formatListItemCallback = null)
@@ -591,7 +591,7 @@ namespace UnityEngine.UIElements
         /// </summary>
         /// <param name="label">The text to use as a label for the field.</param>
         /// <param name="choices">A list of choices to populate the field.</param>
-        /// <param name="defaultValue">The initial mask value for this field.</param>
+        /// <param name="defaultMask">The initial mask value for this field.</param>
         /// <param name="formatSelectedValueCallback">A callback to format the selected value. Unity calls this method automatically when a new value is selected in the field.</param>
         /// <param name="formatListItemCallback">The initial mask value this field should use. Unity calls this method automatically when displaying choices for the field.</param>
         public Mask64Field(string label, List<string> choices, UInt64 defaultMask, Func<string, string> formatSelectedValueCallback = null, Func<string, string> formatListItemCallback = null)

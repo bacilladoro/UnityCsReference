@@ -13,10 +13,12 @@ using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs.LowLevel.Unsafe;
 using UnityEngine;
 using UnityEngine.Analytics;
+using Unity.Scripting.LifecycleManagement;
 
 
 internal class JobsMenuProvider: SettingsProvider
 {
+    [NoAutoStaticsCleanup] // int job-worker-count backup; reset on editor restart by design, safe to persist across reload
     private static int savedJobWorkerCount = JobsUtility.JobWorkerCount;
 
     class JobsProperties

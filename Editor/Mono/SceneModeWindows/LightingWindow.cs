@@ -10,11 +10,12 @@ using UnityEngine.Rendering;
 using System.Text;
 using System.Globalization;
 using System.Linq;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
     [EditorWindowTitle(title = "Lighting", icon = "Lighting")]
-    internal class LightingWindow : EditorWindow
+    internal partial class LightingWindow : EditorWindow
     {
         const string m_UseHardwareRayTracingConfigKey = "useHardwareRayTracing";
 
@@ -71,7 +72,7 @@ namespace UnityEditor
                 EditorGUIUtility.TrTextContent("Lowest Memory Usage"),
             };
 
-            public static string[] BakeModeStrings =
+            public static readonly string[] BakeModeStrings =
             {
                 "Bake Reflection Probes",
                 "Clear Baked Data"
@@ -116,7 +117,8 @@ namespace UnityEditor
 
         Dictionary<Mode, WindowTab> m_Tabs = new Dictionary<Mode, WindowTab>();
 
-        static SerializedObject m_LightingSettings;
+        [AutoStaticsCleanupOnCodeReload]
+        static SerializedObject m_LightingSettings = null;
 
         bool m_IsRealtimeSupported = false;
         bool m_IsBakedSupported = false;
@@ -688,6 +690,7 @@ namespace UnityEditor
         private static readonly string _coreRenderPipelinesPackageName = "com.unity.render-pipelines.core";
         private static bool IsCoreRenderPipelinesPackageAvailable() => PackageManager.PackageInfo.FindForPackageName(_coreRenderPipelinesPackageName) is not null;
 
+        [AutoStaticsCleanupOnCodeReload]
         private static PackageManager.Requests.AddRequest _coreRenderPipelinesPackageAddRequest = null;
         private static void CoreRenderPipelinesPackageInstallProgress()
         {
@@ -1013,6 +1016,7 @@ namespace UnityEditor
             return true;
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         internal static LightingWindow s_Window;
         private static readonly double s_MraysPerSecRepaintThreshold = 0.01;
         internal static bool isShown => s_Window && !s_Window.docked;

@@ -35,9 +35,6 @@ namespace UnityEditor.Build.Profile
             if (buildProfile == null)
                 return;
 
-            if (buildProfile.isMultiTarget)
-                buildProfile.activePlatformGuid = buildProfile.selectedPlatformGuid;
-
             BuildProfileModuleUtil.SwitchLegacyActiveFromBuildProfile(buildProfile);
         }
 

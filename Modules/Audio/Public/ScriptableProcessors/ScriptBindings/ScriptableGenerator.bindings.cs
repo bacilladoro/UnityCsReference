@@ -45,7 +45,7 @@ namespace UnityEngine.Audio
         /// <remarks>
         /// Interface references are not directly serializable in user scripts if they are implemented on a <see cref="UnityEngine.Object"/>,
         /// even if using <see cref="SerializeReference"/>.
-        /// This helper struct additionally provides a <see cref="PropertyDrawer"/> giving a UI with an object field properly scoped to
+        /// This helper struct additionally provides a <see cref="T:UnityEditor.PropertyDrawer"/> giving a UI with an object field properly scoped to
         /// <see cref="IAudioGenerator"/> objects.
         /// </remarks>
         [Serializable]
@@ -156,7 +156,7 @@ namespace UnityEngine.Audio
             /// <remarks>
             /// Realtime <see cref="GeneratorInstance"/>s shall return the same output every time they are processed.
             /// Additionally, the system enforces the buffer size of the passed-in <see cref="ChannelBuffer"/> equals the length of the
-            /// <see cref="AudioFormat.bufferSize"/> that the <see cref="ControlContext"/> runs in.
+            /// <see cref="AudioFormat.bufferFrameCount"/> that the <see cref="ControlContext"/> runs in.
             ///
             /// Use cases include hardware devices that cannot be rendered at arbitrary rate, or systematic graphs that render ahead of time.
             /// If you are not sure whether your <see cref="GeneratorInstance"/> is realtime or not, you should set this to false.
@@ -186,7 +186,7 @@ namespace UnityEngine.Audio
             /// the number of channels this <see cref="GeneratorInstance"/> will use.
             /// </summary>
             /// <remarks>
-            /// This directly determines the size of the <see cref="ChannelBuffer"/> passed to the <see cref="Process"/> method.
+            /// This directly determines the size of the <see cref="ChannelBuffer"/> passed to the <c>Process</c> method.
             /// </remarks>
             public readonly AudioSpeakerMode speakerMode;
 
@@ -359,7 +359,7 @@ namespace UnityEngine.Audio
         public ref struct Arguments
         {
             /// <summary>
-            /// If <see cref="GeneratorInstance.IDefinition.IsRealtime"/> is set, this field contains the aggregate playback speed of this source.
+            /// If <see cref="GeneratorInstance.Configuration.IsRealtime"/> is set, this field contains the aggregate playback speed of this source.
             /// </summary>
             internal float Speed;
         }
@@ -370,7 +370,7 @@ namespace UnityEngine.Audio
         /// <remarks>
         /// The control side of a <see cref="ProcessorInstance"/> receives various callbacks from a <see cref="ControlContext"/>
         /// from the logical control thread.
-        /// You can annotate this with <see cref="Unity.Burst.BurstCompileAttribute"/> to have it compiled with Burst.
+        /// You can annotate this with <see cref="T:Unity.Burst.BurstCompileAttribute"/> to have it compiled with Burst.
         /// </remarks>
         /// <typeparam name="TRealtime">The tandem processing counterpart.</typeparam>
         /// <seealso cref="ProcessorInstance.IControl{TRealtime}"/>
@@ -420,7 +420,7 @@ namespace UnityEngine.Audio
         /// <remarks>
         /// The processing side of a <see cref="ProcessorInstance"/> receives various callbacks from a <see cref="RealtimeContext"/>
         /// from the logical processing thread.
-        /// You can annotate this with <see cref="Unity.Burst.BurstCompileAttribute"/> to have it compiled with Burst.
+        /// You can annotate this with <see cref="T:Unity.Burst.BurstCompileAttribute"/> to have it compiled with Burst.
         /// </remarks>
         /// <seealso cref="ProcessorInstance.IRealtime"/>
         [JobProducerType(typeof(IGeneratorProcessorExtensions.JobStruct<>))]
@@ -450,6 +450,7 @@ namespace UnityEngine.Audio
         internal struct GeneratorHeader
         {
             internal ProcessorHeader Processor;
+            void* m_Channel, m_DSP;
             internal Configuration Configuration;
         }
 
@@ -603,7 +604,7 @@ namespace UnityEngine.Audio
             internal float* AudioBuffer;
             internal DualThreadHandle Self;
             /// <summary>
-            /// The total size of <see cref="AudioBuffer"/> is <see cref="FrameCount"/> times the amount of channels this generator has declared (<see cref="GeneratorInstance.Configuration.setup.channelCount"/>).
+            /// The total size of <see cref="AudioBuffer"/> is <see cref="FrameCount"/> times the amount of channels this generator has declared (<c>channelCount</c>).
             /// </summary>
             internal int FrameCount;
             internal GeneratorInstance.Arguments GeneratorArguments;

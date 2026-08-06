@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.TerrainTools;
 using UnityEngine.Scripting.APIUpdating;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.TerrainTools
 {
@@ -17,14 +18,18 @@ namespace UnityEditor.TerrainTools
     }
 
     [MovedFrom("UnityEditor.Experimental.TerrainAPI")]
-    public static class TerrainPaintUtilityEditor
+    public static partial class TerrainPaintUtilityEditor
     {
         // This maintains the list of terrains we have touched in the current operation (and the current operation identifier, as an undo group)
         // We track this to have good cross-tile undo support: each modified tile should be added, at most, ONCE within a single operation
+        [NoAutoStaticsCleanup] // undo-group id; value-type sentinel (-1), re-synced against Undo.GetCurrentGroup() on next paint operation
         private static int s_CurrentOperationUndoGroup = -1;
+        [AutoStaticsCleanupOnCodeReload]
         private static Dictionary<UnityEngine.Object, int> s_CurrentOperationUndoStack = new Dictionary<UnityEngine.Object, int>();
 
-        static TerrainPaintUtilityEditor()
+        // Re-subscribe to PaintContext.onTerrainTileBeforePaint after each code (re)load, since the event is cleared on reload.
+        [OnCodeLoaded]
+        static void Initialize()
         {
             PaintContext.onTerrainTileBeforePaint += (tile, action, editorUndoName) =>
             {
@@ -214,6 +219,7 @@ namespace UnityEditor.TerrainTools
             heightmapTexture.filterMode = oldFilter;
         }
 
+        [NoAutoStaticsCleanup] // lazy material cache; lazy-init pattern, no code-reload-sensitive state
         static Material m_BrushPreviewMaterial = null;
     }
 }

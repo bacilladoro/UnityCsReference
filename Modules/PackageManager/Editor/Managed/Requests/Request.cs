@@ -131,6 +131,7 @@ namespace UnityEditor.PackageManager.Requests
             m_Serializing = false;
         }
 
+#pragma warning disable UA5000 // The Avoid Finalizer Analyzer produces compile errors for any new finalizers. This pre-existing finalizer declaration has been suppressed, but should be rewritten if possible.
         ~Request()
         {
             if (!m_Serializing)
@@ -140,6 +141,7 @@ namespace UnityEditor.PackageManager.Requests
                 ReleaseCompletedOperation(Id);
             }
         }
+#pragma warning restore UA5000
 
         /// <summary>
         /// Constructor to support serialization.  Internal to prevent

@@ -3,14 +3,18 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 
 namespace UnityEditor.QuickInstall
 {
-    internal class QuickInstallMenuItem
+    internal partial class QuickInstallMenuItem
     {
         readonly MenuConfig m_Config;
         readonly string m_PackageName;
+        // Resets on code reload: this is a "menu refresh scheduled" gate. The pending EditorApplication.delayCall is
+        // dropped on reload, so the flag must return to false or AddMenuItem/RemoveMenuItem would never reschedule.
+        [AutoStaticsCleanupOnCodeReload]
         static bool s_RefreshScheduled = false;
 
         internal QuickInstallMenuItem(string packageName, MenuConfig config)

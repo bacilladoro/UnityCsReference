@@ -18,6 +18,7 @@ namespace UnityEngine
     ///<seealso href="xref:class-Camera">camera component</seealso>
     [RequireComponent(typeof(Camera))]
     [NativeHeader("Modules/Streaming/StreamingController.h")]
+    [NativeClass("StreamingController", PersistentTypeId = 0x5BF715FE)]
     public class StreamingController : Behaviour
     {
         ///<summary>Offset applied to the mipmap level chosen by the texture streaming system for any textures visible from this camera. This Offset can take either a positive or negative value.</summary>

@@ -8,6 +8,7 @@ using UnityEditorInternal;
 using UnityEditor.Scripting;
 using System.Collections.Generic;
 using System.IO;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -32,6 +33,7 @@ namespace UnityEditor
             }
         }
 
+        [NoAutoStaticsCleanup] // lazy GUIStyle/GUIContent cache; re-created on first access, safe to persist
         static Styles s_Styles = null;
         List<string> m_Assets;
         List<string> m_AssetsToSave;

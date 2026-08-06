@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.Assertions;
+using UnityEngine.Pool;
 using UnityEngine.UIElements;
 
 namespace Unity.UIToolkit.Editor.Utilities;
@@ -102,14 +103,60 @@ static class VisualElementUtility
             .First();
     }
 
-    // Convenience for the SceneView picker: given a scene-original element and the panel of an
-    // active editing stage, returns the matching clone element in the stage panel (or null if
-    // either side has no asset / no clone of it).
+    // Convenience for the SceneView picker: given a scene-original element and the panel of an active
+    // editing stage, returns the matching clone in the stage panel; null when the staged document is
+    // unrelated (callers keep the scene element).
     public static VisualElement FindCorrespondingStageClone(this VisualElement sceneElement, Panel stagePanel)
     {
-        var asset = sceneElement?.visualElementAsset;
-        if (asset == null)
-            return null;
-        return stagePanel?.visualTree.FindElementByAsset(asset);
+        return stagePanel?.visualTree.FindCorrespondingElement(sceneElement);
     }
+
+    // Maps `reference` to the descendant of `root` with the same asset and in-memory id path (the
+    // exact repeated-UXML instance). Paths align on the leaf: a tree rooted at the nested document
+    // itself (an isolation stage, a direct panel) just lacks the outer instance ids.
+    public static VisualElement FindCorrespondingElement(this VisualElement root, VisualElement reference)
+    {
+        var asset = reference?.visualElementAsset;
+        if (root == null || asset == null)
+            return null;
+
+        using var _ = ListPool<int>.Get(out var referencePath);
+        if (!VisualElementReferenceTools.TryGetInMemoryPath(reference, referencePath))
+            return null;
+
+        using var __ = ListPool<int>.Get(out var candidatePath);
+        VisualElement exact = null;
+        VisualElement corresponding = null;
+
+        root.Query<VisualElement>().Where(e => AssetsMatch(e.visualElementAsset, asset)).ForEach(candidate =>
+        {
+            if (exact != null || !VisualElementReferenceTools.TryGetInMemoryPath(candidate, candidatePath))
+                return;
+            if (!PathsCorrespond(referencePath, candidatePath))
+                return;
+
+            if (candidatePath.Count == referencePath.Count)
+                exact = candidate;
+            else
+                corresponding ??= candidate;
+        });
+
+        return exact ?? corresponding;
+    }
+
+    // Root-to-leaf id paths, compared leaf-aligned.
+    static bool PathsCorrespond(List<int> a, List<int> b)
+    {
+        var n = Mathf.Min(a.Count, b.Count);
+        for (var i = 1; i <= n; ++i)
+        {
+            if (a[^i] != b[^i])
+                return false;
+        }
+
+        return true;
+    }
+
+    static bool AssetsMatch(VisualElementAsset a, VisualElementAsset b)
+        => a != null && b != null && a.id == b.id && a.visualTreeAsset == b.visualTreeAsset;
 }

@@ -759,7 +759,7 @@ namespace UnityEngine.Events
 
     [Serializable]
     [UsedByNativeCode]
-    public abstract class UnityEventBase : ISerializationCallbackReceiver
+    public abstract partial class UnityEventBase : ISerializationCallbackReceiver
     {
         [AutoStaticsCleanupOnCodeReload(CleanupStrategy = CleanupStrategy.Clear)]
         static readonly List<WeakReference<UnityEventBase>> s_UnityEvents = new();

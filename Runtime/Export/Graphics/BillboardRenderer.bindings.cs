@@ -11,6 +11,7 @@ namespace UnityEngine
 {
     /// Represents a billboard
     [NativeHeader("Runtime/Graphics/Billboard/BillboardAsset.h")]
+    [global::UnityEngine.NativeClass("BillboardAsset", PersistentTypeId = 226)]
     [NativeHeader("Runtime/Export/Graphics/BillboardRenderer.bindings.h")]
     public sealed class BillboardAsset : Object
     {
@@ -162,6 +163,7 @@ namespace UnityEngine
     }
 
     /// Renders a billboard.
+    [global::UnityEngine.NativeClass("BillboardRenderer", PersistentTypeId = 227)]
     [NativeHeader("Runtime/Graphics/Billboard/BillboardRenderer.h")]
     public sealed class BillboardRenderer : Renderer
     {

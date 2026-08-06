@@ -37,11 +37,13 @@ namespace UnityEngine
             m_Ptr = source;
         }
 
+#pragma warning disable UA5000 // The Avoid Finalizer Analyzer produces compile errors for any new finalizers. This pre-existing finalizer declaration has been suppressed, but should be rewritten if possible.
         ~RectOffset()
         {
             if (m_SourceStyle == null)
                 Destroy();
         }
+#pragma warning restore UA5000
 
         // Creates a new rectangle with offsets.
         public RectOffset(int left, int right, int top, int bottom)

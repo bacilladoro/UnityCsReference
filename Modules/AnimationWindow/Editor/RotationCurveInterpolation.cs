@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using UnityEditorInternal;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -46,6 +47,7 @@ namespace UnityEditor
 
         // Maps all rotation euler interpolation variants to their m_LocalRotation equivalent
         // so that node IDs stay stable when the interpolation mode changes.
+        [NoAutoStaticsCleanup] // immutable string->string lookup table built once from literals; no user refs, safe to persist
         private static readonly Dictionary<string, string> s_PropertyNameForHashing = new Dictionary<string, string>(StringComparer.Ordinal)
         {
             { "localEulerAnglesRaw",      "m_LocalRotation"   },
@@ -69,6 +71,7 @@ namespace UnityEditor
             return s_PropertyNameForHashing.TryGetValue(propertyName, out string canonical) ? canonical : propertyName;
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         static List<EditorCurveBinding> s_BindingsCache;
         const string s_PropertyWithSuffixRegex = @"(?<suffix>\.[xyz])$";
         internal static EditorCurveBinding[] ConvertRotationPropertiesToInterpolationType(ReadOnlySpan<EditorCurveBinding> selection, Mode newInterpolationMode)

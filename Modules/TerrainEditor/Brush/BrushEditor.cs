@@ -24,12 +24,12 @@ namespace UnityEditor
 
         static class Styles
         {
-            public static GUIContent readonlyText = EditorGUIUtility.TrTextContent("One or more selected Brushes are read-only.");
-            public static GUIContent maskTexture = EditorGUIUtility.TrTextContent("Mask Texture", "Texture Red channel controls the shape of the Brush");
-            public static GUIContent falloff = EditorGUIUtility.TrTextContent("Falloff Curve", "Controls the Brush falloff curve, over the distance from the center of the Brush.");
-            public static GUIContent radiusScale = EditorGUIUtility.TrTextContent("Falloff Radius Scale", "Controls the radius of the falloff curve.");
-            public static GUIContent remap = EditorGUIUtility.TrTextContent("Brush Remap", "Remaps the grayscale values of the Brush");
-            public static GUIContent remapInvert = EditorGUIUtility.TrTextContent("Brush Invert", "Inverts the Brush shape, swapping black and white");
+            public static readonly GUIContent readonlyText = EditorGUIUtility.TrTextContent("One or more selected Brushes are read-only.");
+            public static readonly GUIContent maskTexture = EditorGUIUtility.TrTextContent("Mask Texture", "Texture Red channel controls the shape of the Brush");
+            public static readonly GUIContent falloff = EditorGUIUtility.TrTextContent("Falloff Curve", "Controls the Brush falloff curve, over the distance from the center of the Brush.");
+            public static readonly GUIContent radiusScale = EditorGUIUtility.TrTextContent("Falloff Radius Scale", "Controls the radius of the falloff curve.");
+            public static readonly GUIContent remap = EditorGUIUtility.TrTextContent("Brush Remap", "Remaps the grayscale values of the Brush");
+            public static readonly GUIContent remapInvert = EditorGUIUtility.TrTextContent("Brush Invert", "Inverts the Brush shape, swapping black and white");
         }
 
 

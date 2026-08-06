@@ -132,6 +132,10 @@ namespace UnityEditor.Search
         public void SetValueWithoutNotify(string newValue)
         {
             searchTextInput.SetValueWithoutNotify(newValue);
+
+            if (panel == null)
+                return;
+
             UpdateCancelButton();
             UpdatePlaceholders();
             UpdateQueryErrors();

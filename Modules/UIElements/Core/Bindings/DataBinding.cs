@@ -13,7 +13,7 @@ namespace UnityEngine.UIElements
     /// <summary>
     /// Binding mode to control how a binding is updated.
     /// </summary>
-    /// <remarks>To let the data binding system know that the value in the UI changed, use <see cref="VisualElement.NotifyPropertyChanged"/>.</remarks>
+    /// <remarks>To let the data binding system know that the value in the UI changed, use <c>VisualElement.NotifyPropertyChanged</c>.</remarks>
     public enum BindingMode
     {
         /// <summary>

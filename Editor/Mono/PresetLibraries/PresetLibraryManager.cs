@@ -6,6 +6,7 @@ using System.IO;
 using UnityEngine;
 using System.Collections.Generic;
 using UnityEditorInternal;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -130,6 +131,7 @@ namespace UnityEditor
 
     internal class PresetLibraryManager : ScriptableSingleton<PresetLibraryManager>
     {
+        [NoAutoStaticsCleanup] // Transient last-error string, consumed and reset to null on read; safe to persist across code reload
         static string s_LastError = null;
         private List<LibraryCache> m_LibraryCaches = new List<LibraryCache>();
 

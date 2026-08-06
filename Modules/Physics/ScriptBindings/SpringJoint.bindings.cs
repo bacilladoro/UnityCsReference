@@ -12,7 +12,7 @@ namespace UnityEngine
     ///The minDistance and maxDistance properties add on top of this implicit distance.</remarks>
     [RequireComponent(typeof(Rigidbody))]
     [NativeHeader("Modules/Physics/SpringJoint.h")]
-    [NativeClass("Unity::SpringJoint")]
+    [NativeClass("Unity::SpringJoint", PersistentTypeId = 145)]
     public class SpringJoint : Joint
     {
         ///<summary>The spring force used to keep the two objects together.</summary>

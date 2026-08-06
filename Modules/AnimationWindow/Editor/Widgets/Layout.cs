@@ -7,6 +7,7 @@ using Unity.IntegerTime;
 using UnityEditorInternal;
 using UnityEngine;
 using UnityEngine.UIElements;
+using Unity.Scripting.LifecycleManagement;
 using Button = UnityEngine.UIElements.Button;
 using UnityObject = UnityEngine.Object;
 
@@ -20,6 +21,7 @@ using UnityEditor.UIElements;
 using FrameRate = Unity.Timeline.Foundation.Time.FrameRate;
 using CanvasManager = Unity.Timeline.Foundation.View.Internals.CanvasManager;
 using TimeRange = Unity.Timeline.Foundation.Time.TimeRange;
+using ObjectField = UnityEditor.UIElements.ObjectField;
 
 namespace UnityEditor.Animations.AnimationWindow.Widgets
 {
@@ -41,6 +43,7 @@ namespace UnityEditor.Animations.AnimationWindow.Widgets
         const string k_AnimationLinkWithSequencerButton = "animation-linkWithSequencerButton";
 
         const string k_AnimationClipDropdown = "animation-clipDropdown";
+        const string k_AnimationClipDropdownHidden = "animation-clipDropdown--hidden";
         const string k_AnimationFrameRate = "animation-frameRate";
 
         const string k_AnimationPreviewButton = "animation-previewButton";
@@ -61,25 +64,27 @@ namespace UnityEditor.Animations.AnimationWindow.Widgets
 
         const string k_AnimationOnboarding = "animation-onboarding";
 
+        [NoAutoStaticsCleanup] // immutable CSS property key; safe to persist
         static readonly CustomStyleProperty<float> k_PreviewColorMultiplier = new CustomStyleProperty<float>("--preview-color-multiplier");
+        [NoAutoStaticsCleanup]
         static readonly CustomStyleProperty<float> k_RecordColorMultiplier = new CustomStyleProperty<float>("--record-color-multiplier");
 
-        static string s_AnimatorOptimizedText = L10n.Tr("Editing and playback of animations on optimized game object hierarchy is not supported.\nPlease select a game object that does not have 'Optimize Game Objects' applied.");
-        static string s_AnimatorAndAnimationClipText = L10n.Tr("an Animator and an Animation Clip");
-        static string s_AnimationClipText = L10n.Tr("an Animation Clip");
-        static string s_FormatIsMissingText = L10n.Tr("To begin animating {0}, create {1}.");
-        static string s_NoAnimatableObjectSelectedText = L10n.Tr("No animatable object selected.");
+        static readonly string s_AnimatorOptimizedText = L10n.Tr("Editing and playback of animations on optimized game object hierarchy is not supported.\nPlease select a game object that does not have 'Optimize Game Objects' applied.");
+        static readonly string s_AnimatorAndAnimationClipText = L10n.Tr("an Animator and an Animation Clip");
+        static readonly string s_AnimationClipText = L10n.Tr("an Animation Clip");
+        static readonly string s_FormatIsMissingText = L10n.Tr("To begin animating {0}, create {1}.");
+        static readonly string s_NoAnimatableObjectSelectedText = L10n.Tr("No animatable object selected.");
 
-        static string s_RecordContentTooltip = L10n.Tr("Enable/disable keyframe recording mode.");
-        static string s_PreviewContentTooltip = L10n.Tr("Enable/disable scene preview mode.");
+        static readonly string s_RecordContentTooltip = L10n.Tr("Enable/disable keyframe recording mode.");
+        static readonly string s_PreviewContentTooltip = L10n.Tr("Enable/disable scene preview mode.");
 
-        static string s_RevertContentTooltip = L10n.Tr("Discard changes made to imported animation.");
-        static string s_ApplyContentTooltip = L10n.Tr("Apply changes made to imported animation.");
-        static string s_AddKeyframeContentTooltip = L10n.Tr("Add keyframe ({0}).");
-        static string s_AddEventContentTooltip = L10n.Tr("Add event.");
-        static string s_FilterBySelectionContentTooltip = L10n.Tr("Filter by selection.");
-        static string s_SequencerLinkContentTooltip = L10n.Tr("Animation Window is linked to Timeline Editor.  Press to Unlink.");
-        static string s_ModeRippleContentTooltip = L10n.Tr("Ripple mode ({0}).");
+        static readonly string s_RevertContentTooltip = L10n.Tr("Discard changes made to imported animation.");
+        static readonly string s_ApplyContentTooltip = L10n.Tr("Apply changes made to imported animation.");
+        static readonly string s_AddKeyframeContentTooltip = L10n.Tr("Add keyframe ({0}).");
+        static readonly string s_AddEventContentTooltip = L10n.Tr("Add event.");
+        static readonly string s_FilterBySelectionContentTooltip = L10n.Tr("Filter by selection.");
+        static readonly string s_SequencerLinkContentTooltip = L10n.Tr("Animation Window is linked to Timeline Editor.  Press to Unlink.");
+        static readonly string s_ModeRippleContentTooltip = L10n.Tr("Ripple mode ({0}).");
 
         const float k_LeftMargin = 40f;
         const float k_RightMargin = 40f;
@@ -112,6 +117,7 @@ namespace UnityEditor.Animations.AnimationWindow.Widgets
         VisualElement m_AnimationControls;
         ToolbarToggle m_LinkWithSequencerButton;
         ClipDropdownField m_ClipDropdownField;
+        ObjectField m_ClipObjectField;
         VisualElement m_AnimationClipFrameRate;
         IntegerField m_AnimationClipFrameRateField;
         HierarchyElement m_HierarchyElement;
@@ -337,6 +343,8 @@ namespace UnityEditor.Animations.AnimationWindow.Widgets
 
             m_ClipDropdownField = this.Q<ClipDropdownField>(className: k_AnimationClipDropdown);
             m_ClipDropdownField.Initialize(state);
+
+            m_ClipObjectField = this.Q<ObjectField>(className: k_AnimationClipDropdown);
 
             m_AnimationClipFrameRate = this.Q<VisualElement>(className: k_AnimationFrameRate);
 
@@ -614,6 +622,25 @@ namespace UnityEditor.Animations.AnimationWindow.Widgets
             // Link with Timeline
             m_LinkWithSequencerButton.EnableInClassList(k_AnimationLinkWithSequencerButton + "__hidden", !state.linkedWithSequencer);
             m_LinkWithSequencerButton.SetValueWithoutNotify(state.linkedWithSequencer);
+
+            // Clip Selection - toggle between dropdown and object field
+            // When editing an AnimationClip asset directly, show a disabled ObjectField
+            // When editing via Animator/Animation component, show the searchable dropdown
+            bool isClipSelectionMode = state.selection is AnimationClipSelectionItem;
+
+            m_ClipDropdownField.EnableInClassList(k_AnimationClipDropdownHidden, isClipSelectionMode);
+            m_ClipObjectField.EnableInClassList(k_AnimationClipDropdownHidden, !isClipSelectionMode);
+
+            if (isClipSelectionMode)
+            {
+                var animWindowClip = state.activeClip as AnimationWindowClip;
+                m_ClipObjectField.SetValueWithoutNotify(animWindowClip?.animationClip);
+            }
+            else
+            {
+                m_ClipDropdownField.SetEnabled(!state.disabled);
+            }
+
 
             // Overlays
             m_CanvasOverlayManager.EnableInClassList(k_AnimationContentOverlay + "__hidden", state.disabled);

@@ -5,15 +5,30 @@
 using System;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEngine.Tilemaps
 {
+    ///<summary>The Tilemap stores <see cref="Sprite" />s in a layout marked by a <see cref="Grid" /> component.</summary>
     public partial class Tilemap
     {
+        // NOTE: these public events can hold user/editor handlers, but AutoStaticsCleanup codegen in this
+        // player-shipped module forces the Tilemap module into stripped player builds
+        // (TestStrippingDependencies). Persist as before until lifecycle registration is strip-safe.
+
+        ///<summary>Callback when Tiles on a Tilemap have changed.</summary>
+        ///<remarks>This returns the positions on the Tilemap which have been updated and the Tile Data of each position that has been updated.</remarks>
+        [NoAutoStaticsCleanup] // see stripping note above
         public static event Action<Tilemap, SyncTile[]> tilemapTileChanged;
 
+        ///<summary>Callback when Tiles on a Tilemap have changed.</summary>
+        ///<remarks>This returns the list of positions on the Tilemap which have been updated.</remarks>
+        [NoAutoStaticsCleanup] // see stripping note above
         public static event Action<Tilemap, NativeArray<Vector3Int>> tilemapPositionsChanged;
 
+        ///<summary>Callback when Tiles on a Tilemap have reached the end of their loop for their Tile Animation.</summary>
+        ///<remarks>This returns the list of positions on the Tilemap which have ended their loop for their Tile Animation.</remarks>
+        [NoAutoStaticsCleanup] // see stripping note above
         public static event Action<Tilemap, NativeArray<Vector3Int>> loopEndedForTileAnimation;
 
         private bool m_BufferSyncTile;

@@ -239,7 +239,7 @@ namespace UnityEngine.UIElements
         /// Assigns a binding between a target and a source.
         /// </summary>
         /// <remarks>
-        /// Passing a value of <see langword="null"/> for <see cref="binding"/> removes the binding.
+        /// Passing a value of <see langword="null"/> for <paramref name="binding"/> removes the binding.
         /// </remarks>
         /// <param name="bindingId">The binding ID.</param>
         /// <param name="binding">The binding object.</param>

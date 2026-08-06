@@ -15,6 +15,7 @@ using UnityEditorInternal;
 using UnityEngine;
 using UnityEngine.Pool;
 using UnityEngine.Scripting;
+using Unity.Scripting.LifecycleManagement;
 using Directory = System.IO.Directory;
 using UnityObject = UnityEngine.Object;
 using JSONObject = System.Collections.IDictionary;
@@ -89,8 +90,10 @@ namespace UnityEditor
         internal static string ProjectLayoutPath => GetProjectLayoutPerMode(ModeService.currentId);
         internal static string currentLayoutName => GetLayoutFileName(ModeService.currentId, Application.unityVersionVer);
 
+        [AutoStaticsCleanupOnCodeReload]
         internal static event Action lastLoadedLayoutChanged;
 
+        [NoAutoStaticsCleanup] // string label cache, value type with no user references, safe to persist across code reload
         static string m_LastLoadedLayoutName;
         internal static string lastLoadedLayoutName
         {
@@ -617,7 +620,8 @@ namespace UnityEditor
             Debug.Assert(File.Exists(defaultLayoutPath));
         }
 
-        static WindowLayout()
+        [OnCodeInitializing]
+        static void Initialize()
         {
             EditorApplication.CallDelayed(UpdateWindowLayoutMenu);
         }
@@ -1813,8 +1817,9 @@ namespace UnityEditor
         }
     }
 
-    internal class WindowFocusState : ScriptableObject
+    internal partial class WindowFocusState : ScriptableObject
     {
+        [AutoStaticsCleanupOnCodeReload]
         private static WindowFocusState m_Instance;
 
         internal string m_LastWindowTypeInSameDock = "";

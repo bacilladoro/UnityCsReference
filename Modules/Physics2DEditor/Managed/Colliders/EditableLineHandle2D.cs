@@ -5,6 +5,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditorInternal;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -25,10 +26,13 @@ namespace UnityEditor
         const float k_ActiveLineSegmentWidth = 5f;
         static readonly int s_InsertPointHash = "s_InsertPointHash".GetHashCode();
         static readonly int s_LineControlHash = "s_LineControlHash".GetHashCode();
+        [NoAutoStaticsCleanup] // transient handle-drag state; safe to persist across code reload as it holds no user-code references
         static Vector3 s_InsertedPointPosition;
+        [NoAutoStaticsCleanup] // transient handle-drag state; safe to persist across code reload as it holds no user-code references
         static int s_InsertedIndex;
         const float k_DotHandleSize = .04f;
         const float k_ProximityDotHandleSize = .05f;
+        [NoAutoStaticsCleanup] // reusable scratch buffer for handle drawing; safe to persist across code reload as it holds no user-code references
         static Vector3[] s_AAPolyLinePoints = new Vector3[2];
 
         Vector3[] m_Points;

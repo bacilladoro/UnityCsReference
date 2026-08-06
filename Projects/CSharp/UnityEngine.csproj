@@ -8,7 +8,7 @@
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <EnableDefaultItems>false</EnableDefaultItems>
-    <DefineConstants>$(DefineConstants);ALLOW_IMPLICIT_INTERNAL_VISIBILITY;COMBINED_ASSEMBLIES;DEBUGGER_LISTENS_FIXED_PORT;EDITOR_ONLY_NAVMESH_BUILDER_DEPRECATED;ENABLE_ACCELERATOR_CLIENT_DEBUGGING;ENABLE_ALTERNATIVE_LISTEN_PORT;ENABLE_AMD;ENABLE_AR;ENABLE_AUDIO;ENABLE_AUDIO_MANAGER_BASED_SCHEDULING;ENABLE_AUDIO_SCRIPTABLE_PIPELINE;ENABLE_BURST;ENABLE_CACHING;ENABLE_CLOTH;ENABLE_CLOUD_LICENSE;ENABLE_CLOUD_SERVICES;ENABLE_CLOUD_SERVICES_ADS;ENABLE_CLOUD_SERVICES_ANALYTICS;ENABLE_CLOUD_SERVICES_BUILD;ENABLE_CLOUD_SERVICES_CRASH_REPORTING;ENABLE_CLOUD_SERVICES_ENGINE_DIAGNOSTICS;ENABLE_CLOUD_SERVICES_PURCHASING;ENABLE_CLOUD_SERVICES_USE_WEBREQUEST;ENABLE_CLUSTERINPUT;ENABLE_CLUSTER_SYNC;ENABLE_CRUNCH_TEXTURE_COMPRESSION;ENABLE_DIRECTOR_AUDIO;ENABLE_DIRECTOR_TEXTURE;ENABLE_EDITOR_GAME_SERVICES;ENABLE_EDITOR_HUB_LICENSE;ENABLE_ETC_COMPRESSION;ENABLE_EVENT_QUEUE;ENABLE_GAMECENTER_API;ENABLE_GENERATE_NATIVE_PLUGINS_FOR_ASSEMBLIES_API;ENABLE_LZMA;ENABLE_MANAGED_ANIMATION_JOBS;ENABLE_MANAGED_AUDIO_JOBS;ENABLE_MANAGED_JOBS;ENABLE_MANAGED_TRANSFORM_JOBS;ENABLE_MANAGED_UNITYTLS;ENABLE_MARSHALLING_TESTS;ENABLE_MICROPHONE;ENABLE_MULTIPLE_DISPLAYS;ENABLE_NAVIGATION_OFFMESHLINK_TO_NAVMESHLINK;ENABLE_NETWORK;ENABLE_NVIDIA;ENABLE_PHYSICS;ENABLE_RUNTIME_GI;ENABLE_SCRIPTING_GC_WBARRIERS;ENABLE_TEXTURE_STREAMING;ENABLE_UNITYEVENTS;ENABLE_UNITYWEBREQUEST;ENABLE_UNITY_CLOUD_IDENTIFIERS;ENABLE_UNITY_COLLECTIONS_CHECKS;ENABLE_UNITY_COLLECTIONS_CHECKS;ENABLE_UNITY_CONSENT;ENABLE_UNITY_GAME_SERVICES_ANALYTICS_SUPPORT;ENABLE_VERSION_CONTROL_INTEGRATION;ENABLE_VIDEO;ENABLE_VIRTUALTEXTURING;ENABLE_VR;ENABLE_WEBCAM;ENABLE_WEBSOCKET_CLIENT;ENABLE_WWW;INCLUDE_DYNAMIC_GI;INCLUDE_UNIFIED_RAYTRACING_COMPUTE_BACKEND;INCLUDE_UNIFIED_RAYTRACING_HARDWARE_BACKEND;NET_BCL_ATTRS_VISIBLE_TO_MODULES;PLATFORM_SUPPORTS_GAMEPAD_AUDIO;PLATFORM_SUPPORTS_MONO;PLAYERCONNECTION_LISTENS_FIXED_PORT;RENDER_SOFTWARE_CURSOR;TEXTCORE_1_0_OR_NEWER;TRACE;UNITY_ANDROID_API;UNITY_ASSEMBLIES_API;UNITY_ASSERTIONS;UNITY_ASSERTIONS;UNITY_CURL_BUILT_IN;UNITY_EDITOR;UNITY_EDITOR_API;UNITY_IPHONE_API;UNITY_METRO_API;UNITY_PS4_API;UNITY_PS5_API;UNITY_STANDALONE_LINUX_API;UNITY_STANDALONE_OSX_API;UNITY_STANDALONE_WIN_API;UNITY_TINYPROFILING_INTERNAL;UNITY_TVOS_API;UNITY_WEBGL_API;USE_PROPERTIES_MODULE</DefineConstants>
+    <DefineConstants>$(DefineConstants);ALLOW_IMPLICIT_INTERNAL_VISIBILITY;COMBINED_ASSEMBLIES;DEBUGGER_LISTENS_FIXED_PORT;EDITOR_ONLY_NAVMESH_BUILDER_DEPRECATED;ENABLE_ACCELERATOR_CLIENT_DEBUGGING;ENABLE_ALTERNATIVE_LISTEN_PORT;ENABLE_AMD;ENABLE_AR;ENABLE_AUDIO;ENABLE_AUDIO_MANAGER_BASED_SCHEDULING;ENABLE_AUDIO_SCRIPTABLE_PIPELINE;ENABLE_BURST;ENABLE_CACHING;ENABLE_CLOTH;ENABLE_CLOUD_LICENSE;ENABLE_CLOUD_SERVICES;ENABLE_CLOUD_SERVICES_ADS;ENABLE_CLOUD_SERVICES_ANALYTICS;ENABLE_CLOUD_SERVICES_BUILD;ENABLE_CLOUD_SERVICES_CRASH_REPORTING;ENABLE_CLOUD_SERVICES_ENGINE_DIAGNOSTICS;ENABLE_CLOUD_SERVICES_PURCHASING;ENABLE_CLOUD_SERVICES_USE_WEBREQUEST;ENABLE_CLUSTERINPUT;ENABLE_CLUSTER_SYNC;ENABLE_CRUNCH_TEXTURE_COMPRESSION;ENABLE_DIRECTOR_AUDIO;ENABLE_DIRECTOR_TEXTURE;ENABLE_EDITOR_GAME_SERVICES;ENABLE_EDITOR_HUB_LICENSE;ENABLE_ETC_COMPRESSION;ENABLE_EVENT_QUEUE;ENABLE_GAMECENTER_API;ENABLE_GENERATE_NATIVE_PLUGINS_FOR_ASSEMBLIES_API;ENABLE_LZMA;ENABLE_MANAGED_ANIMATION_JOBS;ENABLE_MANAGED_AUDIO_JOBS;ENABLE_MANAGED_JOBS;ENABLE_MANAGED_TRANSFORM_JOBS;ENABLE_MANAGED_UNITYTLS;ENABLE_MARSHALLING_TESTS;ENABLE_MICROPHONE;ENABLE_MULTIPLE_DISPLAYS;ENABLE_NAVIGATION_OFFMESHLINK_TO_NAVMESHLINK;ENABLE_NETWORK;ENABLE_NVIDIA;ENABLE_PHYSICS;ENABLE_RUNTIME_GI;ENABLE_SCRIPTING_GC_WBARRIERS;ENABLE_SMARTSTRINGS;ENABLE_TEXTURE_STREAMING;ENABLE_UNITYEVENTS;ENABLE_UNITYWEBREQUEST;ENABLE_UNITY_CLOUD_IDENTIFIERS;ENABLE_UNITY_COLLECTIONS_CHECKS;ENABLE_UNITY_COLLECTIONS_CHECKS;ENABLE_UNITY_CONSENT;ENABLE_UNITY_GAME_SERVICES_ANALYTICS_SUPPORT;ENABLE_VERSION_CONTROL_INTEGRATION;ENABLE_VIDEO;ENABLE_VIRTUALTEXTURING;ENABLE_VR;ENABLE_WEBCAM;ENABLE_WEBSOCKET_CLIENT;ENABLE_WWW;INCLUDE_DYNAMIC_GI;INCLUDE_UNIFIED_RAYTRACING_COMPUTE_BACKEND;INCLUDE_UNIFIED_RAYTRACING_HARDWARE_BACKEND;NET_BCL_ATTRS_VISIBLE_TO_MODULES;PLATFORM_SUPPORTS_GAMEPAD_AUDIO;PLATFORM_SUPPORTS_MONO;PLAYERCONNECTION_LISTENS_FIXED_PORT;RENDER_SOFTWARE_CURSOR;TEXTCORE_1_0_OR_NEWER;TRACE;UNITY_ANDROID_API;UNITY_ASSEMBLIES_API;UNITY_ASSERTIONS;UNITY_ASSERTIONS;UNITY_CURL_BUILT_IN;UNITY_EDITOR;UNITY_EDITOR_API;UNITY_IPHONE_API;UNITY_METRO_API;UNITY_PS4_API;UNITY_PS5_API;UNITY_STANDALONE_LINUX_API;UNITY_STANDALONE_OSX_API;UNITY_STANDALONE_WIN_API;UNITY_TINYPROFILING_INTERNAL;UNITY_TVOS_API;UNITY_WEBGL_API;USE_PROPERTIES_MODULE</DefineConstants>
     <LangVersion>12.0</LangVersion>
     <NoWarn>1701;626;8632</NoWarn>
     <Nullable>disable</Nullable>
@@ -1172,9 +1172,6 @@
     <Compile Include="..\..\Modules\HierarchyCore\Managed\HierarchyFlattenedChildrenEnumerable.cs">
       <Link>Modules\HierarchyCore\Managed\HierarchyFlattenedChildrenEnumerable.cs</Link>
     </Compile>
-    <Compile Include="..\..\Modules\HierarchyCore\Managed\HierarchyFlattenedNodeChildren.cs">
-      <Link>Modules\HierarchyCore\Managed\HierarchyFlattenedNodeChildren.cs</Link>
-    </Compile>
     <Compile Include="..\..\Modules\HierarchyCore\Managed\HierarchyNodeChildren.cs">
       <Link>Modules\HierarchyCore\Managed\HierarchyNodeChildren.cs</Link>
     </Compile>
@@ -1207,9 +1204,6 @@
     </Compile>
     <Compile Include="..\..\Modules\HierarchyCore\Managed\HierarchyViewModelNodesEnumerable.cs">
       <Link>Modules\HierarchyCore\Managed\HierarchyViewModelNodesEnumerable.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Modules\HierarchyCore\Managed\HierarchyViewNodesEnumerable.cs">
-      <Link>Modules\HierarchyCore\Managed\HierarchyViewNodesEnumerable.cs</Link>
     </Compile>
     <Compile Include="..\..\Modules\HierarchyCore\Managed\IHierarchyProperty.cs">
       <Link>Modules\HierarchyCore\Managed\IHierarchyProperty.cs</Link>
@@ -2069,6 +2063,9 @@
     <Compile Include="..\..\Modules\PhysicsCore2D\Scripting\PhysicsQuery.cs">
       <Link>Modules\PhysicsCore2D\Scripting\PhysicsQuery.cs</Link>
     </Compile>
+    <Compile Include="..\..\Modules\PhysicsCore2D\Scripting\PhysicsResultExtensions.cs">
+      <Link>Modules\PhysicsCore2D\Scripting\PhysicsResultExtensions.cs</Link>
+    </Compile>
     <Compile Include="..\..\Modules\PhysicsCore2D\Scripting\PhysicsShape.cs">
       <Link>Modules\PhysicsCore2D\Scripting\PhysicsShape.cs</Link>
     </Compile>
@@ -2381,6 +2378,9 @@
     <Compile Include="..\..\Modules\Scripting\Attributes\BindingsAttributes.cs">
       <Link>Modules\Scripting\Attributes\BindingsAttributes.cs</Link>
     </Compile>
+    <Compile Include="..\..\Modules\Scripting\Attributes\IgnoredByDeepProfilerAttribute.cs">
+      <Link>Modules\Scripting\Attributes\IgnoredByDeepProfilerAttribute.cs</Link>
+    </Compile>
     <Compile Include="..\..\Modules\Scripting\Attributes\UnityString.cs">
       <Link>Modules\Scripting\Attributes\UnityString.cs</Link>
     </Compile>
@@ -2462,6 +2462,222 @@
     <Compile Include="..\..\Modules\Scripting\Scripting\Unsafe\UnsafeUtilityPatched.cs">
       <Link>Modules\Scripting\Scripting\Unsafe\UnsafeUtilityPatched.cs</Link>
     </Compile>
+    <Compile Include="..\..\Modules\SmartStrings\AssemblyInfo.cs">
+      <Link>Modules\SmartStrings\AssemblyInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\SmartStrings\SmartFormat\Core\Formatting\FormatDetails.cs">
+      <Link>Modules\SmartStrings\SmartFormat\Core\Formatting\FormatDetails.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\SmartStrings\SmartFormat\Core\Formatting\FormatterBase.cs">
+      <Link>Modules\SmartStrings\SmartFormat\Core\Formatting\FormatterBase.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\SmartStrings\SmartFormat\Core\Formatting\FormattingException.cs">
+      <Link>Modules\SmartStrings\SmartFormat\Core\Formatting\FormattingException.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\SmartStrings\SmartFormat\Core\Formatting\FormattingInfo.cs">
+      <Link>Modules\SmartStrings\SmartFormat\Core\Formatting\FormattingInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\SmartStrings\SmartFormat\Core\Formatting\IFormatter.cs">
+      <Link>Modules\SmartStrings\SmartFormat\Core\Formatting\IFormatter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\SmartStrings\SmartFormat\Core\Formatting\IFormatterLiteralExtractor.cs">
+      <Link>Modules\SmartStrings\SmartFormat\Core\Formatting\IFormatterLiteralExtractor.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\SmartStrings\SmartFormat\Core\Formatting\IFormattingInfo.cs">
+      <Link>Modules\SmartStrings\SmartFormat\Core\Formatting\IFormattingInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\SmartStrings\SmartFormat\Core\Formatting\IInitializer.cs">
+      <Link>Modules\SmartStrings\SmartFormat\Core\Formatting\IInitializer.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\SmartStrings\SmartFormat\Core\Formatting\ISelectorInfo.cs">
+      <Link>Modules\SmartStrings\SmartFormat\Core\Formatting\ISelectorInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\SmartStrings\SmartFormat\Core\Output\IOutput.cs">
+      <Link>Modules\SmartStrings\SmartFormat\Core\Output\IOutput.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\SmartStrings\SmartFormat\Core\Output\NullOutput.cs">
+      <Link>Modules\SmartStrings\SmartFormat\Core\Output\NullOutput.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\SmartStrings\SmartFormat\Core\Output\StringOutput.cs">
+      <Link>Modules\SmartStrings\SmartFormat\Core\Output\StringOutput.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\SmartStrings\SmartFormat\Core\Output\TextWriterOutput.cs">
+      <Link>Modules\SmartStrings\SmartFormat\Core\Output\TextWriterOutput.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\SmartStrings\SmartFormat\Core\Parsing\AdditionalFormatData.cs">
+      <Link>Modules\SmartStrings\SmartFormat\Core\Parsing\AdditionalFormatData.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\SmartStrings\SmartFormat\Core\Parsing\EscapedLiteral.cs">
+      <Link>Modules\SmartStrings\SmartFormat\Core\Parsing\EscapedLiteral.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\SmartStrings\SmartFormat\Core\Parsing\Format.cs">
+      <Link>Modules\SmartStrings\SmartFormat\Core\Parsing\Format.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\SmartStrings\SmartFormat\Core\Parsing\FormatItem.cs">
+      <Link>Modules\SmartStrings\SmartFormat\Core\Parsing\FormatItem.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\SmartStrings\SmartFormat\Core\Parsing\LiteralText.cs">
+      <Link>Modules\SmartStrings\SmartFormat\Core\Parsing\LiteralText.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\SmartStrings\SmartFormat\Core\Parsing\Parser.cs">
+      <Link>Modules\SmartStrings\SmartFormat\Core\Parsing\Parser.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\SmartStrings\SmartFormat\Core\Parsing\ParsingErrorEventArgs.cs">
+      <Link>Modules\SmartStrings\SmartFormat\Core\Parsing\ParsingErrorEventArgs.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\SmartStrings\SmartFormat\Core\Parsing\ParsingErrors.cs">
+      <Link>Modules\SmartStrings\SmartFormat\Core\Parsing\ParsingErrors.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\SmartStrings\SmartFormat\Core\Parsing\Placeholder.cs">
+      <Link>Modules\SmartStrings\SmartFormat\Core\Parsing\Placeholder.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\SmartStrings\SmartFormat\Core\Parsing\Selector.cs">
+      <Link>Modules\SmartStrings\SmartFormat\Core\Parsing\Selector.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\SmartStrings\SmartFormat\Core\Parsing\SplitList.cs">
+      <Link>Modules\SmartStrings\SmartFormat\Core\Parsing\SplitList.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\SmartStrings\SmartFormat\Core\Settings\CaseSensitivityType.cs">
+      <Link>Modules\SmartStrings\SmartFormat\Core\Settings\CaseSensitivityType.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\SmartStrings\SmartFormat\Core\Settings\ErrorAction.cs">
+      <Link>Modules\SmartStrings\SmartFormat\Core\Settings\ErrorAction.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\SmartStrings\SmartFormat\Core\Settings\FormatErrorAction.cs">
+      <Link>Modules\SmartStrings\SmartFormat\Core\Settings\FormatErrorAction.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\SmartStrings\SmartFormat\Core\Settings\FormatterSettings.cs">
+      <Link>Modules\SmartStrings\SmartFormat\Core\Settings\FormatterSettings.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\SmartStrings\SmartFormat\Core\Settings\ParseErrorAction.cs">
+      <Link>Modules\SmartStrings\SmartFormat\Core\Settings\ParseErrorAction.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\SmartStrings\SmartFormat\Core\Settings\ParserSettings.cs">
+      <Link>Modules\SmartStrings\SmartFormat\Core\Settings\ParserSettings.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\SmartStrings\SmartFormat\Core\Settings\SmartSettings.cs">
+      <Link>Modules\SmartStrings\SmartFormat\Core\Settings\SmartSettings.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\SmartStrings\SmartFormat\Core\Sources\ISource.cs">
+      <Link>Modules\SmartStrings\SmartFormat\Core\Sources\ISource.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\SmartStrings\SmartFormat\Core\Sources\Source.cs">
+      <Link>Modules\SmartStrings\SmartFormat\Core\Sources\Source.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\SmartStrings\SmartFormat\Extensions.Time\TimeFormatter.cs">
+      <Link>Modules\SmartStrings\SmartFormat\Extensions.Time\TimeFormatter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\SmartStrings\SmartFormat\Extensions.Time\Utilities\CommonLanguagesTimeTextInfo.cs">
+      <Link>Modules\SmartStrings\SmartFormat\Extensions.Time\Utilities\CommonLanguagesTimeTextInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\SmartStrings\SmartFormat\Extensions.Time\Utilities\TimeSpanFormatOptions.cs">
+      <Link>Modules\SmartStrings\SmartFormat\Extensions.Time\Utilities\TimeSpanFormatOptions.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\SmartStrings\SmartFormat\Extensions.Time\Utilities\TimeSpanFormatOptionsConverter.cs">
+      <Link>Modules\SmartStrings\SmartFormat\Extensions.Time\Utilities\TimeSpanFormatOptionsConverter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\SmartStrings\SmartFormat\Extensions.Time\Utilities\TimeSpanUtility.cs">
+      <Link>Modules\SmartStrings\SmartFormat\Extensions.Time\Utilities\TimeSpanUtility.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\SmartStrings\SmartFormat\Extensions.Time\Utilities\TimeTextInfo.cs">
+      <Link>Modules\SmartStrings\SmartFormat\Extensions.Time\Utilities\TimeTextInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\SmartStrings\SmartFormat\Extensions\ChooseFormatter.cs">
+      <Link>Modules\SmartStrings\SmartFormat\Extensions\ChooseFormatter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\SmartStrings\SmartFormat\Extensions\ConditionalFormatter.cs">
+      <Link>Modules\SmartStrings\SmartFormat\Extensions\ConditionalFormatter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\SmartStrings\SmartFormat\Extensions\DefaultFormatter.cs">
+      <Link>Modules\SmartStrings\SmartFormat\Extensions\DefaultFormatter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\SmartStrings\SmartFormat\Extensions\DefaultSource.cs">
+      <Link>Modules\SmartStrings\SmartFormat\Extensions\DefaultSource.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\SmartStrings\SmartFormat\Extensions\DictionarySource.cs">
+      <Link>Modules\SmartStrings\SmartFormat\Extensions\DictionarySource.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\SmartStrings\SmartFormat\Extensions\IsMatchFormatter.cs">
+      <Link>Modules\SmartStrings\SmartFormat\Extensions\IsMatchFormatter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\SmartStrings\SmartFormat\Extensions\KeyValuePairSource.cs">
+      <Link>Modules\SmartStrings\SmartFormat\Extensions\KeyValuePairSource.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\SmartStrings\SmartFormat\Extensions\ListFormatter.cs">
+      <Link>Modules\SmartStrings\SmartFormat\Extensions\ListFormatter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\SmartStrings\SmartFormat\Extensions\NullFormatter.cs">
+      <Link>Modules\SmartStrings\SmartFormat\Extensions\NullFormatter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\SmartStrings\SmartFormat\Extensions\PersistentVariablesSource.cs">
+      <Link>Modules\SmartStrings\SmartFormat\Extensions\PersistentVariablesSource.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\SmartStrings\SmartFormat\Extensions\PersistentVariables\PersistentVariables.cs">
+      <Link>Modules\SmartStrings\SmartFormat\Extensions\PersistentVariables\PersistentVariables.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\SmartStrings\SmartFormat\Extensions\PersistentVariables\VariableInterfaces.cs">
+      <Link>Modules\SmartStrings\SmartFormat\Extensions\PersistentVariables\VariableInterfaces.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\SmartStrings\SmartFormat\Extensions\PersistentVariables\VariablesGroupAsset.cs">
+      <Link>Modules\SmartStrings\SmartFormat\Extensions\PersistentVariables\VariablesGroupAsset.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\SmartStrings\SmartFormat\Extensions\PluralLocalizationFormatter.cs">
+      <Link>Modules\SmartStrings\SmartFormat\Extensions\PluralLocalizationFormatter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\SmartStrings\SmartFormat\Extensions\PropertiesSource.cs">
+      <Link>Modules\SmartStrings\SmartFormat\Extensions\PropertiesSource.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\SmartStrings\SmartFormat\Extensions\StringSource.cs">
+      <Link>Modules\SmartStrings\SmartFormat\Extensions\StringSource.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\SmartStrings\SmartFormat\Extensions\SubStringFormatter.cs">
+      <Link>Modules\SmartStrings\SmartFormat\Extensions\SubStringFormatter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\SmartStrings\SmartFormat\Extensions\TemplateFormatter.cs">
+      <Link>Modules\SmartStrings\SmartFormat\Extensions\TemplateFormatter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\SmartStrings\SmartFormat\Extensions\WellKnownExtensionTypes.cs">
+      <Link>Modules\SmartStrings\SmartFormat\Extensions\WellKnownExtensionTypes.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\SmartStrings\SmartFormat\FormattingErrorEventArgs.cs">
+      <Link>Modules\SmartStrings\SmartFormat\FormattingErrorEventArgs.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\SmartStrings\SmartFormat\Pooling\PoolingException.cs">
+      <Link>Modules\SmartStrings\SmartFormat\Pooling\PoolingException.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\SmartStrings\SmartFormat\Pooling\SmartPools.cs">
+      <Link>Modules\SmartStrings\SmartFormat\Pooling\SmartPools.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\SmartStrings\SmartFormat\Smart.cs">
+      <Link>Modules\SmartStrings\SmartFormat\Smart.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\SmartStrings\SmartFormat\SmartExtensions.cs">
+      <Link>Modules\SmartStrings\SmartFormat\SmartExtensions.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\SmartStrings\SmartFormat\SmartFormatter.cs">
+      <Link>Modules\SmartStrings\SmartFormat\SmartFormatter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\SmartStrings\SmartFormat\SmartFormatterLiteralCharacterExtractor.cs">
+      <Link>Modules\SmartStrings\SmartFormat\SmartFormatterLiteralCharacterExtractor.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\SmartStrings\SmartFormat\StringExtensionMethods.cs">
+      <Link>Modules\SmartStrings\SmartFormat\StringExtensionMethods.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\SmartStrings\SmartFormat\Utilities\FormatDelegate.cs">
+      <Link>Modules\SmartStrings\SmartFormat\Utilities\FormatDelegate.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\SmartStrings\SmartFormat\Utilities\PluralRules.cs">
+      <Link>Modules\SmartStrings\SmartFormat\Utilities\PluralRules.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\SmartStrings\SmartFormat\Utilities\SystemTime.cs">
+      <Link>Modules\SmartStrings\SmartFormat\Utilities\SystemTime.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\SmartStrings\SmartFormat\Utilities\Validation.cs">
+      <Link>Modules\SmartStrings\SmartFormat\Utilities\Validation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\SmartStrings\SmartStringsSettings.cs">
+      <Link>Modules\SmartStrings\SmartStringsSettings.cs</Link>
+    </Compile>
     <Compile Include="..\..\Modules\SpriteMask\Public\ScriptBindings\SpriteMask.bindings.cs">
       <Link>Modules\SpriteMask\Public\ScriptBindings\SpriteMask.bindings.cs</Link>
     </Compile>
@@ -2473,12 +2689,6 @@
     </Compile>
     <Compile Include="..\..\Modules\Streaming\ScriptBindings\StreamingController.bindings.cs">
       <Link>Modules\Streaming\ScriptBindings\StreamingController.bindings.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Modules\Substance\SubstanceUtility.bindings.cs">
-      <Link>Modules\Substance\SubstanceUtility.bindings.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Modules\Substance\SubstanceUtility.cs">
-      <Link>Modules\Substance\SubstanceUtility.cs</Link>
     </Compile>
     <Compile Include="..\..\Modules\Subsystems\Example\ExampleSubsystem.bindings.cs">
       <Link>Modules\Subsystems\Example\ExampleSubsystem.bindings.cs</Link>
@@ -4322,6 +4532,9 @@
     <Compile Include="..\..\Modules\UIElements\Core\Referencing\VisualElementReferenceProvider.cs">
       <Link>Modules\UIElements\Core\Referencing\VisualElementReferenceProvider.cs</Link>
     </Compile>
+    <Compile Include="..\..\Modules\UIElements\Core\Renderer\BackgroundGradientBaker.cs">
+      <Link>Modules\UIElements\Core\Renderer\BackgroundGradientBaker.cs</Link>
+    </Compile>
     <Compile Include="..\..\Modules\UIElements\Core\Renderer\GCHandlePool.cs">
       <Link>Modules\UIElements\Core\Renderer\GCHandlePool.cs</Link>
     </Compile>
@@ -4700,6 +4913,9 @@
     <Compile Include="..\..\Modules\UIElements\Core\Style\Background.cs">
       <Link>Modules\UIElements\Core\Style\Background.cs</Link>
     </Compile>
+    <Compile Include="..\..\Modules\UIElements\Core\Style\BackgroundGradient.cs">
+      <Link>Modules\UIElements\Core\Style\BackgroundGradient.cs</Link>
+    </Compile>
     <Compile Include="..\..\Modules\UIElements\Core\Style\ComputedStyle.cs">
       <Link>Modules\UIElements\Core\Style\ComputedStyle.cs</Link>
     </Compile>
@@ -4967,6 +5183,12 @@
     <Compile Include="..\..\Modules\UIElements\Core\Style\UIToolkitConverters.cs">
       <Link>Modules\UIElements\Core\Style\UIToolkitConverters.cs</Link>
     </Compile>
+    <Compile Include="..\..\Modules\UIElements\Core\Style\UnmanagedBackground.cs">
+      <Link>Modules\UIElements\Core\Style\UnmanagedBackground.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\UIElements\Core\Style\UnmanagedBackgroundGradient.cs">
+      <Link>Modules\UIElements\Core\Style\UnmanagedBackgroundGradient.cs</Link>
+    </Compile>
     <Compile Include="..\..\Modules\UIElements\Core\TemplateContainer.cs">
       <Link>Modules\UIElements\Core\TemplateContainer.cs</Link>
     </Compile>
@@ -5023,6 +5245,9 @@
     </Compile>
     <Compile Include="..\..\Modules\UIElements\Core\Text\TextUtilities.cs">
       <Link>Modules\UIElements\Core\Text\TextUtilities.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\UIElements\Core\Text\UIRQuadMap.cs">
+      <Link>Modules\UIElements\Core\Text\UIRQuadMap.cs</Link>
     </Compile>
     <Compile Include="..\..\Modules\UIElements\Core\Text\UITKTextHandle.cs">
       <Link>Modules\UIElements\Core\Text\UITKTextHandle.cs</Link>
@@ -6281,9 +6506,6 @@
     <Compile Include="..\..\Runtime\Export\PlayerPrefs\PlayerPrefs.bindings.cs">
       <Link>Runtime\Export\PlayerPrefs\PlayerPrefs.bindings.cs</Link>
     </Compile>
-    <Compile Include="..\..\Runtime\Export\Profiler\IgnoredByDeepProfilerAttribute.cs">
-      <Link>Runtime\Export\Profiler\IgnoredByDeepProfilerAttribute.cs</Link>
-    </Compile>
     <Compile Include="..\..\Runtime\Export\Properties\DrivenPropertyManager.bindings.cs">
       <Link>Runtime\Export\Properties\DrivenPropertyManager.bindings.cs</Link>
     </Compile>
@@ -7141,16 +7363,16 @@
     </PropertyGroup>
   </Target>
   <ItemGroup>
-    <Analyzer Include="/tmp/uitoolkit_gen_tomgzkfq/Unity.UIToolkit.SourceGenerator.dll" />
+    <Analyzer Include="/tmp/uitoolkit_gen__2wk85wp/Unity.UIToolkit.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.2" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.3" />
-    <PackageReference Include="System.Text.Json" Version="8.0.6" />
-    <PackageReference Include="System.Collections.Immutable" Version="8.0.0" />
-    <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="8.0.1" />
-    <PackageReference Include="System.IO.Hashing" Version="8.0.0" />
-    <PackageReference Include="System.Reflection.Metadata" Version="8.0.1" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.8" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.8" />
+    <PackageReference Include="System.Text.Json" Version="10.0.8" />
+    <PackageReference Include="System.Collections.Immutable" Version="10.0.8" />
+    <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="10.0.8" />
+    <PackageReference Include="System.IO.Hashing" Version="10.0.8" />
+    <PackageReference Include="System.Reflection.Metadata" Version="10.0.8" />
     <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.1.2" />
   </ItemGroup>
 </Project>

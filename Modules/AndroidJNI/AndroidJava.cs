@@ -6,6 +6,7 @@ using System;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Scripting;
 
 namespace UnityEngine
@@ -36,10 +37,12 @@ namespace UnityEngine
             m_jobject = (jobject == IntPtr.Zero) ? IntPtr.Zero : AndroidJNI.NewGlobalRef(jobject);
         }
 
+#pragma warning disable UA5000 // The Avoid Finalizer Analyzer produces compile errors for any new finalizers. This pre-existing finalizer declaration has been suppressed, but should be rewritten if possible.
         ~GlobalJavaObjectRef()
         {
             Dispose();
         }
+#pragma warning restore UA5000
 
         public static implicit operator IntPtr(GlobalJavaObjectRef obj)
         {
@@ -84,20 +87,65 @@ namespace UnityEngine
         }
     }
 
+    ///<summary>This class can be used to implement any java interface. Any java vm method invocation matching the interface on the proxy object will automatically be passed to the c# implementation.</summary>
+    ///<remarks>**Note**: this API can be used from custom thread, but requires that thread to be attached to JVM first, see <see cref="AndroidJNI.AttachCurrentThread" />.</remarks>
+    ///<example>
+    ///  <code><![CDATA[
+    /// // Opens an android date picker dialog and grabs the result using a callback.
+    ///using UnityEngine;
+    ///using System;
+    ///
+    ///class ExampleClass : MonoBehaviour
+    ///{
+    ///    private static DateTime selectedDate = DateTime.Now;
+    ///
+    ///    class DateCallback : AndroidJavaProxy
+    ///    {
+    ///        public DateCallback() : base("android.app.DatePickerDialog$OnDateSetListener") {}
+    ///        void onDateSet(AndroidJavaObject view, int year, int monthOfYear, int dayOfMonth)
+    ///        {
+    ///            selectedDate = new DateTime(year, monthOfYear + 1, dayOfMonth);
+    ///            // If you have no longer any uses for the object, it must be disposed to prevent a leak
+    ///            view.Dispose();
+    ///        }
+    ///    }
+    ///
+    ///    void OnGUI()
+    ///    {
+    ///        if (GUI.Button(new Rect(15, 15, 450, 75), string.Format("{0:yyyy-MM-dd}", selectedDate)))
+    ///        {
+    ///            var activity = new AndroidJavaClass("com.unity3d.player.UnityPlayer").GetStatic<AndroidJavaObject>("currentActivity");
+    ///            activity.Call("runOnUiThread", new AndroidJavaRunnable(() =>
+    ///            {
+    ///                new AndroidJavaObject("android.app.DatePickerDialog", activity, new DateCallback(), selectedDate.Year, selectedDate.Month - 1, selectedDate.Day).Call("show");
+    ///            }));
+    ///        }
+    ///    }
+    ///}
+    ///]]></code>
+    ///</example>
     public class AndroidJavaProxy
     {
+        ///<summary>Java interface implemented by the proxy.</summary>
         public readonly AndroidJavaClass javaInterface;
+        ///<param name="javaInterface">Java interface to be implemented by the proxy.</param>
         public AndroidJavaProxy(string javaInterface) : this(new AndroidJavaClass(javaInterface)) { }
+        ///<param name="javaInterface">Java interface to be implemented by the proxy.</param>
         public AndroidJavaProxy(AndroidJavaClass javaInterface)
         {
             this.javaInterface = javaInterface;
         }
 
+#pragma warning disable UA5000 // The Avoid Finalizer Analyzer produces compile errors for any new finalizers. This pre-existing finalizer declaration has been suppressed, but should be rewritten if possible.
         ~AndroidJavaProxy()
         {
             AndroidJNISafe.DeleteWeakGlobalRef(proxyObject);
         }
+#pragma warning restore UA5000
 
+        ///<summary>Called by the java vm whenever a method is invoked on the java proxy interface. You can override this to run special code on method invocation, or you can leave the implementation as is, and leave the default behavior which is to look for c# methods matching the signature of the java method.</summary>
+        ///<param name="methodName">Name of the invoked java method.</param>
+        ///<param name="args">Arguments passed from the java vm - converted into AndroidJavaObject, AndroidJavaClass or a primitive.</param>
         public virtual AndroidJavaObject Invoke(string methodName, object[] args)
         {
             Exception error = null;
@@ -205,6 +253,9 @@ namespace UnityEngine
             return nativeError == IntPtr.Zero ? null : new AndroidJavaObject(nativeError);
         }
 
+        ///<summary>Called by the java vm whenever a method is invoked on the java proxy interface. You can override this to run special code on method invocation, or you can leave the implementation as is, and leave the default behavior which is to look for c# methods matching the signature of the java method.</summary>
+        ///<param name="methodName">Name of the invoked java method.</param>
+        ///<param name="javaArgs">Arguments passed from the java vm - all objects are represented by AndroidJavaObject, int for instance is represented by a java.lang.Integer object.</param>
         public virtual AndroidJavaObject Invoke(string methodName, AndroidJavaObject[] javaArgs)
         {
             object[] args = new object[javaArgs.Length];
@@ -222,6 +273,10 @@ namespace UnityEngine
             return Invoke(methodName, args);
         }
 
+        ///<summary>Called by the java vm whenever a method is invoked on the java proxy interface. You can override this to run special code on method invocation, or you can leave the implementation as is, which will convert argument array to AndroidJavaObject[] and call other Invoke.</summary>
+        ///<param name="methodName">Name of the invoked java method.</param>
+        ///<param name="javaArgs">A reference to Java object array with arguments passed to this method.</param>
+        ///<returns>A local reference to Java object, representing the return value.</returns>
         public virtual IntPtr Invoke(string methodName, IntPtr javaArgs)
         {
             int arrayLen = 0;
@@ -256,12 +311,16 @@ namespace UnityEngine
 
         // implementing equals, hashCode and toString which should be implemented by all java objects
         // these methods must be in camel case, because that's how they are defined in java.
+        ///<summary>The equivalent of the java.lang.Object <c>equals()</c> method.</summary>
+        ///<returns>Returns true when the objects are equal and false if otherwise.</returns>
         public virtual bool equals(AndroidJavaObject obj)
         {
             IntPtr anotherObject = (obj == null) ? IntPtr.Zero : obj.GetRawObject();
             return AndroidJNI.IsSameObject(proxyObject, anotherObject);
         }
 
+        ///<summary>The equivalent of the java.lang.Object <c>hashCode()</c> method.</summary>
+        ///<returns>Returns the hash code of the java proxy object.</returns>
         public virtual int hashCode()
         {
             Span<jvalue> jniArgs = stackalloc jvalue[1];
@@ -269,6 +328,8 @@ namespace UnityEngine
             return AndroidJNISafe.CallStaticIntMethod(s_JavaLangSystemClass, s_HashCodeMethodID, jniArgs);
         }
 
+        ///<summary>The equivalent of the java.lang.Object <c>toString()</c> method.</summary>
+        ///<returns>Returns C# class name + " &lt;c# proxy java object&gt;".</returns>
         public virtual string toString()
         {
             return this + " <c# proxy java object>";
@@ -300,10 +361,14 @@ namespace UnityEngine
             return ret;
         }
 
+        [NoAutoStaticsCleanup]
         private static readonly GlobalJavaObjectRef s_JavaLangSystemClass = new GlobalJavaObjectRef(AndroidJNISafe.FindClass("java/lang/System"));
         private static readonly IntPtr s_HashCodeMethodID = AndroidJNIHelper.GetMethodID(s_JavaLangSystemClass, "identityHashCode", "(Ljava/lang/Object;)I", true);
     }
 
+    ///<summary>AndroidJavaObject is the Unity representation of a generic instance of java.lang.Object.</summary>
+    ///<remarks>It can be used as type-less interface to an instance of any Java class.
+    ///**Note**: this API can be used from custom thread, but requires that thread to be attached to JVM first, see <see cref="AndroidJNI.AttachCurrentThread" />.</remarks>
     public class AndroidJavaObject : IDisposable
     {
         // Construct an AndroidJavaObject based on the name of the class.
@@ -332,11 +397,18 @@ namespace UnityEngine
             _AndroidJavaObject(className, (object)args);
         }
 
+        ///<summary>Construct an AndroidJavaObject based on the name of the class.</summary>
+        ///<remarks>This essentially means locate the class type, allocate an object and run the specified constructor.</remarks>
+        ///<param name="className">Specifies the Java class name (e.g. "&lt;tt&gt;java.lang.String&lt;/tt&gt;" or "&lt;tt&gt;java/lang/String&lt;/tt&gt;").</param>
+        ///<param name="args">An array of parameters passed to the constructor.</param>
         public AndroidJavaObject(string className, params object[] args) : this()
         {
             _AndroidJavaObject(className, args);
         }
 
+        ///<summary>Create AndroidJavaObject for existing Java object.</summary>
+        ///<remarks>Does not take ownership of passed reference, you still have to delete it.</remarks>
+        ///<param name="jobject">A reference to existing Java object.</param>
         public AndroidJavaObject(IntPtr jobject) : this()
         {
             if (jobject == IntPtr.Zero)
@@ -350,6 +422,10 @@ namespace UnityEngine
             AndroidJNISafe.DeleteLocalRef(jclass);
         }
 
+        ///<summary>Create AndroidJavaObject (and it's Java counterpart) using given Java class and constructor.</summary>
+        ///<param name="clazz">A pointer to Java class.</param>
+        ///<param name="constructorID">A method ID for the constructor to be used.</param>
+        ///<param name="args">An array of parameters passed to the constructor.</param>
         public AndroidJavaObject(IntPtr clazz, IntPtr constructorID, params object[] args)
         {
             m_jclass = new GlobalJavaObjectRef(clazz);
@@ -359,6 +435,9 @@ namespace UnityEngine
         //===================================================================
 
         // IDisposable callback
+        ///<summary>IDisposable callback.</summary>
+        ///<remarks>Used in conjunction with using() { }</remarks>
+        ///<seealso href="http://msdn.microsoft.com/en-us/library/system.idisposable.aspx">IDisposable Interface (MSDN)</seealso>
         public void Dispose()
         {
             Dispose(true);
@@ -368,21 +447,37 @@ namespace UnityEngine
         //===================================================================
 
         // Calls a Java method on an object (non-static).
+        ///<summary>Calls a Java method on an object (non-static).</summary>
+        ///<remarks>To call a method with return type 'void', use the regular version.</remarks>
+        ///<param name="methodName">Specifies which method to call.</param>
+        ///<param name="args">An array of parameters passed to the method.</param>
         public void Call<T>(string methodName, T[] args)
         {
             _Call(methodName, (object)args);
         }
 
+        ///<summary>Calls a Java method on an object (non-static).</summary>
+        ///<remarks>To call a method with return type 'void', use the regular version.</remarks>
+        ///<param name="args">An array of parameters passed to the method.</param>
+        ///<param name="methodID">The ID of the method to call.</param>
         public void Call<T>(IntPtr methodID, T[] args)
         {
             _Call(methodID, (object)args);
         }
 
+        ///<summary>Calls a Java method on an object (non-static).</summary>
+        ///<remarks>To call a method with return type 'void', use the regular version.</remarks>
+        ///<param name="methodName">Specifies which method to call.</param>
+        ///<param name="args">An array of parameters passed to the method.</param>
         public void Call(string methodName, params object[] args)
         {
             _Call(methodName, args);
         }
 
+        ///<summary>Calls a Java method on an object (non-static).</summary>
+        ///<remarks>To call a method with return type 'void', use the regular version.</remarks>
+        ///<param name="args">An array of parameters passed to the method.</param>
+        ///<param name="methodID">The ID of the method to call.</param>
         public void Call(IntPtr methodID, params object[] args)
         {
             _Call(methodID, args);
@@ -391,21 +486,37 @@ namespace UnityEngine
         //===================================================================
 
         // Call a static Java method on a class.
+        ///<summary>Call a static Java method on a class.</summary>
+        ///<remarks>To call a static method with return type 'void', use the regular version.</remarks>
+        ///<param name="methodName">Specifies which method to call.</param>
+        ///<param name="args">An array of parameters passed to the method.</param>
         public void CallStatic<T>(string methodName, T[] args)
         {
             _CallStatic(methodName, (object)args);
         }
 
+        ///<summary>Call a static Java method on a class.</summary>
+        ///<remarks>To call a static method with return type 'void', use the regular version.</remarks>
+        ///<param name="args">An array of parameters passed to the method.</param>
+        ///<param name="methodID">The ID of the method to call.</param>
         public void CallStatic<T>(IntPtr methodID, T[] args)
         {
             _CallStatic(methodID, (object)args);
         }
 
+        ///<summary>Call a static Java method on a class.</summary>
+        ///<remarks>To call a static method with return type 'void', use the regular version.</remarks>
+        ///<param name="methodName">Specifies which method to call.</param>
+        ///<param name="args">An array of parameters passed to the method.</param>
         public void CallStatic(string methodName, params object[] args)
         {
             _CallStatic(methodName, args);
         }
 
+        ///<summary>Call a static Java method on a class.</summary>
+        ///<remarks>To call a static method with return type 'void', use the regular version.</remarks>
+        ///<param name="args">An array of parameters passed to the method.</param>
+        ///<param name="methodID">The ID of the method to call.</param>
         public void CallStatic(IntPtr methodID, params object[] args)
         {
             _CallStatic(methodID, args);
@@ -414,22 +525,50 @@ namespace UnityEngine
         //===================================================================
 
         // Get the value of a field in an object (non-static).
+        ///<summary>Get the value of a field in an object (non-static).</summary>
+        ///<remarks>The generic parameter determines the field type.</remarks>
+        ///<param name="fieldName">The name of the field (e.g. int counter; would have fieldName = "counter").</param>
         public FieldType Get<FieldType>(string fieldName)
         {
             return _Get<FieldType>(fieldName);
         }
 
+        ///<summary>Get the value of a field in an object (non-static).</summary>
+        ///<remarks>The generic parameter determines the field type.</remarks>
+        ///<param name="fieldID">The ID of the field to get.</param>
         public FieldType Get<FieldType>(IntPtr fieldID)
         {
             return _Get<FieldType>(fieldID);
         }
 
         // Set the value of a field in an object (non-static).
+        ///<summary>Set the value of a field in an object (non-static).</summary>
+        ///<remarks>The generic parameter determines the field type.</remarks>
+        ///<param name="fieldName">The name of the field (e.g. int counter; would have fieldName = "counter").</param>
+        ///<param name="val">The value to assign to the field. It has to match the field type.</param>
+        ///<example>
+        ///  <code><![CDATA[
+        ///using UnityEngine;
+        ///
+        ///public class Example : MonoBehaviour
+        ///{
+        ///    void Start()
+        ///    {
+        ///        AndroidJavaObject javaObject = new AndroidJavaObject("android.text.format.Time");
+        ///        javaObject.Set<bool>("allDay", true);
+        ///    }
+        ///}
+        ///]]></code>
+        ///</example>
         public void Set<FieldType>(string fieldName, FieldType val)
         {
             _Set<FieldType>(fieldName, val);
         }
 
+        ///<summary>Set the value of a field in an object (non-static).</summary>
+        ///<remarks>The generic parameter determines the field type.</remarks>
+        ///<param name="fieldID">The ID of the field to set.</param>
+        ///<param name="val">The value to assign to the field. It has to match the field type.</param>
         public void Set<FieldType>(IntPtr fieldID, FieldType val)
         {
             _Set<FieldType>(fieldID, val);
@@ -438,22 +577,52 @@ namespace UnityEngine
         //===================================================================
 
         // Get the value of a static field in an object type.
+        ///<summary>Get the value of a static field in an object type.</summary>
+        ///<remarks>The generic parameter determines the field type.</remarks>
+        ///<param name="fieldName">The name of the field (e.g. &lt;i&gt;int counter;&lt;/i&gt; would have fieldName = "counter").</param>
         public FieldType GetStatic<FieldType>(string fieldName)
         {
             return _GetStatic<FieldType>(fieldName);
         }
 
+        ///<summary>Get the value of a static field in an object type.</summary>
+        ///<remarks>The generic parameter determines the field type.</remarks>
+        ///<param name="fieldID">The ID of the field to get.</param>
         public FieldType GetStatic<FieldType>(IntPtr fieldID)
         {
             return _GetStatic<FieldType>(fieldID);
         }
 
         // Set the value of a static field in an object type.
+        ///<summary>Set the value of a static field in an object type.</summary>
+        ///<remarks>The generic parameter determines the field type.</remarks>
+        ///<param name="fieldName">The name of the field (e.g. int counter; would have fieldName = "counter").</param>
+        ///<param name="val">The value to assign to the field. It has to match the field type.</param>
+        ///<example>
+        ///  <code><![CDATA[
+        ///using UnityEngine;
+        ///
+        ///public class Example : MonoBehaviour
+        ///{
+        ///    // Create an object of user provided class org.example.StaticFields,
+        ///    // and set the value of field 'globalName'.
+        ///    void Start()
+        ///    {
+        ///        AndroidJavaObject javaObject = new AndroidJavaObject("org.example.StaticFields");
+        ///        javaObject.Set<string>("globalName", "this_is_the_name");
+        ///    }
+        ///}
+        ///]]></code>
+        ///</example>
         public void SetStatic<FieldType>(string fieldName, FieldType val)
         {
             _SetStatic<FieldType>(fieldName, val);
         }
 
+        ///<summary>Set the value of a static field in an object type.</summary>
+        ///<remarks>The generic parameter determines the field type.</remarks>
+        ///<param name="fieldID">The ID of the field to set.</param>
+        ///<param name="val">The value to assign to the field. It has to match the field type.</param>
         public void SetStatic<FieldType>(IntPtr fieldID, FieldType val)
         {
             _SetStatic<FieldType>(fieldID, val);
@@ -462,12 +631,40 @@ namespace UnityEngine
         //===================================================================
 
         // Retrieve the <i>raw</i> jobject pointer to the Java object.
+        ///<summary>Retrieves the raw <c>jobject</c> pointer to the Java object.
+        ///
+        ///**Note:** Using raw JNI functions requires advanced knowledge of the Android Java Native Interface (JNI).</summary>
+        ///<example>
+        ///  <code><![CDATA[
+        ///using System;
+        ///using UnityEngine;
+        ///
+        ///public class AndroidJavaObjectGetRawObjectExample: MonoBehaviour
+        ///{
+        ///    void Start()
+        ///    {
+        ///        using (AndroidJavaObject javaObject = new AndroidJavaObject("com.example.exampleunityplugin.ExampleJavaClass"))
+        ///        {
+        ///            IntPtr rawObject = javaObject.GetRawObject();
+        ///            string message = javaObject.Call<string>("getMessage");
+        ///
+        ///            Debug.Log("Message: " + message + " Pointer: "+ rawObject);
+        ///        }
+        ///    }
+        ///}
+        ///]]></code>
+        ///</example>
+        ///<seealso cref="AndroidJavaObject.GetRawClass" />
         public IntPtr GetRawObject()
         {
             return _GetRawObject();
         }
 
         // Retrieve the <i>raw</i> jclass pointer to the Java class;
+        ///<summary>Retrieves the raw <c>jclass</c> pointer to the Java class.
+        ///
+        ///**Note:** Using raw JNI functions requires advanced knowledge of the Android Java Native Interface (JNI).</summary>
+        ///<seealso cref="AndroidJavaObject.GetRawObject" />
         public IntPtr GetRawClass()
         {
             return _GetRawClass();
@@ -475,6 +672,10 @@ namespace UnityEngine
 
         //===================================================================
 
+        ///<summary>Creates a clone of the C# object that references the same Java object.</summary>
+        ///<remarks>Allows you to create multiple C# instances referencing the same Java object. The Java object will be excluded from garbage collection until all the C# references to it are disposed or garbage collected.
+        ///If you call this method on an <see cref="AndroidJavaClass" /> instance, the returned clone's type will also be AndroidJavaClass.</remarks>
+        ///<returns>A new C# object which references the same Java object as the original instance.</returns>
         public AndroidJavaObject CloneReference()
         {
             if (m_jclass == null)
@@ -494,42 +695,74 @@ namespace UnityEngine
         //===================================================================
 
         // Call a Java method on an object.
+        ///<summary>Call a Java method on an object.</summary>
+        ///<remarks>To call a Java method with a non-void return type, use the generic version.</remarks>
+        ///<param name="methodName">Specifies which method to call.</param>
+        ///<param name="args">An array of parameters passed to the method.</param>
         public ReturnType Call<ReturnType, T>(string methodName, T[] args)
         {
             return _Call<ReturnType>(methodName, (object)args);
         }
 
+        ///<summary>Calls a Java method on an object (non-static).</summary>
+        ///<remarks>To call a Java method with a non-void return type, use the generic version.</remarks>
+        ///<param name="args">An array of parameters passed to the method.</param>
+        ///<param name="methodID">The ID of the method to call.</param>
         public ReturnType Call<ReturnType, T>(IntPtr methodID, T[] args)
         {
             return _Call<ReturnType>(methodID, (object)args);
         }
 
+        ///<summary>Call a Java method on an object.</summary>
+        ///<remarks>To call a Java method with a non-void return type, use the generic version.</remarks>
+        ///<param name="methodName">Specifies which method to call.</param>
+        ///<param name="args">An array of parameters passed to the method.</param>
         public ReturnType Call<ReturnType>(string methodName, params object[] args)
         {
             return _Call<ReturnType>(methodName, args);
         }
 
+        ///<summary>Calls a Java method on an object (non-static).</summary>
+        ///<remarks>To call a Java method with a non-void return type, use the generic version.</remarks>
+        ///<param name="args">An array of parameters passed to the method.</param>
+        ///<param name="methodID">The ID of the method to call.</param>
         public ReturnType Call<ReturnType>(IntPtr methodID, params object[] args)
         {
             return _Call<ReturnType>(methodID, args);
         }
 
         // Call a static Java method on a class.
+        ///<summary>Call a static Java method on a class.</summary>
+        ///<remarks>To call a static method with a non-void return type, use the generic version.</remarks>
+        ///<param name="methodName">Specifies which method to call.</param>
+        ///<param name="args">An array of parameters passed to the method.</param>
         public ReturnType CallStatic<ReturnType, T>(string methodName, T[] args)
         {
             return _CallStatic<ReturnType>(methodName, (object)args);
         }
 
+        ///<summary>Call a static Java method on a class.</summary>
+        ///<remarks>To call a static method with a non-void return type, use the generic version.</remarks>
+        ///<param name="args">An array of parameters passed to the method.</param>
+        ///<param name="methodID">The ID of the method to call.</param>
         public ReturnType CallStatic<ReturnType, T>(IntPtr methodID, T[] args)
         {
             return _CallStatic<ReturnType>(methodID, (object)args);
         }
 
+        ///<summary>Call a static Java method on a class.</summary>
+        ///<remarks>To call a static method with a non-void return type, use the generic version.</remarks>
+        ///<param name="methodName">Specifies which method to call.</param>
+        ///<param name="args">An array of parameters passed to the method.</param>
         public ReturnType CallStatic<ReturnType>(string methodName, params object[] args)
         {
             return _CallStatic<ReturnType>(methodName, args);
         }
 
+        ///<summary>Call a static Java method on a class.</summary>
+        ///<remarks>To call a static method with a non-void return type, use the generic version.</remarks>
+        ///<param name="args">An array of parameters passed to the method.</param>
+        ///<param name="methodID">The ID of the method to call.</param>
         public ReturnType CallStatic<ReturnType>(IntPtr methodID, params object[] args)
         {
             return _CallStatic<ReturnType>(methodID, args);
@@ -537,6 +770,7 @@ namespace UnityEngine
 
         //===================================================================
 
+        [NoAutoStaticsCleanup]
         private static bool enableDebugPrints = false;
 
         protected void DebugPrint(string msg)
@@ -591,10 +825,12 @@ namespace UnityEngine
         {
         }
 
+#pragma warning disable UA5000 // The Avoid Finalizer Analyzer produces compile errors for any new finalizers. This pre-existing finalizer declaration has been suppressed, but should be rewritten if possible.
         ~AndroidJavaObject()
         {
             Dispose(false);
         }
+#pragma warning restore UA5000
 
         protected virtual void Dispose(bool disposing)
         {
@@ -1081,9 +1317,62 @@ namespace UnityEngine
             base.Dispose(disposing);
         }
     }
+    ///<summary>AndroidJavaClass is the Unity representation of a generic instance of java.lang.Class.</summary>
+    ///<remarks>**Note**: this API can be used from custom thread, but requires that thread to be attached to JVM first, see <see cref="AndroidJNI.AttachCurrentThread" />.</remarks>
     public class AndroidJavaClass : AndroidJavaObject
     {
         // Construct an AndroidJavaClass from the class name
+        ///<summary>Construct an AndroidJavaClass from the class name.</summary>
+        ///<remarks>
+        ///  <para>This essentially means locate the class type and allocate a &lt;tt&gt;java.lang.Class&lt;/tt&gt; object of that particular type. It allows you to access static properties and methods of the Java/Kotlin classes without creating an instance or allocating additional memory.
+        ///
+        ///The following code example demonstrates the use of <c>AndroidJavaClass</c> constructor for interacting with Java code. It shows how to access a static property from a Java class to retrieve the maximum possible value of an integer.</para>
+        ///  <para>The following code examples demonstrate how to use the <c>AndroidJavaClass</c> constructor to interact with Kotlin code. The following Kotlin example defines a static method to compute the hash code of a string.</para>
+        ///  <para>The following C# example shows how to call the Kotlin method in Unity.</para>
+        ///</remarks>
+        ///<param name="className">Specifies the Java class name (e.g. &lt;tt&gt;java.lang.String&lt;/tt&gt;).</param>
+        ///<example>
+        ///  <code><![CDATA[
+        ///using UnityEngine;
+        ///
+        ///public class AccessJavaLangIntegerStatic : MonoBehaviour
+        ///{
+        ///    void Start()
+        ///    {
+        ///        var integerClass = new AndroidJavaClass("java.lang.Integer");
+        ///        int maxValue = integerClass.GetStatic<int>("MAX_VALUE");
+        ///        Debug.Log("java.lang.Integer.MAX_VALUE: " + maxValue);
+        ///    }
+        ///}
+        ///]]></code>
+        ///</example>
+        ///<example nocheck="true">
+        ///  <code><![CDATA[
+        ///object KotlinStringHelper {
+        ///   @JvmStatic
+        ///   fun getStringHashCode(inputString: String?): Int {
+        ///       return inputString?.hashCode() ?: 0
+        ///   }
+        ///}
+        ///]]></code>
+        ///</example>
+        ///<example>
+        ///  <code><![CDATA[
+        ///using UnityEngine;
+        ///public class KotlinExamples
+        ///{
+        ///    public static int GetKotlinStringHashCode(string text)
+        ///    {
+        ///        //Use Kotlin object name
+        ///        using (AndroidJavaClass kotlinClass = new AndroidJavaClass("KotlinStringHelper")) 
+        ///        {
+        ///            int hash = kotlinClass.CallStatic<int>("getStringHashCode", text);
+        ///            return hash;
+        ///        }
+        ///    }
+        ///}
+        ///]]></code>
+        ///</example>
         public AndroidJavaClass(string className) : base()
         {
             _AndroidJavaClass(className);
@@ -1149,6 +1438,7 @@ namespace UnityEngine
         }
 
         private const string RELECTION_HELPER_CLASS_NAME = "com/unity3d/player/ReflectionHelper";
+        [NoAutoStaticsCleanup]
         private static readonly GlobalJavaObjectRef s_ReflectionHelperClass = new GlobalJavaObjectRef(AndroidJNISafe.FindClass(RELECTION_HELPER_CLASS_NAME));
         private static readonly IntPtr s_ReflectionHelperGetConstructorID = GetStaticMethodID(RELECTION_HELPER_CLASS_NAME, "getConstructorID", "(Ljava/lang/Class;Ljava/lang/String;)Ljava/lang/reflect/Constructor;");
         private static readonly IntPtr s_ReflectionHelperGetMethodID = GetStaticMethodID(RELECTION_HELPER_CLASS_NAME, "getMethodID", "(Ljava/lang/Class;Ljava/lang/String;Ljava/lang/String;Z)Ljava/lang/reflect/Method;");
@@ -1481,7 +1771,7 @@ namespace UnityEngine
             }
         }
 
-        private static int FRAME_SIZE_FOR_ARRAYS = 100;
+        private const int FRAME_SIZE_FOR_ARRAYS = 100;
 
         public static IntPtr ConvertToJNIArray(Array array)
         {

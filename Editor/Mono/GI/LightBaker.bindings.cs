@@ -345,10 +345,12 @@ namespace UnityEditor.LightBaking
             return Internal_Connect(bakePortNumber);
         }
 
+#pragma warning disable UA5000 // The Avoid Finalizer Analyzer produces compile errors for any new finalizers. This pre-existing finalizer declaration has been suppressed, but should be rewritten if possible.
         ~ExternalProcessConnection()
         {
             Destroy();
         }
+#pragma warning restore UA5000
 
         public void Dispose()
         {
@@ -394,10 +396,12 @@ namespace UnityEditor.LightBaking
             _ptr = ptr;
             _ownsPtr = false;
         }
+#pragma warning disable UA5000 // The Avoid Finalizer Analyzer produces compile errors for any new finalizers. This pre-existing finalizer declaration has been suppressed, but should be rewritten if possible.
         ~BakeInput()
         {
             Destroy();
         }
+#pragma warning restore UA5000
 
         public void Dispose()
         {
@@ -700,10 +704,12 @@ namespace UnityEditor.LightBaking
             _ptr = ptr;
             _ownsPtr = false;
         }
+#pragma warning disable UA5000 // The Avoid Finalizer Analyzer produces compile errors for any new finalizers. This pre-existing finalizer declaration has been suppressed, but should be rewritten if possible.
         ~LightProbeRequests()
         {
             Destroy();
         }
+#pragma warning restore UA5000
 
         public void Dispose()
         {
@@ -763,10 +769,12 @@ namespace UnityEditor.LightBaking
             _ptr = ptr;
             _ownsPtr = false;
         }
+#pragma warning disable UA5000 // The Avoid Finalizer Analyzer produces compile errors for any new finalizers. This pre-existing finalizer declaration has been suppressed, but should be rewritten if possible.
         ~VirtualOffsets()
         {
             Destroy();
         }
+#pragma warning restore UA5000
 
         public void Dispose()
         {
@@ -814,10 +822,12 @@ namespace UnityEditor.LightBaking
             _ptr = ptr;
             _ownsPtr = false;
         }
+#pragma warning disable UA5000 // The Avoid Finalizer Analyzer produces compile errors for any new finalizers. This pre-existing finalizer declaration has been suppressed, but should be rewritten if possible.
         ~LightmapRequests()
         {
             Destroy();
         }
+#pragma warning restore UA5000
 
         public void Dispose()
         {
@@ -897,10 +907,12 @@ namespace UnityEditor.LightBaking
             _ptr = ptr;
             _ownsPtr = false;
         }
+#pragma warning disable UA5000 // The Avoid Finalizer Analyzer produces compile errors for any new finalizers. This pre-existing finalizer declaration has been suppressed, but should be rewritten if possible.
         ~DeviceSettings()
         {
             Destroy();
         }
+#pragma warning restore UA5000
 
         public void Dispose()
         {

@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 
 // ReSharper disable once CheckNamespace - we explicitly want UnityEditor namespace
@@ -336,7 +337,9 @@ namespace UnityEditor
                 menu.AddSeparator("");
         }
 
+        [NoAutoStaticsCleanup] // GUIContent override hook; GUIContent survives reload and re-set by callers as needed
         internal static GUIContent overrideCopyContent { set; get; }
+        [NoAutoStaticsCleanup] // GUIContent override hook; GUIContent survives reload and re-set by callers as needed
         internal static GUIContent overridePasteContent { set; get; }
 
         static void SetupAction(SerializedProperty property, GenericMenu menu, Event evt,

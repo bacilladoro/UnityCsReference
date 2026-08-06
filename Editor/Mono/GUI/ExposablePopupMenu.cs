@@ -8,11 +8,12 @@ using System.IO;
 
 using UnityEditorInternal;
 using UnityEngine;
+using Unity.Scripting.LifecycleManagement;
 
 
 namespace UnityEditor
 {
-    internal class ExposablePopupMenu
+    internal partial class ExposablePopupMenu
     {
         public class ItemData
         {
@@ -201,9 +202,11 @@ namespace UnityEditor
                 Debug.LogError("Callback is null");
         }
 
-        internal class PopUpMenu
+        internal partial class PopUpMenu
         {
+            [AutoStaticsCleanupOnCodeReload]
             static List<ItemData> m_Data;
+            [AutoStaticsCleanupOnCodeReload]
             static ExposablePopupMenu m_Caller;
 
             static internal void Show(Rect activatorRect, List<ItemData> buttonData, ExposablePopupMenu caller)

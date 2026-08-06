@@ -13,11 +13,12 @@ using UnityEngine.Analytics;
 using UnityEngine.Rendering;
 using UnityEngine.UIElements;
 using UnityEditor.Callbacks;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
     [CustomEditor(typeof(MemorySettings))]
-    internal class MemorySettingsEditor : Editor
+    internal partial class MemorySettingsEditor : Editor
     {
         class ContentNonSearchable
         {
@@ -105,7 +106,9 @@ namespace UnityEditor
         SerializedProperty m_EditorMemorySettingsProperty;
         SerializedProperty m_DefaultMemorySettingsProperty;
 
+        [NoAutoStaticsCleanup] // lazy Styles holder (GUIStyle/GUIContent); no user refs, safe to persist across code reload
         static Styles s_Styles;
+        [AutoStaticsCleanupOnCodeReload]
         static SettingsProvider s_SettingsProvider;
 
         int m_SelectedPlatform = 0;
@@ -136,9 +139,13 @@ namespace UnityEditor
         }
 
         bool m_EditorSelected = true;
+        [NoAutoStaticsCleanup] // lazy GUIStyle; no user refs, safe to persist across code reload
         static GUIStyle s_TabOnlyOne;
+        [NoAutoStaticsCleanup] // lazy GUIStyle; no user refs, safe to persist across code reload
         static GUIStyle s_TabFirst;
+        [NoAutoStaticsCleanup] // lazy GUIStyle; no user refs, safe to persist across code reload
         static GUIStyle s_TabMiddle;
+        [NoAutoStaticsCleanup] // lazy GUIStyle; no user refs, safe to persist across code reload
         static GUIStyle s_TabLast;
 
         static Rect GetTabRect(Rect rect, int tabIndex, int tabCount, out GUIStyle tabStyle)
@@ -645,6 +652,7 @@ namespace UnityEditor
         const string k_EventName = "mimallocSettingChanged";
         const int k_MaxEventsPerHour = 100;
         const string k_VendorKey = "unity.memory";
+        [NoAutoStaticsCleanup] // test-only hook, null in normal operation; safe to persist across code reload
         static Action<bool, bool, string, string> s_TestEventCallback;
 
         [Serializable]
@@ -674,6 +682,7 @@ namespace UnityEditor
             }
         }
 
+        [NoAutoStaticsCleanup] // one-time-created editor analytics service (infrastructure singleton); no user refs, safe to persist
         static IMemorySettingsAnalyticsService s_AnalyticsService;
 
         static MemorySettingsAnalytics()

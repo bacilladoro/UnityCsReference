@@ -301,7 +301,8 @@ namespace Unity.ProjectAuditor.Editor.UI
                     inValues.Add(new ChartUtil.Element("Moderate", "Moderate issues", moderate, m_SeverityColors[2], Utility.GetIcon(Utility.IconType.Moderate)));
                 if (minor != 0)
                     inValues.Add(new ChartUtil.Element("Minor", "Minor issues", minor, m_SeverityColors[3], Utility.GetIcon(Utility.IconType.Minor)));
-                inValues.Add(new ChartUtil.Element("Ignored", "Ignored issues", ignored, m_SeverityColors[4], Utility.GetIcon(Utility.IconType.Ignored)));
+                if (ignored != 0)
+                    inValues.Add(new ChartUtil.Element("Ignored", "Ignored issues", ignored, m_SeverityColors[4], Utility.GetIcon(Utility.IconType.Ignored)));
 
                 EditorGUILayout.BeginHorizontal();
 

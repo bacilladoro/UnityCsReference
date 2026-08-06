@@ -9,10 +9,14 @@ using Unity.Scripting.LifecycleManagement;
 namespace UnityEngine.Bindings
 {
     [VisibleToOtherModules]
-    internal static class ExceptionMarshaller
+    internal static partial class ExceptionMarshaller
     {
         [ThreadStatic]
-        [AutoStaticsCleanupOnCodeReload]
+        // Cleared on code reload by ClearPendingExceptionOnCodeReload() below. [NoAutoStaticsCleanup]
+        // only suppresses the auto-cleanup source generator, which cannot run in this assembly:
+        // it emits a reference to UnityEngine.DelegateAutoCleanup (CoreModule), which the lower-level
+        // UnityEngine.ScriptingModule cannot reference. neutron uses [AutoStaticsCleanupOnCodeReload] here.
+        [NoAutoStaticsCleanup]
         static Exception s_pendingException;
 
         // This method is called from Burst direct call methods
@@ -52,5 +56,12 @@ namespace UnityEngine.Bindings
         {
             s_pendingException = ex;
         }
+
+        // Equivalent to neutron's [AutoStaticsCleanupOnCodeReload] on s_pendingException: null the
+        // pending exception when code unloads so a user-defined exception type cannot pin the old ALC
+        // across a code reload. Expressed as a method because the field-level auto-cleanup codegen
+        // cannot run in this assembly (see the note on s_pendingException).
+        [OnCodeUnloading]
+        static void ClearPendingExceptionOnCodeReload() => s_pendingException = null;
     }
 }

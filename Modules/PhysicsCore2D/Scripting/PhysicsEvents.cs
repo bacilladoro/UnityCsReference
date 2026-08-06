@@ -8,6 +8,7 @@ using UnityEngine;
 using UnityEngine.Scripting;
 using UnityEngine.Scripting.APIUpdating;
 using Unity.Collections;
+using Unity.Scripting.LifecycleManagement;
 using Object = System.Object;
 
 namespace Unity.U2D.Physics
@@ -75,13 +76,23 @@ namespace Unity.U2D.Physics
             /// </summary>
             public readonly PhysicsShape visitorShape => m_VisitorShape;
 
+            /// <summary>
+            /// Whether this is the first trigger event between the two groups the shapes belong to.
+            /// Always true when either shape has no group or the world has event grouping disallowed.
+            /// </summary>
+            /// <remarks>
+            /// See <see cref="PhysicsShape.physicsGroup"/> and <see cref="PhysicsWorld.eventGroupingAllowed"/>.
+            /// </remarks>
+            public readonly bool firstGroup => m_FirstGroup;
+
             /// <undoc/>
-            public override readonly string ToString() => $"TriggerBeginEvent: triggerShape={triggerShape}, visitorShape={visitorShape}";
+            public override readonly string ToString() => $"TriggerBeginEvent: triggerShape={triggerShape}, visitorShape={visitorShape}, firstGroup={firstGroup}";
 
             #region Internal
 
             readonly PhysicsShape m_TriggerShape;
             readonly PhysicsShape m_VisitorShape;
+            readonly bool m_FirstGroup;
 
             #endregion
         }
@@ -105,13 +116,23 @@ namespace Unity.U2D.Physics
             /// </summary>
             public readonly PhysicsShape visitorShape => m_VisitorShape;
 
+            /// <summary>
+            /// Whether this is the last trigger event between the two groups the shapes belong to.
+            /// Always true when either shape has no group or the world has event grouping disallowed.
+            /// </summary>
+            /// <remarks>
+            /// See <see cref="PhysicsShape.physicsGroup"/> and <see cref="PhysicsWorld.eventGroupingAllowed"/>.
+            /// </remarks>
+            public readonly bool lastGroup => m_LastGroup;
+
             /// <undoc/>
-            public override readonly string ToString() => $"TriggerEndEvent: triggerShape={triggerShape}, visitorShape={visitorShape}";
+            public override readonly string ToString() => $"TriggerEndEvent: triggerShape={triggerShape}, visitorShape={visitorShape}, lastGroup={lastGroup}";
 
             #region Internal
 
             readonly PhysicsShape m_TriggerShape;
             readonly PhysicsShape m_VisitorShape;
+            readonly bool m_LastGroup;
 
             #endregion
         }
@@ -140,14 +161,24 @@ namespace Unity.U2D.Physics
             /// </summary>
             public readonly PhysicsShape.ContactId contactId => m_ContactId;
 
+            /// <summary>
+            /// Whether this is the first contact event between the two groups the shapes belong to.
+            /// Always true when either shape has no group or the world has event grouping disallowed.
+            /// </summary>
+            /// <remarks>
+            /// See <see cref="PhysicsShape.physicsGroup"/> and <see cref="PhysicsWorld.eventGroupingAllowed"/>.
+            /// </remarks>
+            public readonly bool firstGroup => m_FirstGroup;
+
             /// <undoc/>
-            public override readonly string ToString() => $"ContactBeginEvent: shapeA={shapeA}, shapeB={shapeB}, Id={contactId}";
+            public override readonly string ToString() => $"ContactBeginEvent: shapeA={shapeA}, shapeB={shapeB}, Id={contactId}, firstGroup={firstGroup}";
 
             #region Internal
 
             readonly PhysicsShape m_ShapeA;
             readonly PhysicsShape m_ShapeB;
             readonly PhysicsShape.ContactId m_ContactId;
+            readonly bool m_FirstGroup;
 
             #endregion
         }
@@ -177,14 +208,24 @@ namespace Unity.U2D.Physics
             /// </summary>
             public readonly PhysicsShape.ContactId contactId => m_ContactId;
 
+            /// <summary>
+            /// Whether this is the last contact event between the two groups the shapes belong to.
+            /// Always true when either shape has no group or the world has event grouping disallowed.
+            /// </summary>
+            /// <remarks>
+            /// See <see cref="PhysicsShape.physicsGroup"/> and <see cref="PhysicsWorld.eventGroupingAllowed"/>.
+            /// </remarks>
+            public readonly bool lastGroup => m_LastGroup;
+
             /// <undoc/>
-            public override readonly string ToString() => $"ContactEndEvent: shapeA={shapeA}, shapeB={shapeB}, Id={contactId}";
+            public override readonly string ToString() => $"ContactEndEvent: shapeA={shapeA}, shapeB={shapeB}, Id={contactId}, lastGroup={lastGroup}";
 
             #region Internal
 
             readonly PhysicsShape m_ShapeA;
             readonly PhysicsShape m_ShapeB;
             readonly PhysicsShape.ContactId m_ContactId;
+            readonly bool m_LastGroup;
 
             #endregion
         }
@@ -539,6 +580,10 @@ namespace Unity.U2D.Physics
         /// See <see cref="PhysicsEvents.PreSimulateEventHandler"/>.
         /// </summary>
         public static event PreSimulateEventHandler PreSimulate { add => s_PreSimulate += value; remove => s_PreSimulate -= value; }
+        // NOTE: the static events below can hold user/editor handlers, but AutoStaticsCleanup codegen in this
+        // player-shipped module forces the PhysicsCore2D module into stripped player builds
+        // (TestStrippingDependencies). Persist as before until lifecycle registration is strip-safe.
+        [NoAutoStaticsCleanup] // see stripping note above
         static event PreSimulateEventHandler s_PreSimulate;
 
         /// <summary>
@@ -547,6 +592,7 @@ namespace Unity.U2D.Physics
         /// See <see cref="PhysicsEvents.PostSimulateEventHandler"/>.
         /// </summary>
         public static event PostSimulateEventHandler PostSimulate { add => s_PostSimulate += value; remove => s_PostSimulate -= value; }
+        [NoAutoStaticsCleanup] // see stripping note on s_PreSimulate
         static event PostSimulateEventHandler s_PostSimulate;
 
         /// <undoc/>
@@ -653,6 +699,7 @@ namespace Unity.U2D.Physics
         /// See <see cref="PhysicsEvents.WorldDrawResultsEventHandler"/>.
         /// </summary>
         public static event WorldDrawResultsEventHandler WorldDrawResults { add => s_WorldDrawResults += value; remove => s_WorldDrawResults -= value; }
+        [NoAutoStaticsCleanup] // see stripping note on s_PreSimulate
         static event WorldDrawResultsEventHandler s_WorldDrawResults;
 
         /// <undoc/>
@@ -687,6 +734,7 @@ namespace Unity.U2D.Physics
         /// Event callback for a world definition change event.
         /// </summary>
         public static event WorldDefinitionChangeEventHandler WorldDefinitionChange { add => s_WorldDefinitionChange += value; remove => s_WorldDefinitionChange -= value; }
+        [NoAutoStaticsCleanup] // see stripping note on s_PreSimulate
         static event WorldDefinitionChangeEventHandler s_WorldDefinitionChange;
 
         /// <undoc/>
@@ -697,6 +745,44 @@ namespace Unity.U2D.Physics
             {
                 // Invoke the event.
                 s_WorldDefinitionChange?.Invoke(world);
+            }
+            catch (Exception e)
+            {
+                Debug.LogError(e);
+            }
+            finally
+            {
+            }
+        }
+
+        #endregion
+
+        #region World Transform Plane Changed Event
+
+        /// <summary>
+        /// Event handler for a world transform-plane change event callback.
+        /// </summary>
+        /// <param name="world">The world whose transform plane changed.</param>
+        /// <param name="oldTransformPlane">The transform plane the world changed from.</param>
+        /// <param name="newTransformPlane">The transform plane the world changed to.</param>
+        public delegate void WorldTransformPlaneChangeEventHandler(PhysicsWorld world, PhysicsWorld.TransformPlane oldTransformPlane, PhysicsWorld.TransformPlane newTransformPlane);
+
+        /// <summary>
+        /// Event callback for a world transform-plane change event.
+        /// This only fires when the transform plane actually changes.
+        /// </summary>
+        public static event WorldTransformPlaneChangeEventHandler WorldTransformPlaneChange { add => s_WorldTransformPlaneChange += value; remove => s_WorldTransformPlaneChange -= value; }
+        [NoAutoStaticsCleanup] // see stripping note on s_PreSimulate
+        static event WorldTransformPlaneChangeEventHandler s_WorldTransformPlaneChange;
+
+        /// <undoc/>
+        [RequiredByNativeCode]
+        internal static void InvokeWorldTransformPlaneChangeEvent(PhysicsWorld world, PhysicsWorld.TransformPlane oldTransformPlane, PhysicsWorld.TransformPlane newTransformPlane)
+        {
+            try
+            {
+                // Invoke the event.
+                s_WorldTransformPlaneChange?.Invoke(world, oldTransformPlane, newTransformPlane);
             }
             catch (Exception e)
             {

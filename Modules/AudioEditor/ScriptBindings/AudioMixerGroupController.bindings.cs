@@ -10,6 +10,7 @@ namespace UnityEditor.Audio
 {
     ///*undocumented*
     [NativeHeader("Editor/Src/Audio/Mixer/AudioMixerGroupController.h")]
+    [global::UnityEngine.NativeClass("AudioMixerGroupController", PersistentTypeId = 243)]
     [NativeHeader("Modules/AudioEditor/ScriptBindings/AudioMixerGroupController.bindings.h")]
     internal partial class AudioMixerGroupController : AudioMixerGroup
     {

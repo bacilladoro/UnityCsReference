@@ -41,7 +41,6 @@ namespace UnityEngine.UIElements
         /// Gets tree item data for the specified TreeView item id.
         /// </summary>
         /// <param name="node">The node representing a TreeView item.</param>
-        /// <typeparam name="T">Type of the data inside TreeViewItemData.</typeparam>
         /// <returns>The tree item data.</returns>
         public TreeViewItemData<T> GetTreeItemDataForNode(HierarchyNode node)
         {
@@ -55,7 +54,6 @@ namespace UnityEngine.UIElements
         /// Gets data for the specified node.
         /// </summary>
         /// <param name="node">The node representing a TreeView item.</param>
-        /// <typeparam name="T">Type of the data inside TreeViewItemData.</typeparam>
         /// <returns>The data.</returns>
         public T GetDataForNode(HierarchyNode node)
         {

@@ -52,6 +52,9 @@ namespace UnityEditor.Overlays
         [SerializeField]
         OverlayCanvasSaveState m_LastToolbarSaveState;
 
+        [SerializeField]
+        List<string> m_PinnedMenuItemPaths = new();
+
         [Serializable]
         struct WindowToCanvasPair
         {
@@ -176,6 +179,29 @@ namespace UnityEditor.Overlays
         public void SetToolbarSaveState(OverlayCanvasSaveState save)
         {
             m_LastToolbarSaveState = save;
+        }
+
+        internal IReadOnlyList<string> pinnedMenuItemPaths => m_PinnedMenuItemPaths;
+
+        internal bool ContainsPinnedMenuItem(string menuPath) => m_PinnedMenuItemPaths.Contains(menuPath);
+
+        internal bool AddPinnedMenuItem(string menuPath)
+        {
+            if (m_PinnedMenuItemPaths.Contains(menuPath))
+                return false;
+
+            m_PinnedMenuItemPaths.Add(menuPath);
+            Save();
+            return true;
+        }
+
+        internal bool RemovePinnedMenuItem(string menuPath)
+        {
+            if (!m_PinnedMenuItemPaths.Remove(menuPath))
+                return false;
+
+            Save();
+            return true;
         }
     }
 }

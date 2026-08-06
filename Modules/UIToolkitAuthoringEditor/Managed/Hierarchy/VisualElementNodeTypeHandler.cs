@@ -6,6 +6,7 @@ using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using Unity.Hierarchy;
@@ -28,7 +29,6 @@ internal abstract class VisualElementNodeTypeHandler :
     IHierarchySearchPropositionProvider,
     IHierarchyEditorNodeTypeHandler
 {
-    public const string NodeTypeName = "VisualElement";
     protected const string VisualElementDisabledUssClass = "unity-disabled";
 
     public static Regex elementNameRegex { get; } = new (@"^[a-zA-Z0-9\-_]+$", RegexOptions.Compiled);
@@ -47,14 +47,15 @@ internal abstract class VisualElementNodeTypeHandler :
         }
 
         public bool TryGetElement(in HierarchyNode node, out VisualElement element)
-        {
-            return m_Handler.TryGetElementFromNode(in node, out element);
-        }
+            => m_Handler.TryGetElementFromNode(in node, out element);
 
         public bool TryGetNode(VisualElement element, out HierarchyNode node)
-        {
-            return m_Handler.TryGetNodeFromElement(element, out node);
-        }
+            => m_Handler.TryGetNodeFromElement(element, out node);
+
+        public bool TryGetScopeKey(VisualElement element, out string scopeKey)
+            => m_Handler.TryGetScopeKey(element, out scopeKey);
+        public bool TryComputeStableHash(VisualElement element, out Hash128 hash)
+            => m_Handler.TryComputeStableHash(element, out hash);
     }
 
     public const string HierarchyItemClassName = "ui-hierarchy-item";
@@ -197,8 +198,12 @@ internal abstract class VisualElementNodeTypeHandler :
 
     private readonly Mappings m_Mappings = new();
     private readonly List<Panel> m_RegisteredPanels = new();
+
+    // Panels whose initial tree walk (IVisualElementChangeProcessor.BeginProcessing) has run. Until
+    // then, UpdateBegin forces the panel's authoring update to trigger it synchronously (see UpdateBegin).
+    private readonly HashSet<Panel> m_BegunPanels = new();
+
     private readonly QueryEngine<VisualElement> m_QueryEngine;
-    private readonly IVisualElementSelectionHandler m_SelectionHandler;
     readonly HashSet<HierarchyNode> m_HighlightedNodes = new();
     VisualElement m_HoveredElement;
 
@@ -209,8 +214,6 @@ internal abstract class VisualElementNodeTypeHandler :
     private UIHierarchyDisplayOptions m_DisplayOptions;
 
     internal List<VisualElementAsset> m_NodesToSelect;
-
-    protected IVisualElementSelectionHandler SelectionHandler => m_SelectionHandler;
 
     /// <summary>
     /// Flags indicating if mutating operations are permitted in the hierarchy.
@@ -261,10 +264,9 @@ internal abstract class VisualElementNodeTypeHandler :
         }
     }
 
-    protected VisualElementNodeTypeHandler(IVisualElementSelectionHandler selectionHandler)
+    protected VisualElementNodeTypeHandler()
     {
         m_QueryEngine = CreateQueryEngine();
-        m_SelectionHandler = selectionHandler;
         UIToolkitAuthoringSettings.DisplayOptionsChanged += OnDisplayOptionsChanged;
         m_DisplayOptions = UIToolkitAuthoringSettings.DisplayOptions;
     }
@@ -274,7 +276,7 @@ internal abstract class VisualElementNodeTypeHandler :
         UICommandQueue.RegisterHandler<HighlightCommand>(ProcessHighlightElementsCommand);
     }
 
-    /// <inheritdoc cref="HierarchyNodeTypeHandler.Dispose"/>>
+    /// <inheritdoc cref="HierarchyNodeTypeHandlerBase.Dispose(bool)"/>
     protected override void Dispose(bool disposing)
     {
         base.Dispose(disposing);
@@ -282,30 +284,27 @@ internal abstract class VisualElementNodeTypeHandler :
         UnregisterAllPanels();
         UIToolkitAuthoringSettings.DisplayOptionsChanged -= OnDisplayOptionsChanged;
         UICommandQueue.UnregisterHandler<HighlightCommand>(ProcessHighlightElementsCommand);
+        m_GlobalObjectIdKeyCache.Clear();
     }
 
     #region HierarchyNodeTypeHandler
 
 
-    /// <inheritdoc cref="HierarchyNodeTypeHandler.GetNodeTypeName"/>>
-    public sealed override string GetNodeTypeName()
-    {
-        return NodeTypeName;
-    }
 
-    /// <inheritdoc cref="HierarchyNodeTypeHandler.SearchBegin"/>>
+
+    /// <inheritdoc cref="HierarchyNodeTypeHandlerBase.SearchBegin"/>
     protected sealed override void SearchBegin(HierarchySearchQueryDescriptor query)
     {
         m_ParsedQuery = m_QueryEngine.ParseQuery(query.ToString());
     }
 
-    /// <inheritdoc cref="HierarchyNodeTypeHandler.SearchMatch"/>>
+    /// <inheritdoc cref="HierarchyNodeTypeHandlerBase.SearchMatch"/>
     protected sealed override bool SearchMatch(in HierarchyNode node)
     {
         return m_Mappings.TryGetValue(node, out var element) && m_ParsedQuery.Test(element);
     }
 
-    /// <inheritdoc cref="HierarchyNodeTypeHandler.SearchEnd"/>>
+    /// <inheritdoc cref="HierarchyNodeTypeHandlerBase.SearchEnd"/>
     protected sealed override void SearchEnd()
     {
         m_ParsedQuery = null;
@@ -334,7 +333,7 @@ internal abstract class VisualElementNodeTypeHandler :
         }
     }
 
-    /// <inheritdoc cref="HierarchyView.UnbindViewItem"/>>
+    /// <inheritdoc cref="HierarchyView.UnbindViewItem"/>
     protected override void OnUnbindItem(HierarchyViewItem item)
     {
         item.RowContainer.style.backgroundColor = StyleKeyword.Null;
@@ -360,11 +359,180 @@ internal abstract class VisualElementNodeTypeHandler :
         }
     }
 
-    /// <inheritdoc cref="HierarchyNodeTypeHandler.OnInitializingView"/>>
+    /// <inheritdoc cref="HierarchyNodeTypeHandler.OnBindView"/>
     protected override void OnBindView(HierarchyView view)
     {
         view.StyleContainer.styleSheets.Add(StyleSheet);
         view.StyleContainer.styleSheets.Add(ThemeStyleSheet);
+    }
+
+    // UID serialization -------------------------------------------------------------------------
+    //
+    // Persists a stable, domain-reload-safe identity per node so the hierarchy view state
+    // (expansion/selection) can be restored after the hierarchy is recreated. Per-node layout (k_UIDSize):
+    //   [0, k_UIDHashSize)  Hash128 of (document scope key, in-memory authoring-id path)
+    //   [k_UIDHashSize, ..)  EntityId of the node's selection object
+    //
+    // The hash is the durable identifier: the scope key (see TryGetScopeKey) and the in-memory path
+    // (VisualElementAsset ids, which are serialized on the asset) are both stable across a domain
+    // reload, so it re-resolves against the freshly rebuilt element tree. The EntityId is an exact
+    // within-session fallback (its selection object survives the frequent clear+re-clone cycles but
+    // not a domain reload) used for undo/redo and cases where the hash cannot be built.
+    private const int k_UIDVersion = 1;
+    private const int k_UIDHashSize = 16;      // sizeof(Hash128)
+    private const int k_UIDEntityIdSize = 8;   // sizeof(EntityId)
+    private const int k_UIDSize = k_UIDHashSize + k_UIDEntityIdSize;
+
+    // Separates the authoring-id path of the nearest VEA-backed ancestor from the structural
+    // child-index chain used for elements that have no VisualElementAsset (see TryGetStableUidPath).
+    private const int k_NonAssetPathMarker = int.MinValue;
+
+    private readonly List<int> m_UIDPathBuffer = new();
+    private readonly Dictionary<UnityEngine.Object, string> m_GlobalObjectIdKeyCache = new();
+
+    protected override void GetUIDInfo(out HierarchyUIDInfo info) => info = new HierarchyUIDInfo(k_UIDVersion, k_UIDSize);
+
+    protected override void WriteUIDs(ReadOnlySpan<HierarchyNode> nodes, Span<byte> outUIDs)
+    {
+        for (var i = 0; i < nodes.Length; ++i)
+        {
+            var node = nodes[i];
+            var slot = outUIDs.Slice(i * k_UIDSize, k_UIDSize);
+
+            if (m_Mappings.TryGetValue(node, out var element) && TryComputeStableHash(element, out var hash))
+                WriteBlittable(slot[..k_UIDHashSize], ref hash);
+
+            if (m_Mappings.TryGetSelectionHandle(node, out var entityId))
+                WriteBlittable(slot[k_UIDHashSize..], ref entityId);
+        }
+    }
+
+    protected override void ReadUIDs(in HierarchyUIDInfo info, ReadOnlySpan<byte> uids, Span<HierarchyNode> outNodes)
+    {
+        if (info.Version != k_UIDVersion || info.Size != k_UIDSize)
+            return;
+
+        // Build a transient hash -> node index over the currently mapped elements. The window
+        // restores state only after UpdateData() has repopulated the mappings, so everything that
+        // can be resolved is present here; rebuilding per call is fine as restores are infrequent.
+        using var _ = DictionaryPool<Hash128, HierarchyNode>.Get(out var nodesByHash);
+        foreach (var element in m_Mappings.MappedElements)
+        {
+            if (TryComputeStableHash(element, out var hash) && m_Mappings.TryGetValue(element, out var node))
+                nodesByHash[hash] = node;
+        }
+
+        for (var i = 0; i < outNodes.Length; ++i)
+        {
+            var slot = uids.Slice(i * k_UIDSize, k_UIDSize);
+
+            // Preferred path: the hash re-resolves across domain reloads.
+            var hash = ReadBlittable<Hash128>(slot[..k_UIDHashSize]);
+            if (hash.isValid && nodesByHash.TryGetValue(hash, out var node))
+            {
+                outNodes[i] = node;
+                continue;
+            }
+
+            // Within-session fallback: the selection object's EntityId is still valid (no reload).
+            var entityId = ReadBlittable<EntityId>(slot[k_UIDHashSize..]);
+            if (entityId != EntityId.None && m_Mappings.TryGetNodeFromSelectionHandle(entityId, out node))
+                outNodes[i] = node;
+        }
+    }
+
+    /// <summary>
+    /// Computes the stable, domain-reload-safe hash for <paramref name="element"/> from its document
+    /// scope key (see <see cref="TryGetScopeKey"/>) and its in-memory authoring-id path.
+    /// </summary>
+    private bool TryComputeStableHash(VisualElement element, out Hash128 hash)
+    {
+        hash = default;
+
+        if (element == null || !TryGetStableUidPath(element, m_UIDPathBuffer))
+            return false;
+
+        if (!TryGetScopeKey(element, out var scopeKey) || string.IsNullOrEmpty(scopeKey))
+            return false;
+
+        var builder = new Hash128();
+        builder.Append(scopeKey);
+        for (var i = 0; i < m_UIDPathBuffer.Count; ++i)
+            builder.Append(m_UIDPathBuffer[i]);
+
+        hash = builder;
+        return hash.isValid;
+    }
+
+    /// <summary>
+    /// Builds the identity path used for hashing. Authored elements use the authoring-id path
+    /// (<see cref="VisualElementReferenceTools.TryGetInMemoryPath"/>), which is stable across reloads and
+    /// robust to edits. Elements with no <see cref="VisualElement.visualElementAsset"/> — control-internal
+    /// elements such as Foldout/ScrollView/ListView children — have no authoring id, so we anchor to their
+    /// nearest VEA-backed (or panel-component-root) ancestor and append the physical child-index chain,
+    /// which the control rebuilds identically across a domain reload. A marker separates the two segments
+    /// so an index chain can never collide with an authoring-id path.
+    /// </summary>
+    private bool TryGetStableUidPath(VisualElement element, List<int> pathBuffer)
+    {
+        if (VisualElementReferenceTools.TryGetInMemoryPath(element, pathBuffer))
+            return true;
+
+        using var _ = ListPool<int>.Get(out var indexChain);
+
+        var node = element;
+        var parent = node.hierarchy.parent;
+        while (parent != null && parent.visualElementAsset == null && parent is not IPanelComponentRootElement)
+        {
+            indexChain.Add(parent.hierarchy.IndexOf(node));
+            node = parent;
+            parent = node.hierarchy.parent;
+        }
+
+        // TryGetInMemoryPath clears pathBuffer and succeeds for a VEA-backed element or a panel root.
+        if (parent == null || !VisualElementReferenceTools.TryGetInMemoryPath(parent, pathBuffer))
+            return false;
+
+        indexChain.Add(parent.hierarchy.IndexOf(node));
+
+        pathBuffer.Add(k_NonAssetPathMarker);
+        for (var i = indexChain.Count - 1; i >= 0; --i)
+            pathBuffer.Add(indexChain[i]);
+
+        return true;
+    }
+
+    /// <summary>
+    /// Returns a stable, serializable identifier for the document scope that <paramref name="element"/>
+    /// belongs to. Combined with the element's in-memory authoring-id path it forms the node's UID, so
+    /// the key must be identical across domain reloads for the same logical document (for example a
+    /// <see cref="GlobalObjectId"/> for a scene panel component, or the edited asset for a stage).
+    /// </summary>
+    protected abstract bool TryGetScopeKey(VisualElement element, out string scopeKey);
+
+    /// <summary>
+    /// Returns a cached <see cref="GlobalObjectId"/> string for <paramref name="obj"/>, suitable as a
+    /// <see cref="TryGetScopeKey"/> result.
+    /// </summary>
+    protected string GetGlobalObjectIdScopeKey(UnityEngine.Object obj)
+    {
+        if (obj == null)
+            return null;
+
+        if (!m_GlobalObjectIdKeyCache.TryGetValue(obj, out var key))
+            m_GlobalObjectIdKeyCache[obj] = key = GlobalObjectId.GetGlobalObjectIdSlow(obj).ToString();
+
+        return key;
+    }
+
+    private static void WriteBlittable<T>(Span<byte> destination, ref T value) where T : unmanaged
+        => MemoryMarshal.AsBytes(MemoryMarshal.CreateReadOnlySpan(ref value, 1)).CopyTo(destination);
+
+    private static T ReadBlittable<T>(ReadOnlySpan<byte> source) where T : unmanaged
+    {
+        T value = default;
+        source.CopyTo(MemoryMarshal.AsBytes(MemoryMarshal.CreateSpan(ref value, 1)));
+        return value;
     }
 
     #endregion // HierarchyNodeTypeHandler
@@ -458,24 +626,10 @@ internal abstract class VisualElementNodeTypeHandler :
             return false;
         }
 
-        if (!ValidateName(name))
-        {
-            CommandList.SetDirty();
-            return false;
-        }
-
-        var elementVea = element.visualElementAsset;
-        if (elementVea == null)
-        {
-            CommandList.SetDirty();
-            return false;
-        }
-        SetElementNameCommand.Execute(this, elementVea, name);
-        element.name = name;
-        return true;
+        return OnSetName(view, in node, element, name);
     }
 
-    string IHierarchyEditorNodeTypeHandler.GetDisplayName(HierarchyView view, in HierarchyNode node)
+    string IHierarchyEditorNodeTypeHandler.GetDisplayNameOverride(HierarchyView view, in HierarchyNode node)
     {
         if (!m_Mappings.TryGetValue(node, out var element) || element == null)
             return "<null>";
@@ -700,8 +854,24 @@ internal abstract class VisualElementNodeTypeHandler :
     /// <param name="element">The <see cref="VisualElement"/> to rename.</param>
     /// <param name="name">The given name.</param>
     /// <returns><see langword="true"/> if the node is renamed successfully, <see langword="false"/> otherwise.</returns>
-    protected virtual bool OnSetName(HierarchyView view, in HierarchyNode node, VisualElement element, string name) =>
-        false;
+    protected virtual bool OnSetName(HierarchyView view, in HierarchyNode node, VisualElement element, string name)
+    {
+        if (!ValidateName(name))
+        {
+            CommandList.SetDirty();
+            return false;
+        }
+
+        var elementVea = element.visualElementAsset;
+        if (elementVea == null)
+        {
+            CommandList.SetDirty();
+            return false;
+        }
+        SetElementNameCommand.Execute(CommandSources.Hierarchy, elementVea, name);
+        element.name = name;
+        return true;
+    }
 
     /// <summary>
     /// Get a node display name. Default is the node name property.
@@ -821,16 +991,21 @@ internal abstract class VisualElementNodeTypeHandler :
     /// <param name="node">The <see cref="HierarchyNode"/> to perform double click on.</param>
     /// <param name="element">The <see cref="VisualElement"/>.</param>
     /// <returns><see langword="true"/> if action is supported, <see langword="false"/> otherwise.</returns>
-    protected virtual bool CanDoubleClick(HierarchyView view, in HierarchyNode node, VisualElement element) => false;
+    protected virtual bool CanDoubleClick(HierarchyView view, in HierarchyNode node, VisualElement element) => true;
 
     /// <summary>
     /// Action to execute when double clicking on the <see cref="HierarchyNode"/>.
+    /// Frames the element in whichever views are listening (Scene view, UI Viewport).
     /// </summary>
     /// <param name="view">The <see cref="HierarchyView"/>.</param>
     /// <param name="node">The <see cref="HierarchyNode"/> to perform double click on.</param>
     /// <param name="element">The <see cref="VisualElement"/>.</param>
     /// <returns><see langword="true"/> if the action was successful, <see langword="false"/> otherwise.</returns>
-    protected virtual bool OnDoubleClick(HierarchyView view, in HierarchyNode node, VisualElement element) => false;
+    protected virtual bool OnDoubleClick(HierarchyView view, in HierarchyNode node, VisualElement element)
+    {
+        RequestFramingCommand.Execute(CommandSources.Hierarchy, element, orientToFace: false);
+        return true;
+    }
 
     /// <summary>
     /// Determines if a drag operation can be started with the specified nodes.
@@ -1122,6 +1297,9 @@ internal abstract class VisualElementNodeTypeHandler :
     /// <param name="panel">The requested panel.</param>
     protected void RegisterPanel(Panel panel)
     {
+        if (panel == null || m_RegisteredPanels.Contains(panel))
+            return;
+
         panel.RegisterChangeProcessor(this);
         m_RegisteredPanels.Add(panel);
         UnregisterOrphanedElements();
@@ -1135,6 +1313,7 @@ internal abstract class VisualElementNodeTypeHandler :
     {
         panel.UnregisterChangeProcessor(this);
         m_RegisteredPanels.Remove(panel);
+        m_BegunPanels.Remove(panel);
     }
 
     /// <summary>
@@ -1196,12 +1375,37 @@ internal abstract class VisualElementNodeTypeHandler :
         return m_NodesToSelect;
     }
 
+    protected override void UpdateBegin()
+    {
+        if (!Hierarchy.IsCreated)
+            return;
+
+        var registry = VisualElementSelectionRegistry.Instance;
+        if (registry == null)
+            return;
+
+        registry.EnsureInitialized();
+
+        for (var i = 0; i < m_RegisteredPanels.Count; ++i)
+        {
+            var panel = m_RegisteredPanels[i];
+            if (m_BegunPanels.Contains(panel))
+                continue;
+
+            if (registry.IsTracked(panel))
+                panel.UpdateAuthoring();
+        }
+    }
+
     #region IVisualElementChangeProcessor
 
     void IVisualElementChangeProcessor.BeginProcessing(BaseVisualElementPanel panel)
     {
         if (!Hierarchy.IsCreated)
             return;
+
+        if (panel is Panel p)
+            m_BegunPanels.Add(p);
 
         Rebuild(panel);
     }
@@ -1211,16 +1415,12 @@ internal abstract class VisualElementNodeTypeHandler :
         if (!Hierarchy.IsCreated)
             return;
 
-        using var handle = ListPool<VisualElementRemap>.Get(out var remappings);
-        if (changes.addedOrMovedElements.Count > 0 && changes.removedFromPanel.Count > 0)
-            VisualElementRemapper.Remap(changes.addedOrMovedElements, changes.removedFromPanel, remappings);
-
-        if (remappings.Count > 0)
-        {
+        // The selection registry (registered as a change processor before us) has already computed
+        // the old-instance -> new-instance remaps for this batch and transferred the selection
+        // objects. We only need to keep our node map stable by reusing nodes for reclaimed elements.
+        var remappings = VisualElementSelectionRegistry.Instance?.GetFrameRemaps(panel as Panel);
+        if (remappings is { Count: > 0 })
             m_Mappings.Remap(remappings);
-            m_SelectionHandler.Remap(remappings);
-
-        }
 
         // We process the elements that were added or moved before the elements that were removed
         // because when the Hierarchy will remove a node, it will also remove its children, which
@@ -1287,6 +1487,9 @@ internal abstract class VisualElementNodeTypeHandler :
         if (!Hierarchy.IsCreated)
             return;
 
+        if (panel is Panel p)
+            m_BegunPanels.Remove(p);
+
         Clear(panel);
     }
 
@@ -1348,7 +1551,7 @@ internal abstract class VisualElementNodeTypeHandler :
         if (!m_Mappings.TryGetValue(element, out var elementNode))
         {
             CommandList.Add(in parentNode, out elementNode);
-            var instanceID = m_SelectionHandler?.AcquireInstanceId(element) ?? EntityId.None;
+            var instanceID = VisualElementSelectionRegistry.Instance?.GetOrCreateEntityId(element) ?? EntityId.None;
             m_Mappings.TryAdd(in elementNode, element, instanceID);
         }
         else
@@ -1393,7 +1596,6 @@ internal abstract class VisualElementNodeTypeHandler :
 
         CommandList.Remove(removedNode);
         m_Mappings.TryRemove(removedNode);
-        m_SelectionHandler?.ReleaseInstanceId(element);
     }
 
     private void RefreshChildrenSortingIndices(HierarchyNode node)

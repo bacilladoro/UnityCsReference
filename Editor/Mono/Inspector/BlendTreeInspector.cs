@@ -7,6 +7,7 @@ using UnityEngine;
 using UnityEditor;
 using UnityEditor.Animations;
 using System;
+using Unity.Scripting.LifecycleManagement;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,7 +18,7 @@ using System.Globalization;
 namespace UnityEditor
 {
     [CustomEditor(typeof(BlendTree))]
-    internal class BlendTreeInspector : Editor
+    internal partial class BlendTreeInspector : Editor
     {
         enum BlendTreeVisualizationMode
         {
@@ -77,10 +78,16 @@ namespace UnityEditor
                 visSamplerColor     = new Color(1.00f, 0.40f, 0.40f);
             }
         }
-        static Styles styles;
+        [NoAutoStaticsCleanup]
+        static Styles s_Styles;
+        static Styles styles => s_Styles ?? (s_Styles = new());
+        [AutoStaticsCleanupOnCodeReload]
         internal static AnimatorController currentController = null;
+        [AutoStaticsCleanupOnCodeReload]
         internal static Animator currentAnimator = null;
+        [AutoStaticsCleanupOnCodeReload]
         internal static BlendTree parentBlendTree = null;
+        [AutoStaticsCleanupOnCodeReload]
         internal static Action<BlendTree> blendParameterInputChanged = null;
         private readonly int m_BlendAnimationID = "BlendAnimationIDHash".GetHashCode();
         private readonly int m_ClickDragFloatID = "ClickDragFloatIDHash".GetHashCode();
@@ -166,12 +173,8 @@ namespace UnityEditor
 
         void Init()
         {
-            if (styles == null)
-                styles = new Styles();
             if (m_BlendTree == null)
                 m_BlendTree = target as BlendTree;
-            if (styles == null)
-                styles = new Styles();
             if (m_PreviewBlendTree == null)
                 m_PreviewBlendTree = new PreviewBlendTree();
             if (m_VisBlendTree == null)
@@ -489,7 +492,9 @@ namespace UnityEditor
             }
         }
 
+        [NoAutoStaticsCleanup]
         private static bool s_ClickDragFloatDragged;
+        [NoAutoStaticsCleanup]
         private static float s_ClickDragFloatDistance;
         public float ClickDragFloat(Rect position, float value)
         {

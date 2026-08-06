@@ -114,7 +114,9 @@ namespace Unity.U2D.Physics
 
         /// <summary>
         /// Treat this body as high speed object that performs continuous collision detection against dynamic and kinematic bodies, but not other high speed bodies.
-        /// Fast collision bodies should be used sparingly. They are not a solution for general dynamic-versus-dynamic continuous collision.
+        /// Fast collision bodies should be used sparingly, not because they are slow but because everything using fast collisions does not work well.
+        /// They are not a solution for general dynamic-versus-dynamic continuous collision.
+        /// They also may interfere with joint constraints.
         /// </summary>
         public bool fastCollisionsAllowed { readonly get => m_FastCollisionsAllowed; set => m_FastCollisionsAllowed = value; }
 

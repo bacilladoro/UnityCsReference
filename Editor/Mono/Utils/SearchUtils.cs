@@ -4,6 +4,7 @@
 
 using System;
 using UnityEngine.Bindings;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -116,6 +117,7 @@ namespace UnityEditor
             return (bp < 0 && a.Length >= b.Length) || (ap < 0 && b.Length >= a.Length);
         }
 
+        [NoAutoStaticsCleanup] // Lazy cache of an EditorPrefs-backed value; the pref survives reload so the cached value is safe to persist.
         static int? s_DebounceThresholdMs;
         const string k_DebounceThresholdKeyName = "Search.DebounceThresholdMs";
         public static int debounceThresholdMs

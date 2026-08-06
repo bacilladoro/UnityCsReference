@@ -6,6 +6,7 @@ using UnityEngine.Bindings;
 
 namespace UnityEngine.Connect
 {
+    [global::UnityEngine.NativeClass("UnityConnectSettings", PersistentTypeId = 310)]
     [NativeHeader("Modules/UnityConnect/UnityConnectSettings.h")]
     internal class UnityConnectSettings : Object
     {

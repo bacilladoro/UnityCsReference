@@ -92,6 +92,7 @@ namespace Unity.Hierarchy.Editor
         HierarchyGlobalSelectionHandler m_SelectionHandler;
         Label m_StatusBar;
         bool m_ViewStateInit;
+        [NonSerialized] bool m_SavedStateForDomainReload = false; // Used to prevent non-deterministic view-state persistence on OnDisable during a domain reload.
         bool m_HasSceneHandler;
         CommandSubscriberHelper m_CommandSubscriberHelper;
 
@@ -432,6 +433,7 @@ namespace Unity.Hierarchy.Editor
             StageNavigationManager.instance.stageChanged += OnStageChanged;
             PrefabStage.prefabStageReloading += OnPrefabStageReloading;
             PrefabStage.prefabStageReloaded += OnPrefabStageReloaded;
+            AssemblyReloadEvents.beforeAssemblyReload += OnBeforeAssemblyReload;
 
             rootVisualElement.RegisterCallback<KeyDownEvent>(OnKeyDown);
             rootVisualElement.RegisterCallback<KeyUpEvent>(OnKeyUp);
@@ -515,6 +517,7 @@ namespace Unity.Hierarchy.Editor
             PrefabStage.prefabStageReloaded -= OnPrefabStageReloaded;
             StageNavigationManager.instance.stageChanged -= OnStageChanged;
             StageNavigationManager.instance.stageChanging -= OnStageChanging;
+            AssemblyReloadEvents.beforeAssemblyReload -= OnBeforeAssemblyReload;
             PrefabUtility.prefabInstanceUpdated -= OnPrefabInstanceUpdated;
             Undo.undoRedoPerformed -= OnUndoRedoPerformed;
 
@@ -530,8 +533,11 @@ namespace Unity.Hierarchy.Editor
             rootVisualElement.UnregisterCallback<NavigationCancelEvent>(OnNavigationCancel, TrickleDown.TrickleDown);
             rootVisualElement.UnregisterCallback<KeyUpEvent>(OnKeyUp);
 
-            // Save in memory ViewState in case of domain reload
-            SaveViewState(HierarchyViewState.Content.DomainReload);
+            // Save in memory ViewState in case of domain reload — unless OnBeforeAssemblyReload already did
+            // it. Managed OnDisable order during a domain unload is non-deterministic, so we need to save the state
+            // before the current stage's OnDisable is called, otherwise the stage might have already removed their nodes.
+            if (!m_SavedStateForDomainReload)
+                SaveViewState(HierarchyViewState.Content.DomainReload);
 
             // Persist Column setup on disk
             SaveWindowStateSettings();
@@ -581,6 +587,14 @@ namespace Unity.Hierarchy.Editor
             }
 
             HierarchyAnalytics.RemoveWindow(this);
+        }
+
+        void OnBeforeAssemblyReload()
+        {
+            // A domain reload is about to begin. Persist the view state now before any of the managed objects are
+            // unloaded.
+            SaveViewState(HierarchyViewState.Content.DomainReload);
+            m_SavedStateForDomainReload = true;
         }
 
         void OnFocus() => s_LastInteractedHierarchy = this;
@@ -1245,9 +1259,27 @@ namespace Unity.Hierarchy.Editor
                             m_HierarchyView.ViewModel.SetFlags(children, HierarchyNodeFlags.Expanded);
                         }
                     }
-                    m_SelectionHandler.SyncGlobalSelectionFromViewModel();
+                    if (m_HierarchyView.ViewModel.HasFlags(HierarchyNodeFlags.Selected) || !GlobalSelectionIsOnlyAssets())
+                        m_SelectionHandler.SyncGlobalSelectionFromViewModel();
                 });
             }
+        }
+
+        // True when the global selection is non-empty and every selected object is a persistent asset -
+        // something the hierarchy can't represent (e.g. a Project Browser selection). Used so an empty
+        // hierarchy restore doesn't clear such a selection (UUM-146689), while still clearing stale
+        // scene selections.
+        static bool GlobalSelectionIsOnlyAssets()
+        {
+            var objects = Selection.objects;
+            if (objects.Length == 0)
+                return false;
+            foreach (var o in objects)
+            {
+                if (!EditorUtility.IsPersistent(o))
+                    return false;
+            }
+            return true;
         }
 
         internal void SaveStageViewState(Stage stage)
@@ -1600,18 +1632,5 @@ namespace Unity.Hierarchy.Editor
             public event Action<ValidateCommandEvent> ValidateCommand;
             public event Action<ExecuteCommandEvent> ExecuteCommand;
         }
-
-        #region Marked as obsolete error in 6.6
-        /// <summary>
-        /// Raised when the <see cref="HierarchyView"/> is initializing, typically
-        /// allowing callers to load additional stylesheets and add styles to <see cref="HierarchyView.StyleContainer"/>.
-        /// </summary>
-        [NoAutoStaticsCleanup] // [Obsolete(error: true)] — no one can subscribe; no cleanup needed
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [Obsolete("InitializingView is deprecated. Use BindView instead, which provides direct access to the HierarchyView and has a symmetric UnbindView event.", true)]
-#pragma warning disable CS0067
-        public static event Action<VisualElement> InitializingView;
-#pragma warning restore CS0067
-        #endregion
     }
 }

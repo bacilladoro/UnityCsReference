@@ -13,6 +13,7 @@ namespace UnityEngine
     [NativeHeader("Modules/ParticleSystem/ParticleSystemForceField.h")]
     [NativeHeader("Modules/ParticleSystem/ParticleSystemForceFieldManager.h")]
     [NativeHeader("Modules/ParticleSystem/ScriptBindings/ParticleSystemScriptBindings.h")]
+    [global::UnityEngine.NativeClass("ParticleSystemForceField", PersistentTypeId = 330)]
     [RequireComponent(typeof(Transform))]
     public partial class ParticleSystemForceField : Behaviour
     {

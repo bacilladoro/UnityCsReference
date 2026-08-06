@@ -13,23 +13,28 @@ using UnityEngine;
 using UnityEditor.DeploymentTargets;
 using RequiredByNativeCodeAttribute = UnityEngine.Scripting.RequiredByNativeCodeAttribute;
 using UnityEditor.Build;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Modules
 {
-    internal static class ModuleManager
+    internal static partial class ModuleManager
     {
         private static readonly ProfilerMarkerWithStringData s_InitializePlatformSupportModule = ProfilerMarkerWithStringData.Create("InitializePlatformSupportModule", "Name");
 
         [NonSerialized]
+        [AutoStaticsCleanupOnCodeReload]
         static Dictionary<string, IPlatformSupportModule> s_PlatformModules;
 
         [NonSerialized]
+        [AutoStaticsCleanupOnCodeReload]
         static Dictionary<GUID, IPlatformSupportModule> s_PlatformModulesByGuid;
 
         [NonSerialized]
+        [AutoStaticsCleanupOnCodeReload]
         static bool s_PlatformModulesInitialized;
 
         [NonSerialized]
+        [AutoStaticsCleanupOnCodeReload]
         static IPlatformSupportModule s_ActivePlatformModule;
 
         internal static Dictionary<string, IPlatformSupportModule> platformSupportModules

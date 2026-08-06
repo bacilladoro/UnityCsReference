@@ -10,12 +10,13 @@ using UnityEngine.Rendering;
 using UnityEngine.Scripting;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
+using Unity.Scripting.LifecycleManagement;
 using uei = UnityEngine.Internal;
 
 namespace UnityEngine
 {
     [RequiredByNativeCode]
-    public struct Resolution
+    public struct Resolution : IEquatable<Resolution>
     {
         // Keep in sync with ScreenManager::Resolution
         private int m_Width;
@@ -29,6 +30,33 @@ namespace UnityEngine
         [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
         [Obsolete("Resolution.refreshRate is obsolete. Use refreshRateRatio instead.", false)]
         public int refreshRate { get { return (int)Math.Round(m_RefreshRate.value); } set { m_RefreshRate.numerator = (uint)value; m_RefreshRate.denominator = 1; } }
+
+        public bool Equals(Resolution other)
+        {
+            return m_Width == other.m_Width &&
+                m_Height == other.m_Height &&
+                m_RefreshRate.Equals(other.m_RefreshRate);
+        }
+
+        public override bool Equals(object obj)
+        {
+            return obj is Resolution other && Equals(other);
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(m_Width, m_Height, m_RefreshRate);
+        }
+
+        public static bool operator==(Resolution lhs, Resolution rhs)
+        {
+            return lhs.Equals(rhs);
+        }
+
+        public static bool operator!=(Resolution lhs, Resolution rhs)
+        {
+            return !lhs.Equals(rhs);
+        }
 
         public override string ToString()
         {
@@ -588,7 +616,8 @@ namespace UnityEngine
                 Internal_RenderMesh(rparams, mesh, submeshIndex, objectToWorld, null);
         }
 
-        internal static Dictionary<int, RenderInstancedDataLayout> s_RenderInstancedDataLayouts = new Dictionary<int, RenderInstancedDataLayout>();
+        [AutoStaticsCleanupOnCodeReload]
+        internal static readonly Dictionary<int, RenderInstancedDataLayout> s_RenderInstancedDataLayouts = new();
         internal static RenderInstancedDataLayout GetCachedRenderInstancedDataLayout(Type type)
         {
             int typeHashCode = type.GetHashCode();
@@ -601,7 +630,8 @@ namespace UnityEngine
             return layout;
         }
 
-        internal static Dictionary<int, RenderSpriteInstancedDataLayout> s_RenderSpriteInstancedDataLayouts = new Dictionary<int, RenderSpriteInstancedDataLayout>();
+        [AutoStaticsCleanupOnCodeReload]
+        internal static readonly Dictionary<int, RenderSpriteInstancedDataLayout> s_RenderSpriteInstancedDataLayouts = new();
         internal static RenderSpriteInstancedDataLayout GetCachedRenderSpriteInstancedDataLayout(Type type)
         {
             int typeHashCode = type.GetHashCode();
@@ -1250,6 +1280,7 @@ namespace UnityEngine
 {
     public sealed partial class QualitySettings
     {
+        [NoAutoStaticsCleanup] // transient dispose-scope; only non-null synchronously within a single quality-level removal, always restored to null by Dispose
         static QualityLevelRemovalScope s_RemovalScope = null;
 
         /// <summary>
@@ -1262,18 +1293,21 @@ namespace UnityEngine
         /// operation is done before name array is being recomputed. And this should
         /// remains this way as the name should be inspectable from the callback.
         /// </summary>
+        [AutoStaticsCleanupOnCodeReload]
         internal static event Action<int /*previous*/, int /*current*/, int /*currentInPreviousList*/> activeQualityLevelIndexChanged;
 
         /// <summary>
         /// Callback raised when the current active quality level is being changed
         /// It passes to the callback the previous quality level and the current quality level
         /// </summary>
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<int,int> activeQualityLevelChanged;
 
         /// <summary>
         /// Callback raised when the current active quality level is being renamed.
         /// It passed the previous and the new name to the callback.
         /// </summary>
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<string, string> activeQualityLevelRenamed;
 
         internal class QualityLevelRemovalScope : IDisposable

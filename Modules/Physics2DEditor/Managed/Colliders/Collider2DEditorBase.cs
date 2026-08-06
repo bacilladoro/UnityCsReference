@@ -7,11 +7,12 @@ using UnityEditorInternal;
 using UnityEngine;
 using UnityEditor.AnimatedValues;
 using Unity.Collections;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
     [CanEditMultipleObjects]
-    internal abstract class Collider2DEditorBase : Editor
+    internal abstract partial class Collider2DEditorBase : Editor
     {
         protected class Styles
         {
@@ -27,6 +28,9 @@ namespace UnityEditor
         private readonly AnimBool m_ShowContacts = new AnimBool();
         Vector2 m_ContactScrollPosition;
 
+        // this is a cached collection (to avoid allocations on every frame) that can reference user defined Colliders.
+        // We don't care about its content, but we want to prevent references to user code here
+        [AutoStaticsCleanupOnCodeReload]
         static ContactPoint2D[] m_Contacts = new ContactPoint2D[100];
 
         private SavedBool m_ShowLayerOverridesFoldout;

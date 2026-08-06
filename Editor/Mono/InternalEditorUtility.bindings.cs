@@ -786,7 +786,7 @@ namespace UnityEditorInternal
         [Obsolete("SetupShaderMenu is obsolete. You can get list of available shaders with ShaderUtil.GetAllShaderInfo", true)]
         public static void SetupShaderMenu(Material material) {}
 
-        [FreeFunction("UnityConfig::GetUnityBuildFullVersion")]
+        [FreeFunction("UnityConfig::GetUnityBuildFullVersion", true)]
         extern public static string GetFullUnityVersion();
 
         public static Version GetUnityVersion()
@@ -795,34 +795,34 @@ namespace UnityEditorInternal
             return new Version(version.Major, version.Minor, version.Build, GetUnityRevision());
         }
 
-        [FreeFunction("InternalEditorUtilityBindings::GetUnityVersionDigits")]
+        [FreeFunction("InternalEditorUtilityBindings::GetUnityVersionDigits", true)]
         extern public static string GetUnityVersionDigits();
 
-        [FreeFunction("UnityConfig::GetUnityBuildBranchName")]
+        [FreeFunction("UnityConfig::GetUnityBuildBranchName", true)]
         extern public static string GetUnityBuildBranch();
 
-        [FreeFunction("UnityConfig::GetUnityBuildHash")]
+        [FreeFunction("UnityConfig::GetUnityBuildHash", true)]
         extern public static string GetUnityBuildHash();
 
-        [FreeFunction("UnityConfig::GetUnityDisplayVersion")]
+        [FreeFunction("UnityConfig::GetUnityDisplayVersion", true)]
         extern public static string GetUnityDisplayVersion();
 
-        [FreeFunction("UnityConfig::GetUnityDisplayVersionVerbose")]
+        [FreeFunction("UnityConfig::GetUnityDisplayVersionVerbose", true)]
         extern public static string GetUnityDisplayVersionVerbose();
 
-        [FreeFunction("UnityConfig::GetUnityBuildTimeSinceEpoch")]
+        [FreeFunction("UnityConfig::GetUnityBuildTimeSinceEpoch", true)]
         extern public static int GetUnityVersionDate();
 
-        [FreeFunction("UnityConfig::GetUnityBuildNumericRevision")]
+        [FreeFunction("UnityConfig::GetUnityBuildNumericRevision", true)]
         extern public static int GetUnityRevision();
 
-        [FreeFunction("UnityConfig::GetUnityProductName")]
+        [FreeFunction("UnityConfig::GetUnityProductName", true)]
         extern public static string GetUnityProductName();
 
-        [FreeFunction("InternalEditorUtilityBindings::IsUnityBeta")]
+        [FreeFunction("InternalEditorUtilityBindings::IsUnityBeta", true)]
         extern public static bool IsUnityBeta();
 
-        [FreeFunction("InternalEditorUtilityBindings::GetUnityCopyright")]
+        [FreeFunction("InternalEditorUtilityBindings::GetUnityCopyright", true)]
         extern public static string GetUnityCopyright();
 
         [FreeFunction("InternalEditorUtilityBindings::GetLicenseInfoText")]

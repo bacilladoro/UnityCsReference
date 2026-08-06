@@ -13,6 +13,7 @@ namespace UnityEditor
 {
     [NativeHeader("Editor/Src/AssetPipeline/SpeedTreeImporter.h")]
     [NativeHeader("Editor/Src/AssetPipeline/SpeedTreeImporter.bindings.h")]
+    [global::UnityEngine.NativeClass("SpeedTreeImporter", PersistentTypeId = 1110)]
     [NativeHeader("Runtime/Camera/ReflectionProbeTypes.h")]
     public partial class SpeedTreeImporter : AssetImporter
     {

@@ -11,6 +11,8 @@ using UnityObject = UnityEngine.Object;
 
 namespace UnityEngine.Animations
 {
+    ///<summary>An implementation of <see cref="IPlayable" /> that controls an animation mixer.</summary>
+    ///<remarks>NOTE: You can use <see cref="PlayableExtensions" /> methods with AnimationMixerPlayable objects.</remarks>
     [NativeHeader("Modules/Animation/ScriptBindings/AnimationMixerPlayable.bindings.h")]
     [NativeHeader("Modules/Animation/Director/AnimationMixerPlayable.h")]
     [NativeHeader("Runtime/Director/Core/HPlayable.h")]
@@ -21,14 +23,20 @@ namespace UnityEngine.Animations
         PlayableHandle m_Handle;
 
         static readonly AnimationMixerPlayable m_NullPlayable = new AnimationMixerPlayable(PlayableHandle.Null);
+        ///<summary>Returns an invalid AnimationMixerPlayable.</summary>
         public static AnimationMixerPlayable Null { get { return m_NullPlayable; } }
 
+        ///<exclude />
         [Obsolete("normalizeWeights is obsolete. It has no effect and will be removed.")]
         public static AnimationMixerPlayable Create(PlayableGraph graph, int inputCount, bool normalizeWeights)
         {
             return Create(graph, inputCount);
         }
 
+        ///<summary>Creates an <see cref="AnimationMixerPlayable" /> in the <see cref="PlayableGraph" />.</summary>
+        ///<param name="graph">The <see cref="PlayableGraph" /> that will contain the new <see cref="AnimationMixerPlayable" />.</param>
+        ///<param name="inputCount">The number of inputs that the mixer will update.</param>
+        ///<returns>Returns a new <see cref="AnimationMixerPlayable" /> linked to the <see cref="PlayableGraph" />.</returns>
         public static AnimationMixerPlayable Create(PlayableGraph graph, int inputCount = 0)
         {
             var handle = CreateHandle(graph, inputCount);
@@ -55,21 +63,25 @@ namespace UnityEngine.Animations
             m_Handle = handle;
         }
 
+        ///<exclude />
         public PlayableHandle GetHandle()
         {
             return m_Handle;
         }
 
+        ///<exclude />
         public static implicit operator Playable(AnimationMixerPlayable playable)
         {
             return new Playable(playable.GetHandle());
         }
 
+        ///<exclude />
         public static explicit operator AnimationMixerPlayable(Playable playable)
         {
             return new AnimationMixerPlayable(playable.GetHandle());
         }
 
+        ///<exclude />
         public bool Equals(AnimationMixerPlayable other)
         {
             return GetHandle() == other.GetHandle();

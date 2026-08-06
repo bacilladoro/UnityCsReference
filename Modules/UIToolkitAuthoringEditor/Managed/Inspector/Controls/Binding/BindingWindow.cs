@@ -80,8 +80,9 @@ namespace Unity.UIToolkit.Editor
         /// <summary>
         /// Opens a window with the specified mode, title and geometry.
         /// </summary>
-        /// <param name="openToCreate">Indicates whether the window will be used for creeating or editing binding</param>
+        /// <param name="element">The VisualElement being bound.</param>
         /// <param name="bindingPath">The binding path of the UI property to bind</param>
+        /// <param name="mode">Indicates whether the window will be used for creating or editing a binding</param>
         /// <param name="pos">The position of the window</param>
         /// <param name="windowSize">The size of the window</param>
         /// <returns></returns>
@@ -115,15 +116,33 @@ namespace Unity.UIToolkit.Editor
         void OnEnable()
         {
             AssemblyReloadEvents.beforeAssemblyReload += Close;
+            UICommandQueue.RegisterHandler<RemoveBindingCommand>(OnBindingRemoved);
+            UICommandQueue.RegisterHandler<ClearAllStylePropertyBindingsCommand>(OnAllStyleBindingsCleared);
         }
 
         private void OnDisable()
         {
+            UICommandQueue.UnregisterHandler<RemoveBindingCommand>(OnBindingRemoved);
+            UICommandQueue.UnregisterHandler<ClearAllStylePropertyBindingsCommand>(OnAllStyleBindingsCleared);
+
             m_View?.OnClose();
             m_View = null;
             s_Window = null;
 
             AssemblyReloadEvents.beforeAssemblyReload -= Close;
+        }
+
+        // Close the window if the binding it is editing gets removed elsewhere (Remove/Unset/Unset All), so it stops operating on a deleted binding. (UUM-147201)
+        void OnBindingRemoved(in CommandContext context)
+        {
+            if (context.Command is RemoveBindingCommand cmd && m_View != null && m_View.IsEditing(cmd.Element, cmd.BindingId))
+                Close();
+        }
+
+        void OnAllStyleBindingsCleared(in CommandContext context)
+        {
+            if (context.Command is ClearAllStylePropertyBindingsCommand cmd && m_View != null && m_View.IsEditingElement(cmd.Element))
+                Close();
         }
     }
 }

@@ -318,10 +318,7 @@ namespace Unity.UIToolkit.Editor
         /// <summary>
         /// Sets the current data source context.
         /// </summary>
-        /// <param name="element">The selected VisualElement</param>
-        /// <param name="binding">The edited binding</param>
-        /// <param name="bindingDataSource">The current data source</param>
-        /// <param name="bindingDataSourceType">The current data source type</param>
+        /// <param name="context">The current binding context.</param>
         public void SetBindingDataSourceContext(Context context)
         {
             m_AllGroups.Clear();

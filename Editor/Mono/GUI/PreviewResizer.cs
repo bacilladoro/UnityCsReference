@@ -4,6 +4,7 @@
 
 using UnityEngine;
 using UnityEngine.UIElements;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -11,10 +12,14 @@ namespace UnityEditor
     internal class PreviewResizer
     {
         // The raw preview size while dragging (not snapped to allowed values) (shared)
+        [NoAutoStaticsCleanup] // transient drag state, reset when dragging ends; safe to persist
         static float s_DraggedPreviewSize = 0;
         // The returned preview size while dragging (shared)
+        [NoAutoStaticsCleanup] // transient drag state, reset when dragging ends; safe to persist
         static float s_CachedPreviewSizeWhileDragging = 0;
+        [NoAutoStaticsCleanup] // transient drag anchor values captured on MouseDown; safe to persist
         static float s_MouseDownLocation, s_MouseDownValue;
+        [NoAutoStaticsCleanup] // transient drag flag, reset when dragging ends; safe to persist
         static bool s_MouseDragged;
 
         // The last saved preview size - only saved when not dragging

@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
@@ -58,6 +59,7 @@ namespace UnityEditor
             public GUIStyle searchBg = "OT TopBar";
             public GUIStyle bottomBarBg = "OT BottomBar";
         }
+        [NoAutoStaticsCleanup] // lazy GUIStyle/GUIContent Styles holder; safe to persist across reload
         static Styles s_Styles;
 
         public bool IsInitialized()

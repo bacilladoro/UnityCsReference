@@ -14,6 +14,7 @@ using Unity.Jobs;
 namespace UnityEngine
 {
     [UnityEngine.ExcludeFromPreset]
+    [global::UnityEngine.NativeClass("Mesh", PersistentTypeId = 43)]
     [NativeHeader("Runtime/Graphics/Mesh/MeshScriptBindings.h")]
     public sealed partial class Mesh
     {

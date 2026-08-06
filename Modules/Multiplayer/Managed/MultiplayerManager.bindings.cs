@@ -8,6 +8,7 @@ using Unity.Multiplayer;
 namespace UnityEngine.Multiplayer.Internal
 {
     [NativeHeader("Modules/Multiplayer/MultiplayerManager.h")]
+    [NativeClass(null, PersistentTypeId = 0x2719A2C0)]
     [StaticAccessor("GetMultiplayerManager()", StaticAccessorType.Dot)]
     internal static class MultiplayerManager
     {

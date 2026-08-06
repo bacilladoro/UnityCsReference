@@ -9,6 +9,7 @@ namespace UnityEngine
 {
     // Behaviours are Components that can be enabled or disabled.
     [UsedByNativeCode]
+    [global::UnityEngine.NativeClass("Behaviour", PersistentTypeId = 8)]
     [NativeHeader("Runtime/Mono/MonoBehaviour.h")]
     public class Behaviour : Component
     {

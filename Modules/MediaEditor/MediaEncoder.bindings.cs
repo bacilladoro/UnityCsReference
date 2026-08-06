@@ -236,11 +236,6 @@ namespace UnityEditor.Media
             : this(filePath, new[] {audioAttrs})
         {}
 
-        ~MediaEncoder()
-        {
-            Dispose();
-        }
-
         unsafe public bool AddFrame(
             int width, int height, int rowBytes, TextureFormat format, NativeArray<byte> data)
         {
@@ -289,6 +284,8 @@ namespace UnityEditor.Media
                 Internal_Release(m_ThisPtr);
                 m_ThisPtr = IntPtr.Zero;
             }
+            // MediaEncoder is public and unsealed: keep suppressing finalization so a derived
+            // type that adds its own finalizer is still covered after Dispose() (CA1816).
             GC.SuppressFinalize(this);
         }
 

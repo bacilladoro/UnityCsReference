@@ -87,6 +87,7 @@ namespace UnityEngine
     ///based on what material the wheel is hitting.  and <see cref="WheelFrictionCurve" />.</remarks>
     ///<seealso cref="GetGroundHit" />
     [NativeHeader("Modules/Vehicles/WheelCollider.h")]
+    [global::UnityEngine.NativeClass("WheelCollider", PersistentTypeId = 146)]
     [NativeHeader("PhysicsScriptingClasses.h")]
     public class WheelCollider : Collider
     {

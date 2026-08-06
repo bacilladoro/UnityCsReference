@@ -9,35 +9,125 @@ using UnityEngine.Rendering;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Profiling;
 using UnityEngine.Scripting.APIUpdating;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEngine.TerrainTools
 {
+    ///<summary>The context for a paint operation that may span multiple connected Terrain tiles.</summary>
+    ///<remarks>This class is used to apply an edit operation to an area of Terrain that may span multiple Terrain tiles.
+    ///              A PaintContext may be used to edit heightmap or splatmap data, and may also be used to gather normal data in read-only mode (you cannot write to normals, because they are derived from the heightmap).
+    ///
+    ///              
+    ///
+    ///              A PaintContext will calculate the relevant regions on each Terrain, and collect the original data into a single sourceRenderTarget.
+    ///              Your edit operation can then read from sourcerenderTarget, and write the modified data to destinationRenderTarget.
+    ///              Once you have applied your edit operation, the PaintContext can also write the modified data in destinationRenderTarget back to each Terrain, ensuring no seams between them.
+    ///
+    ///              
+    ///
+    ///              The simplest way to use a PaintContext is through the helper functions in TerrainPaintUtility:
+    ///
+    ///              <see cref="TerrainPaintUtility.BeginPaintHeightmap" />, <see cref="TerrainPaintUtility.EndPaintHeightmap" />, <see cref="TerrainPaintUtility.BeginPaintTexture" />, <see cref="TerrainPaintUtility.EndPaintTexture" />, <see cref="TerrainPaintUtility.CollectNormals" /> and <see cref="TerrainPaintUtility.ReleaseContextResources" />.
+    ///
+    ///              
+    ///
+    ///              You can also use PaintContext more directly through its member functions.  In general, they are used in the following order:
+    ///
+    ///              1) Constructor, <see cref="PaintContext.CreateFromBounds" /> - Construct a PaintContext with a target Terrain and a region to edit
+    ///
+    ///              2) <see cref="PaintContext.CreateRenderTargets" /> - Create the source and destination RenderTargets
+    ///
+    ///              3) <see cref="PaintContext.GatherHeightmap" />, <see cref="PaintContext.GatherAlphamap" />, <see cref="PaintContext.GatherNormals" /> - Read from Terrain tiles into sourceRenderTarget
+    ///
+    ///              4) Apply editing operations, reading from sourceRenderTarget, and writing to destinationRenderTarget
+    ///
+    ///              5) <see cref="PaintContext.ScatterHeightmap" />, <see cref="PaintContext.ScatterAlphamap" /> - Write from destinationRenderTarget into Terrain tiles (optional)
+    ///
+    ///              6) <see cref="PaintContext.Cleanup" /> - Destroy RenderTarget resources (required if you call CreateRenderTargets)
+    ///
+    ///              7) <see cref="PaintContext.ApplyDelayedActions" /> - Apply any delayed actions that perform expensive updates</remarks>
+    ///<seealso cref="T:UnityEditor.TerrainTools.TerrainPaintTool`1" />
     [MovedFrom("UnityEngine.Experimental.TerrainAPI")]
-    public class PaintContext
+    public partial class PaintContext
     {
         // initialized by constructor
+        ///<summary>(RO) The Terrain used to build the PaintContext.</summary>
+        ///<remarks>When painting across a border, the PaintContext can refer to several Terrain tiles.
+        ///                  The originTerrain is used to define the terrain space (terrain-local object space) within the PaintContext.</remarks>
         public Terrain originTerrain { get; }     // the terrain that defines the coordinate system and world space position of this PaintContext
+        ///<summary>(RO) The pixel rectangle that this PaintContext represents.</summary>
+        ///<remarks>The pixel rectangle coordinates refer to pixels in the targetTexture on the <see cref="PaintContext.originTerrain" />.</remarks>
+        ///<seealso cref="PaintContext.targetTextureWidth" />
+        ///<seealso cref="PaintContext.targetTextureHeight" />
         public RectInt pixelRect { get; }         // the rectangle, in target texture pixels on the originTerrain, that this paint context represents
+        ///<summary>(RO) The width of the target terrain texture.  This is the resolution for a single Terrain.</summary>
         public int targetTextureWidth { get; }    // the size of the target texture, per terrain tile
+        ///<summary>(RO) The height of the target terrain texture.  This is the resolution for a single Terrain.</summary>
         public int targetTextureHeight { get; }   // the size of the target texture, per terrain tile
+        ///<summary>(RO) The size of a PaintContext pixel in terrain units (as defined by <see cref="originTerrain" />.)</summary>
         public Vector2 pixelSize { get; }         // size of a paint context pixel in object/terrain/world space
 
         // initialized by CreateRenderTargets()
+        ///<summary>(RO) Render target that stores the original data from the Terrain tiles.</summary>
+        ///<remarks>This RenderTexture contains all of the data collected from all Terrain tiles that intersect the PaintContext.
+        ///                  The RenderTexture is created by <see cref="PaintContext.CreateRenderTargets" />, and populated by one of the Gather functions (<see cref="PaintContext.GatherHeightmap" />, <see cref="PaintContext.GatherAlphamap" /> or <see cref="PaintContext.GatherNormals" />).</remarks>
+        ///<seealso cref="PaintContext" />
+        ///<seealso cref="PaintContext.destinationRenderTexture" />
         public RenderTexture sourceRenderTexture { get; private set; }       // the original data
+        ///<summary>(RO) RenderTexture that an edit operation writes to modify the data.</summary>
+        ///<remarks>This RenderTexture stores the modified data represented by a PaintContext.
+        ///                  A terrain tool will typically read from <c>sourceRenderTexture</c>, modify the data, and write to <c>destinationRenderTexture</c>.
+        ///                  The Scatter functions (<see cref="PaintContext.ScatterHeightmap" /> or <see cref="PaintContext.ScatterAlphamap" />) read from <c>destinationRenderTexture</c> to distribute the modified data back to the source Terrain tiles.
+        ///                  <c>destinationRenderTexture</c> is created by <see cref="PaintContext.CreateRenderTargets" />, with size and format matching <c>sourceRenderTexture</c>.</remarks>
+        ///<seealso cref="PaintContext" />
+        ///<seealso cref="PaintContext.sourceRenderTexture" />
         public RenderTexture destinationRenderTexture { get; private set; }  // the modified data (you render to this)
+        ///<summary>(RO) The value of RenderTexture.active at the time CreateRenderTargets is called.</summary>
+        ///<remarks>
+        ///  <see cref="PaintContext.Cleanup" /> uses this value to restore the active RenderTexture to its original value.
+        ///                  In some cases, it may be necessary to manually restore the RenderTexture before calling Cleanup:
+        ///
+        ///                  <c>RenderTexture.active = PaintContext.oldRenderTexture;</c></remarks>
+        ///<seealso cref="PaintContext" />
+        ///<seealso cref="PaintContext.Cleanup" />
         public RenderTexture oldRenderTexture { get; private set; }          // active render texture at the time CreateRenderTargets() is called, restored on Cleanup()
 
+        ///<summary>(RO) The number of Terrain tiles in this PaintContext.</summary>
         public int terrainCount { get { return m_TerrainTiles.Count; } }
+        ///<summary>Retrieves a Terrain from the PaintContext.</summary>
+        ///<remarks>When painting across a border, the PaintContext can refer to several Terrain tiles.
+        ///                  GetTerrain is used to access those Terrain tiles.
+        ///                  terrainIndex must be between 0 and <see cref="PaintContext.terrainCount" /> - 1.</remarks>
+        ///<param name="terrainIndex">Index of the terrain.</param>
+        ///<returns>Returns the Terrain object.</returns>
+        ///<seealso cref="PaintContext.GetClippedPixelRectInTerrainPixels" />
+        ///<seealso cref="PaintContext.GetClippedPixelRectInRenderTexturePixels" />
         public Terrain GetTerrain(int terrainIndex)
         {
             return m_TerrainTiles[terrainIndex].terrain;
         }
 
+        ///<summary>Retrieves the clipped pixel rectangle for a Terrain.</summary>
+        ///<remarks>When painting across a border, the PaintContext can refer to several Terrain tiles.
+        ///                  GetClippedPixelRectInTerrainPixels returns the <see cref="PaintContext.pixelRect" /> clipped to the specified Terrain, in the pixel coordinates of the target texture on that Terrain.
+        ///                  terrainIndex must be between 0 and <see cref="PaintContext.terrainCount" /> - 1.</remarks>
+        ///<param name="terrainIndex">Index of the Terrain.</param>
+        ///<returns>Returns the clipped pixel rectangle.</returns>
+        ///<seealso cref="PaintContext.GetTerrain" />
+        ///<seealso cref="PaintContext.targetTextureWidth" />
+        ///<seealso cref="PaintContext.targetTextureHeight" />
         public RectInt GetClippedPixelRectInTerrainPixels(int terrainIndex)
         {
             return m_TerrainTiles[terrainIndex].clippedTerrainPixels;
         }
 
+        ///<summary>Retrieves the clipped pixel rectangle for a Terrain, relative to the PaintContext render textures.</summary>
+        ///<remarks>When painting across a border, the PaintContext can refer to several Terrain tiles.
+        ///                  GetClippedPixelRectInTerrainPixels returns the <see cref="PaintContext.pixelRect" /> clipped to the specified Terrain, in the pixel coordinates of <see cref="PaintContext.sourceRenderTexture" /> and <see cref="PaintContext.destinationRenderTexture" />.
+        ///                  terrainIndex must be between 0 and <see cref="PaintContext.terrainCount" /> - 1.</remarks>
+        ///<param name="terrainIndex">Index of the Terrain.</param>
+        ///<returns>Returns the clipped pixel rectangle.</returns>
+        ///<seealso cref="PaintContext.GetTerrain" />
         public RectInt GetClippedPixelRectInRenderTexturePixels(int terrainIndex)
         {
             return m_TerrainTiles[terrainIndex].clippedPCPixels;
@@ -49,18 +139,36 @@ namespace UnityEngine.TerrainTools
         private float m_HeightWorldSpaceMin;
         private float m_HeightWorldSpaceMax;
 
+        ///<summary>The minimum height of all Terrain tiles that this PaintContext touches in world space.</summary>
+        ///<remarks>Unity uses this value to transform a height value from a world space Y-coordinate to a value in the [0, 1] range.</remarks>
         public float heightWorldSpaceMin => m_HeightWorldSpaceMin;
+        ///<summary>The height range (from Min to Max) of all Terrain tiles that this PaintContext touches in world space.</summary>
+        ///<remarks>Unity uses this value to transform a height value from a world space Y-coordinate to a value in the [0, 1] range.</remarks>
         public float heightWorldSpaceSize => m_HeightWorldSpaceMax - m_HeightWorldSpaceMin;
 
+        ///<summary>Interface that conveys information about a Terrain within the PaintContext area.</summary>
         public interface ITerrainInfo
         {
+            ///<summary>The Terrain represented by this context. (RO)</summary>
             Terrain terrain                 { get; }            // the terrain tile
+            ///<summary>
+            ///  <see cref="PaintContext.pixelRect" />, clipped to this Terrain, in Terrain pixel coordinates. (RO)</summary>
             RectInt clippedTerrainPixels    { get; }            // the region modified by the PaintContext, in target texture pixels
+            ///<summary>
+            ///  <see cref="PaintContext.pixelRect" />, clipped to this Terrain, in PaintContext pixel coordinates. (RO)</summary>
             RectInt clippedPCPixels         { get; }            // the region modified by the PaintContext, in PaintContext.sourceRenderTexture or destinationRenderTexture pixels
+            ///<summary>Use this property to fill empty regions in PaintContext. It is the same as <c>clippedTerrainPixels</c> with padding around unconnected Terrain edges. (RO)</summary>
             RectInt paddedTerrainPixels     { get; }            // a padded version of clippedTerrainPixels, used for extended-edge sampling to fill empty space
+            ///<summary>Use this property to fill empty regions in PaintContext. It is the same as <c>clippedPCPixels</c> with padding around unconnected Terrain edges. (RO)</summary>
             RectInt paddedPCPixels          { get; }            // a padded version of clippedPCPixels, used for extended-edge sampling to fill empty space
+            ///<summary>Controls gathering from this Terrain within the PaintContext. The default is true.</summary>
+            ///<remarks>Modify this value, if required, to skip this Terrain in any Gather operations that the PaintContext performs.</remarks>
             bool gatherEnable               { get; set; }       // user tools can disable gathering of this terrain tile by setting this flag (default true)
+            ///<summary>Controls scattering to this Terrain within the PaintContext. The default is true.</summary>
+            ///<remarks>Modify this value, if required, to skip this Terrain in any Scatter operations that the PaintContext performs.</remarks>
             bool scatterEnable              { get; set; }       // user tools can disable scattering to this terrain tile by setting this flag (default true)
+            ///<summary>Modify this value, if required, to store and retrieve values relevant to the PaintContext operation.</summary>
+            ///<remarks>For example, use <c>userData</c> to cache information during a Gather operation, and then use that cached information in a Scatter operation.</remarks>
             object userData                 { get; set; }       // user tools can use this to associate data with the terrain
         }
 
@@ -157,9 +265,11 @@ namespace UnityEngine.TerrainTools
             AddTerrainLayer = 1 << 3
         }
 
+        ///<summary>Unity uses this value internally to transform a [0, 1] height value to a texel value, which is stored in <see cref="TerrainData.heightmapTexture" />.</summary>
         public static float kNormalizedHeightScale => 32766.0f / 65535.0f;
 
         // TerrainPaintUtilityEditor hooks to this event to do automatic undo
+        [AutoStaticsCleanupOnCodeReload]
         internal static event Action<PaintContext.ITerrainInfo, ToolAction, string /*editorUndoName*/> onTerrainTileBeforePaint;
 
         internal const int k_MinimumResolution = 1;
@@ -169,6 +279,16 @@ namespace UnityEngine.TerrainTools
             return Mathf.Clamp(resolution, k_MinimumResolution, k_MaximumResolution);
         }
 
+        ///<summary>Creates a new PaintContext, to edit a target texture on a Terrain, in a region defined by pixelRect.</summary>
+        ///<remarks>This constructor finds all Terrain tiles that touch the pixelRect, searching across adjacent connected Terrain tiles.
+        ///                  It also calculates the relevant regions on each Terrain, as well as the transforms between them.</remarks>
+        ///<param name="terrain">Terrain that defines terrain space for this PaintContext.</param>
+        ///<param name="pixelRect">Pixel rectangle to edit in the target terrain texture.</param>
+        ///<param name="targetTextureWidth">Width of the target terrain texture (per Terrain).</param>
+        ///<param name="targetTextureHeight">Height of the target terrain texture (per Terrain).</param>
+        ///<param name="sharedBoundaryTexel">Whether to stretch the Textures so that edge texels lie on the Terrain boundary, and are shared with connected Terrains.</param>
+        ///<param name="fillOutsideTerrain">Whether to fill empty space outside of the Terrain tiles with data from the nearest tile.</param>
+        ///<seealso cref="PaintContext" />
         public PaintContext(
             Terrain terrain, RectInt pixelRect, int targetTextureWidth, int targetTextureHeight,
             [uei.DefaultValue("true")] bool sharedBoundaryTexel = true,
@@ -186,6 +306,19 @@ namespace UnityEngine.TerrainTools
             FindTerrainTilesUnlimited(sharedBoundaryTexel, fillOutsideTerrain);
         }
 
+        ///<summary>Constructs a PaintContext that you can use to edit a texture on a Terrain, in the region defined by boundsInTerrainSpace and extraBorderPixels.</summary>
+        ///<remarks>This function calculates a pixelRect from <c>boundsInTerrainSpace</c> and <c>extraBorderPixels</c>,
+        ///                  and then constructs a PaintContext from the pixelRect.
+        ///
+        ///                  This function is called internally by <see cref="TerrainPaintUtility.BeginPaintHeightmap" />, <see cref="TerrainPaintUtility.BeginPaintTexture" /> and <see cref="TerrainPaintUtility.CollectNormals" />.</remarks>
+        ///<param name="terrain">Terrain that defines terrain space for this PaintContext.</param>
+        ///<param name="boundsInTerrainSpace">Terrain space bounds to edit in the target terrain texture.</param>
+        ///<param name="inputTextureWidth">Width of the input Terrain Texture for all connected Terrains.</param>
+        ///<param name="inputTextureHeight">Height of the input Terrain Texture for all connected Terrains.</param>
+        ///<param name="extraBorderPixels">Number of extra border pixels required. The default value is 0.</param>
+        ///<param name="sharedBoundaryTexel">Whether to stretch the Textures so that edge texels lie on the Terrain boundary, and are shared with connected Terrains.</param>
+        ///<param name="fillOutsideTerrain">Whether to fill empty space outside of the Terrain tiles with data from the nearest tile.</param>
+        ///<seealso cref="PaintContext" />
         public static PaintContext CreateFromBounds(
             Terrain terrain, Rect boundsInTerrainSpace, int inputTextureWidth, int inputTextureHeight,
             [uei.DefaultValue("0")] int extraBorderPixels = 0,
@@ -260,6 +393,13 @@ namespace UnityEngine.TerrainTools
             }
         }
 
+        ///<summary>Creates the <c>sourceRenderTexture</c> and <c>destinationRenderTexture</c>.</summary>
+        ///<remarks>The render textures are created at a resolution matching the current <see cref="PaintContext.pixelRect" />, using the specified <see cref="RenderTextureFormat" />.
+        ///
+        ///                  This function is called internally by <see cref="TerrainPaintUtility.BeginPaintHeightmap" />, <see cref="TerrainPaintUtility.BeginPaintTexture" /> and <see cref="TerrainPaintUtility.CollectNormals" />.</remarks>
+        ///<param name="colorFormat">Render Texture format.</param>
+        ///<seealso cref="PaintContext.destinationRenderTexture" />
+        ///<seealso cref="PaintContext.sourceRenderTexture" />
         public void CreateRenderTargets(RenderTextureFormat colorFormat)
         {
             // Extended edge sampling of tiles requires a depth buffer (see TerrainPaintUtility.DrawQuadPadded for more info).
@@ -279,6 +419,11 @@ whereas the maximum supported resolution is {k_MaximumResolution}. The size has 
             oldRenderTexture = RenderTexture.active;
         }
 
+        ///<summary>Releases the allocated resources of this PaintContext.</summary>
+        ///<remarks>This function releases the <c>sourceRenderTexture</c> and <c>destinationRenderTexture</c>.
+        ///                  When restoreRenderTexture is true, it also restores RenderTexture.active to the value saved as <see cref="oldRenderTexture" />.
+        ///                  This function is called internally by <see cref="TerrainPaintUtility.EndPaintHeightmap" />, <see cref="TerrainPaintUtility.EndPaintTexture" /> and <see cref="TerrainPaintUtility.ReleaseContextResources" />.</remarks>
+        ///<param name="restoreRenderTexture">When true, indicates that this function restores RenderTexture.active</param>
         public void Cleanup(bool restoreRenderTexture = true)
         {
             if (restoreRenderTexture)
@@ -398,18 +543,71 @@ whereas the maximum supported resolution is {k_MaximumResolution}. The size has 
             RenderTexture.active = oldRT;
         }
 
+        ///<summary>Gathers user-specified Texture data into <c>sourceRenderTexture</c>.</summary>
+        ///<remarks>This function collects Texture data from all Terrain tiles in the PaintContext, and merges that data into <c>sourceRenderTexture</c>.
+        ///                    The <c>terrainSource</c> function specifies what data to collect from each Terrain.
+        ///                    Gather assumes that the Texture data, which <c>terrainSource</c> returns, is mapped over the Terrain tile in a manner similar to the Heightmap and Alphamaps.
+        ///
+        ///                    
+        ///
+        ///                    First, the function clears <c>sourceRenderTexture</c> to <c>defaultColor</c>.
+        ///
+        ///                    Then, it uses the following steps to gather each Terrain in the PaintContext:
+        ///
+        ///                    1) Calls <c>terrainSource</c> to retrieve the Texture.
+        ///
+        ///                    2) Calls <c>beforeBlit</c>.
+        ///
+        ///                    3) Uses <c>blitMaterial</c> and <c>blitPass</c> to copy The Texture into <c>sourceRenderTexture</c>.
+        ///
+        ///                    4) Calls <c>afterBlit</c>.</remarks>
+        ///<param name="terrainSource">A function that returns the Texture data to collect from each Terrain.</param>
+        ///<param name="defaultColor">The default color for <c>sourceRenderTexture</c>.</param>
+        ///<param name="blitMaterial">The material used to copy the data.  If null, the default blit material is used.</param>
+        ///<param name="blitPass">The material pass used to copy the data.</param>
+        ///<param name="beforeBlit">An optional action to call before copying from each Terrain. The default is null.</param>
+        ///<param name="afterBlit">An optional action to call after copying from each Terrain. The default is null.</param>
+        ///<seealso cref="PaintContext" />
+        ///<seealso cref="PaintContext.Scatter" />
         public void Gather(Func<ITerrainInfo, Texture> terrainSource, Color defaultColor, Material blitMaterial = null, int blitPass = 0, Action<ITerrainInfo> beforeBlit = null, Action<ITerrainInfo> afterBlit = null)
         {
             if (terrainSource != null)
                 GatherInternal(terrainSource, defaultColor, "PaintContext.Gather", blitMaterial, blitPass, beforeBlit, afterBlit);
         }
 
+        ///<summary>Applies an edited PaintContext by copying modifications back to user-specified RenderTextures for the source Terrain tiles.</summary>
+        ///<remarks>After the edits to a PaintContext are complete, this function applies the modified data in <c>destinationRenderTexture</c> to the data stored for each Terrain.
+        ///                  Scatter performs this copy to a set of RenderTextures, which is specified by <c>terrainDest</c>.
+        ///
+        ///                  
+        ///
+        ///                  This function uses the following steps to scatter to each Terrain in the PaintContext:
+        ///
+        ///                  1) Calls <c>terrainDest</c> to retrieve the target RenderTexture.
+        ///
+        ///                  2) Calls <c>beforeBlit</c>.
+        ///
+        ///                  3) Uses <c>blitMaterial</c> and <c>blitPass</c> to copy the <c>destinationRenderTexture</c> into the target RenderTexture.
+        ///
+        ///                  4) Calls <c>afterBlit</c>.</remarks>
+        ///<param name="terrainDest">Function returning the RenderTexture to be written for each Terrain.</param>
+        ///<param name="blitMaterial">The material used to copy the data.  If null, the default blit material is used.</param>
+        ///<param name="blitPass">The material pass used to copy the data.  Its default value is 0.</param>
+        ///<param name="beforeBlit">An optional action to call before copying to each Terrain.</param>
+        ///<param name="afterBlit">An optional action to call after copying to each Terrain.</param>
+        ///<seealso cref="PaintContext" />
+        ///<seealso cref="PaintContext.Gather" />
         public void Scatter(Func<ITerrainInfo, RenderTexture> terrainDest, Material blitMaterial = null, int blitPass = 0, Action<ITerrainInfo> beforeBlit = null, Action<ITerrainInfo> afterBlit = null)
         {
             if (terrainDest != null)
                 ScatterInternal(terrainDest, "PaintContext.Scatter", blitMaterial, blitPass, beforeBlit, afterBlit);
         }
 
+        ///<summary>Gathers the heightmap information into <c>sourceRenderTexture</c>.</summary>
+        ///<remarks>This function collects the heightmap data from all Terrain tiles in the PaintContext into <c>sourceRenderTexture</c>.
+        ///
+        ///                  This function is called internally by <see cref="TerrainPaintUtility.BeginPaintHeightmap" />.</remarks>
+        ///<seealso cref="PaintContext.ScatterHeightmap" />
         public void GatherHeightmap()
         {
             var blitMaterial = TerrainPaintUtility.GetHeightBlitMaterial();
@@ -428,6 +626,15 @@ whereas the maximum supported resolution is {k_MaximumResolution}. The size has 
                 });
         }
 
+        ///<summary>Applies an edited heightmap PaintContext by copying modifications back to the source Terrain tiles.</summary>
+        ///<remarks>Once the edits to a PaintContext are complete, the modified data in <c>destinationRenderTexture</c> must be applied to the textures stored in each Terrain.
+        ///                  ScatterHeightmap will perform this copy, and mark the modified areas for normal map update next frame.
+        ///                  This function will also create a delayed action to rebuild collision, physics, pixel error metrics, visibility bounding boxes, and grass, tree, and detail positions.
+        ///
+        ///                  This function is called internally by <see cref="TerrainPaintUtility.EndPaintHeightmap" />.</remarks>
+        ///<param name="editorUndoName">Unique name used for the undo stack.</param>
+        ///<seealso cref="PaintContext.GatherHeightmap" />
+        ///<seealso cref="PaintContext.ApplyDelayedActions" />
         public void ScatterHeightmap(string editorUndoName)
         {
             var blitMaterial = TerrainPaintUtility.GetHeightBlitMaterial();
@@ -454,6 +661,11 @@ whereas the maximum supported resolution is {k_MaximumResolution}. The size has 
                 });
         }
 
+        ///<summary>Gathers the Terrain holes information into <c>sourceRenderTexture</c>.</summary>
+        ///<remarks>This function collects the Terrain holes data from all Terrain tiles in the Paint Context, and saves the information in <c>sourceRenderTexture</c>.
+        ///
+        ///                  This function is called internally by <see cref="TerrainPaintUtility.BeginPaintHoles" />.</remarks>
+        ///<seealso cref="PaintContext.ScatterHoles" />
         public void GatherHoles()
         {
             GatherInternal(
@@ -462,6 +674,15 @@ whereas the maximum supported resolution is {k_MaximumResolution}. The size has 
                 "PaintContext.GatherHoles");
         }
 
+        ///<summary>Applies an edited Terrain holes PaintContext by copying modifications back to the source Terrain tiles.</summary>
+        ///<remarks>Once the edits to a PaintContext are complete, the modified data in <c>destinationRenderTexture</c> must be applied to the textures stored in each Terrain.
+        ///                  ScatterHoles performs this copy.
+        ///                  This function will also create a delayed action to rebuild collision, physics, grass, trees and details.
+        ///
+        ///                  This function is called internally by <see cref="TerrainPaintUtility.EndPaintHoles" />.</remarks>
+        ///<param name="editorUndoName">Unique name used for the undo stack.</param>
+        ///<seealso cref="PaintContext.GatherHoles" />
+        ///<seealso cref="PaintContext.ApplyDelayedActions" />
         public void ScatterHoles(string editorUndoName)
         {
             ScatterInternal(
@@ -475,6 +696,14 @@ whereas the maximum supported resolution is {k_MaximumResolution}. The size has 
                 "PaintContext.ScatterHoles");
         }
 
+        ///<summary>Gathers the normal information into <c>sourceRenderTexture</c>.</summary>
+        ///<remarks>This function collects the terrain mesh normalmap data from all Terrain tiles in the PaintContext into <c>sourceRenderTexture</c>.
+        ///
+        ///                  This function is called internally by <see cref="TerrainPaintUtility.CollectNormals" />.
+        ///
+        ///                  Important: There is no corresponding ScatterNormals function, because the normals are not stored, but calculated from the heightmap.</remarks>
+        ///<seealso cref="PaintContext" />
+        ///<seealso cref="PaintContext.GatherHeightmap" />
         public void GatherNormals()
         {
             GatherInternal(
@@ -525,6 +754,13 @@ whereas the maximum supported resolution is {k_MaximumResolution}. The size has 
             return userData;
         }
 
+        ///<summary>Gathers the alphamap information into <c>sourceRenderTexture</c>.</summary>
+        ///<remarks>This function collects the alphamap data from all Terrain tiles in the PaintContext into <c>sourceRenderTexture</c>.
+        ///
+        ///                  This function is called internally by <see cref="TerrainPaintUtility.BeginPaintTexture" />.</remarks>
+        ///<param name="inputLayer">TerrainLayer used for painting.</param>
+        ///<param name="addLayerIfDoesntExist">Set to true to specify that the inputLayer is added to the terrain if it does not already exist. Set to false to specify that terrain layers are not added to the terrain.</param>
+        ///<seealso cref="PaintContext.ScatterAlphamap" />
         public void GatherAlphamap(TerrainLayer inputLayer, bool addLayerIfDoesntExist = true)
         {
             if (inputLayer == null)
@@ -555,6 +791,15 @@ whereas the maximum supported resolution is {k_MaximumResolution}. The size has 
                 });
         }
 
+        ///<summary>Applies an edited alphamap PaintContext by copying modifications back to the source Terrain tiles.</summary>
+        ///<remarks>Once the edits to a PaintContext are complete, the modified data in <c>destinationRenderTexture</c> must be applied to the textures stored in each Terrain.
+        ///                    ScatterAlphamap will perform this copy, and re-normalize the other alphamap channels to maintain a sum of 1.
+        ///                    This function will also create a delayed action to rebuild the basemap LOD texture.
+        ///
+        ///                    This function is called internally by <see cref="TerrainPaintUtility.EndPaintTexture" />.</remarks>
+        ///<param name="editorUndoName">Unique name used for the undo stack.</param>
+        ///<seealso cref="PaintContext.GatherAlphamap" />
+        ///<seealso cref="PaintContext.ApplyDelayedActions" />
         public void ScatterAlphamap(string editorUndoName)
         {
             Vector4[] layerMasks = { new Vector4(1, 0, 0, 0), new Vector4(0, 1, 0, 0), new Vector4(0, 0, 1, 0), new Vector4(0, 0, 0, 1) };
@@ -633,6 +878,7 @@ whereas the maximum supported resolution is {k_MaximumResolution}. The size has 
             public Terrain terrain;
             public ToolAction action;
         }
+        [AutoStaticsCleanupOnCodeReload]
         private static List<PaintedTerrain> s_PaintedTerrain = new List<PaintedTerrain>();
 
         private static void OnTerrainPainted(ITerrainInfo tile, ToolAction action)
@@ -650,6 +896,12 @@ whereas the maximum supported resolution is {k_MaximumResolution}. The size has 
             s_PaintedTerrain.Add(new PaintedTerrain { terrain = tile.terrain, action = action });
         }
 
+        ///<summary>Flushes the delayed actions created by PaintContext heightmap and alphamap modifications.</summary>
+        ///<remarks>Expensive updates that would cause performance issues during painting and sculpting are deferred until the user finishes interacting with them.
+        ///                    <see cref="PaintContext.ScatterAlphamap" /> creates a delayed action to rebuild basemap LOD textures.
+        ///                    <see cref="PaintContext.ScatterHeightmap" /> creates a delayed action to rebuild collision, physics, pixel error metrics, visibility bounding boxes, and grass, tree, and detail positions.
+        ///                    ApplyDelayedActions will immediately apply these delayed actions.
+        ///                    ApplyDelayedActions is called automatically on mouse button up, and when the terrain inspector is closed (OnDisable).</remarks>
         public static void ApplyDelayedActions()
         {
             for (int i = 0; i < s_PaintedTerrain.Count; ++i)

@@ -11,6 +11,7 @@ using Unity.Collections;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -18,7 +19,7 @@ namespace UnityEditor
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = false, Inherited = false)]
     internal sealed partial class RequiredSignatureAttribute : Attribute {}
 
-    internal class AttributeHelper
+    internal partial class AttributeHelper
     {
         [StructLayout(LayoutKind.Sequential)]
         struct MonoGizmoMethod
@@ -310,6 +311,7 @@ namespace UnityEditor
             public IReadOnlyList<MethodWithAttribute> methodsWithAttributes { get; }
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         static Dictionary<Type, MethodInfoSorter> s_DecoratedMethodsByAttrTypeCache = new Dictionary<Type, MethodInfoSorter>();
         private const BindingFlags kAllStatic = BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
 

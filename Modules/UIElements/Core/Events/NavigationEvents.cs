@@ -208,7 +208,6 @@ namespace UnityEngine.UIElements
         /// Events obtained from this method should be released back to the pool using Dispose().
         /// </summary>
         /// <param name="modifiers">The modifier keys held down during the event.</param>
-        /// <param name="deviceType">The type of device this event was created from.</param>
         /// <returns>An initialized navigation event.</returns>
         public static T GetPooled(EventModifiers modifiers = EventModifiers.None)
         {

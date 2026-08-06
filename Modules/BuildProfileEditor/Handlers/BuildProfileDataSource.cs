@@ -114,6 +114,53 @@ namespace UnityEditor.Build.Profile.Handlers
         }
 
         /// <summary>
+        /// Duplicates the given build profile to another platform specified by the target platform GUID.
+        /// </summary>
+        /// <param name="buildProfile">The build profile to duplicate.</param>
+        /// <param name="targetPlatformGuid">The target platform GUID to which the build profile should be duplicated.</param>
+        /// <returns>The duplicated build profile, or null if the duplication failed.</returns>
+        internal BuildProfile DuplicateToOtherPlatform(BuildProfile buildProfile, GUID targetPlatformGuid)
+        {
+            if (buildProfile == null)
+                return null;
+
+            string sourcePath = AssetDatabase.GetAssetPath(buildProfile);
+            if (string.IsNullOrEmpty(sourcePath))
+                return null;
+
+            BuildProfileModuleUtil.EnsureCustomBuildProfileFolderExists();
+            string uniqueFilePath = BuildProfileModuleUtil.GetUniqueBuildProfilePath(sourcePath);
+
+            if (!AssetDatabase.CopyAsset(sourcePath, uniqueFilePath))
+                return null;
+
+            var duplicatedProfile = AssetDatabase.LoadAssetAtPath<BuildProfile>(uniqueFilePath);
+            if (duplicatedProfile == null)
+                return null;
+
+            duplicatedProfile.selectedPlatformGuid = targetPlatformGuid;
+            var (buildTarget, subtarget) = BuildProfileModuleUtil.GetBuildTargetAndSubtarget(targetPlatformGuid);
+            duplicatedProfile.buildTarget = buildTarget;
+            duplicatedProfile.subtarget = subtarget;
+
+            var extension = BuildProfileModuleUtil.GetBuildProfileExtension(targetPlatformGuid);
+            duplicatedProfile.platformBuildProfile = extension?.CreateBuildProfilePlatformSettings();
+
+            EditorUtility.SetDirty(duplicatedProfile);
+            AssetDatabase.SaveAssetIfDirty(duplicatedProfile);
+
+            EditorAnalytics.SendAnalytic(new BuildProfileCreatedEvent(new BuildProfileCreatedEvent.Payload
+            {
+                creationType = BuildProfileCreatedEvent.CreationType.DuplicateToOtherPlatform,
+                platformId = duplicatedProfile.platformGuid.ToString(),
+                platformDisplayName = BuildProfileModuleUtil.GetClassicPlatformDisplayName(duplicatedProfile.platformGuid),
+            }));
+
+            SortCustomBuildProfiles();
+            return duplicatedProfile;
+        }
+
+        /// <summary>
         /// Delete build profile asset and remove from the list of
         /// custom build profiles
         /// </summary>

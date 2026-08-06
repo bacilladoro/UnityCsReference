@@ -10,6 +10,7 @@ using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEditor.Search;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace Unity.ProjectAuditor.Editor.UI.Framework
 {
@@ -176,40 +177,71 @@ namespace Unity.ProjectAuditor.Editor.UI.Framework
 
         private static IEnumerable<SearchColumn> FetchColumns(SearchContext context, IEnumerable<SearchItem> items)
         {
-            yield return new SearchColumn("Category", "", "Project Auditor/Category");
-            yield return new SearchColumn("Severity");
-            yield return new SearchColumn("Reason");
-            yield return new SearchColumn("Description");
-            yield return new SearchColumn("Descriptor ID");
-            yield return new SearchColumn("Path");
+            yield return new SearchColumn("Category", "", "Project Auditor/Category") { width = 150 };
+            yield return new SearchColumn("Severity", "Field/Severity", "Project Auditor/Severity") { width = 90 };
+            yield return new SearchColumn("Reason") { width = 200 };
+            yield return new SearchColumn("Description") { width = 400 };
+            yield return new SearchColumn("Descriptor ID") { width = 90 };
+            yield return new SearchColumn("Path") { width = 350 };
         }
 
         private static SearchTable GetDefaultTableConfig(SearchContext context)
         {
             var columns = new[]
             {
-                new SearchColumn("Category", "", "Project Auditor/Category"),
-                new SearchColumn("Severity"),
-                new SearchColumn("Reason"),
-                new SearchColumn("Description"),
-                new SearchColumn("Path"),
+                new SearchColumn("Category", "", "Project Auditor/Category") { width = 150 },
+                new SearchColumn("Severity", "Field/Severity", "Project Auditor/Severity") { width = 90 },
+                new SearchColumn("Reason") { width = 200 },
+                new SearchColumn("Description") { width = 400 },
+                new SearchColumn("Path") { width = 350 },
             };
 
             return new SearchTable(k_ProviderDisplayName, columns);
         }
 
+        // Creates a read-only "icon + label" cell for the search table.
+        static VisualElement CreateIconLabelCell(float iconSize)
+        {
+            var container = new VisualElement { style = { flexDirection = FlexDirection.Row, alignItems = Align.Center } };
+            container.Add(new Image { name = "icon", style = { width = iconSize, height = iconSize, marginRight = 2, flexShrink = 0 } });
+            container.Add(new Label { name = "label" });
+            return container;
+        }
+
         [SearchColumnProvider("Project Auditor/Category")]
         static void CategoryColumnProvider(SearchColumn column)
         {
-            column.drawer = (args) =>
+            column.getter = args => args.item?.label;
+            column.cellCreator = _ => CreateIconLabelCell(18);
+            column.binder = (args, element) =>
             {
-                var originalIconSize = EditorGUIUtility.GetIconSize();
-                EditorGUIUtility.SetIconSize(new Vector2(18, 18));
-                var content = new GUIContent(args.item.label, args.item.thumbnail);
-                GUILayout.Label(content);
-                EditorGUIUtility.SetIconSize(originalIconSize);
+                element.Q<Image>("icon").image = args.item?.thumbnail;
+                element.Q<Label>("label").text = args.value as string ?? string.Empty;
+            };
+        }
 
-                return args.item.label;
+        // Shared by IssueSearchProvider and DescriptorSearchProvider: shows the severity icon next to its text.
+        [SearchColumnProvider("Project Auditor/Severity")]
+        static void SeverityColumnProvider(SearchColumn column)
+        {
+            column.getter = args => args.item?.GetValue("Severity");
+            column.cellCreator = _ => CreateIconLabelCell(16);
+            column.binder = (args, element) =>
+            {
+                var text = args.value as string;
+                var icon = element.Q<Image>("icon");
+                var label = element.Q<Label>("label");
+
+                if (!string.IsNullOrEmpty(text) && Enum.TryParse<Severity>(text, true, out var severity))
+                {
+                    icon.image = Utility.GetSeverityIcon(severity).image;
+                    label.text = text;
+                }
+                else
+                {
+                    icon.image = null;
+                    label.text = text ?? string.Empty;
+                }
             };
         }
 

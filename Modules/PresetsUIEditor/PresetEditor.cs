@@ -11,23 +11,24 @@ using UnityEditorInternal;
 using UnityEngine;
 using UnityEngine.UIElements;
 using Unity.Collections;
+using Unity.Scripting.LifecycleManagement;
 using UnityObject = UnityEngine.Object;
 
 namespace UnityEditor.Presets
 {
     [CustomEditor(typeof(Preset))]
     [CanEditMultipleObjects]
-    internal class PresetEditor : Editor
+    internal partial class PresetEditor : Editor
     {
         static class Style
         {
-            public static GUIContent presetType = EditorGUIUtility.TrTextContent("Preset Type", "The Object type this Preset can be applied to.");
-            public static GUIStyle centerStyle = new GUIStyle() { alignment = TextAnchor.MiddleCenter };
+            public static readonly GUIContent presetType = EditorGUIUtility.TrTextContent("Preset Type", "The Object type this Preset can be applied to.");
+            public static readonly GUIStyle centerStyle = new GUIStyle() { alignment = TextAnchor.MiddleCenter };
 
-            public static GUIContent addToDefault = EditorGUIUtility.TrTextContent("Add to {0} default", "The Preset will be added first in the default list with an empty filter.");
-            public static GUIContent removeFromDefault = EditorGUIUtility.TrTextContent("Remove from {0} default", "All entry using this Preset will be removed from the default list.");
-            public static GUIContent enableProperty = EditorGUIUtility.TrTextContent("Include Property");
-            public static GUIContent disableProperty = EditorGUIUtility.TrTextContent("Exclude Property");
+            public static readonly GUIContent addToDefault = EditorGUIUtility.TrTextContent("Add to {0} default", "The Preset will be added first in the default list with an empty filter.");
+            public static readonly GUIContent removeFromDefault = EditorGUIUtility.TrTextContent("Remove from {0} default", "All entry using this Preset will be removed from the default list.");
+            public static readonly GUIContent enableProperty = EditorGUIUtility.TrTextContent("Include Property");
+            public static readonly GUIContent disableProperty = EditorGUIUtility.TrTextContent("Exclude Property");
 
             public const string presetEditorStyles = "StyleSheets/Preset/PresetEditor.uss";
             public static readonly string excludedUssClassName = "unity-binding--preset-ignore";
@@ -43,6 +44,7 @@ namespace UnityEditor.Presets
             public UnityObject reference;
             public Hash128 presetHash;
         }
+        [AutoStaticsCleanupOnCodeReload]
         static Dictionary<EntityId, ReferenceCount> s_References = new Dictionary<EntityId, ReferenceCount>();
         List<EntityId> m_PresetsInstanceIds = new List<EntityId>();
 

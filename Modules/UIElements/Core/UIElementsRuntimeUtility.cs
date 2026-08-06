@@ -431,9 +431,16 @@ namespace UnityEngine.UIElements
 
             var ps = panelRenderer.panelSettings as PanelSettings;
             if (panelRenderer.enabled)
+            {
                 panelRenderer.requiresReinsertion = true;
+
+                // UUM-147875: requiresReinsertion may be already true, which will skip shouldCheckForRequiredReinsertions
+                PanelRenderer.shouldCheckForRequiredReinsertions = true;
+            }
             else
+            {
                 panelRenderer.RemoveFromHierarchy();
+            }
 
             panelRenderer.previousEnabled = panelRenderer.enabled;
         }
@@ -624,7 +631,7 @@ namespace UnityEngine.UIElements
 
         /// <summary>
         /// Screen-space height for <paramref name="targetDisplay"/> used when mapping between screen and panel coordinates.
-        /// In the editor, prefers the game view surface from <see cref="PanelSettings.GetGameViewRenderInfo"/> when available.
+        /// In the editor, prefers the game view surface from <c>PanelSettings.GetGameViewRenderInfo</c> when available.
         /// </summary>
         /// <remarks>
         /// Using game-view height for display 0 can be sensitive in some editor unit tests; see EventSystemTests.ClickEventIsSent history.

@@ -22,6 +22,8 @@ namespace UnityEditor.Overlays
     {
         public SaveData[] overlays;
         public DynamicPanelContainerData[] dynamicPanels;
+        // Only meaningful for MainToolbar-mode canvases; empty for all other overlay-canvas windows.
+        public string[] menuItemPaths;
     }
 
     [Serializable]
@@ -837,6 +839,9 @@ namespace UnityEditor.Overlays
                     mainToolbarOverlay.Initialize(definition.attr.path, definition.attr.ussName, definition.attr.displayName, defaultOverlayAttrib.defaultSize, defaultOverlayAttrib.minSize, defaultOverlayAttrib.maxSize, defaultOverlayAttrib.priority, defaultOverlayAttrib.group);
                     AddOverlay(mainToolbarOverlay);
                 }
+
+                foreach (var menuPath in OverlayCanvasesData.instance.pinnedMenuItemPaths)
+                    AddOverlay(MainToolbar.CreateMenuItemOverlay(menuPath));
             }
             else
             {
@@ -1006,7 +1011,15 @@ namespace UnityEditor.Overlays
         {
             CopySaveData(out var overlays, out var dynamicPanels);
 
-            return new OverlayCanvasSaveState { overlays = overlays, dynamicPanels = dynamicPanels };
+            return new OverlayCanvasSaveState { overlays = overlays, dynamicPanels = dynamicPanels, menuItemPaths = CopyMenuItemPaths() };
+        }
+
+        string[] CopyMenuItemPaths()
+        {
+            if (mode != OverlayCanvasMode.MainToolbar)
+                return Array.Empty<string>();
+
+            return new List<string>(OverlayCanvasesData.instance.pinnedMenuItemPaths).ToArray();
         }
 
         internal void SavePreset(OverlayPreset preset)
@@ -1014,6 +1027,7 @@ namespace UnityEditor.Overlays
             CopySaveData(out var saveData, out var dynamicPanelContainerData);
             preset.saveData = saveData;
             preset.dynamicPanelContainerData = dynamicPanelContainerData;
+            preset.menuItemPaths = CopyMenuItemPaths();
         }
 
         internal void SetLastAppliedPresetName(string name)
@@ -1030,10 +1044,30 @@ namespace UnityEditor.Overlays
                 return;
             }
 
+            if (mode == OverlayCanvasMode.MainToolbar)
+                ApplyMenuItemPaths(preset.menuItemPaths ?? Array.Empty<string>());
+
             SetLastAppliedPresetName(preset.name);
             ApplySaveData(preset.saveData, preset.dynamicPanelContainerData);
             preset.ApplyCustomData(this);
             presetChanged?.Invoke();
+        }
+
+        // Replaces the pinned menu items; RestoreOverlays (called right after) docks/displays what remains.
+        void ApplyMenuItemPaths(string[] menuItemPaths)
+        {
+            foreach (var existingPath in new List<string>(OverlayCanvasesData.instance.pinnedMenuItemPaths))
+            {
+                OverlayCanvasesData.instance.RemovePinnedMenuItem(existingPath);
+                if (TryGetOverlay($"{MainToolbar.menuItemOverlayIdPrefix}{existingPath}", out var overlay))
+                    Remove(overlay);
+            }
+
+            foreach (var path in menuItemPaths)
+            {
+                if (OverlayCanvasesData.instance.AddPinnedMenuItem(path))
+                    AddOverlay(MainToolbar.CreateMenuItemOverlay(path));
+            }
         }
 
         internal void ApplySaveData(SaveData[] saveData, DynamicPanelContainerData[] dynamicPanelContainerData)
@@ -1285,12 +1319,21 @@ namespace UnityEditor.Overlays
                     data.containerId = k_DockZoneContainerIDs[(int)DockZone.TopToolbar];
                     overlay.layout = Layout.HorizontalToolbar;
 
-                    var attr = mtOverlay.createElementMethod.GetCustomAttribute<MainToolbarElementAttribute>();
-                    if (attr != null)
+                    if (mtOverlay.createElementMethod != null)
                     {
-                        data.index = attr.defaultDockIndex;
-                        data.dockPosition = (DockPosition)(int)attr.defaultDockPosition;
-                        data.displayed = mtOverlay.createElementMethod.GetCustomAttribute<UnityOnlyMainToolbarPresetAttribute>() != null;
+                        var attr = mtOverlay.createElementMethod.GetCustomAttribute<MainToolbarElementAttribute>();
+                        if (attr != null)
+                        {
+                            data.index = attr.defaultDockIndex;
+                            data.dockPosition = (DockPosition)(int)attr.defaultDockPosition;
+                            data.displayed = mtOverlay.createElementMethod.GetCustomAttribute<UnityOnlyMainToolbarPresetAttribute>() != null;
+                        }
+                    }
+                    else
+                    {
+                        // No attribute to read defaults from: dock middle (after the playmode buttons) and show it.
+                        data.dockPosition = (DockPosition)(int)MainToolbarDockPosition.Middle;
+                        data.displayed = true;
                     }
 
                     m_NewMainToolbarOverlays.Add(mtOverlay);

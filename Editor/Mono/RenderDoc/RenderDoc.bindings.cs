@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEditor.ShortcutManagement;
@@ -34,7 +35,9 @@ namespace UnityEditorInternal
         public static void EndCaptureRenderDoc(EditorWindow window)
             => window.m_Parent.EndCaptureRenderDoc();
 
+        [AutoStaticsCleanupOnCodeReload]
         static EditorWindow s_EditorWindowScheduledForCapture = null;
+        [NoAutoStaticsCleanup] // lazy cache of a fixed-name GUIContent icon; the icon survives reload and re-inits on first access
         static GUIContent s_RenderDocContent;
         internal static bool RenderDocCaptureButton(EditorWindow view, WindowAction self, Rect r)
         {
@@ -80,6 +83,7 @@ namespace UnityEditorInternal
             }
         }
 
+        [NoAutoStaticsCleanup] // within-session capture toggle (unmanaged bool); safe to persist across reload
         static bool s_capture = false;
 
         [Shortcut(RenderDocUtil.captureStartEndRenderDocShortcutID, KeyCode.S, ShortcutModifiers.Alt)]

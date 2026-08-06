@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace UnityEngine
 {
-    partial class TerrainData
+    public partial class TerrainData
     {
         private static bool SupportsCopyTextureBetweenRTAndTexture
         {
@@ -20,6 +20,16 @@ namespace UnityEngine
             }
         }
 
+        ///<summary>Copies the specified part of the active <see cref="RenderTexture" /> to the Terrain heightmap texture.</summary>
+        ///<remarks>This functions calls <see cref="DirtyHeightmapRegion" /> internally and sends out the OnTerrainChanged message accordingly.
+        ///                
+        ///               The range of expected height values for the active <see cref="RenderTexture" /> is between <c>0</c> and <c>0.5</c>. This is unlike <see cref="TerrainData.SetHeights" />, which expects height values between <c>0</c> and <c>1</c>.</remarks>
+        ///<param name="sourceRect">The part of the active Render Texture to copy.</param>
+        ///<param name="dest">The X and Y coordinates of the heightmap texture to copy into.</param>
+        ///<param name="syncControl">Controls how CPU synchronization is performed.</param>
+        ///<seealso cref="TerrainHeightmapSyncControl" />
+        ///<seealso cref="DirtyHeightmapRegion" />
+        ///<seealso cref="SyncHeightmap" />
         public void CopyActiveRenderTextureToHeightmap(RectInt sourceRect, Vector2Int dest, TerrainHeightmapSyncControl syncControl)
         {
             var source = RenderTexture.active;
@@ -37,6 +47,14 @@ namespace UnityEngine
             TerrainCallbacks.InvokeHeightmapChangedCallback(this, new RectInt(dest.x, dest.y, sourceRect.width, sourceRect.height), syncControl == TerrainHeightmapSyncControl.HeightAndLod);
         }
 
+        ///<summary>Marks the specified part of the heightmap as dirty.</summary>
+        ///<remarks>Use this function only after you manually change the GPU part of the heightmap texture by rendering into it, or by using <see cref="Graphics.CopyTexture" />. Use the <c>syncControl</c> parameter to control how you want Unity to perform CPU synchronization. Unity queues the reading back of unsynchronized data (height data, LOD data, or both) until the next call to <see cref="SyncHeightmap" />.
+        ///
+        ///If the current active <see cref="RenderTexture" /> contains your changes, and you want to copy a part of it into the heightmap texture, use <see cref="CopyActiveRenderTextureToHeightmap" /> instead.
+        ///
+        ///This function sends out the OnTerrainChanged message with <see cref="TerrainChangedFlags.Heightmap" /> if you pass <see cref="TerrainHeightmapSyncControl.HeightAndLod" /> to the <c>syncControl</c> parameter. If you pass <see cref="TerrainHeightmapSyncControl.HeightOnly" /> to the <c>syncControl</c> parameter, it sends out the OnTerrainChanged message with <see cref="TerrainChangedFlags.DelayedHeightmapUpdate" />.</remarks>
+        ///<param name="region">The rectangular region to mark as dirty.</param>
+        ///<param name="syncControl">Controls how CPU synchronization is performed.</param>
         public void DirtyHeightmapRegion(RectInt region, TerrainHeightmapSyncControl syncControl)
         {
             int resolution = heightmapResolution;
@@ -53,9 +71,26 @@ namespace UnityEngine
             TerrainCallbacks.InvokeHeightmapChangedCallback(this, region, syncControl == TerrainHeightmapSyncControl.HeightAndLod);
         }
 
+        ///<summary>The name for the Terrain alpha map textures.</summary>
+        ///<remarks>Use this name when you call <see cref="CopyActiveRenderTextureToTexture" />, <see cref="DirtyTextureRegion" />, <see cref="SyncTexture" />, or <see cref="TerrainCallbacks.textureChanged" /> to identify the Terrain alpha map textures.</remarks>
         public static string AlphamapTextureName => "alphamap";
+        ///<summary>The name for the Terrain holes Texture.</summary>
+        ///<remarks>Use this name when you call <see cref="CopyActiveRenderTextureToTexture" />, <see cref="DirtyTextureRegion" />, <see cref="SyncTexture" />, or <see cref="TerrainCallbacks.textureChanged" /> to identify the Terrain holes Texture.</remarks>
         public static string HolesTextureName => "holes";
 
+        ///<summary>Copies the specified part of the active <see cref="RenderTexture" /> to the Terrain texture.</summary>
+        ///<remarks>If the <c>allowDelayedCPUSync</c> parameter is set to <c>true</c>, and the platform supports copying between a <see cref="RenderTexture" /> and a <see cref="Texture2D" />, Unity performs a GPU copy from the active RenderTexture to the Terrain texture. This is sufficient for Terrain rendering, but you will need to call <see cref="SyncTexture" /> afterward to synchronize the CPU part of the texture.
+        ///
+        ///If the <c>allowDelayedCPUSync</c> parameter is set to <c>false</c>, or the platform doesn't support copying between textures, Unity immediately reads back the content of the active RenderTexture, and updates both the CPU and GPU parts of the Terrain texture.
+        ///
+        ///Unity recommends you create the source Render Texture to copy in the format that <see cref="Terrain.heightmapRenderTextureFormat" /> specifies, and call the HLSL function <c>PackHeightmap</c> before you write to the source render texture. To use <c>PackHeightmap</c>, make sure you have the include directive <c>#include "UnityCG.cginc"</c> in your shader.</remarks>
+        ///<param name="textureName">The name of the Terrain texture to copy into.</param>
+        ///<param name="textureIndex">The index of the Terrain texture to copy into.</param>
+        ///<param name="sourceRect">The part of the active Render Texture to copy.</param>
+        ///<param name="dest">The X and Y coordinates of the Terrain texture to copy into.</param>
+        ///<param name="allowDelayedCPUSync">Specifies whether to allow delayed CPU synchronization of the texture.</param>
+        ///<seealso cref="DirtyTextureRegion" />
+        ///<seealso cref="SyncTexture" />
         public void CopyActiveRenderTextureToTexture(string textureName, int textureIndex, RectInt sourceRect, Vector2Int dest, bool allowDelayedCPUSync)
         {
             if (String.IsNullOrEmpty(textureName))
@@ -153,6 +188,13 @@ namespace UnityEngine
             TerrainCallbacks.InvokeTextureChangedCallback(this, textureName, new RectInt(dest.x, dest.y, sourceRect.width, sourceRect.height), !allowDelayedCPUSync);
         }
 
+        ///<summary>Marks the specified part of the Terrain texture as dirty.</summary>
+        ///<remarks>Use this function only after you manually change the GPU part of the Terrain texture, such as by using <see cref="Graphics.CopyTexture" />. Set the <c>allowDelayedCPUSync</c> parameter to <c>true</c> if you want Unity to perform immediate synchronization of the CPU part. If you set it to <c>false</c>, Unity queues the reading back of the dirty region until the next call to <see cref="SyncTexture" />.
+        ///
+        ///If the current active <see cref="RenderTexture" /> contains your changes, and you want to copy a part of it into the Terrain texture, use <see cref="CopyActiveRenderTextureToTexture" /> instead.</remarks>
+        ///<param name="textureName">The name of the Terrain texture.</param>
+        ///<param name="region">The rectangular region to mark as dirty.</param>
+        ///<param name="allowDelayedCPUSync">Specifies whether to allow delayed CPU synchronization of the texture.</param>
         public void DirtyTextureRegion(string textureName, RectInt region, bool allowDelayedCPUSync)
         {
             if (String.IsNullOrEmpty(textureName))
@@ -198,6 +240,8 @@ namespace UnityEngine
                 TerrainCallbacks.InvokeTextureChangedCallback(this, textureName, region, false);
         }
 
+        ///<summary>Performs synchronization queued by previous calls to <see cref="CopyActiveRenderTextureToTexture" /> and <see cref="DirtyTextureRegion" />, which makes CPU data of the Terrain textures up to date.</summary>
+        ///<param name="textureName">The name of the Terrain texture to synchronize.</param>
         public void SyncTexture(string textureName)
         {
             if (String.IsNullOrEmpty(textureName))

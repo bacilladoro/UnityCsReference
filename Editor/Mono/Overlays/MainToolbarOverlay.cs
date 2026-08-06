@@ -26,11 +26,18 @@ namespace UnityEditor.Overlays
         const string k_ContentEmptyTag = "main-toolbar-overlay-empty";
         const string k_MainToolbarOverlayUxmlPath = "UXML/Overlays/main-toolbar-overlay.uxml";
         const string k_Tooltip = "\n\nHold {0} to drag and move";
+        const string k_MultipleElementsClassName = "unity-editor-main-toolbar__group";
+        const string k_PlayModeControlsUssName = "PlayMode";
+        const int k_PlayModeControlsBaseButtonCount = 3;
         [NoAutoStaticsCleanup]
         static VisualTreeAsset s_MainToolbarOverlayTreeAsset = null;
 
         internal MethodInfo createElementMethod { get; set; }
         internal MethodInfo elementAvailabilityMethod { get; set; }
+
+        // Used only when createElementMethod is null, for overlays created dynamically (e.g. a pinned menu item).
+        internal Func<object> createElementDelegate { get; set; }
+        internal Func<bool> isAvailableDelegate { get; set; }
 
         OverlayDragger m_Dragger = null;
         VisualElement m_MainToolbarEditModeDragger = null;
@@ -40,8 +47,8 @@ namespace UnityEditor.Overlays
             OverlayToolbar toolbar = new OverlayToolbar();
             if (!IsAvailable())
                 return toolbar;
-            
-            var result = createElementMethod.Invoke(null, null);
+
+            var result = createElementMethod != null ? createElementMethod.Invoke(null, null) : createElementDelegate?.Invoke();
             
             if (result is MainToolbarElement singleElement)
             {
@@ -57,6 +64,13 @@ namespace UnityEditor.Overlays
                         var ve = RebuildElement(singleOfMultiElement, setDraggerTooltip: false);
                         toolbar.Add(ve);
                     }
+
+                // The Play Mode Controls' own play/pause/step buttons already read as one connected
+                // strip once SetupChildrenAsButtonStrip runs below, so they don't need the outline
+                // unless other elements (e.g. a scenario dropdown) have been added alongside them.
+                var isBasicPlayModeControls = ussName == k_PlayModeControlsUssName
+                    && toolbar.ChildCount(true) <= k_PlayModeControlsBaseButtonCount;
+                toolbar.EnableInClassList(k_MultipleElementsClassName, toolbar.ChildCount(true) > 1 && !isBasicPlayModeControls);
 
                 toolbar.SetupChildrenAsButtonStrip();
             }
@@ -118,7 +132,11 @@ namespace UnityEditor.Overlays
                 menu.AppendSeparator();
             }
 
-            menu.AppendAction(L10n.Tr("Hide"), (action) => displayed = false);
+            // Pinned menu items have no "..." Show/Hide entry to un-hide from, so Hide removes them outright.
+            if (createElementMethod == null)
+                menu.AppendAction(L10n.Tr("Hide"), (action) => MainToolbar.UnpinMenuItemByOverlayId(id));
+            else
+                menu.AppendAction(L10n.Tr("Hide"), (action) => displayed = false);
         }
         
         void SetElementTooltip(VisualElement element)
@@ -147,7 +165,10 @@ namespace UnityEditor.Overlays
         
         internal bool IsAvailable()
         {
-            return elementAvailabilityMethod == null || (bool)elementAvailabilityMethod.Invoke(null, null);
+            if (createElementMethod != null)
+                return elementAvailabilityMethod == null || (bool)elementAvailabilityMethod.Invoke(null, null);
+
+            return isAvailableDelegate == null || isAvailableDelegate.Invoke();
         }
 
         internal override void PopulateRoot(VisualElement root)

@@ -261,13 +261,13 @@ namespace Unity.UIToolkit.Editor
                         var sb = Unsafe.As<T, StyleBackground>(ref v);
                         if (sb.keyword != StyleKeyword.Undefined)
                             return false;
-                        Background.To(sb.value, out var sbId);
+                        Background.To(sb.value, out EntityId sbId);
                         cs.ApplyPropertyAnimation(element, id, sbId);
                         return true;
                     }
                     if (typeof(T) == typeof(Background))
                     {
-                        Background.To(Unsafe.As<T, Background>(ref v), out var bgId);
+                        Background.To(Unsafe.As<T, Background>(ref v), out EntityId bgId);
                         cs.ApplyPropertyAnimation(element, id, bgId);
                         return true;
                     }

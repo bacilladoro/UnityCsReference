@@ -242,6 +242,7 @@ namespace UnityEngine.UIElements
             BackgroundPosition,
             BackgroundRepeat,
             BackgroundSize,
+            BackgroundGradient,
             Color,
             Background,
             Filter,
@@ -308,6 +309,7 @@ namespace UnityEngine.UIElements
                 ".y.value",
                 ".y.unit"
             }, // BackgroundSize
+            System.Array.Empty<string>(), // BackgroundGradient
             new string[]
             {
                 ".r",
@@ -495,6 +497,7 @@ namespace UnityEngine.UIElements
                 AnimationChannelKind.Float,
                 AnimationChannelKind.Int
             }, // BackgroundSize
+            System.Array.Empty<AnimationChannelKind>(), // BackgroundGradient
             new AnimationChannelKind[]
             {
                 AnimationChannelKind.Float,

@@ -83,7 +83,9 @@ namespace UnityEngine
         internal IntPtr m_Ptr;
 
         public MaterialPropertyBlock()    { m_Ptr = CreateImpl(); }
+#pragma warning disable UA5000 // The Avoid Finalizer Analyzer produces compile errors for any new finalizers. This pre-existing finalizer declaration has been suppressed, but should be rewritten if possible.
         ~MaterialPropertyBlock()          { Dispose(); }
+#pragma warning restore UA5000
 
         // should we make it IDisposable?
         private void Dispose()

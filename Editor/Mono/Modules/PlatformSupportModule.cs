@@ -370,13 +370,15 @@ namespace UnityEditor.Modules
         public bool SelectedInitially { get; }
         public bool Selected { get; set; }
         public string Tooltip;
-        public PreconfiguredSettingsVariant(string name, bool selectedInitially, string description = "", string tooltip = "")
+        public GUID PlatformGuid { get; }
+        public PreconfiguredSettingsVariant(string name, bool selectedInitially, string description = "", string tooltip = "", GUID platformGuid = default)
         {
             Name = name;
             Description = description;
             SelectedInitially = selectedInitially;
             Selected = selectedInitially;
             Tooltip = tooltip;
+            PlatformGuid = platformGuid;
         }
     }
 

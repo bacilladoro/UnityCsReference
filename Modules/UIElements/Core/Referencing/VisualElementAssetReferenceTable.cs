@@ -61,7 +61,9 @@ public sealed class VisualElementAssetReferenceTable : IDisposable
         {
         }
 
+#pragma warning disable UA5000 // The Avoid Finalizer Analyzer produces compile errors for any new finalizers. This pre-existing finalizer declaration has been suppressed, but should be rewritten if possible.
         ~ElementNode() => Dispose(false);
+#pragma warning restore UA5000
 
         /// <summary>
         /// Disposes the ElementNode and releases its handle.
@@ -153,10 +155,12 @@ public sealed class VisualElementAssetReferenceTable : IDisposable
     {
     }
 
+#pragma warning disable UA5000 // The Avoid Finalizer Analyzer produces compile errors for any new finalizers. This pre-existing finalizer declaration has been suppressed, but should be rewritten if possible.
     ~VisualElementAssetReferenceTable()
     {
         Dispose(false);
     }
+#pragma warning restore UA5000
 
     /// <summary>
     /// Creates a new VisualElementAssetReferenceTable from the pool.

@@ -112,6 +112,7 @@ namespace UnityEditor
 
     [NativeConditional("ENABLE_VIDEO")]
     [NativeHeader("Modules/VideoEditor/VideoClipImporter.h")]
+    [global::UnityEngine.NativeClass("VideoClipImporter", PersistentTypeId = 1127)]
     [NativeHeader("Modules/VideoEditor/VideoClipImporter.bindings.h")]
     public partial class VideoClipImporter : AssetImporter
     {

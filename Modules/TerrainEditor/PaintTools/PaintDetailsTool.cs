@@ -8,10 +8,11 @@ using UnityEngine.TerrainTools;
 using System;
 using UnityEditor.ShortcutManagement;
 using UnityEditorInternal;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.TerrainTools
 {
-    internal class PaintDetailsTool : TerrainPaintToolWithOverlays<PaintDetailsTool>
+    internal partial class PaintDetailsTool : TerrainPaintToolWithOverlays<PaintDetailsTool>
     {
         [FormerlyPrefKeyAs("Terrain/Detail Brush", "f6")]
         [Shortcut("Terrain/Detail Brush", typeof(TerrainToolShortcutContext), KeyCode.F6)]
@@ -36,6 +37,7 @@ namespace UnityEditor.TerrainTools
             public readonly GUIContent opacity = EditorGUIUtility.TrTextContent("Opacity", "Strength of the applied effect.");
         }
 
+        [NoAutoStaticsCleanup] // lazy GUIContent/GUIStyle styles holder; editor infra, no user refs
         private static Styles s_Styles;
 
         public const int kInvalidDetail = -1;
@@ -60,6 +62,7 @@ namespace UnityEditor.TerrainTools
 
             }
         }
+        [AutoStaticsCleanupOnCodeReload]
         internal static event Action BrushTargetStrengthChanged;
 
         // storing the previous detailStrength to trigger a strengthChanged Action

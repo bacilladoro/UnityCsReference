@@ -20,6 +20,7 @@ namespace UnityEngine
     {
         private IntPtr m_Ptr;
 
+        [RequiredMember]
         private DiagnosticSwitch(IntPtr ptr)
         {
             m_Ptr = ptr;

@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Scripting;
 using UnityEngine.Bindings;
 
@@ -49,6 +50,7 @@ namespace UnityEngine
         public override int marginTop => m_MarginTop;
         public override int marginBottom => m_MarginBottom;
 
+        [NoAutoStaticsCleanup] // static layout sentinel for empty group entries; readonly, no user types, valid indefinitely
         private static readonly GUILayoutEntry none = new GUILayoutEntry(0, 1, 0, 1, GUIStyle.none);
 
         public GUILayoutGroup() : base(0, 0, 0, 0, GUIStyle.none) {}

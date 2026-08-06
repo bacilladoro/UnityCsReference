@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using UnityEngine;
+using Unity.Scripting.LifecycleManagement;
 using Math = System.Math;
 
 namespace UnityEditor
@@ -13,10 +14,11 @@ namespace UnityEditor
          */
         protected abstract class Group
         {
-            readonly protected float kGroupSeparatorHeight = EditorStyles.toolbar.fixedHeight;
+            // Evaluating it lazily avoids touching the style off-GUI.
+            protected float kGroupSeparatorHeight => EditorStyles.toolbar.fixedHeight;
             protected string m_GroupSeparatorTitle;
 
-            protected static int[] s_Empty;
+            protected static readonly int[] s_Empty = System.Array.Empty<int>();
             public ObjectListArea m_Owner;
             public VerticalGrid m_Grid = new VerticalGrid();
             public float m_Height;
@@ -35,8 +37,6 @@ namespace UnityEditor
             public Group(ObjectListArea owner, string groupTitle)
             {
                 m_GroupSeparatorTitle = groupTitle;
-                if (s_Empty == null)
-                    s_Empty = System.Array.Empty<int>();
                 m_Owner = owner;
                 Visible = visiblePreference;
             }

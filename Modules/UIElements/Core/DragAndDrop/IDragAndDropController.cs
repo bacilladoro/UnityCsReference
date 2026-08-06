@@ -131,7 +131,7 @@ namespace UnityEngine.UIElements
         public Vector2 position { get; }
 
         /// <summary>
-        /// The target of the drop. There is only a target when hovering over an item. <see cref="DropPosition.OverItem"/>
+        /// The target of the drop. There is only a target when hovering over an item. <see cref="DragAndDropPosition.OverItem"/>
         /// </summary>
         public object target => m_DragAndDropArgs.target;
 
@@ -259,7 +259,7 @@ namespace UnityEngine.UIElements
         /// <summary>
         /// Sets Entity Ids associated with the current drag-and-drop operation.
         /// </summary>
-        /// <param name="references">The Unity Object references.</param>
+        /// <param name="ids">The Entity Ids.</param>
         public void SetEntityIds(IReadOnlyList<EntityId> ids)
         {
             entityIds = ids;

@@ -16,6 +16,7 @@ namespace UnityEditor
     }
 
     [NativeHeader("Editor/Src/EditorUserSettings.h")]
+    [global::UnityEngine.NativeClass("EditorUserSettings", PersistentTypeId = 162)]
     [StaticAccessor("GetEditorUserSettings()", StaticAccessorType.Dot)]
     public sealed class EditorUserSettings : UnityObject
     {

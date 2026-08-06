@@ -9,7 +9,7 @@ using UnityEngine.Bindings;
 namespace UnityEditor
 {
     // Exposed as internal, editor-only, because we only need it do make a custom inspector
-    [NativeClass(null)]
+    [NativeClass(null, PersistentTypeId = 11)]
     [ExcludeFromPreset]
     internal sealed class AudioManager : ProjectSettingsBase
     {
@@ -17,21 +17,21 @@ namespace UnityEditor
     }
 
     // Exposed as internal, editor-only, because we only need it to make a custom inspector
-    [NativeClass(null)]
+    [NativeClass(null, PersistentTypeId = 19)]
     internal sealed class Physics2DSettings : ProjectSettingsBase
     {
         private Physics2DSettings() {}
     }
 
     // Exposed as internal, editor-only, because we only need it to make a custom inspector
-    [NativeClass(null)]
+    [NativeClass(null, PersistentTypeId = 0x0A86CE7B)]
     internal sealed class PhysicsCoreProjectSettings2D : ProjectSettingsBase
     {
         private PhysicsCoreProjectSettings2D() { }
     }
 
     // Exposed as internal, editor-only, because we only need it do make a custom inspector
-    [NativeClass(null)]
+    [NativeClass(null, PersistentTypeId = 116)]
     [ExcludeFromPreset]
     internal sealed class MonoManager : ProjectSettingsBase
     {
@@ -39,7 +39,7 @@ namespace UnityEditor
     }
 
     // Exposed as internal, editor-only, because we only need it do make a custom inspector
-    [NativeClass(null)]
+    [NativeClass(null, PersistentTypeId = 0x37DF050A)]
     [ExcludeFromPreset]
     internal sealed class VFXManager : ProjectSettingsBase
     {
@@ -60,7 +60,7 @@ namespace UnityEditor
     }
 
     // Exposed as internal, editor-only, because we only need it do make a custom inspector
-    [NativeClass(null)]
+    [NativeClass(null, PersistentTypeId = 13)]
     internal sealed class InputManager : ProjectSettingsBase
     {
         private InputManager() {}
@@ -98,14 +98,14 @@ namespace UnityEditor
     }
 
     // Exposed as internal, editor-only, because we only need it do make a custom inspector
-    [NativeClass(null)]
+    [NativeClass(null, PersistentTypeId = 5)]
     internal sealed class TimeManager : ProjectSettingsBase
     {
         private TimeManager() {}
     }
 
     // Exposed as internal, editor-only, because we only need it do make a custom inspector
-    [NativeClass(null)]
+    [NativeClass(null, PersistentTypeId = 0x1715D37E)]
     internal sealed class MemorySettings : ProjectSettingsBase
     {
         private MemorySettings() {}
@@ -113,7 +113,7 @@ namespace UnityEditor
 
 
     // Exposed as internal, editor-only, because we only need it do make a custom inspector
-    [NativeClass(null)]
+    [NativeClass(null, PersistentTypeId = 310)]
     internal sealed class UnityConnectSettings : ProjectSettingsBase
     {
         private UnityConnectSettings() {}

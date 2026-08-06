@@ -44,6 +44,7 @@ namespace UnityEditor.Animations
     }
 
     [NativeHeader("Editor/Src/Animation/BlendTree.bindings.h")]
+    [global::UnityEngine.NativeClass("BlendTree", PersistentTypeId = 206)]
     [NativeHeader("Editor/Src/Animation/BlendTree.h")]
     public partial class BlendTree : Motion
     {

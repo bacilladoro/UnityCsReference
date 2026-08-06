@@ -145,7 +145,7 @@ namespace UnityEngine.AMD
         public uint displaySizeWidth;
         ///<summary>The height of the presentation resolution targeted by the upscaling process.</summary>
         public uint displaySizeHeight;
-        ///<summary>Initialization flags. .</summary>
+        ///<summary>Initialization flags.</summary>
         ///<seealso cref="FfxFsr2InitializationFlags" />
         public FfxFsr2InitializationFlags ffxFsrFlags;
         ///<exclude />
@@ -279,7 +279,7 @@ namespace UnityEngine.AMD
     {
         ///<summary>The input color buffer to upsample for <see cref="FSR2Context" />. This texture is mandatory and you must set it to a non-null value.</summary>
         public Texture colorInput       { set; get; }
-        ///<summary>The input color buffer to upsample for <see cref="FSR2Context" />. This texture is mandatory and you must set it to a non-null value.</summary>
+        ///<summary>The output color buffer. This texture is mandatory and you must set it to a non-null value.</summary>
         public Texture colorOutput      { set; get; }
         ///<summary>The input depth buffer. This must be the same size as the input color buffer. This texture is mandatory and you must set it to a non-null value.</summary>
         public Texture depth            { set; get; }
@@ -355,7 +355,7 @@ namespace UnityEngine.AMD
     ///        // rendering artifacts.
     ///        fsr2Context.executeData.reset = 1;
     ///#else
-    ///        fsr2Context.executeData.reset = (initializeFsr2Context || parameters.hdCamera.isFirstFrame) ? 1 : 0;
+    ///        fsr2Context.executeData.reset = (initializeFsr2Context || ctx.hdCamera.isFirstFrame) ? 1 : 0;
     ///#endif
     ///
     ///        FSR2TextureTable fsr2TextureTable = new FSR2TextureTable()
@@ -476,7 +476,9 @@ namespace UnityEngine.AMD
             }
         }
 
+#pragma warning disable UA5000 // The Avoid Finalizer Analyzer produces compile errors for any new finalizers. This pre-existing finalizer declaration has been suppressed, but should be rewritten if possible.
         ~NativeData() { Dispose(false); }
+#pragma warning restore UA5000
     }
 
     #endregion
@@ -576,7 +578,7 @@ namespace UnityEngine.AMD
     ///        // rendering artifacts.
     ///        fsr2Context.executeData.reset = 1;
     ///#else
-    ///        fsr2Context.executeData.reset = (initializeFsr2Context || parameters.hdCamera.isFirstFrame) ? 1 : 0;
+    ///        fsr2Context.executeData.reset = (initializeFsr2Context || ctx.hdCamera.isFirstFrame) ? 1 : 0;
     ///#endif
     ///
     ///        FSR2TextureTable fsr2TextureTable = new FSR2TextureTable()
@@ -780,7 +782,7 @@ namespace UnityEngine.AMD
         ///        // rendering artifacts.
         ///        fsr2Context.executeData.reset = 1;
         ///#else
-        ///        fsr2Context.executeData.reset = (initializeFsr2Context || parameters.hdCamera.isFirstFrame) ? 1 : 0;
+        ///        fsr2Context.executeData.reset = (initializeFsr2Context || ctx.hdCamera.isFirstFrame) ? 1 : 0;
         ///#endif
         ///
         ///

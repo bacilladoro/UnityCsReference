@@ -13,6 +13,7 @@ using Object = UnityEngine.Object;
 using System.Globalization;
 using System.Linq;
 using UnityEditor.Presets;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -121,7 +122,9 @@ namespace UnityEditor
         string m_RetargetWarnings;
 
         GUIContent[] m_MotionNodeList;
+        [NoAutoStaticsCleanup] // UI foldout state; safe to persist across reload
         private static bool s_MotionNodeFoldout = false;
+        [NoAutoStaticsCleanup] // UI foldout state; safe to persist across reload
         private static bool s_ImportMessageFoldout = false;
 
         //Prefix used to pick up errors concerning the rig importation
@@ -228,6 +231,7 @@ namespace UnityEditor
                 numberStyle.alignment = TextAnchor.UpperRight;
             }
         }
+        [NoAutoStaticsCleanup] // immutable GUIContent/GUIStyle cache; safe to persist across reload
         static Styles styles;
 
         public ModelImporterClipEditor(AssetImporterEditor panelContainer)
@@ -1093,6 +1097,7 @@ namespace UnityEditor
 
         private AvatarMask m_Mask = null;
         private AvatarMaskInspector m_MaskInspector = null;
+        [NoAutoStaticsCleanup] // UI foldout state; safe to persist across reload
         static private bool m_MaskFoldout = false;
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////////

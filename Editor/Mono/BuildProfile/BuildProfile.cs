@@ -27,7 +27,7 @@ namespace UnityEditor.Build.Profile
         /// Asset Schema Version
         /// </summary>
         [SerializeField]
-        uint m_AssetVersion = 2;
+        uint m_AssetVersion = 3;
 
         /// <summary>
         /// Build Target used to fetch module and build profile extension.
@@ -41,9 +41,7 @@ namespace UnityEditor.Build.Profile
                 if (!isMultiTarget)
                     return m_BuildTarget;
 
-                var guid = activePlatformGuid.Empty() ? selectedPlatformGuid : activePlatformGuid;
-                var (buildTargetFromGuid, _) = BuildProfileModuleUtil.GetBuildTargetAndSubtarget(guid);
-
+                var (buildTargetFromGuid, _) = BuildProfileModuleUtil.GetBuildTargetAndSubtarget(selectedPlatformGuid);
                 return buildTargetFromGuid;
             }
             set => m_BuildTarget = value;
@@ -61,9 +59,7 @@ namespace UnityEditor.Build.Profile
                 if (!isMultiTarget)
                     return m_Subtarget;
 
-                var guid = activePlatformGuid.Empty() ? selectedPlatformGuid : activePlatformGuid;
-                var (_, subtargetFromGuid) = BuildProfileModuleUtil.GetBuildTargetAndSubtarget(guid);
-
+                var (_, subtargetFromGuid) = BuildProfileModuleUtil.GetBuildTargetAndSubtarget(selectedPlatformGuid);
                 return subtargetFromGuid;
             }
             set => m_Subtarget = value;
@@ -97,14 +93,7 @@ namespace UnityEditor.Build.Profile
         [VisibleToOtherModules]
         internal BuildProfilePlatformSettingsBase platformBuildProfile
         {
-            get
-            {
-                if (!isMultiTarget)
-                    return m_PlatformBuildProfile;
-
-                var guid = activePlatformGuid.Empty() ? selectedPlatformGuid : activePlatformGuid;
-                return GetPlatformSettingsForGuid(guid);
-            }
+            get => m_PlatformBuildProfile;
             set => m_PlatformBuildProfile = value;
         }
 
@@ -115,27 +104,11 @@ namespace UnityEditor.Build.Profile
         internal bool isMultiTarget { get; set; }
 
         /// <summary>
-        /// Active platform GUID of a multi-target platform profile. This is used to determine which 
-        /// platform settings to use when building for an active multi-target platform profile.
-        /// Empty if profile is not active.
+        /// Selected platform GUID of a multi-target platform profile. Determines which
+        /// platform settings to use for building and to show in the inspector.
+        /// Set at profile creation time.
         /// </summary>
-        [SerializeField] string m_ActivePlatformGuid;
-        [VisibleToOtherModules]
-        internal GUID activePlatformGuid
-        {
-            get => new GUID(m_ActivePlatformGuid);
-            set
-            {
-                m_ActivePlatformGuid = value.ToString();
-                EditorUtility.SetDirty(this);
-            }
-        }
-
-        /// <summary>
-        /// Selected platform GUID of a multi-target platform profile. This is used to determine which
-        /// platform settings to show in the inspector.
-        /// </summary>
-        string m_SelectedPlatformGuid;
+        [SerializeField] string m_SelectedPlatformGuid;
         [VisibleToOtherModules]
         internal GUID selectedPlatformGuid
         {
@@ -150,16 +123,7 @@ namespace UnityEditor.Build.Profile
         /// the build target for non-multi-target profiles.
         /// </summary>
         [VisibleToOtherModules]
-        internal BuildTarget selectedBuildTarget
-        {
-            get
-            {
-                if (!isMultiTarget)
-                    return buildTarget;
-                var (selectedBuildTarget, _) = BuildProfileModuleUtil.GetBuildTargetAndSubtarget(selectedPlatformGuid);
-                return selectedBuildTarget;
-            }
-        }
+        internal BuildTarget selectedBuildTarget => buildTarget;
 
         /// <summary>
         /// Selected subtarget of the build profile. This is used for showing
@@ -168,68 +132,7 @@ namespace UnityEditor.Build.Profile
         /// the subtarget for non-multi-target profiles.
         /// </summary>
         [VisibleToOtherModules]
-        internal StandaloneBuildSubtarget selectedSubtarget
-        {
-            get
-            {
-                if (!isMultiTarget)
-                    return subtarget;
-                var (_, selectedSubtarget) = BuildProfileModuleUtil.GetBuildTargetAndSubtarget(selectedPlatformGuid);
-                return selectedSubtarget;
-            }
-        }
-
-        /// <summary>
-        /// Selected platform specific build settings for the build profile.
-        /// This is used for showing platform settings in the inspector.
-        /// Returns the selected platform specific build settings for multi-target platform profiles, or
-        /// the platform specific build settings for non-multi-target profiles.
-        /// </summary>
-        [VisibleToOtherModules]
-        internal BuildProfilePlatformSettingsBase selectedPlatformBuildSettings
-        {
-            get
-            {
-                if (!isMultiTarget)
-                    return platformBuildProfile;
-                return GetPlatformSettingsForGuid(selectedPlatformGuid);
-            }
-        }
-
-        [Serializable]
-        struct AdditionalPlatformSettingsData
-        {
-            public GUID platformGuid;
-            [SerializeReference]
-            public BuildProfilePlatformSettingsBase platformSettings;
-        }
-
-        /// <summary>
-        /// Additional platform specific build settings for multi-target platform profiles.
-        /// </summary>
-        [SerializeField]
-        AdditionalPlatformSettingsData[] m_AdditionalPlatformBuildSettings = Array.Empty<AdditionalPlatformSettingsData>();
-        AdditionalPlatformSettingsData[] additionalPlatformBuildSettings
-        {
-            get => m_AdditionalPlatformBuildSettings;
-            set => m_AdditionalPlatformBuildSettings = value;
-        }
-
-        /// <summary>
-        /// Get the platform specific build settings for a given platform GUID. This is used for multi-target platform profiles.
-        /// </summary>
-        BuildProfilePlatformSettingsBase GetPlatformSettingsForGuid(GUID platformGuid)
-        {
-            if (additionalPlatformBuildSettings == null)
-                return null;
-
-            for (int i = 0; i < additionalPlatformBuildSettings.Length; i++)
-            {
-                if (additionalPlatformBuildSettings[i].platformGuid == platformGuid)
-                    return additionalPlatformBuildSettings[i].platformSettings;
-            }
-            return null;
-        }
+        internal StandaloneBuildSubtarget selectedSubtarget => subtarget;
 
         /// <summary>
         /// Boolean flag for overriding global scene list.
@@ -474,9 +377,6 @@ namespace UnityEditor.Build.Profile
             if (platformBuildProfile == null)
                 TryCreatePlatformSettings();
 
-            if (isMultiTarget)
-                TryCreateAdditionalPlatformSettings();
-
             onBuildProfileEnable?.Invoke(this);
             TryLoadBuildProfilePlayerSettings();
             TryLoadGraphicsSettings();
@@ -624,7 +524,6 @@ namespace UnityEditor.Build.Profile
                 return;
 
             targetBuildProfile.platformBuildProfile = null;
-            targetBuildProfile.additionalPlatformBuildSettings = Array.Empty<AdditionalPlatformSettingsData>();
             targetBuildProfile.TryCreatePlatformSettings();
             targetBuildProfile.overrideGlobalScenes = false;
             targetBuildProfile.scenes = Array.Empty<EditorBuildSettingsScene>();
@@ -651,17 +550,9 @@ namespace UnityEditor.Build.Profile
             }
             else if (isMultiTarget)
             {
-                if (!activePlatformGuid.Empty())
-                {
-                    if (this == BuildProfileContext.activeProfile)
-                        selectedPlatformGuid = activePlatformGuid;
-                    else
-                        activePlatformGuid = new GUID(string.Empty);
-                }
-
                 if (TryGetSupportedIBuildTargets(out var supportedTargets))
                 {
-                    if (activePlatformGuid.Empty())
+                    if (selectedPlatformGuid.Empty())
                         selectedPlatformGuid = supportedTargets[0].Guid;
 
                     var (buildTargetFromGuid, subtargetFromGuid) = BuildProfileModuleUtil.GetBuildTargetAndSubtarget(selectedPlatformGuid);
@@ -691,12 +582,22 @@ namespace UnityEditor.Build.Profile
             if (scriptingDefines.Length > 0 && !m_HasScriptingDefines)
                 m_HasScriptingDefines = true;
 
-            // On disk changes to active profile may change platform guid.
-            // Specifically copying the entire YAML of a valid build profile.
-            var guidToCheck = isMultiTarget && !activePlatformGuid.Empty() ? activePlatformGuid : platformGuid;
+            var guidToCheck = isMultiTarget ? selectedPlatformGuid : platformGuid;
             if (this == BuildProfileContext.activeProfile && guidToCheck != EditorUserBuildSettings.activePlatformGuid)
             {
-                EditorUserBuildSettings.SwitchActiveBuildTargetGuid(this);
+                if (EditorUserBuildSettings.GetInternalActivePlatformGuid().Empty())
+                {
+                    // With an active profile and a GUID mismatch, an empty internal
+                    // GUID indicates a legacy API triggered the platform switch.
+                    // Deactivate the profile to honor that switch.
+                    BuildProfileContext.activeProfile = null;
+                }
+                else
+                {
+                    // On disk changes to active profile may change platform guid.
+                    // Specifically copying the entire YAML of a valid build profile.
+                    EditorUserBuildSettings.SwitchActiveBuildTargetGuid(this);
+                }
             }
         }
 

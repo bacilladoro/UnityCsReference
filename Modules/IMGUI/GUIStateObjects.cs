@@ -5,12 +5,14 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngineInternal;
 
 namespace UnityEngine
 {
-    internal class GUIStateObjects
+    internal partial class GUIStateObjects
     {
+        [AutoStaticsCleanupOnCodeReload]
         static Dictionary<int, object> s_StateCache = new Dictionary<int, object>();
 
         [System.Security.SecuritySafeCritical]

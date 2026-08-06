@@ -338,7 +338,7 @@ namespace UnityEditor
         }
 
         // Note: Even though this is a custom editor for Texture2D, the target may not be a Texture2D,
-        // since other editors inherit from this one, such as ProceduralTextureInspector.
+        // since other editors inherit from this one.
         public override void OnInspectorGUI()
         {
             serializedObject.Update();

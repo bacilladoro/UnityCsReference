@@ -50,12 +50,14 @@ namespace UnityEditor
     /// </summary>
     static partial class EditorAssemblies
     {
+        [AutoStaticsCleanupOnCodeReload]
         static Dictionary<Type, Type[]> m_subClasses = new Dictionary<Type, Type[]>();
 
         /// <summary>
         /// The currently loaded editor assemblies
         /// (This is kept up to date from <see cref="SetLoadedEditorAssemblies"/>)
         /// </summary>
+        [AutoStaticsCleanupOnCodeReload]
         static internal Assembly[] loadedAssemblies
         {
             get; private set;
@@ -113,8 +115,8 @@ namespace UnityEditor
             }
         }
 
-        static ProfilerMarkerWithStringData _profilerMarkerProcessInitializeOnLoadAttributes = ProfilerMarkerWithStringData.Create("ProcessInitializeOnLoadAttribute", "Type");
-        static ProfilerMarkerWithStringData _profilerMarkerProcessInitializeOnLoadMethodAttributes = ProfilerMarkerWithStringData.Create("ProcessInitializeOnLoadMethodAttribute", "MethodInfo");
+        static readonly ProfilerMarkerWithStringData _profilerMarkerProcessInitializeOnLoadAttributes = ProfilerMarkerWithStringData.Create("ProcessInitializeOnLoadAttribute", "Type");
+        static readonly ProfilerMarkerWithStringData _profilerMarkerProcessInitializeOnLoadMethodAttributes = ProfilerMarkerWithStringData.Create("ProcessInitializeOnLoadMethodAttribute", "MethodInfo");
         private static readonly ProfilerMarker _profilerMarkerSortTypes = new ProfilerMarker("SortTypesTopologically");
 
         [RequiredByNativeCode]

@@ -4,6 +4,7 @@
 
 using UnityEditorInternal;
 using UnityEngine;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -22,8 +23,9 @@ namespace UnityEditor
             ((GradientPresetLibrary)lib).Draw(rect, presetObject, colorSpace);
         }
     }
-    internal class GradientPicker : EditorWindow
+    internal partial class GradientPicker : EditorWindow
     {
+        [AutoStaticsCleanupOnCodeReload]
         private static GradientPicker s_GradientPicker;
         public static string presetsEditorPrefID { get { return "Gradient"; } }
 

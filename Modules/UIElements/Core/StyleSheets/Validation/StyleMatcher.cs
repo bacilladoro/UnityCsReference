@@ -53,6 +53,8 @@ namespace UnityEngine.UIElements.StyleSheets
         protected abstract bool MatchMaterialPropertyValue();
         protected abstract bool MatchAngle();
         protected abstract bool MatchCustomIdent();
+        protected abstract bool MatchLinearGradient();
+        protected abstract bool MatchRadialGradient();
 
         public abstract int valueCount { get; }
         public abstract bool isCurrentVariable { get; }
@@ -435,6 +437,12 @@ namespace UnityEngine.UIElements.StyleSheets
                     case DataType.CustomIdent:
                         result = MatchCustomIdent();
                         break;
+                    case DataType.LinearGradient:
+                        result = MatchLinearGradient();
+                        break;
+                    case DataType.RadialGradient:
+                        result = MatchRadialGradient();
+                        break;
                 }
             }
 
@@ -617,6 +625,22 @@ namespace UnityEngine.UIElements.StyleSheets
         {
             var value = current;
             Match match = s_FilterFunctionRegex.Match(value);
+            return match.Success;
+        }
+
+        static readonly Regex s_LinearGradientRegex = new Regex(@"^linear-gradient\(.*\)$", RegexOptions.Compiled);
+        protected override bool MatchLinearGradient()
+        {
+            var value = current;
+            Match match = s_LinearGradientRegex.Match(value);
+            return match.Success;
+        }
+
+        static readonly Regex s_RadialGradientRegex = new Regex(@"^radial-gradient\(.*\)$", RegexOptions.Compiled);
+        protected override bool MatchRadialGradient()
+        {
+            var value = current;
+            Match match = s_RadialGradientRegex.Match(value);
             return match.Success;
         }
 
@@ -813,6 +837,34 @@ namespace UnityEngine.UIElements.StyleSheets
         protected override bool MatchFilterFunction()
         {
             var filterType = current.handle.valueIndex;
+            MoveNext();
+
+            var value = current;
+            int argCount = (int)value.sheet.ReadFloat(value.handle);
+            for (int i = 0; i < argCount; ++i)
+                MoveNext();
+
+            return true;
+        }
+
+        protected override bool MatchLinearGradient()
+        {
+            return MatchGradientFunction(StyleValueFunction.LinearGradient);
+        }
+
+        protected override bool MatchRadialGradient()
+        {
+            return MatchGradientFunction(StyleValueFunction.RadialGradient);
+        }
+
+        bool MatchGradientFunction(StyleValueFunction expected)
+        {
+            var handle = current.handle;
+            if (handle.valueType != StyleValueType.Function)
+                return false;
+            if ((StyleValueFunction)handle.valueIndex != expected)
+                return false;
+
             MoveNext();
 
             var value = current;

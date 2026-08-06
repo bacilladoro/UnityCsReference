@@ -10,6 +10,7 @@ using UnityEditor.Profiling;
 using UnityEditorInternal.Profiling;
 using UnityEngine;
 using UnityEngine.UIElements;
+using Unity.Scripting.LifecycleManagement;
 
 /// <summary>
 /// This namespace contains internal classes for the Unity Editor's Profiler.
@@ -217,6 +218,8 @@ namespace UnityEditor.U2D.Profiling
         /// <summary>
         /// An array of counter names for 2D profiling data.
         /// </summary>
+        // Immutable counter-name/category table built once from constants; no user-type references, safe to persist across a code reload.
+        [NoAutoStaticsCleanup]
         static readonly (string counterName, ProfilerCategory category)[] k_Counters =
         {
             (U2DProfilerMakers.k_SpriteCountMarkerName, ProfilerCategory.Memory),

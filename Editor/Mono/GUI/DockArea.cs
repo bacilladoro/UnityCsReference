@@ -12,6 +12,7 @@ using UnityEditorInternal;
 using UnityEngine.XR;
 using System.Threading;
 using System.Threading.Tasks;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -27,10 +28,11 @@ namespace UnityEditor
         }
     }
 
-    internal class DockArea : HostView, IDropArea
+    internal partial class DockArea : HostView, IDropArea
     {
         private static class Styles
         {
+            [NoAutoStaticsCleanup] // style resource handle (no user references), safe to persist across code reload
             private static readonly StyleBlock tab = EditorResources.GetStyle("tab");
             public static readonly GUIStyle background = "dockarea";
             public static readonly float tabMinWidth = tab.GetFloat(StyleCatalogKeyword.minWidth, 50.0f);
@@ -42,7 +44,9 @@ namespace UnityEditor
             public static readonly GUIStyle tabScrollerPrevButton = new GUIStyle("dragtab scroller prev");
             public static readonly GUIStyle tabScrollerNextButton = new GUIStyle("dragtab scroller next");
 
+            [NoAutoStaticsCleanup] // style-value cache of a float; value type with no user references, safe to persist across code reload
             public static SVC<float> genericMenuTopOffset = new SVC<float>("--window-generic-menu-top-offset", 20f);
+            [NoAutoStaticsCleanup] // style-value cache of a float; value type with no user references, safe to persist across code reload
             public static SVC<float> genericMenuFloatingTopOffset = new SVC<float>("--window-floating-generic-menu-top-offset", 20f);
 
             public static readonly GUIStyle tabLabel = new GUIStyle("dragtab") { name = "dragtab-label" };
@@ -58,22 +62,31 @@ namespace UnityEditor
         internal const float kBottomBorders = 2.0f;
 
         // Which pane window would we drop the currently dragged pane over
+        [NoAutoStaticsCleanup] // transient drag-state index; value type, safe to persist across code reload
         static int s_PlaceholderPos;
         // Which pane is currently being dragged around
+        [AutoStaticsCleanupOnCodeReload]
         static EditorWindow s_DragPane;
         // Where did it come from
+        [AutoStaticsCleanupOnCodeReload]
         internal static DockArea s_OriginalDragSource;
 
         // Mouse coords when we started the drag (used to figure out when we should trigger a drag)
+        [NoAutoStaticsCleanup] // transient drag-state coordinates; value type, safe to persist across code reload
         static Vector2 s_StartDragPosition;
         // Are we dragging yet?
+        [NoAutoStaticsCleanup] // transient drag-state flag; value type, safe to persist across code reload
         static bool s_IsDragging;
         // A view that shouldn't be docked to (to make sure we don't attach to a single view with only the tab that we're dragging)
+        [AutoStaticsCleanupOnCodeReload]
         static internal View s_IgnoreDockingForView = null;
 
+        [AutoStaticsCleanupOnCodeReload]
         private static DropInfo s_DropInfo = null;
+        [AutoStaticsCleanupOnCodeReload]
         private static Dictionary<GUIContentKey, GUIContent> s_GUIContents = new Dictionary<GUIContentKey, GUIContent>();
 
+        [AutoStaticsCleanupOnCodeReload]
         private static bool? s_HasStaticTabsCapabilityCached;
         private static bool s_HasStaticTabsCapability
         {
@@ -1306,13 +1319,14 @@ namespace UnityEditor
         }
     }
 
-    internal class MaximizedHostView : HostView
+    internal partial class MaximizedHostView : HostView
     {
         static class Styles
         {
             public static readonly GUIStyle titleBackground = "dockHeader";
             public static readonly GUIStyle titleLabel = new GUIStyle("dragtab") { name = "dragtab-label" };
             public static readonly GUIStyle background = "dockarea";
+            [NoAutoStaticsCleanup] // style-value cache of a float; value type with no user references, safe to persist across code reload
             public static SVC<float> genericMenuTopOffset = new SVC<float>("--window-generic-menu-top-offset", 20f);
         }
 
@@ -1405,6 +1419,7 @@ namespace UnityEditor
             editorWindowBackend?.OnDisplayWindowMenu(menu);
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         private static Dictionary<GUIContentKey, GUIContent> s_GUIContents = new Dictionary<GUIContentKey, GUIContent>();
 
         private GUIContent GetTitleContent(GUIContent content, bool hasUnsavedChanges)

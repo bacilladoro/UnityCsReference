@@ -29,6 +29,7 @@ namespace UnityEngine
 
     ///<summary>Physics material describes how to handle colliding objects (friction, bounciness).</summary>
     ///<seealso cref="Collider" />
+    [global::UnityEngine.NativeClass("PhysicsMaterial", PersistentTypeId = 134)]
     [NativeHeader("Modules/Physics/PhysicsMaterial.h")]
     public class PhysicsMaterial : UnityEngine.Object
     {

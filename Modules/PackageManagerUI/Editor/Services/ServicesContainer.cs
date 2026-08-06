@@ -153,7 +153,7 @@ namespace UnityEditor.PackageManager.UI.Internal
             var customDisplayDialog = Register(new CustomDisplayDialog(applicationProxy, resourceLoader));
 
             var upmCache = Register(new UpmCache(settingsProxy));
-            var upmClient = Register(new UpmClient(upmCache, fetchStatusTracker, ioProxy, clientProxy, applicationProxy, dateTimeProxy));
+            var upmClient = Register(new UpmClient(upmCache, fetchStatusTracker, ioProxy, clientProxy, applicationProxy, dateTimeProxy, settingsProxy));
             var upmRegistryClient = Register(new UpmRegistryClient(settingsProxy, clientProxy, upmCache, applicationProxy));
 
             Register(new SampleImporter(ioProxy, assetDatabaseProxy));
@@ -173,6 +173,7 @@ namespace UnityEditor.PackageManager.UI.Internal
 
             Register(new EditorAnalyticsProxy());
             Register(new PackageManagerWindowProxy());
+            Register(new LicenceProxy());
             Register(new ExtensionManager(packageManagerPrefs));
             Register(new PackageFactory(upmCache, upmClient, backgroundFetchHandler, packageDatabase, settingsProxy, packageCreator, unityConnectProxy, assetStoreCache, assetStoreDownloadManager, fetchStatusTracker, upmRegistryClient, ioProxy, applicationProxy, packageProgressTracker));
             Register(new SampleFactory(ioProxy, upmCache, sampleCache, packageDatabase));

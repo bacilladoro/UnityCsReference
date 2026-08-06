@@ -87,6 +87,10 @@ namespace UnityEditor
                 case LightingSettings.Lightmapper.ProgressiveGPU:
                     return Lightmapper.ProgressiveGPU;
 
+                // The obsolete enum has no Unity Compute member; report the closest GPU lightmapper.
+                case LightingSettings.Lightmapper.UnityComputeGPU:
+                    return Lightmapper.ProgressiveGPU;
+
                 default:
                 {
                     Debug.LogError("Unsupported Lightmapper type was added and not handled correctly. ");
@@ -102,8 +106,11 @@ namespace UnityEditor
                 case Lightmapper.ProgressiveCPU:
                     return LightingSettings.Lightmapper.ProgressiveCPU;
 
+                // In Unity Compute projects the GPU lightmapper means the compute baker, matching the Lighting window.
                 case Lightmapper.ProgressiveGPU:
-                    return LightingSettings.Lightmapper.ProgressiveGPU;
+                    return UnityEditor.Rendering.EditorGraphicsSettings.defaultLightBaker == UnityEditor.Rendering.LightBaker.UnityComputeLightBaker
+                        ? LightingSettings.Lightmapper.UnityComputeGPU
+                        : LightingSettings.Lightmapper.ProgressiveGPU;
 
                 default:
                 {

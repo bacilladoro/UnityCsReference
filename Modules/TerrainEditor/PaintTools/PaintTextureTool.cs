@@ -6,11 +6,12 @@ using UnityEngine;
 using UnityEngine.TerrainTools;
 using UnityEditor.ShortcutManagement;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.TerrainTools
 {
     [FilePathAttribute("Library/TerrainTools/PaintTexture", FilePathAttribute.Location.ProjectFolder)]
-    internal class PaintTextureTool : TerrainPaintToolWithOverlays<PaintTextureTool>
+    internal partial class PaintTextureTool : TerrainPaintToolWithOverlays<PaintTextureTool>
     {
         internal const string k_ToolName = "Paint Texture";
         public override string OnIcon => "TerrainOverlays/PaintMaterials_On.png";
@@ -183,7 +184,9 @@ namespace UnityEditor.TerrainTools
             return -1;
         }
 
+        [AutoStaticsCleanupOnCodeReload] // drag buffer holds TerrainLayer asset refs; drop them on reload
         private static List<TerrainLayer> s_inspectorDraggedLayersBuffer = new List<TerrainLayer>();
+        [NoAutoStaticsCleanup] // value-type transient drag-state flag
         private static bool s_isDraggingTerrainLayersInInspector = false;
 
         private static void CleanupInspectorDragState()

@@ -41,6 +41,7 @@ namespace UnityEngine.VFX
     [NativeHeader("Modules/VFX/Public/ScriptBindings/VisualEffectAssetBindings.h")]
     [NativeHeader("Modules/VFX/Public/VisualEffectAsset.h")]
     [NativeHeader("VFXScriptingClasses.h")]
+    [NativeClass("VisualEffectObject", PersistentTypeId = 0x7AC43185)]
     public abstract class VisualEffectObject : Object
     {
     }
@@ -50,6 +51,7 @@ namespace UnityEngine.VFX
     [UsedByNativeCode]
     [NativeHeader("Modules/VFX/Public/VisualEffectAsset.h")]
     [NativeHeader("VFXScriptingClasses.h")]
+    [NativeClass("VisualEffectAsset", PersistentTypeId = 0x7AB43185)]
     public class VisualEffectAsset : VisualEffectObject
     {
         ///<summary>The default name of the play event.</summary>
@@ -209,6 +211,7 @@ namespace UnityEngine.VFX
     ///<summary>The visual effect class that references an <see cref="VFX.VisualEffectAsset" /> instance within the Scene.</summary>
     [NativeHeader("Modules/VFX/Public/ScriptBindings/VisualEffectBindings.h")]
     [NativeHeader("Modules/VFX/Public/VisualEffect.h")]
+    [NativeClass("VisualEffect", PersistentTypeId = 0x7C28DDA7)]
     [RequireComponent(typeof(Transform))]
     public class VisualEffect : Behaviour
     {
@@ -1441,6 +1444,7 @@ namespace UnityEngine.VFX
     ///<summary>Renders a <see cref="VFX.VisualEffect" />.</summary>
     [RequiredByNativeCode]
     [NativeHeader("Modules/VFX/Public/VFXRenderer.h"), RejectDragAndDropMaterial]
+    [NativeClass("VFXRenderer", PersistentTypeId = 0x045FFA89)]
     public sealed partial class VFXRenderer : Renderer
     {
         ///<exclude />

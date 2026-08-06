@@ -124,7 +124,8 @@ namespace UnityEditor.Build.Profile
         {
             PlatformBrowser,
             DuplicateClassic,
-            DuplicateProfile
+            DuplicateProfile,
+            DuplicateToOtherPlatform
         }
 
         [Serializable]

@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Collections;
 using System.Reflection;
 using UnityEditorInternal;
+using Unity.Scripting.LifecycleManagement;
 
 
 namespace UnityEditor
@@ -212,6 +213,7 @@ namespace UnityEditor
     // @TODO Switch a bunch of others to use this
     internal class GUISlideGroup
     {
+        [NoAutoStaticsCleanup] // within-frame slide-group handle, reset each layout pass; safe to persist
         internal static GUISlideGroup current = null;
         Dictionary<int, Rect> animIDs = new Dictionary<int, Rect>();
         const float kLerp = .1f;

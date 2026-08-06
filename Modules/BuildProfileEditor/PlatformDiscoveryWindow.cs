@@ -61,6 +61,7 @@ namespace UnityEditor.Build.Profile
         Label m_ResourcesContentLabel;
         VisualElement m_PlatformConfigs;
         VisualElement m_NameLinks;
+        HelpBox m_VariantSelectionWarning;
 
         VisualElement m_SupportedPlatformStatusContainer;
 
@@ -110,6 +111,7 @@ namespace UnityEditor.Build.Profile
         {
             bool wasCallbackRegistered = false;
             bool noneSelected = true;
+
             for (var ii = 0; ii < card.preconfiguredSettingsVariants.Length; ii++)
             {
                 var variant = card.preconfiguredSettingsVariants[ii];
@@ -117,22 +119,43 @@ namespace UnityEditor.Build.Profile
                     continue;
 
                 noneSelected = false;
+                var selectedPlatformGuid = GetValidatedVariantPlatformGuid(variant, card);
 
                 if (wasCallbackRegistered)
                 {
-                    AddSingleBuildProfile(card, customProfileName, variant.Name, ii, packagesToAdd, null);
+                    AddSingleBuildProfile(card, customProfileName, variant.Name, ii, packagesToAdd, null, selectedPlatformGuid);
                 }
                 else
                 {
-                    AddSingleBuildProfile(card, customProfileName, variant.Name, ii, packagesToAdd, onCreate);
+                    AddSingleBuildProfile(card, customProfileName, variant.Name, ii, packagesToAdd, onCreate, selectedPlatformGuid);
                     wasCallbackRegistered = true;
                 }
             }
+
             if (noneSelected)
             {
                 AddSingleBuildProfile(card, customProfileName, null,
                     -1, packagesToAdd, onCreate);
             }
+        }
+
+        static GUID GetValidatedVariantPlatformGuid(PreconfiguredSettingsVariant variant, BuildProfileCard card)
+        {
+            bool isMultiTarget = card.supportedPlatformGuids.Length > 0;
+            var guid = variant.PlatformGuid;
+            if (guid.Empty() || !isMultiTarget)
+                return default;
+
+            foreach (var g in card.supportedPlatformGuids)
+            {
+                if (g == guid)
+                    return guid;
+            }
+
+            Debug.LogWarning(
+                $"Variant '{variant.Name}' has platformGuid '{guid}' " +
+                $"which is not a supported platform for '{card.displayName}'. Ignoring platformGuid.");
+            return default;
         }
 
         static void AddSingleBuildProfile(
@@ -141,7 +164,8 @@ namespace UnityEditor.Build.Profile
             string preconfiguredSettingsVariantName,
             int preconfiguredSettingsVariant,
             string[] packagesToAdd,
-            UnityAction<BuildProfile> onCreate)
+            UnityAction<BuildProfile> onCreate,
+            GUID selectedPlatformGuid = default)
         {
             BuildProfileModuleUtil.CreateNewAssetWithName(
                 card.platformId,
@@ -149,7 +173,8 @@ namespace UnityEditor.Build.Profile
                 preconfiguredSettingsVariantName,
                 preconfiguredSettingsVariant,
                 packagesToAdd,
-                onCreate);
+                onCreate,
+                selectedPlatformGuid);
             EditorAnalytics.SendAnalytic(new BuildProfileCreatedEvent(new BuildProfileCreatedEvent.Payload
             {
                 creationType = BuildProfileCreatedEvent.CreationType.PlatformBrowser,
@@ -218,7 +243,8 @@ namespace UnityEditor.Build.Profile
                     platformBannerBgColorHex = BuildProfileModuleUtil.GetPlatformColorString(platformId),
                     internalPackages = internalPackages,
                     partnerPackages = partnerPackages,
-                    preconfiguredSettingsVariants = preconfiguredSettingsVariants
+                    preconfiguredSettingsVariants = preconfiguredSettingsVariants,
+                    supportedPlatformGuids = BuildProfileModuleUtil.GetSupportedPlatformGuids(platformId),
                 });
             }
             return cards.ToArray();
@@ -264,9 +290,11 @@ namespace UnityEditor.Build.Profile
             m_ConfigPanel = rootVisualElement.Q<VisualElement>("platform-config-panel");
             m_ConfigLabel = rootVisualElement.Q<Label>("config-container-title");
             m_ConfigLabel.text = TrText.buildProfileConfigurationLabel;
+            m_VariantSelectionWarning = rootVisualElement.Q<HelpBox>("multi-target-platform-variant-selection-warning");
+            m_VariantSelectionWarning.text = TrText.noVariantSelectionWarning;
             m_PlatformConfigs = rootVisualElement.Q<VisualElement>("platform-configs");
-            m_BuildProfileNameTextField = rootVisualElement.Q<TextField>("build-profile-name");
 
+            m_BuildProfileNameTextField = rootVisualElement.Q<TextField>("build-profile-name");
             m_BuildProfileNameLabel = rootVisualElement.Q<Label>("build-profile-name-label");
             m_BuildProfileNameLabel.text = TrText.buildProfileNameLabel;
 
@@ -725,7 +753,13 @@ namespace UnityEditor.Build.Profile
             var allRequiredPackagesInstalled = AllRequiredPackagesInstalled(card.internalPackages)
                 && AllRequiredPackagesInstalled(card.partnerPackages);
             var isLoggedIn = BuildProfileContext.packageServiceInfoProvider.isUserLoggedIn;
-            m_AddBuildProfileButton.SetEnabled(allRequiredPackagesInstalled || isLoggedIn);
+            var isMultiTarget = card.supportedPlatformGuids.Length > 0;
+            m_AddBuildProfileButton.SetEnabled((allRequiredPackagesInstalled || isLoggedIn) && (!isMultiTarget || count > 0));
+
+            if (isMultiTarget && count == 0)
+                m_VariantSelectionWarning.Show();
+            else
+                m_VariantSelectionWarning.Hide();
         }
 
         static bool AllRequiredPackagesInstalled(BuildTargetDiscovery.PlatformPackageList packageList)

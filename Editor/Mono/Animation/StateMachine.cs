@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using System.Linq;
 using Unity.Collections;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Animations
 {
@@ -252,7 +253,9 @@ namespace UnityEditor.Animations
 
         internal class StateMachineCache
         {
+            [NoAutoStaticsCleanup]
             static Dictionary<AnimatorStateMachine, ChildAnimatorStateMachine[]> m_ChildStateMachines;
+            [NoAutoStaticsCleanup]
             static bool m_Initialized;
 
             static void Init()

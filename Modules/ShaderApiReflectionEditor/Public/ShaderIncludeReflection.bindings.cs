@@ -13,7 +13,7 @@ using Object = UnityEngine.Object;
 namespace UnityEditor.ShaderApiReflection
 {
     [NativeHeader("Modules/ShaderApiReflectionEditor/Public/ShaderIncludeReflection.h")]
-    [NativeClass("ShaderApiReflection::ShaderIncludeReflection")]
+    [NativeClass("ShaderApiReflection::ShaderIncludeReflection", PersistentTypeId = 0x0C78A93D)]
     public sealed class ShaderIncludeReflection : Object
     {
         // Public API

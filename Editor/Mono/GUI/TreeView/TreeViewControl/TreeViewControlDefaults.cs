@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using UnityEngine;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.IMGUI.Controls
 {
@@ -48,14 +49,21 @@ namespace UnityEditor.IMGUI.Controls
 
         public static class DefaultStyles
         {
+            [NoAutoStaticsCleanup] // GUIStyle derived from lineStyle in static ctor; no embedded programmatic texture, survives reload. public field, not made readonly (source-breaking)
             public static GUIStyle foldoutLabel;
+            [NoAutoStaticsCleanup] // GUIStyle derived in static ctor; survives reload. public field, not made readonly (source-breaking)
             public static GUIStyle label;
+            [NoAutoStaticsCleanup] // GUIStyle derived in static ctor; survives reload. public field, not made readonly (source-breaking)
             public static GUIStyle labelRightAligned;
 
+            [NoAutoStaticsCleanup] // GUIStyle derived in static ctor; survives reload. public field, not made readonly (source-breaking)
             public static GUIStyle boldLabel;
+            [NoAutoStaticsCleanup] // GUIStyle derived in static ctor; survives reload. public field, not made readonly (source-breaking)
             public static GUIStyle boldLabelRightAligned;
 
+            [NoAutoStaticsCleanup] // GUIStyle from named skin style; survives reload. public field, not made readonly (source-breaking)
             public static GUIStyle backgroundEven = "OL EntryBackEven";
+            [NoAutoStaticsCleanup] // GUIStyle from named skin style; survives reload. public field, not made readonly (source-breaking)
             public static GUIStyle backgroundOdd = "OL EntryBackOdd";
 
             static DefaultStyles()

@@ -563,7 +563,7 @@ internal static class LinearCollectionFlags
 // nestedByteCount bytes immediately follows (per-entry FBP-bracketed DC +
 // optional String body, walked once per SerializedKeyValue<K,V> entry against
 // the entry-pinned base).
-internal struct DictionaryHeaderWrite  // 24 + sizeof(IntPtr) bytes
+internal struct DictionaryHeaderWrite  // 28 bytes (mirrors ManagedCommandDictionaryWrite)
 {
     public RttiDataType opCode;                        // = RttiDataType.Dictionary
     public byte         reserved0;
@@ -573,15 +573,18 @@ internal struct DictionaryHeaderWrite  // 24 + sizeof(IntPtr) bytes
     public uint         entryStride;                   // sizeof(SerializedKeyValue<K,V>)
     public uint         nestedByteCount;               // bytes of FBP-bracketed body that follow
     public int          getEntriesTypedIndex;          // SerializationCommandObjectTable index for closed GetEntriesTyped<K,V>; -1 = falls back to non-typed entry point
-    public uint         reserved3;                     // pad to 8-byte align fieldUniqueIdentifierTemplate
-    public IntPtr       fieldUniqueIdentifierTemplate; // editor-only; IntPtr.Zero in player builds
+    // Editor-only FUID template stored INLINE right after the nestedByteCount body
+    // (null-terminated; strlen+1 here, 0 in player). The template pointer is
+    // (bodyStart + nestedByteCount); next-entry advance adds align4(fuidTemplateByteCount).
+    public uint         fuidTemplateByteCount;
+    public uint         reserved3;                     // pad to 8
 }
 
 // Mirrors ManagedCommandDictionaryRead in SerializationCommands.h. Same opcode
 // value as DictionaryHeaderWrite — the dispatchers live in separate switches
 // (write inside ObjectsToSerializationBuffer, read inside SerializationBufferToObjects)
 // so opcode reuse is unambiguous.
-internal struct DictionaryHeaderRead  // 24 + 2*sizeof(IntPtr) bytes
+internal struct DictionaryHeaderRead  // 32 + sizeof(IntPtr) bytes (mirrors ManagedCommandDictionaryRead)
 {
     public RttiDataType opCode;                          // = RttiDataType.Dictionary
     public byte         reserved0;
@@ -592,8 +595,10 @@ internal struct DictionaryHeaderRead  // 24 + 2*sizeof(IntPtr) bytes
     public uint         nestedByteCount;                 // bytes of FBP-bracketed body that follow
     public int          dictDefaultAllocateFactoryIndex; // SerializationCommandObjectTable index for Func<object> => new Dictionary<K,V>(); -1 = leave null on read
     public int          setEntriesTypedIndex;            // SerializationCommandObjectTable index for closed SetEntriesTyped<K,V>; -1 = falls back to non-typed entry point
+    // Editor-only FUID template stored INLINE after the body (see DictionaryHeaderWrite).
+    public uint         fuidTemplateByteCount;
+    public uint         reserved3;                       // pad to 8-byte align elementTypeHandle
     public IntPtr       elementTypeHandle;               // SerializedKeyValue<K,V> RuntimeTypeHandle.Value for Array.CreateInstance
-    public IntPtr       fieldUniqueIdentifierTemplate;   // editor-only; IntPtr.Zero in player builds
 }
 
 // Mirrors NativeBufferContext in SerializationCommands.h. Used by every
@@ -695,13 +700,6 @@ internal static unsafe partial class SerializationBackendManagedCommands
     // preserves the bits verbatim. The native side reconstructs the
     // ScriptingObjectPtr — see WriteUnityObjectToBuffer.cpp.
     // calli in real builds — shim keeps the call site identical in the native-test image.
-    [MethodImpl(MethodImplOptions.InternalCall)]
-    [NativeMethod(IsFreeFunction = true, IsThreadSafe = true)]
-    private static extern IntPtr GetWriteUnityObjectToBufferFunctionPointer();
-    private static readonly delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr, int, void> s_writeUnityObjectToBuffer =
-        (delegate* unmanaged[Cdecl]<IntPtr, IntPtr, IntPtr, int, void>)(void*)GetWriteUnityObjectToBufferFunctionPointer();
-    private static void WriteUnityObjectToBuffer(IntPtr fieldValueRaw, IntPtr resolverHandle, IntPtr outputPtr, int flags) =>
-        s_writeUnityObjectToBuffer(fieldValueRaw, resolverHandle, outputPtr, flags);
 
     // Write-side icall for the RttiDataType.ManagedReference opcode
     // ([SerializeReference] inline RefId). Pops the next inline RefId from the
@@ -782,17 +780,9 @@ internal static unsafe partial class SerializationBackendManagedCommands
     private static extern IntPtr GetReadEntityIdFromBufferFunctionPointer();
 
     // Real builds only — the native-test image keeps the per-field path.
-    [MethodImpl(MethodImplOptions.InternalCall)]
-    [NativeMethod(IsFreeFunction = true, IsThreadSafe = true)]
-    private static extern IntPtr GetWriteUnityObjectsToBufferFunctionPointer();
-    private static readonly delegate* unmanaged[Cdecl]<IntPtr, int, IntPtr, IntPtr, IntPtr, int, void> s_writeUnityObjectsToBuffer =
-        (delegate* unmanaged[Cdecl]<IntPtr, int, IntPtr, IntPtr, IntPtr, int, void>)(void*)GetWriteUnityObjectsToBufferFunctionPointer();
-
-    [MethodImpl(MethodImplOptions.InternalCall)]
-    [NativeMethod(IsFreeFunction = true, IsThreadSafe = true)]
-    private static extern IntPtr GetWriteUnityObjectsArrayToBufferFunctionPointer();
-    private static readonly delegate* unmanaged[Cdecl]<IntPtr, int, IntPtr, int, long, IntPtr, void> s_writeUnityObjectsArrayToBuffer =
-        (delegate* unmanaged[Cdecl]<IntPtr, int, IntPtr, int, long, IntPtr, void>)(void*)GetWriteUnityObjectsArrayToBufferFunctionPointer();
+    // UnityObject writes resolve the EntityId in managed and batch through object-free id codecs (no
+    // object crosses to native): scalar copy-group via WriteUnityObjectEntityIdsToBuffer, array via
+    // WriteEntityIdsArrayToBuffer with src==output. The old object-reading batch codecs are gone.
 
     [MethodImpl(MethodImplOptions.InternalCall)]
     [NativeMethod(IsFreeFunction = true, IsThreadSafe = true)]
@@ -805,6 +795,14 @@ internal static unsafe partial class SerializationBackendManagedCommands
     private static extern IntPtr GetWriteEntityIdsToBufferFunctionPointer();
     private static readonly delegate* unmanaged[Cdecl]<IntPtr, int, IntPtr, IntPtr, IntPtr, int, void> s_writeEntityIdsToBuffer =
         (delegate* unmanaged[Cdecl]<IntPtr, int, IntPtr, IntPtr, IntPtr, int, void>)(void*)GetWriteEntityIdsToBufferFunctionPointer();
+
+    // GC-safe batched UnityObject write (scalar copy-group): managed pre-writes each resolved
+    // EntityId into the low bytes of its output slot; native resolves them in place. Object-free.
+    [MethodImpl(MethodImplOptions.InternalCall)]
+    [NativeMethod(IsFreeFunction = true, IsThreadSafe = true)]
+    private static extern IntPtr GetWriteUnityObjectEntityIdsToBufferFunctionPointer();
+    private static readonly delegate* unmanaged[Cdecl]<IntPtr, int, IntPtr, IntPtr, int, void> s_writeUnityObjectEntityIdsToBuffer =
+        (delegate* unmanaged[Cdecl]<IntPtr, int, IntPtr, IntPtr, int, void>)(void*)GetWriteUnityObjectEntityIdsToBufferFunctionPointer();
 
     // Mono/IL2CPP only — CoreCLR's moving GC and non-crossable managed-object return force the per-field path there.
     [MethodImpl(MethodImplOptions.InternalCall)]
@@ -856,23 +854,30 @@ internal static unsafe partial class SerializationBackendManagedCommands
     [NativeMethod(Name = "PopDictionaryFieldUniqueIdentifierStackFrame", IsFreeFunction = true, IsThreadSafe = true)]
     private static extern void PopDictionaryFUIDFrame();
 
-    // Read-side helpers (ConsumeDictionaryRead). Format the dict's FUID template
+    [MethodImpl(MethodImplOptions.InternalCall)]
+    [NativeMethod(Name = "PushFieldUniqueIdentifierArrayIndex", IsFreeFunction = true, IsThreadSafe = true)]
+    private static extern void PushFUIDArrayIndex(IntPtr fuidContext, int index);
+
+    [MethodImpl(MethodImplOptions.InternalCall)]
+    [NativeMethod(Name = "SetFieldUniqueIdentifierCurrentArrayIndex", IsFreeFunction = true, IsThreadSafe = true)]
+    private static extern void SetFUIDCurrentArrayIndex(IntPtr fuidContext, int index);
+
+    [MethodImpl(MethodImplOptions.InternalCall)]
+    [NativeMethod(Name = "PopFieldUniqueIdentifierArrayIndex", IsFreeFunction = true, IsThreadSafe = true)]
+    private static extern void PopFUIDArrayIndex(IntPtr fuidContext);
+
+    // Read-side helper (ConsumeDictionaryRead). Formats the dict's FUID template
     // against the currently-pushed FUID frame to get the duplicate-storage key
-    // (matches what DictionaryField::SetArray does on the legacy path), and
-    // emit the clickable duplicate-key Console warning when the read side
-    // detects keys that the live dict couldn't accept.
+    // (matches what DictionaryField::SetArray does on the legacy path).
     //
     // [FreeFunction] is incompatible with [MethodImpl(InternalCall)] — the
     // BindingsGenerator processes FreeFunction-attributed methods and rejects
     // ones already marked InternalCall. The gate below mirrors the gate on the
-    // sole caller (ConsumeDictionaryRead), so the extern declarations are absent
+    // sole caller (ConsumeDictionaryRead), so the extern declaration is absent
     // in the UNITY_NATIVE_TEST_RESOURCES compile context where the test
     // TestAssembly.dll doesn't run the BindingsGenerator.
     [FreeFunction("DictionaryFieldUniqueIdentifierBindings::FormatDictionaryFieldUniqueIdentifierForActiveContext", IsThreadSafe = true)]
     private static extern string FormatDictionaryFieldUniqueIdentifier(IntPtr dictionaryIdentifierTemplate);
-
-    [FreeFunction("DictionaryFieldUniqueIdentifierBindings::LogDictionaryKeyWarning", IsThreadSafe = true)]
-    private static extern void LogDictionaryKeyWarning(string message, EntityId hostingEntityId);
 
     // Must match the C++ constants in SerializationCommands.h.
     //
@@ -1093,7 +1098,8 @@ internal static unsafe partial class SerializationBackendManagedCommands
         ref byte* output,
         ref BufferDataStager bufferDataStager,
         int  repeatCount,
-        long repeatStride)
+        long repeatStride,
+        IntPtr fuidCtxForElements = default)
     {
         byte* basePtr      = (byte*)pinnedBase;
         byte* entriesStart = (byte*)entriesPtr;
@@ -1102,6 +1108,8 @@ internal static unsafe partial class SerializationBackendManagedCommands
         // repeatCount==1, repeatStride==0 (single-instance callers) folds away under the JIT.
         for (int elem = 0; elem < repeatCount; ++elem)
         {
+            if (fuidCtxForElements != IntPtr.Zero)
+                SetFUIDCurrentArrayIndex(fuidCtxForElements, elem);
             ref byte baseAddr = ref Unsafe.AsRef<byte>(basePtr + (long)elem * repeatStride);
             byte* pos = entriesStart;
 
@@ -1314,47 +1322,34 @@ internal static unsafe partial class SerializationBackendManagedCommands
                 case RttiDataType.UnityObject:
                 {
                     var entry = ConsumeDirectCopyGroup<UnityObjectWriteEntry>(ref pos, out var end);
-                    // Pack arm: inline managed read is safe — the marshalling hazard is icall-only.
-                    // Game release must go through WriteUnityObjectToBuffer so the UUM-143556 type-
-                    // mismatch drop is applied; the inline writer can't consult the native discriminator.
-                    if ((ctx->flags & UnityObjectTransferFlags.PackEntityIdInLSOI) != 0
-                        && (ctx->flags & UnityObjectTransferFlags.SerializeForGameRelease) == 0)
+                    // Resolve the EntityId in managed (ResolveUnityObjectEntityIdForWrite applies the
+                    // UUM-143556 drop) and serialize the id — the object never crosses to native.
+                    // Mirrors the EntityId case: pack/None inline, remapped id via WriteEntityIdToBuffer.
+                    bool packInLSOI = (ctx->flags & UnityObjectTransferFlags.PackEntityIdInLSOI) != 0;
+                    // Remap batch (≥2 fields): pre-write each id into the low bytes of its output slot,
+                    // then one native crossing resolves them in place — object-free batching (c0b1c42).
+                    if (!packInLSOI && end - entry > 1)
                     {
+                        var e = entry;
                         do
                         {
-                            object slot = Unsafe.As<byte, object>(ref Unsafe.AddByteOffset(ref baseAddr, (nint)entry->fieldOffset));
-                            WriteUnityObjectRecordInline(slot, output + entry->destOffset);
-                            entry++;
+                            object slot = Unsafe.As<byte, object>(ref Unsafe.AddByteOffset(ref baseAddr, (nint)e->fieldOffset));
+                            Unsafe.WriteUnaligned<ulong>(output + e->destOffset, ResolveUnityObjectEntityIdForWrite(slot, ctx->flags));
+                            e++;
                         }
-                        while (entry < end);
+                        while (e < end);
+                        s_writeUnityObjectEntityIdsToBuffer(ctx->resolverHandle, ctx->flags, (IntPtr)entry, (IntPtr)output, (int)(end - entry));
                         break;
                     }
-                    // Remap arm: ≥2 fields in one crossing; count==1 takes the per-field codec (lighter, measurably on IL2CPP).
-                    if (end - entry > 1)
-                    {
-                        s_writeUnityObjectsToBuffer(
-                            ctx->resolverHandle, ctx->flags,
-                            (IntPtr)Unsafe.AsPointer(ref baseAddr),
-                            (IntPtr)entry, (IntPtr)output, (int)(end - entry));
-                        break;
-                    }
-                    // Per-field: count==1 fast path and the native-test image.
                     do
                     {
-                        // Raw-pointer read, not `object` — see WriteUnityObjectToBuffer's marshalling note.
-                        ref byte fieldByteRef = ref Unsafe.AddByteOffset(ref baseAddr, (nint)entry->fieldOffset);
-                        IntPtr fieldValueRaw = Unsafe.ReadUnaligned<IntPtr>(ref fieldByteRef);
+                        object slot = Unsafe.As<byte, object>(ref Unsafe.AddByteOffset(ref baseAddr, (nint)entry->fieldOffset));
                         byte* dst = output + entry->destOffset;
-
-                        if (fieldValueRaw == IntPtr.Zero)
-                        {
-                            Unsafe.As<byte, int>(ref *dst) = 0;
-                            Unsafe.WriteUnaligned<long>(ref *(dst + 4), 0L);
-                        }
+                        ulong entityId = ResolveUnityObjectEntityIdForWrite(slot, ctx->flags);
+                        if (packInLSOI || entityId == 0UL)
+                            PackEntityIdIntoLsoi(dst, entityId);
                         else
-                        {
-                            WriteUnityObjectToBuffer(fieldValueRaw, ctx->resolverHandle, (IntPtr)dst, ctx->flags);
-                        }
+                            s_writeEntityIdToBuffer(entityId, ctx->resolverHandle, (IntPtr)dst, ctx->flags);
                         entry++;
                     }
                     while (entry < end);
@@ -2829,13 +2824,25 @@ internal static unsafe partial class SerializationBackendManagedCommands
             fixed (byte* dataPtr = dataAsBytes)
             {
                 long stride = (long)header->elementStride;
-                // Threading the stager by ref + repeatCount lets ExecuteWriteCommands walk
-                // each element's body in one call, coalescing an N-element array of small
-                // structs into ceil(N*body/cap) flushes instead of N.
-                ExecuteWriteCommands(ctx, (IntPtr)dataPtr,
-                    (IntPtr)nestedStart, nestedBytes, transfer,
-                    ref output, ref bufferDataStager,
-                    repeatCount: count, repeatStride: stride);
+                bool pushedArrayIdx = ctx->fuidContext != IntPtr.Zero;
+                if (pushedArrayIdx)
+                    PushFUIDArrayIndex(ctx->fuidContext, 0);
+                try
+                {
+                    // Threading the stager by ref + repeatCount lets ExecuteWriteCommands walk
+                    // each element's body in one call, coalescing an N-element array of small
+                    // structs into ceil(N*body/cap) flushes instead of N.
+                    ExecuteWriteCommands(ctx, (IntPtr)dataPtr,
+                        (IntPtr)nestedStart, nestedBytes, transfer,
+                        ref output, ref bufferDataStager,
+                        repeatCount: count, repeatStride: stride,
+                        fuidCtxForElements: ctx->fuidContext);
+                }
+                finally
+                {
+                    if (pushedArrayIdx)
+                        PopFUIDArrayIndex(ctx->fuidContext);
+                }
             }
         }
 
@@ -2853,25 +2860,30 @@ internal static unsafe partial class SerializationBackendManagedCommands
         pos = nestedStart + nestedBytes;
     }
 
-    // EntityId high word is always 0, so three aligned *(int*) stores suffice. dst is 4-byte aligned.
-    // PackEntityIdInLSOI arm only; the remap arm uses the icall.
+    // UUM-143556 marker the read path stamps on a type-mismatched fake-null reference. This is the
+    // managed write path's own source of truth (the serialization backend is moving to managed; the
+    // native path — and its own kTypeMismatchReferenceError in TransferPPtrToMonoObject.cpp — is legacy
+    // that will go away). While both exist they must stay byte-identical: the read path stamps with the
+    // native copy and the drop below compares against this one, so the round-trip drop test fails if
+    // they ever diverge.
+    private const string kTypeMismatchReferenceError =
+        "The serialized reference's type does not match the field's type; it was removed when building the player (UUM-143556).";
+
+    // EntityId to serialize for a UnityObject ref, with the UUM-143556 game-release drop. Resolving the
+    // id in managed keeps the object off the native path. The drop reproduces the read path's
+    // type-mismatch discriminator in managed — a fake-null wrapper (m_CachedPtr == 0) stamped with the
+    // marker — reading cached-ptr first so bound refs (the common case) short-circuit before the string.
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static unsafe void WriteUnityObjectRecordInline(object wrapper, byte* dst)
+    private static ulong ResolveUnityObjectEntityIdForWrite(object slot, int flags)
     {
-        if (wrapper == null)
-        {
-            *(int*)dst       = 0;
-            *(int*)(dst + 4) = 0;
-            *(int*)(dst + 8) = 0;
-        }
-        else
-        {
-            ulong raw = EntityId.ToULong(
-                Unsafe.As<object, UnityEngine.Object>(ref wrapper).GetEntityIdForSerializationUnchecked());
-            *(int*)dst       = (int)raw;
-            *(int*)(dst + 4) = (int)(raw >> 32);
-            *(int*)(dst + 8) = 0;
-        }
+        if (slot == null)
+            return 0UL;
+        var o = Unsafe.As<object, UnityEngine.Object>(ref slot);
+        if ((flags & UnityObjectTransferFlags.SerializeForGameRelease) != 0
+            && o.GetCachedPtr() == IntPtr.Zero
+            && o.GetUnityRuntimeErrorString() == kTypeMismatchReferenceError)
+            return 0UL; // UUM-143556: never ship a type-mismatched reference to the player.
+        return EntityId.ToULong(o.GetEntityIdForSerializationUnchecked());
     }
 
     // No per-element interpreter frame; bytes match the generic path.
@@ -2902,23 +2914,32 @@ internal static unsafe partial class SerializationBackendManagedCommands
                     batch = left;
 
                 byte* dst = bufferDataStager.StagingPtr;
-                // Pack arm: read each EntityId inline (no icall). The branch is per batch, not per element.
-                // Game release falls to the icall arm so the UUM-143556 drop runs (see the scalar case).
-                if ((ctx->flags & UnityObjectTransferFlags.PackEntityIdInLSOI) != 0
-                    && (ctx->flags & UnityObjectTransferFlags.SerializeForGameRelease) == 0)
+                // Resolve each element's EntityId (with the UUM-143556 game-release drop) in managed;
+                // the movable element references are never handed to native. See the scalar case.
+                bool packInLSOI = (ctx->flags & UnityObjectTransferFlags.PackEntityIdInLSOI) != 0;
+                if (!packInLSOI)
+                {
+                    // Remap batch: pre-write each id into its output slot, resolve in place in one
+                    // crossing (src == output, stride == wire) — object-free batching (2ca2f5c).
+                    for (int i = 0; i < batch; ++i)
+                    {
+                        object slot = Unsafe.As<byte, object>(ref Unsafe.AsRef<byte>(srcCur + (long)i * stride));
+                        Unsafe.WriteUnaligned<ulong>(dst + i * wire, ResolveUnityObjectEntityIdForWrite(slot, ctx->flags));
+                    }
+                    s_writeEntityIdsArrayToBuffer(ctx->resolverHandle, ctx->flags, (IntPtr)dst, batch, (long)wire, (IntPtr)dst);
+                }
+                else
                 {
                     for (int i = 0; i < batch; ++i)
                     {
                         object slot = Unsafe.As<byte, object>(ref Unsafe.AsRef<byte>(srcCur + (long)i * stride));
-                        WriteUnityObjectRecordInline(slot, dst + i * wire);
+                        byte* d = dst + i * wire;
+                        ulong entityId = ResolveUnityObjectEntityIdForWrite(slot, ctx->flags);
+                        if (packInLSOI || entityId == 0UL)
+                            PackEntityIdIntoLsoi(d, entityId);
+                        else
+                            s_writeEntityIdToBuffer(entityId, ctx->resolverHandle, (IntPtr)d, ctx->flags);
                     }
-                }
-                else
-                {
-                    // Remap arm: whole batch in one crossing (vs per-element icall); bytes match
-                    // via the shared leaf. srcCur is pinned for the call.
-                    s_writeUnityObjectsArrayToBuffer(
-                        ctx->resolverHandle, ctx->flags, (IntPtr)srcCur, batch, stride, (IntPtr)dst);
                 }
 
                 // Stage the batch; it flushes with the next window-full batch or, for the
@@ -2983,6 +3004,9 @@ internal static unsafe partial class SerializationBackendManagedCommands
         }
     }
 
+    // Rounds a byte count up to the entry stream's 4-byte alignment.
+    private static uint AlignUp4(uint byteCount) => (byteCount + 3u) & ~3u;
+
     // Consumes one ManagedCommandDictionary entry. Bridges the live
     // Dictionary<K,V> to a SerializedKeyValue<K,V>[] via the existing managed
     // helper, then walks the per-entry FBP-bracketed body once per entry
@@ -3006,13 +3030,19 @@ internal static unsafe partial class SerializationBackendManagedCommands
         byte* nestedStart = pos;
         int   nestedBytes = (int)header->nestedByteCount;
 
+        // Editor-only FUID template lives inline right after the body: it starts at
+        // bodyEnd, and the next entry follows it, 4-byte aligned.
+        byte* bodyEnd     = nestedStart + nestedBytes;
+        int   fuidAdvance = (int)AlignUp4(header->fuidTemplateByteCount);
+        IntPtr fuidTemplate = header->fuidTemplateByteCount != 0 ? (IntPtr)bodyEnd : IntPtr.Zero;
+
         // Field at (baseAddr + fieldOffset) holds a Dictionary<K,V> reference.
         object dictRef = Unsafe.As<byte, object>(
             ref Unsafe.AddByteOffset(ref baseAddr, (nint)header->fieldOffset));
         if (dictRef == null)
         {
             Unsafe.WriteUnaligned(bufferDataStager.Reserve(4), 0);
-            pos = nestedStart + nestedBytes;
+            pos = bodyEnd + fuidAdvance;
             return;
         }
 
@@ -3028,7 +3058,7 @@ internal static unsafe partial class SerializationBackendManagedCommands
             // lookup; falls back to the non-typed path when the index is -1.
             Array entries = DictionarySerialization.InvokeGetEntriesTyped(
                 header->getEntriesTypedIndex,
-                ctx->hostingEntityId, dictRef, header->fieldUniqueIdentifierTemplate);
+                ctx->hostingEntityId, dictRef, fuidTemplate);
 
             int count = entries?.Length ?? 0;
             // Stage the count; per-entry bodies coalesce after it via the FBP threading below.
@@ -3041,10 +3071,24 @@ internal static unsafe partial class SerializationBackendManagedCommands
                 fixed (byte* dataPtr = dataAsBytes)
                 {
                     long stride = (long)header->entryStride;
-                    ExecuteWriteCommands(ctx, (IntPtr)dataPtr,
-                        (IntPtr)nestedStart, nestedBytes, transfer,
-                        ref output, ref bufferDataStager,
-                        repeatCount: count, repeatStride: stride);
+                    // Push AFTER InvokeGetEntriesTyped so the dict's own duplicate-storage
+                    // key (formatted inside that call) never sees the per-entry index.
+                    bool pushedEntryIdx = ctx->fuidContext != IntPtr.Zero;
+                    if (pushedEntryIdx)
+                        PushFUIDArrayIndex(ctx->fuidContext, 0);
+                    try
+                    {
+                        ExecuteWriteCommands(ctx, (IntPtr)dataPtr,
+                            (IntPtr)nestedStart, nestedBytes, transfer,
+                            ref output, ref bufferDataStager,
+                            repeatCount: count, repeatStride: stride,
+                            fuidCtxForElements: ctx->fuidContext);
+                    }
+                    finally
+                    {
+                        if (pushedEntryIdx)
+                            PopFUIDArrayIndex(ctx->fuidContext);
+                    }
                 }
             }
 
@@ -3068,7 +3112,7 @@ internal static unsafe partial class SerializationBackendManagedCommands
                 SerializationBackendManagedCommands.PopDictionaryFUIDFrame();
         }
 
-        pos = nestedStart + nestedBytes;
+        pos = bodyEnd + fuidAdvance;
     }
 
     // Mirrors ConsumeLinearCollection's trivially-copyable arm, but sourced from
@@ -3881,13 +3925,25 @@ internal static unsafe partial class SerializationBackendManagedCommands
                 {
                     long stride  = (long)header->elementStride;
                     int  segSize = 0;
-                    ExecuteReadCommands(
-                        ctx,
-                        ref Unsafe.AsRef<byte>(dataPtr),
-                        nestedStart, nestedBytes,
-                        transfer,
-                        ref segSize,
-                        repeatCount: count, repeatStride: stride);
+                    bool pushedArrayIdx = ctx->fuidContext != IntPtr.Zero;
+                    if (pushedArrayIdx)
+                        PushFUIDArrayIndex(ctx->fuidContext, 0);
+                    try
+                    {
+                        ExecuteReadCommands(
+                            ctx,
+                            ref Unsafe.AsRef<byte>(dataPtr),
+                            nestedStart, nestedBytes,
+                            transfer,
+                            ref segSize,
+                            repeatCount: count, repeatStride: stride,
+                            fuidCtxForElements: ctx->fuidContext);
+                    }
+                    finally
+                    {
+                        if (pushedArrayIdx)
+                            PopFUIDArrayIndex(ctx->fuidContext);
+                    }
                 }
 
                 // Skip the 0..3-byte tail pad the write side emitted after
@@ -4108,25 +4164,6 @@ internal static unsafe partial class SerializationBackendManagedCommands
         AssignArrayBacking(ref baseAddr, header->kind, header->fieldOffset, arr, dataAsBytes, count, elementType);
     }
 
-    // Builds the single Console warning covering whichever key problems the managed deserializer reported for a
-    // dictionary: duplicate keys, null keys, or both. At least one flag is true when this is called. Kept in sync
-    // with the native DictionaryField.cpp ComposeDictionaryKeyWarning so both read paths report identical text.
-    // Only invoked from the warning path below, which is compiled out in UNITY_NATIVE_TEST_RESOURCES.
-    private static string ComposeDictionaryKeyWarningMessage(string dictionaryIdentifier, bool hadDuplicates, bool hadNullKeys)
-    {
-        // Clauses share a single "Dictionary field '<id>' " prefix so the both-problems case names the field once.
-        string body = string.Empty;
-        if (hadDuplicates)
-            body = "contains duplicate key entries. Ensure all keys are unique. Only the first occurrence of each key will be added to the dictionary object.";
-        if (hadNullKeys)
-        {
-            if (body.Length > 0)
-                body += " It also ";
-            body += "contains entries with a null key. A dictionary can't contain a null key, so Unity excludes these entries from the dictionary object.";
-        }
-        return "Dictionary field '" + dictionaryIdentifier + "' " + body;
-    }
-
     // Read-path mirror of ConsumeDictionary. Reads the count prefix and per-entry
     // body (same shape ConsumeLinearCollectionRead's per-element-recursion path
     // produces) into a SerializedKeyValue<K,V>[] staging array, then calls
@@ -4139,12 +4176,6 @@ internal static unsafe partial class SerializationBackendManagedCommands
     // the duplicate-row storage key — must match what the legacy DictionaryField::SetArray
     // produces (DictionaryField.cpp:142-144) so write→read round-trips through
     // the cache are stable.
-    //
-    // Ignored-entry warning: when ctx->warnAboutIgnoredEntries is set (serialized-file
-    // load or Object.Instantiate clone) AND SetEntriesFromSerializedData reports
-    // duplicate or null keys AND we have a non-empty dictionary identifier, emit a
-    // single clickable Console warning covering both problems via LogDictionaryKeyWarning
-    // — same flags + EntityId hookup as DictionaryField::LogDictionaryKeyWarning.
     private static unsafe void ConsumeDictionaryRead(
         NativeReadBufferContext* ctx,
         ref byte baseAddr,
@@ -4155,6 +4186,11 @@ internal static unsafe partial class SerializationBackendManagedCommands
         pos += sizeof(DictionaryHeaderRead);
         byte* nestedStart = pos;
         int   nestedBytes = (int)header->nestedByteCount;
+
+        // Editor-only FUID template inline after the body (see ConsumeDictionary).
+        byte* bodyEnd     = nestedStart + nestedBytes;
+        int   fuidAdvance = (int)AlignUp4(header->fuidTemplateByteCount);
+        IntPtr fuidTemplate = header->fuidTemplateByteCount != 0 ? (IntPtr)bodyEnd : IntPtr.Zero;
 
         // Count prefix — same framing as ConsumeLinearCollectionRead.
         if (ctx->readerAvailable < 4)
@@ -4182,13 +4218,29 @@ internal static unsafe partial class SerializationBackendManagedCommands
                 {
                     long stride  = (long)header->entryStride;
                     int  segSize = 0;
-                    ExecuteReadCommands(
-                        ctx,
-                        ref Unsafe.AsRef<byte>(dataPtr),
-                        nestedStart, nestedBytes,
-                        transfer,
-                        ref segSize,
-                        repeatCount: count, repeatStride: stride);
+                    // Push BEFORE ExecuteReadCommands so descendant dict templates
+                    // with %d resolve the per-entry index. Pop IMMEDIATELY after —
+                    // FormatDictionaryFieldUniqueIdentifier (below) formats the
+                    // dict's OWN key and must not see the per-entry index.
+                    bool pushedEntryIdx = ctx->fuidContext != IntPtr.Zero;
+                    if (pushedEntryIdx)
+                        PushFUIDArrayIndex(ctx->fuidContext, 0);
+                    try
+                    {
+                        ExecuteReadCommands(
+                            ctx,
+                            ref Unsafe.AsRef<byte>(dataPtr),
+                            nestedStart, nestedBytes,
+                            transfer,
+                            ref segSize,
+                            repeatCount: count, repeatStride: stride,
+                            fuidCtxForElements: ctx->fuidContext);
+                    }
+                    finally
+                    {
+                        if (pushedEntryIdx)
+                            PopFUIDArrayIndex(ctx->fuidContext);
+                    }
                 }
 
                 // Skip the 0..3-byte tail pad written by the per-entry write
@@ -4236,10 +4288,10 @@ internal static unsafe partial class SerializationBackendManagedCommands
                 // diagnostic is non-essential, so it stays empty there.
                 string dictionaryIdentifier = string.Empty;
                 if (ctx->hostingEntityId != EntityId.None
-                    && header->fieldUniqueIdentifierTemplate != IntPtr.Zero)
+                    && fuidTemplate != IntPtr.Zero)
                 {
                     dictionaryIdentifier = FormatDictionaryFieldUniqueIdentifier(
-                        header->fieldUniqueIdentifierTemplate) ?? string.Empty;
+                        fuidTemplate) ?? string.Empty;
                 }
 
                 // InvokeSetEntriesTyped uses the build-time interned closed
@@ -4247,24 +4299,9 @@ internal static unsafe partial class SerializationBackendManagedCommands
                 // dict.GetType() + ConcurrentDictionary lookup; falls back to
                 // the non-typed SetEntriesFromSerializedData entry point when
                 // the index is -1.
-                bool hadDuplicates;
-                bool hadNullKeys;
                 DictionarySerialization.InvokeSetEntriesTyped(
                     header->setEntriesTypedIndex,
-                    ctx->hostingEntityId, dictRef, entries, dictionaryIdentifier, out hadDuplicates, out hadNullKeys);
-
-                // Warn policy mirrors the legacy DictionaryField::SetArray path: only fires for
-                // serialized-file loads + Object.Instantiate clones (ctx->warnAboutIgnoredEntries set by
-                // the native dispatcher), and only when we actually have a formatted identifier —
-                // without one we can't tell the user which dictionary field is affected. A single
-                // combined warning covers both problems, so a dictionary with duplicate keys and
-                // null keys logs one Console entry, not two. LogDictionaryKeyWarning is a
-                // [FreeFunction] unavailable in UNITY_NATIVE_TEST_RESOURCES, so it's compiled out there.
-                if (ctx->warnAboutIgnoredEntries && (hadDuplicates || hadNullKeys) && !string.IsNullOrEmpty(dictionaryIdentifier))
-                {
-                    string message = ComposeDictionaryKeyWarningMessage(dictionaryIdentifier, hadDuplicates, hadNullKeys);
-                    LogDictionaryKeyWarning(message, ctx->hostingEntityId);
-                }
+                    ctx->hostingEntityId, dictRef, entries, dictionaryIdentifier, ctx->warnAboutIgnoredEntries);
             }
         }
         finally
@@ -4273,7 +4310,7 @@ internal static unsafe partial class SerializationBackendManagedCommands
                 PopDictionaryFUIDFrame();
         }
 
-        pos = nestedStart + nestedBytes;
+        pos = bodyEnd + fuidAdvance;
     }
 
     // Read-path mirror of ConsumeFixedBuffer. Truncating on overflow and leaving
@@ -4728,13 +4765,16 @@ internal static unsafe partial class SerializationBackendManagedCommands
         IntPtr transfer,
         ref int currentSegmentSize,
         int   repeatCount,
-        long  repeatStride)
+        long  repeatStride,
+        IntPtr fuidCtxForElements = default)
     {
         byte* endPos = entryBase + entryBufSize;
 
         // repeatCount==1, repeatStride==0 (single-instance callers) folds away under the JIT.
         for (int elem = 0; elem < repeatCount; ++elem)
         {
+            if (fuidCtxForElements != IntPtr.Zero)
+                SetFUIDCurrentArrayIndex(fuidCtxForElements, elem);
             ref byte baseAddr = ref Unsafe.AddByteOffset(ref baseAddrParam, (nint)((long)elem * repeatStride));
             byte* pos = entryBase;
 

@@ -36,6 +36,7 @@ enum AudioRandomContainerLoopMode
 }
 
 [NativeHeader("Modules/Audio/Public/AudioContainerElement.h")]
+[NativeClass("AudioContainerElement", PersistentTypeId = 0x49805FF5)]
 sealed class AudioContainerElement : Object
 {
     internal AudioContainerElement()
@@ -51,6 +52,7 @@ sealed class AudioContainerElement : Object
 }
 
 [NativeHeader("Modules/Audio/Public/AudioRandomContainer.h")]
+[NativeClass("AudioRandomContainer", PersistentTypeId = 0x4DF5745F)]
 [HelpURL("AudioRandomContainer-UI")]
 [ExcludeFromPreset]
 sealed class AudioRandomContainer : AudioResource, IAudioGenerator

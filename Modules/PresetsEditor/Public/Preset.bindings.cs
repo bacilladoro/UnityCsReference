@@ -13,6 +13,7 @@ namespace UnityEditor.Presets
 {
     [NativeHeader("Modules/PresetsEditor/Public/Preset.h")]
     [NativeHeader("Modules/PresetsEditor/Public/PresetManager.h")]
+    [NativeClass("Preset", PersistentTypeId = 0x0AD88C10)]
     [UsedByNativeCode]
     [ExcludeFromPreset]
     public sealed class Preset : Object

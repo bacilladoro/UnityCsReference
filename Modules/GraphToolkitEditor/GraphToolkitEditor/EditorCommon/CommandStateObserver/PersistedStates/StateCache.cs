@@ -50,10 +50,12 @@ namespace Unity.GraphToolkit.Editor
         }
 
         /// <inheritdoc />
+#pragma warning disable UA5000 // The Avoid Finalizer Analyzer produces compile errors for any new finalizers. This pre-existing finalizer declaration has been suppressed, but should be rewritten if possible.
         ~StateCache()
         {
             Flush();
         }
+#pragma warning restore UA5000
 
         /// <inheritdoc />
         public void Dispose()

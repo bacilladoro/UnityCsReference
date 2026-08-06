@@ -27,8 +27,7 @@ internal static class UIToolkitStageUtility
                 if (h is not VisualElementNodeTypeHandler)
                     continue;
                 var handler =
-                    (VisualElementNodeTypeHandler)window.Hierarchy.GetNodeTypeHandlerBase(VisualElementNodeTypeHandler
-                        .NodeTypeName);
+                    (VisualElementEditingNodeHandler)window.Hierarchy.GetNodeTypeHandlerBase(VisualElementEditingNodeHandler.NodeTypeName);
                 if (handler == null)
                     return;
                 handler.RequestSelectionOnNextUpdate(new List<VisualElementAsset>(assets));

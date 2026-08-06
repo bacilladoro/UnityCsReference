@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor.ShortcutManagement;
 using UnityEngine;
 
@@ -19,9 +20,12 @@ namespace UnityEditor
 
     static class SceneNavigationInput
     {
+        [NoAutoStaticsCleanup] // value-type (Vector3) input cache
         static Vector3 m_PreviousVector;
         public static float deltaTime => s_Timer.Update();
+        [NoAutoStaticsCleanup] // reusable timing helper, no user references
         static TimeHelper s_Timer = new TimeHelper();
+        [NoAutoStaticsCleanup] // reusable input-vector holder, no user references
         static readonly MovementVector s_CurrentInputVector = new MovementVector();
 
         public static bool moving => !Mathf.Approximately(currentInputVector.sqrMagnitude, 0f);

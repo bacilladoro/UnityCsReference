@@ -5,15 +5,19 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
     /// *undocumented*
     internal class ListViewShared
     {
+        [NoAutoStaticsCleanup] // session-constant platform flag (public field, not made readonly to avoid API break); safe to persist
         public static bool OSX = Application.platform == RuntimePlatform.OSXEditor;
 
+        [NoAutoStaticsCleanup] // transient drag control id, reset when drag ends; safe to persist
         internal static int dragControlID = -1;
+        [NoAutoStaticsCleanup] // transient drag flag, reset when drag ends; safe to persist
         internal static bool isDragging = false;
 
         /// *undocumented*
@@ -45,6 +49,7 @@ namespace UnityEditor
         {
             // this should not be pre-setup
             // different windows (having different styles set) can draw using this
+            [NoAutoStaticsCleanup] // constant string literal (public field, not made readonly to avoid API break); safe to persist
             public static string insertion = "PR Insertion";
         }
 

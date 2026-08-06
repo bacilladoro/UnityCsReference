@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using System.Linq;
 using UnityEngine.Scripting;
 using UnityEngine.Bindings;
@@ -72,10 +73,12 @@ namespace UnityEditor
         }
     }
 
+    [global::UnityEngine.NativeClass("EditorBuildSettings", PersistentTypeId = 1045)]
     [NativeHeader("Editor/Src/EditorBuildSettings.h")]
     public partial class EditorBuildSettings : UnityEngine.Object
     {
         private EditorBuildSettings() {}
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action sceneListChanged;
         [RequiredByNativeCode]
         internal static void SceneListChanged()
@@ -153,6 +156,7 @@ namespace UnityEditor
         }
 
         [Obsolete("UseParallelAssetBundleBuilding is obsolete and will be removed.")]
+        [NoAutoStaticsCleanup] // deprecated value-type setting; safe to persist across reload
         public static bool UseParallelAssetBundleBuilding { get; set; } = false;
 
         [NativeMethod("AddConfigObject")]

@@ -4,16 +4,18 @@
 
 using UnityEngine;
 using System;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
-    internal class FlexibleMenu : PopupWindowContent
+    internal partial class FlexibleMenu : PopupWindowContent
     {
         class Styles
         {
             public GUIStyle menuItem = "MenuItem";
             public GUIContent plusButtonText = EditorGUIUtility.TrTextContent("", "Add New Item");
         }
+        [NoAutoStaticsCleanup] // lazy GUIStyle/GUIContent cache; re-created on first access, safe to persist
         static Styles s_Styles;
 
         IFlexibleMenuItemProvider m_ItemProvider;
@@ -296,8 +298,9 @@ namespace UnityEditor
             GUI.color = orgColor;
         }
 
-        internal static class ItemContextMenu
+        internal static partial class ItemContextMenu
         {
+            [AutoStaticsCleanupOnCodeReload]
             static FlexibleMenu s_Caller;
 
             static public void Show(int itemIndex, FlexibleMenu caller)

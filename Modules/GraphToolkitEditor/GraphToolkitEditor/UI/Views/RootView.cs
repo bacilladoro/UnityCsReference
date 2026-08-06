@@ -121,10 +121,12 @@ namespace Unity.GraphToolkit.Editor
             Dispatcher = new CommandDispatcher();
         }
 
+#pragma warning disable UA5000 // The Avoid Finalizer Analyzer produces compile errors for any new finalizers. This pre-existing finalizer declaration has been suppressed, but should be rewritten if possible.
         ~RootView()
         {
             Dispose(false);
         }
+#pragma warning restore UA5000
 
         /// <summary>
         /// Disposes all resources, unregisters all observers and removes the <see cref="Model"/> from the <see cref="GraphTool"/>'s state.

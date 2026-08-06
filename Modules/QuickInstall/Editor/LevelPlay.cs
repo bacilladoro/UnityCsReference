@@ -2,14 +2,21 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor.QuickInstall;
 
 namespace UnityEditor.LevelPlay
 {
-    [InitializeOnLoad]
-    static class LevelPlayInstaller
+    static partial class LevelPlayInstaller
     {
-        static readonly QuickInstaller s_Installer = new(new QuickInstallConfig
+        // Recreated by Initialize() on every code load; the live instance is owned by QuickInstaller's registries.
+        [NoAutoStaticsCleanup]
+        static QuickInstaller s_Installer;
+
+        [OnCodeLoaded]
+        static void Initialize()
+        {
+            s_Installer = new(new QuickInstallConfig
             (
                 packageName: "com.unity.services.levelplay",
                 assembly: "Unity.LevelPlay.Editor",
@@ -27,6 +34,7 @@ namespace UnityEditor.LevelPlay
                     subtitle: "Monetize your game with Unity LevelPlay"),
                 menuConfig: new MenuConfig ( menuPath: "Services/Ads Mediation (LevelPlay)/Install"),
                 analyticConfig: new AnalyticConfig(sendAssetInstallAnalytic: true)
-        ));
+            ));
+        }
     }
 }

@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 
 namespace UnityEditor
@@ -19,14 +20,19 @@ namespace UnityEditor
     // Example: Scene from back to front (visually): Panel(base), Label, Image, Button(base), Image2, Label2
     // Selection order: Button, Label2, Image2, Image, Label, Panel, goto start
 
-    class SceneViewPicking
+    partial class SceneViewPicking
     {
+        [NoAutoStaticsCleanup] // transient per-pick flag, reset on each selection change
         static bool s_RetainHashes = false;
+        [NoAutoStaticsCleanup] // pick-cycle cache, reset on selection change
         static int s_PreviousTopmostHash = 0;
+        [NoAutoStaticsCleanup] // pick-cycle cache, reset on selection change
         static int s_PreviousPrefixHash = 0;
-        static readonly List<PickingObject> s_ActiveObjectFilter = new List<PickingObject>(1);
+        [AutoStaticsCleanupOnCodeReload]
+        static List<PickingObject> s_ActiveObjectFilter = new List<PickingObject>(1);
 
-        static SceneViewPicking()
+        [OnCodeLoaded]
+        static void Initialize()
         {
             Selection.selectionChanged += ResetHashes;
         }

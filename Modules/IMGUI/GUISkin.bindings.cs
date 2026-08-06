@@ -6,9 +6,10 @@ using UnityEngine.Bindings;
 
 namespace UnityEngine
 {
-    // General settings for how the GUI behaves
+    ///<summary>General settings for how the GUI behaves.</summary>
+    ///<remarks>These are shared by all elements in a <see cref="GUISkin" />.</remarks>
     [NativeHeader("Modules/IMGUI/GUISkin.bindings.h")]
-    partial class GUISettings
+    public partial class GUISettings
     {
         private static extern float Internal_GetCursorFlashSpeed();
     }

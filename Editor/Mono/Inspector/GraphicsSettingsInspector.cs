@@ -19,15 +19,16 @@ using UnityEngine.UIElements;
 using Unity.Collections;
 using Button = UnityEngine.UIElements.Button;
 using HelpBox = UnityEngine.UIElements.HelpBox;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
     [CustomEditor(typeof(GraphicsSettings))]
-    internal class GraphicsSettingsInspector : ProjectSettingsBaseEditor
+    internal partial class GraphicsSettingsInspector : ProjectSettingsBaseEditor
     {
         internal static class GraphicsSettingsData
         {
-            internal static GUIContent builtInWarningText =
+            internal static readonly GUIContent builtInWarningText =
                 EditorGUIUtility.TrTextContent("A Scriptable Render Pipeline is in use. Settings in the Built-In Render Pipeline are not currently in use.");
             internal const string builtIn = "Built-In";
             internal const string bodyTemplateBuiltInOnly = "UXML/ProjectSettings/GraphicsSettingsEditor-Builtin.uxml";
@@ -51,6 +52,7 @@ namespace UnityEditor
         HelpBox m_BuildProfileGraphicsSettingsOverrideWarning;
         ObjectFieldWithPrompt m_DefaultRenderPipelineField;
         HelpBox m_BiRPDeprecationInfoBox;
+        [AutoStaticsCleanupOnCodeReload]
         internal static Action OnActiveProfileGraphicsSettingsChanged;
 
         readonly Dictionary<VisualElement, List<Label>> m_Labels = new();
@@ -473,8 +475,13 @@ namespace UnityEditor
 //            m_BiRPDeprecationInfoBox.linkHref = System.IO.Path.Combine(Help.baseDocumentationUrl, "urp", "upgrading-from-birp");
 
             m_DefaultRenderPipelineField = root.Q<ObjectFieldWithPrompt>("DefaultRenderPipeline");
-            if (m_DefaultRenderPipelineField != null)
-                m_DefaultRenderPipelineField.RegisterValueChangedCallback(evt => UpdateBiRPDeprecationInfoBox());
+            m_DefaultRenderPipelineField?.RegisterValueChangedCallback(evt => UpdateBiRPDeprecationInfoBox());
+            m_DefaultRenderPipelineField?.SetShouldDisplayDialog((current, newValue) =>
+            {
+                Type currentAssetType = current == null ? typeof(RenderPipelineAsset) : current.GetType();
+                Type newAssetType = newValue == null ? typeof(RenderPipelineAsset) : newValue.GetType();
+                return (currentAssetType != newAssetType);
+            });
 
             UpdateBiRPDeprecationInfoBox();
         }
@@ -744,6 +751,7 @@ namespace UnityEditor
         // As there is no C# representation of the field, there is no way to decorate them with attribute.
         // C++ variable name are used to build the path of the SerializedProperty, but do not match the displayed name.
         // Introducing a C# bindings may be a good solution for long therm maintenance but for limited cost, let's just remap.
+        [NoAutoStaticsCleanup] // immutable string->string remap table populated once; no user-type refs, safe to persist across reload
         static readonly Dictionary<string, string> k_CPPToLabels = new()
         {
             //below are labels set in the UXML GraphicsSettingsEditor-Common.uxml

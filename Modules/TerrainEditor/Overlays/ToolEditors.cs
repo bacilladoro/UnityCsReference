@@ -14,15 +14,18 @@ using UnityEditor.EditorTools;
 using UnityEditor.UIElements;
 using UnityEngine.TerrainUtils;
 using UnityEngine.UIElements;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.TerrainTools
 {
     [CustomEditor(typeof(TerrainPaintToolWithOverlaysBase), editorForChildClasses: true)]
-    internal class TerrainToolEditor : Editor, ICreateHorizontalToolbar
+    internal partial class TerrainToolEditor : Editor, ICreateHorizontalToolbar
     {
         private Vector2 m_ScrollPos;
         private IMGUIContainer m_ImgContainer;
+        [AutoStaticsCleanupOnCodeReload] // caches Type->MethodInfo reflection per tool type; drop on reload so it rebuilds against current types
         static Dictionary<Type, (MethodInfo, bool)> m_ToolTypeToGUIFunc = new (); // true for non-obsolete, false for obsolete
+        [AutoStaticsCleanupOnCodeReload] // domain-reload detection flag: reset to null on reload so package-installed state is recomputed
         private static bool? m_IsTerrainToolsInstalled; // this value gets cleared on domain reload
 
         private static bool IsTerrainToolsPackageInstalled()

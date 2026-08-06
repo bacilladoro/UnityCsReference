@@ -10,22 +10,22 @@ namespace Unity.Hierarchy
 {
     public static partial class HierarchyExtensions
     {
-        #region Marked as obsolete warning in 6.6
-        [Obsolete("GetNode is obsolete, use Hierarchy.GetNodeFromEntityId instead.", false)]
+        #region Marked as obsolete error in 6.7
+        [Obsolete("GetNode is obsolete, use Hierarchy.GetNodeFromEntityId instead.", true)]
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public static HierarchyNode GetNode(this Hierarchy hierarchy, EntityId entityId) => hierarchy.GetNodeFromEntityId(entityId);
+        public static HierarchyNode GetNode(this Hierarchy hierarchy, EntityId entityId) => throw null;
 
-        [Obsolete("GetNodes is obsolete, use Hierarchy.GetNodesFromEntityIds instead.", false)]
+        [Obsolete("GetNodes is obsolete, use Hierarchy.GetNodesFromEntityIds instead.", true)]
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public static void GetNodes(this Hierarchy hierarchy, ReadOnlySpan<EntityId> entityIds, Span<HierarchyNode> outNodes) => hierarchy.GetNodesFromEntityIds(entityIds, outNodes);
+        public static void GetNodes(this Hierarchy hierarchy, ReadOnlySpan<EntityId> entityIds, Span<HierarchyNode> outNodes) => throw null;
 
-        [Obsolete("GetEntityId is obsolete, use Hierarchy.GetEntityIdFromNode instead.", false)]
+        [Obsolete("GetEntityId is obsolete, use Hierarchy.GetEntityIdFromNode instead.", true)]
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public static EntityId GetEntityId(this Hierarchy hierarchy, in HierarchyNode node) => hierarchy.GetEntityIdFromNode(in node);
+        public static EntityId GetEntityId(this Hierarchy hierarchy, in HierarchyNode node) => throw null;
 
-        [Obsolete("GetEntityIds is obsolete, use Hierarchy.GetEntityIdsFromNodes instead.", false)]
+        [Obsolete("GetEntityIds is obsolete, use Hierarchy.GetEntityIdsFromNodes instead.", true)]
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public static void GetEntityIds(this Hierarchy hierarchy, ReadOnlySpan<HierarchyNode> nodes, Span<EntityId> outEntityIds) => hierarchy.GetEntityIdsFromNodes(nodes, outEntityIds);
+        public static void GetEntityIds(this Hierarchy hierarchy, ReadOnlySpan<HierarchyNode> nodes, Span<EntityId> outEntityIds) => throw null;
         #endregion
     }
 }

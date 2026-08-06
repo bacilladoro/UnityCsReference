@@ -8,6 +8,7 @@ using UnityEngine.Rendering;
 using UnityEngine;
 using UnityEngineInternal;
 using Object = UnityEngine.Object;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -46,7 +47,7 @@ namespace UnityEditor
         }
     }
 
-    internal class SharedLightingSettingsEditor
+    internal partial class SharedLightingSettingsEditor
     {
         SavedBool m_ShowRealtimeLightsSettings;
         SavedBool m_ShowMixedLightsSettings;
@@ -130,7 +131,7 @@ namespace UnityEditor
             AO = 2
         }
 
-        static class Styles
+        static partial class Styles
         {
             public static readonly float buttonWidth = 200;
 
@@ -259,6 +260,7 @@ namespace UnityEditor
             public static readonly GUIContent lightmapperNotSupportedWarning = EditorGUIUtility.TrTextContent("This lightmapper is not supported by the current Render Pipeline. The Editor will use ");
             public static readonly GUIContent progressiveCpuDeprecationWarning = EditorGUIUtility.TrTextContent("Progressive CPU will be removed in a future release. Please use the Unity Compute Light Baker instead.");
             public static readonly GUIContent openGraphicsSettings = EditorGUIUtility.TrTextContent("Open", "Open the Graphics Settings and select the Default Light Baker.");
+            [NoAutoStaticsCleanup] // lazy GUIStyle derived from EditorStyles; holds no user-code refs, safe to persist across reload
             static GUIStyle s_DeprecationHelpBoxLabel;
             // wordWrappedLabel with a small vertical offset so the first line of text visually aligns with the icon.
             public static GUIStyle deprecationHelpBoxLabel => s_DeprecationHelpBoxLabel ??= new GUIStyle(EditorStyles.wordWrappedLabel)

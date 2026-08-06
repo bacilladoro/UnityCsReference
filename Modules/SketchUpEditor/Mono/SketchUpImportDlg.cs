@@ -14,6 +14,7 @@ using TreeViewItem = UnityEditor.IMGUI.Controls.TreeViewItem<int>;
 using TreeViewGUI = UnityEditor.IMGUI.Controls.TreeViewGUI<int>;
 using TreeViewDataSource = UnityEditor.IMGUI.Controls.TreeViewDataSource<int>;
 using TreeViewState = UnityEditor.IMGUI.Controls.TreeViewState<int>;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -229,6 +230,7 @@ namespace UnityEditor
                 footerStyle.fixedHeight = kBottomHeight;
             }
 
+            [NoAutoStaticsCleanup] // Styles cache holds only GUIStyle/GUIContent; safe to persist across reload
             static Styles s_Styles = null;
 
             public static Styles styles

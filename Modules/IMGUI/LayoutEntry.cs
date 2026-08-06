@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Security;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Scripting;
 using UnityEngineInternal;
 using UnityEngine.Bindings;
@@ -35,7 +36,7 @@ namespace UnityEngine
             set { m_Style = value; ApplyStyleSettings(value); }
         }
 
-        internal static Rect kDummyRect = new Rect(0, 0, 1, 1);
+        internal static readonly Rect kDummyRect = new Rect(0, 0, 1, 1);
 
         // The margins of this element.
         public virtual int marginLeft => style.margin.left;
@@ -104,6 +105,7 @@ namespace UnityEngine
                 maxHeight = minHeight;
         }
 
+        [NoAutoStaticsCleanup] // debug indentation depth for ToString; reset implicitly by each layout pass
         protected static int indent = 0;
         public override string ToString()
         {

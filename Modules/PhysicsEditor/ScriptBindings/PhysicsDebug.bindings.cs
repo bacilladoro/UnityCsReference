@@ -11,6 +11,7 @@ using UnityEngine.Scripting;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Collections;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -155,7 +156,7 @@ namespace UnityEditor
     }
 
     [NativeHeader("Modules/PhysicsEditor/PhysicsDebugDraw.h")]
-    internal static class PhysicsDebugDraw
+    internal static partial class PhysicsDebugDraw
     {
         [FreeFunction("PhysicsDebugDraw::GetPooledQueries")]
         internal extern static void GetPooledQueries();
@@ -169,8 +170,11 @@ namespace UnityEditor
         [FreeFunction("PhysicsDebugDraw::IsContactVisualised")]
         internal extern static bool IsColliderVisualised(Collider collider);
 
+        [AutoStaticsCleanupOnCodeReload]
         internal static event Action<PhysicsScene> OnBeforeSimulate;
+        [AutoStaticsCleanupOnCodeReload]
         internal static event Action<NativeArray<Query>> OnRetrievePooledQueries;
+        [AutoStaticsCleanupOnCodeReload]
         internal static event Action<PhysicsScene> OnDestroyPhysicsScene;
 
         [RequiredByNativeCode]

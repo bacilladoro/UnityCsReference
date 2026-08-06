@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
 using UnityEditor.EngineDiagnostics;
@@ -18,7 +19,9 @@ internal class InsightsEditorAnalytic : IAnalytic, IPostprocessBuildWithReport
 {
     private const string k_NewProjectFlag = "-createproject";
 
+    [NoAutoStaticsCleanup] // caches a one-time read of process command-line args, which never change for the process lifetime (incl. across code reload)
     static bool s_HasCheckedCreateProjectFlag;
+    [NoAutoStaticsCleanup] // cached -createproject command-line flag; immutable for the process lifetime, safe to persist across code reload
     static bool s_IsCreateProjectFlagSet;
 
     InsightsEditorAnalyticsEvent m_Data;

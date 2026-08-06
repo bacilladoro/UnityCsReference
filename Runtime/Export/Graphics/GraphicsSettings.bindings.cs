@@ -42,6 +42,7 @@ namespace UnityEngine.Rendering
     }
 
     [NativeHeader("Runtime/Camera/GraphicsSettings.h")]
+    [global::UnityEngine.NativeClass("GraphicsSettings", PersistentTypeId = 30)]
     [StaticAccessor("GetGraphicsSettings()", StaticAccessorType.Dot)]
     public sealed partial class GraphicsSettings : Object
     {

@@ -34,7 +34,7 @@ namespace UnityEditor
         void Synchronize();
 
         IAnimationWindowClip[] GetClips();
-        IAnimationWindowClip CreateNewClip();
+        IAnimationWindowClip CreateNewClip(string suggestedName = null);
         bool InitializeSelection();
 
         bool IsCompatibleWith(UnityEngine.Object selectedObject);

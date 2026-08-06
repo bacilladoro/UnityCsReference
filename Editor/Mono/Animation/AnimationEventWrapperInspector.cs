@@ -7,16 +7,17 @@ using System.Collections.Generic;
 using System.Reflection;
 using System;
 using Object = UnityEngine.Object;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
     [CustomEditor(typeof(AnimationEventWrapper))]
     [CanEditMultipleObjects]
-    internal class AnimationEventWrapperInspector : UnityEditor.Editor
+    internal partial class AnimationEventWrapperInspector : UnityEditor.Editor
     {
-        public static GUIContent s_OverloadWarning = EditorGUIUtility.TrTextContent("Some functions were overloaded in MonoBehaviour components and may not work as intended if used with Animation Events!");
-        public static GUIContent s_DuplicatesWarning = EditorGUIUtility.TrTextContent("Some functions have the same name across several MonoBehaviour components and may not work as intended if used with Animation Events!");
-        public static GUIContent s_RequireMethod = EditorGUIUtility.TrTextContent("Require Receiver", "When enabled, an error will be emitted if there is no matching method on the GameObject.");
+        public static readonly GUIContent s_OverloadWarning = EditorGUIUtility.TrTextContent("Some functions were overloaded in MonoBehaviour components and may not work as intended if used with Animation Events!");
+        public static readonly GUIContent s_DuplicatesWarning = EditorGUIUtility.TrTextContent("Some functions have the same name across several MonoBehaviour components and may not work as intended if used with Animation Events!");
+        public static readonly GUIContent s_RequireMethod = EditorGUIUtility.TrTextContent("Require Receiver", "When enabled, an error will be emitted if there is no matching method on the GameObject.");
 
         const string kNotSupportedPostFix = " (Function Not Supported)";
         const string kNoneSelected = "(No Function Selected)";
@@ -41,8 +42,11 @@ namespace UnityEditor
         }
 
         // These are used so we don't alloc new lists on every call
+        [AutoStaticsCleanupOnCodeReload]
         static List<AnimationMethodMap> supportedMethods;
+        [AutoStaticsCleanupOnCodeReload]
         static List<AnimationMethodMap> overloads;
+        [AutoStaticsCleanupOnCodeReload]
         static List<AnimationMethodMap> duplicates;
 
         public static void OnEditAnimationEvents(AnimationEventWrapper[] awEvents, AnimationEventEditorState state)
@@ -271,6 +275,7 @@ namespace UnityEditor
             }
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         static Dictionary<Type, IReadOnlyList<AnimationMethodMap>> s_TypeAnimationMethodMapCache = new Dictionary<Type, IReadOnlyList<AnimationMethodMap>>();
 
         static void CollectSupportedMethods(GameObject gameObject, List<AnimationMethodMap> supportedMethods, List<AnimationMethodMap> overloadedMethods, List<AnimationMethodMap> duplicatedMethods)
@@ -569,6 +574,7 @@ namespace UnityEditor
 
 
         // this are used so we don't alloc new lists on every call
+        [AutoStaticsCleanupOnCodeReload]
         static List<AnimationEvent> getDataSelectedEvents;
         private static AnimationWindowEventData GetData(AnimationEventWrapper[] awEvents)
         {

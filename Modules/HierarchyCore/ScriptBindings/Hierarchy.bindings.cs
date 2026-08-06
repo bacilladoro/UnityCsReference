@@ -133,10 +133,12 @@ namespace Unity.Hierarchy
             m_IsOwner = false;
         }
 
+#pragma warning disable UA5000 // The Avoid Finalizer Analyzer produces compile errors for any new finalizers. This pre-existing finalizer declaration has been suppressed, but should be rewritten if possible.
         ~Hierarchy()
         {
             Dispose(false);
         }
+#pragma warning restore UA5000
 
         /// <summary>
         /// Dispose this object to release its memory.
@@ -494,6 +496,19 @@ namespace Unity.Hierarchy
         public extern string GetName(in HierarchyNode node);
 
         /// <summary>
+        /// Gets a pointer to the UTF-8 name of a hierarchy node as a view over the hierarchy's native storage.
+        /// </summary>
+        /// <remarks>
+        /// The returned span is not owned by the caller: it points into native memory owned by the hierarchy
+        /// and is invalidated by the next hierarchy mutation. Do not hold onto it.
+        /// </remarks>
+        /// <param name="node">The hierarchy node.</param>
+        /// <returns>The name of the node as a Span of UTF-8 bytes.</returns>
+        [NativeMethod(IsThreadSafe = true, ThrowsException = true)]
+        [VisibleToOtherModules("UnityEngine.HierarchyModule")]
+        internal extern ReadOnlySpan<byte> GetNameRaw(in HierarchyNode node);
+
+        /// <summary>
         /// Gets the path of a hierarchy node.
         /// </summary>
         /// <param name="node">The hierarchy node.</param>
@@ -654,61 +669,15 @@ namespace Unity.Hierarchy
         }
         #endregion
 
-        #region Marked as obsolete error in 6.6
-        /// <summary>
-        /// Registers a hierarchy node type handler for this hierarchy.
-        /// </summary>
-        /// <remarks>
-        /// If a hierarchy node type handler with that type is already registered, the same instance is returned.
-        /// </remarks>
-        /// <returns>The hierarchy node type handler instance for that type.</returns>
-        [Obsolete("RegisterNodeTypeHandler has been renamed GetOrCreateNodeTypeHandler (UnityUpgradable) -> GetOrCreateNodeTypeHandler<T>()", true)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public T RegisterNodeTypeHandler<T>() where T : HierarchyNodeTypeHandlerBase => throw null;
-
-        /// <summary>
-        /// Removes a hierarchy node type handler from this hierarchy.
-        /// </summary>
-        [Obsolete("UnregisterNodeTypeHandler no longer has any effect and will be removed in a future release.", true)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public void UnregisterNodeTypeHandler<T>() where T : HierarchyNodeTypeHandlerBase => throw null;
-
-        /// <summary>
-        /// Gets the number of node type handlers that this hierarchy uses.
-        /// </summary>
-        /// <returns>Number of node type handlers.</returns>
-        [Obsolete("GetAllNodeTypeHandlersBaseCount is obsolete, please use EnumerateNodeTypeHandlersBase instead.", true)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public int GetAllNodeTypeHandlersBaseCount() => throw null;
-
-        /// <summary>
-        /// Gets all the node type handlers that this hierarchy uses.
-        /// </summary>
-        /// <param name="handlers">The list of node type handlers to populate.</param>
-        [Obsolete("GetAllNodeTypeHandlersBase is obsolete, please use EnumerateNodeTypeHandlersBase instead.", true)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public void GetAllNodeTypeHandlersBase(List<HierarchyNodeTypeHandlerBase> handlers) => throw null;
-
-        /// <summary>
-        /// Sorts the child nodes of a hierarchy node according to their sort index.
-        /// </summary>
-        /// <param name="node">The hierarchy node.</param>
-        /// <param name="recurse">Whether to sort the child nodes recursively.</param>
-        [Obsolete("SortChildren(node, recurse) with a bool parameter is obsolete, please use SortChildren(node) or SortChildrenRecursive(node) instead.", true)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public void SortChildren(in HierarchyNode node, bool recurse) => throw null;
-        #endregion
-
-        #region Marked as obsolete warning in 6.6
+        #region Marked as obsolete error in 6.7
         /// <summary>
         /// Gets the hash code for the specified hierarchy node.
         /// </summary>
         /// <param name="node">The hierarchy node.</param>
         /// <returns>The node hash code.</returns>
-        [Obsolete("GetHashCode is no longer used by HierarchyViewModelState serialization. Use HierarchyNodeTypeHandlerBase.GetUIDInfo/WriteUIDs/ReadUIDs instead.", false)]
+        [Obsolete("GetHashCode is no longer used by HierarchyViewModelState serialization. Use HierarchyNodeTypeHandlerBase.GetUIDInfo/WriteUIDs/ReadUIDs instead.", true)]
         [EditorBrowsable(EditorBrowsableState.Never)]
-        [NativeMethod(IsThreadSafe = true, ThrowsException = true)]
-        public extern int GetHashCode(in HierarchyNode node);
+        public int GetHashCode(in HierarchyNode node) => throw null;
         #endregion
     }
 }

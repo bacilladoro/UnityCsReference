@@ -10,6 +10,7 @@ using Unity.Collections;
 using Object = UnityEngine.Object;
 using TreeViewItem = UnityEditor.IMGUI.Controls.TreeViewItem<int>;
 using TreeViewUtility = UnityEditor.IMGUI.Controls.TreeViewUtility<int>;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditorInternal
 {
@@ -17,6 +18,7 @@ namespace UnityEditorInternal
     {
         struct KeyComparer : IComparer<Key>
         {
+            [NoAutoStaticsCleanup]
             static readonly Type s_GameObjectType = typeof(GameObject);
 
             public int Compare(Key x, Key y)

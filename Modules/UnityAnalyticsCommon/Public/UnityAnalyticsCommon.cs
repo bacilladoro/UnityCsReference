@@ -15,15 +15,24 @@ using UnityEngine.Scripting;
 
 namespace UnityEngine.Analytics
 {
+    ///<exclude />
     public enum AnalyticsResult
     {
+        ///<exclude />
         Ok,
+        ///<exclude />
         NotInitialized,
+        ///<exclude />
         AnalyticsDisabled,
+        ///<exclude />
         TooManyItems,
+        ///<exclude />
         SizeLimitReached,
+        ///<exclude />
         TooManyRequests,
+        ///<exclude />
         InvalidData,
+        ///<exclude />
         UnsupportedPlatform
     }
 

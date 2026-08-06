@@ -5,6 +5,7 @@
 using System;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Bindings;
 
 namespace Unity.Content
@@ -41,7 +42,9 @@ namespace Unity.Content
                 throw new InvalidOperationException("The provided namespace is invalid. Did you already delete it?");
         }
 
+        [NoAutoStaticsCleanup] // default namespace is created once from native content and persists across code reloads
         static bool s_defaultInitialized = false;
+        [NoAutoStaticsCleanup] // default namespace handle stays valid across code reloads (native-owned)
         static ContentNamespace s_Default;
         public static ContentNamespace Default
         {
@@ -56,7 +59,7 @@ namespace Unity.Content
             }
         }
 
-        static Regex s_ValidName = new Regex(@"^[a-zA-Z0-9]{1,16}$", RegexOptions.Compiled);
+        static readonly Regex s_ValidName = new Regex(@"^[a-zA-Z0-9]{1,16}$", RegexOptions.Compiled);
         public static ContentNamespace GetOrCreateNamespace(string name)
         {
             if (s_ValidName.IsMatch(name))

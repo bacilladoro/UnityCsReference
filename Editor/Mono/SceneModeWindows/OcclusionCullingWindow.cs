@@ -6,12 +6,14 @@ using System;
 using UnityEngine;
 using UnityEditor.Overlays;
 using UnityEngine.Scripting;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
     [EditorWindowTitle(title = "Occlusion", icon = "Occlusion")]
-    internal class OcclusionCullingWindow : EditorWindow
+    internal partial class OcclusionCullingWindow : EditorWindow
     {
+        [NoAutoStaticsCleanup] // Window visibility flag; guarded by ms_OcclusionCullingWindow null-check, safe to persist across reload.
         static bool s_IsVisible = false;
 
         private bool m_PreVis;
@@ -19,10 +21,12 @@ namespace UnityEditor
         private bool m_ClearBakeData = true;
         private string m_Warning;
 
+        [AutoStaticsCleanupOnCodeReload]
         static OcclusionCullingWindow ms_OcclusionCullingWindow;
         Vector2 m_ScrollPosition = Vector2.zero;
         Mode m_Mode = Mode.AreaSettings;
 
+        [NoAutoStaticsCleanup] // Lazy GUIStyle/GUIContent holder; re-created on first access, safe to persist across reload.
         static Styles s_Styles;
 
         class Styles

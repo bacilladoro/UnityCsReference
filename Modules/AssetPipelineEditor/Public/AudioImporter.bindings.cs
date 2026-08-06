@@ -55,6 +55,7 @@ namespace UnityEditor
         public bool                     preloadAudioData;
     }
 
+    [global::UnityEngine.NativeClass("AudioImporter", PersistentTypeId = 1020)]
     [NativeHeader("Modules/AssetPipelineEditor/Public/AudioImporter.h")]
     // Audio importer lets you modify [[AudioClip]] import settings from editor scripts.
     public sealed partial class AudioImporter : AssetImporter

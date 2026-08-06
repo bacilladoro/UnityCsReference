@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor.Experimental;
 using UnityEditor.ShortcutManagement;
 using UnityEngine;
@@ -11,7 +12,7 @@ using UnityEngine.UIElements;
 
 namespace UnityEditor
 {
-    public class SceneViewCameraWindow : PopupWindowContent
+    public partial class SceneViewCameraWindow : PopupWindowContent
     {
         static class Styles
         {
@@ -92,9 +93,12 @@ namespace UnityEditor
         Vector2 m_WindowSize = new Vector2(Styles.windowWidth, Styles.windowHeight);
 
         [Obsolete($"{nameof(SceneViewCameraWindow)} has been converted to UITK. Please use {nameof(createAdditionalSettingsGUI)} and {nameof(bindAdditionalSettings)} instead. #from(6000.5)")]
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<SceneView> additionalSettingsGui;
 
+        [AutoStaticsCleanupOnCodeReload]
         public static Func<SceneView, VisualElement> createAdditionalSettingsGUI;
+        [AutoStaticsCleanupOnCodeReload]
         public static Action<SceneView, VisualElement> bindAdditionalSettings;
 
         public override Vector2 GetWindowSize()

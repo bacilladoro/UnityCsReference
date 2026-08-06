@@ -801,7 +801,6 @@ namespace UnityEditor
 
         public static int nearestControl { get { return s_NearestDistance <= kPickDistance ? s_NearestControl : 0; } set { s_NearestControl = value; } }
 
-        [RequiredByNativeCode]
         internal static void BeginHandles()
         {
             Handles.Init();
@@ -826,7 +825,6 @@ namespace UnityEditor
             EditorGUI.s_DelayedTextEditor?.BeginGUI();
         }
 
-        [RequiredByNativeCode]
         internal static void EndHandles()
         {
             if (s_PreviousNearestControl != s_NearestControl

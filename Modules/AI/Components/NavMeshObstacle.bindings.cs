@@ -23,6 +23,7 @@ namespace UnityEngine.AI
     ///<seealso cref="NavMeshAgent" />
     [MovedFrom("UnityEngine")]
     [NativeHeader("Modules/AI/Components/NavMeshObstacle.bindings.h")]
+    [global::UnityEngine.NativeClass("NavMeshObstacle", PersistentTypeId = 208)]
     [HelpURL("https://docs.unity3d.com/Packages/com.unity.ai.navigation@2.0/manual/NavMeshObstacle.html")]
     public sealed class NavMeshObstacle : Behaviour
     {

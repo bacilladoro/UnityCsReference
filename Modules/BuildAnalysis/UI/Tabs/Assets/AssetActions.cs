@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 
 namespace UnityEditor.Build.Analysis
@@ -18,9 +19,13 @@ namespace UnityEditor.Build.Analysis
         internal const string k_MissingAssetMessage =
             "Asset not found. It may have been renamed, moved, or deleted since this build was analyzed.";
 
+        [NoAutoStaticsCleanup] // defaults to a same-assembly method and is invoked without a null-check; resetting to null would NRE. Tests swap it but restore the default in TearDown.
         internal static Action<string> ShowInProjectImpl = DefaultShowInProject;
+        [NoAutoStaticsCleanup] // defaults to a same-assembly method and is invoked without a null-check; resetting to null would NRE. Tests swap it but restore the default in TearDown.
         internal static Action<string> CopyPathImpl = DefaultCopyPath;
+        [NoAutoStaticsCleanup] // defaults to a same-assembly method and is invoked without a null-check; resetting to null would NRE. Tests swap it but restore the default in TearDown.
         internal static Func<string, bool> CanShowInProjectImpl = DefaultCanShowInProject;
+        [NoAutoStaticsCleanup] // defaults to a same-assembly method and is invoked without a null-check; resetting to null would NRE. Tests swap it but restore the default in TearDown.
         internal static Action<string> NotifyMissingImpl = DefaultNotifyMissing;
 
         public static void ShowInProject(string assetPath) => ShowInProjectImpl(assetPath);

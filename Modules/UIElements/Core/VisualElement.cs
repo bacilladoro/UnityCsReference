@@ -571,7 +571,7 @@ namespace UnityEngine.UIElements
 
         /// <summary>
         /// Return the resulting scaling from the panel that considers the screen DPI and the customizable scaling factor, but not the transform scale of the element and its ancestors.
-        /// See <see cref="Panel.scaledPixelsPerPoint"/>.
+        /// See <see cref="BaseVisualElementPanel.scaledPixelsPerPoint"/>.
         /// This should only be called on elements that are part of a panel.
         /// </summary>
         public float scaledPixelsPerPoint
@@ -1883,22 +1883,6 @@ namespace UnityEngine.UIElements
             }
         }
 
-        // Backdrop-filter elements require special handling on transform changes since their UV mapping
-        // depends on world transform. This count tracks descendants with backdrop-filter so we can
-        // efficiently determine when to trigger hierarchical regeneration.
-        internal int backdropFilterDescendantCount = 0;
-
-        internal void ChangeBackdropFilterDescendantCount(int delta)
-        {
-            VisualElement ve = this;
-
-            while (ve != null)
-            {
-                ve.backdropFilterDescendantCount += delta;
-                ve = ve.hierarchy.parent;
-            }
-        }
-
         /// <summary>
         ///  Initializes and returns an instance of VisualElement.
         /// </summary>
@@ -1956,6 +1940,7 @@ namespace UnityEngine.UIElements
         // For unit tests
         internal static int s_FinalizerCount = 0;
 
+#pragma warning disable UA5000 // The Avoid Finalizer Analyzer produces compile errors for any new finalizers. This pre-existing finalizer declaration has been suppressed, but should be rewritten if possible.
         ~VisualElement()
         {
             try
@@ -1977,6 +1962,7 @@ namespace UnityEngine.UIElements
                 Debug.LogException(e);
             }
         }
+#pragma warning restore UA5000
 
         private const string k_ElementReleaseExceptionMessage = "You can't modify a VisualElement after its resources are released. This usually happens when PanelRenderer releases elements during UI reload or cleanup. Make sure that you don't hold stale references to elements.";
 

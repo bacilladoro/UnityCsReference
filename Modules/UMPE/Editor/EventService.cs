@@ -11,6 +11,7 @@ using UnityEngine.Scripting;
 using Debug = UnityEngine.Debug;
 using UnityEngine;
 using UnityEngine.Scripting.APIUpdating;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.MPE
 {
@@ -18,7 +19,7 @@ namespace UnityEditor.MPE
     public enum EventDataSerialization { StandardJson, JsonUtility };
 
     [MovedFrom("Unity.MPE")]
-    public static class EventService
+    public static partial class EventService
     {
         internal class RequestData
         {
@@ -41,21 +42,45 @@ namespace UnityEditor.MPE
         private const string k_LogMsg = "log";
         private const long k_RequestDefaultTimeout = 700;
 
+        [AutoStaticsCleanupOnCodeReload]
         internal static Dictionary<string, List<Func<string, object[], object>>> s_Events = new Dictionary<string, List<Func<string, object[], object>>>();
+        [AutoStaticsCleanupOnCodeReload]
         internal static Dictionary<string, RequestData> s_Requests = new Dictionary<string, RequestData>();
-        internal static ChannelClient m_Client;
+        [AutoStaticsCleanupOnCodeReload]
+        internal static ChannelClient client;
+        [AutoStaticsCleanupOnCodeReload]
+        internal static bool s_IsClientStarting = false;
 
-        static EventService()
+        [AutoStaticsCleanupOnCodeReload]
+        static Lazy<bool> _initializedLazy = new Lazy<bool>(StartOnFirstUse);
+
+        private static bool StartOnFirstUse()
         {
             Start();
+            return true;
+        }
+
+        internal static ChannelClient m_Client
+        {
+            get
+            {
+                if (client == null && !s_IsClientStarting)
+                    Start();
+                return client;
+            }
+            set{ client = value; }
         }
 
         public static void Start()
         {
+            s_IsClientStarting = true;
             if (m_Client != null || isConnected)
                 return;
 
+#pragma warning disable UAL0018 // Auto cleaned up symbol is captured in another member
+            // m_client property is implemented on top of an auto cleanup field
             m_Client = ChannelClient.GetOrCreateClient("event");
+#pragma warning restore UAL0018 // Auto cleaned up symbol is captured in another member
             m_Client.RegisterMessageHandler(IncomingEvent);
             m_Client.Start(false);
             int tickCount = 100;
@@ -67,6 +92,7 @@ namespace UnityEditor.MPE
 
             EditorApplication.tick -= Tick;
             EditorApplication.tick += Tick;
+            s_IsClientStarting = false;
         }
 
         public static void Close()
@@ -79,6 +105,8 @@ namespace UnityEditor.MPE
 
         public static Action RegisterEventHandler(string eventType, Action<string, object[]> handler)
         {
+            // ensure event service is started
+            _ = _initializedLazy.Value;
             return RegisterEventHandler(eventType, (type, args) =>
             {
                 handler(type, args);
@@ -88,6 +116,8 @@ namespace UnityEditor.MPE
 
         public static Action RegisterEventHandler(string eventType, Func<string, object[], object> handler)
         {
+            // ensure event service is started
+            _ = _initializedLazy.Value;
             // Note: User will need to register on domain reload...
             List<Func<string, object[], object>> handlers = null;
             if (!s_Events.TryGetValue(eventType, out handlers))
@@ -112,6 +142,8 @@ namespace UnityEditor.MPE
 
         public static void UnregisterEventHandler(string eventType, Func<string, object[], object> handler)
         {
+            // ensure event service is started
+            _ = _initializedLazy.Value;
             List<Func<string, object[], object>> handlers = null;
             if (s_Events.TryGetValue(eventType, out handlers))
             {
@@ -132,6 +164,8 @@ namespace UnityEditor.MPE
 
         public static void Emit(string eventType, object args = null, int targetId = -1, EventDataSerialization eventDataSerialization = EventDataSerialization.JsonUtility)
         {
+            // ensure event service is started
+            _ = _initializedLazy.Value;
             if (args == null)
                 Emit(eventType, null, targetId, eventDataSerialization);
             else
@@ -140,6 +174,8 @@ namespace UnityEditor.MPE
 
         public static void Emit(string eventType, object[] args, int targetId = -1, EventDataSerialization eventDataSerialization = EventDataSerialization.JsonUtility)
         {
+            // ensure event service is started
+            _ = _initializedLazy.Value;
             const bool notifyWildcard = true;
             var req = CreateRequest(k_EventMsg, eventType, targetId, -1, args, eventDataSerialization);
 
@@ -175,6 +211,8 @@ namespace UnityEditor.MPE
 
         public static void Request(string eventType, Action<Exception, object[]> promiseHandler, object args = null, long timeoutInMs = k_RequestDefaultTimeout, EventDataSerialization eventDataSerialization = EventDataSerialization.JsonUtility)
         {
+            // ensure event service is started
+            _ = _initializedLazy.Value;
             if (args == null)
                 Request(eventType, promiseHandler, null, timeoutInMs, eventDataSerialization);
             else
@@ -183,6 +221,8 @@ namespace UnityEditor.MPE
 
         public static void Request(string eventType, Action<Exception, object[]> promiseHandler, object[] args, long timeoutInMs = k_RequestDefaultTimeout, EventDataSerialization eventDataSerialization = EventDataSerialization.JsonUtility)
         {
+            // ensure event service is started
+            _ = _initializedLazy.Value;
             RequestData request;
             if (s_Requests.TryGetValue(eventType, out request))
             {

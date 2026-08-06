@@ -4,11 +4,11 @@
 
 using System;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor.Build;
 using UnityEngine;
 using UnityEngine.Bindings;
 using UnityEngine.Internal;
-using Unity.Scripting.LifecycleManagement;
 using Object = UnityEngine.Object;
 
 namespace UnityEditor;

@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.Bindings;
 using UnityEngine.Scripting;
@@ -19,6 +20,7 @@ namespace UnityEditor
         internal SerializedObject m_SerializedObject;
 
         private SerializedProperty[] m_ModifiedTrackedProperties;
+        [NoAutoStaticsCleanup] // empty array, no references; safe to persist across reload
         private static readonly SerializedProperty[] s_EmptyPropertyArray = Array.Empty<SerializedProperty>();
 
         public SerializedObjectChangeTracker(SerializedObject obj)
@@ -28,7 +30,9 @@ namespace UnityEditor
             m_ModifiedTrackedProperties = s_EmptyPropertyArray;
         }
 
+#pragma warning disable UA5000 // The Avoid Finalizer Analyzer produces compile errors for any new finalizers. This pre-existing finalizer declaration has been suppressed, but should be rewritten if possible.
         ~SerializedObjectChangeTracker() { Dispose(); }
+#pragma warning restore UA5000
 
         public void Dispose()
         {

@@ -23,20 +23,20 @@ namespace Unity.GraphToolkit.Editor
         protected static readonly IReadOnlyList<ItemLibraryDatabaseBase> k_NoDatabase = new List<ItemLibraryDatabaseBase>();
 
         /// <summary>
-        /// An empty list of <see cref="Type"/>.
+        /// An empty collection of <see cref="Type"/>.
         /// </summary>
-        /// <remarks>'k_NoTypeList' is a static, read-only list of <see cref="Type"/> used to represent an empty type collection. It helps optimize
-        /// performance by reusing a predefined empty list instead of creating new instances when no types are available, which prevents memory allocations.
+        /// <remarks>'k_NoTypeList' is a static, read-only collection of <see cref="Type"/> used to represent an empty type collection. It helps optimize
+        /// performance by reusing a predefined empty collection instead of creating new instances when no types are available, which prevents memory allocations.
         /// </remarks>
-        protected static readonly IReadOnlyList<Type> k_NoTypeList = Array.Empty<Type>();
+        protected static readonly IReadOnlyCollection<Type> k_NoTypeList = Array.Empty<Type>();
 
         /// <summary>
-        /// List of types supported for variables and constants.
+        /// Collection of types supported for variables in the blackboard.
         /// </summary>
         /// <remarks>
         /// Will populate the default implementation of <see cref="GetVariableDatabases"/>.
         /// </remarks>
-        public virtual IReadOnlyList<Type> SupportedTypes => k_NoTypeList;
+        public virtual IReadOnlyCollection<Type> AvailableVariableTypes => k_NoTypeList;
 
         List<ItemLibraryDatabaseBase> m_GraphElementsDatabases;
         List<ItemLibraryDatabaseBase> m_GraphVariablesDatabases;
@@ -96,7 +96,7 @@ namespace Unity.GraphToolkit.Editor
         {
             return m_TypeDatabases ??= new List<ItemLibraryDatabaseBase>
                 {
-                    SupportedTypes.ToDatabase(GraphModel)
+                    AvailableVariableTypes.ToDatabase(GraphModel)
                 };
         }
 

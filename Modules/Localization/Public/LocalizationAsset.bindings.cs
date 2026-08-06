@@ -12,7 +12,7 @@ namespace UnityEngine
     ///<summary>An asset to represent a table of localized strings for one specific locale.</summary>
     [NativeHeader("Modules/Localization/Public/LocalizationAsset.h")]
     [NativeHeader("Modules/Localization/Public/LocalizationAsset.bindings.h")]
-    [NativeClass("LocalizationAsset")]
+    [NativeClass("LocalizationAsset", PersistentTypeId = 0x7C33F103)]
     [ExcludeFromPreset]
     [MovedFrom("UnityEditor")]
     public sealed class LocalizationAsset : Object

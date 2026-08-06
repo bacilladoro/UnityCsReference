@@ -8,12 +8,13 @@ using UnityEditor.Toolbars;
 using UnityEngine.UIElements;
 using UnityEditor.EditorTools;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.TerrainTools
 {
     [Overlay(typeof(SceneView), "Brush Attributes", defaultDockPosition = DockPosition.Top, defaultDockZone = DockZone.TopToolbar, defaultDockIndex = 0, group = OverlayAttribute.unityGroup)]
     [Icon("TerrainOverlays/BrushSettingIcons/BrushAttributes.png")]
-    internal class BrushAttributes : ToolbarOverlay, ITransientOverlay, ICreateHorizontalToolbar, ICreateVerticalToolbar
+    internal partial class BrushAttributes : ToolbarOverlay, ITransientOverlay, ICreateHorizontalToolbar, ICreateVerticalToolbar
     {
         public bool visible
         {
@@ -26,6 +27,7 @@ namespace UnityEditor.TerrainTools
             }
         }
 
+        [AutoStaticsCleanupOnCodeReload] // overlay instance; drop the stale one on reload (overlay system recreates it)
         internal static BrushAttributes s_Instance;
         BrushAttributes() : base(
 
@@ -136,7 +138,7 @@ namespace UnityEditor.TerrainTools
         private const float k_MinValue = 0;
         private const float k_MaxValue = 1;
 
-        static Texture2D s_OpacityIcon =
+        static readonly Texture2D s_OpacityIcon =
             EditorGUIUtility.LoadIcon("TerrainOverlays/BrushSettingIcons/Opacity.png");
 
         static Texture2D Texture
@@ -226,7 +228,7 @@ namespace UnityEditor.TerrainTools
         internal const string k_Id = "Brushes/Size";
         private const string k_Label = "Size";
 
-        static Texture2D s_SizeIcon =
+        static readonly Texture2D s_SizeIcon =
             EditorGUIUtility.LoadIcon("TerrainOverlays/BrushSettingIcons/Size.png");
         static Texture2D Texture
         {
@@ -336,7 +338,7 @@ namespace UnityEditor.TerrainTools
         private const float k_MaxValue = 1;
 
         // todo: replace this icon
-        static Texture2D s_TargetStrengthIcon =
+        static readonly Texture2D s_TargetStrengthIcon =
             EditorGUIUtility.LoadIcon("TerrainOverlays/BrushSettingIcons/TargetDensity.png");
 
         static Texture2D Texture

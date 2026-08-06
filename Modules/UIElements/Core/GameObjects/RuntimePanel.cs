@@ -19,7 +19,7 @@ namespace UnityEngine.UIElements
         PanelSettings panelSettings { get; }
 
         /// <summary>
-        /// A GameObject from the Scene that can be used by <see cref="UnityEngine.EventSystems.EventSystem"/>
+        /// A GameObject from the Scene that can be used by <c>UnityEngine.EventSystems.EventSystem</c>
         /// to get and set focus to this panel. If null, panel focus will be handled independently of
         /// Event System selection.
         /// </summary>
@@ -327,6 +327,11 @@ namespace UnityEngine.UIElements
 
             visualTree.RegisterCallback<FocusEvent, RuntimePanel>((e, p) => p.OnElementFocus(e), this,
                 TrickleDown.TrickleDown);
+        }
+
+        protected internal override PanelSettings GetLinkedPanelSettings()
+        {
+            return (PanelSettings)ownerObject;
         }
 
         internal override void Update()

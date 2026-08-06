@@ -5,16 +5,18 @@
 using UnityEngine;
 using UnityEditor.StyleSheets;
 using UnityEditor.Experimental;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
     // This uses a normal editor window with a single view inside.
-    internal class PaneDragTab : GUIView
+    internal partial class PaneDragTab : GUIView
     {
         const float kMaxArea = 50000.0f;
 
 #pragma warning disable 169
 
+        [AutoStaticsCleanupOnCodeReload]
         private static PaneDragTab s_Get;
         private DropInfo.Type m_Type = (DropInfo.Type)(-1);
         private GUIContent m_Content;
@@ -26,15 +28,17 @@ namespace UnityEditor
 
         private static class Styles
         {
+            [NoAutoStaticsCleanup] // cached style block resolved from a fixed catalog key; safe to persist
             private static readonly StyleBlock tab = EditorResources.GetStyle("tab");
             public static readonly float tabMinWidth = tab.GetFloat(StyleCatalogKeyword.minWidth, 50.0f);
             public static readonly float tabMaxWidth = tab.GetFloat(StyleCatalogKeyword.maxWidth, 150.0f);
             public static readonly float tabWidthPadding = tab.GetFloat(StyleCatalogKeyword.paddingRight);
 
-            public static GUIStyle dragtab = "dragtab";
-            public static GUIStyle view = "TabWindowBackground";
+            public static readonly GUIStyle dragtab = "dragtab";
+            public static readonly GUIStyle view = "TabWindowBackground";
             public static readonly GUIStyle tabLabel = new GUIStyle("dragtab") { name = "dragtab-label" };
 
+            [NoAutoStaticsCleanup] // cached style-catalog color value resolved from a fixed key; safe to persist
             public static readonly SVC<Color> backgroundColor = new SVC<Color>("--unity-colors-app_toolbar-background");
         }
 

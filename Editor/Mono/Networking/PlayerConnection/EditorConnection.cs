@@ -11,6 +11,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Networking.PlayerConnection;
 using UnityEngine.Scripting;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Networking.PlayerConnection
 {
@@ -57,8 +58,9 @@ namespace UnityEditor.Networking.PlayerConnection
     }
 
     [Serializable]
-    public class EditorConnection : ScriptableSingleton<EditorConnection>, IEditorPlayerConnection
+    public partial class EditorConnection : ScriptableSingleton<EditorConnection>, IEditorPlayerConnection
     {
+        [AutoStaticsCleanupOnCodeReload]
         internal static IPlayerEditorConnectionNative connectionNative;
 
         [SerializeField]

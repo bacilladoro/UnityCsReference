@@ -8,7 +8,7 @@ namespace UnityEngine
 {
     public sealed partial class StaticBatchingUtility
     {
-        internal static ProfilerMarker s_CombineMarker = new ProfilerMarker("StaticBatching.Combine");
+        internal static readonly ProfilerMarker s_CombineMarker = new ProfilerMarker("StaticBatching.Combine");
 
         public static void Combine(GameObject staticBatchRoot)
         {

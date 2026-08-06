@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using UnityEngine.SceneManagement;
 using UnityEditor.Overlays;
 using UnityEditor.SceneManagement;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -41,6 +42,7 @@ namespace UnityEditor
         bool m_MouseLeaveListenerAdded = false;
         bool m_SceneViewListenerAdded = false;
 
+        [AutoStaticsCleanupOnCodeReload]
         static PhysicsDebugWindow s_Window;
 
         private int m_CollumnsPrev = -1;

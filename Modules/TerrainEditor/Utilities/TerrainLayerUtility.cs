@@ -10,6 +10,7 @@ using UnityEditor;
 using UnityEditorInternal;
 using UnityEngine;
 using Object = UnityEngine.Object;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -33,7 +34,8 @@ namespace UnityEditor
             public readonly GUIContent tilingSize = EditorGUIUtility.TrTextContent("Size");
             public readonly GUIContent tilingOffset = EditorGUIUtility.TrTextContent("Offset");
         }
-        private static Styles s_Styles = new Styles();
+        [NoAutoStaticsCleanup] // GUIContent styles holder; editor infra, no user refs
+        private static readonly Styles s_Styles = new Styles();
 
         public static int ShowTerrainLayersSelectionHelper(Terrain terrain, int activeTerrainLayer)
         {

@@ -7,3 +7,5 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("Unity.Modules.Physics.Tests.Playmode")]
 [assembly: InternalsVisibleTo("Unity.Modules.Physics.Tests.Editor")]
 [assembly: InternalsVisibleTo("Unity.Modules.Physics.Tests.Common")]
+[assembly: InternalsVisibleTo("Unity.NetCode.PhysicsInternalAccess")]
+

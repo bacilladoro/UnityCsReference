@@ -346,7 +346,7 @@ namespace UnityEngine.UIElements
         }
 
         /// <summary>
-        /// Tries to read a <see cref="TEnum"/> from the <see cref="StyleProperty"/>'s value.
+        /// Tries to read a <typeparamref name="TEnum"/> from the <see cref="StyleProperty"/>'s value.
         /// </summary>
         /// <param name="styleSheet">The data store.</param>
         /// <param name="value">The read value.</param>
@@ -427,9 +427,181 @@ namespace UnityEngine.UIElements
         /// <param name="value">The value to store.</param>
         public void SetBackground(StyleSheet styleSheet, Background value)
         {
+            // Gradient-only value: serialise as a gradient function call. Otherwise asset-ref.
+            if (value.GetSelectedImage() == null && !value.gradient.IsEmpty())
+            {
+                SetBackgroundGradient(styleSheet, value.gradient);
+                return;
+            }
+
             SetSize(ref m_Values, 1);
             styleSheet.WriteAssetReference(ref m_Values[0], value.GetSelectedImage());
             requireVariableResolve = false;
+        }
+
+        /// <summary>
+        /// Writes a <see cref="BackgroundGradient"/> as a background-image gradient
+        /// function value (empty gradients collapse to <c>none</c>). Layout matches what
+        /// <see cref="StylePropertyReader"/>.ReadBackgroundGradient parses.
+        /// </summary>
+        public void SetBackgroundGradient(StyleSheet styleSheet, BackgroundGradient value)
+        {
+            if (value.IsEmpty())
+            {
+                SetSize(ref m_Values, 1);
+                m_Values[0] = new StyleValueHandle((int)StyleValueKeyword.None, StyleValueType.Keyword);
+                requireVariableResolve = false;
+                return;
+            }
+
+            var plan = new List<HandleWriteOp>(8 + (value.stops?.Length ?? 0) * 3);
+
+            plan.Add(HandleWriteOp.Function(value.type == GradientType.Linear
+                ? StyleValueFunction.LinearGradient
+                : StyleValueFunction.RadialGradient));
+
+            // Arg-count slot is backfilled once we know how many we wrote.
+            int argCountSlot = plan.Count;
+            plan.Add(HandleWriteOp.Float(0f));
+            int argStart = plan.Count;
+
+            bool hasPrefix;
+            if (value.type == GradientType.Linear)
+            {
+                // Explicit `deg` — writer→parser stable, no `to bottom` guesswork.
+                float deg = value.angle * Mathf.Rad2Deg;
+                plan.Add(HandleWriteOp.Dimension(new Dimension(deg, Dimension.Unit.Degree)));
+                hasPrefix = true;
+            }
+            else
+            {
+                // Elide CSS defaults; the parser coerces `circle` to `ellipse`, so we never emit it.
+                bool sizeIsDefault = value.size == BackgroundGradientSize.FarthestCorner;
+                bool positionIsDefault = Mathf.Approximately(value.position.x, 0.5f)
+                                      && Mathf.Approximately(value.position.y, 0.5f);
+
+                if (!sizeIsDefault)
+                {
+                    // Emit `ellipse` with the extent for clarity, even though the parser accepts extent alone.
+                    plan.Add(HandleWriteOp.EnumIdent("ellipse"));
+                    string extent = value.size switch
+                    {
+                        BackgroundGradientSize.ClosestSide => "closest-side",
+                        BackgroundGradientSize.ClosestCorner => "closest-corner",
+                        BackgroundGradientSize.FarthestSide => "farthest-side",
+                        _ => "farthest-corner",
+                    };
+                    plan.Add(HandleWriteOp.EnumIdent(extent));
+                }
+
+                if (!positionIsDefault)
+                {
+                    plan.Add(HandleWriteOp.EnumIdent("at"));
+                    plan.Add(HandleWriteOp.Dimension(new Dimension(value.position.x * 100f, Dimension.Unit.Percent)));
+                    plan.Add(HandleWriteOp.Dimension(new Dimension(value.position.y * 100f, Dimension.Unit.Percent)));
+                }
+
+                hasPrefix = !sizeIsDefault || !positionIsDefault;
+            }
+
+            // Comma before stops only when a prefix was actually emitted.
+            if (hasPrefix)
+                plan.Add(HandleWriteOp.CommaSeparator());
+
+            // Drop explicit positions when they match what the parser would auto-distribute.
+            bool omitPositions = AreStopsAutoDistributed(value.stops);
+
+            var stops = value.stops;
+            for (int i = 0; i < stops.Length; ++i)
+            {
+                var stop = stops[i];
+                plan.Add(HandleWriteOp.Color(stop.color));
+                if (!omitPositions)
+                {
+                    plan.Add(stop.positionIsPercent
+                        ? HandleWriteOp.Dimension(new Dimension(stop.position * 100f, Dimension.Unit.Percent))
+                        : HandleWriteOp.Dimension(new Dimension(stop.position, Dimension.Unit.Pixel)));
+                }
+                if (i < stops.Length - 1)
+                    plan.Add(HandleWriteOp.CommaSeparator());
+            }
+
+            int argCount = plan.Count - argStart;
+            plan[argCountSlot] = HandleWriteOp.Float(argCount);
+
+            SetSize(ref m_Values, plan.Count);
+            for (int i = 0; i < plan.Count; ++i)
+                plan[i].Apply(styleSheet, ref m_Values[i]);
+
+            requireVariableResolve = false;
+        }
+
+        // True when stops match the parser's auto-distribute (percent 0..100 evenly).
+        static bool AreStopsAutoDistributed(BackgroundGradientStop[] stops)
+        {
+            if (stops == null || stops.Length < 2)
+                return false;
+            const float kTol = 1e-4f;
+            for (int i = 0; i < stops.Length; ++i)
+            {
+                if (!stops[i].positionIsPercent)
+                    return false;
+                float expected = (float)i / (stops.Length - 1);
+                if (Mathf.Abs(stops[i].position - expected) > kTol)
+                    return false;
+            }
+            return true;
+        }
+
+        // Deferred handle-write op so the arg-count slot can be backfilled in one pass.
+        struct HandleWriteOp
+        {
+            StyleValueType m_Type;
+            StyleValueFunction m_Func;
+            float m_Float;
+            Dimension m_Dim;
+            Color m_Color;
+            string m_Str;
+
+            public static HandleWriteOp Function(StyleValueFunction f)
+                => new() { m_Type = StyleValueType.Function, m_Func = f };
+            public static HandleWriteOp Float(float v)
+                => new() { m_Type = StyleValueType.Float, m_Float = v };
+            public static HandleWriteOp Dimension(Dimension d)
+                => new() { m_Type = StyleValueType.Dimension, m_Dim = d };
+            public static HandleWriteOp Color(Color c)
+                => new() { m_Type = StyleValueType.Color, m_Color = c };
+            public static HandleWriteOp EnumIdent(string s)
+                => new() { m_Type = StyleValueType.Enum, m_Str = s };
+            public static HandleWriteOp CommaSeparator()
+                => new() { m_Type = StyleValueType.CommaSeparator };
+
+            public void Apply(StyleSheet sheet, ref StyleValueHandle handle)
+            {
+                switch (m_Type)
+                {
+                    case StyleValueType.Function:
+                        sheet.WriteFunction(ref handle, m_Func);
+                        break;
+                    case StyleValueType.Float:
+                        sheet.WriteFloat(ref handle, m_Float);
+                        break;
+                    case StyleValueType.Dimension:
+                        sheet.WriteDimension(ref handle, m_Dim);
+                        break;
+                    case StyleValueType.Color:
+                        sheet.WriteColor(ref handle, m_Color);
+                        break;
+                    case StyleValueType.Enum:
+                        // AddValue(string) is the internal append-and-return-index path (no dedup, fine here).
+                        int idx = sheet.AddValue(m_Str);
+                        handle = new StyleValueHandle(idx, StyleValueType.Enum);
+                        break;
+                    case StyleValueType.CommaSeparator:
+                        handle = new StyleValueHandle(0, StyleValueType.CommaSeparator);
+                        break;
+                }
+            }
         }
 
         /// <summary>
@@ -481,7 +653,7 @@ namespace UnityEngine.UIElements
         }
 
         /// <summary>
-        /// Tries to read a <see cref="TObject"/> from the <see cref="StyleProperty"/>'s value.
+        /// Tries to read a <typeparamref name="TObject"/> from the <see cref="StyleProperty"/>'s value.
         /// </summary>
         /// <param name="styleSheet">The data store.</param>
         /// <param name="value">The read value.</param>

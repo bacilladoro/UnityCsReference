@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using UnityEngine;
+using Unity.Scripting.LifecycleManagement;
 using System;
 using System.IO;
 using UnityEditorInternal;
@@ -33,10 +34,11 @@ namespace UnityEditor
         }
     }
 
-    internal abstract class ScriptableSingletonDictionary<TDerived, TValue> : ScriptableObject
+    internal abstract partial class ScriptableSingletonDictionary<TDerived, TValue> : ScriptableObject
         where TDerived : ScriptableObject
         where TValue : ScriptableObject
     {
+        [AutoStaticsCleanupOnCodeReload]
         private static TDerived s_Instance;
         static readonly string k_Extension = ".pref";
 

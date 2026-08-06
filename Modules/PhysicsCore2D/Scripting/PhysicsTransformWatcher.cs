@@ -8,6 +8,7 @@ using Unity.Collections;
 using UnityEngine;
 using UnityEngine.Pool;
 using UnityEngine.Scripting;
+using Unity.Scripting.LifecycleManagement;
 
 using static Unity.U2D.Physics.Scripting2D;
 
@@ -106,6 +107,10 @@ namespace Unity.U2D.Physics
             }
         }
 
+        // Watcher callbacks can point into reloadable code, but AutoStaticsCleanup codegen in this
+        // player-shipped module forces the PhysicsCore2D module into stripped player builds
+        // (TestStrippingDependencies). Persist as before until lifecycle registration is strip-safe.
+        [NoAutoStaticsCleanup] // see stripping note above
         static Dictionary<Transform, HashSet<PhysicsCallbacks.ITransformChangedCallback>> s_TransformWatchers = null;
 
         #region Native Methods

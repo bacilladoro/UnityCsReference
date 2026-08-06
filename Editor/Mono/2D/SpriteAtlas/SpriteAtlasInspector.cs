@@ -10,6 +10,7 @@ using UnityEditor.Build;
 using UnityEditor.U2D.Common;
 using UnityEditor.U2D.Interface;
 using UnityEditorInternal;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.U2D
 {
@@ -101,6 +102,7 @@ namespace UnityEditor.U2D
             }
         }
 
+        [NoAutoStaticsCleanup] // lazy GUIStyle/GUIContent style cache (no programmatically-created textures) — safe to persist across a code reload
         private static Styles s_Styles;
 
         private static Styles styles

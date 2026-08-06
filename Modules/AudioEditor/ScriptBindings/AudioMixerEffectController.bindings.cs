@@ -18,6 +18,7 @@ namespace UnityEditor.Audio
     }
 
     [NativeHeader("Editor/Src/Audio/Mixer/AudioMixerEffectController.h")]
+    [global::UnityEngine.NativeClass("AudioMixerEffectController", PersistentTypeId = 244)]
     [NativeHeader("Modules/AudioEditor/ScriptBindings/AudioMixerEffectController.bindings.h")]
     internal class AudioMixerEffectController : Object
     {

@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using System.Reflection;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -14,7 +15,7 @@ using Object = UnityEngine.Object;
 namespace UnityEditor
 {
     [NativeHeader("Editor/Src/ObjectFactory.h")]
-    public static class ObjectFactory
+    public static partial class ObjectFactory
     {
         const int kInvalidSceneHandle = 0;
 
@@ -33,6 +34,7 @@ namespace UnityEditor
         [FreeFunction]
         static extern GameObject CreateDefaultGameObject(string name);
 
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<Component> componentWasAdded;
 
         [RequiredByNativeCode]

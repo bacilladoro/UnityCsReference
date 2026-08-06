@@ -59,6 +59,8 @@ namespace UnityEditor.AnimationWindowBuiltin
 
         bool EditAnimationClip(AnimationWindow window, AnimationClip animationClip, out IAnimationWindowSelectionItem newSelection)
         {
+            // Always create AnimationClipSelectionItem when an AnimationClip asset is selected directly
+            // This ensures the UI switches to ObjectField mode (vs dropdown for GameObject context)
             if (!window.selection.IsCompatibleWith(animationClip))
             {
                 newSelection = AnimationClipSelectionItem.Create(window, animationClip);

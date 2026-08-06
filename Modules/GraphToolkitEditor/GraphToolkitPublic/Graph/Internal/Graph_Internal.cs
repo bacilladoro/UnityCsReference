@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using System.Collections.Generic;
 using Unity.GraphToolkit.Editor.Implementation;
 
 namespace Unity.GraphToolkit.Editor
@@ -32,5 +33,11 @@ namespace Unity.GraphToolkit.Editor
             OnDefineSubgraphNodeOptions(s_OptionDefinitionContext);
             s_OptionDefinitionContext.Finish();
         }
+
+        internal IEnumerable<Type> InvokeBuildAvailableVariableTypes(IReadOnlyCollection<Type> baseSupportedTypes)
+            => BuildAvailableVariableTypes(baseSupportedTypes);
+
+        internal IEnumerable<Type> InvokeBuildAvailableConstantTypes(IReadOnlyCollection<Type> baseSupportedTypes)
+            => BuildAvailableConstantTypes(baseSupportedTypes);
     }
 }

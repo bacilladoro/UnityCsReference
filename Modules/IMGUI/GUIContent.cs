@@ -4,12 +4,15 @@
 
 using System;
 using System.Runtime.InteropServices;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Bindings;
 using UnityEngine.Scripting;
 
 namespace UnityEngine
 {
-    // The contents of a GUI element.
+    ///<summary>The contents of a GUI element.</summary>
+    ///<remarks>This works closely in relation with <see cref="GUIStyle" />. GUIContent defines <c>what</c> to render and <see cref="GUIStyle" /> defines <c>how</c> to render it.</remarks>
+    ///<seealso cref="GUIStyle" />
     [StructLayout(LayoutKind.Sequential)]
     [Serializable]
     [NativeHeader("Modules/IMGUI/GUIContent.h")]
@@ -28,13 +31,29 @@ namespace UnityEngine
 
         internal event Action OnTextChanged;
 
+        [NoAutoStaticsCleanup] // marshaling cache; reference persists, fields mutated and restored within each Temp() call
         private static readonly GUIContent s_Text      = new GUIContent();
+        [NoAutoStaticsCleanup] // marshaling cache; reference persists, fields mutated and restored within each Temp() call
         private static readonly GUIContent s_Image     = new GUIContent();
+        [NoAutoStaticsCleanup] // marshaling cache; reference persists, fields mutated and restored within each Temp() call
         private static readonly GUIContent s_TextImage = new GUIContent();
 
-        internal static string k_ZeroWidthSpace = "\u200B";
+        internal static readonly string k_ZeroWidthSpace = "\u200B";
 
-        // The text contained.
+        ///<summary>The text contained.</summary>
+        ///<example>
+        ///  <code><![CDATA[
+        ///using UnityEngine;
+        ///
+        ///public class ExampleScript : MonoBehaviour
+        ///{
+        ///    void OnGUI()
+        ///    {
+        ///        GUI.Button(new Rect(0, 0, 100, 20), new GUIContent("Click me!"));
+        ///    }
+        ///}
+        ///]]></code>
+        ///</example>
         public string text
         {
             get { return m_Text; }
@@ -67,49 +86,145 @@ namespace UnityEngine
             textWithWhitespace = value;
         }
 
-        // The icon image contained.
+        ///<summary>The icon image contained.</summary>
+        ///<example>
+        ///  <code><![CDATA[
+        ///using UnityEngine;
+        ///
+        ///public class ExampleScript : MonoBehaviour
+        ///{
+        ///    public Texture icon;
+        ///
+        ///    void OnGUI()
+        ///    {
+        ///        if (!icon)
+        ///        {
+        ///            Debug.LogError("Add a texture on the inspector first");
+        ///            return;
+        ///        }
+        ///        GUI.Button(new Rect(0, 0, 100, 20), new GUIContent(icon));
+        ///    }
+        ///}
+        ///]]></code>
+        ///</example>
         public Texture image
         {
             get { return m_Image; }
             set { m_Image = value; }
         }
 
-        // The tooltip of this element.
+        ///<summary>The tooltip of this element.</summary>
+        ///<remarks>The tooltip associated with this content. Read GUItooltip to get the tooltip of the gui element the user is currently over.</remarks>
+        ///<example>
+        ///  <code><![CDATA[
+        ///using UnityEngine;
+        ///
+        ///public class ExampleScript : MonoBehaviour
+        ///{
+        ///    void OnGUI()
+        ///    {
+        ///        GUI.Button(new Rect(0, 0, 100, 20), new GUIContent("A Button", "This is the tooltip"));
+        ///        // If the user hovers the mouse over the button, the global tooltip gets set
+        ///        GUI.Label(new Rect(0, 40, 100, 40), GUI.tooltip);
+        ///    }
+        ///}
+        ///]]></code>
+        ///</example>
         public string tooltip
         {
             get { return m_Tooltip; }
             set { m_Tooltip = value; }
         }
 
-        // Constructor for GUIContent in all shapes and sizes
+        ///<summary>Constructor for GUIContent in all shapes and sizes.</summary>
+        ///<remarks>Build an empty GUIContent.</remarks>
         public GUIContent() {}
 
-        // Build a GUIContent object containing only text.
+        ///<summary>Build a GUIContent object containing only text.</summary>
+        ///<remarks>When using the GUI, you don't need to create GUIContents for simple text strings - these two lines of code are functionally equivalent:</remarks>
+        ///<example>
+        ///  <code><![CDATA[
+        ///using UnityEngine;
+        ///
+        ///public class ExampleScript : MonoBehaviour
+        ///{
+        ///    void OnGUI()
+        ///    {
+        ///        GUI.Button(new Rect(0, 0, 100, 20), "Click Me");
+        ///        GUI.Button(new Rect(0, 30, 100, 20), new GUIContent("Click Me"));
+        ///    }
+        ///}
+        ///]]></code>
+        ///</example>
         public GUIContent(string text) :
             this(text, null, string.Empty)
         {}
 
-        // Build a GUIContent object containing only an image.
+        ///<summary>Build a GUIContent object containing only an image.</summary>
+        ///<example>
+        ///  <code><![CDATA[
+        ///using UnityEngine;
+        ///
+        ///public class ExampleScript : MonoBehaviour
+        ///{
+        ///    public Texture icon;
+        ///    void OnGUI()
+        ///    {
+        ///        GUI.Button(new Rect(0, 30, 100, 20), new GUIContent(icon));
+        ///    }
+        ///}
+        ///]]></code>
+        ///</example>
         public GUIContent(Texture image) :
             this(string.Empty, image, string.Empty)
         {}
 
-        // Build a GUIContent object containing both /text/ and an image.
+        ///<summary>Build a GUIContent object containing both <c>text</c> and an image.</summary>
+        ///<example>
+        ///  <code><![CDATA[
+        ///using UnityEngine;
+        ///
+        ///public class ExampleScript : MonoBehaviour
+        ///{
+        ///    public Texture icon;
+        ///    void OnGUI()
+        ///    {
+        ///        GUI.Button(new Rect(0, 30, 100, 20), new GUIContent("Click me", icon));
+        ///    }
+        ///}
+        ///]]></code>
+        ///</example>
         public GUIContent(string text, Texture image) :
             this(text, image, string.Empty)
         {}
 
-        // Build a GUIContent containing some /text/. When the user hovers the mouse over it, the global GUI::ref::tooltip is set to the /tooltip/.
+        ///<summary>Build a GUIContent containing some <c>text</c>. When the user hovers the mouse over it, the global <see cref="GUI.tooltip" /> is set to the <c>tooltip</c>.</summary>
+        ///<example>
+        ///  <code><![CDATA[
+        ///using UnityEngine;
+        ///
+        ///public class ExampleScript : MonoBehaviour
+        ///{
+        ///    void OnGUI()
+        ///    {
+        ///        GUI.Button(new Rect(0, 0, 100, 20), new GUIContent("Click me", "This is the tooltip"));
+        ///
+        ///        // If the user hovers the mouse over the button, the global tooltip gets set
+        ///        GUI.Label(new Rect(0, 40, 100, 40), GUI.tooltip);
+        ///    }
+        ///}
+        ///]]></code>
+        ///</example>
         public GUIContent(string text, string tooltip) :
             this(text, null, tooltip)
         {}
 
-        // Build a GUIContent containing an image. When the user hovers the mouse over it, the global GUI::ref::tooltip is set to the /tooltip/.
+        ///<summary>Build a GUIContent containing an image. When the user hovers the mouse over it, the global <see cref="GUI.tooltip" /> is set to the <c>tooltip</c>.</summary>
         public GUIContent(Texture image, string tooltip) :
             this(string.Empty, image, tooltip)
         {}
 
-        // Build a GUIContent that contains both /text/, an /image/ and has a /tooltip/ defined. When the user hovers the mouse over it, the global GUI::ref::tooltip is set to the /tooltip/.
+        ///<summary>Build a GUIContent that contains both <c>text</c>, an <c>image</c> and has a <c>tooltip</c> defined. When the user hovers the mouse over it, the global <see cref="GUI.tooltip" /> is set to the <c>tooltip</c>.</summary>
         public GUIContent(string text, Texture image, string tooltip)
         {
             this.text = text;
@@ -117,7 +232,7 @@ namespace UnityEngine
             this.tooltip = tooltip;
         }
 
-        // Build a GUIContent as a copy of another GUIContent.
+        ///<summary>Build a GUIContent as a copy of another GUIContent.</summary>
         public GUIContent(GUIContent src)
         {
             text = src.m_Text;
@@ -125,10 +240,25 @@ namespace UnityEngine
             tooltip = src.m_Tooltip;
         }
 
-        // Shorthand for empty content.
+        ///<summary>Shorthand for empty content.</summary>
+        ///<example>
+        ///  <code><![CDATA[
+        ///using UnityEngine;
+        ///
+        ///public class ExampleScript : MonoBehaviour
+        ///{
+        ///    void OnGUI()
+        ///    {
+        ///        GUI.Button(new Rect(0, 0, 100, 20), GUIContent.none);
+        ///    }
+        ///}
+        ///]]></code>
+        ///</example>
+        [NoAutoStaticsCleanup] // static sentinel for empty content; no user types, safe to persist
         public static GUIContent none = new GUIContent("");
 
         // *undocumented*
+        ///<exclude />
         internal int hash
         {
             get

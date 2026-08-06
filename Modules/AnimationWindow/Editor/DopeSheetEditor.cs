@@ -10,6 +10,7 @@ using Event = UnityEngine.Event;
 using Object = UnityEngine.Object;
 using System.Collections;
 using System.Linq;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditorInternal
 {
@@ -29,7 +30,7 @@ namespace UnityEditorInternal
         const int kLabelMarginHorizontal = 8;
         const int kLabelMarginVertical = 2;
 
-        static private Color s_SelectedKeyColor = new Color32(87, 133, 217, 255);
+        static private readonly Color s_SelectedKeyColor = new Color32(87, 133, 217, 255);
 
         struct DrawElement
         {

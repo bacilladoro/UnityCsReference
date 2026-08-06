@@ -5,6 +5,7 @@
 //#define DEBUG_EDITOR_RESOURCES // ONLY NEEDED BY STYLING DEVS AND DESIGNERS.
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -120,7 +121,9 @@ namespace UnityEditor.Experimental
         private const string k_PrefsUserFontKey = "user_editor_font";
         const string k_GlobalStyleCatalogCacheFilePath = "Library/Style.catalog";
 
+        [NoAutoStaticsCleanup] // lazy style-catalog cache, rebuilt on demand via null-check; safe to persist
         private static StyleCatalog s_StyleCatalog;
+        [NoAutoStaticsCleanup] // refresh flag for the lazy style catalog; not reload-dependent state
         private static bool s_RefreshGlobalStyleCatalog = false;
 
         static class Constants
@@ -163,6 +166,7 @@ namespace UnityEditor.Experimental
 
         internal static IReadOnlyCollection<string> supportedFontNames => supportedFonts.Keys;
 
+        [NoAutoStaticsCleanup] // lazy font-name cache backed by EditorPrefs, rebuilt on demand via null-check
         private static string s_CurrentFontName = null;
 
         internal static string currentFontName
@@ -192,6 +196,7 @@ namespace UnityEditor.Experimental
             return currentFontDef.GetFont(fontStyle);
         }
 
+        [NoAutoStaticsCleanup] // lazy dictionary of built-in font defs, rebuilt on demand via null-check; no user types
         private static Dictionary<string, FontDef> s_SupportedFonts = null;
         internal static Dictionary<string, FontDef> supportedFonts
         {

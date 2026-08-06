@@ -292,30 +292,6 @@ namespace Unity.GraphToolkit.Editor
             }
         }
 
-        internal (Vector2, Vector2, Vector2) GetContentTransform()
-        {
-            var halfSize = 0.5f * new Vector2(m_ArrowLength, m_ArrowWidth);
-            var tr = GetParentTransform();
-
-            var transformedCornerA = MathUtils.Multiply2X3(tr, new Vector3(halfSize.x, halfSize.y, 1));
-            var transformedCornerB = MathUtils.Multiply2X3(tr, new Vector3(-halfSize.x, halfSize.y, 1));
-            var transformedCornerC = MathUtils.Multiply2X3(tr, new Vector3(halfSize.x, -halfSize.y, 1));
-            var transformedCornerD = MathUtils.Multiply2X3(tr, new Vector3(-halfSize.x, -halfSize.y, 1));
-
-            var bounds = new Rect();
-            bounds.xMin = Mathf.Min(transformedCornerA.x, transformedCornerB.x, transformedCornerC.x, transformedCornerD.x);
-            bounds.yMin = Mathf.Min(transformedCornerA.y, transformedCornerB.y, transformedCornerC.y, transformedCornerD.y);
-            bounds.xMax = Mathf.Max(transformedCornerA.x, transformedCornerB.x, transformedCornerC.x, transformedCornerD.x);
-            bounds.yMax = Mathf.Max(transformedCornerA.y, transformedCornerB.y, transformedCornerC.y, transformedCornerD.y);
-
-            tr.Item3 -= new Vector2(bounds.x, bounds.y);
-
-            // put 0, 0, at the intersection between triangle and square
-            tr.Item3 += MathUtils.Multiply2X3(tr, new Vector3(.5f * m_ArrowLength - m_ArrowTriangleLength, 0, 0));
-
-            return tr;
-        }
-
         public void UpdateLayout()
         {
             if (parent == null)
@@ -339,6 +315,18 @@ namespace Unity.GraphToolkit.Editor
             style.top = bounds.y;
             style.width = bounds.width;
             style.height = bounds.height;
+
+            var counter = this.Q<TransitionCounter>();
+            counter?.SetCenteringOffset(tr.Item1 * CentroidOffsetAlongWire());
+        }
+
+        float CentroidOffsetAlongWire()
+        {
+            var body = m_ArrowLength - m_ArrowTriangleLength;
+            var tip = 0.5f * m_ArrowTriangleLength;
+            var bodyCenter = -0.5f * m_ArrowTriangleLength;
+            var tipCenter = 0.5f * m_ArrowLength - m_ArrowTriangleLength * (2f / 3f);
+            return (body * bodyCenter + tip * tipCenter) / (body + tip);
         }
 
         /// <inheritdoc />

@@ -8,6 +8,7 @@ using UnityEngine.Bindings;
 namespace UnityEditor
 {
     [NativeHeader("Modules/AssetPipelineEditor/Public/AndroidAssetPackImporter.h")]
+    [NativeClass("AndroidAssetPackImporter", PersistentTypeId = 0x6783E580)]
     [ExcludeFromPreset]
     public class AndroidAssetPackImporter : AssetImporter
     {

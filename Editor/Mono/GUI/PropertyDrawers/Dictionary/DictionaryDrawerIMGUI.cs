@@ -9,6 +9,7 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEditor.IMGUI.Controls;
 using UnityEditor.UIElements;
+using Unity.Scripting.LifecycleManagement;
 using TreeView = UnityEditor.IMGUI.Controls.TreeView<int>;
 using TreeViewItem = UnityEditor.IMGUI.Controls.TreeViewItem<int>;
 using TreeViewState = UnityEditor.IMGUI.Controls.TreeViewState<int>;
@@ -35,7 +36,7 @@ internal partial class DictionaryDrawer
     /// for UITK so the partial <see cref="DictionaryDrawer"/> ends up with only the
     /// PropertyDrawer overrides delegating into here.
     /// </summary>
-    sealed class DrawerInstanceIMGUI
+    sealed partial class DrawerInstanceIMGUI
     {
         // Per-(property, container) IMGUI state cache. In-memory, editor-process lifetime.
         // Key: (propertyPath, targetEntityId, imguiContainerId).
@@ -45,7 +46,14 @@ internal partial class DictionaryDrawer
         // availableWidth (see GetOrCreate with isMultiEdit: true). GetOrCreate promotes a
         // stub to a full entry on demand while preserving any width already observed
         // during a prior short-circuit frame.
+        [AutoStaticsCleanupOnCodeReload]
         static readonly Dictionary<PropertyCacheKey, DrawerInstanceIMGUI> s_Cache = new();
+
+        internal static void InvalidateAllSortOrders()
+        {
+            foreach (var instance in s_Cache.Values)
+                instance.InvalidateSortOrder();
+        }
 
         static class Styles
         {
@@ -86,11 +94,11 @@ internal partial class DictionaryDrawer
             public static readonly GUIStyle columnLabel = "MultiColumnHeader";
             public static readonly GUIStyle columnLabelClipped = new GUIStyle(columnLabel) { clipping = TextClipping.Ellipsis };
 
-            public static GUIContent iconPlus = EditorGUIUtility.TrIconContent("Toolbar Plus");
-            public static GUIContent iconMinus = EditorGUIUtility.TrIconContent("Toolbar Minus");
+            public static readonly GUIContent iconPlus = EditorGUIUtility.TrIconContent("Toolbar Plus");
+            public static readonly GUIContent iconMinus = EditorGUIUtility.TrIconContent("Toolbar Minus");
 
-            public static Texture2D sortAscIcon = EditorGUIUtility.LoadIconRequired("UIPackageResources/Images/scrollup_uielements.png");
-            public static Texture2D sortDescIcon = EditorGUIUtility.LoadIconRequired("UIPackageResources/Images/scrolldown_uielements.png");
+            public static readonly Texture2D sortAscIcon = EditorGUIUtility.LoadIconRequired("UIPackageResources/Images/scrollup_uielements.png");
+            public static readonly Texture2D sortDescIcon = EditorGUIUtility.LoadIconRequired("UIPackageResources/Images/scrolldown_uielements.png");
         }
 
         readonly struct PropertyCacheKey : IEquatable<PropertyCacheKey>
@@ -147,6 +155,8 @@ internal partial class DictionaryDrawer
         // with sortedIndices.
         public ulong lastKnownKeysHash;
         public bool needsReload;
+        public bool needsSortOrderRebuild;
+        public bool needsLayoutChange;
         public bool needsDuplicate;
         public readonly Type keyType;
         public readonly Type valueType;
@@ -177,6 +187,9 @@ internal partial class DictionaryDrawer
         public readonly float attributeKeyFraction;
         public readonly Hash128 stateCacheKey;
         public float availableWidth;
+
+        DictionaryState m_CachedViewState;
+        int m_CachedStateVersion = -1;
 
         // Stubs allocated by GetOrCreate(..., isMultiEdit: true) leave treeView null;
         // a null treeView is the stable marker that distinguishes a stub from a fully-
@@ -500,6 +513,8 @@ internal partial class DictionaryDrawer
                 return;
             }
 
+            SyncWithDictionaryViewState();
+
             // Pick up external array-size changes (Undo, script, prefab apply, etc.)
             // before drawing so the row-count text in the foldout reflects them this
             // frame. The actual rebuild is deferred to PerformReload between OnGUI
@@ -608,10 +623,19 @@ internal partial class DictionaryDrawer
         void ClearAllPendingFlags()
         {
             needsReload = false;
+            needsSortOrderRebuild = false;
+            needsLayoutChange = false;
             needsMarkerRefresh = false;
             pendingSortToggle = false;
             pendingSortToggleSelectionArrayIndices = null;
             StopInteractionCheck();
+        }
+
+        public void InvalidateSortOrder()
+        {
+            needsReload = true;
+            needsSortOrderRebuild = true;
+            ScheduleDeferredStructuralWork();
         }
 
         // Detect external array-size changes and (re-)arm the deferred reload.
@@ -626,6 +650,48 @@ internal partial class DictionaryDrawer
 
             needsReload = true;
             ScheduleDeferredStructuralWork();
+        }
+
+        // Sibling dictionaries (elements sharing a normalized stateCacheKey) share one persisted
+        // DictionaryState. UITK links live views and pushes; IMGUI is immediate-mode, so each
+        // instance instead pulls the shared state each frame and applies any divergence. Structural
+        // changes (sort/layout) are deferred like every other reload; the column fraction is a pure
+        // draw-time value, so it's applied inline. StateCache hands back the same DictionaryState
+        // instance to every sibling, so a resize drag mutating that object in-memory (see
+        // HandleResize) is picked up here without a per-frame disk write.
+        void SyncWithDictionaryViewState()
+        {
+            // Only re-read when shared state changed; a default dictionary would otherwise run GetState -> File.Exists every event.
+            if (m_CachedStateVersion != StateVersion)
+            {
+                m_CachedViewState = GetCachedState(stateCacheKey);
+                m_CachedStateVersion = StateVersion;
+            }
+            var state = m_CachedViewState;
+
+            bool cachedSortAscending = state?.sortAscending ?? true;
+            if (cachedSortAscending != sortAscending && !pendingSortToggle)
+            {
+                sortAscending = cachedSortAscending;
+                needsReload = true;
+                needsSortOrderRebuild = true;
+                ScheduleDeferredStructuralWork();
+            }
+
+            var effectiveLayout = GetActiveLayout(state, attributeLayout);
+            if (effectiveLayout != layout)
+            {
+                layout = effectiveLayout;
+                needsLayoutChange = true;
+                ScheduleDeferredStructuralWork();
+            }
+
+            float effectiveFraction = GetActiveKeyColumnFraction(state, attributeKeyFraction);
+            if (!Mathf.Approximately(header.column1Fraction, effectiveFraction))
+            {
+                header.column1Fraction = effectiveFraction;
+                imguiContainer?.MarkDirtyRepaint();
+            }
         }
 
         // Coalescing entry point for every structural mutation. Caller flips a pending flag
@@ -712,6 +778,14 @@ internal partial class DictionaryDrawer
 
             bool needsRepaint = false;
 
+            if (needsLayoutChange)
+            {
+                needsLayoutChange = false;
+                ClassifyRowHeights();
+                treeView.Reload();
+                needsRepaint = true;
+            }
+
             if (pendingSortToggle)
             {
                 PerformSortToggle();
@@ -724,7 +798,7 @@ internal partial class DictionaryDrawer
             {
                 int currentSize = arrayProperty.arraySize;
                 bool sizeChanged = currentSize != displayedItemCount;
-                bool keysChanged = sizeChanged || GetKeysContentHash(arrayProperty) != lastKnownKeysHash;
+                bool keysChanged = sizeChanged || needsSortOrderRebuild || GetKeysContentHash(arrayProperty) != lastKnownKeysHash;
 
                 if (!keysChanged)
                 {
@@ -741,6 +815,7 @@ internal partial class DictionaryDrawer
                     // A full reload also recomputes both marker sets, so a pending
                     // marker-only refresh is subsumed and can be cleared.
                     needsMarkerRefresh = false;
+                    needsSortOrderRebuild = false;
                     needsRepaint = true;
                     StopInteractionCheck();
                 }
@@ -1033,11 +1108,17 @@ internal partial class DictionaryDrawer
             int ignoredCount = duplicateCount + nullKeyCount;
             int itemCount = displayedItemCount;
 
-            string countText = Texts.GetItemCountText(itemCount);
-            string ignoredText = ignoredCount > 0
-                ? Texts.GetIgnoredCountText(ignoredCount)
-                : "";
-            string infoText = $"{countText}{ignoredText}";
+            string infoText;
+            if (DictionaryDrawer.ShowSerializedOrder)
+            {
+                infoText = Texts.ShowingSerializedOrderInfoLabel;
+            }
+            else
+            {
+                infoText = Texts.GetItemCountText(itemCount);
+                if (ignoredCount > 0)
+                    infoText += Texts.GetIgnoredCountText(ignoredCount);
+            }
 
             var infoSize = EditorStyles.miniLabel.CalcSize(new GUIContent(infoText));
             var infoRect = new Rect(rect.xMax - infoSize.x - 4f, rect.y, infoSize.x, rect.height);
@@ -1064,7 +1145,7 @@ internal partial class DictionaryDrawer
             }
 
             var selection = treeView.GetSelection();
-            using (new EditorGUI.DisabledScope(selection.Count == 0))
+            using (new EditorGUI.DisabledScope(arrayProperty.arraySize == 0))
             {
                 if (GUI.Button(removeRect, Styles.iconMinus, Styles.footerButton))
                 {
@@ -1075,25 +1156,23 @@ internal partial class DictionaryDrawer
 
         void SetTreeViewFocusOnMouseEvents(Rect treeRect)
         {
-            // TreeView focus grab on MouseDown / ScrollWheel. Must be called before the
-            // TreeView's OnGUI().
-            // Two reasons stack:
-            //   - Visual: the active (blue) selection outline only shows when the
-            //     treeview itself owns keyboard focus, mirroring how row clicks
-            //     already grab focus via HandleRowSelectionClick.
-            //   - Correctness: scrolling (wheel, scrollbar drag, repeat-button) culls
-            //     rows that leave the visible area, and culled controls don't allocate
-            //     their controlIDs — that shifts the IDs of the rows that remain and
-            //     reroutes keyboard focus to an unrelated cell. Releasing whatever
-            //     currently owns keyboard focus (typically a text field in a row)
-            //     before the scroll runs avoids that. SetFocus also clears
-            //     EditorGUIUtility.editingTextField, so a text edit ends cleanly.
+            // TreeView focus grab on ScrollWheel. Must be called before the TreeView's OnGUI().
+            //
+            // This ends an in-progress cell text edit when the user wheel-scrolls the list and
+            // hands focus (and the blue selection outline) to the treeview itself: SetFocus moves
+            // keyboardControl to the treeview and clears EditorGUIUtility.editingTextField.
+            //
+            // Note it is intentionally NOT done for plain MouseDown. Scrolling culls rows that
+            // leave the visible area, but the cells' control ids are position-keyed and stay
+            // stable across culling, so a focused cell is never rerouted to a different row —
+            // grabbing focus on MouseDown would only steal it from the cell the user just clicked,
+            // breaking caret placement (first click selects all, second could never place the caret).
             //
             // OnOptimizedInspectorGUI(Rect contentRect) clears GUIUtility.keyboardControl
             // = 0 even when we have treeview focus, so the !HasFocus() check is needed
             // here too — without it SetFocus would no-op when the user is just panning
             // over the treeview and we want the blue outline back.
-            if ((Event.current.type == EventType.MouseDown || Event.current.type == EventType.ScrollWheel)
+            if (Event.current.type == EventType.ScrollWheel
                 && treeRect.Contains(Event.current.mousePosition)
                 && !treeView.HasFocus())
                 treeView.SetFocus();
@@ -1151,8 +1230,9 @@ internal partial class DictionaryDrawer
             var selection = treeView.GetSelection();
             int newSelectedDisplayIndex = selection.Count == 1 ? selection[0] : -1;
 
-            bool removed = RemoveEntriesAtDisplayIndices(
-                arrayProperty, selection, sortedIndices);
+            var removed = selection.Count > 0
+                ? RemoveEntriesAtDisplayIndices(arrayProperty, selection, sortedIndices)
+                : RemoveEntryAtDisplayIndex(arrayProperty, arrayProperty.arraySize - 1, sortedIndices);
             if (!removed)
                 return;
 
@@ -1360,7 +1440,7 @@ internal partial class DictionaryDrawer
                 GUI.Label(label0Rect, m_KeyLabel, Styles.columnLabelClipped);
 
                 var arrowIcon = instance.sortAscending ? Styles.sortAscIcon : Styles.sortDescIcon;
-                if (arrowIcon != null)
+                if (arrowIcon != null && !DictionaryDrawer.ShowSerializedOrder)
                 {
                     var arrowRect = new Rect(arrowX, label0Rect.y + (label0Rect.height - Styles.k_SortArrowSize) * 0.5f, Styles.k_SortArrowSize, Styles.k_SortArrowSize);
                     GUI.DrawTexture(arrowRect, arrowIcon);
@@ -1393,7 +1473,7 @@ internal partial class DictionaryDrawer
                 GUI.Label(label0Rect, m_OneColumnLabel, Styles.columnLabelClipped);
 
                 var arrowIcon = instance.sortAscending ? Styles.sortAscIcon : Styles.sortDescIcon;
-                if (arrowIcon != null)
+                if (arrowIcon != null && !DictionaryDrawer.ShowSerializedOrder)
                 {
                     var arrowRect = new Rect(arrowX, rect.y + (rect.height - Styles.k_SortArrowSize) * 0.5f, Styles.k_SortArrowSize, Styles.k_SortArrowSize);
                     GUI.DrawTexture(arrowRect, arrowIcon);
@@ -1428,6 +1508,11 @@ internal partial class DictionaryDrawer
                             // floor when the new totalWidth would force a column under it.
                             float newCol0Fraction = (evt.mousePosition.x - headerRect.x) / totalWidth;
                             m_Column1Fraction = ClampDraggedKeyColumnFraction(newCol0Fraction, totalWidth);
+                            var state = GetCachedState(m_StateCacheKey);
+                            if (state != null)
+                                state.keyColumnFractionSetByUser = m_Column1Fraction;
+                            else
+                                UpdateCachedState(m_StateCacheKey, cached => cached.keyColumnFractionSetByUser = m_Column1Fraction);
                             evt.Use();
                         }
                         break;
@@ -1444,6 +1529,9 @@ internal partial class DictionaryDrawer
 
             void HandleSortToggle(Rect sortRect, DrawerInstanceIMGUI instance)
             {
+                if (DictionaryDrawer.ShowSerializedOrder)
+                    return;
+
                 var evt = Event.current;
                 switch (evt.GetTypeForControl(m_SortToggleControlID))
                 {
@@ -1502,6 +1590,10 @@ internal partial class DictionaryDrawer
                     AddLayoutItem(menu, Texts.TwoColumnsLayoutLabel, DictionaryLayout.TwoColumns, instance);
                     AddLayoutItem(menu, Texts.OneColumnWithValueFoldoutLayoutLabel, DictionaryLayout.OneColumnWithValueFoldout, instance);
                     AddLayoutItem(menu, Texts.OneColumnWithValueVisibleLayoutLabel, DictionaryLayout.OneColumnWithValueVisible, instance);
+                    menu.AddSeparator(string.Empty);
+
+                    menu.AddItem(new GUIContent(Texts.ShowSerializedOrderLabel), DictionaryDrawer.ShowSerializedOrder,
+                        () => DictionaryDrawer.SetShowSerializedOrder(!DictionaryDrawer.ShowSerializedOrder));
                     menu.AddSeparator(string.Empty);
 
                     if (instance.header.HasCachedState)
@@ -1815,6 +1907,19 @@ internal partial class DictionaryDrawer
                 return true;
             }
 
+            // Selects the entry a drop lands on (before the key ObjectField Uses() the DragPerform), so the deferred re-sort keeps it selected and frames it. Mirrors DictionaryView.OnRowDragPerform.
+            void SelectEntryOnKeyDrop(Rect keyCellRect, int arrayIndex)
+            {
+                if (Event.current.type != EventType.DragPerform || !keyCellRect.Contains(Event.current.mousePosition))
+                    return;
+                if (!m_Instance.sortedIndices.ContainsArrayIndex(arrayIndex))
+                    return;
+                SetSelection(new[] { m_Instance.sortedIndices.ToDisplayIndex(arrayIndex) });
+
+                // Grab view focus (a drag from another view left focus there) so the relocated row shows the active blue outline, not grey; keyboardControl is set by the reload's needsTreeViewFocus path.
+                GUIView.current?.Focus();
+            }
+
             void DrawKeyCell(Rect keyRect, SerializedProperty keyProp, int arrayIndex)
             {
                 keyRect.yMin += Styles.k_RowVerticalPadding;
@@ -1830,6 +1935,7 @@ internal partial class DictionaryDrawer
                 // The TrackPropertyValue listener registered on the IMGUIContainer in
                 // GetOrCreate handles both same-inspector and cross-inspector
                 // updates uniformly, so this draw site only renders the field.
+                SelectEntryOnKeyDrop(keyRect, arrayIndex);
                 DrawClippedPropertyField(keyRect, keyFieldRect, keyProp, m_Instance.keyType, m_Instance.keyHasCustomDrawer);
             }
 
@@ -1857,6 +1963,7 @@ internal partial class DictionaryDrawer
                 float keyMinFieldWidth = GetCellMinFieldWidth(keyProp, m_Instance.keyHasCustomDrawer);
                 var keyFieldRect = BuildCellFieldRect(keyCellRect, contentLeft, Styles.k_CellHorizontalPadding, keyMinFieldWidth);
                 EditorGUIUtility.labelWidth = ComputeCellLabelWidth(keyFieldRect.width);
+                SelectEntryOnKeyDrop(keyCellRect, arrayIndex);
                 DrawPropertyField(keyFieldRect, keyProp, m_Instance.keyType, m_Instance.keyHasCustomDrawer);
                 y += keyH + spacing;
 
@@ -2162,6 +2269,7 @@ internal static class DrawerEditorGUI
     // same style with UpperLeft so the content stays anchored to the top, leaving the
     // bottom-right corner clear for the button overlay. Lazy-init: EditorStyles.helpBox
     // is not safe to access during static class reload.
+    [NoAutoStaticsCleanup] // lazy GUIStyle cache guarded by == null; re-created on first access, safe to persist
     static GUIStyle s_HelpBoxUpperLeft;
     static GUIStyle helpBoxUpperLeft
     {

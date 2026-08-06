@@ -267,6 +267,7 @@ namespace UnityEngine.PlayerLoop
         [RequiredByNativeCode]
         public struct EndGraphicsJobsAfterScriptLateUpdate {}
         [RequiredByNativeCode]
+        [Obsolete("UpdateSubstance is no longer used and will be removed in a future version of Unity.")]
         public struct UpdateSubstance {}
         [RequiredByNativeCode]
         public struct UpdateCustomRenderTextures {}

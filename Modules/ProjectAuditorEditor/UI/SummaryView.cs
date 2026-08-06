@@ -497,7 +497,7 @@ namespace Unity.ProjectAuditor.Editor.UI
                 new KeyValuePair<string, string>("Project ID", sessionInfo.ProjectId),
                 new KeyValuePair<string, string>("Rules Version", sessionInfo.ProjectAuditorRulesVersion),
                 new KeyValuePair<string, string>("Project Areas", ObjectNames.NicifyVariableName(sessionInfo.ProjectAreas.Value.ToString())),
-                new KeyValuePair<string, string>("Analysis Platform", Formatting.GetModernBuildTargetName(sessionInfo.Platform))
+                new KeyValuePair<string, string>("Analysis Platform", Formatting.GetModernBuildTargetName(sessionInfo.Platform)),
             ]);
 
             if ((sessionInfo.ProjectAreas & ProjectAreaFlags.Code) != 0)

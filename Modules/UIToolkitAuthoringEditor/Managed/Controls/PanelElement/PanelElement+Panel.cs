@@ -35,6 +35,11 @@ sealed partial class PanelElement : VisualElement
             resetPanelRenderingOnAssetChange = true;
         }
 
+        protected internal override PanelSettings GetLinkedPanelSettings()
+        {
+            return Owner.PanelSettings;
+        }
+
         public override void TickSchedulingUpdaters()
         {
             // Required here because we will use the settings from an "external" panel settings and we need to

@@ -3,11 +3,13 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using UnityEngine;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
     internal class RectHandles
     {
+        [NoAutoStaticsCleanup] // Lazy GUIStyle-only cache; styles resolve by name and survive reload.
         static Styles s_Styles;
         class Styles
         {
@@ -17,6 +19,7 @@ namespace UnityEditor
             public readonly GUIStyle pivotdotactive = "U2D.pivotDotActive";
         }
 
+        [NoAutoStaticsCleanup] // Transient int cursor id; unmanaged, safe to persist across reload.
         private static int s_LastCursorId;
 
         internal static bool RaycastGUIPointToWorldHit(Vector2 guiPoint, Plane plane, out Vector3 hit)
@@ -250,6 +253,7 @@ namespace UnityEditor
             Handles.color = oldColor;
         }
 
+        [NoAutoStaticsCleanup] // Reused scratch buffer of unmanaged Vector3; safe to persist, resized on demand.
         static Vector3[] s_TempVectors = System.Array.Empty<Vector3>();
 
         public static void DrawPolyLineWithShadow(Color shadowColor, Vector2 screenOffset, params Vector3[] points)

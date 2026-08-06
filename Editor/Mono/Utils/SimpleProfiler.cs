@@ -6,6 +6,7 @@
 using UnityEngine;
 using UnityEditor;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -20,9 +21,13 @@ namespace UnityEditor
     internal class SimpleProfiler
     {
         // Lazy coding with parallel stacks
+        [NoAutoStaticsCleanup] // Internal profiling scratch state (no user-type references); safe to persist across code reload.
         private static Stack<string> m_Names = new Stack<string>();
+        [NoAutoStaticsCleanup] // Internal profiling scratch state (no user-type references); safe to persist across code reload.
         private static Stack<float> m_StartTime = new Stack<float>();
+        [NoAutoStaticsCleanup] // Internal profiling scratch state (no user-type references); safe to persist across code reload.
         private static Dictionary<string, float> m_Timers = new Dictionary<string, float>();
+        [NoAutoStaticsCleanup] // Internal profiling scratch state (no user-type references); safe to persist across code reload.
         private static Dictionary<string, int> m_Calls = new Dictionary<string, int>();
 
         [System.Diagnostics.Conditional("SIMPLE_PROFILER")]

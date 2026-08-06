@@ -5,6 +5,7 @@
 using System;
 using UnityEngine;
 using UnityEngine.Animations;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -45,6 +46,7 @@ namespace UnityEditor
             public GUIContent UseUpObject { get { return m_UseUpObject; } }
         }
 
+        [NoAutoStaticsCleanup]
         private static Styles s_Style = null;
 
         public void OnEnable()

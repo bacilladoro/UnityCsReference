@@ -51,6 +51,7 @@ namespace UnityEditor
 
     [NativeHeader("Editor/Src/VersionControlSettings.h")]
     [NativeHeader("Editor/Src/EditorUserSettings.h")]
+    [UnityEngine.NativeClass("VersionControlSettings", PersistentTypeId = 0x351A24BB)]
     public sealed class VersionControlSettings : Object
     {
         private VersionControlSettings()

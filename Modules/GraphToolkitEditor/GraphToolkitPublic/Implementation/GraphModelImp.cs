@@ -14,8 +14,36 @@ namespace Unity.GraphToolkit.Editor.Implementation
     [Serializable]
     class GraphModelImp : GraphModel
     {
-        List<Type> m_SupportedTypes;
+        [NonSerialized]
         IReadOnlyList<Type> m_SupportedNodes;
+
+        [NonSerialized]
+        HashSet<Type> m_AutoSupportedTypes;
+        [NonSerialized]
+        HashSet<Type> m_SupportedTypes;
+        [NonSerialized]
+        HashSet<Type> m_AvailableVariableTypes;
+        [NonSerialized]
+        HashSet<Type> m_AvailableConstantTypes;
+
+        [NonSerialized]
+        ReadOnlyHashSet<Type> m_ReadOnlyAutoSupportedTypes;
+        [NonSerialized]
+        ReadOnlyHashSet<Type> m_ReadOnlySupportedTypes;
+        [NonSerialized]
+        ReadOnlyHashSet<Type> m_ReadOnlyAvailableVariableTypes;
+        [NonSerialized]
+        ReadOnlyHashSet<Type> m_ReadOnlyAvailableConstantTypes;
+
+        static string CircularDependencyError(string accessedProperty, string buildMethod)
+            => $"Do not access {accessedProperty} from within {buildMethod}: it creates a circular dependency. Use the baseSupportedTypes parameter as the base set instead.";
+
+        [NonSerialized]
+        bool m_IsBuildingSupportedTypes;
+        [NonSerialized]
+        bool m_IsBuildingAvailableVariableTypes;
+        [NonSerialized]
+        bool m_IsBuildingAvailableConstantTypes;
 
         [SerializeReference]
         Graph m_Graph;
@@ -288,13 +316,9 @@ namespace Unity.GraphToolkit.Editor.Implementation
                 initializationModel: constant
             );
 
-            if (result != null && result.DataType.Resolve() is { } variableType)
-            {
-                if (!SupportedTypes.Contains(variableType))
-                {
-                    m_SupportedTypes.Add(variableType);
-                }
-            }
+            if (result?.DataType.Resolve() is { } variableType)
+                AddAutoSupportedType(variableType);
+
             return result;
         }
 
@@ -422,10 +446,8 @@ namespace Unity.GraphToolkit.Editor.Implementation
             });
 
             // Add to supported types for Blackboard compatibility
-            if (nodeModel != null && !SupportedTypes.Contains(valueType))
-            {
-                m_SupportedTypes.Add(valueType);
-            }
+            if (nodeModel != null)
+                AddAutoSupportedType(valueType);
 
             return (IConstantNode)nodeModel;
         }
@@ -706,13 +728,13 @@ namespace Unity.GraphToolkit.Editor.Implementation
                     return IsNodeCompatible(customNodeModel.Node);
 
                 case VariableNodeModel variableNodeModel:
-                    return variableNodeModel.VariableDeclarationModel.GetType() == typeof(VariableDeclarationModel) && SupportedTypes.Contains(variableNodeModel.VariableDeclarationModel.DataType.Resolve());
+                    return variableNodeModel.VariableDeclarationModel.GetType() == typeof(VariableDeclarationModel) && SupportedTypesSet.Contains(variableNodeModel.VariableDeclarationModel.DataType.Resolve());
 
                 case ConstantNodeModel constantNodeModel:
-                    return SupportedTypes.Contains(constantNodeModel.Type);
+                    return SupportedTypesSet.Contains(constantNodeModel.Type);
 
                 case WirePortalModel portalNodeModel:
-                    return SupportedTypes.Contains(portalNodeModel.GetPortDataTypeHandle().Resolve());
+                    return SupportedTypesSet.Contains(portalNodeModel.GetPortDataTypeHandle().Resolve());
 
                 case SubgraphNodeModel subgraphNodeModel:
                     var subgraph = (subgraphNodeModel.GetSubgraphModel() as GraphModelImp)?.Graph ??
@@ -763,7 +785,7 @@ namespace Unity.GraphToolkit.Editor.Implementation
         public override bool CanPasteVariable(VariableDeclarationModelBase originalModel)
         {
             return originalModel is VariableDeclarationModel &&
-                   SupportedTypes.Contains(originalModel.DataType.Resolve());
+                   SupportedTypesSet.Contains(originalModel.DataType.Resolve());
         }
 
         public override bool CanBeDroppedInOtherGraph(GraphModel otherGraph)
@@ -853,20 +875,135 @@ namespace Unity.GraphToolkit.Editor.Implementation
             return port.IsExpandable;
         }
 
-        public IReadOnlyList<Type> SupportedTypes
+        public IReadOnlyList<Type> SupportedNodes => m_SupportedNodes ??= PublicGraphFactory.GetNodeTypes(m_Graph.GetType());
+
+        IReadOnlyCollection<Type> AutoSupportedTypes
         {
             get
             {
-                if (m_SupportedTypes == null)
-                {
-                    InitializeSupportedTypes();
-                }
+                if (m_AutoSupportedTypes == null)
+                    InitializeAutoSupportedTypes();
 
+                return m_ReadOnlyAutoSupportedTypes ??= new ReadOnlyHashSet<Type>(m_AutoSupportedTypes);
+            }
+        }
+
+        HashSet<Type> AutoSupportedTypesSet
+        {
+            get
+            {
+                if (m_AutoSupportedTypes == null)
+                    InitializeAutoSupportedTypes();
+
+                return m_AutoSupportedTypes;
+            }
+        }
+
+        void AddAutoSupportedType(Type type)
+        {
+            if (!AutoSupportedTypesSet.Add(type))
+                return;
+
+            // Invalidate caches that depend on the auto set.
+            m_AvailableVariableTypes = null;
+            m_ReadOnlyAvailableVariableTypes = null;
+            m_AvailableConstantTypes = null;
+            m_ReadOnlyAvailableConstantTypes = null;
+            m_SupportedTypes = null;
+            m_ReadOnlySupportedTypes = null;
+        }
+
+        public IReadOnlyCollection<Type> SupportedTypes
+        {
+            get
+            {
+                if (m_SupportedTypes != null)
+                    return m_ReadOnlySupportedTypes;
+
+                if (m_IsBuildingSupportedTypes)
+                    throw new InvalidOperationException(CircularDependencyError(
+                        nameof(SupportedTypes),
+                        "BuildAvailableVariableTypes or BuildAvailableConstantTypes"));
+
+                m_IsBuildingSupportedTypes = true;
+                try
+                {
+                    var result = new HashSet<Type>(AutoSupportedTypesSet);
+                    result.UnionWith(AvailableVariableTypes);
+                    result.UnionWith(AvailableConstantTypes);
+                    m_SupportedTypes = result;
+                    m_ReadOnlySupportedTypes = new ReadOnlyHashSet<Type>(m_SupportedTypes);
+                }
+                finally
+                {
+                    m_IsBuildingSupportedTypes = false;
+                }
+                return m_ReadOnlySupportedTypes;
+            }
+        }
+
+        HashSet<Type> SupportedTypesSet
+        {
+            get
+            {
+                _ = SupportedTypes; // ensure m_SupportedTypes is populated (or throws if circular)
                 return m_SupportedTypes;
             }
         }
 
-        public IReadOnlyList<Type> SupportedNodes => m_SupportedNodes ??= PublicGraphFactory.GetNodeTypes(m_Graph.GetType());
+        public IReadOnlyCollection<Type> AvailableVariableTypes
+        {
+            get
+            {
+                if (m_AvailableVariableTypes != null)
+                    return m_ReadOnlyAvailableVariableTypes;
+
+                if (m_IsBuildingAvailableVariableTypes)
+                    throw new InvalidOperationException(CircularDependencyError(
+                        $"{nameof(SupportedTypes)} or {nameof(AvailableVariableTypes)}",
+                        "BuildAvailableVariableTypes"));
+
+                m_IsBuildingAvailableVariableTypes = true;
+                try
+                {
+                    var built = m_Graph.InvokeBuildAvailableVariableTypes(AutoSupportedTypes);
+                    m_AvailableVariableTypes = built != null ? new HashSet<Type>(built) : [];
+                    m_ReadOnlyAvailableVariableTypes = new ReadOnlyHashSet<Type>(m_AvailableVariableTypes);
+                }
+                finally
+                {
+                    m_IsBuildingAvailableVariableTypes = false;
+                }
+                return m_ReadOnlyAvailableVariableTypes;
+            }
+        }
+
+        public IReadOnlyCollection<Type> AvailableConstantTypes
+        {
+            get
+            {
+                if (m_AvailableConstantTypes != null)
+                    return m_ReadOnlyAvailableConstantTypes;
+
+                if (m_IsBuildingAvailableConstantTypes)
+                    throw new InvalidOperationException(CircularDependencyError(
+                        $"{nameof(SupportedTypes)} or {nameof(AvailableConstantTypes)}",
+                        "BuildAvailableConstantTypes"));
+
+                m_IsBuildingAvailableConstantTypes = true;
+                try
+                {
+                    var built = m_Graph.InvokeBuildAvailableConstantTypes(AutoSupportedTypes);
+                    m_AvailableConstantTypes = built != null ? new HashSet<Type>(built) : [];
+                    m_ReadOnlyAvailableConstantTypes = new ReadOnlyHashSet<Type>(m_AvailableConstantTypes);
+                }
+                finally
+                {
+                    m_IsBuildingAvailableConstantTypes = false;
+                }
+                return m_ReadOnlyAvailableConstantTypes;
+            }
+        }
 
         internal static GraphElementModel CreateContextNodeFromData(IGraphNodeCreationData nodeCreationData, Type customNodeType)
         {
@@ -904,11 +1041,11 @@ namespace Unity.GraphToolkit.Editor.Implementation
         public class DummyContext : ContextNode
         {}
 
-        void InitializeSupportedTypes()
+        void InitializeAutoSupportedTypes()
         {
+            m_AutoSupportedTypes = [];
+
             using var _ = BlockAssetDirtyScope();
-            m_SupportedTypes = new List<Type>();
-            var supportedTypes = new HashSet<Type>();
             var nodeCreationData = new GraphNodeCreationData(this, Vector2.zero, SpawnFlags.Orphan);
 
             foreach (var type in SupportedNodes)
@@ -917,19 +1054,16 @@ namespace Unity.GraphToolkit.Editor.Implementation
 
                 if (typeof(ContextNode).IsAssignableFrom(type))
                 {
-                    InitializeSupportedTypesFromContextNodeType(m_Graph.GetType(), nodeCreationData, type, supportedTypes);
+                    InitializeSupportedTypesFromContextNodeType(m_Graph.GetType(), nodeCreationData, type, m_AutoSupportedTypes);
                     createdElement = (IUserNodeModelImp)(CreateContextNodeFromData(nodeCreationData, type) as ContextNodeModel);
                 }
                 else
                     createdElement = (IUserNodeModelImp)CreateNodeFromData(nodeCreationData, type);
 
-                GetPortTypesForNode((INode)createdElement.Node.m_Implementation, supportedTypes);
+                GetPortTypesForNode((INode)createdElement.Node.m_Implementation, m_AutoSupportedTypes);
 
                 createdElement.CallOnDisable();
             }
-
-            m_SupportedTypes.AddRange(supportedTypes);
-            m_SupportedTypes.Sort((a, b) => Comparer<string>.Default.Compare(a.Name, b.Name));
         }
 
         public override void CloneGraph(GraphModel sourceGraphModel, bool keepVariableDeclarationGuids = false)

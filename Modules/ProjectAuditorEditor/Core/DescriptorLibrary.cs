@@ -32,11 +32,24 @@ namespace Unity.ProjectAuditor.Editor.Core
             return alreadyFound;
         }
 
+        // Every currently registered descriptor. Order is unspecified.
+        public static IReadOnlyCollection<Descriptor> GetAllDescriptors()
+        {
+            if (s_Descriptors == null)
+                return Array.Empty<Descriptor>();
+            return s_Descriptors.Values;
+        }
+
         public static Descriptor GetDescriptor(int idAsInt)
         {
             if (!s_Descriptors.TryGetValue(idAsInt, out var descriptor))
                 throw new InvalidOperationException($"Descriptor with id {idAsInt} is not registered. Ensure Initialize() registers all descriptors used in Analyze(). This can happen if you report an issue without checking context.IsDescriptorEnabled(descriptor), for example if the issue is only applicable on a subset of platforms.");
             return descriptor;
+        }
+
+        public static bool HasDescriptor(int idAsInt)
+        {
+            return s_Descriptors.ContainsKey(idAsInt);
         }
 
         public static string GetAreasString(Areas areas)

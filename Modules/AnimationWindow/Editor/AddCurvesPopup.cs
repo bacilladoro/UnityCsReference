@@ -6,10 +6,11 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEditor.IMGUI.Controls;
 using UnityEngine;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditorInternal
 {
-    class AddCurvesPopup : EditorWindow
+    partial class AddCurvesPopup : EditorWindow
     {
         const float k_WindowPadding = 3;
         const float k_SpaceForSlider = 16;
@@ -18,10 +19,14 @@ namespace UnityEditorInternal
         const float k_WindowMinWidth = 240;
         const float k_WindowFixedHeight = 250;
 
+        [AutoStaticsCleanupOnCodeReload]
         internal static AnimationWindowState s_State;
 
+        [AutoStaticsCleanupOnCodeReload]
         private static AddCurvesPopup s_AddCurvesPopup;
+        [NoAutoStaticsCleanup]
         private static long s_LastClosedTime;
+        [AutoStaticsCleanupOnCodeReload]
         private static AddCurvesPopupHierarchy s_Hierarchy;
 
         private SearchField m_SearchField;

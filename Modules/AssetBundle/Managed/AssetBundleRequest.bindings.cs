@@ -9,23 +9,30 @@ using UnityEngine.Scripting;
 
 namespace UnityEngine
 {
-    // Asynchronous load request from an [[AssetBundle]].
+    ///<summary>Asynchronous load request from an <see cref="AssetBundle" />.</summary>
+    ///<seealso cref="AsyncOperation" />
     [StructLayout(LayoutKind.Sequential)]
     [RequiredByNativeCode]
     [NativeHeader("Modules/AssetBundle/Public/AssetBundleLoadAssetOperation.h")]
     public class AssetBundleRequest : ResourceRequest
     {
+        ///<exclude />
         [NativeMethod("GetLoadedAsset")]
         protected override extern Object GetResult();
 
+        ///<summary>Asset object being loaded (RO).</summary>
+        ///<remarks>Note that accessing asset before <see cref="AsyncOperation.isDone" /> is true will stall the loading process.</remarks>
         public new Object asset { get { return GetResult(); } }
 
+        ///<summary>Asset objects with sub assets being loaded. (RO)</summary>
+        ///<remarks>Note that accessing asset before <see cref="AsyncOperation.isDone" /> is true will stall the loading process.</remarks>
         public extern Object[] allAssets
         {
             [NativeMethod("GetAllLoadedAssets")]
             get;
         }
 
+        ///<exclude />
         public AssetBundleRequest() { }
 
         private AssetBundleRequest(IntPtr ptr) : base(ptr)

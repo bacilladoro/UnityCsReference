@@ -13,6 +13,7 @@ namespace UnityEngine
     ///ConstantForce on the other hand will apply the force every frame until you change the force or torque to a new value.</remarks>
     ///<seealso cref="Rigidbody" />
     [RequireComponent(typeof(Rigidbody))]
+    [global::UnityEngine.NativeClass("ConstantForce", PersistentTypeId = 75)]
     [NativeHeader("Modules/Physics/ConstantForce.h")]
     public class ConstantForce : Behaviour
     {

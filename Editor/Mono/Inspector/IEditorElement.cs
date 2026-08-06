@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.UIElements;
 
 namespace UnityEditor
@@ -24,8 +25,9 @@ namespace UnityEditor
         string name { get; set; }
     }
 
-    internal static class EditorElementHelper
+    internal static partial class EditorElementHelper
     {
+        [AutoStaticsCleanupOnCodeReload]
         internal static Func<int, IPropertyView, string, IEditorElement> CreateFunctor;
 
         internal static IEditorElement CreateEditorElement(int editorIndex, IPropertyView iw, string title)

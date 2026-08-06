@@ -4,14 +4,16 @@
 
 using UnityEngine;
 using UnityEditor;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
     class DragRectGUI
     {
-        static int dragRectHash = "DragRect".GetHashCode();
+        static readonly int dragRectHash = "DragRect".GetHashCode();
+        [NoAutoStaticsCleanup] // frame-transient drag state, reset to 0 on mouse up; safe to persist
         static int s_DragCandidateState = 0;
-        static float s_DragSensitivity = 1.0f;
+        static readonly float s_DragSensitivity = 1.0f;
 
         public static int DragRect(Rect position, int value, int minValue, int maxValue)
         {

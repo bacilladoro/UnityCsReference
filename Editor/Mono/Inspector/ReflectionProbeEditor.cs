@@ -14,16 +14,19 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.SceneManagement;
 using static UnityEditor.RendererEditorBase;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
     [CustomEditor(typeof(ReflectionProbe))]
     [CanEditMultipleObjects]
-    internal class ReflectionProbeEditor : Editor
+    internal partial class ReflectionProbeEditor : Editor
     {
+        [NoAutoStaticsCleanup] // last-interacted editor is refreshed by the next inspector interaction; a stale ref is harmless
         static ReflectionProbeEditor s_LastInteractedEditor;
         // The Dictionary is tracking the active Reflection Probe. It is also keeping a counter (int) to track active editor instances as multiple intances
         // could be created simultaneously. We want to remove the ReflectionProbe from that Dictionary only when the last reference has been destroyed.
+        [AutoStaticsCleanupOnCodeReload]
         static Dictionary<ReflectionProbe,int> s_CurrentlyEditedProbes = new Dictionary<ReflectionProbe, int>();
 
         SerializedProperty m_Mode;
@@ -47,6 +50,7 @@ namespace UnityEditor
 
         SerializedProperty[] m_NearAndFarProperties;
 
+        [NoAutoStaticsCleanup] // lazily recreated on next access; a stale/destroyed Mesh ref is re-evaluated by the null-guarded getter
         private static Mesh s_SphereMesh;
         private Material m_ReflectiveMaterial;
         private Matrix4x4 m_OldLocalSpace = Matrix4x4.identity;
@@ -88,67 +92,69 @@ namespace UnityEditor
                 richTextMiniLabel.richText = true;
             }
 
-            public static GUIStyle richTextMiniLabel = new GUIStyle(EditorStyles.miniLabel);
+            public static readonly GUIStyle richTextMiniLabel = new GUIStyle(EditorStyles.miniLabel);
 
-            public static GUIContent bakeButtonText = EditorGUIUtility.TrTextContent("Bake");
-            public static GUIContent bakeButtonTextDisabled = EditorGUIUtility.TrTextContent("Bake", "You need to save the scene before bake");
+            public static readonly GUIContent bakeButtonText = EditorGUIUtility.TrTextContent("Bake");
+            public static readonly GUIContent bakeButtonTextDisabled = EditorGUIUtility.TrTextContent("Bake", "You need to save the scene before bake");
             public static readonly string[] bakeCustomOptionText = { "Bake as new Cubemap..." };
             public static readonly string[] bakeButtonsText = { "Bake All Reflection Probes" };
 
-            public static GUIContent bakeCustomButtonText = EditorGUIUtility.TrTextContent("Bake", "Bakes Reflection Probe's cubemap, overwriting the existing cubemap texture asset (if any).");
-            public static GUIContent bakeCustomButtonTextDisabled = EditorGUIUtility.TrTextContent("Bake", "You need to save the scene before bake");
-            public static GUIContent runtimeSettingsHeader = EditorGUIUtility.TrTextContent("Runtime Settings", "These settings determine this Probe's priority, blending, intensity, and zone of effect and works in conjunction with the cubemap of this probe when it is rendered.");
-            public static GUIContent backgroundColorText = EditorGUIUtility.TrTextContent("Background Color", "Camera clears the screen to this color before rendering.");
-            public static GUIContent clearFlagsText = EditorGUIUtility.TrTextContent("Clear Flags", "Specify how to fill empty areas of the cubemap.");
-            public static GUIContent intensityText = EditorGUIUtility.TrTextContent("Intensity", "The intensity modifier the Editor applies to this probe's texture in its shader.");
-            public static GUIContent resolutionText = EditorGUIUtility.TrTextContent("Resolution", "The resolution of the cubemap.");
-            public static GUIContent captureCubemapHeader = EditorGUIUtility.TrTextContent("Cubemap Capture Settings", "Settings that determine how to render this probe's cubemap.");
-            public static GUIContent boxProjectionText = EditorGUIUtility.TrTextContent("Box Projection", "When enabled, Unity assumes that the reflected light is originating from the inside of the probe's box, rather than from infinitely far away. This is useful for box-shaped indoor environments.");
-            public static GUIContent blendDistanceText = EditorGUIUtility.TrTextContent("Blend Distance", "Area around the probe where it is blended with other probes. Only used in deferred probes.");
-            public static GUIContent sizeText = EditorGUIUtility.TrTextContent("Box Size", "The size of the box in which the reflections will be applied to objects. The value is not affected by the Transform of the Game Object.");
-            public static GUIContent centerText = EditorGUIUtility.TrTextContent("Box Offset", "The center of the box in which the reflections will be applied to objects. The value is relative to the position of the Game Object.");
-            public static GUIContent customCubemapText = EditorGUIUtility.TrTextContent("Cubemap", "Sets a custom cubemap for this probe.");
-            public static GUIContent importanceText = EditorGUIUtility.TrTextContent("Importance", "When reflection probes overlap, Unity uses Importance to determine which probe should take priority.");
-            public static GUIContent renderDynamicObjects = EditorGUIUtility.TrTextContent("Dynamic Objects", "If enabled dynamic objects are also rendered into the cubemap");
-            public static GUIContent timeSlicing = EditorGUIUtility.TrTextContent("Time Slicing", "If enabled this probe will update over several frames, to help reduce the impact on the frame rate");
-            public static GUIContent refreshMode = EditorGUIUtility.TrTextContent("Refresh Mode", "Controls how this probe refreshes in the Player");
-            public static GUIContent useOcclusionCulling = EditorGUIUtility.TrTextContent("Occlusion Culling", "If this property is enabled, geometries which are blocked from the probe's line of sight are skipped during rendering.");
-            public static GUIContent hdrText = EditorGUIUtility.TrTextContent("HDR", "Enable High Dynamic Range rendering.");
-            public static GUIContent shadowDistanceText = EditorGUIUtility.TrTextContent("Shadow Distance", "Maximum distance at which Unity renders shadows associated with this probe.");
-            public static GUIContent cullingMaskText = EditorGUIUtility.TrTextContent("Culling Mask", "Allows objects on specified layers to be included or excluded in the reflection.");
-            public static GUIContent textureTypeError = EditorGUIUtility.TrTextContent("The associated texture is not a Cubemap. If the texture is backed by an asset this can be fixed by setting the texture type to Cubemap in the texture importer and then rebaking the probe.");
+            public static readonly GUIContent bakeCustomButtonText = EditorGUIUtility.TrTextContent("Bake", "Bakes Reflection Probe's cubemap, overwriting the existing cubemap texture asset (if any).");
+            public static readonly GUIContent bakeCustomButtonTextDisabled = EditorGUIUtility.TrTextContent("Bake", "You need to save the scene before bake");
+            public static readonly GUIContent runtimeSettingsHeader = EditorGUIUtility.TrTextContent("Runtime Settings", "These settings determine this Probe's priority, blending, intensity, and zone of effect and works in conjunction with the cubemap of this probe when it is rendered.");
+            public static readonly GUIContent backgroundColorText = EditorGUIUtility.TrTextContent("Background Color", "Camera clears the screen to this color before rendering.");
+            public static readonly GUIContent clearFlagsText = EditorGUIUtility.TrTextContent("Clear Flags", "Specify how to fill empty areas of the cubemap.");
+            public static readonly GUIContent intensityText = EditorGUIUtility.TrTextContent("Intensity", "The intensity modifier the Editor applies to this probe's texture in its shader.");
+            public static readonly GUIContent resolutionText = EditorGUIUtility.TrTextContent("Resolution", "The resolution of the cubemap.");
+            public static readonly GUIContent captureCubemapHeader = EditorGUIUtility.TrTextContent("Cubemap Capture Settings", "Settings that determine how to render this probe's cubemap.");
+            public static readonly GUIContent boxProjectionText = EditorGUIUtility.TrTextContent("Box Projection", "When enabled, Unity assumes that the reflected light is originating from the inside of the probe's box, rather than from infinitely far away. This is useful for box-shaped indoor environments.");
+            public static readonly GUIContent blendDistanceText = EditorGUIUtility.TrTextContent("Blend Distance", "Area around the probe where it is blended with other probes. Only used in deferred probes.");
+            public static readonly GUIContent sizeText = EditorGUIUtility.TrTextContent("Box Size", "The size of the box in which the reflections will be applied to objects. The value is not affected by the Transform of the Game Object.");
+            public static readonly GUIContent centerText = EditorGUIUtility.TrTextContent("Box Offset", "The center of the box in which the reflections will be applied to objects. The value is relative to the position of the Game Object.");
+            public static readonly GUIContent customCubemapText = EditorGUIUtility.TrTextContent("Cubemap", "Sets a custom cubemap for this probe.");
+            public static readonly GUIContent importanceText = EditorGUIUtility.TrTextContent("Importance", "When reflection probes overlap, Unity uses Importance to determine which probe should take priority.");
+            public static readonly GUIContent renderDynamicObjects = EditorGUIUtility.TrTextContent("Dynamic Objects", "If enabled dynamic objects are also rendered into the cubemap");
+            public static readonly GUIContent timeSlicing = EditorGUIUtility.TrTextContent("Time Slicing", "If enabled this probe will update over several frames, to help reduce the impact on the frame rate");
+            public static readonly GUIContent refreshMode = EditorGUIUtility.TrTextContent("Refresh Mode", "Controls how this probe refreshes in the Player");
+            public static readonly GUIContent useOcclusionCulling = EditorGUIUtility.TrTextContent("Occlusion Culling", "If this property is enabled, geometries which are blocked from the probe's line of sight are skipped during rendering.");
+            public static readonly GUIContent hdrText = EditorGUIUtility.TrTextContent("HDR", "Enable High Dynamic Range rendering.");
+            public static readonly GUIContent shadowDistanceText = EditorGUIUtility.TrTextContent("Shadow Distance", "Maximum distance at which Unity renders shadows associated with this probe.");
+            public static readonly GUIContent cullingMaskText = EditorGUIUtility.TrTextContent("Culling Mask", "Allows objects on specified layers to be included or excluded in the reflection.");
+            public static readonly GUIContent textureTypeError = EditorGUIUtility.TrTextContent("The associated texture is not a Cubemap. If the texture is backed by an asset this can be fixed by setting the texture type to Cubemap in the texture importer and then rebaking the probe.");
 
-            public static GUIContent typeText = EditorGUIUtility.TrTextContent("Type", "Specify the lighting setup for this probe: Baked, Custom, or Realtime.");
-            public static GUIContent[] reflectionProbeMode = { EditorGUIUtility.TrTextContent("Baked"), EditorGUIUtility.TrTextContent("Custom"), EditorGUIUtility.TrTextContent("Realtime") };
-            public static int[] reflectionProbeModeValues = { (int)ReflectionProbeMode.Baked, (int)ReflectionProbeMode.Custom, (int)ReflectionProbeMode.Realtime };
+            public static readonly GUIContent typeText = EditorGUIUtility.TrTextContent("Type", "Specify the lighting setup for this probe: Baked, Custom, or Realtime.");
+            public static readonly GUIContent[] reflectionProbeMode = { EditorGUIUtility.TrTextContent("Baked"), EditorGUIUtility.TrTextContent("Custom"), EditorGUIUtility.TrTextContent("Realtime") };
+            public static readonly int[] reflectionProbeModeValues = { (int)ReflectionProbeMode.Baked, (int)ReflectionProbeMode.Custom, (int)ReflectionProbeMode.Realtime };
 
+            [NoAutoStaticsCleanup] // lazy int[] cache rebuilt on demand by GetResolutionArray; contents are resolution values, safe to persist
             public static int[] reflectionResolutionValuesArray = null;
+            [NoAutoStaticsCleanup] // lazy GUIContent[] cache rebuilt on demand by GetResolutionArray; GUIContent survives reload, safe to persist
             public static GUIContent[] reflectionResolutionTextArray = null;
 
-            public static GUIContent[] clearFlags =
+            public static readonly GUIContent[] clearFlags =
             {
                 EditorGUIUtility.TrTextContent("Skybox"),
                 EditorGUIUtility.TrTextContent("Solid Color")
             };
-            public static int[] clearFlagsValues = { 1, 2 }; // taken from Camera.h
+            public static readonly int[] clearFlagsValues = { 1, 2 }; // taken from Camera.h
 
-            private static GUIContent customPrivitiveBoundsHandleEditModeButton = new GUIContent(
+            private static readonly GUIContent customPrivitiveBoundsHandleEditModeButton = new GUIContent(
                 EditorGUIUtility.IconContent("EditShape").image,
                 EditorGUIUtility.TrTextContent("Adjust the probe's zone of effect. Holding Alt or Shift and click the control handle to pin the center or scale the volume uniformly.").text
             );
-            public static GUIContent[] toolContents =
+            public static readonly GUIContent[] toolContents =
             {
                 customPrivitiveBoundsHandleEditModeButton,
                 EditorGUIUtility.TrIconContent("CapturePosition", "Modify capture position.")
             };
-            public static EditMode.SceneViewEditMode[] sceneViewEditModes = new[]
+            public static readonly EditMode.SceneViewEditMode[] sceneViewEditModes = new[]
             {
                 EditMode.SceneViewEditMode.ReflectionProbeBox,
                 EditMode.SceneViewEditMode.ReflectionProbeOrigin
             };
 
             public static readonly string baseSceneEditingToolText = "Probe Scene Editing Mode: ";
-            public static GUIContent[] toolNames =
+            public static readonly GUIContent[] toolNames =
             {
                 new GUIContent(baseSceneEditingToolText + "Box Projection Bounds", ""),
                 new GUIContent(baseSceneEditingToolText + "Probe Origin", "")
@@ -156,9 +162,9 @@ namespace UnityEditor
         } // end of class Styles
 
         // Should match reflection probe gizmo color in GizmoDrawers.cpp!
-        internal static Color kGizmoReflectionProbe = new Color(0xFF / 255f, 0xE5 / 255f, 0x94 / 255f, 0x80 / 255f);
-        internal static Color kGizmoReflectionProbeDisabled = new Color(0x99 / 255f, 0x89 / 255f, 0x59 / 255f, 0x60 / 255f);
-        internal static Color kGizmoHandleReflectionProbe = new Color(0xFF / 255f, 0xE5 / 255f, 0xAA / 255f, 0xFF / 255f);
+        internal static readonly Color kGizmoReflectionProbe = new Color(0xFF / 255f, 0xE5 / 255f, 0x94 / 255f, 0x80 / 255f);
+        internal static readonly Color kGizmoReflectionProbeDisabled = new Color(0x99 / 255f, 0x89 / 255f, 0x59 / 255f, 0x60 / 255f);
+        internal static readonly Color kGizmoHandleReflectionProbe = new Color(0xFF / 255f, 0xE5 / 255f, 0xAA / 255f, 0xFF / 255f);
 
         private SavedBool m_ShowRuntimeSettings;
         private SavedBool m_ShowCubemapCaptureSettings;
@@ -713,6 +719,9 @@ namespace UnityEditor
             foreach (var t in targets)
             {
                 ReflectionProbe p = (ReflectionProbe)t;
+                if (!p)
+                    continue;
+
                 if (!reflectiveMaterial)
                     return;
 

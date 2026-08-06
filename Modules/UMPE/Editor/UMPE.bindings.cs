@@ -10,6 +10,7 @@ using UnityEngine;
 using UnityEngine.Bindings;
 using UnityEngine.Scripting;
 using UnityEngine.Scripting.APIUpdating;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.MPE
 {
@@ -87,6 +88,7 @@ namespace UnityEditor.MPE
     [StructLayout(LayoutKind.Sequential)]
     public struct ChannelInfo : IEquatable<ChannelInfo>
     {
+        [NoAutoStaticsCleanup] // value-type "invalid" sentinel, no user references, safe to persist across code reload
         public static ChannelInfo invalidChannel = new ChannelInfo()
         {
             m_ChannelId = -1
@@ -134,6 +136,7 @@ namespace UnityEditor.MPE
     [StructLayout(LayoutKind.Sequential)]
     public struct ChannelClientInfo : IEquatable<ChannelClientInfo>
     {
+        [NoAutoStaticsCleanup] // value-type "invalid" sentinel, no user references, safe to persist across code reload
         public static ChannelClientInfo invalidClient = new ChannelClientInfo()
         {
             m_ChannelClientId = -1,
@@ -265,9 +268,11 @@ namespace UnityEditor.MPE
 
         #pragma warning disable CS0067
         [Obsolete("Event SlaveProcessExitedEvent was renamed. Use ProcessExitedEvent. (UnityUpgradable) -> ProcessExitedEvent")]
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<int, ProcessState> SlaveProcessExitedEvent;
         #pragma warning restore CS0067
 
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<int, ProcessState> ProcessExitedEvent;
 
         [RequiredByNativeCode]

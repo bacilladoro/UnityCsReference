@@ -28,11 +28,20 @@ namespace Unity.ProjectAuditor.Editor
         /// </summary>
         public int callbackOrder => 1;  // We want LastBuildReportProvider to update its cached report before we run analysis.
 
+        /// <summary>
+        /// Returns a list of Unity versions that is known to Project Auditor. It is based on the content in the Obsolete API Database.
+        /// </summary>
+        /// <exception cref="System.InvalidOperationException">Thrown if the Project Auditor Rules package is not installed.</exception>
+        public static IReadOnlyList<string> KnownUnityVersions { get { return ObsoleteLibrary.UnityVersions; } }
+
         internal static string s_DataPath => "ProjectAuditor"; // on disk: EditorResourcesPackage/Editor Default Resources/ProjectAuditor
         internal static string s_RulesDataPath => ProjectAuditorRulesPackage.Path + "/Rules";
         internal static string s_RoslynAnalyzersDataPath => ProjectAuditorRulesPackage.Path + "/RoslynAnalyzers";
 
         internal const string DisplayName = "Project Auditor";
+
+        const string k_PreferencesRoot = "Edit > Preferences";
+        internal const string k_PreferencesPath = k_PreferencesRoot + " > Analysis > " + DisplayName;
 
         internal static string ProjectPath
         {
@@ -192,6 +201,8 @@ namespace Unity.ProjectAuditor.Editor
             AsyncProgressState progressState = progress?.StartRoot("Project Auditor", "Analyzing", numModules);
 
             var categoriesSet = new HashSet<IssueCategory>(categories);
+            var suppressedDiagnostics = UserPreferences.BuildSuppressedDiagnosticsSet();
+            UserPreferences.WarnOnInvalidSuppressedDiagnostics(suppressedDiagnostics);
 
             var logTimingsInfo = UserPreferences.LogTimingsInfo;
             var stopwatch = Stopwatch.StartNew();
@@ -215,7 +226,23 @@ namespace Unity.ProjectAuditor.Editor
                             #pragma warning restore UA2001
                         }
 
-                        var resultsList = new List<ReportItem>(results);
+                        var resultsList = new List<ReportItem>();
+
+                        // Suppressed issues are discarded.
+                        if (suppressedDiagnostics.Count > 0)
+                        {
+                            foreach (var item in results)
+                            {
+                                var id = item.DescriptorIdAsString;
+                                if (id == null || !suppressedDiagnostics.Contains(id))
+                                    resultsList.Add(item);
+                            }
+                        }
+                        else
+                        {
+                            resultsList.AddRange(results);
+                        }
+
                         if (resultsList.Count > 0)
                         {
                             report.AddIssues(resultsList);

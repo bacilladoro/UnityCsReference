@@ -9,14 +9,16 @@ using System.Collections.Generic;
 using UnityEditor.Build.Profile;
 using UnityEditor.Modules;
 using System;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Build
 {
     internal delegate void GetScriptCompilationDefinesDelegate(BuildTarget target, HashSet<string> defines);
 
     [RequiredByNativeCode]
-    internal class BuildDefines
+    internal partial class BuildDefines
     {
+        [AutoStaticsCleanupOnCodeReload]
         public static event GetScriptCompilationDefinesDelegate getScriptCompilationDefinesDelegates;
 
         [RequiredByNativeCode]

@@ -12,8 +12,7 @@ namespace Unity.ProjectAuditor.Editor.UI
     {
         const string k_RoslynDisabled = @"The UseRoslynAnalyzers option is disabled. This is required to see results from the Domain Reload Analyzer.
 
-To enable Roslyn diagnostics reporting, make sure the corresponding option is enabled in Preferences > Analysis > " + ProjectAuditor.DisplayName + @" > Use Roslyn Analyzers.
-To open the Preferences window, go to Edit > Preferences (macOS: Unity > Settings) in the main menu.";
+To enable Roslyn diagnostics reporting, make sure the corresponding option is enabled in " + ProjectAuditor.k_PreferencesPath + " > Use Roslyn Analyzers.";
 
         public CodeDomainReloadView(ViewManager viewManager) : base(viewManager)
         {

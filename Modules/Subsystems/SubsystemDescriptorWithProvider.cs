@@ -6,8 +6,10 @@ using System;
 
 namespace UnityEngine.SubsystemsImplementation
 {
+    ///<summary>Information about a <see cref="SubsystemWithProvider" /> that can be queried before creating a subsystem instance.</summary>
     public abstract class SubsystemDescriptorWithProvider : ISubsystemDescriptor
     {
+        ///<summary>A unique string that identifies the <see cref="SubsystemWithProvider" /> that this descriptor can create.</summary>
         public string id { get; set; }
 
         internal protected Type providerType { get; set; }
@@ -19,12 +21,14 @@ namespace UnityEngine.SubsystemsImplementation
         internal abstract void ThrowIfInvalid();
     }
 
+    ///<exclude />
     public class SubsystemDescriptorWithProvider<TSubsystem, TProvider> : SubsystemDescriptorWithProvider
         where TSubsystem : SubsystemWithProvider, new()
         where TProvider : SubsystemProvider<TSubsystem>
     {
         internal override ISubsystem CreateImpl() => this.Create();
 
+        ///<exclude />
         public TSubsystem Create()
         {
             var subsystem = SubsystemManager.FindStandaloneSubsystemByDescriptor(this) as TSubsystem;
@@ -65,8 +69,10 @@ namespace UnityEngine.SubsystemsImplementation
 
     namespace Extensions
     {
+        ///<exclude />
         public static class SubsystemDescriptorExtensions
         {
+            ///<exclude />
             public static SubsystemProxy<TSubsystem, TProvider> CreateProxy<TSubsystem, TProvider>(this SubsystemDescriptorWithProvider<TSubsystem, TProvider> descriptor)
                 where TSubsystem : SubsystemWithProvider, new()
                 where TProvider : SubsystemProvider<TSubsystem>

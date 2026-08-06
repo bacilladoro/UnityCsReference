@@ -101,7 +101,27 @@ namespace UnityEditor
             }
             Undo.RecordObject(m_LightmapSettings.targetObject, "New Lighting Settings");
             Lightmapping.lightingSettingsInternal = ls;
-            ProjectWindowUtil.CreateAsset(ls, (ls.name + ".lighting"));
+
+            string fileName = ls.name + ".lighting";
+
+            // Resolve the folder CreateAsset will target: the selected asset's folder, else the folder shown in the Project Browser (matching ProjectBrowser.ValidateCreateNewAssetPath).
+            string targetFolder;
+            if (Selection.GetFiltered(typeof(Object), SelectionMode.Assets).Length > 0)
+            {
+                string selectionPath = AssetDatabase.GetUniquePathNameAtSelectedPath(fileName);
+                int lastSlash = selectionPath.LastIndexOf('/');
+                targetFolder = lastSlash >= 0 ? selectionPath.Substring(0, lastSlash) : "Assets";
+            }
+            else
+            {
+                targetFolder = ProjectWindowUtil.GetActiveFolderPath();
+            }
+
+            // An immutable folder (e.g. inside a package) can't have a .meta written, so redirect creation to the Assets root in that case.
+            if (!AssetDatabase.TryGetAssetFolderInfo(targetFolder, out _, out bool immutable) || immutable)
+                ProjectWindowUtil.CreateAsset(ls, "Assets/" + fileName);
+            else
+                ProjectWindowUtil.CreateAsset(ls, fileName);
         }
 
         void LightingSettingsGUI()

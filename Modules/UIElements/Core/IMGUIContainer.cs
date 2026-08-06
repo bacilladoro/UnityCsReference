@@ -26,7 +26,7 @@ namespace UnityEngine.UIElements
         /// The function that's called to render and handle IMGUI events.
         /// </summary>
         /// <remarks>
-        /// This is assigned to onGUIHandler and is similar to <see cref="MonoBehaviour.OnGUI"/>.
+        /// This is assigned to onGUIHandler and is similar to <c>MonoBehaviour.OnGUI</c>.
         /// </remarks>
         public Action onGUIHandler
         {
@@ -874,17 +874,11 @@ namespace UnityEngine.UIElements
                 // Detach (e.g. tab switch) fires no FocusOut, so commit the pending delayed-field edit while still attached.
                 if (focusController != null && focusController.IsFocused(this))
                     UIElementsIMGUIUtility.s_FocusOutContainerCallback?.Invoke(this);
-                if (elementPanel != null)
-                {
-                    elementPanel.IMGUIContainersCount--;
-                }
             }
             else if (evt.eventTypeId == AttachToPanelEvent.TypeId())
             {
                 if (elementPanel != null)
                 {
-                    elementPanel.IMGUIContainersCount++;
-
                     // Set class names for foldout depth.
                     SetFoldoutDepthClass();
                 }

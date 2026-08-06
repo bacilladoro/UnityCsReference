@@ -17,6 +17,7 @@ using UnityEngine;
 using UnityEngine.Pool;
 using UnityEngine.Rendering;
 using UnityEngine.UIElements;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -113,6 +114,7 @@ namespace UnityEditor
             public static readonly string buildProfileQualitySettingsOverrideWarning = L10n.Tr("The current active build profile has overridden Quality levels inclusion. To ensure that the correct levels are included in your build, see the Build Profiles...");
             public static readonly string buildProfileQualitySettingsInformationSingular = L10n.Tr("Renaming and deleting Quality levels will impact one build profile. To edit Quality levels included in build profiles, go to Build Profiles...");
             public static readonly string buildProfileQualitySettingsInformationPlural = L10n.Tr("Renaming and deleting Quality levels will impact {0} build profiles. To edit Quality levels included in build profiles, go to Build Profiles...");
+            public static readonly string adaptiveVSyncInfo = L10n.Tr("There are settings below that are only applicable to the current Build Target such as Adaptive Vsync. To change the Build Target, go to the Build Settings");
         }
 
         internal class Styles
@@ -173,7 +175,6 @@ namespace UnityEditor
         private VisualElement m_CurrentRoot;
         private VisualElement m_QualityTableContainer;
         private ListView m_QualityLevelsListView;
-        private IMGUIContainer m_QualityDetailsContainer;
         private VisualElement m_HeaderElement;
         private Label m_LevelsLabel;
         private VisualElement m_QualityLevelHeader;
@@ -411,6 +412,9 @@ namespace UnityEditor
 
             // Build quality level table
             BuildQualityLevelTable();
+
+            // Build global HelpBoxes for warnings (before quality level header)
+            BuildGlobalWarningHelpBoxes();
 
             // Build quality level header (level name + current tag + set current button)
             BuildQualityLevelHeader();
@@ -1201,6 +1205,47 @@ namespace UnityEditor
             RefreshQualityUI();
         }
 
+        private void BuildGlobalWarningHelpBoxes()
+        {
+            // Build Profile Override Warning
+            m_BuildProfileOverrideWarning = new HelpBox
+            {
+                name = "BuildProfileOverrideWarning",
+                messageType = HelpBoxMessageType.Warning,
+                text = Content.buildProfileQualitySettingsOverrideWarning,
+                style = { display = DisplayStyle.None }
+            };
+            m_CurrentRoot.Add(m_BuildProfileOverrideWarning);
+
+            // Build Profile Quality Level Info
+            m_BuildProfileQualityLevelInfo = new HelpBox
+            {
+                name = "BuildProfileQualityLevelInfo",
+                messageType = HelpBoxMessageType.Info,
+                style = { display = DisplayStyle.None }
+            };
+            m_CurrentRoot.Add(m_BuildProfileQualityLevelInfo);
+
+            // Different Render Pipeline Assets Error
+            m_DifferentRenderPipelineAssetsError = new HelpBox
+            {
+                name = "DifferentRenderPipelineAssetsError",
+                messageType = HelpBoxMessageType.Error,
+                style = { display = DisplayStyle.None }
+            };
+            m_CurrentRoot.Add(m_DifferentRenderPipelineAssetsError);
+
+            // Adaptive VSync Info
+            m_AdaptiveVSyncInfo = new HelpBox
+            {
+                name = "AdaptiveVSyncInfo",
+                messageType = HelpBoxMessageType.Info,
+                text = Content.adaptiveVSyncInfo,
+                style = { display = DisplayStyle.None }
+            };
+            m_CurrentRoot.Add(m_AdaptiveVSyncInfo);
+        }
+
         private void BuildQualityLevelHeader()
         {
             m_QualityLevelHeader = new VisualElement
@@ -1291,43 +1336,204 @@ namespace UnityEditor
 
         private void OnSetCurrentButtonClicked()
         {
-            SetCurrentTargetQualityLevel(selectedLevel);
-            RefreshQualityUI();
-            UpdateQualityLevelHeader();
+            if (ChangeCurrentQuality())
+            {
+                SetCurrentTargetQualityLevel(selectedLevel);
+                RefreshQualityUI();
+                UpdateQualityLevelHeader();
+            }
         }
+
+        private static string GetRenderPipelineAssetTypeName(RenderPipelineAsset asset)
+        {
+            if (asset == null)
+            {
+                if (GraphicsSettings.defaultRenderPipeline != null)
+                    return GraphicsSettings.defaultRenderPipeline.GetType().Name;
+
+                return "None";
+            }
+
+            return asset.GetType().Name;
+        }
+
+        private static bool IsDifferentType(RenderPipelineAsset current, RenderPipelineAsset target)
+        {
+            static Type GetRenderPipelineAssetTypeWithFallbackInGraphics(RenderPipelineAsset asset)
+            {
+                if (asset == null)
+                    return (GraphicsSettings.defaultRenderPipeline == null) ? typeof(RenderPipelineAsset) : GraphicsSettings.defaultRenderPipeline.GetType();
+
+                return asset.GetType();
+            }
+
+            Type currentAssetType = GetRenderPipelineAssetTypeWithFallbackInGraphics(current);
+            Type newAssetType = GetRenderPipelineAssetTypeWithFallbackInGraphics(target);
+
+
+            return (currentAssetType != newAssetType);
+        }
+
+        private bool ChangeCurrentQuality()
+        {
+            // Only show confirmation dialog if editing actual QualitySettings (not a preset)
+            if (m_IsEditingQualitySettings)
+            {
+                // Get current quality level render pipeline asset
+                var currentQualityLevel = GetCurrentTargetQualityLevel();
+                var currentLevelSettings = m_QualitySettingsProperty.GetArrayElementAtIndex(currentQualityLevel);
+                var currentRenderPipelineProperty = currentLevelSettings.FindPropertyRelative("customRenderPipeline");
+                var currentAsset = currentRenderPipelineProperty.objectReferenceValue as RenderPipelineAsset;
+
+                // Get target quality level render pipeline asset
+                var targetAsset = m_CustomRenderPipelineProperty.objectReferenceValue as RenderPipelineAsset;
+
+                bool isDifferentType = IsDifferentType(currentAsset, targetAsset);
+
+                // Show confirmation dialog if changing to a quality level with a different render pipeline asset type
+                if (isDifferentType)
+                {
+                    var messageBuilder = new System.Text.StringBuilder();
+                    messageBuilder.AppendLine("Changing the active quality level to one with a different Render Pipeline Asset type can take a significant amount of time.");
+                    messageBuilder.AppendLine();
+                    messageBuilder.AppendLine($"Current Value: {GetRenderPipelineAssetTypeName(currentAsset)}.");
+                    messageBuilder.AppendLine($"New Value: {GetRenderPipelineAssetTypeName(targetAsset)}.");
+
+                    if (!EditorUtility.DisplayDialog("Switch Current Quality Level", messageBuilder.ToString(), "Apply", "Cancel"))
+                    {
+                        return false; // User cancelled
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        private ObjectFieldWithPrompt m_RenderPipelineAssetField;
+        private VisualElement m_LevelDetailsRoot;
+        private VisualElement m_ShadowsSection;
+        private HelpBox m_BuildProfileOverrideWarning;
+        private HelpBox m_BuildProfileQualityLevelInfo;
+        private HelpBox m_DifferentRenderPipelineAssetsError;
+        private HelpBox m_AdaptiveVSyncInfo;
+        private HelpBox m_SRPStatusMessage;
+        private HelpBox m_BirpStatusMessage;
 
         private void BuildQualityLevelDetailsIMGUI()
         {
-            m_QualityDetailsContainer = new IMGUIContainer(DrawQualityLevelDetailsIMGUI)
+            // Load UXML template
+            var uxmlPath = "UXML/ProjectSettings/QualitySettingsEditor-LevelDetails.uxml";
+            var uxml = EditorGUIUtility.Load(uxmlPath) as VisualTreeAsset;
+
+            if (uxml == null)
+                return;
+
+            m_LevelDetailsRoot = uxml.Instantiate();
+            m_CurrentRoot.Add(m_LevelDetailsRoot);
+
+            // Query elements
+            m_RenderPipelineAssetField = m_LevelDetailsRoot.Q<ObjectFieldWithPrompt>("RenderPipelineAsset");
+            m_ShadowsSection = m_LevelDetailsRoot.Q<VisualElement>("ShadowsSection");
+            m_SRPStatusMessage = m_LevelDetailsRoot.Q<HelpBox>("SRPStatusMessage");
+            m_BirpStatusMessage = m_LevelDetailsRoot.Q<HelpBox>("BirpStatusMessage");
+
+            // Set up BiRP deprecation documentation link (set once, used for all BiRP messages)
+            if (m_BirpStatusMessage != null)
             {
-                name = "QualityLevelDetails"
-            };
-            m_QualityDetailsContainer.AddToClassList("quality-details__imgui-container");
-            m_CurrentRoot.Add(m_QualityDetailsContainer);
+                // Workaround, as there is a bug in the documentation forwarder that causes links containing a \ to be broken:
+                m_BirpStatusMessage.linkHref = $"https://docs.unity3d.com/{Application.unityVersionVer}.{Application.unityVersionMaj}/Documentation/Manual/urp/upgrading-from-birp.html";
+
+                // Use this once the documentation forwarder has been fixed
+                // Slack thread: https://unity.slack.com/archives/CTD5B2N7J/p1765805896918059
+                // Ticket: https://jira.unity3d.com/browse/WEBDOCS-2894
+                // m_BirpStatusMessage.linkHref = System.IO.Path.Combine(Help.baseDocumentationUrl, "urp", "upgrading-from-birp");
+            }
+
+            // Set up ObjectFieldWithPrompt callback to only show dialog when types differ AND editing current quality level AND editing actual QualitySettings (not preset)
+            if (m_RenderPipelineAssetField != null)
+            {
+                m_RenderPipelineAssetField.SetShouldDisplayDialog((current, newValue) =>
+                {
+                    // Only show dialog if:
+                    // 1. Changing asset type AND
+                    // 2. Editing the current quality level AND
+                    // 3. Editing actual QualitySettings (not a preset)
+                    bool isDifferentType = IsDifferentType(current as RenderPipelineAsset, newValue as RenderPipelineAsset);
+                    bool isCurrentQualityLevel = (selectedLevel == GetCurrentTargetQualityLevel());
+
+                    return isDifferentType && isCurrentQualityLevel && m_IsEditingQualitySettings;
+                });
+
+                // Bind to the property when the panel attaches
+                m_LevelDetailsRoot.RegisterCallback<AttachToPanelEvent>(evt =>
+                {
+                    RefreshCacheIfNeeded(selectedLevel);
+                    if (m_CustomRenderPipelineProperty != null && m_RenderPipelineAssetField != null)
+                    {
+                        m_RenderPipelineAssetField.BindProperty(m_CustomRenderPipelineProperty);
+                    }
+                });
+            }
+
+            // Set up IMGUI containers for each section
+            SetupIMGUIContainer("RenderingIMGUI", DrawRenderingIMGUI);
+            SetupIMGUIContainer("TexturesIMGUI", DrawTexturesIMGUI);
+            SetupIMGUIContainer("ParticlesIMGUI", DrawParticlesIMGUI);
+            SetupIMGUIContainer("TerrainIMGUI", DrawTerrainIMGUI);
+            SetupIMGUIContainer("ShadowsIMGUI", DrawShadowsIMGUI);
+            SetupIMGUIContainer("AsyncUploadIMGUI", DrawAsyncUploadIMGUI);
+            SetupIMGUIContainer("LODDetailIMGUI", DrawLODDetailIMGUI);
+            SetupIMGUIContainer("MeshesIMGUI", DrawMeshesIMGUI);
+
+            // Schedule periodic updates for warnings visibility
+            m_LevelDetailsRoot.schedule.Execute(UpdateWarningsVisibility).Every(1000);
         }
 
-        private void DrawQualityLevelDetailsIMGUI()
+        private void SetupIMGUIContainer(string containerName, Action drawCallback)
         {
-            m_QualitySettings.Update();
+            var container = m_LevelDetailsRoot?.Q<IMGUIContainer>(containerName);
+            if (container != null)
+            {
+                container.onGUIHandler = () =>
+                {
+                    m_QualitySettings.Update();
+                    selectedLevel = Mathf.Clamp(selectedLevel, 0, Mathf.Max(0, m_QualitySettingsProperty.arraySize - 1));
+                    RefreshCacheIfNeeded(selectedLevel);
+                    float restoreLabelWidth = EditorGUIUtility.labelWidth;
+                    EditorGUIUtility.labelWidth = 220;
+                    drawCallback?.Invoke();
+                    EditorGUIUtility.labelWidth = restoreLabelWidth;
+                    m_QualitySettings.ApplyModifiedProperties();
+                };
+            }
+        }
 
-            // Use the inspected quality level (not necessarily the current active level)
-            selectedLevel = Mathf.Clamp(selectedLevel, 0, Mathf.Max(0, m_QualitySettingsProperty.arraySize - 1));
-            RefreshCacheIfNeeded(selectedLevel);
-
+        private void UpdateWarningsVisibility()
+        {
             ShowAffectedBuildProfileInformation();
             CheckSameRenderPipelineAssetForOverridenQualityLevels();
 
-            if (BuildProfileContext.ActiveProfileHasQualitySettings())
-                EditorGUILayout.HelpBox(Content.buildProfileQualitySettingsOverrideWarning, MessageType.Warning, true);
+            if (m_BuildProfileOverrideWarning != null)
+            {
+                bool showWarning = BuildProfileContext.ActiveProfileHasQualitySettings();
+                m_BuildProfileOverrideWarning.style.display = showWarning ? DisplayStyle.Flex : DisplayStyle.None;
+            }
 
-            if (m_AdaptiveVSyncVisible)
-                EditorGUILayout.HelpBox("There are settings below that are only applicable to the current Build Target such as Adaptive Vsync. To change the Build Target, go to the Build Settings", MessageType.Info);
+            if (m_AdaptiveVSyncInfo != null)
+            {
+                m_AdaptiveVSyncInfo.style.display = m_AdaptiveVSyncVisible ? DisplayStyle.Flex : DisplayStyle.None;
+            }
 
-            // Render all quality level property fields
-            DrawQualityLevelPropertiesIMGUI(selectedLevel);
+            // Update shadows section visibility
+            if (m_ShadowsSection != null)
+            {
+                bool usingSRP = IsUsingSRP();
+                bool shadowMaskSupported = SupportedRenderingFeatures.IsMixedLightingModeSupported(MixedLightingMode.Shadowmask);
+                bool showShadowMaskUsage = shadowMaskSupported && !SupportedRenderingFeatures.active.overridesShadowmask;
+                bool showShadowsSection = !usingSRP || showShadowMaskUsage;
 
-            // Apply modified properties at the end
-            m_QualitySettings.ApplyModifiedProperties();
+                m_ShadowsSection.style.display = showShadowsSection ? DisplayStyle.Flex : DisplayStyle.None;
+            }
         }
 
         private void RefreshQualityUI()
@@ -1335,20 +1541,11 @@ namespace UnityEditor
             m_QualitySettings.Update();
             UpdateQualityLevelHeader();
             m_QualityLevelsListView?.RefreshItems();
-            m_QualityDetailsContainer?.MarkDirtyRepaint();
+            m_LevelDetailsRoot?.MarkDirtyRepaint();
         }
 
-        private void DrawQualityLevelPropertiesIMGUI(int selectedLevel)
+        private void DrawRenderingIMGUI()
         {
-            float restoreLabelWidth = EditorGUIUtility.labelWidth;
-            EditorGUIUtility.labelWidth = 220;
-
-            // This contains the bulk of property rendering from OnInspectorGUI
-            GUILayout.Label(EditorGUIUtility.TempContent("Rendering"), EditorStyles.boldLabel);
-
-            EditorGUI.RenderPipelineAssetField(Content.kRenderPipelineObject, m_QualitySettings, m_CustomRenderPipelineProperty);
-
-            // Show unified render pipeline status message
             ShowRenderPipelineStatusMessage(out bool usingSRP);
 
             if (!usingSRP)
@@ -1413,12 +1610,12 @@ namespace UnityEditor
                     m_AdaptiveVsyncProperty.boolValue = false;
                     break;
             }
+        }
 
-            bool shadowMaskSupported = SupportedRenderingFeatures.IsMixedLightingModeSupported(MixedLightingMode.Shadowmask);
-            bool showShadowMaskUsage = shadowMaskSupported && !SupportedRenderingFeatures.active.overridesShadowmask;
+        private void DrawTexturesIMGUI()
+        {
 
-            GUILayout.Space(10);
-            GUILayout.Label(EditorGUIUtility.TempContent("Textures"), EditorStyles.boldLabel);
+            bool usingSRP = IsUsingSRP();
 
             EditorGUI.BeginChangeCheck();
             EditorGUILayout.PropertyField(m_GlobalTextureMipmapLimitProperty, Content.kGlobalTextureMipmapLimit);
@@ -1444,9 +1641,13 @@ namespace UnityEditor
                 EditorGUILayout.PropertyField(m_StreamingMipmapsMaxFileIORequestsProperty, Content.kStreamingMipmapsMaxFileIORequests);
                 EditorGUI.indentLevel--;
             }
+        }
 
-            GUILayout.Space(10);
-            GUILayout.Label(EditorGUIUtility.TempContent("Particles"), EditorStyles.boldLabel);
+        private void DrawParticlesIMGUI()
+        {
+
+            bool usingSRP = IsUsingSRP();
+
             if (!usingSRP)
             {
                 EditorGUILayout.PropertyField(m_SoftParticlesProperty);
@@ -1455,8 +1656,11 @@ namespace UnityEditor
             }
             EditorGUILayout.PropertyField(m_ParticleRaycastBudgetProperty);
 
-            GUILayout.Space(10);
-            GUILayout.Label(EditorGUIUtility.TempContent("Terrain"), EditorStyles.boldLabel);
+        }
+
+        private void DrawTerrainIMGUI()
+        {
+
             EditorGUILayout.PropertyField(m_BillboardsFaceCameraPositionProperty, Content.kBillboardsFaceCameraPos);
             EditorGUILayout.PropertyField(m_UseLegacyDetailsDistributionProperty, Content.kUseLegacyDistribution);
 
@@ -1520,34 +1724,37 @@ namespace UnityEditor
             EditorGUILayout.EndHorizontal();
 
             EditorGUIUtility.labelWidth = originalLabelWidth;
+        }
 
-            if (!usingSRP || showShadowMaskUsage)
+        private void DrawShadowsIMGUI()
+        {
+
+            bool usingSRP = IsUsingSRP();
+            bool shadowMaskSupported = SupportedRenderingFeatures.IsMixedLightingModeSupported(MixedLightingMode.Shadowmask);
+            bool showShadowMaskUsage = shadowMaskSupported && !SupportedRenderingFeatures.active.overridesShadowmask;
+
+            if (showShadowMaskUsage)
+                EditorGUILayout.PropertyField(m_ShadowMaskUsageProperty);
+
+            if (!usingSRP)
             {
-                GUILayout.Space(10);
+                EditorGUILayout.PropertyField(m_ShadowsProperty);
+                EditorGUILayout.PropertyField(m_ShadowResolutionProperty);
+                EditorGUILayout.PropertyField(m_ShadowProjectionProperty);
+                EditorGUILayout.PropertyField(m_ShadowDistanceProperty);
+                EditorGUILayout.PropertyField(m_ShadowNearPlaneOffsetProperty);
+                EditorGUILayout.PropertyField(m_ShadowCascadesProperty);
 
-                GUILayout.Label(EditorGUIUtility.TempContent("Shadows"), EditorStyles.boldLabel);
-
-                if (showShadowMaskUsage)
-                    EditorGUILayout.PropertyField(m_ShadowMaskUsageProperty);
-
-                if (!usingSRP)
-                {
-                    EditorGUILayout.PropertyField(m_ShadowsProperty);
-                    EditorGUILayout.PropertyField(m_ShadowResolutionProperty);
-                    EditorGUILayout.PropertyField(m_ShadowProjectionProperty);
-                    EditorGUILayout.PropertyField(m_ShadowDistanceProperty);
-                    EditorGUILayout.PropertyField(m_ShadowNearPlaneOffsetProperty);
-                    EditorGUILayout.PropertyField(m_ShadowCascadesProperty);
-
-                    if (m_ShadowCascadesProperty.intValue == 2)
-                        DrawCascadeSplitGUI<float>(ref m_ShadowCascade2SplitProperty);
-                    else if (m_ShadowCascadesProperty.intValue == 4)
-                        DrawCascadeSplitGUI<Vector3>(ref m_ShadowCascade4SplitProperty);
-                }
+                if (m_ShadowCascadesProperty.intValue == 2)
+                    DrawCascadeSplitGUI<float>(ref m_ShadowCascade2SplitProperty);
+                else if (m_ShadowCascadesProperty.intValue == 4)
+                    DrawCascadeSplitGUI<Vector3>(ref m_ShadowCascade4SplitProperty);
             }
 
-            GUILayout.Space(10);
-            GUILayout.Label(EditorGUIUtility.TempContent("Async Asset Upload"), EditorStyles.boldLabel);
+        }
+
+        private void DrawAsyncUploadIMGUI()
+        {
 
             EditorGUILayout.PropertyField(m_AsyncUploadTimeSliceProperty, Content.kAsyncUploadTimeSlice);
             EditorGUILayout.PropertyField(m_AsyncUploadBufferSizeProperty, Content.kAsyncUploadBufferSize);
@@ -1562,8 +1769,10 @@ namespace UnityEditor
                 EditorGUILayout.HelpBox(messageToDisplay, MessageType.Warning, false);
             }
 
-            GUILayout.Space(10);
-            GUILayout.Label(EditorGUIUtility.TempContent("Level of Detail"), EditorStyles.boldLabel);
+        }
+
+        private void DrawLODDetailIMGUI()
+        {
 
             if (!SupportedRenderingFeatures.active.overridesLODBias)
                 EditorGUILayout.PropertyField(m_LodBiasProperty, Content.kLODBiasLabel);
@@ -1573,29 +1782,13 @@ namespace UnityEditor
             if (!SupportedRenderingFeatures.active.overridesEnableLODCrossFade)
                 EditorGUILayout.PropertyField(m_EnableLODCrossFadeProperty, Content.kEnableLODCrossFadeLabel);
 
-            GUILayout.Space(10);
-            GUILayout.Label(EditorGUIUtility.TempContent("Meshes"), EditorStyles.boldLabel);
-            EditorGUILayout.PropertyField(m_SkinWeightsProperty);
-
-            EditorGUIUtility.labelWidth = restoreLabelWidth;
         }
 
-        private static void DrawHorizontalDivider()
+        private void DrawMeshesIMGUI()
         {
-            var spacerLine = GUILayoutUtility.GetRect(GUIContent.none,
-                GUIStyle.none,
-                GUILayout.ExpandWidth(true),
-                GUILayout.Height(1));
-            var oldBgColor = GUI.backgroundColor;
-            if (EditorGUIUtility.isProSkin)
-                GUI.backgroundColor = oldBgColor * 0.7058f;
-            else
-                GUI.backgroundColor = Color.black;
 
-            if (Event.current.type == EventType.Repaint)
-                EditorGUIUtility.whiteTextureStyle.Draw(spacerLine, GUIContent.none, false, false, false, false);
+            EditorGUILayout.PropertyField(m_SkinWeightsProperty);
 
-            GUI.backgroundColor = oldBgColor;
         }
 
         void SoftParticlesHintGUI()
@@ -1679,10 +1872,14 @@ namespace UnityEditor
             return overrideActive;
         }
 
+        [NoAutoStaticsCleanup] // Scratch buffer for building a UI warning; cleared before each use and holds only strings, no user-type references.
         static List<string> s_PlatformsWithDifferentRPAssets = new();
 
         void CheckSameRenderPipelineAssetForOverridenQualityLevels()
         {
+            if (m_DifferentRenderPipelineAssetsError == null)
+                return;
+
             s_PlatformsWithDifferentRPAssets.Clear();
 
             foreach (var platform in m_ValidPlatforms)
@@ -1696,41 +1893,78 @@ namespace UnityEditor
 
             if (s_PlatformsWithDifferentRPAssets.Count > 0)
             {
-                EditorGUILayout.HelpBox($"The following platforms have assets in its associated Quality levels that belong to different render pipelines: {string.Join(", ", s_PlatformsWithDifferentRPAssets)}", MessageType.Error);
-            }
-        }
-
-        private static System.Text.StringBuilder s_MessageBuilder = new System.Text.StringBuilder();
-        void ShowRenderPipelineStatusMessage(out bool usingSRP)
-        {
-            s_MessageBuilder.Clear();
-            MessageType messageType = MessageType.Info;
-            bool showLearnMoreLink = false;
-            usingSRP = false;
-
-            // Check the render pipeline configuration
-            if (GraphicsSettings.defaultRenderPipeline != null)
-            {
-                usingSRP = true;
-                s_MessageBuilder.Append("A Scriptable Render Pipeline is in use");
-
-                if (m_CustomRenderPipelineProperty.objectReferenceValue == null)
-                {
-                    s_MessageBuilder.AppendLine(" because a Default Render Pipeline Asset is set in Graphics.");
-                    s_MessageBuilder.Append("You can assign a Render Pipeline Asset in this quality level to override the one used in Graphics");
-                }
-
-                s_MessageBuilder.Append(". Some settings will not be used and are hidden.");
-            }
-            else if (m_CustomRenderPipelineProperty.objectReferenceValue != null)
-            {
-                usingSRP = true;
-                s_MessageBuilder.Append("A Scriptable Render Pipeline is in use. But a Default Render Pipeline Asset in Graphics is missing.");
-                s_MessageBuilder.Append(" Some settings will not be used and are hidden.");
+                m_DifferentRenderPipelineAssetsError.text = $"The following platforms have assets in its associated Quality levels that belong to different render pipelines: {string.Join(", ", s_PlatformsWithDifferentRPAssets)}";
+                m_DifferentRenderPipelineAssetsError.style.display = DisplayStyle.Flex;
             }
             else
             {
-                // Built-in Render Pipeline (deprecated)
+                m_DifferentRenderPipelineAssetsError.style.display = DisplayStyle.None;
+            }
+        }
+
+        [NoAutoStaticsCleanup] // Reused message-formatting buffer; ShowRenderPipelineStatusMessage clears it before each use and it holds only text, safe to persist across reloads.
+        private static System.Text.StringBuilder s_MessageBuilder = new System.Text.StringBuilder();
+
+        bool IsUsingSRP()
+        {
+            // Check if using Scriptable Render Pipeline
+            if (GraphicsSettings.defaultRenderPipeline != null)
+                return true;
+            if (m_CustomRenderPipelineProperty != null && m_CustomRenderPipelineProperty.objectReferenceValue != null)
+                return true;
+            return false;
+        }
+
+        void ShowRenderPipelineStatusMessage(out bool usingSRP)
+        {
+            usingSRP = IsUsingSRP();
+
+            // Determine display states based on whether SRP is in use
+            DisplayStyle srpHelpBoxVisibility = DisplayStyle.None;
+            DisplayStyle birpHelpboxVisibilty = DisplayStyle.None;
+
+            // Build the appropriate message
+            s_MessageBuilder.Clear();
+            MessageType messageType = MessageType.Info;
+
+            if (usingSRP)
+            {
+                // SRP is in use - build message and show without Learn More link
+                if (GraphicsSettings.defaultRenderPipeline != null)
+                {
+                    if (m_CustomRenderPipelineProperty.objectReferenceValue == null)
+                    {
+                        // Default RP from Graphics, no quality-level override
+                        s_MessageBuilder.Append("A Scriptable Render Pipeline is in use");
+                        s_MessageBuilder.AppendLine(" because a Default Render Pipeline Asset is set in Graphics.");
+                        s_MessageBuilder.Append("You can assign a Render Pipeline Asset in this quality level to override the one used in Graphics");
+                        s_MessageBuilder.Append(". Some settings will not be used and are hidden.");
+                    }
+                    else
+                    {
+                        s_MessageBuilder.Append("A Scriptable Render Pipeline is in use. Some settings will not be used and are hidden.");
+                    }
+                }
+                else
+                {
+                    // Quality-level RP without default RP in Graphics
+                    s_MessageBuilder.Append("A Scriptable Render Pipeline is in use. But a Default Render Pipeline Asset in Graphics is missing.");
+                    s_MessageBuilder.Append(" Some settings will not be used and are hidden.");
+                }
+
+                if (s_MessageBuilder.Length > 0)
+                {
+                    srpHelpBoxVisibility = DisplayStyle.Flex;
+                    if (m_SRPStatusMessage != null)
+                    {
+                        m_SRPStatusMessage.text = s_MessageBuilder.ToString();
+                        m_SRPStatusMessage.messageType = (HelpBoxMessageType)messageType;
+                    }
+                }
+            }
+            else
+            {
+                // BiRP deprecation - build message and show with Learn More link
                 bool installedSRP = false;
                 foreach (var type in TypeCache.GetTypesDerivedFrom<RenderPipelineAsset>())
                 {
@@ -1743,75 +1977,50 @@ namespace UnityEditor
 
                 if (installedSRP)
                 {
-                    s_MessageBuilder.Append("If you don't use a render pipeline asset, Unity uses the Built-In Render Pipeline which is deprecated. ");
-                    s_MessageBuilder.Append("Migrate your project to the Universal Render Pipeline instead.");
+                    s_MessageBuilder.Append("If you don't use a render pipeline asset, Unity uses the Built-In Render Pipeline which is deprecated. Migrate your project to the Universal Render Pipeline instead.");
                     messageType = MessageType.Warning;
                 }
                 else
                 {
-                    s_MessageBuilder.Append("The Built-In Render Pipeline is deprecated. ");
-                    s_MessageBuilder.Append("Migrate your project to the Universal Render Pipeline instead.");
+                    s_MessageBuilder.Append("The Built-In Render Pipeline is deprecated. Migrate your project to the Universal Render Pipeline instead.");
                     messageType = MessageType.Info;
                 }
 
-                showLearnMoreLink = true;
-            }
-
-            // Show the unified message
-            if (s_MessageBuilder.Length > 0)
-            {
-                if (showLearnMoreLink)
+                birpHelpboxVisibilty = DisplayStyle.Flex;
+                if (m_BirpStatusMessage != null)
                 {
-                    // Show with "Learn more" link for Built-in deprecation
-                    // Workaround, as there is a bug in the documentation forwarder that causes links containing a / to be broken:
-                    string linkHref = $"https://docs.unity3d.com/{Application.unityVersionVer}.{Application.unityVersionMaj}/Documentation/Manual/urp/upgrading-from-birp.html";
-
-                    // Use this once the documentation forwarder has been fixed
-                    // Slack thread: https://unity.slack.com/archives/CTD5B2N7J/p1765805896918059
-                    // Ticket: https://jira.unity3d.com/browse/WEBDOCS-2894
-                    //   linkHref = System.IO.Path.Combine(Help.baseDocumentationUrl, "urp", "upgrading-from-birp");
-
-                    using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
-                    {
-                        var infoLabel = EditorGUIUtility.TempContent(s_MessageBuilder.ToString(), EditorGUIUtility.GetHelpIcon(messageType));
-                        Rect r = GUILayoutUtility.GetRect(infoLabel, EditorStyles.wordWrappedLabel);
-                        int oldIndent = EditorGUI.indentLevel;
-                        EditorGUI.indentLevel = 0;
-                        EditorGUI.LabelField(r, infoLabel, EditorStyles.wordWrappedLabel);
-                        EditorGUI.indentLevel = oldIndent;
-
-                        // Right align the Link
-                        using (new EditorGUILayout.HorizontalScope())
-                        {
-                            GUILayout.FlexibleSpace();
-                            EditorGUI.indentLevel = 2;
-                            if (EditorGUILayout.LinkButton("Learn more..."))
-                            {
-                                Help.BrowseURL(linkHref);
-                            }
-                        }
-                        EditorGUI.indentLevel = oldIndent;
-                        GUILayout.Space(3);
-                    }
-                }
-                else
-                {
-                    // Standard help box for SRP messages
-                    EditorGUILayout.HelpBox(s_MessageBuilder.ToString(), messageType);
+                    m_BirpStatusMessage.text = s_MessageBuilder.ToString();
+                    m_BirpStatusMessage.messageType = (HelpBoxMessageType)messageType;
                 }
             }
+
+            // Apply display states to both HelpBoxes
+            if (m_SRPStatusMessage != null)
+                m_SRPStatusMessage.style.display = srpHelpBoxVisibility;
+
+            if (m_BirpStatusMessage != null)
+                m_BirpStatusMessage.style.display = birpHelpboxVisibilty;
         }
 
         private void ShowAffectedBuildProfileInformation()
         {
+            if (m_BuildProfileQualityLevelInfo == null)
+                return;
+
             var profilesWithQualityLevelOverrides = BuildProfileQualitySettingsEditor.GetBuildProfilesWithSettingsOverrideCount();
 
             if (profilesWithQualityLevelOverrides > 0)
             {
                 if (profilesWithQualityLevelOverrides == 1)
-                    EditorGUILayout.HelpBox(string.Format(Content.buildProfileQualitySettingsInformationSingular), MessageType.Info);
+                    m_BuildProfileQualityLevelInfo.text = string.Format(Content.buildProfileQualitySettingsInformationSingular);
                 else
-                    EditorGUILayout.HelpBox(string.Format(Content.buildProfileQualitySettingsInformationPlural, profilesWithQualityLevelOverrides), MessageType.Info);
+                    m_BuildProfileQualityLevelInfo.text = string.Format(Content.buildProfileQualitySettingsInformationPlural, profilesWithQualityLevelOverrides);
+
+                m_BuildProfileQualityLevelInfo.style.display = DisplayStyle.Flex;
+            }
+            else
+            {
+                m_BuildProfileQualityLevelInfo.style.display = DisplayStyle.None;
             }
         }
 
@@ -1923,6 +2132,13 @@ namespace UnityEditor
 
             m_CachedSelectedLevel = selectedLevel;
             m_CachedQualityLevelCount = m_QualitySettingsProperty.arraySize;
+
+            // Rebind the ObjectFieldWithPrompt when switching quality levels
+            if (m_RenderPipelineAssetField != null && m_CustomRenderPipelineProperty != null)
+            {
+                m_RenderPipelineAssetField.Unbind();
+                m_RenderPipelineAssetField.BindProperty(m_CustomRenderPipelineProperty);
+            }
         }
 
         void RefreshCacheIfNeeded(int selectedLevel)

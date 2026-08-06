@@ -9,40 +9,30 @@ namespace UnityEngine.Rendering
     [NativeHeader("Runtime/GfxDevice/GraphicsApiValidationBindings.h")]
     public static class GraphicsApiValidation
     {
-        public static bool IsValidationSupported()
-        {
-            return false;
-        }
+        [FreeFunction("IsGraphicsApiValidationSupported", IsThreadSafe = false)]
+        public static extern bool IsValidationSupported();
 
-        [NativeConditional("(PLATFORM_WIN || PLATFORM_WINRT) && !PLATFORM_GAMECORE")]
         [FreeFunction("ClearGraphicsApiValidationErrors", IsThreadSafe = false)]
         public static extern void ClearValidationErrors();
 
-        [NativeConditional("(PLATFORM_WIN || PLATFORM_WINRT) && !PLATFORM_GAMECORE")]
         [FreeFunction("GetGraphicsApiValidationErrorCount", IsThreadSafe = false)]
         public static extern int GetValidationErrorCount();
 
-        [NativeConditional("(PLATFORM_WIN || PLATFORM_WINRT) && !PLATFORM_GAMECORE")]
         [FreeFunction("GetGraphicsApiValidationError", IsThreadSafe = false)]
         public static extern string GetValidationError(int index);
 
-        [NativeConditional("(PLATFORM_WIN || PLATFORM_WINRT) && !PLATFORM_GAMECORE")]
         [FreeFunction("GetGraphicsApiValidationErrorsDroppedCount", IsThreadSafe = false)]
         public static extern int GetValidationErrorsDroppedCount();
 
-        [NativeConditional("(PLATFORM_WIN || PLATFORM_WINRT) && !PLATFORM_GAMECORE")]
         [FreeFunction("SetGraphicsApiValidationErrorLoggingSuppressed", IsThreadSafe = false)]
         public static extern void SetValidationErrorLoggingSuppressed(bool suppressed);
 
-        [NativeConditional("(PLATFORM_WIN || PLATFORM_WINRT) && !PLATFORM_GAMECORE")]
         [FreeFunction("IsGraphicsApiValidationErrorLoggingSuppressed", IsThreadSafe = false)]
         public static extern bool IsValidationErrorLoggingSuppressed();
 
-        [NativeConditional("(PLATFORM_WIN || PLATFORM_WINRT) && !PLATFORM_GAMECORE")]
         [FreeFunction("IsGraphicsApiValidationRequested", IsThreadSafe = false)]
         public static extern bool IsValidationRequested();
 
-        [NativeConditional("(PLATFORM_WIN || PLATFORM_WINRT) && !PLATFORM_GAMECORE")]
         [FreeFunction("IsGraphicsApiValidationActive", IsThreadSafe = false)]
         public static extern bool IsValidationActive();
     }

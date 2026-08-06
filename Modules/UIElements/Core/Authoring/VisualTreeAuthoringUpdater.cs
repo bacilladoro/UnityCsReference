@@ -41,7 +41,6 @@ namespace UnityEngine.UIElements
         /// Called when the change processor is unregistered.
         /// </summary>
         /// <param name="panel">The panel the change processor is unregistering from.</param>
-        /// <param name="changes">The changes that occurred during that frame.</param>
         void EndProcessing(BaseVisualElementPanel panel);
     }
 

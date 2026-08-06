@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using System.Runtime.InteropServices;
 using UnityEngine.Bindings;
 using UnityEngine.Scripting;
@@ -38,10 +39,11 @@ namespace UnityEditor.Hardware
         }
     }
 
-    public sealed class Usb
+    public sealed partial class Usb
     {
         public delegate void OnDevicesChangedHandler(UsbDevice[] devices);
 
+        [AutoStaticsCleanupOnCodeReload]
         public static event OnDevicesChangedHandler DevicesChanged;
 
         [RequiredByNativeCode]
@@ -100,9 +102,10 @@ namespace UnityEditor.Hardware
     }
 
     [NativeHeader("Editor/Src/Devices/DevDevice.h")]
-    public sealed class DevDeviceList
+    public sealed partial class DevDeviceList
     {
         public delegate void OnChangedHandler();
+        [AutoStaticsCleanupOnCodeReload]
         public static event OnChangedHandler Changed;
 
         public static void OnChanged()

@@ -4,6 +4,7 @@
 
 using System.Collections.Generic;
 using System.Linq;
+using Unity.Scripting.LifecycleManagement;
 
 
 namespace UnityEditor.IMGUI.Controls
@@ -18,6 +19,7 @@ namespace UnityEditor.IMGUI.Controls
 
     internal abstract class LazyTreeViewDataSource<TIdentifier> : TreeViewDataSource<TIdentifier> where TIdentifier : unmanaged, System.IEquatable<TIdentifier>
     {
+        [NoAutoStaticsCleanup] // TIdentifier has unmanaged constraint, so the reused list holds no user-type refs; safe to persist
         static readonly List<TreeViewItem<TIdentifier>> s_ChildListForCollapsedParent = new List<TreeViewItem<TIdentifier>>();
 
         public LazyTreeViewDataSource(TreeViewController<TIdentifier> treeView)

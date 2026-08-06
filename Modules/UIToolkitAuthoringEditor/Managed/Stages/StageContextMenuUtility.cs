@@ -39,9 +39,19 @@ internal static class StageContextMenuUtility
     {
         PopulateEditOperations(view, in node, menu, handler);
         menu.AppendSeparator();
+        PopulateFrameOperations(element, menu);
+        menu.AppendSeparator();
+        PopulateSelectionOperations(view, menu);
+        menu.AppendSeparator();
         PopulateOpenActions(element, menu);
         menu.AppendSeparator();
         PopulateElementOperations(menu);
+    }
+
+    static void PopulateFrameOperations(VisualElement element, DropdownMenu menu)
+    {
+        menu.AppendAction("Frame Selection", _ => RequestFramingCommand.Execute(CommandSources.Hierarchy, element, orientToFace: false));
+        menu.AppendAction("Frame and Align to View", _ => RequestFramingCommand.Execute(CommandSources.Hierarchy, element, orientToFace: true));
     }
 
     static void PopulateOpenActions(VisualElement element, DropdownMenu menu)
@@ -185,8 +195,10 @@ internal static class StageContextMenuUtility
 
         var deleteMenu = k_EditFolderName + "/" + k_Delete;
         AppendAction(menu, k_Delete, Menu.GetHotkey(deleteMenu), view.OnDelete, handler.CanDelete(view));
+    }
 
-        menu.AppendSeparator();
+    static void PopulateSelectionOperations(HierarchyView view, DropdownMenu menu)
+    {
         var selectAllMenu = k_EditFolderName + "/" + k_SelectAll;
         AppendAction(menu, k_SelectAll, Menu.GetHotkey(selectAllMenu), () => { view.SelectAll(exposedOnly:true); });
         var deselectAllMenu = k_EditFolderName + "/" + k_DeselectAll;

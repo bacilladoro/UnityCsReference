@@ -8,6 +8,7 @@ using System.Linq;
 using UnityEngine;
 using UnityObject = UnityEngine.Object;
 using DataModeSupportHandler = UnityEditor.DeclareDataModeSupportAttribute.DataModeSupportHandler;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -298,14 +299,10 @@ namespace UnityEditor
         }
     }
 
-    static class DataModeSupportUtils
+    static partial class DataModeSupportUtils
     {
+        [AutoStaticsCleanupOnCodeReload(CleanupStrategy = CleanupStrategy.Clear)] // initializer is not trivial but we can still clear only
         static readonly List<DataModeSupportHandler> k_Handlers = new(4);
-
-        static DataModeSupportUtils()
-        {
-            Rebuild();
-        }
 
         public static void GetDataModeSupport(UnityObject activeSelection, UnityObject activeContext, HashSet<DataMode> supportedDataModes)
         {
@@ -315,6 +312,7 @@ namespace UnityEditor
             }
         }
 
+        [OnCodeInitializing]
         static void Rebuild()
         {
             k_Handlers.Clear();

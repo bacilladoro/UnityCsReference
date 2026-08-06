@@ -7,6 +7,7 @@ namespace UnityEngine.Networking
 {
     public partial class UnityWebRequest
     {
+        ///<exclude />
         [System.Obsolete("UnityWebRequest.isError has been renamed to isNetworkError for clarity. (UnityUpgradable) -> isNetworkError", false)]
         public bool isError
         {

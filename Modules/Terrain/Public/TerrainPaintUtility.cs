@@ -6,23 +6,35 @@ using System;
 using UnityEngine.Rendering;
 using uei = UnityEngine.Internal;
 using UnityEngine.Scripting.APIUpdating;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEngine.TerrainTools
 {
+    ///<summary>Built-in render passes for paint material.</summary>
     public enum TerrainBuiltinPaintMaterialPasses
     {
+        ///<summary>Built-in render pass for raising and lowering Terrain height.</summary>
         RaiseLowerHeight = 0,
+        ///<summary>Built-in render pass for stamping heights on the Terrain.</summary>
         StampHeight,
+        ///<summary>Built-in render pass for setting Terrain height.</summary>
         SetHeights,
+        ///<summary>Built-in render pass for smoothing the Terrain height.</summary>
         SmoothHeights,
+        ///<summary>Built-in render pass for painting the splatmap texture.</summary>
         PaintTexture,
+        ///<summary>Built-in render pass for painting Terrain holes.</summary>
         PaintHoles
     }
 
+    ///<summary>A set of utility functions for custom terrain paint tools.</summary>
     [MovedFrom("UnityEngine.Experimental.TerrainAPI")]
     public static class TerrainPaintUtility
     {
+        [NoAutoStaticsCleanup] // lazy material cache; lazy-init pattern, no code-reload-sensitive state
         private static Material s_BuiltinPaintMaterial = null;
+        ///<summary>Returns the built-in in paint material used by the built-in tools.</summary>
+        ///<returns>Built-in terrain paint material.</returns>
         public static Material GetBuiltinPaintMaterial()
         {
             if (s_BuiltinPaintMaterial == null)
@@ -30,6 +42,14 @@ namespace UnityEngine.TerrainTools
             return s_BuiltinPaintMaterial;
         }
 
+        ///<summary>Calculates the minimum and maximum Brush size limits, in world space.</summary>
+        ///<remarks>Converts the minimum and maximum Brush pixel resolutions into the equivalent world space sizes.</remarks>
+        ///<param name="minBrushWorldSize">Returns the minimum Brush size, in world space units.</param>
+        ///<param name="maxBrushWorldSize">Returns the maximum Brush size, in world space units.</param>
+        ///<param name="terrainTileWorldSize">The size of a Terrain tile, in world space units.</param>
+        ///<param name="terrainTileTextureResolutionPixels">The resolution of the Terrain tile texture the Brush edits, in pixels.</param>
+        ///<param name="minBrushResolutionPixels">The minimum Brush resolution, in pixels.  Default is 1 pixel.</param>
+        ///<param name="maxBrushResolutionPixels">The maximum Brush resolution, in pixels.  Default is 8192 pixels.</param>
         public static void GetBrushWorldSizeLimits(
             out float minBrushWorldSize,
             out float maxBrushWorldSize,
@@ -59,6 +79,12 @@ namespace UnityEngine.TerrainTools
         }
 
         // returns a transform from terrain space to brush UV
+        ///<summary>Creates a BrushTransform from the input parameters.</summary>
+        ///<param name="terrain">Reference terrain, defines terrain UV and object space.</param>
+        ///<param name="brushCenterTerrainUV">Center point of the brush, in terrain UV space (0-1 across the terrain tile).</param>
+        ///<param name="brushSize">Size of the brush, in terrain space.</param>
+        ///<param name="brushRotationDegrees">Brush rotation in degrees (clockwise).</param>
+        ///<returns>Transform from terrain space to Brush UVs.</returns>
         public static BrushTransform CalculateBrushTransform(
             Terrain terrain, Vector2 brushCenterTerrainUV, float brushSize, float brushRotationDegrees)
         {
@@ -77,6 +103,16 @@ namespace UnityEngine.TerrainTools
             return xform;
         }
 
+        ///<summary>Builds a Scale &amp; Offset transform to convert between one PaintContext's UV space and another PaintContext's UV space.</summary>
+        ///<remarks>This method provides functionality that you can use when you must perform tasks such as rendering to one PaintContext when reading a texture from another PaintContext.
+        ///                  You can apply the returned transform to convert the UVs from one PaintContext to another.
+        ///
+        ///                  The returned scaleOffset vector is in the same format as used by the TEX_TRANSFORM macro:
+        ///
+        ///                  <c>dstUV.uv = srcUV.uv * scaleOffset.xy + scaleOffset.zw</c></remarks>
+        ///<param name="src">Source PaintContext.</param>
+        ///<param name="dst">Destination PaintContext.</param>
+        ///<param name="scaleOffset">ScaleOffset transform.</param>
         public static void BuildTransformPaintContextUVToPaintContextUV(PaintContext src, PaintContext dst, out Vector4 scaleOffset)
         {
             // for example:
@@ -117,6 +153,11 @@ namespace UnityEngine.TerrainTools
         }
 
         // this function sets up material properties used by functions provided in TerrainTool.cginc
+        ///<summary>Sets up all of the material properties used by functions in TerrainTool.cginc.</summary>
+        ///<remarks>TerrainTool.cginc contains useful transforms for terrain tool shader; this function fills out the material properties necessary for those transforms to work properly.</remarks>
+        ///<param name="paintContext">PaintContext describing the area we are editing, and the terrain space.</param>
+        ///<param name="brushXform">BrushTransform from terrain space to Brush UVs.</param>
+        ///<param name="material">Material to populate with transform properties.</param>
         public static void SetupTerrainToolMaterialProperties(
             PaintContext paintContext,
             in BrushTransform brushXform,     // the brush transform to terrain space (of paintContext.originTerrain)
@@ -168,11 +209,29 @@ namespace UnityEngine.TerrainTools
             return ctx;
         }
 
+        ///<summary>Releases the allocated resources of the specified PaintContext.</summary>
+        ///<param name="ctx">The PaintContext containing the resources to release.</param>
+        ///<seealso cref="PaintContext.Cleanup" />
         public static void ReleaseContextResources(PaintContext ctx)
         {
             ctx.Cleanup();
         }
 
+        ///<summary>Helper function to set up a PaintContext for modifying the heightmap of one or more Terrain tiles.</summary>
+        ///<remarks>BeginPaintHeightmap identifies all of the heightmap pixels that are within <c>extraBorderPixels</c> of the bounds rectangle.
+        ///                  The search is performed across adjacent connected Terrain tiles.
+        ///                  The pixels are collected into a temporary render texture and stored in <see cref="PaintContext.sourceRenderTexture" />.
+        ///
+        ///                  After calling this function, you may modify the heightmap by writing the new values into <see cref="PaintContext.destinationRenderTexture" />.
+        ///                  Then, you may complete the modification by calling <see cref="TerrainPaintUtility.EndPaintHeightmap" /> to copy the modified data back to the Terrain tiles.
+        ///                  Alteratively, you may cancel the modification by calling <see cref="TerrainPaintUtility.ReleaseContextResources" /> to release the RenderTexture resources.</remarks>
+        ///<param name="terrain">Reference Terrain tile.</param>
+        ///<param name="boundsInTerrainSpace">The region in terrain space to edit.</param>
+        ///<param name="extraBorderPixels">Number of extra border pixels required.</param>
+        ///<param name="fillOutsideTerrain">Whether to fill empty space outside of Terrain tiles with data from the nearest tile.</param>
+        ///<returns>PaintContext containing the combined heightmap data for the specified region.</returns>
+        ///<seealso cref="TerrainPaintUtility.EndPaintHeightmap" />
+        ///<seealso cref="PaintContext" />
         public static PaintContext BeginPaintHeightmap(Terrain terrain, Rect boundsInTerrainSpace,
             [uei.DefaultValue("0")] int extraBorderPixels = 0,
             [uei.DefaultValue("true")] bool fillOutsideTerrain = true)
@@ -185,12 +244,35 @@ namespace UnityEngine.TerrainTools
             return ctx;
         }
 
+        ///<summary>Helper function to complete a heightmap modification.</summary>
+        ///<remarks>Once the modified data is written to <see cref="PaintContext.destinationRenderTexture" />, call this function to copy the modifications back to the original Terrain tiles.
+        ///                  This function also signals Unity to update the dirty regions in each of the affected heightmaps, to update collision and physics.
+        ///                  This function will also release all allocated resources in the PaintContext.
+        ///
+        ///                  See <see cref="TerrainPaintUtility.BeginPaintHeightmap" />, <see cref="PaintContext" />, and <see cref="PaintContext.ScatterHeightmap" />.</remarks>
+        ///<param name="ctx">The heightmap paint context to complete.</param>
+        ///<param name="editorUndoName">Unique name used for the undo stack.</param>
         public static void EndPaintHeightmap(PaintContext ctx, string editorUndoName)
         {
             ctx.ScatterHeightmap(editorUndoName);
             ctx.Cleanup();
         }
 
+        ///<summary>Helper function to set up a PaintContext for modifying the Terrain holes of one or more Terrain tiles.</summary>
+        ///<remarks>BeginPaintHoles identifies all of the Terrain holes pixels that are within <c>extraBorderPixels</c> of the bounds rectangle.
+        ///                  The search is performed across adjacent connected Terrain tiles.
+        ///                  The pixels are collected into a temporary render texture and stored in <see cref="PaintContext.sourceRenderTexture" />.
+        ///
+        ///                  After you call this function, you can write new values into <see cref="PaintContext.destinationRenderTexture" /> to modify the Terrain holes.
+        ///                  Then, you may complete the modification by calling <see cref="TerrainPaintUtility.EndPaintHoles" /> to copy the modified data back to the Terrain tiles.
+        ///                  Alteratively, you may cancel the modification by calling <see cref="TerrainPaintUtility.ReleaseContextResources" /> to release the RenderTexture resources.</remarks>
+        ///<param name="terrain">Reference Terrain tile.</param>
+        ///<param name="boundsInTerrainSpace">The region in Terrain space to edit.</param>
+        ///<param name="extraBorderPixels">Number of extra border pixels required.</param>
+        ///<param name="fillOutsideTerrain">Whether to fill empty space outside of Terrain tiles with data from the nearest tile.</param>
+        ///<returns>PaintContext that contains the combined Terrain holes data for the specified region.</returns>
+        ///<seealso cref="TerrainPaintUtility.EndPaintHoles" />
+        ///<seealso cref="PaintContext" />
         public static PaintContext BeginPaintHoles(
             Terrain terrain, Rect boundsInTerrainSpace,
             [uei.DefaultValue("0")] int extraBorderPixels = 0,
@@ -204,12 +286,35 @@ namespace UnityEngine.TerrainTools
             return ctx;
         }
 
+        ///<summary>Helper function to complete a Terrain holes modification.</summary>
+        ///<remarks>Once the modified data is written to <see cref="PaintContext.destinationRenderTexture" />, call this function to copy the modifications back to the original Terrain tiles.
+        ///                  This function also instructs Unity to update the dirty regions of the Terrain holes data in each of the affected Terrain tiles, so as to update collision and physics.
+        ///                  This function will also release all allocated resources in the PaintContext.
+        ///
+        ///                  See <see cref="TerrainPaintUtility.BeginPaintHoles" />, <see cref="PaintContext" />, and <see cref="PaintContext.ScatterHoles" />.</remarks>
+        ///<param name="ctx">The Terrain holes PaintContext to complete.</param>
+        ///<param name="editorUndoName">Unique name used for the undo stack.</param>
         public static void EndPaintHoles(PaintContext ctx, string editorUndoName)
         {
             ctx.ScatterHoles(editorUndoName);
             ctx.Cleanup();
         }
 
+        ///<summary>Helper function to set up a PaintContext that collects mesh normal data from one or more Terrain tiles.</summary>
+        ///<remarks>CollectNormals identifies all of the normalmap pixels that are within <c>extraBorderPixels</c> of the bounds rectangle.
+        ///                  The search is performed across adjacent connected Terrain tiles.
+        ///                  The pixels are collected into a temporary render texture and stored in <see cref="PaintContext.sourceRenderTexture" />.
+        ///
+        ///                  Important: there is no corresponding function to write modified normalmap data back to the Terrain tiles, because the normalmap is not stored; it is calculated from the heightmap.
+        ///
+        ///                  Once you are done using the sourceRenderTexture, you must call <see cref="TerrainPaintUtility.ReleaseContextResources" /> to release the RenderTexture resources.</remarks>
+        ///<param name="terrain">Reference Terrain tile.</param>
+        ///<param name="boundsInTerrainSpace">The region in terrain space from which to collect normals.</param>
+        ///<param name="extraBorderPixels">Number of extra border pixels required.</param>
+        ///<param name="fillOutsideTerrain">Whether to fill empty space outside of Terrain tiles with data from the nearest tile.</param>
+        ///<returns>PaintContext containing the combined normalmap data for the specified region.</returns>
+        ///<seealso cref="PaintContext.GatherNormals" />
+        ///<seealso cref="PaintContext" />
         public static PaintContext CollectNormals(
             Terrain terrain, Rect boundsInTerrainSpace,
             [uei.DefaultValue("0")] int extraBorderPixels = 0,
@@ -223,6 +328,22 @@ namespace UnityEngine.TerrainTools
             return ctx;
         }
 
+        ///<summary>Helper function to set up a PaintContext for modifying the alphamap of one or more Terrain tiles.</summary>
+        ///<remarks>BeginPaintTexture identifies all of the alphamap pixels that are within <c>extraBorderPixels</c> of the bounds rectangle.
+        ///                  The search is performed across adjacent connected Terrain tiles.
+        ///                  The pixels are collected into a temporary render texture and stored in <see cref="PaintContext.sourceRenderTexture" />.
+        ///
+        ///                  After calling this function, you may modify the alphamap by writing the new values into <see cref="PaintContext.destinationRenderTexture" />.
+        ///                  Then, you may complete the modification by calling <see cref="TerrainPaintUtility.EndPaintTexture" /> to copy the modified data back to the Terrain tiles.
+        ///                  Alteratively, you may cancel the modification by calling <see cref="TerrainPaintUtility.ReleaseContextResources" /> to release the RenderTexture resources.</remarks>
+        ///<param name="terrain">Reference Terrain tile.</param>
+        ///<param name="inputLayer">Selects the alphamap to paint.</param>
+        ///<param name="boundsInTerrainSpace">The region in terrain space to edit.</param>
+        ///<param name="extraBorderPixels">Number of extra border pixels required.</param>
+        ///<param name="fillOutsideTerrain">Whether to fill empty space outside of Terrain tiles with data from the nearest tile.</param>
+        ///<returns>PaintContext containing the combined alphamap data for the specified region.</returns>
+        ///<seealso cref="TerrainPaintUtility.EndPaintTexture" />
+        ///<seealso cref="PaintContext" />
         public static PaintContext BeginPaintTexture(
             Terrain terrain, Rect boundsInTerrainSpace, TerrainLayer inputLayer,
             [uei.DefaultValue("0")] int extraBorderPixels = 0,
@@ -238,6 +359,15 @@ namespace UnityEngine.TerrainTools
             return ctx;
         }
 
+        ///<summary>Helper function to complete a texture alphamap modification.</summary>
+        ///<remarks>Once the modified data is written to <see cref="PaintContext.destinationRenderTexture" />, call this function to copy the modifications back to the original Terrain tiles.
+        ///                  This function also signals Unity to recalculate the basemap.
+        ///                  This function will also release all allocated resources in the PaintContext.</remarks>
+        ///<param name="ctx">The texture paint context to complete.</param>
+        ///<param name="editorUndoName">Unique name used for the undo stack.</param>
+        ///<seealso cref="TerrainPaintUtility.BeginPaintTexture" />
+        ///<seealso cref="PaintContext" />
+        ///<seealso cref="PaintContext.ScatterAlphamap" />
         public static void EndPaintTexture(PaintContext ctx, string editorUndoName)
         {
             ctx.ScatterAlphamap(editorUndoName);
@@ -245,6 +375,8 @@ namespace UnityEngine.TerrainTools
         }
 
         // materials
+        ///<summary>Returns the default material for blitting operations.</summary>
+        ///<returns>Built in "Hidden/BlitCopy" material.</returns>
         public static Material GetBlitMaterial()
         {
             if (!s_BlitMaterial)
@@ -253,6 +385,8 @@ namespace UnityEngine.TerrainTools
             return s_BlitMaterial;
         }
 
+        ///<summary>Returns the Material to use when copying the Terrain heightmap.</summary>
+        ///<returns>Built in "Hidden/TerrainEngine/HeightBlitCopy" material.</returns>
         public static Material GetHeightBlitMaterial()
         {
             if (!s_HeightBlitMaterial)
@@ -261,6 +395,11 @@ namespace UnityEngine.TerrainTools
             return s_HeightBlitMaterial;
         }
 
+        ///<summary>Returns the default copy terrain layer material.</summary>
+        ///<remarks>This material is used by PaintTexture operations.
+        ///                  Pass 0 is used to select a channel from the alphamap and copy it into a single channel intermediary texture
+        ///                  Pass 1 is used to copy from the single channel intermediary texture back into the source alphamap.</remarks>
+        ///<returns>Built in "Hidden/Terrain/TerrainLayerUtils" material.</returns>
         public static Material GetCopyTerrainLayerMaterial()
         {
             if (!s_CopyTerrainLayerMaterial)
@@ -416,6 +555,11 @@ namespace UnityEngine.TerrainTools
         }
 
         // Alphamap utilities
+        ///<summary>Returns the alphamap texture at mapIndex.</summary>
+        ///<remarks>This function will throw an exception if the map index is out of range.</remarks>
+        ///<param name="terrain">Terrain tile.</param>
+        ///<param name="mapIndex">Index to retrieve.</param>
+        ///<returns>Alphamap texture at mapIndex.</returns>
         public static Texture2D GetTerrainAlphaMapChecked(Terrain terrain, int mapIndex)
         {
             if (mapIndex >= terrain.terrainData.alphamapTextureCount)
@@ -424,6 +568,10 @@ namespace UnityEngine.TerrainTools
             return terrain.terrainData.GetAlphamapTexture(mapIndex);
         }
 
+        ///<summary>Finds the index of a TerrainLayer in a Terrain tile.</summary>
+        ///<param name="terrain">Terrain tile.</param>
+        ///<param name="inputLayer">Terrain layer to search for.</param>
+        ///<returns>Returns the index of the terrain layer if it exists or -1 if it doesn't exist.</returns>
         static public int FindTerrainLayerIndex(Terrain terrain, TerrainLayer inputLayer)
         {
             var terrainLayers = terrain.terrainData.terrainLayers;
@@ -448,8 +596,11 @@ namespace UnityEngine.TerrainTools
 
         //--
 
+        [NoAutoStaticsCleanup] // lazy material cache; lazy-init pattern, no code-reload-sensitive state
         static Material s_BlitMaterial = null;
+        [NoAutoStaticsCleanup] // lazy material cache; lazy-init pattern, no code-reload-sensitive state
         static Material s_HeightBlitMaterial = null;
+        [NoAutoStaticsCleanup] // lazy material cache; lazy-init pattern, no code-reload-sensitive state
         static Material s_CopyTerrainLayerMaterial = null;
     }
 }

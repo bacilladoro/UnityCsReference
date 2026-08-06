@@ -9,6 +9,7 @@ using UnityEngine.Bindings;
 using UnityEngine.Scripting;
 using UnityEditor.Build.Reporting;
 using System.IO;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Build
 {
@@ -115,6 +116,7 @@ namespace UnityEditor.Build
             }
         }
 
+        [NoAutoStaticsCleanup] // value-only cache mirroring persistent native C++ root-dir cache; stays in sync across reload
         static string s_LastPushedDirectory;
 
         /// <summary>

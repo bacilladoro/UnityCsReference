@@ -273,6 +273,13 @@ namespace UnityEditor.Build.Profile
             return true;
         }
 
+        public static GUID[] GetSupportedPlatformGuids(GUID platformId)
+        {
+            if (BuildTargetDiscovery.TryGetSupportedPlatformGuids(platformId, out var supportedPlatformGuids))
+                return supportedPlatformGuids;
+            return Array.Empty<GUID>();
+        }
+
         public static ISDKPlatformExtension GetSDKPlatformExtension(GUID platformId)
         {
             if (BuildTargetDiscovery.TryGetSDKPlatformExtension(platformId, out var extension))
@@ -401,7 +408,7 @@ namespace UnityEditor.Build.Profile
             var namedBuildTarget = NamedBuildTarget.FromActiveSettings(buildTarget);
             var scriptingBackend = PlayerSettings.GetScriptingBackend(namedBuildTarget);
 
-            return scriptingBackend == ScriptingImplementation.Mono2x;
+            return scriptingBackend == ScriptingImplementation.Mono2x || scriptingBackend == ScriptingImplementation.IL2CPP;
         }
 
         public static bool IsBuildAutomationSupported(GUID platformGuid)
@@ -492,7 +499,7 @@ namespace UnityEditor.Build.Profile
         /// <param name="assetBundleManifestPath">The path to the asset bundle manifest file.</param>
         /// <param name="customBuildOptions">Custom build options to be applied.</param>
         /// <see cref="BuildPlayerWindow.DefaultBuildMethods.GetBuildPlayerOptionsInternal"/>
-        internal static BuildPlayerOptions GetBuildPlayerOptionsFromActiveProfile(string buildLocation, string assetBundleManifestPath, BuildOptions customBuildOptions)
+        internal static BuildPlayerOptions GetBuildPlayerOptionsFromActiveProfile(string buildLocation, string assetBundleManifestPath, BuildOptions customBuildOptions, string[] extraScriptingDefines = null)
         {
             var options = new BuildPlayerOptions();
             var activeProfile = BuildProfile.GetActiveBuildProfile();
@@ -516,6 +523,7 @@ namespace UnityEditor.Build.Profile
             options.assetBundleManifestPath = assetBundleManifestPath ?? PostprocessBuildPlayer.GetStreamingAssetsBundleManifestPath();
             options.scenes = EditorBuildSettingsScene.GetActiveSceneList(activeProfile.GetScenesForBuild());
             options.previousBuildReportDirectories = PostprocessBuildPlayer.GetPreviousContentBuildReportDirectories();
+            options.extraScriptingDefines = extraScriptingDefines;
 
             return options;
         }
@@ -825,7 +833,8 @@ namespace UnityEditor.Build.Profile
         /// </summary>
         public static void CreateNewAssetWithName(
             GUID platformId, string customProfileName, string preconfiguredSettingsVariantName,
-            int preconfiguredSettingsVariant, string[] packagesToAdd, UnityAction<BuildProfile> onCreate)
+            int preconfiguredSettingsVariant, string[] packagesToAdd, UnityAction<BuildProfile> onCreate,
+            GUID selectedPlatformGuid = default)
         {
             BuildProfileModuleUtil.EnsureCustomBuildProfileFolderExists();
             BuildProfile.CreateInstance(
@@ -833,7 +842,8 @@ namespace UnityEditor.Build.Profile
                 , GetProfilePathWithProvidedName(platformId, customProfileName, preconfiguredSettingsVariantName)
                 , preconfiguredSettingsVariant
                 , packagesToAdd
-                , onCreate);
+                , onCreate
+                , selectedPlatformGuid);
         }
 
         /// <summary>

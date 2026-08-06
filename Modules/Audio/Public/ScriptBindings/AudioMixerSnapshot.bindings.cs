@@ -8,14 +8,19 @@ using UnityEngine.Internal;
 
 namespace UnityEngine.Audio
 {
+    ///<summary>Object representing a snapshot in the mixer.</summary>
+    [global::UnityEngine.NativeClass("AudioMixerSnapshot", PersistentTypeId = 272)]
     [NativeHeader("Modules/Audio/Public/AudioMixerSnapshot.h")]
     public partial class AudioMixerSnapshot : Object, ISubAssetNotDuplicatable
     {
         internal AudioMixerSnapshot() {}
 
+        ///<exclude />
         [NativeProperty]
         public extern AudioMixer audioMixer { get; }
 
+        ///<summary>Performs an interpolated transition towards this snapshot over the time interval specified.</summary>
+        ///<param name="timeToReach">Relative time after which this snapshot should be reached from any current state.</param>
         public void TransitionTo(float timeToReach)
         {
             audioMixer.TransitionToSnapshot(this, timeToReach);

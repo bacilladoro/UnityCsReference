@@ -8,12 +8,14 @@ using UnityEngine.Scripting;
 using System.Text;
 using JetBrains.Annotations;
 using UnityEngine.Scripting.APIUpdating;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.MPE
 {
     [MovedFrom("Unity.MPE")]
     public partial class ChannelClient
     {
+        [AutoStaticsCleanupOnCodeReload]
         internal static Dictionary<int, ChannelClient> s_Clients = new Dictionary<int, ChannelClient>();
         List<Action<string>> m_Handlers = new List<Action<string>>();
         List<Action<byte[]>> m_BinaryHandlers = new List<Action<byte[]>>();

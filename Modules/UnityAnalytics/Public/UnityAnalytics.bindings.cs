@@ -8,6 +8,7 @@ using UnityEngine.Bindings;
 namespace UnityEngine.Analytics
 {
 
+    ///<exclude />
     [StructLayout(LayoutKind.Sequential)]
     [NativeHeader("Modules/UnityAnalytics/Public/UnityAnalytics.h")]
     [NativeHeader("Modules/UnityAnalyticsCommon/Public/UnityAnalyticsCommon.h")]
@@ -15,6 +16,7 @@ namespace UnityEngine.Analytics
     [NativeHeader("Modules/UnityAnalytics/Public/Events/UserCustomEvent.h")]
     public static partial class Analytics
     {
+        ///<exclude />
         public static bool initializeOnStartup
         {
             get
@@ -30,6 +32,7 @@ namespace UnityEngine.Analytics
             }
         }
 
+        ///<exclude />
         public static AnalyticsResult ResumeInitialization()
         {
             if (!IsInitialized())

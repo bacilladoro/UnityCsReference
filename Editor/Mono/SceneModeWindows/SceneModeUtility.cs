@@ -9,10 +9,11 @@ using System.Collections.Generic;
 using UnityEditorInternal;
 using UnityEngine.Pool;
 using Object = UnityEngine.Object;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
-    public static class SceneModeUtility
+    public static partial class SceneModeUtility
     {
         class SceneModeData : ScriptableSingleton<SceneModeData>
         {
@@ -20,6 +21,7 @@ namespace UnityEditor
             public SceneHierarchyWindow hierarchyWindow = null;
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         private static Type s_FocusType = null;
         private static Type focusType
         {
@@ -50,12 +52,14 @@ namespace UnityEditor
         }
 
 
+        [NoAutoStaticsCleanup] // Lazy IconContent loaded by fixed name; asset survives reload and re-inits on first access.
         private static GUIContent s_NoneButtonContent = null;
 
         private class Styles
         {
             public GUIStyle typeButton = "SearchModeFilter";
         }
+        [NoAutoStaticsCleanup] // Lazy GUIStyle holder; re-created on first access, safe to persist across reload.
         private static Styles s_Styles;
         private static Styles styles { get { if (s_Styles == null) s_Styles = new Styles(); return s_Styles; } }
 

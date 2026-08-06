@@ -19,6 +19,7 @@ using UnityEditor.TerrainTools;
 using UnityEditor.Rendering;
 using UnityEngine.Scripting.APIUpdating;
 using UnityEditor.EditorTools;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -132,7 +133,7 @@ namespace UnityEditor
     }
 
     [CustomEditor(typeof(Terrain))]
-    internal class TerrainInspector : Editor
+    internal partial class TerrainInspector : Editor
     {
         internal class Styles
         {
@@ -302,6 +303,7 @@ namespace UnityEditor
                 4096
             };
         }
+        [NoAutoStaticsCleanup] // lazy GUIContent/GUIStyle styles holder; editor infra, no user refs
         internal static Styles styles;
 
         // Source terrain
@@ -405,15 +407,27 @@ namespace UnityEditor
 
 
         internal int m_ActivePaintToolIndex = 0;
+        // Tool cache reset to null (not Clear()) on reload so LoadTools() rebuilds it — it early-returns when the maps are non-null.
+        [AutoStaticsCleanupOnCodeReload]
         static internal string[] m_PaintToolNames = null;
+        [AutoStaticsCleanupOnCodeReload(CleanupStrategy = CleanupStrategy.ResetToDefaultValue)]
         static internal Dictionary<string, ITerrainPaintTool> m_ToolsMap;
+        [AutoStaticsCleanupOnCodeReload(CleanupStrategy = CleanupStrategy.ResetToDefaultValue)]
         static internal Dictionary<string, Type> m_ToolNameToType = null;
+        [AutoStaticsCleanupOnCodeReload(CleanupStrategy = CleanupStrategy.ResetToDefaultValue)]
         static internal Dictionary<Type, string> m_TypeToToolName = null;
+        [NoAutoStaticsCleanup] // reusable scratch context, re-populated via Set() before each paint call
         static OnPaintContext onPaintEditContext = new OnPaintContext(new RaycastHit(), null, Vector2.zero, 0.0f, 0.0f);
+        [NoAutoStaticsCleanup] // reusable stateless scratch context
         static OnInspectorGUIContext onInspectorGUIEditContext = new OnInspectorGUIContext();
+        [NoAutoStaticsCleanup] // reusable scratch context, re-populated via Set() before each scene call
         static OnSceneGUIContext onSceneGUIEditContext = new OnSceneGUIContext(null, new RaycastHit(), null, 0.0f, 0.0f, 0);
 
+        // Coupled with m_ActiveTerrainTool below: reset to the editor-tool default on reload so the pair stays
+        // coherent (m_ActiveTerrainTool is cleaned to null, so mode must not stay false pointing at a null tool).
+        [AutoStaticsCleanupOnCodeReload]
         internal static bool s_ActiveTerrainToolIsEditorTool = true;
+        [AutoStaticsCleanupOnCodeReload]
         private static ITerrainPaintTool m_ActiveTerrainTool = null; // NOT EDITOR TOOL
         public static ITerrainPaintTool GetActiveTerrainTool()
         {
@@ -430,12 +444,14 @@ namespace UnityEditor
             return null;
         }
 
-        internal static int s_TerrainEditorHash = "TerrainEditor".GetHashCode();
+        internal static readonly int s_TerrainEditorHash = "TerrainEditor".GetHashCode();
 
         // The instance ID of the active inspector.
         // It's defined as the last inspector that had one of its terrain tools selected.
         // If a terrain inspector is the only one when created, it also becomes active.
+        [NoAutoStaticsCleanup] // value-type id; paired instance is cleaned and active-inspector lookups also null-check the instance
         static internal EntityId s_activeTerrainInspector = EntityId.None;
+        [AutoStaticsCleanupOnCodeReload]
         static internal TerrainInspector s_activeTerrainInspectorInstance = null;
 
         List<ReflectionProbeBlendInfo> m_BlendInfoList = new List<ReflectionProbeBlendInfo>();
@@ -447,6 +463,7 @@ namespace UnityEditor
 
         private RendererLightingSettings m_Lighting;
 
+        [AutoStaticsCleanupOnCodeReload]
         private static Terrain s_LastActiveTerrain;
 
         static void ChangeTool(ShortcutArguments args, Action<TerrainInspector> action)
@@ -1690,7 +1707,9 @@ namespace UnityEditor
             }
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         internal static event Action BrushSizeChanged;
+        [AutoStaticsCleanupOnCodeReload]
         internal static event Action BrushStrengthChanged;
         public void ShowBrushes(int spacing, bool showBrushes, bool showBrushEditor, bool showBrushSize, bool showBrushStrength, int textureResolutionPerTile)
         {
@@ -1977,11 +1996,19 @@ namespace UnityEditor
                 bool resolutionChanged = terrainData.detailResolution != detailResolution;
                 if (resolutionChanged)
                 {
-                    detailResolutionPerPatch = Mathf.Min(detailResolutionPerPatch, detailResolution);
+                    if (detailResolution < kMinDetailResolutionPerPatch)
+                    {
+                        detailResolution = 0;
+                    }
+                    else
+                    {
+                        var maxResolutionPerPatch = Mathf.Max(detailResolution, kMinDetailResolutionPerPatch);
+                        detailResolutionPerPatch = Mathf.Clamp(detailResolutionPerPatch, kMinDetailResolutionPerPatch, maxResolutionPerPatch);
+                    }
                 }
 
                 bool resolutionPerPatchChanged = terrainData.detailResolutionPerPatch != detailResolutionPerPatch;
-                if (resolutionPerPatchChanged)
+                if (resolutionPerPatchChanged && detailResolution != 0)
                 {
                     detailResolution = Mathf.Max(detailResolution, detailResolutionPerPatch);
                 }

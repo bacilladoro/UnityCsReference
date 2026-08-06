@@ -46,8 +46,6 @@ namespace UnityEditor.Build.Profile
         public static readonly string addOpenScenes = L10n.Tr("Add Open Scenes");
         public static readonly string sceneListOverride = L10n.Tr("Override Global Scene List");
         public static readonly string openSceneList = L10n.Tr("Open Scene List");
-        public static readonly string platformSelectionDropdown = L10n.Tr("Build Platform");
-        public static readonly string switchProfilePlatformButton = L10n.Tr("Switch Build Platform");
         public static readonly string compilingMessage = L10n.Tr("Cannot build player while editor is importing assets or compiling scripts.");
         public static readonly string invalidVirtualTexturingSettingMessage = L10n.Tr("Cannot build player because Virtual Texturing is enabled, but the target platform or graphics API does not support Virtual Texturing. Go to Player Settings to resolve the incompatibility.");
         public static readonly string scriptingDefines = L10n.Tr("Scripting Defines");
@@ -118,6 +116,7 @@ namespace UnityEditor.Build.Profile
         public static readonly string deselectAll = L10n.Tr("Deselect All");
         public static readonly string buildProfileNameLabel = L10n.Tr("Name");
         public static readonly string buildProfileConfigurationLabel = L10n.Tr("Build Profile Configurations");
+        public static readonly string noVariantSelectionWarning = L10n.Tr("Select one or more configurations to create Build Profiles.");
         public static readonly string browseSamplesCheckboxLabel = L10n.Tr("Browse related samples in package manager.");
         public static readonly string signInRequiredForPackages = L10n.Tr("{0}Sign in to view and install platform packages.");
         public static readonly string requiredPackagesInstalled = L10n.Tr("Required packages are installed. ");

@@ -15,10 +15,11 @@ using Object = UnityEngine.Object;
 using UnityTexture2D = UnityEngine.Texture2D;
 using UnityEditor.SceneManagement;
 using UnityEngine.Scripting;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
-    internal static class SpriteUtility
+    internal static partial class SpriteUtility
     {
         static class SpriteUtilityStrings
         {
@@ -30,6 +31,7 @@ namespace UnityEditor
             public static readonly GUIContent failedToCreateAnimationError = EditorGUIUtility.TrTextContent("Failed to create animation for dragged object");
         }
 
+        [NoAutoStaticsCleanup] // Lazily-created Material from a built-in shader; safe to persist across reloads.
         private static Material s_PreviewSpriteDefaultMaterial;
 
         internal static Material previewSpriteDefaultMaterial
@@ -45,7 +47,9 @@ namespace UnityEditor
             }
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         static List<Object> s_SceneDragObjects;
+        [AutoStaticsCleanupOnCodeReload]
         static DragType s_DragType;
         enum DragType { NotInitialized, SpriteAnimation, CreateMultiple }
 

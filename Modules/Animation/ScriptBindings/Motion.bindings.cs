@@ -8,6 +8,19 @@ using UnityEngine.Scripting;
 
 namespace UnityEngine
 {
+    ///<summary>Stores a reference to an animation asset associated with a [State Machine](xref:AnimationStateMachines) state.</summary>
+    ///<remarks>The <see cref="Motion" /> class acts as an abstraction for APIs that accept either the <see cref="AnimationClip" /> or <see cref="T:UnityEditor.Animations.BlendTree" /> animation classes.
+    ///
+    ///
+    ///
+    ///This example demonstrates how to create a <see cref="T:UnityEditor.Animations.BlendTree" /> from a selection of <see cref="AnimationClip">AnimationClips</see>. This example also demonstrates how a <see cref="T:UnityEditor.Animations.BlendTree" /> is composed of two or more child <see cref="Motion" />s, and how to use a <see cref="T:UnityEditor.Animations.BlendTree" /> to instantiate an <see cref="T:UnityEditor.Animations.AnimatorState" />.</remarks>
+    ///<example nocheck="true">
+    ///  <code><![CDATA[{code Tests/EditModeAndPlayModeTests/Animation/Assets/Editor/DocumentationExamples/MotionClassExample.cs}]]></code>
+    ///</example>
+    ///<seealso cref="P:UnityEditor.Animations.AnimatorState.motion" />
+    ///<seealso cref="M:UnityEditor.Animations.AnimatorController.AddMotion" />
+    ///<seealso cref="M:UnityEditor.Animations.BlendTree.AddChild" />
+    [global::UnityEngine.NativeClass("Motion", PersistentTypeId = 207)]
     [NativeHeader("Modules/Animation/Motion.h")]
     public partial class Motion : Object
     {
@@ -24,6 +37,7 @@ namespace UnityEngine
             get;
         }
 
+        ///<exclude />
         extern public bool legacy
         {
             [NativeMethod("IsLegacy")]

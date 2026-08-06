@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor.EditorTools;
 using UnityEditor.Overlays;
 using UnityEditor.Toolbars;
@@ -79,7 +80,8 @@ namespace UnityEditor
         
         Editor m_ToolEditor, m_ContextEditor;
         
-        static IReadOnlyList<string> builtinToolbarElements = new[] 
+        [NoAutoStaticsCleanup] // static list of string toolbar ids, no user references
+        static IReadOnlyList<string> builtinToolbarElements = new[]
         {
             "SceneView/2D",
             "SceneView/Audio",

@@ -13,8 +13,7 @@ namespace UnityEditor.Toolbars
 {
     sealed class MainToolbarAnalytics : IDisposable
     {
-        const string k_VendorKey = "unity.main-toolbar";
-
+        [Serializable]
         class PresetChangedData : IAnalytic.IData
         {
             [SerializeField] public string presetName;
@@ -41,27 +40,34 @@ namespace UnityEditor.Toolbars
             }
         }
 
+        [Serializable]
         class ElementChangedData : IAnalytic.IData
         {
             [SerializeField] public string elementId;
         }
 
+        [Serializable]
+        class NewElementEventData : IAnalytic.IData
+        {
+            [SerializeField] public NewElementData[] elements;
+        }
+
+        [Serializable]
         class NewElementData : ElementChangedData
         {
             [SerializeField] public string sourceAssembly;
         }
 
-        [AnalyticInfo(eventName: "toolbarNewElement", vendorKey: k_VendorKey, version: 2)]
+        [AnalyticInfo(eventName: "toolbarNewElement", vendorKey: k_VendorKey, version: 4)]
         class NewElementEvent : IAnalytic
         {
-            NewElementData m_data = null;
+            NewElementEventData m_data = null;
 
-            public NewElementEvent(string elementId, string sourceAssembly)
+            public NewElementEvent(NewElementData[] elements)
             {
-                m_data = new NewElementData
+                m_data = new NewElementEventData
                 {
-                    elementId = elementId,
-                    sourceAssembly = sourceAssembly
+                    elements = elements
                 };
             }
 
@@ -73,6 +79,7 @@ namespace UnityEditor.Toolbars
             }
         }
 
+        [Serializable]
         class ElementOrderChangedData : ElementChangedData
         {
             [SerializeField] public string container; // {left, middle, right}
@@ -123,22 +130,24 @@ namespace UnityEditor.Toolbars
             }
         }
 
-        class ElementVisibilityChangedData : ElementChangedData
+        [Serializable]
+        class ElementVisibilityChangedData : IAnalytic.IData
         {
-            [SerializeField] public bool visibility;
+            [SerializeField] public string[] shown;
+            [SerializeField] public string[] hidden;
         }
 
-        [AnalyticInfo(eventName: "toolbarElementVisibilityChanged", vendorKey: k_VendorKey)]
+        [AnalyticInfo(eventName: "toolbarElementVisibilityChanged", vendorKey: k_VendorKey, version: 2)]
         class ElementVisibilityChangedEvent : IAnalytic
         {
             ElementVisibilityChangedData m_data = null;
 
-            public ElementVisibilityChangedEvent(string elementId, bool visibility)
+            public ElementVisibilityChangedEvent(string[] shown, string[] hidden)
             {
                 m_data = new ElementVisibilityChangedData
                 {
-                    elementId = elementId,
-                    visibility = visibility
+                    shown = shown,
+                    hidden = hidden
                 };
             }
 
@@ -156,8 +165,30 @@ namespace UnityEditor.Toolbars
             public Action<VisualElement> contentRebuilt;
         }
 
+        class OverlayVisibilityBatch
+        {
+            public List<string> shown = new List<string>(32);
+            public List<string> hidden = new List<string>(32);
+
+            public void Clear()
+            {
+                shown.Clear();
+                hidden.Clear();
+            }
+
+            public bool HasAny()
+            {
+                return shown.Count > 0 || hidden.Count > 0;
+            }
+        }
+
+        const string k_VendorKey = "unity.main-toolbar";
+        const string k_NewElementKey = "unity.main-toolbar.analytics.new-element-sent";
+
         readonly OverlayCanvas m_TargetCanvas;
         readonly Dictionary<MainToolbarOverlay, OverlayData> m_OverlayData = new Dictionary<MainToolbarOverlay, OverlayData>();
+        readonly OverlayVisibilityBatch m_VisibilityBatch = new OverlayVisibilityBatch();
+        readonly List<NewElementData> m_NewElementBatch = new List<NewElementData>();
 
         public MainToolbarAnalytics(MainToolbarWindow window)
         {
@@ -206,7 +237,7 @@ namespace UnityEditor.Toolbars
         {
             Action<bool> displayedChanged = (display) => OnOverlayDisplayChanged(overlay, display);
             Action<VisualElement> contentRebuilt = (toolbar) => OnOverlayContentRebuilt(overlay, toolbar);
-            
+
             m_OverlayData.Add(overlay, new OverlayData
             {
                 displayedChanged = displayedChanged,
@@ -285,12 +316,47 @@ namespace UnityEditor.Toolbars
 
         void SendElementVisibilityChanged(MainToolbarOverlay overlay)
         {
-            EditorAnalytics.SendAnalytic(new ElementVisibilityChangedEvent(overlay.id, overlay.displayed));
+            if (!m_VisibilityBatch.HasAny())
+            {
+                EditorApplication.delayCall += () =>
+                {
+                    EditorAnalytics.SendAnalytic(new ElementVisibilityChangedEvent(m_VisibilityBatch.shown.ToArray(), m_VisibilityBatch.hidden.ToArray()));
+                    m_VisibilityBatch.Clear();
+                };
+            }
+
+            if (overlay.displayed)
+            {
+                m_VisibilityBatch.shown.Add(overlay.id);
+            }
+            else
+            {
+                m_VisibilityBatch.hidden.Add(overlay.id);
+            }
         }
 
         void SendNewElementAdded(MainToolbarOverlay overlay)
         {
-            EditorAnalytics.SendAnalytic(new NewElementEvent(overlay.id, overlay.createElementMethod.DeclaringType.Assembly.FullName));
+            // Ensure that new elements are only sent once per session
+            var key = $"{k_NewElementKey}.{overlay.id}";
+            if (!SessionState.GetBool(key, false))
+            {
+                if (m_NewElementBatch.Count == 0)
+                {
+                    EditorApplication.delayCall += () =>
+                    {
+                        EditorAnalytics.SendAnalytic(new NewElementEvent(m_NewElementBatch.ToArray()));
+                        m_NewElementBatch.Clear();
+                    };
+                }
+
+                SessionState.SetBool(key, true);
+
+                var assemblyName = overlay.createElementMethod != null
+                    ? overlay.createElementMethod.DeclaringType.Assembly.FullName
+                    : "MenuItemPin";
+                m_NewElementBatch.Add(new NewElementData { elementId = overlay.id, sourceAssembly = assemblyName });
+            }
         }
 
         void SendElementOrderChanged(MainToolbarOverlay overlay)
@@ -300,7 +366,7 @@ namespace UnityEditor.Toolbars
                 return;
 
             var section = overlay.container.GetContainerSection(sectionIdx);
-            var currentCount = 0; 
+            var currentCount = 0;
             var visibleIndex = -1;
             for (int i = 0; i < section.overlayCount; ++i)
             {

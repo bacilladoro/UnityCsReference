@@ -24,12 +24,14 @@ public class SDKPreconfiguredSettingsVariant
     public string description { get; }
     public string tooltip { get; }
     public bool selectedInitially { get; }
+    public UnityEngine.GUID platformGuid { get; }
 
-    public SDKPreconfiguredSettingsVariant(string displayName, string description, string tooltip, bool selectedInitially = false)
+    public SDKPreconfiguredSettingsVariant(string displayName, string description, string tooltip, bool selectedInitially = false, UnityEngine.GUID platformGuid = default)
     {
         this.displayName = displayName;
         this.description = description;
         this.tooltip = tooltip;
         this.selectedInitially = selectedInitially;
+        this.platformGuid = platformGuid;
     }
 }

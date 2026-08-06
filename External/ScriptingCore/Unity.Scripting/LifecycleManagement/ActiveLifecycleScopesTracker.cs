@@ -143,7 +143,9 @@ namespace Unity.Scripting.LifecycleManagement
         private readonly Dictionary<LifecycleScopeKey, ActiveLifecycleScopeBase> _activeScopes = new();
         private readonly ScopeTransitionHelper _scopeTransitionHelper;
         private readonly Queue<ScopeTransitionRequestBase> _transitionRequestQueue = new();
-        private readonly Dictionary<(Type, ScopeTransitionType), List<ClassAutoCleanup>> _autoCleanups = new();
+        // Avoid ValueTuple as dictionary key: ValueTuple.GetHashCode() triggers System.Numerics.Hashing.HashHelpers..cctor()
+        // which P/Invokes into libmono-native for random seed generation, unavailable on UAAL ARMv7 Mono during AssemblyLoaded scope entry.
+        private readonly Dictionary<Type, Dictionary<ScopeTransitionType, List<ClassAutoCleanup>>> _autoCleanups = new();
         private readonly object _autoCleanupsLock = new();
 
         internal IReadOnlyDictionary<LifecycleScopeKey, ActiveLifecycleScopeBase> ActiveScopes => _activeScopes; // for test debugging only
@@ -395,7 +397,8 @@ namespace Unity.Scripting.LifecycleManagement
         {
             lock (_autoCleanupsLock)
             {
-                if (_autoCleanups.TryGetValue((lifecycleScopeType, scopeTransitionType), out var autoCleanups))
+                if (_autoCleanups.TryGetValue(lifecycleScopeType, out var innerDict)
+                    && innerDict.TryGetValue(scopeTransitionType, out var autoCleanups))
                 {
                     foreach (var autoCleanup in autoCleanups)
                     {
@@ -670,13 +673,18 @@ namespace Unity.Scripting.LifecycleManagement
                 return;
             }
 
-            var key = (scopeType, cleanOn == LifecycleManagement.ScopeTransitionType.Entering ? ScopeTransitionType.EnterScope : ScopeTransitionType.ExitScope);
+            var innerKey = cleanOn == LifecycleManagement.ScopeTransitionType.Entering ? ScopeTransitionType.EnterScope : ScopeTransitionType.ExitScope;
             lock (_autoCleanupsLock)
             {
-                if (!_autoCleanups.TryGetValue(key, out var autoCleanups))
+                if (!_autoCleanups.TryGetValue(scopeType, out var innerDict))
+                {
+                    innerDict = new Dictionary<ScopeTransitionType, List<ClassAutoCleanup>>();
+                    _autoCleanups[scopeType] = innerDict;
+                }
+                if (!innerDict.TryGetValue(innerKey, out var autoCleanups))
                 {
                     autoCleanups = new List<ClassAutoCleanup>();
-                    _autoCleanups[key] = autoCleanups;
+                    innerDict[innerKey] = autoCleanups;
                 }
                 autoCleanups.Add(classAutoCleanup);
             }
@@ -690,20 +698,27 @@ namespace Unity.Scripting.LifecycleManagement
         {
             lock (_autoCleanupsLock)
             {
-                var unloadingKeys = new List<(Type, ScopeTransitionType)>();
-                foreach (var key in _autoCleanups.Keys)
+                var unloadingOuterKeys = new List<Type>();
+                foreach (var outerKvp in _autoCleanups)
                 {
-                    if (IsTypeInUnloadingAssembly(key.Item1, unloadingAssemblies))
+                    if (IsTypeInUnloadingAssembly(outerKvp.Key, unloadingAssemblies))
                     {
-                        unloadingKeys.Add(key);
+                        unloadingOuterKeys.Add(outerKvp.Key);
                         continue;
                     }
 
-                    var autoCleanups = _autoCleanups[key];
-                    autoCleanups.RemoveAll(cleanup => IsTypeInUnloadingAssembly(cleanup.GetType(), unloadingAssemblies));
+                    var emptyInnerKeys = new List<ScopeTransitionType>();
+                    foreach (var innerKvp in outerKvp.Value)
+                    {
+                        innerKvp.Value.RemoveAll(cleanup => IsTypeInUnloadingAssembly(cleanup.GetType(), unloadingAssemblies));
+                        if (innerKvp.Value.Count == 0)
+                            emptyInnerKeys.Add(innerKvp.Key);
+                    }
+                    foreach (var k in emptyInnerKeys)
+                        outerKvp.Value.Remove(k);
                 }
 
-                foreach (var key in unloadingKeys)
+                foreach (var key in unloadingOuterKeys)
                 {
                     _autoCleanups.Remove(key);
                 }

@@ -19,41 +19,41 @@ namespace UnityEditor
     {
         class Styles
         {
-            public static GUIContent mode = new GUIContent("Mode");
-            public static GUIContent logLevel = new GUIContent("Log Level");
-            public static GUIContent automaticAdd = new GUIContent("Automatic Add",
+            public static readonly GUIContent mode = new GUIContent("Mode");
+            public static readonly GUIContent logLevel = new GUIContent("Log Level");
+            public static readonly GUIContent automaticAdd = new GUIContent("Automatic Add",
                 "Automatically add newly created assets to version control.");
-            public static GUIContent scanLocalPackagesOnConnect = new GUIContent("Scan Local Packages on Connect",
+            public static readonly GUIContent scanLocalPackagesOnConnect = new GUIContent("Scan Local Packages on Connect",
                 "Scan local packages during the version control initialization to automatically add newly created assets to source control.");
-            public static GUIContent smartMerge = new GUIContent("Smart merge");
-            public static GUIContent trackPackagesOutsideProject = new GUIContent("Version Packages Outside Project", "Tracks changes to packages that reside on disk outside of the project's root folder.");
-            public static GUIContent vcsConnect = new GUIContent("Connect");
-            public static GUIContent vcsReconnect = new GUIContent("Reconnect");
-            public static GUIContent workOffline = new GUIContent("Work Offline",
+            public static readonly GUIContent smartMerge = new GUIContent("Smart merge");
+            public static readonly GUIContent trackPackagesOutsideProject = new GUIContent("Version Packages Outside Project", "Tracks changes to packages that reside on disk outside of the project's root folder.");
+            public static readonly GUIContent vcsConnect = new GUIContent("Connect");
+            public static readonly GUIContent vcsReconnect = new GUIContent("Reconnect");
+            public static readonly GUIContent workOffline = new GUIContent("Work Offline",
                 "Enable asset modifications even when not connected to a version control server. Requires manual integration into VCS system afterwards.");
-            public static GUIContent allowAsyncUpdate = new GUIContent("Async Status",
+            public static readonly GUIContent allowAsyncUpdate = new GUIContent("Async Status",
                 "Enable asynchronous file status queries (useful with slow server connections).");
-            public static GUIContent showFailedCheckouts = new GUIContent("Show Failed Checkouts",
+            public static readonly GUIContent showFailedCheckouts = new GUIContent("Show Failed Checkouts",
                 "Show dialogs for failed 'Check Out' operations.");
-            public static GUIContent overwriteFailedCheckoutAssets =
+            public static readonly GUIContent overwriteFailedCheckoutAssets =
                 new GUIContent("Overwrite Failed Checkout Assets",
                     "When on, assets that can not be checked out will get saved anyway.");
-            public static GUIContent autoRevertUnchangedFiles =
+            public static readonly GUIContent autoRevertUnchangedFiles =
                 new GUIContent("Auto Revert Unchanged Files",
                     "Automatically revert files that were checked out during asset import but have no actual content changes. Uses server-side hash verification, so files with real changes are preserved.");
-            public static GUIContent overlayIcons = new GUIContent("Overlay Icons",
+            public static readonly GUIContent overlayIcons = new GUIContent("Overlay Icons",
                 "Should version control status icons be shown.");
-            public static GUIContent projectOverlayIcons = new GUIContent("Project Window",
+            public static readonly GUIContent projectOverlayIcons = new GUIContent("Project Window",
                 "Should version control status icons be shown in the Project window.");
-            public static GUIContent hierarchyOverlayIcons = new GUIContent("Hierarchy Window",
+            public static readonly GUIContent hierarchyOverlayIcons = new GUIContent("Hierarchy Window",
                 "Should version control status icons be shown in the Hierarchy window.");
-            public static GUIContent otherOverlayIcons = new GUIContent("Other Windows",
+            public static readonly GUIContent otherOverlayIcons = new GUIContent("Other Windows",
                 "Should version control status icons be shown in other windows.");
 
             // these are required to have correct search keywords
-            public static GUIContent password = new GUIContent("Password");
-            public static GUIContent username = new GUIContent("Username");
-            public static GUIContent server = new GUIContent("Server");
+            public static readonly GUIContent password = new GUIContent("Password");
+            public static readonly GUIContent username = new GUIContent("Username");
+            public static readonly GUIContent server = new GUIContent("Server");
         }
 
         const int kVCFieldRecentCount = 10;

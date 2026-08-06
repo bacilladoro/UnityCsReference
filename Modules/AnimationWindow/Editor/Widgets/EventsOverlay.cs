@@ -5,6 +5,7 @@
 using Unity.Timeline.Foundation.Widgets;
 using UnityEngine;
 using UnityEngine.UIElements;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Animations.AnimationWindow.Widgets
 {
@@ -13,7 +14,9 @@ namespace UnityEditor.Animations.AnimationWindow.Widgets
         const string k_Style = "eventsOverlay";
         const string k_Name = "eventsOverlay";
 
+        [NoAutoStaticsCleanup] // immutable CSS property key; safe to persist
         static readonly CustomStyleProperty<int> k_HorizontalOffsetStyleProperty = new("--tooltip-horizontal-offset");
+        [NoAutoStaticsCleanup]
         static readonly CustomStyleProperty<int> k_VerticalOffsetStyleProperty = new("--tooltip-vertical-offset");
 
         private int m_HorizontalOffset;

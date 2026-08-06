@@ -27,8 +27,8 @@ namespace UnityEditor
         public int selectedIndex { get { return m_SelectedBrush; } }
         internal static class Styles
         {
-            public static GUIStyle gridList = "GridList";
-            public static GUIContent brushes = EditorGUIUtility.TrTextContent("Brushes");
+            public static readonly GUIStyle gridList = "GridList";
+            public static readonly GUIContent brushes = EditorGUIUtility.TrTextContent("Brushes");
         }
 
         public BrushList()

@@ -10,6 +10,7 @@ using System.Linq;
 using UnityEditor.AssetImporters;
 using System.Globalization;
 using Object = UnityEngine.Object;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -24,14 +25,14 @@ namespace UnityEditor
 #pragma warning restore UA2001
             public static readonly int[] kSampleRateValues = {8000, 11025, 22050, 44100, 48000, 96000, 192000};
 
-            public static GUIContent LoadType = EditorGUIUtility.TrTextContent("Load Type");
-            public static GUIContent PreloadAudioData = EditorGUIUtility.TrTextContent("Preload Audio Data*");
-            public static GUIContent CompressionFormat = EditorGUIUtility.TrTextContent("Compression Format");
-            public static GUIContent Quality = EditorGUIUtility.TrTextContent("Quality");
-            public static GUIContent SampleRateSetting = EditorGUIUtility.TrTextContent("Sample Rate Setting");
-            public static GUIContent SampleRate = EditorGUIUtility.TrTextContent("Sample Rate");
-            public static GUIContent DefaultPlatform = EditorGUIUtility.TrTextContent("Default");
-            public static GUIContent SharedSettingInformation = EditorGUIUtility.TrTextContent("* Shared setting between multiple platforms.");
+            public static readonly GUIContent LoadType = EditorGUIUtility.TrTextContent("Load Type");
+            public static readonly GUIContent PreloadAudioData = EditorGUIUtility.TrTextContent("Preload Audio Data*");
+            public static readonly GUIContent CompressionFormat = EditorGUIUtility.TrTextContent("Compression Format");
+            public static readonly GUIContent Quality = EditorGUIUtility.TrTextContent("Quality");
+            public static readonly GUIContent SampleRateSetting = EditorGUIUtility.TrTextContent("Sample Rate Setting");
+            public static readonly GUIContent SampleRate = EditorGUIUtility.TrTextContent("Sample Rate");
+            public static readonly GUIContent DefaultPlatform = EditorGUIUtility.TrTextContent("Default");
+            public static readonly GUIContent SharedSettingInformation = EditorGUIUtility.TrTextContent("* Shared setting between multiple platforms.");
         }
 
         SerializedProperty m_ForceToMono;
@@ -64,6 +65,7 @@ namespace UnityEditor
             public int GetHashCode(BuildPlatform platform) => (int)platform.targetGroup;
 
         }
+        [NoAutoStaticsCleanup] // stateless comparer, safe to persist across reloads
         static readonly BuildPlatformGroupComparer s_BuildPlatformGroupComparer = new BuildPlatformGroupComparer();
         // Don't add duplicate platform groups even if there are multiple platforms in the group
         // Case UUM-399

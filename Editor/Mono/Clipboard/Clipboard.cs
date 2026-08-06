@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using Unity.Loading;
 using Object = UnityEngine.Object;
@@ -15,8 +16,9 @@ using Object = UnityEngine.Object;
 // ReSharper disable once CheckNamespace - we explicitly want UnityEditor namespace
 namespace UnityEditor
 {
-    internal static class Clipboard
+    internal static partial class Clipboard
     {
+        [AutoStaticsCleanupOnCodeReload]
         static ClipboardState m_State = new ClipboardState();
 
         public static bool hasLong

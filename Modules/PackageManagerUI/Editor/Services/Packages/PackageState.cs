@@ -10,8 +10,6 @@ namespace UnityEditor.PackageManager.UI.Internal
         None = 0,
         Installed,
         InstalledAsDependency,
-        DownloadAvailable,
-        ImportAvailable,
         Imported,
         InDevelopment,
         UpdateAvailable,

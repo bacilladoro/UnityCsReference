@@ -2,11 +2,12 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Scripting;
 
 namespace UnityEditor
 {
-    public static class AssemblyReloadEvents
+    public static partial class AssemblyReloadEvents
     {
         public delegate void AssemblyReloadCallback();
         public static event AssemblyReloadCallback beforeAssemblyReload
@@ -14,6 +15,7 @@ namespace UnityEditor
             add => m_BeforeAssemblyReloadEvent.Add(value);
             remove => m_BeforeAssemblyReloadEvent.Remove(value);
         }
+        [AutoStaticsCleanupOnCodeReload]
         private static EventWithPerformanceTracker<AssemblyReloadCallback> m_BeforeAssemblyReloadEvent =
             new EventWithPerformanceTracker<AssemblyReloadCallback>($"{nameof(AssemblyReloadEvents)}.{nameof(beforeAssemblyReload)}");
         public static event AssemblyReloadCallback afterAssemblyReload
@@ -21,6 +23,7 @@ namespace UnityEditor
             add => m_AfterAssemblyReloadEvent.Add(value);
             remove => m_AfterAssemblyReloadEvent.Remove(value);
         }
+        [AutoStaticsCleanupOnCodeReload]
         private static EventWithPerformanceTracker<AssemblyReloadCallback> m_AfterAssemblyReloadEvent =
             new EventWithPerformanceTracker<AssemblyReloadCallback>($"{nameof(AssemblyReloadEvents)}.{nameof(afterAssemblyReload)}");
 

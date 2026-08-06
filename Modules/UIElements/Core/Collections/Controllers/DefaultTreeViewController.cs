@@ -138,7 +138,6 @@ namespace UnityEngine.UIElements
         /// Gets the tree item data for the specified TreeView item ID.
         /// </summary>
         /// <param name="id">The TreeView item ID.</param>
-        /// <typeparam name="T">Type of the data inside TreeViewItemData.</typeparam>
         /// <returns>The tree item data.</returns>
         public virtual TreeViewItemData<T> GetTreeViewItemDataForId(int id)
         {
@@ -149,7 +148,6 @@ namespace UnityEngine.UIElements
         /// Gets the tree item data for the specified TreeView item index.
         /// </summary>
         /// <param name="index">The TreeView item index.</param>
-        /// <typeparam name="T">Type of the data inside TreeViewItemData.</typeparam>
         /// <returns>The tree item data.</returns>
         public virtual TreeViewItemData<T> GetTreeViewItemDataForIndex(int index)
         {
@@ -199,7 +197,6 @@ namespace UnityEngine.UIElements
         /// Gets data for the specified TreeView item ID.
         /// </summary>
         /// <param name="id">The TreeView item ID.</param>
-        /// <typeparam name="T">Type of the data inside TreeViewItemData.</typeparam>
         /// <returns>The data.</returns>
         public virtual T GetDataForId(int id)
         {
@@ -210,7 +207,6 @@ namespace UnityEngine.UIElements
         /// Gets data for the specified TreeView item index.
         /// </summary>
         /// <param name="index">The TreeView item index.</param>
-        /// <typeparam name="T">Type of the data inside TreeViewItemData.</typeparam>
         /// <returns>The data.</returns>
         public virtual T GetDataForIndex(int index)
         {

@@ -51,6 +51,7 @@ class SDKPlatformProvider
     static readonly string k_CompatibilityError = L10n.Tr("{0} is not a compatible platform provider: {1}");
     static readonly string k_InvalidPlatformTypeError = L10n.Tr("{0} has an invalid platform type: {1}");
     static readonly string k_MultiTargetPlatformCompatibilityError = L10n.Tr("{0} is not compatible as a multi-target platform provider: {1}");
+    static readonly string k_MultiTargetVariantMissingGuidError = L10n.Tr("{0} has a preconfigured settings variant '{1}' without a platformGuid.");
     static readonly string k_DerivedPlatformCompatibilityError = L10n.Tr("{0} is not compatible as a derived platform provider: {1}");
     static readonly string k_UnrecognizedVersionError = L10n.Tr("unrecognized version {0}.");
     static readonly string k_RequiredPropertyError = L10n.Tr("required property '{0}' is missing.");
@@ -94,7 +95,7 @@ class SDKPlatformProvider
         {
             if (variant == null)
                 continue;
-            var newVariant = new PreconfiguredSettingsVariant(variant.displayName, variant.selectedInitially, variant.description, variant.tooltip);
+            var newVariant = new PreconfiguredSettingsVariant(variant.displayName, variant.selectedInitially, variant.description, variant.tooltip, variant.platformGuid);
             variantList.Add(newVariant);
         }
         preconfiguredSettingsVariants = variantList.ToArray();
@@ -196,7 +197,14 @@ class SDKPlatformProvider
         switch (provider.version)
         {
             case 1:
-                return HasRequiredCoreProperties(provider.GetType(), out error);
+                if (!HasRequiredCoreProperties(provider.GetType(), out error))
+                    return false;
+                if (!HasRequiredProperty(provider.GetType(), k_PreconfiguredSettingsVariants,
+                        typeof(SDKPreconfiguredSettingsVariant[]), out error))
+                    return false;
+                if (!AllVariantsHavePlatformGuid(provider, out error))
+                    return false;
+                return true;
             default:
                 error = FormatUnrecognizedVersionError(provider.version);
                 return false;
@@ -240,6 +248,31 @@ class SDKPlatformProvider
         {
             error = FormatPropertyTypeError(propertyName, propertyType);
             return false;
+        }
+
+        error = null;
+        return true;
+    }
+
+    static bool AllVariantsHavePlatformGuid(IPlatformProvider provider, out string error)
+    {
+        var providerType = provider.GetType();
+        var variants = (SDKPreconfiguredSettingsVariant[])providerType.GetProperty(k_PreconfiguredSettingsVariants).GetValue(provider);
+        if (variants == null)
+        {
+            error = FormatRequiredPropertyError(k_PreconfiguredSettingsVariants);
+            return false;
+        }
+
+        foreach (var variant in variants)
+        {
+            if (variant == null)
+                continue;
+            if (variant.platformGuid.Empty())
+            {
+                error = string.Format(k_MultiTargetVariantMissingGuidError, providerType.FullName, variant.displayName);
+                return false;
+            }
         }
 
         error = null;

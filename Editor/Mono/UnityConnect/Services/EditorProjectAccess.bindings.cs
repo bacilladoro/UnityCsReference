@@ -8,6 +8,7 @@ using UnityEngine.Bindings;
 namespace UnityEditor.Web
 {
     [NativeHeader("Editor/Src/UnityConnect/Services/EditorProjectAccess.h")]
+    [NativeClass("EditorProjectAccess", PersistentTypeId = 0x1968D9A2)]
     internal partial class EditorProjectAccess : Object
     {
         public EditorProjectAccess()

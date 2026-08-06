@@ -108,6 +108,9 @@ namespace Unity.Hierarchy
         readonly ProfilerMarker m_RefreshItemsProfilerMarker = new ProfilerMarker("HierarchyView.RefreshItems");
         readonly ProfilerMarker m_SetSelectionMarker = new ProfilerMarker("HierarchyView.SetSelection");
 
+        // Cached to avoid a per-bind delegate allocation.
+        readonly HierarchyViewItem.ExpandedStateChangedEventHandler m_OnExpandedStateChanged;
+
         /// <summary>
         /// Delegate type used to handle the <see cref="SourceHierarchyChanging"/> event.
         /// </summary>
@@ -338,6 +341,8 @@ namespace Unity.Hierarchy
         public HierarchyView()
         {
             HierarchyLogging.Log($"HierarchyView({GetHashCode():X}).New()");
+
+            m_OnExpandedStateChanged = SetExpandedState;
 
             // UX elements
             AddToClassList(k_HierarchyViewRootStyleName);
@@ -1514,8 +1519,17 @@ namespace Unity.Hierarchy
             Update();
         }
 
-        internal void SetRenamingItem(HierarchyViewItem item)
+        internal void SetRenamingItem(HierarchyViewItem item, bool canceled = false)
         {
+            // Reset the "same row clicked twice" tracker when rename ends via a click (Blur)
+            // so the click that dismissed the TextField doesn't immediately re-schedule a new
+            // rename. When rename is canceled (Esc, context menu) the item stays selected and
+            // the next click on it should still be able to re-enter rename mode.
+            if (item == null && m_RenamingItem != null && !canceled)
+            {
+                m_LastMouseUpSelectionIndex = -1;
+            }
+
             m_RenamingItem = item;
         }
 
@@ -1553,12 +1567,8 @@ namespace Unity.Hierarchy
             if (item == null)
                 return;
 
-            var position = evt.position;
-
-            // Rename only works for the name element, not the whole item.
-            var itemName = item.Q<HierarchyViewItemName>();
-            if (itemIndex == m_LastMouseUpSelectionIndex && evt.clickCount == 1
-                                                         && itemName != null && itemName.worldBound.Contains(position))
+            // Rename works for whole cell
+            if (itemIndex == m_LastMouseUpSelectionIndex && evt.clickCount == 1 && item.GetRenameRect().Contains(evt.position))
             {
                 if (m_RenameDelayMs == 0)
                 {
@@ -1765,12 +1775,12 @@ namespace Unity.Hierarchy
 
         void OnBindItem(HierarchyViewItem item)
         {
-            item.ExpandedStateChanged += SetExpandedState;
+            item.ExpandedStateChanged += m_OnExpandedStateChanged;
         }
 
         void OnUnbindItem(HierarchyViewItem element)
         {
-            element.ExpandedStateChanged -= SetExpandedState;
+            element.ExpandedStateChanged -= m_OnExpandedStateChanged;
         }
 
         void OnHandlerCreated(HierarchyNodeTypeHandlerBase handler)

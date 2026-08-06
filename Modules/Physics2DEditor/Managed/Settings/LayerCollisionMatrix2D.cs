@@ -14,8 +14,8 @@ namespace UnityEditor
             public static readonly GUIStyle hoverStyle = GetHoverStyle();
         }
 
-        private static Color transparentColor = new Color(1, 1, 1, 0);
-        private static Color highlightColor = EditorGUIUtility.isProSkin ? new Color(1, 1, 1, 0.2f) : new Color(0,0,0, 0.2f);
+        private static readonly Color transparentColor = new Color(1, 1, 1, 0);
+        private static readonly Color highlightColor = EditorGUIUtility.isProSkin ? new Color(1, 1, 1, 0.2f) : new Color(0,0,0, 0.2f);
 
         public delegate bool GetValueFunc(int layerA, int layerB);
         public delegate void SetValueFunc(int layerA, int layerB, bool val);

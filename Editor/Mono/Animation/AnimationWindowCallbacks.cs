@@ -8,12 +8,13 @@ using UnityEngine;
 
 namespace UnityEditor
 {
-    static class AnimationWindowCallbacks
+    static partial class AnimationWindowCallbacks
     {
-        [AutoStaticsCleanupOnCodeReload]
+        [NoAutoStaticsCleanup]
         public static Type AnimationWindowType = null;
 
         public delegate void StopAnimationPlaybackAndPreviewingCallback();
+        [AutoStaticsCleanupOnCodeReload]
         public static StopAnimationPlaybackAndPreviewingCallback StopAnimationPlaybackAndPreviewing;
 
         public static EditorWindow[] GetAllAnimationWindows()

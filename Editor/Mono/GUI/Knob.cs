@@ -5,6 +5,7 @@
 using UnityEngine;
 using System;
 using System.Globalization;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -237,6 +238,7 @@ namespace UnityEditor
                 return currentValue;
             }
 
+            [NoAutoStaticsCleanup] // lazy IMGUI shader material guarded by if (!knobMaterial); re-created on first access, safe to persist
             private static Material knobMaterial;
             static void CreateKnobMaterial()
             {

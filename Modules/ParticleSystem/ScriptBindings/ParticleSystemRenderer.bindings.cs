@@ -12,6 +12,7 @@ namespace UnityEngine
     [NativeHeader("ParticleSystemScriptingClasses.h")]
     [NativeHeader("Modules/ParticleSystem/ParticleSystemRenderer.h")]
     [NativeHeader("Modules/ParticleSystem/ScriptBindings/ParticleSystemRendererScriptBindings.h")]
+    [global::UnityEngine.NativeClass("ParticleSystemRenderer", PersistentTypeId = 199)]
     [RequireComponent(typeof(Transform))]
     public sealed partial class ParticleSystemRenderer : Renderer
     {

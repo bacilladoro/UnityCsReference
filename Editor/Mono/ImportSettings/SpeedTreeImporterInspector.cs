@@ -17,10 +17,10 @@ namespace UnityEditor
     {
         private static class Styles
         {
-            public static GUIContent ApplyAndGenerate = EditorGUIUtility.TrTextContent("Apply & Generate Materials", "Apply current importer settings and generate materials with new settings.");
-            public static GUIContent Regenerate = EditorGUIUtility.TrTextContent("Regenerate Materials", "Regenerate materials from the current importer settings.");
-            public static GUIContent RegenerateRemapped = EditorGUIUtility.TrTextContent("Regenerate Materials", "Regenerate the remapped materials from the current import settings.");
-            public static GUIContent ApplyAndGenerateRemapped = EditorGUIUtility.TrTextContent("Apply & Generate Materials", "Apply current importer settings and regenerate the remapped materials with new settings.");
+            public static readonly GUIContent ApplyAndGenerate = EditorGUIUtility.TrTextContent("Apply & Generate Materials", "Apply current importer settings and generate materials with new settings.");
+            public static readonly GUIContent Regenerate = EditorGUIUtility.TrTextContent("Regenerate Materials", "Regenerate materials from the current importer settings.");
+            public static readonly GUIContent RegenerateRemapped = EditorGUIUtility.TrTextContent("Regenerate Materials", "Regenerate the remapped materials from the current import settings.");
+            public static readonly GUIContent ApplyAndGenerateRemapped = EditorGUIUtility.TrTextContent("Apply & Generate Materials", "Apply current importer settings and regenerate the remapped materials with new settings.");
         }
 
         private SerializedProperty m_MaterialLocation;

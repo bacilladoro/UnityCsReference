@@ -36,7 +36,7 @@ namespace UnityEngine.UIElements
         Dynamic,
 
         /// <summary>
-        /// The size of the UIDocument will be fixed to the values provided in <see cref="worldSpaceSize"/>.
+        /// The size of the UIDocument will be fixed to the values provided in <see cref="UIDocument.worldSpaceSize"/>.
         /// </summary>
         Fixed
     }

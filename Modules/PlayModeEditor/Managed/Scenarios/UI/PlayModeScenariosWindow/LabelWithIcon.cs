@@ -14,10 +14,10 @@ namespace Unity.PlayMode.Editor
     /// </summary>
     class LabelWithIcon : VisualElement
     {
-        static readonly string k_BaseClassName = "unity-scenarios-label-with-icon__base--scenario-window";
+        const string k_BaseClassName = "unity-scenarios-label-with-icon__base--scenario-window";
 
-        static string s_VisualTreePath = "PlayMode/UI/LabelWithIcon.uxml";
-        static string s_StylePath = "PlayMode/UI/Framework.uss";
+        const string s_VisualTreePath = "PlayMode/UI/LabelWithIcon.uxml";
+        const string s_StylePath = "PlayMode/UI/Framework.uss";
 
         /// <summary>
         /// Invoked if the edit was successful and no InputWarning was present.

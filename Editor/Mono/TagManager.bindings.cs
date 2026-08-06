@@ -13,7 +13,7 @@ using UnityEngine.Scripting;
 
 namespace UnityEditor
 {
-    [NativeClass(null)]
+    [NativeClass(null, PersistentTypeId = 78)]
     [NativeHeader("Runtime/BaseClasses/TagManager.h")]
     internal sealed class TagManager : ProjectSettingsBase
     {

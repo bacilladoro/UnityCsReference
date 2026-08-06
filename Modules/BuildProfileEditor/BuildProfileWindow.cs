@@ -64,7 +64,6 @@ namespace UnityEditor.Build.Profile
         ToolbarButton m_AssetImportButton;
         Button m_BuildAndRunButton;
         Button m_ActivateButton;
-        Button m_SwitchProfilePlatformButton;
         Button m_BuildInCloudPackageButton;
         AssetImportOverridesWindow m_AssetImportWindow;
         Background m_WarningIcon;
@@ -158,7 +157,6 @@ namespace UnityEditor.Build.Profile
             m_BuildProfileInspectorHeaderElement = rootVisualElement.Q<VisualElement>(buildProfileInspectorHeaderVisualElement);
             m_BuildAndRunButton = rootVisualElement.Q<Button>("build-and-run-button");
             m_ActivateButton = rootVisualElement.Q<Button>("activate-button");
-            m_SwitchProfilePlatformButton = rootVisualElement.Q<Button>("switch-profile-platform-button");
             m_BuildInCloudPackageButton = rootVisualElement.Q<Button>("build-cloud-build-pkg");
             m_WelcomeMessageElement = rootVisualElement.Q<VisualElement>("fallback-no-custom-build-profiles");
             m_WelcomeMessageElementNoClassicPlatforms = rootVisualElement.Q<VisualElement>("fallback-no-custom-or-classic-build-profiles");
@@ -175,7 +173,6 @@ namespace UnityEditor.Build.Profile
             playerSettingsButton.text = TrText.playerSettings;
             listViewAddProfileButton.text = TrText.addBuildProfile;
             m_ActivateButton.text = TrText.activate;
-            m_SwitchProfilePlatformButton.text = TrText.switchProfilePlatformButton;
             m_BuildAndRunButton.text = TrText.buildAndRun;
             m_BuildInCloudPackageButton.text = TrText.cloudBuild;
 
@@ -210,7 +207,6 @@ namespace UnityEditor.Build.Profile
                 OnBuildButtonClicked(BuildOptions.AutoRunPlayer | BuildOptions.StrictMode);
             };
             m_ActivateButton.clicked += OnActivateButtonClicked;
-            m_SwitchProfilePlatformButton.clicked += OnActivateButtonClicked;
             m_BuildInCloudPackageButton.clicked += OnCloudBuildClicked;
             addBuildProfileButton.clicked += this.OpenPlatformDiscoveryWindow;
             listViewAddProfileButton.clicked += this.OpenPlatformDiscoveryWindow;
@@ -277,7 +273,6 @@ namespace UnityEditor.Build.Profile
             m_SelectionFooter.Show();
             m_BuildProfileSelection.SelectItems(selectedItems);
             m_BuildProfileSelection.UpdateSelectionGUI(profile);
-            m_SwitchProfilePlatformButton.Hide();
 
             if (!m_BuildProfileSelection.IsMultipleSelection())
             {
@@ -313,7 +308,6 @@ namespace UnityEditor.Build.Profile
             m_SelectionFooter.Show();
             m_BuildProfileSelection.SelectItem(profile);
             m_BuildProfileSelection.UpdateSelectionGUI(profile);
-            m_SwitchProfilePlatformButton.Hide();
 
             RebuildBuildProfileEditor(profile);
 
@@ -606,30 +600,17 @@ namespace UnityEditor.Build.Profile
 
             BuildProfile activateProfile = m_BuildProfileSelection.Get(0);
             if (activateProfile.IsActiveBuildProfileOrPlatform())
-            {
-                if (!activateProfile.isMultiTarget)
-                    return;
-
-                if (activateProfile.activePlatformGuid == activateProfile.selectedPlatformGuid)
-                    return;
-            }
+                return;
 
             // before we update the BuildProfileContext's activeProfile,
             // we want to capture the current active profile to check if an editor restart is required
             // because certain player settings changed that will require it
             var currentBuildProfile = BuildProfileContext.activeProfile;
 
-            if (activateProfile.isMultiTarget)
-                activateProfile.activePlatformGuid = activateProfile.selectedPlatformGuid;
-
             // success here is handling the player settings, failure is the user cancels handling the restart.
             var isSuccess = BuildProfileModuleUtil.HandlePlayerSettingsChanged(currentBuildProfile, activateProfile);
             if (!isSuccess)
-            {
-                if (activateProfile.isMultiTarget)
-                    activateProfile.activePlatformGuid = new GUID(string.Empty);
                 return;
-            }
 
             // Classic profiles should not be set as active, they are identified
             // by the state of EditorUserBuildSettings active build target.
@@ -724,17 +705,6 @@ namespace UnityEditor.Build.Profile
 
             // Activate button state differs between active/inactive
             m_WindowState.activateAction = isActive ? ActionState.Hidden : (canBuild ? ActionState.Enabled : ActionState.Hidden);
-
-            if (isActive)
-                m_SwitchProfilePlatformButton.Hide();
-
-            // Multi-target profile with platform mismatch: show switch button, hide build actions.
-            if (isActive && profile.isMultiTarget && profile.activePlatformGuid != profile.selectedPlatformGuid)
-            {
-                m_SwitchProfilePlatformButton.Show();
-                HideBuildButtonActions();
-                return;
-            }
 
             // When the SDK platform suppresses default build actions, hide them and let the
             // platform populate its own custom buttons instead.

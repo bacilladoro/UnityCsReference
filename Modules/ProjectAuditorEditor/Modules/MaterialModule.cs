@@ -42,8 +42,6 @@ namespace Unity.ProjectAuditor.Editor.Modules
         {
             var analyzers = GetCompatibleAnalyzers(analysisParams);
 
-            var platformString = analysisParams.PlatformAsString;
-
             var context = new MaterialAnalysisContext
             {
                 // Importer set in loop

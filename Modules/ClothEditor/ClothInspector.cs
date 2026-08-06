@@ -8,6 +8,7 @@ using UnityEngine;
 using UnityEditorInternal;
 using UnityObject = UnityEngine.Object;
 using UnityEditor.Overlays;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -38,7 +39,7 @@ namespace UnityEditor
 
     [CustomEditor(typeof(Cloth))]
     [CanEditMultipleObjects]
-    class ClothInspector : Editor
+    partial class ClothInspector : Editor
     {
         public enum DrawMode { MaxDistance = 1, CollisionSphereDistance }
         public enum ToolMode { Select, Paint, GradientTool }
@@ -73,15 +74,17 @@ namespace UnityEditor
 
         const float kDisabledValue = float.MaxValue;
 
+        [NoAutoStaticsCleanup] // lazily generated gradient texture with HideAndDontSave/DontSave hide flags; not user code and safe to persist across code reload
         static Texture2D s_ColorTexture = null;
+        [AutoStaticsCleanupOnCodeReload]
         static ClothInspector s_Inspector;
 
-        public static PrefColor s_BrushColor = new PrefColor("Cloth/Brush Color 2", 0.0f / 255.0f, 0.0f / 255.0f, 0.0f / 255.0f, 51.0f / 255.0f);
-        public static PrefColor s_SelfAndInterCollisionParticleColor = new PrefColor("Cloth/Self or Inter Collision Particle Color 2", 145.0f / 255.0f, 244.0f / 255.0f, 139.0f / 255.0f, 0.5f);
-        public static PrefColor s_UnselectedSelfAndInterCollisionParticleColor = new PrefColor("Cloth/Unselected Self or Inter Collision Particle Color 2", 0.1f, 0.1f, 0.1f, 0.5f);
-        public static PrefColor s_SelectedParticleColor = new PrefColor("Cloth/Selected Self or Inter Collision Particle Color 2", 64.0f / 255.0f, 160.0f / 255.0f, 255.0f / 255.0f, 0.5f);
+        public static readonly PrefColor s_BrushColor = new PrefColor("Cloth/Brush Color 2", 0.0f / 255.0f, 0.0f / 255.0f, 0.0f / 255.0f, 51.0f / 255.0f);
+        public static readonly PrefColor s_SelfAndInterCollisionParticleColor = new PrefColor("Cloth/Self or Inter Collision Particle Color 2", 145.0f / 255.0f, 244.0f / 255.0f, 139.0f / 255.0f, 0.5f);
+        public static readonly PrefColor s_UnselectedSelfAndInterCollisionParticleColor = new PrefColor("Cloth/Unselected Self or Inter Collision Particle Color 2", 0.1f, 0.1f, 0.1f, 0.5f);
+        public static readonly PrefColor s_SelectedParticleColor = new PrefColor("Cloth/Selected Self or Inter Collision Particle Color 2", 64.0f / 255.0f, 160.0f / 255.0f, 255.0f / 255.0f, 0.5f);
 
-        public static ToolMode[] s_ToolMode =
+        public static readonly ToolMode[] s_ToolMode =
         {
             ToolMode.Paint,
             ToolMode.Select,
@@ -119,59 +122,61 @@ namespace UnityEditor
 
             public static readonly int clothEditorWindowWidth = 300;
 
-            public static GUIContent[] toolContents =
+            public static readonly GUIContent[] toolContents =
             {
                 EditorGUIUtility.IconContent("editconstraints_16"),
                 EditorGUIUtility.IconContent("editCollision_16")
             };
 
-            public static GUIContent[] toolIcons =
+            public static readonly GUIContent[] toolIcons =
             {
                 EditorGUIUtility.TrTextContent("Select"),
                 EditorGUIUtility.TrTextContent("Paint"),
                 EditorGUIUtility.TrTextContent("Gradient Tool")
             };
 
-            public static GUIContent[] drawModeStrings =
+            public static readonly GUIContent[] drawModeStrings =
             {
                 EditorGUIUtility.TrTextContent("Fixed"),
                 EditorGUIUtility.TrTextContent("Max Distance"),
                 EditorGUIUtility.TrTextContent("Surface Penetration")
             };
 
-            public static GUIContent[] toolModeStrings =
+            public static readonly GUIContent[] toolModeStrings =
             {
                 EditorGUIUtility.TrTextContent("Select"),
                 EditorGUIUtility.TrTextContent("Paint"),
                 EditorGUIUtility.TrTextContent("Erase")
             };
 
-            public static GUIContent[] collToolModeIcons =
+            public static readonly GUIContent[] collToolModeIcons =
             {
                 EditorGUIUtility.TrTextContent("Select"),
                 EditorGUIUtility.TrTextContent("Paint"),
                 EditorGUIUtility.TrTextContent("Erase")
             };
 
-            public static GUIContent[] collVisModeStrings =
+            public static readonly GUIContent[] collVisModeStrings =
             {
                 EditorGUIUtility.TrTextContent("Self-Collision"),
                 EditorGUIUtility.TrTextContent("Inter-Collision"),
             };
 
-            public static GUIContent paintIcon = EditorGUIUtility.TrIconContent("ClothInspector.PaintValue", "Change this vertex coefficient value by painting in the scene view.");
+            public static readonly GUIContent paintIcon = EditorGUIUtility.TrIconContent("ClothInspector.PaintValue", "Change this vertex coefficient value by painting in the scene view.");
 
-            public static EditMode.SceneViewEditMode[] sceneViewEditModes = new[]
+            public static readonly EditMode.SceneViewEditMode[] sceneViewEditModes = new[]
             {
                 EditMode.SceneViewEditMode.ClothConstraints,
                 EditMode.SceneViewEditMode.ClothSelfAndInterCollisionParticles
             };
 
-            public static GUIContent selfCollisionDistanceGUIContent = EditorGUIUtility.TrTextContent("Self-Collision Distance");
-            public static GUIContent selfCollisionStiffnessGUIContent = EditorGUIUtility.TrTextContent("Self-Collision Stiffness");
+            public static readonly GUIContent selfCollisionDistanceGUIContent = EditorGUIUtility.TrTextContent("Self-Collision Distance");
+            public static readonly GUIContent selfCollisionStiffnessGUIContent = EditorGUIUtility.TrTextContent("Self-Collision Stiffness");
 
             static Styles()
             {
+#pragma warning disable UAL0015 // Auto cleaned up symbol assigned by constructor
+                // populating translation cache
                 toolContents[0].tooltip = EditorGUIUtility.TrTextContent("Edit cloth constraints").text;
                 toolContents[1].tooltip = EditorGUIUtility.TrTextContent("Edit cloth self/inter-collision").text;
 
@@ -181,6 +186,7 @@ namespace UnityEditor
                 collToolModeIcons[0].tooltip = EditorGUIUtility.TrTextContent("Select cloth particles.").text;
                 collToolModeIcons[1].tooltip = EditorGUIUtility.TrTextContent("Paint cloth particles.").text;
                 collToolModeIcons[2].tooltip = EditorGUIUtility.TrTextContent("Erase cloth particles.").text;
+#pragma warning restore UAL0015 // Auto cleaned up symbol assigned by constructor
             }
         }
 

@@ -8,10 +8,11 @@ using UnityEngine.Assertions;
 using UnityEngine.Rendering;
 using UnityEngine.Animations;
 using Object = UnityEngine.Object;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
-    internal class AvatarPreview
+    internal partial class AvatarPreview
     {
         const string kDefaultAvatarPreviewOption = "DefaultAvatarPreviewOption";
         const string kIkPref = "AvatarpreviewShowIK";
@@ -203,7 +204,9 @@ namespace UnityEditor
             public GUIStyle preSlider = "preSlider";
             public GUIStyle preSliderThumb = "preSliderThumb";
         }
+        [AutoStaticsCleanupOnCodeReload]
         private static Styles s_Styles;
+        private static Styles styles => s_Styles ??= new();
 
         void SetPreviewCharacterEnabled(bool enabled, bool showReference)
         {
@@ -448,9 +451,6 @@ namespace UnityEditor
 
         private void Init()
         {
-            if (s_Styles == null)
-                s_Styles = new Styles();
-
             if (m_FloorPlane == null)
             {
                 m_FloorPlane = Resources.GetBuiltinResource(typeof(Mesh), "New-Plane.fbx") as Mesh;
@@ -514,7 +514,7 @@ namespace UnityEditor
 
         float PreviewSlider(Rect rect, float val, float snapThreshold)
         {
-            val = GUI.HorizontalSlider(rect, val, 0.1f, 2.0f, s_Styles.preSlider, s_Styles.preSliderThumb);//, GUILayout.MaxWidth(64));
+            val = GUI.HorizontalSlider(rect, val, 0.1f, 2.0f, styles.preSlider, styles.preSliderThumb);//, GUILayout.MaxWidth(64));
             if (val > 0.25f - snapThreshold && val < 0.25f + snapThreshold)
                 val = 0.25f;
             else if (val > 0.5f - snapThreshold && val < 0.5f + snapThreshold)
@@ -540,13 +540,13 @@ namespace UnityEditor
             if (m_ShowIKOnFeetButton)
             {
                 EditorGUI.BeginChangeCheck();
-                m_IKOnFeet = GUILayout.Toggle(m_IKOnFeet, s_Styles.ik, s_Styles.preButton);
+                m_IKOnFeet = GUILayout.Toggle(m_IKOnFeet, styles.ik, styles.preButton);
                 if (EditorGUI.EndChangeCheck())
                     EditorPrefs.SetBool(kIkPref, m_IKOnFeet);
             }
 
             EditorGUI.BeginChangeCheck();
-            GUILayout.Toggle(is2D, s_Styles.is2D, s_Styles.preButton);
+            GUILayout.Toggle(is2D, styles.is2D, styles.preButton);
             if (EditorGUI.EndChangeCheck())
             {
                 is2D = !is2D;
@@ -554,11 +554,11 @@ namespace UnityEditor
             }
 
             EditorGUI.BeginChangeCheck();
-            m_ShowReference = GUILayout.Toggle(m_ShowReference, s_Styles.pivot, s_Styles.preButton);
+            m_ShowReference = GUILayout.Toggle(m_ShowReference, styles.pivot, styles.preButton);
             if (EditorGUI.EndChangeCheck())
                 EditorPrefs.SetBool(kReferencePref, m_ShowReference);
 
-            if (EditorGUILayout.DropdownButton(s_Styles.avatarIcon, FocusType.Passive, EditorStyles.toolbarDropDownRight))
+            if (EditorGUILayout.DropdownButton(styles.avatarIcon, FocusType.Passive, EditorStyles.toolbarDropDownRight))
             {
                 GenericMenu menu = new GenericMenu();
                 menu.AddItem(EditorGUIUtility.TrTextContent("Auto"), false, SetPreviewAvatarOption, PreviewPopupOptions.Auto);

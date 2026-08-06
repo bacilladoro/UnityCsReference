@@ -4,6 +4,7 @@
 
 using System.Collections.Generic;
 using System.Linq;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -17,6 +18,7 @@ namespace UnityEditor
             public readonly GUIContent FixSpeedTreeShaders = EditorGUIUtility.TrTextContent("Fix SpeedTree Shaders");
         }
 
+        [NoAutoStaticsCleanup] // lazy GUIContent holder; survives domain reload and re-inits on first access
         private static Styles s_Styles = null;
 
         private static IEnumerable<MeshRenderer> EnumerateMeshRenderers(GameObject gameObject)

@@ -103,10 +103,12 @@ namespace UnityEditor.VFX
             }
         }
 
+#pragma warning disable UA5000 // The Avoid Finalizer Analyzer produces compile errors for any new finalizers. This pre-existing finalizer declaration has been suppressed, but should be rewritten if possible.
         ~VFXCPUBufferData()
         {
             Release();
         }
+#pragma warning restore UA5000
 
         public void Dispose()
         {
@@ -306,6 +308,7 @@ namespace UnityEditor.VFX
     [NativeHeader("Modules/VFXEditor/Public/ScriptBindings/VisualEffectResourceBindings.h")]
     [NativeHeader("Modules/VFXEditor/Public/VisualEffectResource.h")]
     [NativeHeader("VFXScriptingClasses.h")]
+    [NativeClass("VisualEffectResource", PersistentTypeId = 0x7AB43187)]
     internal partial class VisualEffectResource : UnityObject
     {
         public VisualEffectResource()

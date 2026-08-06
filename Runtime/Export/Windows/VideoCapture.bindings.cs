@@ -299,6 +299,7 @@ namespace UnityEngine.Windows.WebCam
         private extern void Dispose_Internal();
 
         //-----------------------------------------------------------------
+#pragma warning disable UA5000 // The Avoid Finalizer Analyzer produces compile errors for any new finalizers. This pre-existing finalizer declaration has been suppressed, but should be rewritten if possible.
         ~VideoCapture()
         {
             if (m_NativePtr != IntPtr.Zero)
@@ -307,6 +308,7 @@ namespace UnityEngine.Windows.WebCam
                 m_NativePtr = IntPtr.Zero;
             }
         }
+#pragma warning restore UA5000
 
         [NativeConditional("(PLATFORM_WIN || PLATFORM_WINRT) && !PLATFORM_XBOXONE")]
         [NativeMethod("VideoCaptureBindings::DisposeThreaded", HasExplicitThis = true, IsThreadSafe = true)]

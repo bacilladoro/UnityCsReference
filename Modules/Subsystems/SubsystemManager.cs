@@ -13,17 +13,23 @@ namespace UnityEngine
     public static partial class SubsystemManager
     {
 
+        ///<summary>Gets all of the currently known subsystem descriptors regardless of specific subsystem type.</summary>
+        ///<param name="descriptors">Subsystem descriptors.</param>
         public static void GetAllSubsystemDescriptors(List<ISubsystemDescriptor> descriptors)
         {
             SubsystemDescriptorStore.GetAllSubsystemDescriptors(descriptors);
         }
 
+        ///<summary>Returns a list of <see cref="SubsystemDescriptor" />s which describe additional functionality that can be enabled.</summary>
+        ///<param name="descriptors">Subsystem specific descriptors.</param>
         public static void GetSubsystemDescriptors<T>(List<T> descriptors)
             where T : ISubsystemDescriptor
         {
             SubsystemDescriptorStore.GetSubsystemDescriptors(descriptors);
         }
 
+        ///<summary>Returns active <see cref="Subsystem" />s of a specific instance type.</summary>
+        ///<param name="subsystems">Active subsystems.</param>
         public static void GetSubsystems<T>(List<T> subsystems)
             where T : ISubsystem
         {
@@ -46,8 +52,16 @@ namespace UnityEngine
 
 // event never invoked warning (invoked indirectly from native code)
 #pragma warning disable CS0067
+        ///<summary>Called from <see cref="SubsystemManager" /> before reloading all XR SDK Provider packaged subsystems.</summary>
+        ///<remarks>When the Editor starts or when packages are installed or removed, the <see cref="SubsystemManager" /> searches the packages and loads all XR SDK packages that it finds. Handling this event allows you to do work you might need after the subsystem manager loads and initializes new subsystem descriptors.</remarks>
+        ///<seealso cref="SubsystemManager" />
+        ///<seealso cref="SubsystemDescriptor" />
         [AutoStaticsCleanupOnCodeReload]
         public static event Action beforeReloadSubsystems;
+        ///<summary>Called from <see cref="SubsystemManager" /> when it has completed reloading all XR SDK Provider packaged subsystems.</summary>
+        ///<remarks>When the Editor starts or when packages are installed or removed, the <see cref="SubsystemManager" /> searches the packages and loads all XR SDK packages that it finds. Handling this event allows you to do work you might need after the subsystem manager loads and initializes new subsystem descriptors.</remarks>
+        ///<seealso cref="SubsystemManager" />
+        ///<seealso cref="SubsystemDescriptor" />
         [AutoStaticsCleanupOnCodeReload]
         public static event Action afterReloadSubsystems;
 #pragma warning restore CS0067

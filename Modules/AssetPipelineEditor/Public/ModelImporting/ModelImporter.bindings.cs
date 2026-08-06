@@ -424,6 +424,7 @@ namespace UnityEditor
     }
 
     [UsedByNativeCode]
+    [global::UnityEngine.NativeClass("HumanTemplate", PersistentTypeId = 1105)]
     [NativeHeader("Editor/Src/Animation/HumanTemplate.h")]
     public sealed partial class HumanTemplate : Object
     {
@@ -457,6 +458,7 @@ namespace UnityEditor
 
     [NativeHeader("Modules/AssetPipelineEditor/Public/ModelImporting/ModelImporter.h")]
     [NativeHeader("Modules/AssetPipelineEditor/Public/ModelImporting/ModelImporter.bindings.h")]
+    [global::UnityEngine.NativeClass("ModelImporter", PersistentTypeId = 1040)]
     [NativeHeader("Modules/Animation/ScriptBindings/AvatarBuilder.bindings.h")]
     public partial class ModelImporter : AssetImporter
     {

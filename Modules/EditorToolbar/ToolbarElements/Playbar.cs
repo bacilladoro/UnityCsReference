@@ -67,7 +67,7 @@ namespace UnityEditor.Toolbars
                 }
                 else
                 {
-                    elements.Add(new MainToolbarCustom(() =>
+                    elements.Add(new MainToolbarCustomElement(() =>
                     {
                         var imgui = new IMGUIContainer(OverrideGUIHandler);
                         imgui.style.width = k_ImguiOverrideWidth;

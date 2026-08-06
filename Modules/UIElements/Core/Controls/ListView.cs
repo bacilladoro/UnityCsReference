@@ -31,32 +31,32 @@ namespace UnityEngine.UIElements
     /// recycles these objects and re-binds them to new data items.
     ///
     /// To set the height of a single item in pixels, set the <c>item-height</c> property in UXML or the
-    ///     <see cref="ListView.itemHeight"/> property in C# to the desired value. \\
+    ///     <see cref="BaseVerticalCollectionView.itemHeight"/> property in C# to the desired value. \\
     /// \\
     /// To display a border around the scrollable area, set the <c>show-border</c> property in UXML or the
-    ///     <see cref="ListView.showBorder"/> property in C# to <c>true</c>.\\
+    ///     <see cref="BaseVerticalCollectionView.showBorder"/> property in C# to <c>true</c>.\\
     ///     \\
     /// By default, the user can select one element in the list at a time. To change the default selection
-    /// use the <c>selection-type</c> property in UXML or the<see cref="ListView.selectionType"/> property in C#.
+    /// use the <c>selection-type</c> property in UXML or the<see cref="BaseVerticalCollectionView.selectionType"/> property in C#.
     ///     To allow the user to select more than one element simultaneously, set the property to <c>Selection.Multiple</c>.
     ///     To prevent the user from selecting items, set the property to <c>Selection.None</c>.\\
     /// \\
     ///     By default, all rows in the ListView have same background color. To make the row background colors
     ///     alternate, set the <c>show-alternating-row-backgrounds</c> property in UXML or the
-    ///     <see cref="ListView.showAlternatingRowBackgrounds"/> property in C# to
+    ///     <see cref="BaseVerticalCollectionView.showAlternatingRowBackgrounds"/> property in C# to
     ///     <see cref="AlternatingRowBackground.ContentOnly"/> or
     ///     <see cref="AlternatingRowBackground.All"/>. For details, see <see cref="AlternatingRowBackground"/>. \\
     /// \\
     ///     By default, the user can't reorder the list's elements. To allow the user to drag the elements
-    ///     to reorder them, set the <c>reorderable</c> property in UXML or the <see cref="ListView.reorderable"/>
+    ///     to reorder them, set the <c>reorderable</c> property in UXML or the <see cref="BaseVerticalCollectionView.reorderable"/>
     ///     property in C# to <c>true</c>.\\
     /// \\
     /// To make the first item in the ListView display the number of items in the list, set the
-    ///     <c>show-bound-collection-size</c> property in UXML or the <see cref="ListView.showBoundCollectionSize"/>
+    ///     <c>show-bound-collection-size</c> property in UXML or the <see cref="BaseListView.showBoundCollectionSize"/>
     ///     to true. This is useful for debugging. By default, the ListView's scroller element only scrolls vertically.\\
     /// \\
     /// To enable horizontal scrolling when the displayed element is wider than the visible area, set the
-    ///     <c>horizontal-scrolling-enabled</c> property in UXML or the <see cref="ListView.horizontalScrollingEnabled"/>
+    ///     <c>horizontal-scrolling-enabled</c> property in UXML or the <see cref="BaseVerticalCollectionView.horizontalScrollingEnabled"/>
     ///     to <c>true</c>.
     ///
     /// For more information, refer to [[wiki:UIE-uxml-element-ListView|ListView]].
@@ -241,7 +241,7 @@ namespace UnityEngine.UIElements
         protected override CollectionViewController CreateViewController() => new ListViewController();
 
         /// <summary>
-        /// Creates a <see cref="ListView"/> with all default properties. The <see cref="ListView.itemsSource"/>
+        /// Creates a <see cref="ListView"/> with all default properties. The <see cref="BaseVerticalCollectionView.itemsSource"/>
         /// must all be set for the ListView to function properly.
         /// </summary>
         public ListView()

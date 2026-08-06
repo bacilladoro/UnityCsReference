@@ -33,7 +33,6 @@ namespace UnityEngine.UIElements
         bool Start(StylePropertyId id, MaterialDefinition from, MaterialDefinition to, int durationMs, int delayMs, Func<float, float> easingCurve);
         // Cursor can't be smoothly interpolated (Texture2D reference); transitions step discretely.
         bool Start(StylePropertyId id, Cursor from, Cursor to, int durationMs, int delayMs, Func<float, float> easingCurve);
-
         bool HasRunningAnimation(StylePropertyId id);
         void UpdateAnimation(StylePropertyId id);
         void GetAllAnimations(List<StylePropertyId> outPropertyIds);

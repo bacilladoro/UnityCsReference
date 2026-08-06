@@ -129,6 +129,7 @@ namespace UnityEditor.U2D
     // SpriteAtlas Importer lets you modify [[SpriteAtlas]]
     [NativeHeader("Editor/Src/2D/SpriteAtlas/SpriteAtlasAsset.h")]
     [NativeHeader("Editor/Src/2D/SpriteAtlas/SpriteAtlasAsset.h")]
+    [NativeClass("SpriteAtlasAsset", PersistentTypeId = 0x2489757E)]
     public class SpriteAtlasAsset : UnityEngine.Object
     {
         public SpriteAtlasAsset() { Internal_Create(this); }

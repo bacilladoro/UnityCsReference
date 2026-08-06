@@ -11,7 +11,7 @@ using Unity.Scripting.LifecycleManagement;
 namespace UnityEditor
 {
     [RequiredByNativeCode]
-    internal class EditorPreviewTilemap : ITilemap
+    internal partial class EditorPreviewTilemap : ITilemap
     {
         [NoAutoStaticsCleanup]
         private static Sprite s_InvalidTileSprite;
@@ -34,6 +34,7 @@ namespace UnityEditor
             return s_InvalidTileSprite;
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         internal static Func<Tilemap, ITilemap> createEditorPreviewTilemap;
 
         internal static void RegisterCreateEditorPreviewTilemapFunc(Func<Tilemap, ITilemap> func)

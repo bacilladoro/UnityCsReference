@@ -7,6 +7,7 @@ using UnityEngine;
 using UnityEditor;
 using UnityEngine.UIElements;
 using UnityEditor.UIElements;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditorInternal
 {
@@ -38,13 +39,11 @@ namespace UnityEditorInternal
                 EditorGUIUtility.TrTextContent("Random Color")
             };
         }
-        static Styles s_Styles;
+        [NoAutoStaticsCleanup] // Readonly eager init re-runs per ALC on code load; GUIContent members survive reload.
+        static readonly Styles s_Styles = new();
 
         void Init(SerializedProperty property)
         {
-            if (s_Styles == null)
-                s_Styles = new Styles();
-
             if (m_PropertyDataPerPropertyPath.TryGetValue(property.propertyPath, out m_Property))
                 return;
 

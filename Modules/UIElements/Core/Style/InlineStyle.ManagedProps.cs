@@ -24,13 +24,15 @@ partial class InlineStyleAccess
 
     StyleBackground GetStyleBackground(StylePropertyId id)
     {
-        if (TryGetObject(id, out Object obj, out StyleKeyword keyword))
+        var inline = new StyleValueManaged();
+        if (TryGetStyleValueManaged(id, ref inline))
         {
-            StyleBackground styleBg = Background.FromObject(obj);
-            styleBg.keyword = keyword;
+            // Inline value: full Background (typed setter) or plain Object (legacy asset).
+            Background bg = inline.value is Background b ? b : Background.FromObject(inline.value as Object);
+            StyleBackground styleBg = bg;
+            styleBg.keyword = inline.keyword;
             return styleBg;
         }
-
         return StyleKeyword.Null;
     }
 
@@ -76,7 +78,10 @@ partial class InlineStyleAccess
         var sv = new StyleValueManaged();
         sv.id = id;
         sv.keyword = inlineValue.keyword;
-        sv.value = inlineValue.value.GetSelectedImage();
+        // Preserve the full Background struct so subsequent reads round-trip losslessly.
+        // Note: When gradient is empty, use a code path that does not box.
+        var bg = inlineValue.value;
+        sv.value = bg.gradient.IsEmpty() ? bg.GetSelectedImage() : bg;
         SetStyleValueManaged(sv);
 
         if (inlineValue.keyword == StyleKeyword.Null)

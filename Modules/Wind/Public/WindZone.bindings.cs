@@ -56,6 +56,7 @@ namespace UnityEngine
 
     ///<summary>Wind Zones add realism to the trees you create by making them wave their branches and leaves as if blown by the wind.</summary>
     ///<remarks>**Note:** This only works with trees created by the tree creator or imported from SpeedTree Modeler.</remarks>
+    [global::UnityEngine.NativeClass("WindZone", PersistentTypeId = 182)]
     [NativeHeader("Modules/Wind/Public/Wind.h")]
     public class WindZone : Component
     {

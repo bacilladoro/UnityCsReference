@@ -8,6 +8,7 @@ using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor.IMGUI.Controls;
+using Unity.Scripting.LifecycleManagement;
 
 using TreeViewItem = UnityEditor.IMGUI.Controls.TreeViewItem<int>;
 using TreeViewGUI = UnityEditor.IMGUI.Controls.TreeViewGUI<int>;
@@ -74,6 +75,7 @@ namespace UnityEditorInternal
         private static readonly string k_DeleteKey = L10n.Tr("Delete Key");
         private static readonly string k_RemoveCurve = L10n.Tr("Remove Curve");
 
+        [NoAutoStaticsCleanup]
         internal static int s_WasInsideValueRectFrame = -1;
 
         public AnimationWindowHierarchyGUI(TreeViewController treeView, AnimationWindowState state)
@@ -368,6 +370,8 @@ namespace UnityEditorInternal
                 GUI.Label(labelRect, Styles.content, lineStyle);
 
                 SetStyleTextColor(lineStyle, oldColor);
+
+                GUIView.current?.MarkHotRegion(GUIClip.UnclipToWindow(labelRect));
             }
 
             if (IsRenaming(node.id) && Event.current.type != EventType.Layout)
@@ -529,6 +533,7 @@ namespace UnityEditorInternal
             {
                 case EventType.Repaint:
                     style.Draw(position, content, id, false, position.Contains(evt.mousePosition));
+                    GUIView.current?.MarkHotRegion(GUIClip.UnclipToWindow(position));
                     break;
                 case EventType.MouseDown:
                     if (position.Contains(evt.mousePosition) && evt.button == 0)

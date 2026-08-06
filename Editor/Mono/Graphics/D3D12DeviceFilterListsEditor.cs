@@ -22,6 +22,7 @@ namespace UnityEditor
             public const float kHeightBetweenFields = 3.0f;
             public const float kHeightBetweenRows = 10.0f;
             public const float kComparatorFieldWidth = 170.0f;
+            public const string kGfxJobsNoticeText = "The order of the Graphics Jobs Filters is important. Filtering will use the first passing filter to determine Graphics Jobs Mode at runtime.";
 
             public static readonly GUIContent preferredGraphicsJobsMode = EditorGUIUtility.TrTextContent("Preferred Graphics Jobs Mode", "Indicates which graphics jobs mode this filter will enforce at runtime.");
 
@@ -460,47 +461,35 @@ namespace UnityEditor
             }
         };
 
-        private float DoListInternal(ReorderableFilterList list, float startingHeight)
+        private void DoListInternal(ReorderableFilterList list)
         {
-            var listRect = GUILayoutUtility.GetRect(startingHeight, list.reorderableList.GetHeight(), GUILayout.ExpandWidth(true));
+            var listRect = GUILayoutUtility.GetRect(0.0f, list.reorderableList.GetHeight(), GUILayout.ExpandWidth(true));
             listRect.x += EditorGUI.kIndentPerLevel;
             listRect.width -= EditorGUI.kIndentPerLevel;
             list.DoList(listRect);
-            return list.reorderableList.GetHeight();
         }
 
-        private float DoList(ReorderableFilterList list, string name, ref bool showPosition, float startingHeight, Func<float, float> onBeforeListDraw = null, Func<float, float> onAfterListDraw = null)
+        private void DoList(ReorderableFilterList list, string name, ref bool showPosition, Action onBeforeListDraw = null, Action onAfterListDraw = null)
         {
-            var height = startingHeight;
             showPosition = EditorGUILayout.BeginFoldoutHeaderGroup(showPosition, name);
             if (showPosition)
             {
-                using (var scopedHeight = new IndentLevelScope())
+                using (new IndentLevelScope())
                 {
-                    height += onBeforeListDraw?.Invoke(height) ?? 0.0f;
-                    height += DoListInternal(list, height);
-                    height += onAfterListDraw?.Invoke(height) ?? 0.0f;
+                    onBeforeListDraw?.Invoke();
+                    DoListInternal(list);
+                    onAfterListDraw?.Invoke();
                 }
             }
             EditorGUILayout.EndFoldoutHeaderGroup();
-            return height;
         }
 
-        private float DrawGfxJobsExtraNotice(float startingHeight)
+        private void DrawGfxJobsExtraNotice()
         {
-            var content = EditorGUIUtility.TempContent("The order of the Graphics Jobs Filters is important. Filtering will use the first passing filter to determine Graphics Jobs Mode at runtime.", EditorGUIUtility.GetHelpIcon(MessageType.Info));
+            var content = EditorGUIUtility.TempContent(D3D12DeviceFilterUI.Styles.kGfxJobsNoticeText, EditorGUIUtility.GetHelpIcon(MessageType.Info));
 
-            var rect = GUILayoutUtility.GetRect(0.0f, 0.0f, GUILayout.ExpandWidth(true));
-            rect.x += EditorGUI.kIndentPerLevel;
-            rect.width -= EditorGUI.kIndentPerLevel;
-            var height = EditorStyles.helpBox.CalcHeight(content, rect.width);
-
-            rect = GUILayoutUtility.GetRect(0.0f, height, GUILayout.ExpandWidth(true));
-            rect.x += EditorGUI.kIndentPerLevel;
-            rect.width -= EditorGUI.kIndentPerLevel;
-
-            EditorGUI.HelpBox(rect, content);
-            return height;
+            // CalcHeight here would measure the Layout-event dummy rect width and clip the box.
+            EditorGUILayout.HelpBox(content);
         }
 
         public override void OnInspectorGUI()
@@ -513,11 +502,9 @@ namespace UnityEditor
 
             using (var changed = new ChangeCheckScope())
             {
-                var height = 0.0f;
-
-                height = DoList(m_AllowReorderableFilterList, "Allow Filters", ref m_ShowAllow, height);
-                height = DoList(m_DenyReorderableFilterList, "Deny Filters", ref m_ShowDeny, height);
-                height = DoList(m_GfxJobsReorderableFilterList, "Preferred Graphics Jobs Filters", ref m_ShowGfxJobs, height, DrawGfxJobsExtraNotice);
+                DoList(m_AllowReorderableFilterList, "Allow Filters", ref m_ShowAllow);
+                DoList(m_DenyReorderableFilterList, "Deny Filters", ref m_ShowDeny);
+                DoList(m_GfxJobsReorderableFilterList, "Preferred Graphics Jobs Filters", ref m_ShowGfxJobs, DrawGfxJobsExtraNotice);
 
                 if (changed.changed)
                     serializedObject.ApplyModifiedProperties();

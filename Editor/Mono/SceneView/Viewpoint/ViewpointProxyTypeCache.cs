@@ -4,12 +4,14 @@
 
 using System;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 
 namespace UnityEditor
 {
-    class ViewpointProxyTypeCache
+    partial class ViewpointProxyTypeCache
     {
+        [AutoStaticsCleanupOnCodeReload]
         static ViewpointProxyTypeCache[] s_Cache;
 
         Type m_ViewpointType;

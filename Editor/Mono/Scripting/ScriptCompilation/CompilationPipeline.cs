@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor.Scripting;
@@ -232,15 +233,22 @@ namespace UnityEditor.Compilation
 
     public static partial class CompilationPipeline
     {
+        [NoAutoStaticsCleanup] // lazy cache of static platform definitions, rebuilt on demand via null-check; no user types
         static AssemblyDefinitionPlatform[] assemblyDefinitionPlatforms;
 
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<object> compilationStarted;
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<object> compilationFinished;
         [Obsolete("Use compilationStarted, compilationFinished or assemblyCompilationFinished instead. Note that using any of these functions to do time measurements is a bad idea as they run async to actual compilation.")]
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<string> assemblyCompilationStarted;
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<string> assemblyCompilationNotRequired;
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<string, CompilerMessage[]> assemblyCompilationFinished;
 
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<CodeOptimization> codeOptimizationChanged;
 
         public static CodeOptimization codeOptimization

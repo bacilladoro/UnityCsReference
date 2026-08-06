@@ -10,11 +10,14 @@ using System.Runtime.InteropServices;
 
 namespace UnityEngine.Subsystems
 {
+    ///<exclude />
     [NativeHeader("Modules/Subsystems/Example/ExampleSubsystem.h")]
     [UsedByNativeCode]
     public class ExampleSubsystem : IntegratedSubsystem<ExampleSubsystemDescriptor>
     {
+        ///<exclude />
         public extern void PrintExample();
+        ///<exclude />
         public extern bool GetBool();
 
         new internal static class BindingsMarshaller

@@ -7,11 +7,12 @@ using UnityEditor;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEditorInternal;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
     [System.Serializable]
-    internal class AvatarMuscleEditor : AvatarSubEditor
+    internal partial class AvatarMuscleEditor : AvatarSubEditor
     {
         class Styles
         {
@@ -57,8 +58,9 @@ namespace UnityEditor
             public GUIContent resetMuscle = EditorGUIUtility.TrTextContent("Reset");
         }
 
-        static Styles styles { get { if (s_Styles == null) s_Styles = new Styles(); return s_Styles; } }
+        [AutoStaticsCleanupOnCodeReload]
         static Styles s_Styles;
+        static Styles styles => s_Styles ??= new();
 
         // This list containt the mecanim's musle id for each muscle group
         protected int[][] m_Muscles =

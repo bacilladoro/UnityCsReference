@@ -10,6 +10,7 @@ using UnityEngine;
 using UnityEditorInternal;
 using Object = UnityEngine.Object;
 using Unity.Collections;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -41,6 +42,7 @@ namespace UnityEditor
             public readonly GUIStyle m_DropdownButton = "MiniPopup";
         }
 
+        [NoAutoStaticsCleanup] // GUIContent/GUIStyle-only lazy Styles cache; contents survive code reload
         private static GUIStyles s_Styles = null;
         private static GUIStyles Styles
         {

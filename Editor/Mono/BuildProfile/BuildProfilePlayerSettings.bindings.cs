@@ -10,6 +10,7 @@ using UnityEngine.Scripting;
 namespace UnityEditor.Build.Profile;
 
 [NativeHeader("Runtime/Misc/PlayerSettings.h")]
+[NativeClass("BuildProfilePlayerSettings", PersistentTypeId = 0x43E334C1)]
 [UsedByNativeCode]
 [VisibleToOtherModules]
 internal class BuildProfilePlayerSettings : UnityEngine.Object

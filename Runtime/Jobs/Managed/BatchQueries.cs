@@ -10,6 +10,7 @@ using System.Runtime.InteropServices;
 using UnityEngine.Bindings;
 using Unity.Collections;
 using Unity.Jobs;
+using Unity.Scripting.LifecycleManagement;
 
 namespace Unity.Jobs.LowLevel.Unsafe
 {
@@ -26,8 +27,9 @@ namespace Unity.Jobs.LowLevel.Unsafe
         internal NativeArray<CommandT> commands;
         internal NativeArray<ResultT> results;
     }
-    public struct BatchQueryJobStruct<T> where T : struct
+    public partial struct BatchQueryJobStruct<T> where T : struct
     {
+        [AutoStaticsCleanupOnCodeReload] // job reflection data is invalid after code reload and must be recreated
         static internal IntPtr                    jobReflectionData;
 
         public static IntPtr Initialize()

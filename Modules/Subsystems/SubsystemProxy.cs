@@ -4,12 +4,15 @@
 
 namespace UnityEngine.SubsystemsImplementation
 {
+    ///<exclude />
     public class SubsystemProxy<TSubsystem, TProvider>
         where TSubsystem : SubsystemWithProvider, new()
         where TProvider : SubsystemProvider<TSubsystem>
     {
+        ///<exclude />
         public TProvider provider { get; private set; }
 
+        ///<exclude />
         public bool running
         {
             get => provider.running;

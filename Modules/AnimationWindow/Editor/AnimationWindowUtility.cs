@@ -8,6 +8,7 @@ using System.Globalization;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Bindings;
+using Unity.Scripting.LifecycleManagement;
 using Object = UnityEngine.Object;
 using TangentMode = UnityEditor.AnimationUtility.TangentMode;
 
@@ -18,6 +19,7 @@ namespace UnityEditorInternal
     {
         public const float MaxDisplayableKeyValue = 5e5f;
 
+        [AutoStaticsCleanupOnCodeReload(CleanupStrategy = CleanupStrategy.Clear)]
         private static readonly List<IAnimationWindowPropertyHandler> s_PropertyHandlers = new();
 
         [VisibleToOtherModules("UnityEditor.UIToolkitAuthoringModule")]

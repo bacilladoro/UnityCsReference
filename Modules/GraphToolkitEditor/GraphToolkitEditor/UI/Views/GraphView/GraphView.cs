@@ -115,6 +115,9 @@ namespace Unity.GraphToolkit.Editor
         readonly VisualElement m_GraphViewContainer;
         readonly VisualElement m_MarkersParent;
 
+        readonly UserNodeViewBuilderLookup m_BuilderLookup = new();
+        internal UserNodeViewBuilderLookup BuilderLookup => m_BuilderLookup;
+
         Dictionary<VisualElement, string>[] m_ElementsPerZoom = new Dictionary<VisualElement, string> [(int)GraphViewZoomMode.Unknown];
 
         SelectionDragger m_SelectionDragger;

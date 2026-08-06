@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using UnityEngine;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor.StyleSheets;
 using System.Runtime.InteropServices;
 using System.Collections.Generic;
@@ -48,7 +49,9 @@ namespace UnityEditor
 
         static internal bool macEditor => Application.platform == RuntimePlatform.OSXEditor;
 
+        [AutoStaticsCleanupOnCodeReload]
         static internal bool s_Modal = false;
+        [AutoStaticsCleanupOnCodeReload]
         private static ContainerWindow s_MainWindow;
 
         static internal ContainerWindow mainWindow { get => s_MainWindow; }
@@ -60,9 +63,13 @@ namespace UnityEditor
             public static float borderSize => macEditor ? osxBorderSize : winBorderSize;
             public static float buttonMargin => macEditor ? osxBorderMargin : winBorderMargin;
 
+            [NoAutoStaticsCleanup] // styled layout constant loaded by name; safe to persist across reload
             private static SVC<float> winBorderSize = new SVC<float>("--container-window-buttons-right-margin-win");
+            [NoAutoStaticsCleanup] // styled layout constant loaded by name; safe to persist across reload
             private static SVC<float> osxBorderSize = new SVC<float>("--container-window-buttons-right-margin-osx");
+            [NoAutoStaticsCleanup] // styled layout constant loaded by name; safe to persist across reload
             private static SVC<float> winBorderMargin = new SVC<float>("--container-window-button-left-right-margin-win");
+            [NoAutoStaticsCleanup] // styled layout constant loaded by name; safe to persist across reload
             private static SVC<float> osxBorderMargin = new SVC<float>("--container-window-button-left-right-margin-osx");
         }
         static internal float buttonHorizontalSpace => (kButtonWidth + Styles.buttonMargin * 2f);
@@ -73,6 +80,7 @@ namespace UnityEditor
             m_UnsavedEditorWindows = new List<EditorWindow>();
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         private static Func<bool> MppmCloseCallback;
 
         internal void __internalAwake()
@@ -672,6 +680,7 @@ namespace UnityEditor
         }
 
         // Array of all visible ContainerWindows, from frontmost to last
+        [AutoStaticsCleanupOnCodeReload]
         static List<ContainerWindow> s_AllWindows = new List<ContainerWindow>();
         public static ContainerWindow[] windows
         {

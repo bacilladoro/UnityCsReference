@@ -10,6 +10,7 @@ using UnityEngine.Scripting;
 namespace UnityEngine
 {
     [NativeHeader("Runtime/Graphics/LightingSettings.h")]
+    [NativeClass("LightingSettings", PersistentTypeId = 0x32B30F6B)]
     [PreventReadOnlyInstanceModificationAttribute]
     public sealed partial class LightingSettings : Object
     {

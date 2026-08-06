@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using System.Collections.Generic;
 using System.Text;
 using UnityEditor.Experimental;
@@ -40,6 +41,7 @@ namespace UnityEditor
         Best = 100 // Best compression
     }
 
+    [global::UnityEngine.NativeClass("SceneAsset", PersistentTypeId = 1032)]
     public class SceneAsset : Object
     {
         private SceneAsset() {}
@@ -66,10 +68,12 @@ namespace UnityEditor
             }
         }
 
+        [NoAutoStaticsCleanup] // StringBuilder reuse pool, no user-type references; safe to persist across reload
         private static readonly Stack<StringBuilder> _SbPool = new Stack<StringBuilder>();
 
         public delegate void SelectMenuItemFunction(object userData, string[] options, int selected);
 
+        [AutoStaticsCleanupOnCodeReload]
         internal static event Action onResetMouseDown;
 
         public static bool LoadWindowLayout(string path)
@@ -97,6 +101,7 @@ namespace UnityEditor
             CompressCubemapTexture(texture, format, TextureCompressionQuality.Normal);
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         private static System.Collections.Generic.Dictionary<EntityId, Texture> s_ActiveIconPathLUT = new System.Collections.Generic.Dictionary<EntityId, Texture>();
         internal static Texture GetIconInActiveState(Texture icon)
         {

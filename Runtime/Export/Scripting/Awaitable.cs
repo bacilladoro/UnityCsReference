@@ -45,14 +45,16 @@ namespace UnityEngine
             public bool IsManaged => _handle == ManagedHandle._handle;
             public AwaitableHandle(IntPtr handle) => _handle = handle;
 
-            public static AwaitableHandle ManagedHandle = new AwaitableHandle(new IntPtr(-1));
-            public static AwaitableHandle NullHandle = new AwaitableHandle(IntPtr.Zero);
+            public static readonly AwaitableHandle ManagedHandle = new AwaitableHandle(new IntPtr(-1));
+            public static readonly AwaitableHandle NullHandle = new AwaitableHandle(IntPtr.Zero);
             public static implicit operator IntPtr(AwaitableHandle handle) => handle._handle;
             public static implicit operator AwaitableHandle(IntPtr handle) => new AwaitableHandle(handle);
         }
 
         private SpinLock _spinLock = default;
 
+        // Thread-local pool of reusable Awaitable instances (Unity type, no user-code references) — safe to persist.
+        [NoAutoStaticsCleanup]
         static readonly ThreadLocal<ObjectPool<Awaitable>> _pool =
             new(() => new ObjectPool<Awaitable>(() => new(), collectionCheck: false));
         AwaitableHandle _handle;

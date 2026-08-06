@@ -5,6 +5,7 @@
 using System;
 using UnityEditor.ShortcutManagement;
 using UnityEngine;
+using Unity.Scripting.LifecycleManagement;
 
 using TangentMode = UnityEditor.AnimationUtility.TangentMode;
 
@@ -18,7 +19,7 @@ namespace UnityEditor
     }
 
     [Serializable]
-    internal class CurveEditorWindow : EditorWindow
+    internal partial class CurveEditorWindow : EditorWindow
     {
         public enum NormalizationMode
         {
@@ -30,6 +31,7 @@ namespace UnityEditor
         //const int kToolbarHeight = 17;
         const int kPresetsHeight = 50;
 
+        [AutoStaticsCleanupOnCodeReload]
         static CurveEditorWindow s_SharedCurveEditor;
 
         internal CurveEditor m_CurveEditor;
@@ -311,7 +313,9 @@ namespace UnityEditor
             public GUIStyle curveSwatch = "PopupCurveEditorSwatch";
             public GUIStyle curveSwatchArea = "PopupCurveSwatchBackground";
         }
-        internal static Styles ms_Styles;
+        [AutoStaticsCleanupOnCodeReload]
+        static Styles s_Styles;
+        internal static Styles ms_Styles => s_Styles ??= new();
 
         CurveWrapper[] GetCurveWrapperArray()
         {
@@ -460,9 +464,6 @@ namespace UnityEditor
 
             if (m_DelegateView == null && m_OnCurveChanged == null)
                 m_Curve = null;
-
-            if (ms_Styles == null)
-                ms_Styles = new Styles();
 
             // Curve Editor
             m_CurveEditor.rect = GetCurveEditorRect();

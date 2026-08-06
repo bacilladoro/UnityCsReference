@@ -6,11 +6,12 @@ using System;
 using UnityEngine;
 using UnityEditorInternal;
 using UnityEngine.Bindings;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
     [VisibleToOtherModules("UnityEditor.UIBuilderModule", "UnityEditor.VectorGraphicsModule")]
-    internal class SpriteUtilityWindow
+    internal partial class SpriteUtilityWindow
     {
         protected class Styles
         {
@@ -22,6 +23,7 @@ namespace UnityEditor
             public static readonly GUIContent okText = EditorGUIUtility.TrTextContent("OK");
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         static LaunchSpriteEditorWindowAfterDomainReload s_LaunchSpriteEditorWindowAfterDomainReload;
 
         internal static bool DoOpenSpriteEditorWindowUI(bool enableOpenSpriteEditorButton, bool enableInstallButton = true)
@@ -80,6 +82,7 @@ namespace UnityEditor
         }
 
 
+        [AutoStaticsCleanupOnCodeReload]
         static Func<UnityEngine.Object, bool> showSpriteEditorWindow = null;
 
         static bool InstallSpritePackage()
@@ -105,6 +108,7 @@ namespace UnityEditor
             applySpriteEditorWindow();
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         static Action applySpriteEditorWindow = () => {};
     } // class
 

@@ -29,11 +29,6 @@ namespace UnityEditorInternal.Media
             m_Ptr = Create(clip);
         }
 
-        ~MediaDecoder()
-        {
-            Dispose();
-        }
-
         public bool GetNextFrame(Texture2D tex, out MediaTime time)
         {
             ThrowIfDisposed();
@@ -69,7 +64,6 @@ namespace UnityEditorInternal.Media
                 Internal_Release(m_Ptr);
                 m_Ptr = IntPtr.Zero;
             }
-            GC.SuppressFinalize(this);
         }
 
         private IntPtr Create(string filePath)

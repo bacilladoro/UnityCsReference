@@ -12,6 +12,7 @@ using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEngine
 {
+    [global::UnityEngine.NativeClass("ReflectionProbe", PersistentTypeId = 215)]
     [NativeHeader("Runtime/Camera/ReflectionProbes.h")]
     public sealed partial class ReflectionProbe : Behaviour
     {

@@ -9,11 +9,13 @@ using UnityEngine.UIElements;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
-    internal class UndoSerializationWindow : EditorWindow
+    internal partial class UndoSerializationWindow : EditorWindow
     {
+        [AutoStaticsCleanupOnCodeReload]
         static UndoSerializationWindow s_Instance;
         public static UndoSerializationWindow instance => s_Instance;
         

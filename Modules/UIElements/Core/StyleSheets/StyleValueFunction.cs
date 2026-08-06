@@ -25,7 +25,8 @@ namespace UnityEngine.UIElements
         FilterContrast,
         FilterHueRotate,
         FilterDropShadow,
-        MaterialProperty
+        MaterialProperty,
+        RadialGradient
     }
 
     internal static class StyleValueFunctionExtension
@@ -33,6 +34,7 @@ namespace UnityEngine.UIElements
         public const string k_Var = "var";
         public const string k_Env = "env";
         public const string k_LinearGradient = "linear-gradient";
+        public const string k_RadialGradient = "radial-gradient";
         public const string k_NoneFilter = "none";
         public const string k_CustomFilter = "filter";
         public const string k_FilterTint = "tint";
@@ -59,6 +61,8 @@ namespace UnityEngine.UIElements
                     return StyleValueFunction.Env;
                 case k_LinearGradient:
                     return StyleValueFunction.LinearGradient;
+                case k_RadialGradient:
+                    return StyleValueFunction.RadialGradient;
                 case k_NoneFilter:
                     return StyleValueFunction.NoneFilter;
                 case k_FilterTint:
@@ -96,6 +100,8 @@ namespace UnityEngine.UIElements
                     return k_Env;
                 case StyleValueFunction.LinearGradient:
                     return k_LinearGradient;
+                case StyleValueFunction.RadialGradient:
+                    return k_RadialGradient;
                 case StyleValueFunction.NoneFilter:
                     return k_NoneFilter;
                 case StyleValueFunction.CustomFilter:

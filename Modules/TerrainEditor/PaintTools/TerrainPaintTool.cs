@@ -9,6 +9,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.Scripting.APIUpdating;
 using UnityEngine.TerrainTools;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.TerrainTools
 {
@@ -165,11 +166,14 @@ namespace UnityEditor.TerrainTools
     // TerrainPaintTool is the old paint tool type which inherits from ScriptableSingleton
     // TerrainPaintToolWithOverlays is a new type of paint tool which inherits from EditorTools and is used in Overlays
     // there are additional variables that come with this new type, such as TerrainCategory and HasToolSettings
-    public abstract class TerrainPaintToolWithOverlaysBase : EditorTools.EditorTool, ITerrainPaintToolWithOverlays
+    public abstract partial class TerrainPaintToolWithOverlaysBase : EditorTools.EditorTool, ITerrainPaintToolWithOverlays
     {
+        [NoAutoStaticsCleanup] // reusable scratch context, re-populated via Set() before each scene call
         static OnSceneGUIContext s_OnSceneGUIContext = new OnSceneGUIContext(null, new RaycastHit(), null, 0.0f, 0.0f, 0);
+        [NoAutoStaticsCleanup] // reusable scratch context, re-populated via Set() before each paint call
         static OnPaintContext s_OnPaintContext = new OnPaintContext(new RaycastHit(), null, Vector2.zero, 0.0f, 0.0f);
 
+        [AutoStaticsCleanupOnCodeReload]
         static Terrain s_LastActiveTerrain;
 
         public virtual string OnIcon => "TerrainOverlays/CustomBrushes_On.png";

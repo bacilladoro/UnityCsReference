@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
@@ -19,7 +20,17 @@ namespace UnityEditor
     {
         static CustomEditorAttributes instance => k_Instance.Value;
 
+        [NoAutoStaticsCleanup] // singleton lazily recreated on demand; the cache it holds is cleared by ReleaseCache on code unload
         static readonly Lazy<CustomEditorAttributes> k_Instance = new(() => new CustomEditorAttributes());
+
+        [OnCodeUnloading]
+        static void ReleaseCache()
+        {
+            if (k_Instance.IsValueCreated)
+            {
+                k_Instance.Value.m_Cache.Clear();
+            }
+        }
 
         readonly CustomEditorCache m_Cache = new CustomEditorCache();
 

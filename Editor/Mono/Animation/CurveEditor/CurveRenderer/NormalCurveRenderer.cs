@@ -4,6 +4,7 @@
 
 using UnityEngine;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -25,6 +26,7 @@ namespace UnityEditor
         private Bounds? m_Bounds;
         private Mesh m_CurveMesh;
 
+        [NoAutoStaticsCleanup]
         private static Material s_CurveMaterial;
         public static Material curveMaterial
         {

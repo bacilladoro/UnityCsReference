@@ -5,6 +5,7 @@
 using UnityEditorInternal;
 using UnityEngine;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -12,10 +13,11 @@ namespace UnityEditor
     {
         private static class Styles
         {
+            [NoAutoStaticsCleanup] // lazily built from EditorStyles.popup (a GUIStyle); rebuilt on demand and safe to persist
             private static GUIStyle m_BoldPopupStyle;
 
-            public static GUIContent m_SortingLayerStyle = EditorGUIUtility.TrTextContent("Sorting Layer", "Name of the Renderer's sorting layer");
-            public static GUIContent m_SortingOrderStyle = EditorGUIUtility.TrTextContent("Order in Layer", "Renderer's order within a sorting layer");
+            public static readonly GUIContent m_SortingLayerStyle = EditorGUIUtility.TrTextContent("Sorting Layer", "Name of the Renderer's sorting layer");
+            public static readonly GUIContent m_SortingOrderStyle = EditorGUIUtility.TrTextContent("Order in Layer", "Renderer's order within a sorting layer");
 
             public static GUIStyle boldPopupStyle
             {

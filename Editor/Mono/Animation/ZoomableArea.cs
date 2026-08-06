@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using UnityEngine;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -15,7 +16,9 @@ namespace UnityEditor
     internal class ZoomableArea
     {
         // Global state
+        [NoAutoStaticsCleanup]
         private static Vector2 m_MouseDownPosition = new Vector2(-1000000, -1000000); // in transformed space
+        [NoAutoStaticsCleanup]
         private static int zoomableAreaHash = "ZoomableArea".GetHashCode();
 
         // Range lock settings
@@ -256,7 +259,9 @@ namespace UnityEditor
                     return enableSliderZoom ? normalSliderStyles.minMaxSliders : normalSliderStyles.scrollbar;
             }
 
+            [NoAutoStaticsCleanup]
             private static SliderTypeStyles minimalSliderStyles;
+            [NoAutoStaticsCleanup]
             private static SliderTypeStyles normalSliderStyles;
 
             private class SliderTypeStyles

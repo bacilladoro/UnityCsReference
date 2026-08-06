@@ -4,6 +4,7 @@
 
 using UnityEngine;
 using UnityEngine.Animations;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -37,6 +38,7 @@ namespace UnityEditor
             public GUIContent FreezeAxes { get { return m_RotationAxes; } }
         }
 
+        [NoAutoStaticsCleanup]
         private static Styles s_Style = null;
 
         public void OnEnable()

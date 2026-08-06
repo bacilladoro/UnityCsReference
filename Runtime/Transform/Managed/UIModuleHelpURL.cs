@@ -16,7 +16,7 @@ namespace UnityEngine
         {
             get
             {
-                return "2.6";
+                return "2.7";
             }
         }
 

@@ -38,7 +38,19 @@ namespace UnityEngine.UIElements.UIR
         {
             bool hierarchical = (renderData.dirtiedValues & RenderDataDirtyTypes.OpacityHierarchy) != 0;
             stats.recursiveOpacityUpdates++;
-            DepthFirstOnOpacityChanged(renderTreeManager, renderData.parent != null ? renderData.parent.compositeOpacity : 1.0f, renderData, dirtyID, hierarchical, ref stats);
+
+            // A nested render tree root has no parent link into the outer tree, so it draws its ancestor
+            // composite from the owner's outer subTreeQuad renderData.
+            float parentCompositeOpacity;
+            if (renderData.isNestedRenderTreeRoot)
+            {
+                Debug.Assert(renderData.owner.renderData != null, "Nested render tree root should always have an outer renderData");
+                parentCompositeOpacity = renderData.owner.renderData.compositeOpacity;
+            }
+            else
+                parentCompositeOpacity = renderData.parent != null ? renderData.parent.compositeOpacity : 1.0f;
+
+            DepthFirstOnOpacityChanged(renderTreeManager, parentCompositeOpacity, renderData, dirtyID, hierarchical, ref stats);
         }
 
         internal static void ProcessOnColorChanged(RenderTreeManager renderTreeManager, RenderData renderData, uint dirtyID, ref ChainBuilderStats stats)
@@ -374,7 +386,9 @@ namespace UnityEngine.UIElements.UIR
 
         static void ResetRenderData(RenderTreeManager renderTreeManager, RenderData renderData)
         {
-            renderData.renderTree.ChildWillBeRemoved(renderData);
+            // Captured before renderData.renderTree is cleared below; the backdrop-filter teardown needs it. UI-5170.
+            RenderTree renderTree = renderData.renderTree;
+            renderTree.ChildWillBeRemoved(renderData);
             CommandManipulator.ResetCommands(renderTreeManager, renderData);
 
             if (renderData.parent == null)
@@ -473,7 +487,7 @@ namespace UnityEngine.UIElements.UIR
             {
                 BackdropFilterHelper.ReleaseBackdropFilterResources(renderTreeManager, renderData);
                 renderTreeManager.panel?.DecrementBackdropFilterCount();
-                renderData.owner.ChangeBackdropFilterDescendantCount(-1);
+                renderTree.UnregisterBackdropFilter(renderData);
             }
 
             renderTreeManager.ReturnPoolRenderData(renderData);
@@ -670,14 +684,29 @@ namespace UnityEngine.UIElements.UIR
 
             renderData.dirtyID = dirtyID; // Prevent reprocessing of the same element in the same pass
 
+            const float meaningfullOpacityChange = 0.0001f;
+
             if (renderData.isSubTreeQuad)
-                return; // TODO: We will need to process the opacity when implementing the real composite opacity
+            {
+                // Propagated opacity: track the ancestor composite here and dirty the nested tree when it changes
+                stats.recursiveOpacityUpdatesExpanded++;
+                float oldAncestorComposite = renderData.compositeOpacity;
+                bool ancestorCompositeChanged =
+                    Mathf.Abs(oldAncestorComposite - parentCompositeOpacity) > meaningfullOpacityChange
+                    || (oldAncestorComposite < VisibilityTreshold ^ parentCompositeOpacity < VisibilityTreshold);
+                if (ancestorCompositeChanged)
+                {
+                    renderData.compositeOpacity = parentCompositeOpacity;
+                    var nested = renderData.owner.nestedRenderData;
+                    if (nested != null)
+                        nested.renderTree.OnRenderDataOpacityChanged(nested, hierarchical: true);
+                }
+                return;
+            }
 
             stats.recursiveOpacityUpdatesExpanded++;
             float oldOpacity = renderData.compositeOpacity;
             float newOpacity = renderData.owner.resolvedStyle.opacity * parentCompositeOpacity;
-
-            const float meaningfullOpacityChange = 0.0001f;
 
             bool visiblityTresholdPassed = (oldOpacity < VisibilityTreshold ^ newOpacity < VisibilityTreshold);
             bool compositeOpacityChanged = Mathf.Abs(oldOpacity - newOpacity) > meaningfullOpacityChange || visiblityTresholdPassed;
@@ -690,7 +719,11 @@ namespace UnityEngine.UIElements.UIR
             }
 
             bool changedOpacityID = false;
-            bool hasDistinctOpacity = newOpacity < parentCompositeOpacity - meaningfullOpacityChange; //assume 0 <= opacity <= 1
+
+            // For a nested render tree root, the tree has no parent to inherit an opacityID from.
+            // Compare against identity so the root allocates its own opacityID whenever the composite differs from 1
+            float distinctOpacityReference = renderData.isNestedRenderTreeRoot ? 1.0f : parentCompositeOpacity;
+            bool hasDistinctOpacity = newOpacity < distinctOpacityReference - meaningfullOpacityChange; //assume 0 <= opacity <= 1
             if (hasDistinctOpacity && renderData.opacityID.ownedState == OwnedState.Inherited)
             {
                 var newAlloc = renderTreeManager.shaderInfoAllocator.AllocOpacity();
@@ -883,6 +916,12 @@ namespace UnityEngine.UIElements.UIR
                     DepthFirstOnTransformOrSizeChanged(renderTreeManager, child, dirtyID, isAncestorOfChangeSkinned, transformChanged, childParentBoneChanged, ref stats);
                     child = child.nextSibling;
                 }
+            }
+            else if (transformChanged)
+            {
+                // Recursion stops at group transforms (descendants ride the group matrix). Backdrop-filters are
+                // the exception: their UVs track the world transform, which moved — refresh them via the registry. UI-5170.
+                renderData.renderTree.RefreshBackdropFilterDescendantsOfGroup(renderData);
             }
         }
 
@@ -1112,8 +1151,8 @@ namespace UnityEngine.UIElements.UIR
         {
             VisualElement ve = renderData.owner;
             bool wasEnabled = renderData.hasBackdropFilterAllocated;
-            // backdrop-filter is not supported on world-space (camera-drawn) panels.
-            bool isEnabled = ve.hasBackdropFilter && !renderTreeManager.drawInCameras;
+            // Unsupported on world-space (camera-drawn) panels; and the parent owns the backdrop, so a nested-render-tree root must not (nothing behind it to capture).
+            bool isEnabled = ve.hasBackdropFilter && !renderTreeManager.drawInCameras && !renderData.isNestedRenderTreeRoot;
 
             if (wasEnabled == isEnabled)
                 return;
@@ -1121,14 +1160,19 @@ namespace UnityEngine.UIElements.UIR
             if (isEnabled)
             {
                 BackdropFilterHelper.AllocBackdropFilterTextureId(renderTreeManager, renderData);
-                renderTreeManager.panel?.IncrementBackdropFilterCount();
-                ve.ChangeBackdropFilterDescendantCount(+1);
+                // Alloc can fail when the texture registry is full; only count/register on success so this stays
+                // symmetric with the free path (also gated on hasBackdropFilterAllocated). UI-5170.
+                if (renderData.hasBackdropFilterAllocated)
+                {
+                    renderTreeManager.panel?.IncrementBackdropFilterCount();
+                    renderData.renderTree.RegisterBackdropFilter(renderData);
+                }
             }
             else
             {
                 BackdropFilterHelper.ReleaseBackdropFilterResources(renderTreeManager, renderData);
                 renderTreeManager.panel?.DecrementBackdropFilterCount();
-                ve.ChangeBackdropFilterDescendantCount(-1);
+                renderData.renderTree.UnregisterBackdropFilter(renderData);
             }
         }
 

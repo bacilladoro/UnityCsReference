@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using UnityEngine;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using System.Collections.Generic;
 using System;
@@ -179,11 +180,15 @@ namespace UnityEditor
     }
 
     [VisibleToOtherModules("UnityEditor.UIElementsModule", "UnityEditor.UIToolkitAuthoringModule")]
-    internal class PrefSettings
+    internal partial class PrefSettings
     {
+        [NoAutoStaticsCleanup] // editor-preference registry of internal IPrefType impls (no user code); persists across reload
         static List<IPrefType> m_AddedPrefs = new List<IPrefType>();
+        [NoAutoStaticsCleanup] // registered editor preferences keyed by name (internal pref types only); persists across reload
         static SortedList<string, object> m_Prefs = new SortedList<string, object>();
+        [AutoStaticsCleanupOnCodeReload]
         public static Action<string, Type> settingChanged;
+        [AutoStaticsCleanupOnCodeReload]
         public static Action settingsReverted;
 
         [VisibleToOtherModules("UnityEditor.UIElementsModule", "UnityEditor.UIToolkitAuthoringModule")]

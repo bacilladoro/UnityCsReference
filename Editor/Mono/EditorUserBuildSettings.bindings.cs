@@ -357,6 +357,7 @@ namespace UnityEditor
     }
 
     [NativeHeader("Editor/Src/EditorUserBuildSettings.h")]
+    [global::UnityEngine.NativeClass("EditorUserBuildSettings", PersistentTypeId = 1051)]
     [StaticAccessor("GetEditorUserBuildSettings()", StaticAccessorType.Dot)]
     public partial class EditorUserBuildSettings : Object
     {
@@ -728,7 +729,7 @@ namespace UnityEditor
         }
 
         // WDP password is not to be saved with other settings and only stored in memory until Editor is closed
-        [NoAutoStaticsCleanup] // in-memory-only string until editor closes; no user refs, safe to persist
+        [NoAutoStaticsCleanup] // in-memory-only WDP password intentionally kept until Editor exits (not persisted, not reset)
         private static string internal_windowsDevicePortalPassword;
 
         public static string windowsDevicePortalPassword
@@ -794,7 +795,7 @@ namespace UnityEditor
         // The currently active build target.
         public static extern BuildTarget activeBuildTarget { get; }
 
-        private static extern GUID GetInternalActivePlatformGuid();
+        internal static extern GUID GetInternalActivePlatformGuid();
 
         // Internal setter only to be used for testing.
         internal static extern void SetActivePlatformGuid(GUID platformId);
@@ -834,7 +835,7 @@ namespace UnityEditor
         private static extern bool SwitchActiveBuildTargetAndSubTargetGuid(GUID platformGuid, BuildTarget target, int subtarget);
         internal static bool SwitchActiveBuildTargetGuid(BuildProfile profile)
         {
-            var platformGuid = profile.isMultiTarget ? profile.activePlatformGuid : profile.platformGuid;
+            var platformGuid = profile.isMultiTarget ? profile.selectedPlatformGuid : profile.platformGuid;
 
             // Account for derived platforms.
             // Jira https://jira.unity3d.com/browse/PLAT-9234
@@ -861,7 +862,7 @@ namespace UnityEditor
 
             buildTargetFromGuid = BuildProfileModuleUtil.GetActiveBuildTargetForProfileSwitch(profile, buildTargetFromGuid);
 
-            return SwitchActiveBuildTargetAndSubTargetGuid(profile.platformGuid, buildTargetFromGuid, activeSubtarget);
+            return SwitchActiveBuildTargetAndSubTargetGuid(platformGuid, buildTargetFromGuid, activeSubtarget);
         }
 
         // The currently active build target.
@@ -1035,7 +1036,6 @@ namespace UnityEditor
             set;
         }
 
-        // Enable linkage of NVN Graphics Debugger for Nintendo Switch.
         public static extern bool switchNVNGraphicsDebugger
         {
             [NativeMethod("GetNVNGraphicsDebuggerForSwitch")]
@@ -1044,7 +1044,6 @@ namespace UnityEditor
             set;
         }
 
-        // Generate Nintendo Switch shader info for shader source visualization and profiling in NVN Graphics Debugger or Low-Level Graphics Debugger (LLGD)
         public static extern bool generateNintendoSwitchShaderInfo
         {
             [NativeMethod("GetGenerateNintendoSwitchShaderInfo")]
@@ -1053,7 +1052,6 @@ namespace UnityEditor
             set;
         }
 
-        // Enable shader debugging using NVN Graphics Debugger
         public static extern bool switchNVNShaderDebugging
         {
             [NativeMethod("GetNVNShaderDebugging")]
@@ -1062,7 +1060,6 @@ namespace UnityEditor
             set;
         }
 
-        //  Enable NVN aftermath (legacy, use switchNVNAftermathlevel instead).
         [Obsolete("switchNVNAftermath is deprecated, use switchNVNAftermathLevel instead.")]
         public static extern bool switchNVNAftermath
         {
@@ -1072,7 +1069,6 @@ namespace UnityEditor
             set;
         }
 
-        //  Enable NVN aftermath.
         public static extern int switchNVNAftermathLevel
         {
             [NativeMethod("GetNVNAftermathLevel")]
@@ -1081,7 +1077,6 @@ namespace UnityEditor
             set;
         }
 
-        // Enable debug validation of NVN drawcalls
         [Obsolete("switchNVNDrawValidation is deprecated, use switchNVNDrawValidation_Heavy instead.")]
         public static bool switchNVNDrawValidation
         {

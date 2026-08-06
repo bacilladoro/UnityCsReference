@@ -18,6 +18,10 @@ namespace Unity.UI.Builder
     [UxmlElement]
     partial class ImageStyleField : MultiTypeField
     {
+        // Non-Type popup entry — swaps the sub-control to the embedded gradient editor.
+        internal const string k_GradientTypeName = "Gradient";
+
+        readonly BackgroundGradientField m_GradientField;
         const double k_TimeoutMilliseconds = 10000;
         const int k_TimeDeltaMilliseconds = 10;
 
@@ -90,7 +94,63 @@ namespace Unity.UI.Builder
                 typeof(Sprite),
                 typeof(VectorImage)
             });
+
+            // Non-Type popup entry — AddType would wire it as an ObjectField filter.
+            if (!typePopup.choices.Contains(k_GradientTypeName))
+                typePopup.choices.Add(k_GradientTypeName);
+
+            m_GradientField = new BackgroundGradientField();
+            m_GradientField.style.display = DisplayStyle.None;
+            m_GradientField.style.flexGrow = 1f;
+            visualInput.Add(m_GradientField);
+
+            typePopup.RegisterValueChangedCallback(evt =>
+            {
+                UpdateGradientVisibility();
+                // On mode swap, emit through the destination writer so the USS source updates.
+                if (evt.newValue == k_GradientTypeName && evt.previousValue != k_GradientTypeName)
+                    m_GradientField.NotifyCurrentValue();
+                else if (evt.previousValue == k_GradientTypeName && evt.newValue != k_GradientTypeName)
+                    NotifyObjectFieldValue();
+            });
+            UpdateGradientVisibility();
         }
+
+        void NotifyObjectFieldValue()
+        {
+            using var changeEvt = ChangeEvent<UnityEngine.Object>.GetPooled(objectField.value, objectField.value);
+            changeEvt.target = this;
+            SendEvent(changeEvt);
+        }
+
+        // Must be called after SetTypePopupValueWithoutNotify, which bypasses the popup change callback.
+        internal void SyncGradientVisibility() => UpdateGradientVisibility();
+
+        // Called on selection change to avoid stale gradient state from the previous element.
+        internal void ResetGradientToAuthoringDefault()
+        {
+            m_GradientField.SetValueWithoutNotify(BackgroundGradientField.defaultAuthoringGradient);
+        }
+
+        void UpdateGradientVisibility()
+        {
+            bool isGradient = typePopup.value == k_GradientTypeName;
+            m_GradientField.style.display = isGradient ? DisplayStyle.Flex : DisplayStyle.None;
+            objectField.style.display = isGradient ? DisplayStyle.None : DisplayStyle.Flex;
+            // The Sprite edit button's visibility is handled by the popup formatSelectedValueCallback,
+            // which hides it whenever the selected type isn't "Sprite" — including "Gradient".
+        }
+
+        // Push the gradient in and flip the popup to "Gradient" without notifying.
+        internal void SetGradientWithoutNotify(BackgroundGradient gradient)
+        {
+            m_GradientField.SetValueWithoutNotify(gradient);
+            typePopup.SetValueWithoutNotify(k_GradientTypeName);
+            UpdateGradientVisibility();
+        }
+
+        internal bool isGradientSelected => typePopup.value == k_GradientTypeName;
+        internal BackgroundGradientField gradientField => m_GradientField;
 
         private void OnEnterEditButton(PointerEnterEvent evt)
         {

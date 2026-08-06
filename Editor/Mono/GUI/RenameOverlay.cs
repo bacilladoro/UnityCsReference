@@ -7,6 +7,7 @@ using UnityEngine;
 using UnityEditorInternal;
 using UnityEngine.Assertions;
 using UnityEngine.Events;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -68,8 +69,9 @@ namespace UnityEditor
             set { m_TrimLeadingAndTrailingWhitespace = value; }
         }
 
+        [NoAutoStaticsCleanup] // lazy GUIStyle cache guarded by == null; re-created on first access, safe to persist
         private static GUIStyle s_DefaultTextFieldStyle = null;
-        private static int s_TextFieldHash = "RenameFieldTextField".GetHashCode();
+        private static readonly int s_TextFieldHash = "RenameFieldTextField".GetHashCode();
         private int m_TextFieldControlID;
 
         // Returns true if started renaming

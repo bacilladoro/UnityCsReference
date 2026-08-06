@@ -42,17 +42,16 @@ namespace UnityEngine.Bindings
        EmptyWithCapacity
     }
 
-    [VisibleToOtherModules]
-    [Il2CppEagerStaticClassConstruction]
-    [StructLayout(LayoutKind.Sequential)]
     /// <summary>
     /// Represents an array that can be marshalled to and from native code.
-
     /// </summary>
-    /// <remarks
+    /// <remarks>
     /// Note blittable arrays that are only marshalled in are passed as spans, since they are pinned in and are not changed
     /// This array is used for non-blittable arrays and blittable arrays that are out marshalled
     /// </remarks>
+    [VisibleToOtherModules]
+    [Il2CppEagerStaticClassConstruction]
+    [StructLayout(LayoutKind.Sequential)]
     internal unsafe struct MarshalledArray
     {
         internal enum DataOwner : int
@@ -204,6 +203,7 @@ namespace UnityEngine.Bindings
         /// Allocates a native buffer of the required size if needed
         /// </summary>
         /// <typeparam name="TManaged"></typeparam>
+        /// <typeparam name="TCollectionAccessor"></typeparam>
         /// <param name="collectionAccessor">The managed array being marshalled</param>
         /// <param name="marshalledArray">The marshalled buffer to pass to native.  This buffer may be already allocated (size > 0), if so we assume that data is already zero filled</param>
         /// <param name="nativeElementSize"></param>

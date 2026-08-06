@@ -6,6 +6,7 @@ using UnityEngine;
 using UnityEditor;
 using UnityEngine.TerrainTools;
 using UnityEditor.ShortcutManagement;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.TerrainTools
 {
@@ -28,6 +29,7 @@ namespace UnityEditor.TerrainTools
             public readonly GUIContent description = EditorGUIUtility.TrTextContent("Left click to raise.\n\nHold shift and left click to lower.");
         }
 
+        [NoAutoStaticsCleanup] // lazy GUIContent/GUIStyle styles holder; editor infra, no user refs
         private static Styles m_styles;
         private Styles GetStyles()
         {

@@ -37,6 +37,7 @@ namespace UnityEngine
     }
 
     [NativeHeader("Runtime/Misc/RuntimeInitializeOnLoadManager.h")]
+    [global::UnityEngine.NativeClass("RuntimeInitializeOnLoadManager", PersistentTypeId = 300)]
     [StaticAccessorAttribute("GetRuntimeInitializeOnLoadManager()")]
     internal sealed partial class RuntimeInitializeOnLoadManager
     {

@@ -166,7 +166,7 @@ namespace UnityEngine.UIElements
         public DropdownMenuEventInfo eventInfo { get; private set; }
 
         /// <summary>
-        /// The userData object stored by the constructor. You can use <see cref="AppendAction"/> to set it and use it in the status callbacks.
+        /// The userData object stored by the constructor. You can use <see cref="DropdownMenu.AppendAction(string, Action{DropdownMenuAction}, Func{DropdownMenuAction, DropdownMenuAction.Status}, object)"/> to set it and use it in the status callbacks.
         /// </summary>
         public object userData { get; private set; }
 

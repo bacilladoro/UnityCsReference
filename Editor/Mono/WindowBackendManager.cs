@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.Bindings;
 
@@ -73,10 +74,12 @@ namespace UnityEditor
         IWindowBackend GetBackendForWindow(IWindowModel model);
         bool ValidateBackendCompatibility(IWindowBackend backend, IWindowModel model, ref bool isCompatible);
     }
-    internal static class EditorWindowBackendManager
+    internal static partial class EditorWindowBackendManager
     {
+        [NoAutoStaticsCleanup] // one-time infrastructure factory; must persist across reload or window creation breaks
         internal static GetDefaultWindowBackendFunction defaultWindowBackend { get; set; }
 
+        [AutoStaticsCleanupOnCodeReload]
         private static List<IEditorWindowBackendSystem> sRegisteredSystems = new List<IEditorWindowBackendSystem>();
 
         static internal void RegisterWindowSystem(IEditorWindowBackendSystem system)

@@ -8,6 +8,7 @@ using UnityEngine.Bindings;
 
 namespace UnityEngine
 {
+    [global::UnityEngine.NativeClass("TextAsset", PersistentTypeId = 49)]
     [NativeHeader("Runtime/Scripting/TextAsset.h")]
     public partial class TextAsset : Object
     {

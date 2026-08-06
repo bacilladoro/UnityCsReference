@@ -10,6 +10,7 @@ namespace UnityEngine
     ///<summary>A component for masking Sprites and Particles.</summary>
     ///<remarks>By default it will mask all Sorting Layers. A custom range of Sorting Layers can be set. If a SortingGroup is present, it will act local to the SortingGroup.</remarks>
     [RejectDragAndDropMaterial]
+    [global::UnityEngine.NativeClass("SpriteMask", PersistentTypeId = 331)]
     [NativeHeader("Modules/SpriteMask/Public/SpriteMask.h")]
     public sealed partial class SpriteMask : Renderer
     {

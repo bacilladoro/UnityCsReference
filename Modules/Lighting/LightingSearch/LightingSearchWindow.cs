@@ -120,8 +120,10 @@ namespace UnityEditor.Lighting.LightingSearch
             {
                 // Suppress "Unknown filter" errors that occur when using saved queries
                 // with filters that have not been indexed in the current project yet.
-                // Only suppress errors from the Project tab (asset provider) where indexing occurs.
-                if (group == "asset" &&
+                // Only suppress errors from the Project (asset provider) where indexing occurs.
+                // Check the error's own provider rather than the currently selected group tab
+                // ('group'), since the error can surface while a different tab (e.g. "All") is active.
+                if (error.provider?.id == AssetProvider.type &&
                     error.reason != null &&
                     error.reason.Contains("Unknown filter", StringComparison.OrdinalIgnoreCase))
                     return false;

@@ -282,6 +282,8 @@ namespace Unity.GraphToolkit.Editor
 
             if (Border != null)
                 Border.Zoom = zoom;
+
+            PostSetElementLevelOfDetail(zoom, newZoomMode, oldZoomMode);
         }
 
         /// <summary>
@@ -293,6 +295,11 @@ namespace Unity.GraphToolkit.Editor
         public virtual void SetElementLevelOfDetail(float zoom, GraphViewZoomMode newZoomMode, GraphViewZoomMode oldZoomMode)
         {
         }
+
+        /// <summary>
+        /// Can be overriden to handle logic that needs to be done after LOD has changed and implementations of <see cref="SetElementLevelOfDetail"/> have been called
+        /// </summary>
+        internal virtual void PostSetElementLevelOfDetail(float zoom, GraphViewZoomMode newZoomMode, GraphViewZoomMode oldZoomMode) { }
 
         /// <inheritdoc />
         protected override void OnCustomStyleResolved(CustomStyleResolvedEvent evt)

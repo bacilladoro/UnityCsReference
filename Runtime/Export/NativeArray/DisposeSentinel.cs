@@ -97,6 +97,7 @@ namespace Unity.Collections.LowLevel.Unsafe
             Profiling.LowLevel.Unsafe.ProfilerUnsafeUtility.EndSample(s_CreateProfilerMarkerPtr);
         }
 
+#pragma warning disable UA5000 // The Avoid Finalizer Analyzer produces compile errors for any new finalizers. This pre-existing finalizer declaration has been suppressed, but should be rewritten if possible.
         ~DisposeSentinel()
         {
             if (m_IsCreated != 0)
@@ -130,6 +131,7 @@ namespace Unity.Collections.LowLevel.Unsafe
                 Profiling.LowLevel.Unsafe.ProfilerUnsafeUtility.EndSample(s_LogErrorProfilerMarkerPtr);
             }
         }
+#pragma warning restore UA5000
 
         [Unity.Burst.BurstDiscard]
         public static void Clear(ref DisposeSentinel sentinel)

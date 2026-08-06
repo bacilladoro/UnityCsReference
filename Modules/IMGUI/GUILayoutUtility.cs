@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Security;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngineInternal;
 using UnityEngine.Bindings;
 using UnityEngine.Scripting;
@@ -72,14 +73,18 @@ namespace UnityEngine
             }
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         // TODO: Clean these up after a while
-        static readonly Dictionary<EntityId, LayoutCache> s_StoredLayouts = new Dictionary<EntityId, LayoutCache>();
-        static readonly Dictionary<int, LayoutCache> s_StoredWindows = new Dictionary<int, LayoutCache>();
+        static Dictionary<EntityId, LayoutCache> s_StoredLayouts = new Dictionary<EntityId, LayoutCache>();
+        [AutoStaticsCleanupOnCodeReload]
+        static Dictionary<int, LayoutCache> s_StoredWindows = new Dictionary<int, LayoutCache>();
 
+        [AutoStaticsCleanupOnCodeReload]
         internal static LayoutCache current = new LayoutCache();
 
         internal static readonly Rect kDummyRect = new Rect(0, 0, 1, 1);
 
+        [NoAutoStaticsCleanup] // counter balanced within each layout pass; mismatches throw ExitGUIException before reload can occur
         internal static int unbalancedgroupscount { get; set; }
 
         internal static LayoutCache GetLayoutCacheWindow(int id)
@@ -198,9 +203,11 @@ namespace UnityEngine
         }
 
         // TODO: actually make these check...
+        ///<exclude />
         [Obsolete("BeginGroup has no effect and will be removed", false)]
         public static void BeginGroup(string GroupName) {}
 
+        ///<exclude />
         [Obsolete("EndGroup has no effect and will be removed", false)]
         public static void EndGroup(string groupName) {}
 
@@ -224,27 +231,6 @@ namespace UnityEngine
             }
         }
 
-        // Global layout function. Called from EditorWindows (differs from game view in that they use the full window size and try to stretch GUI
-        internal static void LayoutFromEditorWindow()
-        {
-            if (current.topLevel != null)
-            {
-                current.topLevel.CalcWidth();
-                current.topLevel.SetHorizontal(0, Screen.width / GUIUtility.pixelsPerPoint);
-                current.topLevel.CalcHeight();
-                current.topLevel.SetVertical(0, Screen.height / GUIUtility.pixelsPerPoint);
-
-                // UNCOMMENT ME TO DEBUG THE EditorWindow ROOT LAYOUT RESULTS
-                //          Debug.Log (current.topLevel);
-                // Layout all beginarea parts...
-                LayoutFreeGroup(current.windows);
-            }
-            else
-            {
-                Debug.LogError("GUILayout state invalid. Verify that all layout begin/end calls match.");
-            }
-        }
-
         [VisibleToOtherModules("UnityEngine.UIElementsModule")]
         internal static void LayoutFromContainer(float w, float h)
         {
@@ -264,32 +250,6 @@ namespace UnityEngine
             {
                 Debug.LogError("GUILayout state invalid. Verify that all layout begin/end calls match.");
             }
-        }
-
-        // Global layout function. Calculates all sizes of all windows etc & assigns.
-        // After this call everything has a properly calculated size
-        // Called by Unity automatically.
-        // Is public so we can access it from editor inspectors, but not supported by public stuff
-        internal static float LayoutFromInspector(float width)
-        {
-            if (current.topLevel != null && current.topLevel.windowID == -1)
-            {
-                // Here we go over all entries and calculate their sizes
-                current.topLevel.CalcWidth();
-                current.topLevel.SetHorizontal(0, width);
-                current.topLevel.CalcHeight();
-                current.topLevel.SetVertical(0, Mathf.Min(Screen.height / GUIUtility.pixelsPerPoint, current.topLevel.maxHeight));
-                // UNCOMMENT ME TO DEBUG THE INSPECTOR
-                //          Debug.Log (current.topLevel);
-                float height = current.topLevel.minHeight;
-                // Layout all beginarea parts...
-                // TODO: NOT SURE HOW THIS WORKS IN AN INSPECTOR
-                LayoutFreeGroup(current.windows);
-                return height;
-            }
-            if (current.topLevel != null)
-                LayoutSingleGroup(current.topLevel);
-            return 0;
         }
 
         internal static void LayoutFreeGroup(GUILayoutGroup toplevel)
@@ -353,7 +313,9 @@ namespace UnityEngine
             return (GUILayoutGroup)Activator.CreateInstance(LayoutType);
         }
 
-        // Generic helper - use this when creating a layoutgroup. It will make sure everything is wired up correctly.
+        ///<summary>Generic helper - use this when creating a layoutgroup. It will make sure everything is wired up correctly.</summary>
+        ///<param name="style">The style of the group.</param>
+        ///<param name="options">The layout options to apply to it.</param>
         internal static GUILayoutGroup BeginLayoutGroup(GUIStyle style, GUILayoutOption[] options, Type layoutType)
         {
             unbalancedgroupscount++;
@@ -381,7 +343,7 @@ namespace UnityEngine
             return g;
         }
 
-        // The matching end for BeginLayoutGroup
+        ///<summary>The matching end for BeginLayoutGroup.</summary>
         internal static void EndLayoutGroup()
         {
             unbalancedgroupscount--;
@@ -403,7 +365,8 @@ namespace UnityEngine
                 current.topLevel = new GUILayoutGroup();
         }
 
-        // Generic helper - use this when creating a layout group. It will make sure everything is wired up correctly.
+        ///<summary>Use this generic helper when creating a layoutgroup. It will make sure everything is wired up correctly.</summary>
+        ///<param name="style">The style of the group.</param>
         internal static GUILayoutGroup BeginLayoutArea(GUIStyle style, Type layoutType)
         {
             unbalancedgroupscount++;
@@ -437,6 +400,7 @@ namespace UnityEngine
         }
 
         // Trampoline for Editor stuff
+        ///<exclude />
         internal static GUILayoutGroup DoBeginLayoutArea(GUIStyle style, Type layoutType)
         {
             return BeginLayoutArea(style, layoutType);
@@ -444,9 +408,74 @@ namespace UnityEngine
 
         internal static GUILayoutGroup topLevel => current.topLevel;
 
+        ///<summary>Reserve layout space for a rectangle for displaying some contents with a specific style.</summary>
+        ///<param name="content">The content to make room for displaying.</param>
+        ///<param name="style">The <see cref="GUIStyle" /> to layout for.</param>
+        ///<returns>A rectangle that is large enough to contain content when rendered in style.</returns>
+        ///<example>
+        ///  <code><![CDATA[
+        ///using UnityEngine;
+        ///
+        ///public class ExampleScript : MonoBehaviour
+        ///{
+        ///    // Shows the button rect properties in a label when the mouse is over it
+        ///    GUIContent buttonText = new GUIContent("some button");
+        ///    GUIStyle buttonStyle = GUIStyle.none;
+        ///
+        ///    void OnGUI()
+        ///    {
+        ///        Rect rt = GUILayoutUtility.GetRect(buttonText, buttonStyle);
+        ///        if (rt.Contains(Event.current.mousePosition))
+        ///        {
+        ///            GUI.Label(new Rect(0, 20, 200, 70), "PosX: " + rt.x + "\nPosY: " + rt.y +
+        ///                "\nWidth: " + rt.width + "\nHeight: " + rt.height);
+        ///        }
+        ///        GUI.Button(rt, buttonText, buttonStyle);
+        ///    }
+        ///}
+        ///]]></code>
+        ///</example>
+        ///<seealso cref="GUILayout.Width" />
+        ///<seealso cref="GUILayout.Height" />
+        ///<seealso cref="GUILayout.MinWidth" />
+        ///<seealso cref="GUILayout.MaxWidth" />
+        ///<seealso cref="GUILayout.MinHeight" />
         public static Rect GetRect(GUIContent content, GUIStyle style)                                 { return DoGetRect(content, style, null); }
 
-        // Reserve layout space for a rectangle for displaying some contents with a specific style.
+        ///<summary>Reserve layout space for a rectangle for displaying some contents with a specific style.</summary>
+        ///<param name="content">The content to make room for displaying.</param>
+        ///<param name="style">The <see cref="GUIStyle" /> to layout for.</param>
+        ///<param name="options">An optional list of layout options that specify extra layouting properties. Any values passed in here will override settings defined by the <c>style</c>.&lt;br&gt;
+        ///<see cref="GUILayout.MaxHeight" />, <see cref="GUILayout.ExpandWidth" />, <see cref="GUILayout.ExpandHeight" /></param>
+        ///<returns>A rectangle that is large enough to contain content when rendered in style.</returns>
+        ///<example>
+        ///  <code><![CDATA[
+        ///using UnityEngine;
+        ///
+        ///public class ExampleScript : MonoBehaviour
+        ///{
+        ///    // Shows the button rect properties in a label when the mouse is over it
+        ///    GUIContent buttonText = new GUIContent("some button");
+        ///    GUIStyle buttonStyle = GUIStyle.none;
+        ///
+        ///    void OnGUI()
+        ///    {
+        ///        Rect rt = GUILayoutUtility.GetRect(buttonText, buttonStyle);
+        ///        if (rt.Contains(Event.current.mousePosition))
+        ///        {
+        ///            GUI.Label(new Rect(0, 20, 200, 70), "PosX: " + rt.x + "\nPosY: " + rt.y +
+        ///                "\nWidth: " + rt.width + "\nHeight: " + rt.height);
+        ///        }
+        ///        GUI.Button(rt, buttonText, buttonStyle);
+        ///    }
+        ///}
+        ///]]></code>
+        ///</example>
+        ///<seealso cref="GUILayout.Width" />
+        ///<seealso cref="GUILayout.Height" />
+        ///<seealso cref="GUILayout.MinWidth" />
+        ///<seealso cref="GUILayout.MaxWidth" />
+        ///<seealso cref="GUILayout.MinHeight" />
         public static Rect GetRect(GUIContent content, GUIStyle style, params GUILayoutOption[] options)       { return DoGetRect(content, style, options); }
 
         static Rect DoGetRect(GUIContent content, GUIStyle style, GUILayoutOption[] options)
@@ -496,23 +525,117 @@ namespace UnityEngine
             }
         }
 
+        ///<summary>Reserve layout space for a rectangle with a fixed content area.</summary>
+        ///<param name="width">The width of the area you want.</param>
+        ///<param name="height">The height of the area you want.</param>
+        ///<returns>The rectangle to put your control in.</returns>
+        ///<seealso cref="GUILayout.Width" />
+        ///<seealso cref="GUILayout.Height" />
+        ///<seealso cref="GUILayout.MinWidth" />
+        ///<seealso cref="GUILayout.MaxWidth" />
+        ///<seealso cref="GUILayout.MinHeight" />
         public static Rect GetRect(float width, float height)                                      { return DoGetRect(width, width, height, height, GUIStyle.none, null); }
+        ///<summary>Reserve layout space for a rectangle with a fixed content area.</summary>
+        ///<param name="width">The width of the area you want.</param>
+        ///<param name="height">The height of the area you want.</param>
+        ///<param name="style">An optional <see cref="GUIStyle" /> to layout for. If specified, the style's <c>padding</c> value will be added to your sizes &amp; its <c>margin</c> value will be used for spacing.</param>
+        ///<returns>The rectangle to put your control in.</returns>
+        ///<seealso cref="GUILayout.Width" />
+        ///<seealso cref="GUILayout.Height" />
+        ///<seealso cref="GUILayout.MinWidth" />
+        ///<seealso cref="GUILayout.MaxWidth" />
+        ///<seealso cref="GUILayout.MinHeight" />
         public static Rect GetRect(float width, float height, GUIStyle style)                      {return DoGetRect(width, width, height, height, style, null); }
+        ///<summary>Reserve layout space for a rectangle with a fixed content area.</summary>
+        ///<param name="width">The width of the area you want.</param>
+        ///<param name="height">The height of the area you want.</param>
+        ///<param name="options">An optional list of layout options that specify extra layouting properties. Any values passed in here will override settings defined by the <c>style</c>.&lt;br&gt;
+        ///<see cref="GUILayout.MaxHeight" />, <see cref="GUILayout.ExpandWidth" />, <see cref="GUILayout.ExpandHeight" /></param>
+        ///<returns>The rectangle to put your control in.</returns>
+        ///<seealso cref="GUILayout.Width" />
+        ///<seealso cref="GUILayout.Height" />
+        ///<seealso cref="GUILayout.MinWidth" />
+        ///<seealso cref="GUILayout.MaxWidth" />
+        ///<seealso cref="GUILayout.MinHeight" />
         public static Rect GetRect(float width, float height, params GUILayoutOption[] options)    {return DoGetRect(width, width, height, height, GUIStyle.none, options); }
 
-        // Reserve layout space for a rectangle with a fixed content area.
+        ///<summary>Reserve layout space for a rectangle with a fixed content area.</summary>
+        ///<param name="width">The width of the area you want.</param>
+        ///<param name="height">The height of the area you want.</param>
+        ///<param name="style">An optional <see cref="GUIStyle" /> to layout for. If specified, the style's <c>padding</c> value will be added to your sizes &amp; its <c>margin</c> value will be used for spacing.</param>
+        ///<param name="options">An optional list of layout options that specify extra layouting properties. Any values passed in here will override settings defined by the <c>style</c>.&lt;br&gt;
+        ///<see cref="GUILayout.MaxHeight" />, <see cref="GUILayout.ExpandWidth" />, <see cref="GUILayout.ExpandHeight" /></param>
+        ///<returns>The rectangle to put your control in.</returns>
+        ///<seealso cref="GUILayout.Width" />
+        ///<seealso cref="GUILayout.Height" />
+        ///<seealso cref="GUILayout.MinWidth" />
+        ///<seealso cref="GUILayout.MaxWidth" />
+        ///<seealso cref="GUILayout.MinHeight" />
         public static Rect GetRect(float width, float height, GUIStyle style, params GUILayoutOption[] options)
         {return DoGetRect(width, width, height, height, style, options); }
 
+        ///<summary>Reserve layout space for a flexible rect.</summary>
+        ///<remarks>The rectangle's size will be between the min &amp; max values.</remarks>
+        ///<param name="minWidth">The minimum width of the area passed back.</param>
+        ///<param name="maxWidth">The maximum width of the area passed back.</param>
+        ///<param name="minHeight">The minimum width of the area passed back.</param>
+        ///<param name="maxHeight">The maximum width of the area passed back.</param>
+        ///<returns>A rectangle with size between minWidth &amp; maxWidth on both axes.</returns>
+        ///<seealso cref="GUILayout.Width" />
+        ///<seealso cref="GUILayout.Height" />
+        ///<seealso cref="GUILayout.MinWidth" />
+        ///<seealso cref="GUILayout.MaxWidth" />
+        ///<seealso cref="GUILayout.MinHeight" />
         public static Rect GetRect(float minWidth, float maxWidth, float minHeight, float maxHeight)
         { return DoGetRect(minWidth, maxWidth, minHeight, maxHeight, GUIStyle.none, null); }
 
+        ///<summary>Reserve layout space for a flexible rect.</summary>
+        ///<remarks>The rectangle's size will be between the min &amp; max values.</remarks>
+        ///<param name="minWidth">The minimum width of the area passed back.</param>
+        ///<param name="maxWidth">The maximum width of the area passed back.</param>
+        ///<param name="minHeight">The minimum width of the area passed back.</param>
+        ///<param name="maxHeight">The maximum width of the area passed back.</param>
+        ///<param name="style">An optional style. If specified, the style's <c>padding</c> value will be added to the sizes requested &amp; the style's <c>margin</c> values will be used for spacing.</param>
+        ///<returns>A rectangle with size between minWidth &amp; maxWidth on both axes.</returns>
+        ///<seealso cref="GUILayout.Width" />
+        ///<seealso cref="GUILayout.Height" />
+        ///<seealso cref="GUILayout.MinWidth" />
+        ///<seealso cref="GUILayout.MaxWidth" />
+        ///<seealso cref="GUILayout.MinHeight" />
         public static Rect GetRect(float minWidth, float maxWidth, float minHeight, float maxHeight, GUIStyle style)
         { return DoGetRect(minWidth, maxWidth, minHeight, maxHeight, style, null); }
 
+        ///<summary>Reserve layout space for a flexible rect.</summary>
+        ///<remarks>The rectangle's size will be between the min &amp; max values.</remarks>
+        ///<param name="minWidth">The minimum width of the area passed back.</param>
+        ///<param name="maxWidth">The maximum width of the area passed back.</param>
+        ///<param name="minHeight">The minimum width of the area passed back.</param>
+        ///<param name="maxHeight">The maximum width of the area passed back.</param>
+        ///<param name="options">An optional list of layout options that specify extra layouting properties. Any values passed in here will override settings defined by the <c>style</c>.&lt;br&gt;
+        ///<see cref="GUILayout.MaxHeight" />, <see cref="GUILayout.ExpandWidth" />, <see cref="GUILayout.ExpandHeight" /></param>
+        ///<returns>A rectangle with size between minWidth &amp; maxWidth on both axes.</returns>
+        ///<seealso cref="GUILayout.Width" />
+        ///<seealso cref="GUILayout.Height" />
+        ///<seealso cref="GUILayout.MinWidth" />
+        ///<seealso cref="GUILayout.MaxWidth" />
+        ///<seealso cref="GUILayout.MinHeight" />
         public static Rect GetRect(float minWidth, float maxWidth, float minHeight, float maxHeight, params GUILayoutOption[] options)
         { return DoGetRect(minWidth, maxWidth, minHeight, maxHeight, GUIStyle.none, options); }
-        // Reserve layout space for a flexible rect.
+        ///<summary>Reserve layout space for a flexible rect.</summary>
+        ///<remarks>The rectangle's size will be between the min &amp; max values.</remarks>
+        ///<param name="minWidth">The minimum width of the area passed back.</param>
+        ///<param name="maxWidth">The maximum width of the area passed back.</param>
+        ///<param name="minHeight">The minimum width of the area passed back.</param>
+        ///<param name="maxHeight">The maximum width of the area passed back.</param>
+        ///<param name="style">An optional style. If specified, the style's <c>padding</c> value will be added to the sizes requested &amp; the style's <c>margin</c> values will be used for spacing.</param>
+        ///<param name="options">An optional list of layout options that specify extra layouting properties. Any values passed in here will override settings defined by the <c>style</c>.&lt;br&gt;
+        ///<see cref="GUILayout.MaxHeight" />, <see cref="GUILayout.ExpandWidth" />, <see cref="GUILayout.ExpandHeight" /></param>
+        ///<returns>A rectangle with size between minWidth &amp; maxWidth on both axes.</returns>
+        ///<seealso cref="GUILayout.Width" />
+        ///<seealso cref="GUILayout.Height" />
+        ///<seealso cref="GUILayout.MinWidth" />
+        ///<seealso cref="GUILayout.MaxWidth" />
+        ///<seealso cref="GUILayout.MinHeight" />
         public static Rect GetRect(float minWidth, float maxWidth, float minHeight, float maxHeight, GUIStyle style, params GUILayoutOption[] options)
         { return DoGetRect(minWidth, maxWidth, minHeight, maxHeight, style, options); }
         static Rect DoGetRect(float minWidth, float maxWidth, float minHeight, float maxHeight, GUIStyle style, GUILayoutOption[] options)
@@ -529,7 +652,31 @@ namespace UnityEngine
             }
         }
 
-        // Get the rectangle last used by GUILayout for a control.
+        ///<summary>Get the rectangle last used by GUILayout for a control.</summary>
+        ///<remarks>Note that this only works during the Repaint event.</remarks>
+        ///<returns>The last used rectangle.</returns>
+        ///<example>
+        ///  <code><![CDATA[
+        ///using UnityEngine;
+        ///
+        ///public class ExampleScript : MonoBehaviour
+        ///{
+        ///    void OnGUI()
+        ///    {
+        ///        GUILayout.Button("My button");
+        ///        if (Event.current.type == EventType.Repaint &&
+        ///            GUILayoutUtility.GetLastRect().Contains(Event.current.mousePosition))
+        ///        {
+        ///            GUILayout.Label("Mouse over!");
+        ///        }
+        ///        else
+        ///        {
+        ///            GUILayout.Label("Mouse somewhere else");
+        ///        }
+        ///    }
+        ///}
+        ///]]></code>
+        ///</example>
         public static Rect GetLastRect()
         {
             switch (Event.current.type)
@@ -542,10 +689,47 @@ namespace UnityEngine
             }
         }
 
+        ///<summary>Reserve layout space for a rectangle with a specific aspect ratio.</summary>
+        ///<param name="aspect">The aspect ratio of the element (width / height).</param>
+        ///<returns>The rect for the control.</returns>
+        ///<seealso cref="GUILayout.Width" />
+        ///<seealso cref="GUILayout.Height" />
+        ///<seealso cref="GUILayout.MinWidth" />
+        ///<seealso cref="GUILayout.MaxWidth" />
+        ///<seealso cref="GUILayout.MinHeight" />
         public static Rect GetAspectRect(float aspect) { return DoGetAspectRect(aspect, null); }
+        ///<summary>Reserve layout space for a rectangle with a specific aspect ratio.</summary>
+        ///<param name="aspect">The aspect ratio of the element (width / height).</param>
+        ///<param name="style">An optional style. If specified, the style's <c>padding</c> value will be added to the sizes of the returned rectangle &amp; the style's <c>margin</c> values will be used for spacing.</param>
+        ///<returns>The rect for the control.</returns>
+        ///<seealso cref="GUILayout.Width" />
+        ///<seealso cref="GUILayout.Height" />
+        ///<seealso cref="GUILayout.MinWidth" />
+        ///<seealso cref="GUILayout.MaxWidth" />
+        ///<seealso cref="GUILayout.MinHeight" />
         public static Rect GetAspectRect(float aspect, GUIStyle style) { return DoGetAspectRect(aspect, null); }
+        ///<summary>Reserve layout space for a rectangle with a specific aspect ratio.</summary>
+        ///<param name="aspect">The aspect ratio of the element (width / height).</param>
+        ///<param name="options">An optional list of layout options that specify extra layouting properties. Any values passed in here will override settings defined by the <c>style</c>.&lt;br&gt;
+        ///<see cref="GUILayout.MaxHeight" />, <see cref="GUILayout.ExpandWidth" />, <see cref="GUILayout.ExpandHeight" /></param>
+        ///<returns>The rect for the control.</returns>
+        ///<seealso cref="GUILayout.Width" />
+        ///<seealso cref="GUILayout.Height" />
+        ///<seealso cref="GUILayout.MinWidth" />
+        ///<seealso cref="GUILayout.MaxWidth" />
+        ///<seealso cref="GUILayout.MinHeight" />
         public static Rect GetAspectRect(float aspect, params GUILayoutOption[] options) {  return DoGetAspectRect(aspect, options); }
-        // Reserve layout space for a rectangle with a specific aspect ratio.
+        ///<summary>Reserve layout space for a rectangle with a specific aspect ratio.</summary>
+        ///<param name="aspect">The aspect ratio of the element (width / height).</param>
+        ///<param name="style">An optional style. If specified, the style's <c>padding</c> value will be added to the sizes of the returned rectangle &amp; the style's <c>margin</c> values will be used for spacing.</param>
+        ///<param name="options">An optional list of layout options that specify extra layouting properties. Any values passed in here will override settings defined by the <c>style</c>.&lt;br&gt;
+        ///<see cref="GUILayout.MaxHeight" />, <see cref="GUILayout.ExpandWidth" />, <see cref="GUILayout.ExpandHeight" /></param>
+        ///<returns>The rect for the control.</returns>
+        ///<seealso cref="GUILayout.Width" />
+        ///<seealso cref="GUILayout.Height" />
+        ///<seealso cref="GUILayout.MinWidth" />
+        ///<seealso cref="GUILayout.MaxWidth" />
+        ///<seealso cref="GUILayout.MinHeight" />
         public static Rect GetAspectRect(float aspect, GUIStyle style, params GUILayoutOption[] options)   {  return DoGetAspectRect(aspect, options); }
         private static Rect DoGetAspectRect(float aspect, GUILayoutOption[] options)
         {
@@ -571,6 +755,7 @@ namespace UnityEngine
                 return s_SpaceStyle;
             }
         }
+        [NoAutoStaticsCleanup] // lazy-cache default GUIStyle for spacing; recreated on null check; no user types or runtime state dependency
         static GUIStyle s_SpaceStyle;
     }
 }

@@ -17,6 +17,7 @@ namespace UnityEngine
     [NativeHeader("Configuration/UnityConfigure.h")]
     [NativeHeader("Runtime/Transform/Transform.h")]
     [NativeHeader("Runtime/Transform/ScriptBindings/TransformScriptBindings.h")]
+    [global::UnityEngine.NativeClass("Transform", PersistentTypeId = 4)]
     [RequiredByNativeCode]
     public partial class Transform : Component, IEnumerable
     {

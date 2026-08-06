@@ -3,16 +3,18 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using UnityEngine;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
     /// *undocumented*
     internal class ListViewGUI
     {
-        static int[] dummyWidths = new int[1];
+        static readonly int[] dummyWidths = new int[1];
 
+        [NoAutoStaticsCleanup] // shared IMGUI list-view scratch state, re-populated each use; safe to persist
         static internal ListViewShared.InternalListViewState ilvState = new ListViewShared.InternalListViewState();
-        static int listViewHash = "ListView".GetHashCode();
+        static readonly int listViewHash = "ListView".GetHashCode();
 
         static public ListViewShared.ListViewElementsEnumerator ListView(Rect pos, ListViewState state)
         {

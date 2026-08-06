@@ -82,6 +82,7 @@ namespace UnityEngineInternal.Video
         extern public void SetSkipOnDrop(bool skipOnDrop);
         extern public bool GetSkipOnDrop();
         extern public bool GetTexture(Texture texture, out long outputFrameNum);
+        extern public double GetLastPresentedFrameTime();
 
         public delegate void Callback();
         extern public void SeekToFrame(long frameIndex, Callback seekCompletedCallback);

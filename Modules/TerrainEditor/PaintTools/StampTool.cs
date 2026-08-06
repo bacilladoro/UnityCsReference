@@ -6,6 +6,7 @@ using UnityEngine;
 using UnityEditor;
 using UnityEngine.TerrainTools;
 using UnityEditor.ShortcutManagement;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.TerrainTools
 {
@@ -37,6 +38,7 @@ namespace UnityEditor.TerrainTools
             public readonly GUIContent maxadd = EditorGUIUtility.TrTextContent("Max <--> Add", "Blend between adding the heights and taking the maximum.");
         }
 
+        [NoAutoStaticsCleanup] // lazy GUIContent/GUIStyle styles holder; editor infra, no user refs
         private static Styles m_styles;
         private Styles GetStyles()
         {

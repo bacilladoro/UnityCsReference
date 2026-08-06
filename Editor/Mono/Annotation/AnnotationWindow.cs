@@ -5,12 +5,13 @@
 using UnityEngine;
 using System.Collections.Generic;
 using UnityEditor.ShortcutManagement;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
-    internal class AnnotationWindow : EditorWindow
+    internal partial class AnnotationWindow : EditorWindow
     {
-        private static SavedBool s_ShowTerrainDebugWarnings = new SavedBool("Terrain.ShowDebugWarnings", true);
+        private static readonly SavedBool s_ShowTerrainDebugWarnings = new SavedBool("Terrain.ShowDebugWarnings", true);
 
         public static bool ShowTerrainDebugWarnings
         {
@@ -63,10 +64,13 @@ namespace UnityEditor
         float iconRightAlign;
         float iconTextRightAlign;
 
+        [AutoStaticsCleanupOnCodeReload]
         static AnnotationWindow s_AnnotationWindow = null;
+        [NoAutoStaticsCleanup] // safe: timestamp guard, intentionally persisted across reloads
         static long s_LastClosedTime;
         const long k_JustClosedPeriod = 400;
 
+        [NoAutoStaticsCleanup] // safe: lazily rebuilt GUI styles cache, recreated on demand
         static Styles m_Styles;
         List<GizmoInfo> m_RecentAnnotations;
         List<GizmoInfo> m_BuiltinAnnotations;

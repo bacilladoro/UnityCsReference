@@ -9,6 +9,7 @@ using UnityEditor;
 using UnityEngine.UIElements;
 using UnityEditor.UIElements;
 using Unity.Collections;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditorInternal
 {
@@ -47,15 +48,14 @@ namespace UnityEditorInternal
                 EditorGUIUtility.TrTextContent("Random Between Two Constants")
             };
         }
-        static Styles s_Styles;
+        [NoAutoStaticsCleanup] // Readonly eager init re-runs per ALC on code load; GUIContent/Color/AnimationCurve members survive reload.
+        static readonly Styles s_Styles = new();
 
+        [NoAutoStaticsCleanup] // Tracks the control id of the curve currently open in the editor window; unmanaged, safe to persist.
         static int s_CurveId;
 
         void Init(SerializedProperty property)
         {
-            if (s_Styles == null)
-                s_Styles = new Styles();
-
             if (m_PropertyDataPerPropertyPath.TryGetValue(property.propertyPath, out m_Property))
                 return;
 

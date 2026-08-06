@@ -8,10 +8,12 @@ using UnityEditor;
 namespace UnityEditorInternal
 {
     [ExcludeFromPreset]
+    [NativeClass("PackageManifestImporter", PersistentTypeId = 0x710E27E6)]
     public sealed class PackageManifestImporter : AssetImporter
     {
     }
 
+    [NativeClass("PackageManifest", PersistentTypeId = 0x710E27E5)]
     public sealed class PackageManifest : TextAsset
     {
         private PackageManifest() {}

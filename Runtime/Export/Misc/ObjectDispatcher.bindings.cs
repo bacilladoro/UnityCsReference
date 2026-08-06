@@ -6,6 +6,7 @@ using System;
 using System.Runtime.CompilerServices;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Scripting;
 using UnityEngine.Bindings;
 using System.Collections.Generic;
@@ -120,10 +121,12 @@ namespace UnityEngine
             m_TransformComponentCallback = DispatchCallback;
         }
 
+#pragma warning disable UA5000 // The Avoid Finalizer Analyzer produces compile errors for any new finalizers. This pre-existing finalizer declaration has been suppressed, but should be rewritten if possible.
         ~ObjectDispatcher()
         {
             Dispose(false);
         }
+#pragma warning restore UA5000
 
         public void Dispose()
         {
@@ -158,6 +161,7 @@ namespace UnityEngine
                 throw new Exception("Only types inherited from UnityEngine.Component are supported.");
         }
 
+        [NoAutoStaticsCleanup] // s_TypeDispatch and s_TransformDispatch are static functions that are not affected by code reloads
         private static TypeDispatchAction s_TypeDispatch = (Object[] changed, IntPtr changedID, IntPtr destroyedID, int changedCount, int destroyedCount, Action<TypeDispatchData> callback) =>
         {
             unsafe
@@ -181,6 +185,7 @@ namespace UnityEngine
             }
         };
 
+        [NoAutoStaticsCleanup] // s_TypeDispatch and s_TransformDispatch are static functions that are not affected by code reloads
         private static TransformDispatchAction s_TransformDispatch = (
             IntPtr transformed,
             IntPtr parents,

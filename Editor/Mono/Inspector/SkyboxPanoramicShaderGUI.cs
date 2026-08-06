@@ -7,6 +7,7 @@ using UnityEditor;
 using UnityEditor.AnimatedValues;
 using UnityEditorInternal;
 using UnityEditor.Build;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -24,6 +25,7 @@ namespace UnityEditor
                 return s_Stereo3DLayoutContent;
             }
 
+            [NoAutoStaticsCleanup] // Lazy GUIContent cache; recreated on first access if null, safe to persist across code reload.
             private static GUIContent s_Stereo3DLayoutContent;
         }
 

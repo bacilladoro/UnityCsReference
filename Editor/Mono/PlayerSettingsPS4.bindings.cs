@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using UnityEngine;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Bindings;
 using System;
 using System.Runtime.CompilerServices;
@@ -202,7 +203,9 @@ namespace UnityEditor
             [NativeProperty("ps4ReprojectionSupport", false, TargetType.Field)] extern public static bool reprojectionSupport { get; set; }
             [NativeProperty("ps4UseAudio3dBackend", false, TargetType.Field)] extern public static bool useAudio3dBackend { get; set; }
             [NativeProperty("ps4Audio3dVirtualSpeakerCount", false, TargetType.Field)] extern public static int audio3dVirtualSpeakerCount { get; set; }
-            [Obsolete("Use PlayerSettings.SetIl2CppCompilerConfiguration() instead.")] public static int scriptOptimizationLevel { get; set; }
+            [Obsolete("Use PlayerSettings.SetIl2CppCompilerConfiguration() instead.")]
+            [NoAutoStaticsCleanup] // deprecated value-type setting; safe to persist across reload
+            public static int scriptOptimizationLevel { get; set; }
             [NativeProperty("ps4UseLowGarlicFragmentationMode", true, TargetType.Field)] extern public static bool useLowGarlicFragmentationMode { get; set; }
             [NativeProperty("ps4SocialScreenEnabled", false, TargetType.Field)] extern public static int socialScreenEnabled { get; set; }
             [NativeProperty("ps4attribUserManagement", false, TargetType.Field)] extern public static bool attribUserManagement { get; set; }

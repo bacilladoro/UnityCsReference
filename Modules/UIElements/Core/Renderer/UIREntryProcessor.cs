@@ -254,6 +254,8 @@ namespace UnityEngine.UIElements.UIR
                         // The vector image has embedded textures/gradients and we have a manager that can accept the settings.
                         // Register the settings and assume that it works.
                         m_RenderTreeManager.InsertVectorImage(m_CurrentRenderData, entry.gradientsOwner);
+                        m_RenderTreeManager.backgroundGradientBaker.AddUser(entry.gradientsOwner); // no-op for non-baker VIs
+
                         var gradientRemap = m_RenderTreeManager.vectorImageManager.AddUser(entry.gradientsOwner, m_CurrentRenderData.owner);
                         m_GradientSettingIndexOffset = (ushort)gradientRemap.destIndex;
                         if (gradientRemap.atlas != TextureId.invalid)
@@ -541,6 +543,9 @@ namespace UnityEngine.UIElements.UIR
 
                 if ((entry.flags & EntryFlags.IsPremultiplied) != 0)
                     cmd.flags |= CommandFlags.IsPremultiplied;
+
+                if ((entry.flags & EntryFlags.SamplesGammaSource) != 0)
+                    cmd.flags |= CommandFlags.SkipForceGamma;
 
                 m_VertsFilled += entryVertexCount;
                 m_IndicesFilled += entryIndexCount;

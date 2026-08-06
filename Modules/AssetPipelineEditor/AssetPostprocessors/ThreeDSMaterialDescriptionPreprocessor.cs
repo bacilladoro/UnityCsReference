@@ -87,7 +87,7 @@ namespace UnityEditor.AssetImporters
             if (description.TryGetProperty("EmissiveColor", out vectorProperty))
             {
                 material.SetColor("_EmissionColor", vectorProperty);
-                material.globalIlluminationFlags |= MaterialGlobalIlluminationFlags.RealtimeEmissive;
+                material.globalIlluminationFlags |= MaterialGlobalIlluminationFlags.RealtimeIndirectEmission;
                 material.EnableKeyword("_EMISSION");
             }
 

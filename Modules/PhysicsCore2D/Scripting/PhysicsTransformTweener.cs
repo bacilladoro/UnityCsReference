@@ -11,6 +11,7 @@ using Unity.Profiling;
 using UnityEngine;
 using UnityEngine.Jobs;
 using UnityEngine.Scripting;
+using Unity.Scripting.LifecycleManagement;
 
 using static Unity.U2D.Physics.Scripting2D;
 
@@ -387,6 +388,8 @@ namespace Unity.U2D.Physics
 
         #region Transform Access Arrays
 
+        // Per-world TransformAccessArray marshaling cache (indexed by world, no user-type references); entries are managed/reallocated on demand by the create/dispose native callbacks, so it is safe to persist across a code reload.
+        [NoAutoStaticsCleanup]
         static TransformAccessArray[] s_WorldTransformAccessArrays = null;
 
         // Ensures the per-world array can index the given world.

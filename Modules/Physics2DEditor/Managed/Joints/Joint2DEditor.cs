@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 
 namespace UnityEditor
@@ -58,6 +59,7 @@ namespace UnityEditor
             public readonly GUIStyle connectedAnchor = "U2D.dragDot";
             public readonly GUIStyle connectedAnchorActive = "U2D.dragDotActive";
         }
+        [NoAutoStaticsCleanup] // cached editor GUIStyles; safe to persist across code reload as they hold no user-code references
         protected static Styles s_Styles;
 
         protected bool HandleAnchor(ref Vector3 position, bool isConnectedAnchor)

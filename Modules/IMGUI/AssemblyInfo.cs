@@ -8,6 +8,8 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("UnityEngine.UIElementsModule")]
 [assembly: InternalsVisibleTo("Unity.UIElements")]
 [assembly: InternalsVisibleTo("Unity.UIElements.Editor")]
+[assembly: InternalsVisibleTo("Unity.UIElements.EditorResources.Authoring")]
+[assembly: InternalsVisibleTo("Unity.UIElements.EditorResources.EditorTests")]
 [assembly: InternalsVisibleTo("Unity.UIElements.EditorTests")]
 [assembly: InternalsVisibleTo("Unity.UIElements.Tests")]
 [assembly: InternalsVisibleTo("UnityEngine.UI.Tests")]

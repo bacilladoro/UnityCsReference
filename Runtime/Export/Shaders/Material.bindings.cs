@@ -12,6 +12,7 @@ using System.Runtime.InteropServices;
 namespace UnityEngine
 {
     [NativeHeader("Runtime/Graphics/ShaderScriptBindings.h")]
+    [global::UnityEngine.NativeClass("Material", PersistentTypeId = 21)]
     [NativeHeader("Runtime/Shaders/Material.h")]
     public partial class Material : Object
     {

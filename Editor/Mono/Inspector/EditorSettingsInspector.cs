@@ -20,79 +20,78 @@ namespace UnityEditor
     {
         class Content
         {
-            public static GUIContent unityRemote = EditorGUIUtility.TrTextContent("Unity Remote");
-            public static GUIContent device = EditorGUIUtility.TrTextContent("Device");
-            public static GUIContent compression = EditorGUIUtility.TrTextContent("Compression");
-            public static GUIContent resolution = EditorGUIUtility.TrTextContent("Resolution");
-            public static GUIContent joystickSource = EditorGUIUtility.TrTextContent("Joystick Source");
+            public static readonly GUIContent unityRemote = EditorGUIUtility.TrTextContent("Unity Remote");
+            public static readonly GUIContent device = EditorGUIUtility.TrTextContent("Device");
+            public static readonly GUIContent compression = EditorGUIUtility.TrTextContent("Compression");
+            public static readonly GUIContent resolution = EditorGUIUtility.TrTextContent("Resolution");
+            public static readonly GUIContent joystickSource = EditorGUIUtility.TrTextContent("Joystick Source");
 
-            public static GUIContent mode = EditorGUIUtility.TrTextContent("Mode");
-            public static GUIContent parallelImport = EditorGUIUtility.TrTextContent("Parallel Import", "During an asset database refresh some asset imports can be performed in parallel in sub processes.");
-            public static GUIContent parallelImportLearnMore = EditorGUIUtility.TrTextContent("Learn more...", "During an asset database refresh some asset imports can be performed in parallel in sub processes.");
-            public static GUIContent desiredImportWorkerCountOverride = EditorGUIUtility.TrTextContent("Override Desired Worker Count", "Override the desired worker count specified in the preferences.");
-            public static GUIContent desiredImportWorkerCount = EditorGUIUtility.TrTextContent("Desired Import Worker Count", "The desired number of import worker processes to use for importing. The actual number of worker processes on the system can be both lower or higher that this, but the system will seek towards this number when importing.");
-            public static GUIContent standbyImportWorkerCount = EditorGUIUtility.TrTextContent("Standby Import Worker Count", "The number of import worker processes to keep around in standby and ready for importing. The actual number of worker processes on the system can be both lower or higher that this, but the system will seek towards this number when worker processes are idle.");
-            public static GUIContent idleWorkerShutdownDelay = EditorGUIUtility.TrTextContent("Idle Import Worker Shutdown Delay", "When an importer worker has been idle for this amount of seconds in will be shutdown unless it would take the worker count below the standby worker count setting.");
+            public static readonly GUIContent mode = EditorGUIUtility.TrTextContent("Mode");
+            public static readonly GUIContent parallelImport = EditorGUIUtility.TrTextContent("Parallel Import", "During an asset database refresh some asset imports can be performed in parallel in sub processes.");
+            public static readonly GUIContent parallelImportLearnMore = EditorGUIUtility.TrTextContent("Learn more...", "During an asset database refresh some asset imports can be performed in parallel in sub processes.");
+            public static readonly GUIContent desiredImportWorkerCountOverride = EditorGUIUtility.TrTextContent("Override Desired Worker Count", "Override the desired worker count specified in the preferences.");
+            public static readonly GUIContent desiredImportWorkerCount = EditorGUIUtility.TrTextContent("Desired Import Worker Count", "The desired number of import worker processes to use for importing. The actual number of worker processes on the system can be both lower or higher that this, but the system will seek towards this number when importing.");
+            public static readonly GUIContent standbyImportWorkerCount = EditorGUIUtility.TrTextContent("Standby Import Worker Count", "The number of import worker processes to keep around in standby and ready for importing. The actual number of worker processes on the system can be both lower or higher that this, but the system will seek towards this number when worker processes are idle.");
+            public static readonly GUIContent idleWorkerShutdownDelay = EditorGUIUtility.TrTextContent("Idle Import Worker Shutdown Delay", "When an importer worker has been idle for this amount of seconds in will be shutdown unless it would take the worker count below the standby worker count setting.");
 
-            public static GUIContent cacheServer = EditorGUIUtility.TrTextContent("Accelerator Cache Server (project specific)");
-            public static GUIContent checkConnection = EditorGUIUtility.TrTextContent("Check Connection");
-            public static GUIContent assetPipeline = EditorGUIUtility.TrTextContent("Asset Pipeline");
-            public static GUIContent artifactGarbageCollection = EditorGUIUtility.TrTextContent("Remove unused Artifacts on Restart", "By default, when you start the Editor, Unity removes unused artifact files in the Library folder, and removes their entries in the asset database. This is a form of \"garbage collection\". This setting allows you to turn off the asset database garbage collection, so that previous artifact revisions which are no longer used are still preserved after restarting the Editor. This is useful if you need to debug unexpected import results.");
-            public static GUIContent cacheServerIPLabel = EditorGUIUtility.TrTextContent("IP address");
-            public static GUIContent cacheServerNamespacePrefixLabel = EditorGUIUtility.TrTextContent("Namespace prefix", "The namespace used for looking up and storing values on the cache server");
-            public static GUIContent cacheServerEnableImportResultCachingLabel = EditorGUIUtility.TrTextContent("Import Result Caching", "Enables import result caching on the cache server.");
-            public static GUIContent cacheServerEnableDownloadLabel = EditorGUIUtility.TrTextContent("Download", "Enables downloads from the cache server.");
-            public static GUIContent cacheServerEnableUploadLabel = EditorGUIUtility.TrTextContent("Upload", "Enables uploads to the cache server.");
-            public static GUIContent cacheServerEnableTlsLabel = EditorGUIUtility.TrTextContent("TLS/SSL", "Enabled encryption on the cache server connection.");
-            public static GUIContent cacheServerValidationLabel = EditorGUIUtility.TrTextContent("Content Validation");
-            public static GUIContent cacheServerDownloadBatchSizeLabel = EditorGUIUtility.TrTextContent("Download Batch Size");
+            public static readonly GUIContent cacheServer = EditorGUIUtility.TrTextContent("Accelerator Cache Server (project specific)");
+            public static readonly GUIContent checkConnection = EditorGUIUtility.TrTextContent("Check Connection");
+            public static readonly GUIContent assetPipeline = EditorGUIUtility.TrTextContent("Asset Pipeline");
+            public static readonly GUIContent artifactGarbageCollection = EditorGUIUtility.TrTextContent("Remove unused Artifacts on Restart", "By default, when you start the Editor, Unity removes unused artifact files in the Library folder, and removes their entries in the asset database. This is a form of \"garbage collection\". This setting allows you to turn off the asset database garbage collection, so that previous artifact revisions which are no longer used are still preserved after restarting the Editor. This is useful if you need to debug unexpected import results.");
+            public static readonly GUIContent cacheServerIPLabel = EditorGUIUtility.TrTextContent("IP address");
+            public static readonly GUIContent cacheServerNamespacePrefixLabel = EditorGUIUtility.TrTextContent("Namespace prefix", "The namespace used for looking up and storing values on the cache server");
+            public static readonly GUIContent cacheServerEnableImportResultCachingLabel = EditorGUIUtility.TrTextContent("Import Result Caching", "Enables import result caching on the cache server.");
+            public static readonly GUIContent cacheServerEnableDownloadLabel = EditorGUIUtility.TrTextContent("Download", "Enables downloads from the cache server.");
+            public static readonly GUIContent cacheServerEnableUploadLabel = EditorGUIUtility.TrTextContent("Upload", "Enables uploads to the cache server.");
+            public static readonly GUIContent cacheServerEnableTlsLabel = EditorGUIUtility.TrTextContent("TLS/SSL", "Enabled encryption on the cache server connection.");
+            public static readonly GUIContent cacheServerValidationLabel = EditorGUIUtility.TrTextContent("Content Validation");
+            public static readonly GUIContent cacheServerDownloadBatchSizeLabel = EditorGUIUtility.TrTextContent("Download Batch Size");
             public static readonly GUIContent cacheServerLearnMore = new GUIContent("Learn more...", "Go to Unity Accelerator documentation.");
 
-            public static GUIContent assetSerialization = EditorGUIUtility.TrTextContent("Asset Serialization");
-            public static GUIContent defaultBehaviorMode = EditorGUIUtility.TrTextContent("Default Behaviour Mode");
+            public static readonly GUIContent assetSerialization = EditorGUIUtility.TrTextContent("Asset Serialization");
+            public static readonly GUIContent defaultBehaviorMode = EditorGUIUtility.TrTextContent("Default Behaviour Mode");
 
-            public static GUIContent buildPipelineHeader = EditorGUIUtility.TrTextContent("Build Pipeline");
+            public static readonly GUIContent buildPipelineHeader = EditorGUIUtility.TrTextContent("Build Pipeline");
 
-            public static GUIContent sceneHandlingHeader = EditorGUIUtility.TrTextContent("Scene Handling");
-            public static GUIContent forceAssetUnloadAndGCOnSceneLoad = EditorGUIUtility.TrTextContent("Force Asset Unload & GC on Scene Load", "Force a managed heap garbage collection and unload unused assets after loading scenes in single mode in the Editor or exiting Prefab Mode. In complex projects, this can slow down performance. Disable this if you do not require class finalizers to run at the end of scene loading. Note that regular dynamic GC and unused asset unloading still occur when memory usage is high, but without this option, class finalizers might not run immediately after each scene load.");
+            public static readonly GUIContent sceneHandlingHeader = EditorGUIUtility.TrTextContent("Scene Handling");
+            public static readonly GUIContent forceAssetUnloadAndGCOnSceneLoad = EditorGUIUtility.TrTextContent("Force Asset Unload & GC on Scene Load", "Force a managed heap garbage collection and unload unused assets after loading scenes in single mode in the Editor or exiting Prefab Mode. In complex projects, this can slow down performance. Disable this if you do not require class finalizers to run at the end of scene loading. Note that regular dynamic GC and unused asset unloading still occur when memory usage is high, but without this option, class finalizers might not run immediately after each scene load.");
 
-            public static GUIContent graphics = EditorGUIUtility.TrTextContent("Graphics");
-            public static GUIContent showLightmapResolutionOverlay = EditorGUIUtility.TrTextContent("Show Lightmap Resolution Overlay");
-            public static GUIContent useLegacyProbeSampleCount = EditorGUIUtility.TrTextContent("Use legacy Light Probe sample counts", "Uses fixed Light Probe sample counts for baking with the Progressive Lightmapper. The sample counts are: 64 direct samples, 2048 indirect samples and 2048 environment samples.");
+            public static readonly GUIContent graphics = EditorGUIUtility.TrTextContent("Graphics");
+            public static readonly GUIContent showLightmapResolutionOverlay = EditorGUIUtility.TrTextContent("Show Lightmap Resolution Overlay");
+            public static readonly GUIContent useLegacyProbeSampleCount = EditorGUIUtility.TrTextContent("Use legacy Light Probe sample counts", "Uses fixed Light Probe sample counts for baking with the Progressive Lightmapper. The sample counts are: 64 direct samples, 2048 indirect samples and 2048 environment samples.");
 
-            public static GUIContent spritePacker = EditorGUIUtility.TrTextContent("Sprite Atlas");
+            public static readonly GUIContent spritePacker = EditorGUIUtility.TrTextContent("Sprite Atlas");
             public static readonly GUIContent spriteMaxCacheSize = EditorGUIUtility.TrTextContent("Max SpriteAtlas Cache Size (GB)", "The size of the Sprite Atlas Cache folder will be kept below this maximum value when possible. Change requires Editor restart.");
 
-            public static GUIContent cSharpProjectGeneration = EditorGUIUtility.TrTextContent("C# Project Generation");
-            public static GUIContent additionalExtensionsToInclude = EditorGUIUtility.TrTextContent("Additional extensions to include");
-            public static GUIContent rootNamespace = EditorGUIUtility.TrTextContent("Root namespace");
+            public static readonly GUIContent cSharpProjectGeneration = EditorGUIUtility.TrTextContent("C# Project Generation");
+            public static readonly GUIContent additionalExtensionsToInclude = EditorGUIUtility.TrTextContent("Additional extensions to include");
+            public static readonly GUIContent rootNamespace = EditorGUIUtility.TrTextContent("Root namespace");
 
-            public static GUIContent scriptCompilation = EditorGUIUtility.TrTextContent("Script Compilation");
+            public static readonly GUIContent scriptCompilation = EditorGUIUtility.TrTextContent("Script Compilation");
             public static readonly GUIContent enableMSBuildCompilationPipeline = EditorGUIUtility.TrTextContent("Enable MSBuild Compilation (Experimental)", "Enable MSBuild compilation for script assemblies. Modification requires a restart of the Editor.");
 
-            public static GUIContent textureCompressors = EditorGUIUtility.TrTextContent("Texture Compressors");
-            public static GUIContent bc7Compressor = EditorGUIUtility.TrTextContent("BC7 Compressor", "Compressor to use for BC7 format texture compression");
-            public static GUIContent etcCompressor = EditorGUIUtility.TrTextContent("ETC Compressor", "Compressors to use for ETC/ETC2/EAC format texture compression");
-            public static GUIContent fast = EditorGUIUtility.TrTextContent("Fast");
-            public static GUIContent normal = EditorGUIUtility.TrTextContent("Normal");
-            public static GUIContent best = EditorGUIUtility.TrTextContent("Best");
+            public static readonly GUIContent textureCompressors = EditorGUIUtility.TrTextContent("Texture Compressors");
+            public static readonly GUIContent bc7Compressor = EditorGUIUtility.TrTextContent("BC7 Compressor", "Compressor to use for BC7 format texture compression");
+            public static readonly GUIContent etcCompressor = EditorGUIUtility.TrTextContent("ETC Compressor", "Compressors to use for ETC/ETC2/EAC format texture compression");
+            public static readonly GUIContent fast = EditorGUIUtility.TrTextContent("Fast");
+            public static readonly GUIContent normal = EditorGUIUtility.TrTextContent("Normal");
+            public static readonly GUIContent best = EditorGUIUtility.TrTextContent("Best");
 
-            public static GUIContent lineEndingForNewScripts = EditorGUIUtility.TrTextContent("Line Endings For New Scripts");
+            public static readonly GUIContent lineEndingForNewScripts = EditorGUIUtility.TrTextContent("Line Endings For New Scripts");
 
-            public static GUIContent streamingSettings = EditorGUIUtility.TrTextContent("Texture Streaming Settings");
-            public static GUIContent enablePlayModeTextureStreaming = EditorGUIUtility.TrTextContent("Enable Mipmap Streaming In Play Mode", "Texture Mipmap Streaming must be enabled in Quality Settings for mipmap streaming to function in Play Mode. This reduces GPU memory by streaming mips in and out as needed.");
-            public static GUIContent enableEditModeTextureStreaming = EditorGUIUtility.TrTextContent("Enable Mipmap Streaming In Edit Mode", "Texture Mipmap Streaming must be enabled in Quality Settings for mipmap streaming to function in Edit Mode. This reduces GPU memory by streaming mips in and out as needed.");
-            public static GUIContent enableEditorAsyncCPUTextureLoading = EditorGUIUtility.TrTextContent("Load texture data on demand", "While in Editor, load CPU side texture data for streaming textures from disk asynchronously on demand (will avoid some stalls and reduce CPU memory usage). Change requires Editor restart.");
+            public static readonly GUIContent streamingSettings = EditorGUIUtility.TrTextContent("Texture Streaming Settings");
+            public static readonly GUIContent enablePlayModeTextureStreaming = EditorGUIUtility.TrTextContent("Enable Mipmap Streaming In Play Mode", "Texture Mipmap Streaming must be enabled in Quality Settings for mipmap streaming to function in Play Mode. This reduces GPU memory by streaming mips in and out as needed.");
+            public static readonly GUIContent enableEditModeTextureStreaming = EditorGUIUtility.TrTextContent("Enable Mipmap Streaming In Edit Mode", "Texture Mipmap Streaming must be enabled in Quality Settings for mipmap streaming to function in Edit Mode. This reduces GPU memory by streaming mips in and out as needed.");
+            public static readonly GUIContent enableEditorAsyncCPUTextureLoading = EditorGUIUtility.TrTextContent("Load texture data on demand", "While in Editor, load CPU side texture data for streaming textures from disk asynchronously on demand (will avoid some stalls and reduce CPU memory usage). Change requires Editor restart.");
 
             public static readonly GUIContent shaders = EditorGUIUtility.TrTextContent("Shaders");
-            public static GUIContent asyncShaderCompilation = EditorGUIUtility.TrTextContent("Asynchronous Shader Compilation", "Enables async shader compilation in Game and Scene view. Async compilation for custom editor tools can be achieved via script API and is not affected by this option.");
-            public static readonly GUIContent blockShaders = EditorGUIUtility.TrTextContent("Block Shaders (Early Access)", "Enables block shader asset creation and compilation. Change triggers re-import of block shader assets.");
+            public static readonly GUIContent asyncShaderCompilation = EditorGUIUtility.TrTextContent("Asynchronous Shader Compilation", "Enables async shader compilation in Game and Scene view. Async compilation for custom editor tools can be achieved via script API and is not affected by this option.");
 
-            public static GUIContent prefabMode = EditorGUIUtility.TrTextContent("Prefab Mode");
-            public static GUIContent prefabModeAllowAutoSave = EditorGUIUtility.TrTextContent("Allow Auto Save", "When enabled, an Auto Save toggle is displayed in Prefab Mode which you can turn on or off. This is the default. When disabled, there is no Auto Save in Prefab Mode in this project and the toggle is not displayed.");
-            public static GUIContent prefabModeEditingEnvironments = EditorGUIUtility.TrTextContent("Editing Environments");
-            public static GUIContent prefabModeRegularEnvironment = EditorGUIUtility.TrTextContent("Regular Environment");
-            public static GUIContent prefabModeUIEnvironment = EditorGUIUtility.TrTextContent("UI Environment");
+            public static readonly GUIContent prefabMode = EditorGUIUtility.TrTextContent("Prefab Mode");
+            public static readonly GUIContent prefabModeAllowAutoSave = EditorGUIUtility.TrTextContent("Allow Auto Save", "When enabled, an Auto Save toggle is displayed in Prefab Mode which you can turn on or off. This is the default. When disabled, there is no Auto Save in Prefab Mode in this project and the toggle is not displayed.");
+            public static readonly GUIContent prefabModeEditingEnvironments = EditorGUIUtility.TrTextContent("Editing Environments");
+            public static readonly GUIContent prefabModeRegularEnvironment = EditorGUIUtility.TrTextContent("Regular Environment");
+            public static readonly GUIContent prefabModeUIEnvironment = EditorGUIUtility.TrTextContent("UI Environment");
 
             public static readonly GUIContent enterPlayModeSettings = EditorGUIUtility.TrTextContent("Enter Play Mode Settings");
             public static readonly GUIContent enterPlayModeOptions = EditorGUIUtility.TrTextContent("When entering Play Mode", "Reload options when entering Play Mode.");
@@ -135,7 +134,7 @@ namespace UnityEditor
             public static readonly GUIContent useLegacyHierarchy = EditorGUIUtility.TrTextContent("Use Legacy Hierarchy", "Use the legacy Hierarchy window.");
             public static readonly GUIContent numberingProjectSpace = EditorGUIUtility.TrTextContent("Space Before Number in Asset Names");
 
-            public static GUIContent referencedClipsExactNaming = EditorGUIUtility.TrTextContent("Exactly Match Referenced Clip Names", "Controls how referenced clips are matched with models that are animated in Legacy mode. If turned on, the model name and the referenced clip names must exactly match. If turned off, only the start of the model name needs to match the referenced clip name. Also controls the behavior of the \"Update referenced clips\" button for models that are animated in Humanoid mode. See the documentation for EditorSettings.referencedClipsExactNaming for more details.");
+            public static readonly GUIContent referencedClipsExactNaming = EditorGUIUtility.TrTextContent("Exactly Match Referenced Clip Names", "Controls how referenced clips are matched with models that are animated in Legacy mode. If turned on, the model name and the referenced clip names must exactly match. If turned off, only the start of the model name needs to match the referenced clip name. Also controls the behavior of the \"Update referenced clips\" button for models that are animated in Humanoid mode. See the documentation for EditorSettings.referencedClipsExactNaming for more details.");
 
             public static readonly GUIContent buildProfileSettings = EditorGUIUtility.TrTextContent("Build Profiles");
             public static readonly GUIContent buildProfileClassicPlatforms = EditorGUIUtility.TrTextContent("Hide Classic Platforms");
@@ -276,8 +275,6 @@ namespace UnityEditor
         SerializedProperty m_AssetNamingUsesSpace;
 
         SerializedProperty m_AsyncShaderCompilation;
-        SerializedProperty m_BlockShaders;
-        SerializedProperty m_UnlockBlockShaders;
         SerializedProperty m_DefaultBehaviorMode;
         SerializedProperty m_SerializationMode;
         SerializedProperty m_PrefabRegularEnvironment;
@@ -330,8 +327,6 @@ namespace UnityEditor
             m_AssetNamingUsesSpace = serializedObject.FindProperty("m_AssetNamingUsesSpace");
 
             m_AsyncShaderCompilation = serializedObject.FindProperty("m_AsyncShaderCompilation");
-            m_BlockShaders = serializedObject.FindProperty("m_BlockShaders");
-            m_UnlockBlockShaders = serializedObject.FindProperty("m_UnlockBlockShaders");
 
             m_DefaultBehaviorMode = serializedObject.FindProperty("m_DefaultBehaviorMode");
             Assert.IsNotNull(m_DefaultBehaviorMode);
@@ -966,21 +961,35 @@ namespace UnityEditor
         {
             GUILayout.Space(10);
             GUILayout.Label(Content.scriptCompilation, EditorStyles.boldLabel);
-            EditorGUI.BeginChangeCheck();
-            EditorGUILayout.PropertyField(m_EnableMSBuildCompilationPipeline, Content.enableMSBuildCompilationPipeline);
-            if (EditorGUI.EndChangeCheck())
+
+            bool forcedByCommandLine = Array.Exists(Environment.GetCommandLineArgs(),
+                a => string.Equals(a, "-enable-msbuild", StringComparison.OrdinalIgnoreCase));
+
+            using (new EditorGUI.DisabledScope(forcedByCommandLine))
             {
-                if (!m_ScriptCompilationPipelineChangeDialogDisplayed)
+                EditorGUI.BeginChangeCheck();
+                EditorGUILayout.PropertyField(m_EnableMSBuildCompilationPipeline, Content.enableMSBuildCompilationPipeline);
+                if (EditorGUI.EndChangeCheck())
                 {
-                    m_ScriptCompilationPipelineChangeDialogDisplayed = true;
-                    bool doRestart = EditorUtility.DisplayDialog(
-                        L10n.Tr("Modifying scripting compilation pipeline"),
-                        L10n.Tr("Script compilation pipeline changed. This requires a restart of the Editor."),
-                        L10n.Tr("Restart Now"),
-                        L10n.Tr("Restart Later"));
-                    if (doRestart)
-                        EditorApplication.delayCall += EditorApplication.RestartEditorAndRecompileScripts;
+                    if (!m_ScriptCompilationPipelineChangeDialogDisplayed)
+                    {
+                        m_ScriptCompilationPipelineChangeDialogDisplayed = true;
+                        bool doRestart = EditorUtility.DisplayDialog(
+                            L10n.Tr("Modifying scripting compilation pipeline"),
+                            L10n.Tr("Script compilation pipeline changed. This requires a restart of the Editor."),
+                            L10n.Tr("Restart Now"),
+                            L10n.Tr("Restart Later"));
+                        if (doRestart)
+                            EditorApplication.delayCall += EditorApplication.RestartEditorAndRecompileScripts;
+                    }
                 }
+            }
+
+            if (forcedByCommandLine)
+            {
+                EditorGUILayout.HelpBox(
+                    L10n.Tr("MSBuild compilation is forced on by the '-enable-msbuild' command-line argument. The project setting is ignored for this session."),
+                    MessageType.Info);
             }
         }
 
@@ -1044,14 +1053,6 @@ namespace UnityEditor
             GUILayout.Label(Content.shaders, EditorStyles.boldLabel);
 
             EditorGUILayout.PropertyField(m_AsyncShaderCompilation, Content.asyncShaderCompilation);
-
-            if (EditorSettings.unlockBlockShaders)
-            {
-                EditorGUI.BeginChangeCheck();
-                m_BlockShaders.boolValue = EditorGUILayout.Toggle(Content.blockShaders, m_BlockShaders.boolValue);
-                if (EditorGUI.EndChangeCheck())
-                    EditorSettings.blockShaders = m_BlockShaders.boolValue;
-            }
         }
 
         private void DoEnterPlayModeSettings()

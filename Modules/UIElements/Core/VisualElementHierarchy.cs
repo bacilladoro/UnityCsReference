@@ -202,7 +202,7 @@ namespace UnityEngine.UIElements
 
             if (container == null)
             {
-                throw new InvalidOperationException("You can't add directly to this VisualElement. Use hierarchy.Add() if you know what you're doing.");
+                throw new InvalidOperationException("You cannot add a child to this VisualElement because its contentContainer is null. To add directly to its hierarchy, use hierarchy.Add().");
             }
             else if (container == this)
             {
@@ -683,16 +683,6 @@ namespace UnityEngine.UIElements
 
                 bool childWasEnabledInHierarchy = child.enabledInHierarchy;
 
-                // backdropFilterDescendantCount is self-inclusive (a bd-filter element counts itself),
-                // unlike imguiContainerDescendantCount which excludes self. The self contribution is
-                // already maintained by SyncBackdropFilterState on style transitions, so the contribution
-                // to ancestors is just the subtree count.
-                int backdropFilterCount = child.backdropFilterDescendantCount;
-                if (backdropFilterCount > 0)
-                {
-                    m_Owner.ChangeBackdropFilterDescendantCount(backdropFilterCount);
-                }
-
                 child.PropagateParentEnabled(m_Owner.enabledInHierarchy);
 
                 child.hierarchy.SetParent(m_Owner);
@@ -763,13 +753,6 @@ namespace UnityEngine.UIElements
                 if (imguiContainerCount > 0)
                 {
                     m_Owner.ChangeIMGUIContainerCount(-imguiContainerCount);
-                }
-
-                // See comment in Add: backdropFilterDescendantCount is self-inclusive.
-                int backdropFilterCount = child.backdropFilterDescendantCount;
-                if (backdropFilterCount > 0)
-                {
-                    m_Owner.ChangeBackdropFilterDescendantCount(-backdropFilterCount);
                 }
 
                 child.hierarchy.SetParent(null);

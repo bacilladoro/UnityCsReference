@@ -4,8 +4,8 @@
 
 using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using Unity.ProjectAuditor.Editor.Core;
-using Unity.ProjectAuditor.Editor.Utils;
 using UnityEditorInternal;
 
 namespace Unity.ProjectAuditor.Editor.Modules
@@ -70,7 +70,7 @@ namespace Unity.ProjectAuditor.Editor.Modules
             else
             {
                 // if not preview or experimental, check anyway if there is a recommended version available
-                var recommendedVersionString = PackageUtils.GetPackageRecommendedVersion(package);
+                var recommendedVersionString = package.versions.recommended;
                 if (!string.IsNullOrEmpty(package.version) && !string.IsNullOrEmpty(recommendedVersionString))
                 {
                     if (!recommendedVersionString.Equals(package.version))
@@ -78,7 +78,7 @@ namespace Unity.ProjectAuditor.Editor.Modules
                         var version = InternalEditorUtility.GetUnityVersion();
                         var versionString = $"{version.Major}.{version.Minor}";
 
-                        if (PackageUtils.CompareVersions(package.version, recommendedVersionString) < 0)
+                        if (CompareVersions(package.version, recommendedVersionString) < 0)
                         {
                             yield return context.CreateIssue(IssueCategory.ProjectSetting, k_RecommendPackageUpgrade.Id, package.name, package.version, recommendedVersionString)
                                 .WithLocation(package.assetPath)
@@ -93,6 +93,16 @@ namespace Unity.ProjectAuditor.Editor.Modules
                     }
                 }
             }
+        }
+
+        internal static int CompareVersions(string lhs, string rhs)
+        {
+            const string regex = "[^0-9.]";
+            var leftStr = Regex.Replace(lhs, regex, "", RegexOptions.IgnoreCase);
+            var rightStr = Regex.Replace(rhs, regex, "", RegexOptions.IgnoreCase);
+            var leftVersion = new Version(leftStr);
+            var rightVersion = new Version(rightStr);
+            return leftVersion.CompareTo(rightVersion);
         }
     }
 }

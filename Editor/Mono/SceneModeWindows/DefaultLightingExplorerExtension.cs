@@ -75,10 +75,10 @@ namespace UnityEditor
             };
         }
 
-        public virtual void OnEnable() {}
-        public virtual void OnDisable() {}
+        public virtual void OnEnable() { }
+        public virtual void OnDisable() { }
 
-        private static bool IsEditable(Object target)
+        protected static bool IsEditable(Object target)
         {
             return ((target.hideFlags & HideFlags.NotEditable) == 0);
         }
@@ -138,7 +138,7 @@ namespace UnityEditor
 #pragma warning restore UA2001
         }
 
-        protected virtual  LightingExplorerTableColumn[] Get2DLightColumns()
+        protected virtual LightingExplorerTableColumn[] Get2DLightColumns()
         {
             return new[]
             {
@@ -454,7 +454,7 @@ namespace UnityEditor
             }).SelectMany(meshRenderer => meshRenderer.sharedMaterials).Where((Material m) =>
 
             {
-                return m != null && ((m.globalIlluminationFlags & MaterialGlobalIlluminationFlags.AnyEmissive) != 0) && m.HasProperty("_EmissionColor");
+                return m != null && ((m.globalIlluminationFlags & (MaterialGlobalIlluminationFlags.RealtimeIndirectEmission | MaterialGlobalIlluminationFlags.BakedEmission)) != 0) && m.HasProperty("_EmissionColor");
             }).Distinct().ToArray();
         }
 
@@ -466,7 +466,7 @@ namespace UnityEditor
                 {
                     if (GUI.Button(r, Styles.SelectObjectsButton, "label"))
                     {
-                        SearchableEditorWindow.SearchForReferencesToInstanceID(prop.serializedObject.targetObject.GetEntityId());
+                        SearchForReferences(prop);
                     }
                 }),     // 0: Icon
                 new LightingExplorerTableColumn(LightingExplorerTableColumn.DataType.Name, Styles.Name, null, 200), // 1: Name
@@ -477,9 +477,9 @@ namespace UnityEditor
 
                     using (new EditorGUI.DisabledScope(!IsEditable(prop.serializedObject.targetObject)))
                     {
-                        MaterialGlobalIlluminationFlags giFlags = ((prop.intValue & (int)MaterialGlobalIlluminationFlags.BakedEmissive) != 0) ? MaterialGlobalIlluminationFlags.BakedEmissive : MaterialGlobalIlluminationFlags.RealtimeEmissive;
+                        MaterialGlobalIlluminationFlags giFlags = ((prop.intValue & (int)MaterialGlobalIlluminationFlags.BakedEmission) != 0) ? MaterialGlobalIlluminationFlags.BakedEmission : MaterialGlobalIlluminationFlags.RealtimeIndirectEmission;
 
-                        int[] lightmapEmissiveValues = { (int)MaterialGlobalIlluminationFlags.RealtimeEmissive, (int)MaterialGlobalIlluminationFlags.BakedEmissive };
+                        int[] lightmapEmissiveValues = { (int)MaterialGlobalIlluminationFlags.RealtimeIndirectEmission, (int)MaterialGlobalIlluminationFlags.BakedEmission };
 
                         EditorGUI.BeginProperty(r, GUIContent.none, prop);
                         EditorGUI.BeginChangeCheck();
@@ -538,6 +538,10 @@ namespace UnityEditor
                         EditorUtility.SetDirty(targetMaterial);
                     }) // 3: Color
             };
+        }
+
+        protected void SearchForReferences(SerializedProperty prop){
+            SearchableEditorWindow.SearchForReferencesToInstanceID(prop.serializedObject.targetObject.GetEntityId());
         }
     }
 }

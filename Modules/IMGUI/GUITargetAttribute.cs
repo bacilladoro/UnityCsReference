@@ -8,24 +8,34 @@ using UnityEngine.Scripting;
 
 namespace UnityEngine
 {
-    /// Controls for which screen the OnGUI is called
+    ///<summary>Allows to control for which display the OnGUI is called.</summary>
     [AttributeUsage(AttributeTargets.Method)]
     public class GUITargetAttribute : Attribute
     {
         internal int displayMask;
 
+        ///<summary>Default constructor initializes the attribute for OnGUI to be called for all available displays.</summary>
         public GUITargetAttribute() { displayMask = -1; }
 
+        ///<summary>Default constructor initializes the attribute for OnGUI to be called for all available displays.</summary>
+        ///<param name="displayIndex">Display index.</param>
         public GUITargetAttribute(int displayIndex)
         {
             displayMask = 1 << displayIndex;
         }
 
+        ///<summary>Default constructor initializes the attribute for OnGUI to be called for all available displays.</summary>
+        ///<param name="displayIndex">Display index.</param>
+        ///<param name="displayIndex1">Display index.</param>
         public GUITargetAttribute(int displayIndex, int displayIndex1)
         {
             displayMask = (1 << displayIndex) | (1 << displayIndex1);
         }
 
+        ///<summary>Default constructor initializes the attribute for OnGUI to be called for all available displays.</summary>
+        ///<param name="displayIndex">Display index.</param>
+        ///<param name="displayIndex1">Display index.</param>
+        ///<param name="displayIndexList">Display index list.</param>
         public GUITargetAttribute(int displayIndex, int displayIndex1, params int[] displayIndexList)
         {
             displayMask = (1 << displayIndex) | (1 << displayIndex1);

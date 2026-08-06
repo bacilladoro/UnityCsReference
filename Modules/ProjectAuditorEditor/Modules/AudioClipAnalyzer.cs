@@ -39,9 +39,10 @@ namespace Unity.ProjectAuditor.Editor.Modules
                 var audioImporter = AssetImporter.GetAtPath(issue.RelativePath) as AudioImporter;
                 if (audioImporter != null)
                 {
-                    var sampleSettings = audioImporter.GetOverrideSampleSettings(analysisParams.PlatformAsString);
+                    var platform = analysisParams.Platform.ToString();
+                    var sampleSettings = audioImporter.GetOverrideSampleSettings(platform);
                     sampleSettings.loadType = AudioClipLoadType.Streaming;
-                    audioImporter.SetOverrideSampleSettings(analysisParams.PlatformAsString, sampleSettings);
+                    audioImporter.SetOverrideSampleSettings(platform, sampleSettings);
                     audioImporter.SaveAndReimport();
                     return true;
                 }
@@ -157,10 +158,11 @@ namespace Unity.ProjectAuditor.Editor.Modules
                 var audioImporter = AssetImporter.GetAtPath(issue.RelativePath) as AudioImporter;
                 if (audioImporter != null)
                 {
-                    var sampleSettings = audioImporter.GetOverrideSampleSettings(analysisParams.PlatformAsString);
+                    var platform = analysisParams.Platform.ToString();
+                    var sampleSettings = audioImporter.GetOverrideSampleSettings(platform);
                     sampleSettings.sampleRateSetting = AudioSampleRateSetting.OverrideSampleRate;
                     sampleSettings.sampleRateOverride = 48000;
-                    audioImporter.SetOverrideSampleSettings(analysisParams.PlatformAsString, sampleSettings);
+                    audioImporter.SetOverrideSampleSettings(platform, sampleSettings);
                     audioImporter.SaveAndReimport();
                     return true;
                 }
@@ -183,9 +185,10 @@ namespace Unity.ProjectAuditor.Editor.Modules
                 var audioImporter = AssetImporter.GetAtPath(issue.RelativePath) as AudioImporter;
                 if (audioImporter != null)
                 {
-                    var sampleSettings = audioImporter.GetOverrideSampleSettings(analysisParams.PlatformAsString);
+                    var platform = analysisParams.Platform.ToString();
+                    var sampleSettings = audioImporter.GetOverrideSampleSettings(platform);
                     sampleSettings.preloadAudioData = false;
-                    audioImporter.SetOverrideSampleSettings(analysisParams.PlatformAsString, sampleSettings);
+                    audioImporter.SetOverrideSampleSettings(platform, sampleSettings);
                     audioImporter.SaveAndReimport();
                     return true;
                 }
@@ -231,9 +234,10 @@ namespace Unity.ProjectAuditor.Editor.Modules
                 var audioImporter = AssetImporter.GetAtPath(issue.RelativePath) as AudioImporter;
                 if (audioImporter != null)
                 {
-                    var sampleSettings = audioImporter.GetOverrideSampleSettings(analysisParams.PlatformAsString);
+                    var platform = analysisParams.Platform.ToString();
+                    var sampleSettings = audioImporter.GetOverrideSampleSettings(platform);
                     sampleSettings.compressionFormat = AudioCompressionFormat.Vorbis;
-                    audioImporter.SetOverrideSampleSettings(analysisParams.PlatformAsString, sampleSettings);
+                    audioImporter.SetOverrideSampleSettings(platform, sampleSettings);
                     audioImporter.SaveAndReimport();
                     return true;
                 }

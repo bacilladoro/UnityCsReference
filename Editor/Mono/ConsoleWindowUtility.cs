@@ -3,11 +3,13 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
-    public static class ConsoleWindowUtility
+    public static partial class ConsoleWindowUtility
     {
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action consoleLogsChanged;
 
         public static void GetConsoleLogCounts(out int error, out int warn, out int log)

@@ -408,6 +408,19 @@ namespace UnityEditor.Overlays
                 }
             }
 
+            if (a.menuItemPaths != b.menuItemPaths && (a.menuItemPaths == null || b.menuItemPaths == null))
+                return true;
+
+            if (a.menuItemPaths != null)
+            {
+                if (a.menuItemPaths.Length != b.menuItemPaths.Length)
+                    return true;
+
+                foreach (var path in a.menuItemPaths)
+                    if (Array.IndexOf(b.menuItemPaths, path) < 0)
+                        return true;
+            }
+
             return false;
         }
     }

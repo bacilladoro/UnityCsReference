@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using UnityEngine;
+using Unity.Scripting.LifecycleManagement;
 using System.Linq;
 using System;
 using System.Collections.Generic;
@@ -106,6 +107,7 @@ namespace UnityEditor
 
         private bool m_RequestedViewDataSave;
 
+        [AutoStaticsCleanupOnCodeReload]
         private static Action s_UpdateWindowMenuListingOff;
 
         internal SerializableJsonDictionary viewDataDictionary
@@ -125,6 +127,7 @@ namespace UnityEditor
         // This list contains all the editor windows that are already enabled/active/alive.
         // It is important to check if your window is contained in this list before doing anything,
         // such like UI build/rebuild.
+        [AutoStaticsCleanupOnCodeReload]
         internal static List<EditorWindow> activeEditorWindows
         {
             [VisibleToOtherModules("UnityEditor.UIToolkitAuthoringModule")]
@@ -457,8 +460,10 @@ namespace UnityEditor
         }
 
         [Obsolete($"Use {nameof(windowFocusChanged)} instead.", false)]
+        [AutoStaticsCleanupOnCodeReload]
         static public Action focusedWindowChanged;
 
+        [AutoStaticsCleanupOnCodeReload]
         static public event Action windowFocusChanged;
 
         static internal void OnWindowFocusChanged()
@@ -1521,6 +1526,7 @@ namespace UnityEditor
             return root;
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         static OverlayShortcutContext s_ShortcutContext = new OverlayShortcutContext();
 
         internal class OverlayShortcutContext : IShortcutContext

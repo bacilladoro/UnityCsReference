@@ -179,5 +179,8 @@ namespace Unity.Hierarchy
 
         [FreeFunction("HierarchyTestsHelperBindings::FindNodeByNameRecursive", IsThreadSafe = true)]
         internal static extern HierarchyNode FindNodeByNameRecursive(Hierarchy hierarchy, in HierarchyNode parent, string name);
+
+        [FreeFunction("HierarchyTestsHelperBindings::ValidateSearchFilterFields", IsThreadSafe = true)]
+        internal static extern bool ValidateSearchFilterFields(HierarchySearchFilter filter, string expectedName, string expectedValue, HierarchySearchFilterOperator expectedOp);
     }
 }

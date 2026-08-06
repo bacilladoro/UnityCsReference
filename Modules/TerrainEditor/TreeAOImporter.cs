@@ -6,15 +6,17 @@ using UnityEngine;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine.SceneManagement;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
     internal class TreeAO
     {
         const int kWorkLayer = 29;
-        static bool kDebug = false;
+        static readonly bool kDebug = false;
         const float occlusion = .5f;
 
+        [NoAutoStaticsCleanup] // value-type (Vector3[]) sampling directions; lazily rebuilt via InitializeDirections(), no user refs
         static Vector3[] directions;
 
         private static int PermuteCuboid(Vector3[] dirs, int offset, float x, float y, float z)
@@ -114,7 +116,7 @@ namespace UnityEditor
             Object.DestroyImmediate(go);
         }
 
-        static RaycastHit[] s_RayCastHits = new RaycastHit[100];
+        static readonly RaycastHit[] s_RayCastHits = new RaycastHit[100];
 
         static int CountIntersections(PhysicsScene physicsScene, Vector3 v, Vector3 dist, float length)
         {

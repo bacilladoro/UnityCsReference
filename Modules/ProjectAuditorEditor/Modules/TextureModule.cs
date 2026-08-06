@@ -89,8 +89,7 @@ namespace Unity.ProjectAuditor.Editor.Modules
         public override IEnumerator Audit(AnalysisParams analysisParams, IProgress progress)
         {
             var analyzers = GetCompatibleAnalyzers(analysisParams);
-
-            var platformString = analysisParams.PlatformAsString;
+            var platformString = analysisParams.Platform.ToString();
 
             var context = new TextureAnalysisContext
             {
@@ -115,9 +114,7 @@ namespace Unity.ProjectAuditor.Editor.Modules
 
                 var textureImporter = AssetImporter.GetAtPath(assetPath) as TextureImporter;
                 if (textureImporter == null)
-                {
                     continue; // skip render textures
-                }
 
                 context.Importer = textureImporter;
                 context.ImporterPlatformSettings = textureImporter.GetPlatformTextureSettings(platformString);
@@ -133,9 +130,7 @@ namespace Unity.ProjectAuditor.Editor.Modules
 
                 var format = (TextureFormat)context.ImporterPlatformSettings.format;
                 if (context.ImporterPlatformSettings.format == TextureImporterFormat.Automatic)
-                {
-                    format = (TextureFormat)context.Importer.GetAutomaticFormat(context.Params.PlatformAsString);
-                }
+                    format = (TextureFormat)context.Importer.GetAutomaticFormat(platformString);
 
                 context.Size = UnityEngine.Experimental.Rendering.GraphicsFormatUtility.ComputeMipChainSize(context.Texture.width, context.Texture.height, TextureUtils.GetTextureDepth(context.Texture), format, context.Texture.mipmapCount);
 

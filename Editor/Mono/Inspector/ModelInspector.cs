@@ -9,6 +9,7 @@ using UnityEditorInternal;
 using UnityEngine;
 using UnityEngine.Rendering;
 using Object = UnityEngine.Object;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -28,6 +29,7 @@ namespace UnityEditor
         SerializedProperty m_PreBakeTriangleCollisionMesh;
 #pragma warning restore 0649
 
+        [NoAutoStaticsCleanup] // Unmanaged scroll-position value; persisting it across code reload only retains UI scroll offset, no leak.
         static Vector2 m_ScrollPos;
 
         static readonly GUIContent s_LevelOfDetailLabel = new GUIContent("Level of Detail", "The number of Mesh LODs within each sub-mesh.");

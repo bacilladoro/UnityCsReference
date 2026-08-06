@@ -8,6 +8,7 @@ using UnityEditor.Hardware;
 using UnityEditorInternal;
 using UnityEngine;
 using UnityEngine.Networking.PlayerConnection;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Networking.PlayerConnection
 {
@@ -47,9 +48,10 @@ namespace UnityEditor.Networking.PlayerConnection
         public static readonly GUIContent dropdownButton = UnityEditor.EditorGUIUtility.TrTextContent("", "Target Selection: Choose the target to connect to.");
     }
 
-    public static class PlayerConnectionGUI
+    public static partial class PlayerConnectionGUI
     {
         // Allows other modules to extend the menu options
+        [AutoStaticsCleanupOnCodeReload]
         internal static event Action<ConnectionTreeViewWindow, Rect> showingConnectionMenu;
 
         public static void ConnectionTargetSelectionDropdown(Rect rect, IConnectionState state, GUIStyle style = null)
@@ -108,6 +110,7 @@ namespace UnityEditor.Networking.PlayerConnection
             public static readonly string Editor = "Editor";
             public static readonly string DirectConnection = "Direct Connection";
         }
+        [NoAutoStaticsCleanup] // lazy GUIContent UI label; no user refs, safe to persist across code reload
         static GUIContent s_NotificationMessage;
 
         public GUIContent notificationMessage => s_NotificationMessage;
@@ -159,6 +162,7 @@ namespace UnityEditor.Networking.PlayerConnection
         EditorConnectionTarget? m_EditorModeTargetState = null;
 
 
+        [NoAutoStaticsCleanup] // holds only WeakReferences which never pin their targets or the ALC; safe to persist across code reload
         static List<WeakReference> s_AllGeneralAttachToPlayerStates = new List<WeakReference>();
 
         public GeneralConnectionState(EditorWindow parentWindow, Action<string, EditorConnectionTarget?> connectedCallback = null, Action<EditorConnectionTarget> editorModeTargetSwitchedCallback = null, Func<EditorConnectionTarget, bool> editorModeTargetConnectionStatus = null)
@@ -387,12 +391,14 @@ namespace UnityEditor.Networking.PlayerConnection
 
         private bool disposed = false; // To detect redundant calls
 
+#pragma warning disable UA5000 // The Avoid Finalizer Analyzer produces compile errors for any new finalizers. This pre-existing finalizer declaration has been suppressed, but should be rewritten if possible.
         ~GeneralConnectionState()
         {
             if (!disposed)
                 // Referring to the interface here, because the user only knows about the public IConnectionState interfaces and nothing about the internal GeneralConnectionState (except for the fact that it's about to show up in this error's callstack)
                 Debug.LogError("IConnectionState was not Disposed! Please make sure to call Dispose in OnDisable of the EditorWindow in which it was used.");
         }
+#pragma warning restore UA5000
 
         public void Dispose()
         {

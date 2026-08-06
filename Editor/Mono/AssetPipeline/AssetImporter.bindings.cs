@@ -18,6 +18,7 @@ namespace UnityEditor
     [NativeHeader("Editor/Src/AssetPipeline/AssetImporter.bindings.h")]
     [ExcludeFromObjectFactory]
     [Preserve]
+    [global::UnityEngine.NativeClass("AssetImporter", PersistentTypeId = 1003)]
     [UsedByNativeCode]
     public partial class AssetImporter : Object
     {

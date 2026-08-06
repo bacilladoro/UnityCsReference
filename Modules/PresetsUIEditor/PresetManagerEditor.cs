@@ -22,7 +22,7 @@ namespace UnityEditor.Presets
         internal override string targetTitle => "Preset Manager";
         class Content
         {
-            public static GUIContent presetManager = EditorGUIUtility.TrTextContent("Preset management");
+            public static readonly GUIContent presetManager = EditorGUIUtility.TrTextContent("Preset management");
         }
 
         struct DefaultPresetListData

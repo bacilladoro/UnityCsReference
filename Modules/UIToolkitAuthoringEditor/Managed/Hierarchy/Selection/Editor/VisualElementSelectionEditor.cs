@@ -108,17 +108,9 @@ class VisualElementSelectionEditor : UISelectionEditor
 
     bool GetBoundsInternal(out Bounds bounds)
     {
-        bounds = default;
-
-        var element = Target.Element;
-        if (element == null)
-            return false;
-
-        var panelComponent = VisualElementSceneViewOverlay.FindPanelComponentForElement(element);
-        if (panelComponent == null)
-            return false;
-
-        bounds = VisualElementSceneViewOverlay.GetElementWorldBounds(element, panelComponent);
-        return true;
+        // Resolves the world-space scene instance (incl. from a staging clone), falls back to the host
+        // GameObject, and floors the flat-quad bounds — so Edit > Frame Selected / F frame the element
+        // properly in the SceneView instead of diving in or doing nothing.
+        return VisualElementSceneViewOverlay.TryGetFramableWorldBounds(Target.Element, out bounds, out _);
     }
 }

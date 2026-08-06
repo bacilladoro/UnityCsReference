@@ -3,12 +3,13 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Bindings;
 
 namespace UnityEngine.Scripting
 {
     [NativeHeader("Runtime/Scripting/GarbageCollector.h")]
-    public static class GarbageCollector
+    public static partial class GarbageCollector
     {
         public enum Mode
         {
@@ -17,6 +18,7 @@ namespace UnityEngine.Scripting
             Manual =  2,
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<Mode> GCModeChanged;
 
         public static Mode GCMode

@@ -115,6 +115,14 @@ namespace Unity.U2D.Physics
         public bool continuousAllowed { readonly get => m_ContinuousAllowed; set => m_ContinuousAllowed = value; }
 
         /// <summary>
+        /// Controls if contact and trigger begin/end events for shapes assigned a group are marked as being the first or last event between the two groups involved.
+        /// This allows the many events produced between two groups of shapes to be reduced to a single begin and end, such as when treating multiple shapes as a single object.
+        /// The marking is only calculated for shapes assigned a group and only when a begin or end event is produced, so the cost of leaving this enabled is minor.
+        /// See <see cref="PhysicsWorld.eventGroupingAllowed"/>
+        /// </summary>
+        public bool eventGroupingAllowed { readonly get => m_EventGroupingAllowed; set => m_EventGroupingAllowed = value; }
+
+        /// <summary>
         /// Controls if contact filter callbacks will be called.
         /// A contact filter callback allows direct control over whether a contact will be created between a pair of shapes.
         /// This applies to both triggers and non-triggers but only with Dynamic bodies.
@@ -288,6 +296,7 @@ namespace Unity.U2D.Physics
         [SerializeField] bool m_SyncInterpolation;
         [SerializeField] bool m_SleepingAllowed;
         [SerializeField] bool m_ContinuousAllowed;
+        [SerializeField] bool m_EventGroupingAllowed;
         [SerializeField] bool m_ContactFilterCallbacks;
         [SerializeField] bool m_PreSolveCallbacks;
         [SerializeField] bool m_AutoBodyUpdateCallbacks;

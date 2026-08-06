@@ -213,6 +213,9 @@ namespace UnityEditor.UIElements
 
                 var content = EditorGUIUtility.ObjectContent(m_ObjectField.value, m_ObjectField.objectType, property);
                 m_ObjectIcon.image = content.image;
+                // if selecting a normal map, use GetCachedIcon which in turn does the swizzle for us and ensures consistent rendering between Project & Inspector
+                if (m_ObjectField.value is Texture nmTex && nmTex != null && TextureUtil.IsNormalMapUsageMode(TextureUtil.GetUsageMode(nmTex)))
+                    m_ObjectIcon.image = AssetDatabase.GetCachedIcon(AssetDatabase.GetAssetPath(nmTex));
                 m_ObjectLabel.text = content.text;
                 m_ObjectLabel.EnableInClassList(nullLabelUssClassName, m_ObjectField.value == null);
             }

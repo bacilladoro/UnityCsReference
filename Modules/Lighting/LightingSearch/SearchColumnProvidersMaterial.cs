@@ -48,9 +48,9 @@ namespace UnityEditor.Lighting.LightingSearch
 
         static MaterialGlobalIlluminationDisplay MapToDisplayEnum(MaterialGlobalIlluminationFlags flags)
         {
-            if ((flags & MaterialGlobalIlluminationFlags.BakedEmissive) != 0)
+            if ((flags & MaterialGlobalIlluminationFlags.BakedEmission) != 0)
                 return MaterialGlobalIlluminationDisplay.Baked;
-            if ((flags & MaterialGlobalIlluminationFlags.RealtimeEmissive) != 0)
+            if ((flags & MaterialGlobalIlluminationFlags.RealtimeIndirectEmission) != 0)
                 return MaterialGlobalIlluminationDisplay.Realtime;
             return MaterialGlobalIlluminationDisplay.None;
         }
@@ -59,8 +59,8 @@ namespace UnityEditor.Lighting.LightingSearch
         {
             return display switch
             {
-                MaterialGlobalIlluminationDisplay.Baked => MaterialGlobalIlluminationFlags.BakedEmissive,
-                MaterialGlobalIlluminationDisplay.Realtime => MaterialGlobalIlluminationFlags.RealtimeEmissive,
+                MaterialGlobalIlluminationDisplay.Baked => MaterialGlobalIlluminationFlags.BakedEmission,
+                MaterialGlobalIlluminationDisplay.Realtime => MaterialGlobalIlluminationFlags.RealtimeIndirectEmission,
                 MaterialGlobalIlluminationDisplay.None => MaterialGlobalIlluminationFlags.None,
                 _ => MaterialGlobalIlluminationFlags.None
             };

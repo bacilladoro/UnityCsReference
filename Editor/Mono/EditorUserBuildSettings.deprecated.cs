@@ -3,8 +3,8 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
-using UnityEngine.Scripting;
 using Unity.Scripting.LifecycleManagement;
+using UnityEngine.Scripting;
 
 namespace UnityEditor
 {

@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.Internal;
 
@@ -75,7 +76,7 @@ namespace UnityEditor
     }
 
     [ExcludeFromDocs]
-    public static class CommandService
+    public static partial class CommandService
     {
         private struct Command
         {
@@ -86,10 +87,13 @@ namespace UnityEditor
             public bool managed;
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         private static Dictionary<string, Command> s_Commands;
+        [NoAutoStaticsCleanup] // Fixed single-element sentinel args array; holds only a null, no user-code references, safe to persist across reload.
         private static readonly object[] k_DefaultArgs = { null };
 
-        static CommandService()
+        [OnCodeLoaded]
+        static void Initialize()
         {
 #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
             s_Commands = ScanAttributes().ToDictionary(c => c.id, c => c);

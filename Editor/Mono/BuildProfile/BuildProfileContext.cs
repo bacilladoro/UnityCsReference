@@ -969,7 +969,7 @@ namespace UnityEditor.Build.Profile
             if (platformGuid == activeProfile.platformGuid)
                 return true;
 
-            if (activeProfile.isMultiTarget && platformGuid == activeProfile.activePlatformGuid)
+            if (activeProfile.isMultiTarget && platformGuid == activeProfile.selectedPlatformGuid)
                 return true;
 
             return false;

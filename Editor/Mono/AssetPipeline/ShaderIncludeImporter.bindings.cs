@@ -9,10 +9,12 @@ using UnityEngine.UIElements;
 namespace UnityEditor
 {
     [NativeHeader("Editor/Src/AssetPipeline/ShaderIncludeImporter.h")]
+    [NativeClass("ShaderIncludeImporter", PersistentTypeId = 0x7D5EBFAD)]
     internal sealed partial class ShaderIncludeImporter : AssetImporter
     {
     }
 
+    [global::UnityEngine.NativeClass("ShaderInclude", PersistentTypeId = 109)]
     [NativeHeader("Editor/Src/Shaders/ShaderInclude.h")]
     public sealed partial class ShaderInclude : TextAsset
     {

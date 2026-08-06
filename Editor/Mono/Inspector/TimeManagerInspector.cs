@@ -4,6 +4,7 @@
 
 using System;
 using Unity.IntegerTime;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 
 namespace UnityEditor
@@ -24,6 +25,7 @@ namespace UnityEditor
         SerializedProperty m_TimeScaleProperty;
         SerializedProperty m_MaxParticleTimestepProperty;
 
+        [NoAutoStaticsCleanup] // Constant ticks-per-second of the fixed-time domain; value is invariant across code reloads.
         static RationalTime.TicksPerSecond m_FixedTimeTicksPerSecond;
         const float MinFixedTimeStep = 0.0001f;
 

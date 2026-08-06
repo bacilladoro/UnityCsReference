@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor.Presets;
 using UnityEditor.Rendering;
 using UnityEditor.UIElements;
@@ -28,6 +29,7 @@ namespace UnityEditor
 
         bool isEditable => AssetDatabase.IsOpenForEdit(k_AssetPath, StatusQueryOptions.UseCachedIfPossible);
 
+        [NoAutoStaticsCleanup] // Transient one-shot navigation hint consumed and reset to None during the next inspector build; safe to persist.
         static InitialExpansionState s_InitialExpansionState = InitialExpansionState.None;
 
         internal enum InitialExpansionState
@@ -41,17 +43,17 @@ namespace UnityEditor
 
         internal class StylesNonSearchable
         {
-            public static GUIContent existingTagMessage = EditorGUIUtility.TrTextContent("Tag with \"{0}\" name already exists.");
+            public static readonly GUIContent existingTagMessage = EditorGUIUtility.TrTextContent("Tag with \"{0}\" name already exists.");
         }
 
         internal class Styles
         {
-            public static GUIContent tags = EditorGUIUtility.TrTextContent("Tags");
-            public static GUIContent sortingLayers = EditorGUIUtility.TrTextContent("Sorting Layers");
-            public static GUIContent layers = EditorGUIUtility.TrTextContent("Layers");
-            public static GUIContent renderingLayers = EditorGUIUtility.TrTextContent("Rendering Layers");
+            public static readonly GUIContent tags = EditorGUIUtility.TrTextContent("Tags");
+            public static readonly GUIContent sortingLayers = EditorGUIUtility.TrTextContent("Sorting Layers");
+            public static readonly GUIContent layers = EditorGUIUtility.TrTextContent("Layers");
+            public static readonly GUIContent renderingLayers = EditorGUIUtility.TrTextContent("Rendering Layers");
 
-            public static float elementHeight = EditorGUIUtility.singleLineHeight + 2;
+            public static readonly float elementHeight = EditorGUIUtility.singleLineHeight + 2;
             public const float headerListHeight = 3;
 
             public const string tagListElement = "tags-and-layer-list__element";

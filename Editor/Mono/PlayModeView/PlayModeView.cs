@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor.Modules;
 using UnityEditorInternal;
 using UnityEngine;
@@ -26,12 +27,15 @@ namespace UnityEditor
 
     [Serializable]
     [VisibleToOtherModules("UnityEditor.PlayModeModule")]
-    internal abstract class PlayModeView : EditorWindow, ISerializationCallbackReceiver, IGameViewRenderInfo
+    internal abstract partial class PlayModeView : EditorWindow, ISerializationCallbackReceiver, IGameViewRenderInfo
     {
-        static List<PlayModeView> s_PlayModeViews = new List<PlayModeView>();
+        [AutoStaticsCleanupOnCodeReload]
+        static readonly List<PlayModeView> s_PlayModeViews = new List<PlayModeView>();
 
+        [AutoStaticsCleanupOnCodeReload]
         private static PlayModeView s_LastFocused;
 
+        [AutoStaticsCleanupOnCodeReload]
         static PlayModeView s_RenderingView;
 
         private readonly string m_ViewsCache = Path.GetFullPath(Directory.GetCurrentDirectory() + "/Library/PlayModeViewStates/");
@@ -55,6 +59,7 @@ namespace UnityEditor
         protected const int k_MaxSupportedDisplays = 8;
         protected const float k_defaultDPI = 96;
 
+        [AutoStaticsCleanupOnCodeReload]
         static Dictionary<Type, string> s_AvailableWindowTypes;
 
         internal Vector2 viewPadding
@@ -592,6 +597,7 @@ namespace UnityEditor
             m_TargetDisplay = GetValidTargetDisplay(m_TargetDisplay);
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         static List<PlayModeView> s_LastInteractedByDisplay;
 
         [VisibleToOtherModules("UnityEngine.UIElementsModule", "UnityEngine.InputForUIModule")]

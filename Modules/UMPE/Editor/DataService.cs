@@ -6,6 +6,7 @@ using System;
 using System.Linq;
 using JetBrains.Annotations;
 using UnityEditorInternal;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.MPE
 {
@@ -16,8 +17,11 @@ namespace UnityEditor.MPE
 
     static class DataService
     {
+        [NoAutoStaticsCleanup] // refresh gate re-enabled per process by the AfterDomainReload role provider; value type, safe to persist
         internal static bool s_ImportRefreshEnabled = false;
+        [NoAutoStaticsCleanup] // transient value-type guard, self-corrected on next refresh; safe to persist across code reload
         internal static bool s_AboutToRefresh = false;
+        [NoAutoStaticsCleanup] // asset-path accumulator (strings only, no user references); nulling would break Concat in OnPostprocessAllAssets
         internal static string[] s_ImportedAssets = Array.Empty<string>();
 
         [UsedImplicitly]

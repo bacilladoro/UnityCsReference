@@ -12,7 +12,7 @@ namespace UnityEditor
     [CustomEditor(typeof(WebCamTexture))]
     internal class WebCamTextureInspector : Editor
     {
-        static GUIContent[] s_PlayIcons = {null, null};
+        static readonly GUIContent[] s_PlayIcons = {null, null};
         Vector2 m_Pos;
 
         public override void OnInspectorGUI()

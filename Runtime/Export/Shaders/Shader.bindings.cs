@@ -28,6 +28,7 @@ namespace UnityEngine
     [NativeHeader("Runtime/Shaders/ShaderNameRegistry.h")]
     [NativeHeader("Runtime/Shaders/GpuPrograms/ShaderVariantCollection.h")]
     [NativeHeader("Runtime/Shaders/Keywords/KeywordSpaceScriptBindings.h")]
+    [global::UnityEngine.NativeClass("Shader", PersistentTypeId = 48)]
     [NativeHeader("Runtime/Misc/ResourceManager.h")]
     public sealed partial class Shader : Object
     {

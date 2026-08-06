@@ -156,7 +156,7 @@ namespace UnityEngine.XR
         extern public float zFar { get; set; }
         ///<exclude />
         extern public bool  sRGB { get; set; }
-        ///<summary>A scale applied to the standard occulsion mask.</summary>
+        ///<summary>A scale applied to the standard occlusion mask.</summary>
         ///<remarks>This property scales up the occlusion mask to allow pixels outside of the XR headset's field of vision are rendered to, allowing effects to access the required texture data. Scaling up the occlusion mask could incur a performance penalty on the GPU due to the extra pixels being rendered.</remarks>
         extern public float occlusionMaskScale { get; set;}
 

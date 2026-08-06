@@ -5,6 +5,7 @@
 using System.Linq;
 using UnityEngine;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -41,11 +42,14 @@ namespace UnityEditor
         // just have these be static.
         //
         // The point on screen that the user started dragging a selection rect from.
+        [NoAutoStaticsCleanup] // value-type (Vector2) drag-start cache, repopulated on next drag
         private static Vector2 s_StartMouseDragPosition;
         // The selection at the start of the drag. Using this and the start mousepos,
         // we can reconstruct the selection live during the drag so the user will always see the drag.
+        [NoAutoStaticsCleanup] // value-type index list, no user references
         private static List<int> s_StartDragSelection;
 
+        [NoAutoStaticsCleanup] // transient per-drag flag
         private static bool s_DidDrag;
 
         /// Move the selected points using standard handles. returns true if point moved
@@ -125,6 +129,7 @@ namespace UnityEditor
 #pragma warning restore UA2010
         }
 
+        [NoAutoStaticsCleanup] // value-type index list, no user references
         private static List<int> s_SelectionStart;
         // This function implements selection of points. Returns true is selection changes
         public static bool SelectPoints(IEditablePoint points, Transform cloudTransform, ref List<int> selection)

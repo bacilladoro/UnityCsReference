@@ -399,6 +399,21 @@ namespace UnityEditor.UIElements
 
         protected void WriteImport(ref ExportContext ctx, StyleSheet.ImportStruct import)
         {
+            // Built-in themes are imported as cloned sub-assets with no asset path, so MakeAssetUri
+            // can't represent them. Re-emit the theme scheme (e.g. unity-theme://default) directly,
+            // otherwise the @import line would be silently dropped and the .tss corrupted on save.
+            var themeUri = URIHelpers.MakeThemeImportUri(import.styleSheet, AssetDatabase.GetAssetPath(ctx.styleSheet));
+            if (!string.IsNullOrEmpty(themeUri))
+            {
+                WriteDirective(ref ctx, "@import ");
+                WriteFunctionName(ref ctx, "url");
+                WritePunctuation(ref ctx, "(");
+                WritePath(ref ctx, themeUri);
+                WritePunctuation(ref ctx, ")");
+                WritePunctuation(ref ctx, ";");
+                return;
+            }
+
             // Skip invalid references.
             var path = URIHelpers.MakeAssetUri(import.styleSheet);
             if (string.IsNullOrEmpty(path) || path == "none")

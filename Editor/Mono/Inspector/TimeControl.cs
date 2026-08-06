@@ -5,6 +5,7 @@
 using UnityEngine;
 using UnityEditor;
 using UnityEditorInternal;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -84,6 +85,7 @@ namespace UnityEditor
             public GUIStyle playButton = "TimeScrubberButton";
             public GUIStyle timeScrubber = "TimeScrubber";
         }
+        [NoAutoStaticsCleanup]
         private static Styles s_Styles;
 
         private static readonly int kScrubberIDHash = "ScrubberIDHash".GetHashCode();

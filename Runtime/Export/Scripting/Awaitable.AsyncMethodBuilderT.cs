@@ -5,6 +5,7 @@
 using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Internal;
 using UnityEngine.Pool;
 
@@ -22,6 +23,9 @@ namespace UnityEngine
             }
             private class StateMachineBox<TStateMachine> : IStateMachineBox where TStateMachine : IAsyncStateMachine
             {
+                // Lives in a generic type instantiated per async state machine; the static is per-instantiation
+                // and is unloaded with its type on code reload — nothing to persist or leak.
+                [NoAutoStaticsCleanup]
                 static readonly ThreadLocal<ObjectPool<StateMachineBox<TStateMachine>>> _pool =
                     new(() => new ObjectPool<StateMachineBox<TStateMachine>>(() => new(), collectionCheck: false));
                 public static StateMachineBox<TStateMachine> GetOne() { return _pool.Value.Get(); }

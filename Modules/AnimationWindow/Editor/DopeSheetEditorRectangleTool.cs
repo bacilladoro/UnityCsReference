@@ -21,7 +21,7 @@ namespace UnityEditor
         const int kHLabelMarginHorizontal = 8;
         const int kHLabelMarginVertical = 1;
 
-        static Rect g_EmptyRect = new Rect(0f, 0f, 0f, 0f);
+        static readonly Rect g_EmptyRect = new Rect(0f, 0f, 0f, 0f);
 
         struct ToolLayout
         {

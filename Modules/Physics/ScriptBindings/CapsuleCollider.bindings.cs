@@ -13,6 +13,7 @@ namespace UnityEngine
     ///<seealso cref="PhysicsMaterial" />
     ///<seealso cref="Rigidbody" />
     [RequireComponent(typeof(Transform))]
+    [global::UnityEngine.NativeClass("CapsuleCollider", PersistentTypeId = 136)]
     [NativeHeader("Modules/Physics/CapsuleCollider.h")]
     public class CapsuleCollider : Collider
     {

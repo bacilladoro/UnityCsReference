@@ -2,14 +2,21 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor.QuickInstall;
 
 namespace UnityEditor.InAppPurchasing
 {
-    [InitializeOnLoad]
-    static class InAppPurchasingInstaller
+    static partial class InAppPurchasingInstaller
     {
-        static readonly QuickInstaller s_Installer = new(new QuickInstallConfig
+        // Recreated by Initialize() on every code load; the live instance is owned by QuickInstaller's registries.
+        [NoAutoStaticsCleanup]
+        static QuickInstaller s_Installer;
+
+        [OnCodeLoaded]
+        static void Initialize()
+        {
+            s_Installer = new(new QuickInstallConfig
             (
                 packageName: "com.unity.purchasing",
                 assembly: "UnityEditor.Purchasing",
@@ -24,6 +31,7 @@ namespace UnityEditor.InAppPurchasing
                     documentationUrl: "https://docs.unity3d.com/Packages/com.unity.purchasing@latest"),
                 menuConfig: new MenuConfig(menuPath: "Services/In-App Purchasing/Install"),
                 analyticConfig: new AnalyticConfig(sendAssetInstallAnalytic: false)
-        ));
+            ));
+        }
     }
 }

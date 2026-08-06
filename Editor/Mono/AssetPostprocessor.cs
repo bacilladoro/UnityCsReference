@@ -13,6 +13,7 @@ using UnityEditor.AssetImporters;
 using Object = UnityEngine.Object;
 using UnityEditor.Profiling;
 using UnityEditor.Callbacks;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -168,7 +169,7 @@ namespace UnityEditor
         }
     }
 
-    internal class AssetPostprocessingInternal
+    internal partial class AssetPostprocessingInternal
     {
         // What is it:
         // Static postprocessor methods always called for each importer that are part of importer static dependency.
@@ -258,11 +259,15 @@ namespace UnityEditor
             "OnPostprocessSprites",
         };
 
+        [NoAutoStaticsCleanup] // Lookup tables keyed/valued by built-in importer types and fixed dependency-name constants; contents are domain-invariant and safe to persist across reloads.
         static Dictionary<string, string[]> s_PostprocessorMethodsByDependencyKey;
+        [NoAutoStaticsCleanup] // Lookup tables keyed/valued by built-in importer types and fixed dependency-name constants; contents are domain-invariant and safe to persist across reloads.
         static Dictionary<Type, string[]> s_StaticPostprocessorMethodsByImporterType;
+        [NoAutoStaticsCleanup] // Lookup tables keyed/valued by built-in importer types and fixed dependency-name constants; contents are domain-invariant and safe to persist across reloads.
         static Dictionary<Type, string[]> s_DynamicPostprocessorMethodsByImporterType;
 
         // Internal for debugging purposes. We can generate dependency graphs to help understand issues.
+        [AutoStaticsCleanupOnCodeReload]
         internal static OnPostprocessAllAssetsCallbackCollection s_OnPostprocessAllAssetsCallbacks = new OnPostprocessAllAssetsCallbackCollection();
 
         static AssetPostprocessingInternal()
@@ -410,26 +415,44 @@ namespace UnityEditor
         internal const string kTextureSpritePostprocessorDependencyName = "postprocessor/textureSprite";
         internal const string kTexturePreprocessorDependencyName = "postprocessor/texturePreprocessor";
 
+        [AutoStaticsCleanupOnCodeReload]
         static Stack<SortedSet<AssetPostprocessor>> m_PostprocessStack = null;
+        [AutoStaticsCleanupOnCodeReload]
         static SortedSet<AssetPostprocessor> m_ImportProcessors = null;
 
+        [AutoStaticsCleanupOnCodeReload]
         static Type[] m_PostprocessorClasses = null;
+        [AutoStaticsCleanupOnCodeReload]
         static string m_MeshProcessorsHashString = null;
+        [AutoStaticsCleanupOnCodeReload]
         static string m_AudioProcessorsHashString = null;
+        [AutoStaticsCleanupOnCodeReload]
         static string m_SpeedTreeProcessorsHashString = null;
+        [AutoStaticsCleanupOnCodeReload]
         static string m_PrefabProcessorsHashString = null;
+        [AutoStaticsCleanupOnCodeReload]
         static string m_CameraProcessorsHashString = null;
+        [AutoStaticsCleanupOnCodeReload]
         static string m_LightProcessorsHashString = null;
+        [AutoStaticsCleanupOnCodeReload]
         static string m_Texture2DProcessorsHashString = null;
+        [AutoStaticsCleanupOnCodeReload]
         static string m_TextureCubeProcessorsHashString = null;
+        [AutoStaticsCleanupOnCodeReload]
         static string m_Texture3DPostprocessorDependencyName = null;
+        [AutoStaticsCleanupOnCodeReload]
         static string m_Texture2DArrayDependencyName = null;
+        [AutoStaticsCleanupOnCodeReload]
         static string m_TextureSpriteDependencyName = null;
+        [AutoStaticsCleanupOnCodeReload]
         static string m_TexturePreprocessorDependencyName = null;
 
+        [AutoStaticsCleanupOnCodeReload]
         static Dictionary<Type, SortedSet<AssetPostprocessor.PostprocessorInfo>> s_StaticPostprocessorsPerImporterType = new Dictionary<Type, SortedSet<AssetPostprocessor.PostprocessorInfo>>();
+        [AutoStaticsCleanupOnCodeReload]
         static Dictionary<Type, SortedSet<AssetPostprocessor.PostprocessorInfo>> s_DynamicPostprocessorsPerImporterType = new Dictionary<Type, SortedSet<AssetPostprocessor.PostprocessorInfo>>();
 
+        [AutoStaticsCleanupOnCodeReload]
         static Stack<AssetPostProcessorAnalyticsData> s_AnalyticsEventsStack = new Stack<AssetPostProcessorAnalyticsData>();
 
         static Type[] GetCachedAssetPostprocessorClasses()
@@ -767,6 +790,30 @@ namespace UnityEditor
             object[] args = { go, bindings };
             CallPostProcessMethods("OnPostprocessGameObjectWithAnimatedUserProperties", args);
             AnimationUtility.CopyBindingsArrayToBindingsArrayPtr(bindings, bindingsPtr);
+        }
+
+        [RequiredByNativeCode]
+        static bool HasPostprocessGameObjectWithUserProperties()
+        {
+            foreach (AssetPostprocessor inst in m_ImportProcessors)
+            {
+                if (inst.GetType().GetMethod("OnPostprocessGameObjectWithUserProperties", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance) != null)
+                    return true;
+            }
+
+            return false;
+        }
+
+        [RequiredByNativeCode]
+        static bool HasPostprocessGameObjectWithAnimatedUserProperties()
+        {
+            foreach (AssetPostprocessor inst in m_ImportProcessors)
+            {
+                if (inst.GetType().GetMethod("OnPostprocessGameObjectWithAnimatedUserProperties", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance) != null)
+                    return true;
+            }
+
+            return false;
         }
 
         [RequiredByNativeCode]

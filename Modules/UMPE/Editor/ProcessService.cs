@@ -4,6 +4,7 @@
 
 using System.Reflection;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.MPE
 {
@@ -17,6 +18,7 @@ namespace UnityEditor.MPE
             public MethodInfo execute;
         };
 
+        [AutoStaticsCleanupOnCodeReload]
         static List<RoleProvider> s_RoleProviders;
     }
 }

@@ -212,11 +212,11 @@ namespace Unity.GraphToolkit.Editor
                 var listType = typeof(List<>).MakeGenericType(baseType);
                 var arrayType = baseType.MakeArrayType();
 
-                if (graphImp.SupportedTypes.Contains(singleType))
+                if (graphImp.AvailableVariableTypes.Contains(singleType))
                     modes |= SupportedModes.Single;
-                if (graphImp.SupportedTypes.Contains(listType))
+                if (graphImp.AvailableVariableTypes.Contains(listType))
                     modes |= SupportedModes.List;
-                if (graphImp.SupportedTypes.Contains(arrayType))
+                if (graphImp.AvailableVariableTypes.Contains(arrayType))
                     modes |= SupportedModes.Array;
             }
             else

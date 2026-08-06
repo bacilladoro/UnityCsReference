@@ -10,9 +10,7 @@ using Unity.ProjectAuditor.Editor.Core;
 using Unity.ProjectAuditor.Editor.Utils;
 using UnityEditor;
 using UnityEditor.IMGUI.Controls;
-using UnityEditor.Search;
 using UnityEngine;
-using UnityEngine.Search;
 using TreeViewState = UnityEditor.IMGUI.Controls.TreeViewState<int>;
 
 namespace Unity.ProjectAuditor.Editor.UI.Framework
@@ -526,15 +524,7 @@ namespace Unity.ProjectAuditor.Editor.UI.Framework
             }
 
             if (GUILayout.Button(Contents.SearchJumpButton, SharedStyles.OpenSearchWindowButton, GUILayout.Height(18), GUILayout.Width(18)))
-            {
-                var provider = SearchService.GetProvider(IssueSearchProvider.kProviderId);
-                var searchContext = SearchService.CreateContext(provider);
-                var viewState = new SearchViewState(searchContext, SearchViewFlags.TableView)
-                {
-                    title = "Project Auditor Report",
-                };
-                var searchView = SearchService.ShowWindow(viewState);
-            }
+                Utility.SearchWindow(IssueSearchProvider.kProviderId, "Project Auditor Report");
 
 
             GUILayout.FlexibleSpace();
@@ -613,12 +603,10 @@ namespace Unity.ProjectAuditor.Editor.UI.Framework
 
                 DrawToolbarButtonIcon(Contents.AnalyzeNowButton, () =>
                 {
-                    if (m_Table.GetNumIgnoredIssues() > 0)
+                    if (m_Table.HasIgnoredUnsuppressedIssues())
                     {
-                        if (EditorUtility.DisplayDialog(k_Discard, k_DiscardQuestion, "Discard Ignored Items", "Cancel"))
-                        {
+                        if (EditorUtility.DisplayDialog(Contents.DiscardTitle, Contents.DiscardQuestion, Contents.DiscardIgnoredItems, Contents.Cancel))
                             m_ViewManager.OnAnalysisRequested(m_Desc.Category);
-                        }
                     }
                     else
                     {
@@ -1025,9 +1013,6 @@ namespace Unity.ProjectAuditor.Editor.UI.Framework
         protected const string k_AnalysisIsRequiredText = "<Missing Data: Please Analyze>";
         protected const string k_MultipleSelectionText = "<Multiple selection>";
 
-        const string k_Discard = "Analyze Now";
-        const string k_DiscardQuestion = "If you analyze this section, your currently ignored items will be discarded.";
-
         public static int ToolbarButtonSize => LayoutSize.ToolbarButtonSize;
         public static int ToolbarIconSize => LayoutSize.ToolbarIconSize;
 
@@ -1047,7 +1032,7 @@ namespace Unity.ProjectAuditor.Editor.UI.Framework
             public static readonly int ToolbarButtonSize = 80;
             public static readonly int ToolbarLargeButtonSize = 120;
             public static readonly int ToolbarIconSize = 32;
-            public static readonly int ActionButtonHeight = 30;
+            public static readonly int ActionButtonHeight = 24;
             public static readonly int TabButtonSize = 16;
             public static readonly int CellItemIconSize = 16;
             public static readonly int CellWidthPadding = 6;
@@ -1068,6 +1053,11 @@ namespace Unity.ProjectAuditor.Editor.UI.Framework
             public static readonly GUIContent Dependencies = new GUIContent("Dependencies");
 
             public static readonly GUIContent SearchJumpButton = EditorGUIUtility.TrIconContent("SearchJump Icon", "Open in Search");
+
+            public static readonly string DiscardTitle = L10n.Tr("Analyze Now");
+            public static readonly string DiscardQuestion = L10n.Tr("If you analyze this section, your currently ignored items will be discarded.");
+            public static readonly string DiscardIgnoredItems = L10n.Tr("Discard Ignored Items");
+            public static readonly string Cancel = L10n.Tr("Cancel");
         }
 
         protected void ApplyQuickFixes(IReadOnlyList<ReportItem> issues)

@@ -378,7 +378,9 @@ namespace UnityEngine.NVIDIA
             }
         }
 
+#pragma warning disable UA5000 // The Avoid Finalizer Analyzer produces compile errors for any new finalizers. This pre-existing finalizer declaration has been suppressed, but should be rewritten if possible.
         ~NativeData() { Dispose(false); }
+#pragma warning restore UA5000
     }
 
     internal class NativeStr : IDisposable
@@ -414,7 +416,9 @@ namespace UnityEngine.NVIDIA
             }
         }
 
+#pragma warning disable UA5000 // The Avoid Finalizer Analyzer produces compile errors for any new finalizers. This pre-existing finalizer declaration has been suppressed, but should be rewritten if possible.
         ~NativeStr() { Dispose(false); }
+#pragma warning restore UA5000
     }
 
     #endregion

@@ -10,12 +10,14 @@ using UnityEngine.Rendering;
 
 namespace UnityEngine
 {
+    [global::UnityEngine.NativeClass("OcclusionPortal", PersistentTypeId = 41)]
     [NativeHeader("Runtime/Camera/OcclusionPortal.h")]
     public sealed partial class OcclusionPortal : Component
     {
         [NativeProperty("IsOpen")] public extern bool open { get; set; }
     }
 
+    [global::UnityEngine.NativeClass("OcclusionArea", PersistentTypeId = 192)]
     [NativeHeader("Runtime/Camera/OcclusionArea.h")]
     public sealed partial class OcclusionArea : Component
     {
@@ -23,6 +25,7 @@ namespace UnityEngine
         public extern Vector3 size { get; set; }
     }
 
+    [global::UnityEngine.NativeClass("Flare", PersistentTypeId = 121)]
     [NativeHeader("Runtime/Camera/Flare.h")]
     public sealed partial class Flare : Object
     {
@@ -74,6 +77,7 @@ namespace UnityEngine
 
     [NativeHeader("Runtime/Camera/Flare.h")]
     [System.Obsolete("The Lens Flare component is deprecated now that the Built-In Render Pipeline is deprecated. To use an alternative, refer to the documentation in the component help icon. #from(6000.5)", false)]
+    [global::UnityEngine.NativeClass("LensFlare", PersistentTypeId = 123)]
     [SRPReplacementComponentAttribute("UnityEngine.Rendering.LensFlareComponentSRP", "Lens Flare SRP" )]
     public sealed partial class LensFlare : Behaviour
     {
@@ -87,6 +91,7 @@ namespace UnityEngine
 
     [NativeHeader("Runtime/Camera/Projector.h")]
     [System.Obsolete("Projector component is deprecated now that the Built-In Render Pipeline is deprecated. To use an alternative, refer to the documentation in the component help icon. #from(6000.5)", false)]
+    [global::UnityEngine.NativeClass("Projector", PersistentTypeId = 119)]
     [SRPReplacementComponentAttribute("UnityEngine.Rendering.Universal.DecalProjector", "Decal Projector SRP")]
     public sealed partial class Projector : Behaviour
     {
@@ -101,6 +106,7 @@ namespace UnityEngine
         extern public Material material { get; set; }
     }
 
+    [global::UnityEngine.NativeClass("Skybox", PersistentTypeId = 45)]
     [NativeHeader("Runtime/Camera/Skybox.h")]
     public sealed partial class Skybox : Behaviour
     {
@@ -108,6 +114,7 @@ namespace UnityEngine
     }
 
     [RequireComponent(typeof(Transform))]
+    [global::UnityEngine.NativeClass("MeshFilter", PersistentTypeId = 33)]
     [NativeHeader("Runtime/Graphics/Mesh/MeshFilter.h")]
     public sealed partial class MeshFilter : Component
     {
@@ -121,6 +128,7 @@ namespace UnityEngine
     [RequireComponent(typeof(Transform))]
     [NativeHeader("Runtime/Camera/HaloManager.h")]
     [System.Obsolete("The Halo component is deprecated now that the Built-In Render Pipeline is deprecated. To use an alternative, refer to the documentation in the component help icon. #from(6000.5)", false)]
+    [global::UnityEngine.NativeClass("Halo", PersistentTypeId = 122)]
     [SRPReplacementComponentAttribute("UnityEngine.Rendering.LensFlareComponentSRP", "Lens Flare SRP")]
     internal sealed partial class Halo : Behaviour
     {

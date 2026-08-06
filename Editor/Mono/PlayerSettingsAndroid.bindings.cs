@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using UnityEngine;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Bindings;
 using System;
 using System.Text.RegularExpressions;
@@ -121,6 +122,9 @@ namespace UnityEditor
 
         // Android 16.0, API level 36
         AndroidApiLevel36 = 36,
+
+        // Android 17.0, API level 37.0
+        AndroidApiLevel37 = 37,
     }
 
     // Preferred application install location
@@ -591,6 +595,7 @@ namespace UnityEditor
             }
 
             [Obsolete("ChromeOS is no longer supported.")]
+            [NoAutoStaticsCleanup] // deprecated value-type setting; safe to persist across reload
             public static bool chromeosInputEmulation { get; set; }
 
             // Returns Android banner list
@@ -649,6 +654,7 @@ namespace UnityEditor
             }
 
             [Obsolete("androidTargetDevices is deprecated since ChromeOS is no longer supported.")]
+            [NoAutoStaticsCleanup] // deprecated value-type setting; safe to persist across reload
             public static AndroidTargetDevices androidTargetDevices { get; set; }
 
             [StaticAccessor("GetPlayerSettings().GetEditorOnly()", StaticAccessorType.Dot)]

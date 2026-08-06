@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using UnityEditor.Callbacks;
 using UnityObject = UnityEngine.Object;
 using UnityEditorInternal;
+using Unity.Scripting.LifecycleManagement;
 
 using AnimationWindowLayout = UnityEditor.Animations.AnimationWindow.Widgets.Layout;
 
@@ -18,10 +19,12 @@ namespace UnityEditor
     public sealed partial class AnimationWindow : EditorWindow, IHasCustomMenu
     {
         // Active Animation windows
-        static readonly List<AnimationWindow> s_AnimationWindows = new List<AnimationWindow>();
+        [AutoStaticsCleanupOnCodeReload(CleanupStrategy = CleanupStrategy.Clear)]
+        static List<AnimationWindow> s_AnimationWindows = new List<AnimationWindow>();
         internal static List<AnimationWindow> GetAllAnimationWindows() { return s_AnimationWindows; }
 
-        static readonly List<IAnimationWindowResponder> s_Responders = new List<IAnimationWindowResponder>();
+        [AutoStaticsCleanupOnCodeReload(CleanupStrategy = CleanupStrategy.Clear)]
+        static List<IAnimationWindowResponder> s_Responders = new List<IAnimationWindowResponder>();
 
         [InitializeOnLoadMethod]
         static void InitializeOnLoad()

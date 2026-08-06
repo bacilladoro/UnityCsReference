@@ -5,11 +5,12 @@
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Serialization;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
     [AssetFileNameExtension("brush")]
-    internal class Brush : ScriptableObject
+    internal partial class Brush : ScriptableObject
     {
         [MenuItem("Assets/Create/Terrain/Brush", secondaryPriority = 1)]
         public static void CreateNewDefaultBrush()
@@ -56,7 +57,9 @@ namespace UnityEditor
         bool m_UpdateThumbnail = true;
         internal bool readOnly { get; set; } = false;
 
+        [AutoStaticsCleanupOnCodeReload] // programmatically-created Texture2D (SetPixels); drop on reload so it is rebuilt fresh
         static Texture2D s_WhiteTexture = null;
+        [NoAutoStaticsCleanup] // lazy material cache; lazy-init pattern, no code-reload-sensitive state
         static Material s_CreateBrushMaterial = null;
 
         internal static Brush CreateInstance(Texture2D t, AnimationCurve f, float radiusScale, bool isReadOnly)

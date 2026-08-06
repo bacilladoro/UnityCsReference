@@ -11,6 +11,7 @@ using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using RequiredByNativeCodeAttribute = UnityEngine.Scripting.RequiredByNativeCodeAttribute;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -55,7 +56,7 @@ namespace UnityEditor
         ChangeRootOrder = 13,
     }
 
-    public static class ObjectChangeEvents
+    public static partial class ObjectChangeEvents
     {
         public delegate void ObjectChangeEventsHandler(ref ObjectChangeEventStream stream);
 
@@ -65,11 +66,13 @@ namespace UnityEditor
             remove => m_ChangesPublishedEvent.Remove(value);
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         private static EventWithPerformanceTracker<ObjectChangeEventsHandler> m_ChangesPublishedEvent = new EventWithPerformanceTracker<ObjectChangeEventsHandler>($"{nameof(ObjectChangeEvents)}.{nameof(changesPublished)}");
 
         // TODO: Once Burst supports internal/external functions in static initializers, this can become
         //   static readonly int s_staticSafetyId = AtomicSafetyHandle.NewStaticSafetyId<ObjectChangeEventStream>();
         // and InitStaticSafetyId() can be replaced with a call to AtomicSafetyHandle.SetStaticSafetyId();
+        [NoAutoStaticsCleanup] // AtomicSafetyHandle static safety id is stable across code reload; re-registering would leak ids
         static int s_staticSafetyId;
         [BurstDiscard]
         static void InitStaticSafetyId(ref AtomicSafetyHandle handle1, ref AtomicSafetyHandle handle2)

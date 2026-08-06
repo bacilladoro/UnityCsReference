@@ -8,6 +8,7 @@ using UnityEngine.Bindings;
 using UnityEngine.Scripting;
 using UnityEngine;
 using UnityEngine.Internal;
+using Unity.Scripting.LifecycleManagement;
 
 using Object = UnityEngine.Object;
 using UnityEngine.Animations;
@@ -92,6 +93,7 @@ namespace UnityEditor
         }
 
         public delegate void OnCurveWasModified(AnimationClip clip, EditorCurveBinding binding, CurveModifiedType type);
+        [NoAutoStaticsCleanup]
         public static OnCurveWasModified onCurveWasModified;
 
         [RequiredByNativeCode]

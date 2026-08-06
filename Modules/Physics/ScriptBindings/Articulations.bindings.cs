@@ -278,7 +278,7 @@ namespace UnityEngine
     ///Like with regular Joints, there are two anchors for each pair of connected articulation bodies. One anchor is defined in the parent body's reference frame, whereas the other one is defined in the child's reference frame. Changing the constraints, you directly affect the allowed space for relative positions of the two anchors. For instance, <see cref="ArticulationDofLock.LockedMotion" /> will not allow any relative motion at all.</remarks>
     [RequireComponent(typeof(Transform))]
     [NativeHeader("Modules/Physics/ArticulationBody.h")]
-    [NativeClass("Physics::ArticulationBody")]
+    [NativeClass("Physics::ArticulationBody", PersistentTypeId = 0x0A3C9234)]
     public partial class ArticulationBody : Behaviour
     {
         ///<summary>The type of joint connecting this body to its parent body.</summary>

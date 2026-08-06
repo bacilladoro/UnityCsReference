@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using JetBrains.Annotations;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using Unity.Collections;
 using Object = UnityEngine.Object;
@@ -14,11 +15,13 @@ namespace UnityEditor
 {
     public sealed partial class ObjectNames
     {
-        static class InspectorTitles
+        internal static partial class InspectorTitles
         {
-            static readonly Dictionary<Type, string> s_InspectorTitles;
+            [AutoStaticsCleanupOnCodeReload]
+            static Dictionary<Type, string> s_InspectorTitles;
 
-            static InspectorTitles()
+            [OnCodeLoaded]
+            static void Initialize()
             {
                 var addComponentMenuTypes = TypeCache.GetTypesWithAttribute<AddComponentMenu>();
 

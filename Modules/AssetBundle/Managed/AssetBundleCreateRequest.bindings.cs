@@ -14,12 +14,18 @@ using UnityEngineInternal;
 
 namespace UnityEngine
 {
-    // Asynchronous create request for an [[AssetBundle]].
+    ///<summary>Asynchronous load request for an <see cref="AssetBundle" />.</summary>
+    ///<seealso cref="AssetBundle.LoadFromFileAsync" />
+    ///<seealso cref="AssetBundle.LoadFromMemoryAsync" />
+    ///<seealso cref="AssetBundle.LoadFromStreamAsync" />
+    ///<seealso cref="AsyncOperation" />
     [StructLayout(LayoutKind.Sequential)]
     [RequiredByNativeCode]
     [NativeHeader("Modules/AssetBundle/Public/AssetBundleLoadFromAsyncOperation.h")]
     public class AssetBundleCreateRequest : AsyncOperation
     {
+        ///<summary>Asset object being loaded (RO).</summary>
+        ///<remarks>Note that accessing asset before <see cref="AsyncOperation.isDone" /> is true will stall the loading process.</remarks>
         public extern UnityEngine.AssetBundle assetBundle
         {
             [NativeMethod("GetAssetBundleBlocking")]
@@ -33,6 +39,7 @@ namespace UnityEngine
             SetEnableCompatibilityChecks(false);
         }
 
+        ///<exclude />
         public AssetBundleCreateRequest() { }
 
         private AssetBundleCreateRequest(IntPtr ptr) : base(ptr)

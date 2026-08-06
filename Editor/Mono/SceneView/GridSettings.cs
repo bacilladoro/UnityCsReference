@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -85,7 +86,7 @@ namespace UnityEditor
     }
 
     [FilePath("Library/EditorGridSettings.asset", FilePathAttribute.Location.ProjectFolder)]
-    class GridSettings : ScriptableSingleton<GridSettings>
+    partial class GridSettings : ScriptableSingleton<GridSettings>
     {
         const GridMode k_DefaultGridMode = GridMode.World;
 
@@ -182,6 +183,10 @@ namespace UnityEditor
             }
         }
         
+        // Scene Transform, must not persist across a code reload; reset to null. null is a normal
+        // state (the rotation setter clears it, the only reader null-checks and falls back), and it
+        // is re-read lazily on the next UI refresh.
+        [AutoStaticsCleanupOnCodeReload]
         internal static Transform lastRotationSampleTransform { get; set; }
 
         public Quaternion rotation

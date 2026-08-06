@@ -5,6 +5,7 @@
 using UnityEngine;
 using UnityEditorInternal;
 using UnityEngine.UIElements;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -19,11 +20,17 @@ namespace UnityEditor
 
     public partial class Highlighter
     {
+        [AutoStaticsCleanupOnCodeReload]
         private static GUIView s_View;
+        [AutoStaticsCleanupOnCodeReload]
         private static EditorWindow s_ViewWindow;
+        [NoAutoStaticsCleanup] // enum value; recomputed by the next Highlight() call, safe to persist
         private static HighlightSearchMode s_SearchMode;
+        [NoAutoStaticsCleanup] // float animation timer; reset by Stop()/Highlight(), safe to persist
         private static float s_HighlightElapsedTime = 0;
+        [NoAutoStaticsCleanup] // float timestamp; reset by Stop()/Highlight(), safe to persist
         private static float s_LastTime = 0;
+        [NoAutoStaticsCleanup] // Rect value type; recomputed each Update(), safe to persist
         private static Rect s_RepaintRegion;
 
         private const float kPulseSpeed = 0.45f; // Pulses per second
@@ -32,12 +39,25 @@ namespace UnityEditor
         // Twice the IMGUI speed because UIToolkit ScrollView scroll offset has a frame delay between updates
         private static readonly float kUIToolkitScrollSpeed = scrollSpeed * 2;
 
+        [NoAutoStaticsCleanup] // within-call reentrancy guard; always reset to false, safe to persist
         private static bool s_RecursionLock = false;
+        private static bool s_ScrollToMode = false;
+        private static float s_ScrollToArrivalTime = -1f;
 
+        // Timing and colors match the Graphics settings reveal.
+        private const float kScrollToFadeDuration = 0.6f;
+        private const float kScrollToPeakAlpha = 0.4f;
+        private static readonly Color kScrollToTintDark = new Color(0.6f, 0.6f, 0.6f);
+        private static readonly Color kScrollToTintLight = new Color(0.38f, 0.38f, 0.38f);
+
+        [AutoStaticsCleanupOnCodeReload]
         private static VisualElement activeElement = null;
+        [AutoStaticsCleanupOnCodeReload]
         private static ScrollView activeScrollView = null;
+        [NoAutoStaticsCleanup] // bool flag; reset by Stop()/Search(), safe to persist
         private static bool activeIsImgui = false;
 
+        [NoAutoStaticsCleanup] // lazy GUIStyle by fixed name "ControlHighlight"; whitelisted type, re-inits via null-guard on first access, safe to persist
         private static GUIStyle s_HighlightStyle;
         private static GUIStyle highlightStyle
         {
@@ -60,6 +80,8 @@ namespace UnityEditor
             activeIsImgui = false;
             activeScrollView = null;
             useUIToolkitScrolling = true;
+            s_ScrollToMode = false;
+            s_ScrollToArrivalTime = -1f;
             activeRect = new Rect();
 
             searchMode = HighlightSearchMode.None;
@@ -73,6 +95,16 @@ namespace UnityEditor
         }
 
         public static bool Highlight(string windowTitle, string text, HighlightSearchMode mode)
+        {
+            return Highlight(windowTitle, text, mode, true, false);
+        }
+
+        internal static bool ScrollTo(string windowTitle, string text, HighlightSearchMode mode, bool logFailure)
+        {
+            return Highlight(windowTitle, text, mode, logFailure, true);
+        }
+
+        static bool Highlight(string windowTitle, string text, HighlightSearchMode mode, bool logFailure, bool scrollTo)
         {
             bool success = false;
             if (s_RecursionLock || searching)
@@ -90,12 +122,14 @@ namespace UnityEditor
 
                 if (!SetWindow(windowTitle))
                 {
-                    Debug.LogWarning("Window " + windowTitle + " not found.");
+                    if (logFailure)
+                        Debug.LogWarning("Window " + windowTitle + " not found.");
                 }
                 else if (mode != HighlightSearchMode.None)
                 {
                     active = true;
                     activeText = text;
+                    s_ScrollToMode = scrollTo;
                     s_SearchMode = mode;
                     s_LastTime = Time.realtimeSinceStartup;
 
@@ -115,7 +149,8 @@ namespace UnityEditor
                     }
                     else
                     {
-                        Debug.LogWarning("Item " + text + " not found in window " + windowTitle + ".");
+                        if (logFailure)
+                            Debug.LogWarning("Item " + text + " not found in window " + windowTitle + ".");
                         Stop();
                     }
 
@@ -129,7 +164,10 @@ namespace UnityEditor
             return success;
         }
 
+        [NoAutoStaticsCleanup] // bool auto-property; reset by Stop(), safe to persist
         public static bool active { get; private set; }
+
+        internal static bool scrollToMode => s_ScrollToMode;
 
         internal static bool IsSearchingForIdentifier()
         {
@@ -171,6 +209,19 @@ namespace UnityEditor
 
             if (useUIToolkitScrolling)
                 HandleScroll();
+
+            if (s_ScrollToMode)
+            {
+                if (activeVisible && s_ScrollToArrivalTime < 0f)
+                    s_ScrollToArrivalTime = Time.realtimeSinceStartup;
+
+                if (s_ScrollToArrivalTime >= 0f && Time.realtimeSinceStartup - s_ScrollToArrivalTime > 2f * kScrollToFadeDuration)
+                {
+                    // The zero activeRect makes the next update run the teardown above.
+                    Stop();
+                    return;
+                }
+            }
 
             // Keep elapsed time explicitly rather than measuring time since highlight began.
             // This way all views use the same elapsed time even if some realtime elapsed
@@ -307,6 +358,19 @@ namespace UnityEditor
 
             if (Event.current.type != EventType.Repaint)
                 return;
+
+            if (s_ScrollToMode)
+            {
+                if (s_ScrollToArrivalTime < 0f)
+                    return;
+
+                float phase = (Time.realtimeSinceStartup - s_ScrollToArrivalTime) / kScrollToFadeDuration;
+                float fade = phase <= 1f ? Mathf.SmoothStep(0f, 1f, phase) : Mathf.SmoothStep(1f, 0f, phase - 1f);
+                var tint = EditorGUIUtility.isProSkin ? kScrollToTintDark : kScrollToTintLight;
+                tint.a = kScrollToPeakAlpha * fade;
+                EditorGUI.DrawRect(GUIUtility.ScreenToGUIRect(activeRect), tint);
+                return;
+            }
 
             Rect localRect = GUIUtility.ScreenToGUIRect(activeRect);
             localRect = highlightStyle.padding.Add(localRect);

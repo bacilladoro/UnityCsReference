@@ -731,14 +731,37 @@ namespace UnityEditor.StyleSheets
         public static string[] GetSheetPathsFromRootFolders(IEnumerable<string> rootFolders, SkinTarget target, string sheetPostFix = "")
         {
             var skinSheetName = $"{(target == SkinTarget.Light ? "light" : "dark")}{sheetPostFix}.uss";
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
-            var sheetPaths = rootFolders.Select(folderPath => Directory.GetFiles(EditorResources.ExpandPath(folderPath), "*.uss", SearchOption.AllDirectories))
-#pragma warning restore UA2001
-                .SelectMany(p => p)
-                .Where(p => p.EndsWith("common.uss") || p.EndsWith(skinSheetName))
-                .Select(p => p.Replace("\\", "/"))
-                .ToArray();
-            return sheetPaths;
+            var result = new List<string>();
+            foreach (var folderPath in rootFolders)
+            {
+                if (folderPath.StartsWith("Packages/", StringComparison.OrdinalIgnoreCase))
+                {
+                    // Enumerate via AssetDatabase.GetAllAssetPaths() rather than AssetDatabase.FindAssets("t:StyleSheet", ...).
+                    // During the editor-resources build (BuildPipeline.InvokeGenerateBuildTimeAssets) the package USS
+                    // sources are imported but the FindAssets *search index* is not populated (the asset pipeline
+                    // refreshes with NoUpdate), so FindAssets returns nothing and skin generation fails on clean CI
+                    // builds. GetAllAssetPaths reads the asset-path registry (populated on import), which is reliable
+                    // in that context.
+                    var folderPrefix = folderPath.EndsWith("/") ? folderPath : folderPath + "/";
+                    foreach (var assetPath in AssetDatabase.GetAllAssetPaths())
+                    {
+                        if (assetPath.StartsWith(folderPrefix, StringComparison.Ordinal) &&
+                            (assetPath.EndsWith("common.uss") || assetPath.EndsWith(skinSheetName)))
+                            result.Add(assetPath);
+                    }
+                }
+                else
+                {
+                    var files = Directory.GetFiles(EditorResources.ExpandPath(folderPath), "*.uss", SearchOption.AllDirectories);
+                    foreach (var file in files)
+                    {
+                        var normalized = file.Replace("\\", "/");
+                        if (normalized.EndsWith("common.uss") || normalized.EndsWith(skinSheetName))
+                            result.Add(normalized);
+                    }
+                }
+            }
+            return result.ToArray();
         }
 
         public static GUISkin CreatePackageSkinFromBundleSkin(SkinTarget target)

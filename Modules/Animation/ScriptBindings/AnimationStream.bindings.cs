@@ -20,6 +20,16 @@ namespace UnityEngine.Animations
         kValidMinVersion = 2         // Minimum valid version
     }
 
+    ///<summary>The stream of animation data passed from one <see cref="T:UnityEngine.Playables.Playable" /> to another.</summary>
+    ///<remarks>The AnimationStream structure is passed through the animation <see cref="T:UnityEngine.Playables.Playable" /> structures, like <see cref="AnimationClipPlayable" /> and <see cref="AnimationMixerPlayable" />. They can be modified when used with an <see cref="IAnimationJobPlayable" />, like the <see cref="AnimationScriptPlayable" />.
+    ///
+    ///The Playables implementing <see cref="IAnimationJobPlayable" /> take a custom C# job, which must implement <see cref="IAnimationJob" />, and the AnimationStream is then passed to its callbacks during the animation processing pass.</remarks>
+    ///<seealso cref="IAnimationJob" />
+    ///<seealso cref="AnimationScriptPlayable" />
+    ///<seealso cref="TransformStreamHandle" />
+    ///<seealso cref="PropertyStreamHandle" />
+    ///<seealso cref="TransformSceneHandle" />
+    ///<seealso cref="PropertySceneHandle" />
     [MovedFrom("UnityEngine.Experimental.Animations")]
     [NativeHeader("Modules/Animation/ScriptBindings/AnimationStream.bindings.h")]
     [NativeHeader("Modules/Animation/Director/AnimationStream.h")]
@@ -43,6 +53,7 @@ namespace UnityEngine.Animations
             get { return m_AnimatorBindingsVersion; }
         }
 
+        ///<summary>Returns <c>true</c> if the stream is valid; <c>false</c> otherwise. (RO)</summary>
         public bool isValid
         {
             get
@@ -62,38 +73,53 @@ namespace UnityEngine.Animations
                 throw new InvalidOperationException("The AnimationStream is invalid.");
         }
 
+        ///<summary>Gets the delta time for the evaluated frame. (RO)</summary>
         public float deltaTime
         {
             get { CheckIsValid(); return GetDeltaTime(); }
         }
 
+        ///<summary>Gets or sets the avatar velocity for the evaluated frame.</summary>
         public Vector3 velocity
         {
             get { CheckIsValid(); return GetVelocity(); }
             set { CheckIsValid(); SetVelocity(value); }
         }
 
+        ///<summary>Gets or sets the avatar angular velocity for the evaluated frame.</summary>
         public Vector3 angularVelocity
         {
             get { CheckIsValid(); return GetAngularVelocity(); }
             set { CheckIsValid(); SetAngularVelocity(value); }
         }
 
+        ///<summary>Gets the root motion position for the evaluated frame. (RO)</summary>
+        ///<seealso cref="Animator.applyRootMotion" />
+        ///<seealso cref="IAnimationJob.ProcessRootMotion" />
         public Vector3 rootMotionPosition
         {
             get { CheckIsValid(); return GetRootMotionPosition(); }
         }
 
+        ///<summary>Gets the root motion rotation for the evaluated frame. (RO)</summary>
+        ///<seealso cref="Animator.applyRootMotion" />
+        ///<seealso cref="IAnimationJob.ProcessRootMotion" />
         public Quaternion rootMotionRotation
         {
             get { CheckIsValid(); return GetRootMotionRotation(); }
         }
 
+        ///<summary>Returns <c>true</c> if the stream is from a humanoid avatar; <c>false</c> otherwise. (RO)</summary>
+        ///<seealso cref="M:UnityEngine.Animations.AnimationStream.AsHuman" />
         public bool isHumanStream
         {
             get { CheckIsValid(); return GetIsHumanStream(); }
         }
 
+        ///<summary>Gets the same stream, but as an <see cref="AnimationHumanStream" />.</summary>
+        ///<remarks>This function throws an <c>InvalidOperationException</c> is the avatar is not a humanoid.</remarks>
+        ///<returns>Returns the same stream, but as an <see cref="AnimationHumanStream" />.</returns>
+        ///<seealso cref="isHumanStream" />
         public AnimationHumanStream AsHuman()
         {
             CheckIsValid();
@@ -103,23 +129,37 @@ namespace UnityEngine.Animations
             return GetHumanStream();
         }
 
+        ///<summary>Gets the number of input streams. (RO)</summary>
+        ///<remarks>The number of input streams are equal to the number of inputs in the Playable.</remarks>
+        ///<seealso cref="GetInputStream" />
         public int inputStreamCount
         {
             get { CheckIsValid(); return GetInputStreamCount(); }
         }
 
+        ///<summary>Gets the <see cref="AnimationStream" /> of the playable input at <c>index</c>.</summary>
+        ///<param name="index">The input index.</param>
+        ///<returns>Returns the <see cref="AnimationStream" /> of the playable input at <c>index</c>. Returns an invalid stream if the input is not an animation Playable.</returns>
+        ///<seealso cref="inputStreamCount" />
         public AnimationStream GetInputStream(int index)
         {
             CheckIsValid();
             return InternalGetInputStream(index);
         }
 
+        ///<summary>Gets the weight of the <see cref="T:UnityEngine.Playables.Playable" /> connected at a specific input index.</summary>
+        ///<param name="index">The input index.</param>
+        ///<returns>Returns the weight of the <see cref="T:UnityEngine.Playables.Playable" /> input as a float.</returns>
+        ///<seealso cref="inputStreamCount" />
         public float GetInputWeight(int index)
         {
             CheckIsValid();
             return InternalGetInputWeight(index);
         }
 
+        ///<summary>Deep copies motion from a source animation stream to the current animation stream.</summary>
+        ///<remarks>The copied motion includes velocity, angular velocity, and other hidden velocity properties such as avatar foot velocity.</remarks>
+        ///<param name="animationStream">The source animation stream with the motion to deep copy.</param>
         public void CopyAnimationStreamMotion(AnimationStream animationStream)
         {
             CheckIsValid();

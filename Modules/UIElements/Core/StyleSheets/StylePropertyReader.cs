@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Runtime.InteropServices;
@@ -62,6 +63,12 @@ namespace UnityEngine.UIElements.StyleSheets
         internal delegate int GetCursorIdFunction(StyleSheet sheet, StyleValueHandle handle);
 
         internal static GetCursorIdFunction getCursorIdFunc = null;
+
+        // One-shot per session — avoids flooding the console when a stylesheet with a
+        // limitation-tripping gradient is applied to many elements.
+        static bool s_WarnedCircleCoerce;
+        static bool s_WarnedRadialPositionUnit;
+        static bool s_WarnedPixelStopPosition;
 
         private List<StylePropertyValue> m_Values = new List<StylePropertyValue>();
         private List<int> m_ValueCount = new List<int>();
@@ -384,10 +391,32 @@ namespace UnityEngine.UIElements.StyleSheets
             }
         }
 
-        public EntityId ReadBackground(int index)
+        public void ReadBackground(ref UnmanagedBackground target, int index)
         {
             var source = new ImageSource();
             var value = m_Values[m_CurrentValueIndex + index];
+
+            // Gradient functions share the background-image slot. Store the gradient
+            // metadata here and defer the bake to render time (UIRElementBuilder).
+            if (value.handle.valueType == StyleValueType.Function)
+            {
+                var fn = (StyleValueFunction)value.handle.valueIndex;
+                if (fn == StyleValueFunction.LinearGradient || fn == StyleValueFunction.RadialGradient)
+                {
+                    var gradient = ReadBackgroundGradient(index);
+                    target.imageEntityId = EntityId.None;
+                    if (gradient.IsEmpty())
+                    {
+                        target.gradient.Clear();
+                        return;
+                    }
+                    Span<UnmanagedBackgroundGradient> single = stackalloc UnmanagedBackgroundGradient[1];
+                    single[0] = gradient;
+                    target.gradient.CopyFrom((ReadOnlySpan<UnmanagedBackgroundGradient>)single);
+                    return;
+                }
+            }
+
             if (value.handle.valueType == StyleValueType.Keyword)
             {
                 if (value.handle.valueIndex != (int)StyleValueKeyword.None)
@@ -405,20 +434,11 @@ namespace UnityEngine.UIElements.StyleSheets
                 source.texture = Panel.LoadResource("d_console.warnicon", typeof(Texture2D), dpiScaling) as Texture2D;
             }
 
-            Background background;
-            if (source.texture != null)
-                background = Background.FromTexture2D(source.texture);
-            else if (source.sprite != null)
-                background = Background.FromSprite(source.sprite);
-            else if (source.vectorImage != null)
-                background = Background.FromVectorImage(source.vectorImage);
-            else if (source.renderTexture != null)
-                background = Background.FromRenderTexture(source.renderTexture);
-            else
-                background = new Background();
-
-            Background.To(background, out EntityId entityId);
-            return entityId;
+            UnityEngine.Object obj =
+                source.texture ?? (UnityEngine.Object)
+                source.sprite ?? source.vectorImage ?? (UnityEngine.Object)source.renderTexture;
+            target.imageEntityId = obj != null ? obj.GetEntityId() : EntityId.None;
+            target.gradient.Clear();
         }
 
         public Cursor ReadCursor(int index)
@@ -476,6 +496,448 @@ namespace UnityEngine.UIElements.StyleSheets
             var val1 = m_Values[m_CurrentValueIndex + index];
             var val2 = valueCount > 1 ? m_Values[m_CurrentValueIndex + index + 1] : default;
             return ReadBackgroundSize(valueCount, val1, val2);
+        }
+
+        // Parses a linear-/radial-gradient() USS function into a BackgroundGradient.
+        // Angles normalised to CSS radians (0 = "to top", clockwise). Returns default on `none`.
+        BackgroundGradient ReadBackgroundGradient(int index)
+        {
+            var value = m_Values[m_CurrentValueIndex + index];
+            if (value.handle.valueType == StyleValueType.Keyword)
+                return default; // `none`
+
+            if (value.handle.valueType != StyleValueType.Function)
+                return default;
+
+            var fn = (StyleValueFunction)value.handle.valueIndex;
+            int cursor = index + 1;
+            int argCount = ReadInt(cursor++);
+            int argsEnd = cursor + argCount;
+            if (argsEnd > valueCount)
+                argsEnd = valueCount;
+
+            return fn switch
+            {
+                StyleValueFunction.LinearGradient => ParseLinearGradient(ref cursor, argsEnd),
+                StyleValueFunction.RadialGradient => ParseRadialGradient(ref cursor, argsEnd),
+                _ => default,
+            };
+        }
+
+        BackgroundGradient ParseLinearGradient(ref int cursor, int argsEnd)
+        {
+            float angle = Mathf.PI; // CSS default: "to bottom"
+
+            // Direction phase (optional) up to the first comma.
+            while (cursor < argsEnd)
+            {
+                var value = GetValue(cursor);
+                var vt = value.handle.valueType;
+
+                if (vt == StyleValueType.CommaSeparator)
+                {
+                    cursor++;
+                    break;
+                }
+
+                if (vt == StyleValueType.Dimension && TryReadAngle(value, out var dirAngle))
+                {
+                    angle = dirAngle;
+                    cursor++;
+                    continue;
+                }
+
+                if (vt == StyleValueType.Enum)
+                {
+                    var ident = value.sheet.ReadEnum(value.handle);
+                    if (string.Equals(ident, "to", StringComparison.OrdinalIgnoreCase))
+                    {
+                        cursor++;
+                        float sideA = float.NaN, sideB = float.NaN;
+                        while (cursor < argsEnd)
+                        {
+                            var v2 = GetValue(cursor);
+                            if (v2.handle.valueType != StyleValueType.Enum)
+                                break;
+                            var sk = v2.sheet.ReadEnum(v2.handle);
+                            if (!TryGetSideAngle(sk, out var sa))
+                                break;
+                            if (float.IsNaN(sideA)) sideA = sa;
+                            else if (float.IsNaN(sideB)) sideB = sa;
+                            else break;
+                            cursor++;
+                        }
+                        if (!float.IsNaN(sideA) && !float.IsNaN(sideB))
+                            angle = AverageAngles(sideA, sideB);
+                        else if (!float.IsNaN(sideA))
+                            angle = sideA;
+                        continue;
+                    }
+                    break; // named color / first stop — direction phase is done
+                }
+
+                break; // color/dimension → already in stops phase
+            }
+
+            var stops = ReadColorStops(ref cursor, argsEnd);
+            if (stops.Length == 0)
+                return default;
+
+            return new BackgroundGradient
+            {
+                type = GradientType.Linear,
+                angle = angle,
+                stops = stops,
+                position = new Vector2(0.5f, 0.5f),
+                shape = BackgroundGradientShape.Ellipse,
+                size = BackgroundGradientSize.FarthestCorner,
+            };
+        }
+
+        BackgroundGradient ParseRadialGradient(ref int cursor, int argsEnd)
+        {
+            var shape = BackgroundGradientShape.Ellipse;
+            var size = BackgroundGradientSize.FarthestCorner;
+            var position = new Vector2(0.5f, 0.5f);
+
+            // Prefix phase (optional): shape / size / position up to the first comma.
+            while (cursor < argsEnd)
+            {
+                var value = GetValue(cursor);
+                var vt = value.handle.valueType;
+
+                if (vt == StyleValueType.CommaSeparator)
+                {
+                    cursor++;
+                    break;
+                }
+
+                if (vt == StyleValueType.Enum)
+                {
+                    var ident = value.sheet.ReadEnum(value.handle);
+
+                    if (string.Equals(ident, "circle", StringComparison.OrdinalIgnoreCase))
+                    {
+                        // circle needs element-aspect-aware UVs; the hash-cached baker can't deliver — coerce to ellipse.
+                        if (!s_WarnedCircleCoerce)
+                        {
+                            s_WarnedCircleCoerce = true;
+                            Debug.LogWarning(
+                                "radial-gradient(circle, ...) is not supported on rectangular " +
+                                "elements yet; falling back to `ellipse` (which stretches " +
+                                "with the element's aspect ratio).");
+                        }
+                        shape = BackgroundGradientShape.Ellipse;
+                        cursor++;
+                        continue;
+                    }
+                    if (string.Equals(ident, "ellipse", StringComparison.OrdinalIgnoreCase))
+                    {
+                        shape = BackgroundGradientShape.Ellipse;
+                        cursor++;
+                        continue;
+                    }
+                    if (TryGetRadialExtent(ident, out var extent))
+                    {
+                        size = extent;
+                        cursor++;
+                        continue;
+                    }
+                    if (string.Equals(ident, "at", StringComparison.OrdinalIgnoreCase))
+                    {
+                        cursor++;
+                        position = ReadRadialPosition(ref cursor, argsEnd);
+                        continue;
+                    }
+                    break; // likely a named color — prefix done
+                }
+
+                break; // color/dimension before a comma → no prefix
+            }
+
+            var stops = ReadColorStops(ref cursor, argsEnd);
+            if (stops.Length == 0)
+                return default;
+
+            return new BackgroundGradient
+            {
+                type = GradientType.Radial,
+                angle = 0f,
+                stops = stops,
+                position = position,
+                shape = shape,
+                size = size,
+            };
+        }
+
+        BackgroundGradientStop[] ReadColorStops(ref int cursor, int argsEnd)
+        {
+            var stops = new List<BackgroundGradientStop>(4);
+            var hasExplicitPosition = new List<bool>(4);
+
+            while (cursor < argsEnd)
+            {
+                var value = GetValue(cursor);
+                var vt = value.handle.valueType;
+
+                if (vt == StyleValueType.CommaSeparator)
+                {
+                    cursor++;
+                    continue;
+                }
+
+                if (!TryReadStopColor(value, out var color))
+                {
+                    Debug.LogWarning($"Unexpected value type '{vt}' in gradient color-stop list");
+                    cursor++;
+                    continue;
+                }
+                cursor++;
+
+                bool gotPosition = false;
+                float position = 0f;
+                bool isPercent = false;
+                if (cursor < argsEnd)
+                {
+                    var nextVal = GetValue(cursor);
+                    if (nextVal.handle.valueType == StyleValueType.Dimension)
+                    {
+                        var dim = nextVal.sheet.ReadDimension(nextVal.handle);
+                        if (dim.unit == Dimension.Unit.Percent)
+                        {
+                            position = dim.value / 100f;
+                            isPercent = true;
+                            gotPosition = true;
+                            cursor++;
+                        }
+                        else if (dim.unit == Dimension.Unit.Pixel)
+                        {
+                            // Pixel-positioned stops can't be resolved against the element size at bake
+                            // time (the atlas is size-independent). Consume the token and treat the stop
+                            // as auto-distributed so the gradient still looks sensible.
+                            if (!s_WarnedPixelStopPosition)
+                            {
+                                s_WarnedPixelStopPosition = true;
+                                Debug.LogWarning(
+                                    "Pixel-positioned gradient stops (e.g. `red 10px`) aren't supported; " +
+                                    "the position is dropped and the stop is auto-distributed.");
+                            }
+                            cursor++;
+                        }
+                    }
+                }
+
+                stops.Add(new BackgroundGradientStop
+                {
+                    color = color,
+                    position = position,
+                    positionIsPercent = !gotPosition || isPercent,
+                });
+                hasExplicitPosition.Add(gotPosition);
+            }
+
+            if (stops.Count == 0)
+                return Array.Empty<BackgroundGradientStop>();
+
+            // Auto-distribute stops without explicit positions; anchor endpoints to 0%/100%.
+            if (stops.Count >= 1 && !hasExplicitPosition[0])
+            {
+                var s = stops[0];
+                s.position = 0f;
+                s.positionIsPercent = true;
+                stops[0] = s;
+                hasExplicitPosition[0] = true;
+            }
+            if (stops.Count >= 2 && !hasExplicitPosition[stops.Count - 1])
+            {
+                var s = stops[stops.Count - 1];
+                s.position = 1f;
+                s.positionIsPercent = true;
+                stops[stops.Count - 1] = s;
+                hasExplicitPosition[stops.Count - 1] = true;
+            }
+            for (int i = 1; i < stops.Count - 1; i++)
+            {
+                if (hasExplicitPosition[i]) continue;
+                int prev = i - 1;
+                int next = i + 1;
+                while (next < stops.Count && !hasExplicitPosition[next]) next++;
+                if (next >= stops.Count) break; // shouldn't happen given anchoring above
+                int gap = next - prev;
+                for (int j = prev + 1; j < next; j++)
+                {
+                    float t = (float)(j - prev) / gap;
+                    var s = stops[j];
+                    // Percent-positioned stops only; pixel positions stay as-authored.
+                    if (!hasExplicitPosition[j])
+                    {
+                        s.position = Mathf.Lerp(stops[prev].position, stops[next].position, t);
+                        s.positionIsPercent = stops[prev].positionIsPercent && stops[next].positionIsPercent;
+                        stops[j] = s;
+                        hasExplicitPosition[j] = true;
+                    }
+                }
+                i = next - 1;
+            }
+
+            return stops.ToArray();
+        }
+
+        Vector2 ReadRadialPosition(ref int cursor, int argsEnd)
+        {
+            // CSS <position> after `at`: 1-2 tokens → single fraction-of-element-box Vector2 (default: center).
+            var pos = new Vector2(0.5f, 0.5f);
+            int read = 0;
+            float pendingX = float.NaN;
+            float pendingY = float.NaN;
+
+            while (cursor < argsEnd && read < 2)
+            {
+                var value = GetValue(cursor);
+                var vt = value.handle.valueType;
+
+                if (vt == StyleValueType.CommaSeparator)
+                    break;
+
+                if (vt == StyleValueType.Enum)
+                {
+                    var ident = value.sheet.ReadEnum(value.handle);
+                    if (TryGetPositionFraction(ident, out var fracX, out var fracY))
+                    {
+                        if (!float.IsNaN(fracX)) pendingX = fracX;
+                        if (!float.IsNaN(fracY)) pendingY = fracY;
+                        cursor++;
+                        read++;
+                        continue;
+                    }
+                    break;
+                }
+
+                if (vt == StyleValueType.Dimension)
+                {
+                    var dim = value.sheet.ReadDimension(value.handle);
+                    float fraction;
+                    if (dim.unit == Dimension.Unit.Percent)
+                    {
+                        fraction = dim.value / 100f;
+                    }
+                    else
+                    {
+                        // Non-percent units aren't resolvable without the element's bounds; center as a safe fallback.
+                        if (!s_WarnedRadialPositionUnit)
+                        {
+                            s_WarnedRadialPositionUnit = true;
+                            Debug.LogWarning(
+                                "radial-gradient positions only support percentages; " +
+                                "non-percent values fall back to the center (50%).");
+                        }
+                        fraction = 0.5f;
+                    }
+                    if (float.IsNaN(pendingX)) pendingX = fraction;
+                    else if (float.IsNaN(pendingY)) pendingY = fraction;
+                    cursor++;
+                    read++;
+                    continue;
+                }
+
+                break;
+            }
+
+            if (!float.IsNaN(pendingX)) pos.x = pendingX;
+            if (!float.IsNaN(pendingY)) pos.y = pendingY;
+            return pos;
+        }
+
+        static bool TryReadAngle(StylePropertyValue value, out float radians)
+        {
+            radians = 0f;
+            // CSS treats a bare `0` (a plain float, no unit) as a valid <angle>.
+            if (value.handle.valueType == StyleValueType.Float
+                && Mathf.Approximately(value.sheet.ReadFloat(value.handle), 0f))
+                return true;
+            if (value.handle.valueType != StyleValueType.Dimension) return false;
+            var dim = value.sheet.ReadDimension(value.handle);
+            switch (dim.unit)
+            {
+                case Dimension.Unit.Degree:   radians = dim.value * Mathf.Deg2Rad; return true;
+                case Dimension.Unit.Gradian:  radians = dim.value * (Mathf.PI / 200f); return true;
+                case Dimension.Unit.Radian:   radians = dim.value; return true;
+                case Dimension.Unit.Turn:     radians = dim.value * (2f * Mathf.PI); return true;
+                default: return false;
+            }
+        }
+
+        static bool TryGetSideAngle(string sideKeyword, out float radians)
+        {
+            switch (sideKeyword.ToLowerInvariant())
+            {
+                case "top":    radians = 0f;                    return true;
+                case "right":  radians = Mathf.PI / 2f;         return true;
+                case "bottom": radians = Mathf.PI;              return true;
+                case "left":   radians = 3f * Mathf.PI / 2f;    return true;
+                default:       radians = 0f;                    return false;
+            }
+        }
+
+        static float AverageAngles(float a, float b)
+        {
+            // Bisect the shorter arc between a and b on the unit circle.
+            float twoPi = 2f * Mathf.PI;
+            float diff = b - a;
+            if (diff > Mathf.PI) diff -= twoPi;
+            else if (diff < -Mathf.PI) diff += twoPi;
+            float mid = a + diff * 0.5f;
+            if (mid < 0f) mid += twoPi;
+            if (mid >= twoPi) mid -= twoPi;
+            return mid;
+        }
+
+        static bool TryGetRadialExtent(string kw, out BackgroundGradientSize size)
+        {
+            switch (kw.ToLowerInvariant())
+            {
+                case "closest-corner":  size = BackgroundGradientSize.ClosestCorner;  return true;
+                case "closest-side":    size = BackgroundGradientSize.ClosestSide;    return true;
+                case "farthest-corner": size = BackgroundGradientSize.FarthestCorner; return true;
+                case "farthest-side":   size = BackgroundGradientSize.FarthestSide;   return true;
+                default: size = BackgroundGradientSize.FarthestCorner; return false;
+            }
+        }
+
+        static bool TryGetPositionFraction(string kw, out float fracX, out float fracY)
+        {
+            fracX = float.NaN;
+            fracY = float.NaN;
+            switch (kw.ToLowerInvariant())
+            {
+                case "left":   fracX = 0f;   return true;
+                case "right":  fracX = 1f;   return true;
+                case "top":    fracY = 0f;   return true;
+                case "bottom": fracY = 1f;   return true;
+                // `center` is the "default axis" — leaves both fractions NaN so the caller
+                // doesn't overwrite an axis already set by a paired keyword. Unset axes fall
+                // back to 0.5 in the finalizer, so `at center` alone still yields (0.5, 0.5).
+                case "center": return true;
+                default: return false;
+            }
+        }
+
+        bool TryReadStopColor(StylePropertyValue value, out Color color)
+        {
+            color = default;
+            var vt = value.handle.valueType;
+            if (vt == StyleValueType.Color)
+            {
+                color = value.sheet.ReadColor(value.handle);
+                return true;
+            }
+            if (vt == StyleValueType.Enum)
+            {
+                var colorName = value.sheet.ReadAsString(value.handle);
+                if (StyleSheetColor.TryGetColor(colorName, out color))
+                    return true;
+            }
+            return false;
         }
 
         public void ReadListEasingFunction(ref UnmanagedRefCountedList<EasingFunction> result, int index)

@@ -5,15 +5,21 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.TerrainTools
 {
     public static class PaintDetailsToolUtility
     {
+        [NoAutoStaticsCleanup] // value-type cache sentinel; cache is invalidated by comparing against the terrain's current dirty count
         private static int s_LastTerrainDataDirtyCount = -1;
+        [NoAutoStaticsCleanup] // value-type cache key; invalidated via dirty-count/density comparison
         private static float s_LastTerrainDetailDensity = 0.0f;
+        [NoAutoStaticsCleanup] // value-type (Vector2Int[]) cache; rebuilt when the dirty-count check fails
         private static Vector2Int[] s_CachedClampedPatches;
+        [NoAutoStaticsCleanup] // value-type UI flag; recomputed each cache rebuild
         private static bool s_ShowTooManyDetailText = false;
+        [NoAutoStaticsCleanup] // value-typed memoization cache (Vector2Int->Vector2); no user refs, invalidated via dirty-count check
         private static Dictionary<Vector2Int, Vector2> s_CachedPatchHeightMinMax = new Dictionary<Vector2Int, Vector2>();
         private static readonly GUIContent k_TooManyDetails = EditorGUIUtility.TrTextContent(
             "This area contains too many detail objects.\nDecrease the detail object density or remove some by pressing Ctrl while you paint.",

@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor.Build.Profile;
 using UnityEditor.Connect;
 using UnityEditor.EngineDiagnostics;
@@ -83,6 +84,7 @@ namespace UnityEditor.InsightsEditor
 
         // Change to ordering in UI warrants mapping
         [VisibleToOtherModules]
+        [NoAutoStaticsCleanup] // immutable index<->state lookup table of value types; safe to persist across code reload
         internal static readonly ReadOnlyDictionary<int, BuildProfileEngineDiagnosticsState> k_IndexToBuildProfileEngineDiagnosticsState =
             new(new Dictionary<int, BuildProfileEngineDiagnosticsState>
         {
@@ -91,6 +93,7 @@ namespace UnityEditor.InsightsEditor
             { 2, BuildProfileEngineDiagnosticsState.Enabled }
         });
         [VisibleToOtherModules]
+        [NoAutoStaticsCleanup] // immutable state<->index lookup table of value types; safe to persist across code reload
         internal static readonly ReadOnlyDictionary<BuildProfileEngineDiagnosticsState, int> k_BuildProfileEngineDiagnosticsStateToIndex = new(
             new Dictionary<BuildProfileEngineDiagnosticsState, int>
         {
@@ -98,7 +101,8 @@ namespace UnityEditor.InsightsEditor
             { BuildProfileEngineDiagnosticsState.Disabled, 1 },
             { BuildProfileEngineDiagnosticsState.Enabled, 2 }
         });
-        static ReadOnlyDictionary<bool, string> k_EngineDiagnosticsEnabledToStringMap = new(
+        [NoAutoStaticsCleanup] // immutable bool->label lookup table of value types/strings; safe to persist across code reload
+        static readonly ReadOnlyDictionary<bool, string> k_EngineDiagnosticsEnabledToStringMap = new(
             new Dictionary<bool, string>
         {
             { false, TrText.k_EngineDiagnosticsStateDropdownDisabled },

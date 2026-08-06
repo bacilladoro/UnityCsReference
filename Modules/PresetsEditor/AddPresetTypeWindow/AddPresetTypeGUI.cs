@@ -11,7 +11,7 @@ namespace UnityEditor.Presets
     {
         private static class Styles
         {
-            public static GUIStyle itemStyle = "DD LargeItemStyle";
+            public static readonly GUIStyle itemStyle = "DD LargeItemStyle";
         }
 
         private Vector2 m_IconSize = new Vector2(16, 16);

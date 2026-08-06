@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using System.Collections.Generic;
 
@@ -13,7 +14,8 @@ namespace UnityEditor
         {
             public GUIStyle selectionRect = "SelectionRect";
         }
-        static Styles ms_Styles = new Styles();
+        [NoAutoStaticsCleanup] // lightweight style wrapper with no runtime-state-dependent content; safe to persist
+        static readonly Styles ms_Styles = new Styles();
 
         // Copied from GUI class and modified slightly to not require
         // calls to methods that are internal to the GUI class
@@ -51,11 +53,12 @@ namespace UnityEditor
             return false;
         }
 
-        static int repeatButtonHash = "repeatButton".GetHashCode();
+        static readonly int repeatButtonHash = "repeatButton".GetHashCode();
 
+        [NoAutoStaticsCleanup] // transient scroll repeat timestamp; any stale value clears on next scroll start
         static float nextScrollStepTime = 0;
-        static int firstScrollWait = 250; // ms
-        static int scrollWait = 30; // ms
+        static readonly int firstScrollWait = 250; // ms
+        static readonly int scrollWait = 30; // ms
 
         /// *undocumented*
         // Copied from GUI class and modified slightly to not require
@@ -91,6 +94,7 @@ namespace UnityEditor
             return changed;
         }
 
+        [NoAutoStaticsCleanup] // transient active scroller control ID; 0 default is correct after reload
         static int scrollControlID;
         public static void MinMaxScroller(Rect position, int id, ref float value, ref float size, float visualStart, float visualEnd, float startLimit, float endLimit, GUIStyle slider, GUIStyle thumb, GUIStyle leftButton, GUIStyle rightButton, bool horiz)
         {
@@ -157,23 +161,30 @@ namespace UnityEditor
             public int whereWeDrag = -1;        // which part are we dragging? 0 = middle, 1 = min, 2 = max, 3 = min trough, 4 = max trough
         }
 
+        [NoAutoStaticsCleanup] // transient drag state for MinMaxSlider; null after reload is correct
         static MinMaxSliderState s_MinMaxSliderState;
-        static int kFirstScrollWait = 250; // ms
-        static int kScrollWait = 30; // ms
+        static readonly int kFirstScrollWait = 250; // ms
+        static readonly int kScrollWait = 30; // ms
+        [NoAutoStaticsCleanup] // transient scroll repeat timestamp; any stale value is harmless
         static System.DateTime s_NextScrollStepTime = System.DateTime.Now; // whatever but null
 
         // Mouse down position for
+        [NoAutoStaticsCleanup] // transient mouse-down position; reset on next MouseDown event
         private static Vector2 s_MouseDownPos = Vector2.zero;
         // Are we doing a drag selection (as opposed to when the mousedown was over a selection rect)
         enum DragSelectionState
         {
             None, DragSelecting, Dragging
         }
+        [NoAutoStaticsCleanup] // transient drag-selection state; None default is correct after reload
         static DragSelectionState s_MultiSelectDragSelection = DragSelectionState.None;
+        [NoAutoStaticsCleanup] // transient selection start position; only valid during active drag-select
         static Vector2 s_StartSelectPos = Vector2.zero;
+        [NoAutoStaticsCleanup] // transient selection backup during drag; null after reload is correct
         static List<bool> s_SelectionBackup = null;
+        [NoAutoStaticsCleanup] // transient per-frame selection snapshot; null after reload is correct
         static List<bool> s_LastFrameSelections = null;
-        internal static int s_MinMaxSliderHash = "MinMaxSlider".GetHashCode();
+        internal static readonly int s_MinMaxSliderHash = "MinMaxSlider".GetHashCode();
         /// Make a double-draggable slider that will let you specify a range of values.
         /// @param position where to draw it
         /// @param value the current start position
@@ -453,8 +464,11 @@ namespace UnityEditor
             }
         }
 
+        [NoAutoStaticsCleanup] // transient add-mode flag; false default is correct after reload
         private static bool adding = false;
+        [NoAutoStaticsCleanup] // transient initial selection snapshot during drag; only valid during active drag
         private static bool[] initSelections;
+        [NoAutoStaticsCleanup] // transient initial index during drag; 0 default is correct after reload
         private static int initIndex = 0;
 
         // Used for selecting multiple rows on the left in the animation window.

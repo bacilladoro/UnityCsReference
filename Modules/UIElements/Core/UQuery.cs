@@ -808,7 +808,6 @@ namespace UnityEngine.UIElements
         /// <summary>
         /// Selects all elements of the specified Type (eg: Label, Button, ScrollView, etc).
         /// </summary>
-        /// <param name="name">If specified, will select elements with this name.</param>
         /// <param name="className">If specified, will select elements with the given class (not to be confused with Type).</param>
         /// <returns>QueryBuilder configured with the associated selection rules.</returns>
         public UQueryBuilder<T2> OfType<T2>(UniqueStyleString className) where T2 : VisualElement

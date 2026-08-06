@@ -14,6 +14,7 @@ using UnityEditor.EditorTools;
 using UnityEditor.Overlays;
 using Object = UnityEngine.Object;
 using UnityEngine.Rendering;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -528,12 +529,12 @@ namespace UnityEditor
         public List<int> SelectedPoints { get { return m_Selection; } }
     }
 
-    class LightProbeGroupOverlay : TransientSceneViewOverlay
+    partial class LightProbeGroupOverlay : TransientSceneViewOverlay
     {
         LightProbeGroup m_Target;
         LightProbeGroupEditor m_Editor;
 
-        internal static class Styles
+        internal static partial class Styles
         {
             public static readonly GUIContent showWireframe = EditorGUIUtility.TrTextContent("Show Wireframe", "Show the tetrahedron wireframe visualizing the blending between probes.");
             public static readonly GUIContent selectedProbePosition = EditorGUIUtility.TrTextContent("Selected Probe Position", "The local position of this probe relative to the parent group.");
@@ -558,6 +559,7 @@ namespace UnityEditor
                 }
             }
 
+            [NoAutoStaticsCleanup] // lazy GUIStyle derived from EditorStyles; holds no user-code refs, safe to persist across reload
             static GUIStyle s_EditModeInfoBoxStyle;
         }
 

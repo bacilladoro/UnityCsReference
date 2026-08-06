@@ -9,7 +9,7 @@ using UnityEngine.Scripting;
 
 namespace UnityEngine.UIElements.Layout;
 
-[NativeHeader("Modules/UIElements/Core/Layout/Native/LayoutNative.h")]
+[NativeHeader("External/Yoga/LayoutNative.h")]
 static class LayoutNative
 {
     [NativeMethod(IsThreadSafe = false)]

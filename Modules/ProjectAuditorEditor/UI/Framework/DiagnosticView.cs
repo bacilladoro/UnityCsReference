@@ -31,14 +31,14 @@ namespace Unity.ProjectAuditor.Editor.UI.Framework
         public override void DrawDetails(ReportItem[] selectedIssues)
         {
             Descriptor descriptor = null;
-            var descriptorDictionary = new HashSet<Descriptor>();
+            var descriptorIdSet = new HashSet<string>();
             bool allFixed = true;
             //bool anyFixable = false;
             bool allFixable = true;
             foreach (var issue in selectedIssues)
             {
                 var currentDescriptor = issue.Id.GetDescriptor();
-                descriptorDictionary.Add(currentDescriptor);
+                descriptorIdSet.Add(currentDescriptor.Id);
                 if (allFixed && currentDescriptor.Fixer != null && issue.WasFixed == false)
                     allFixed = false;
                 //if (!anyFixable && currentDescriptor.Fixer != null)
@@ -47,7 +47,7 @@ namespace Unity.ProjectAuditor.Editor.UI.Framework
                     allFixable = false;
             }
 
-            var numSelectedIDs = descriptorDictionary.Count;
+            var numSelectedIDs = descriptorIdSet.Count;
             bool oneSelectedID = numSelectedIDs == 1;
             bool anySelectedIDs = numSelectedIDs > 0;
             bool multipleSelectedIDs = numSelectedIDs > 1;
@@ -117,6 +117,26 @@ namespace Unity.ProjectAuditor.Editor.UI.Framework
 
                 if (anySelectedIDs)
                 {
+                    var saveChanges = () =>
+                    {
+                        ProjectAuditorSettings.instance.Save();
+                        m_ViewManager.OnSelectedIssuesIgnoreRequested?.Invoke(selectedIssues);
+
+                        m_Table.Clear();
+                        m_Table.AddIssues(m_Issues);
+                        m_Table.Reload();
+                    };
+
+                    var setIgnoredForSelectedDescriptors = (bool ignored) =>
+                    {
+                        foreach (var issue in m_Issues)
+                        {
+                            if (descriptorIdSet.Contains(issue.Id))
+                                issue.IsIgnored = ignored;
+                        }
+                    };
+
+                    // Ignore
                     var issuesAreIgnored = Array.TrueForAll(selectedIssues, i => i.IsIgnored);
                     if (issuesAreIgnored)
                     {
@@ -125,12 +145,7 @@ namespace Unity.ProjectAuditor.Editor.UI.Framework
                             foreach (var t in selectedIssues)
                                 t.IsIgnored = false;
 
-                            ProjectAuditorSettings.instance.Save();
-                            m_ViewManager.OnSelectedIssuesDisplayRequested?.Invoke(selectedIssues);
-
-                            m_Table.Clear();
-                            m_Table.AddIssues(m_Issues);
-                            m_Table.Reload();
+                            saveChanges();
                         });
                     }
                     else
@@ -138,16 +153,45 @@ namespace Unity.ProjectAuditor.Editor.UI.Framework
                         DrawActionButton(selectedIssues.Length > 1 ? Contents.IgnoreAll : Contents.Ignore, () =>
                         {
                             foreach (var t in selectedIssues)
-                            {
                                 t.IsIgnored = true;
-                            }
 
-                            ProjectAuditorSettings.instance.Save();
-                            m_ViewManager.OnSelectedIssuesIgnoreRequested?.Invoke(selectedIssues);
+                            saveChanges();
+                        });
+                    }
 
-                            m_Table.Clear();
-                            m_Table.AddIssues(m_Issues);
-                            m_Table.Reload();
+                    // Suppress
+                    var suppressedDiagnostics = UserPreferences.BuildSuppressedDiagnosticsSet();
+                    var issuesAreSuppressed = Array.TrueForAll(selectedIssues, i => suppressedDiagnostics.Contains(i.Id));
+
+                    if (issuesAreSuppressed)
+                    {
+                        DrawActionButton(multipleSelectedIDs ? Contents.UnsuppressAll : Contents.Unsuppress, () =>
+                        {
+                            setIgnoredForSelectedDescriptors(false);
+                            foreach (var id in descriptorIdSet)
+                                UserPreferences.RemoveSuppressedDiagnostic(id, suppressedDiagnostics);
+
+                            saveChanges.Invoke();
+                        });
+                    }
+                    else
+                    {
+                        DrawActionButton(multipleSelectedIDs ? Contents.SuppressAll : Contents.Suppress, () =>
+                        {
+                            var title = multipleSelectedIDs ? Contents.SuppressAllTitle : Contents.SuppressTitle;
+                            var message =
+                                (multipleSelectedIDs ? string.Format(Contents.SuppressAllBody, descriptorIdSet.Count) : Contents.SuppressBody)
+                                + "\n\n"
+                                + Contents.SuppressReview;
+
+                            if (!EditorUtility.DisplayDialog(title, message, Contents.SuppressConfirm, Contents.SuppressCancel))
+                                return;
+
+                            setIgnoredForSelectedDescriptors(true);
+                            foreach (var id in descriptorIdSet)
+                                UserPreferences.AddSuppressedDiagnostic(id, suppressedDiagnostics);
+
+                            saveChanges.Invoke();
                         });
                     }
                 }
@@ -266,12 +310,24 @@ namespace Unity.ProjectAuditor.Editor.UI.Framework
         {
             public static readonly GUIContent Ignore = EditorGUIUtility.TrTextContent("Ignore Issue", "Ignore selected issue");
             public static readonly GUIContent IgnoreAll = EditorGUIUtility.TrTextContent("Ignore Issues", "Ignore selected issues");
-            public static readonly GUIContent Display = EditorGUIUtility.TrTextContent("Display", "Always show selected issue");
-            public static readonly GUIContent DisplayAll = EditorGUIUtility.TrTextContent("Display All", "Always show selected issues");
+            public static readonly GUIContent Suppress = EditorGUIUtility.TrTextContent("Suppress Issue Type", "Add this issue type to the list of suppressed issues that are not included in future reports");
+            public static readonly GUIContent SuppressAll = EditorGUIUtility.TrTextContent("Suppress Issue Types", "Add these issue types to the list of suppressed issues that are not included in future reports");
+            public static readonly GUIContent Display = EditorGUIUtility.TrTextContent("Display Issues", "Show selected issue");
+            public static readonly GUIContent DisplayAll = EditorGUIUtility.TrTextContent("Display Issues", "Show selected issues");
+            public static readonly GUIContent Unsuppress = EditorGUIUtility.TrTextContent("Unsuppress Issue Type", "Include this issue type in future reports");
+            public static readonly GUIContent UnsuppressAll = EditorGUIUtility.TrTextContent("Unsuppress Issue Types", "Include these issue types in future reports");
             public static readonly GUIContent OnlyMajor = EditorGUIUtility.TrTextContent("Only Major/Critical", "Only display the most important issues");
             public static readonly GUIContent OnlyQuickFixes = EditorGUIUtility.TrTextContent("Only Quick Fixes", "Only show issues where a Quick Fix is available");
             public static readonly GUIContent OnlyPerformanceCritical = EditorGUIUtility.TrTextContent("Only Performance Critical", "Only show issues occurring in frequently executed code, such as per-frame Update loops");
             public static readonly GUIContent UpgradeTargetVersion = EditorGUIUtility.TrTextContent("Upgrade Target Version:");
+
+            public static readonly string SuppressTitle = L10n.Tr("Suppress Issue Type");
+            public static readonly string SuppressAllTitle = L10n.Tr("Suppress Issue Types");
+            public static readonly string SuppressBody = L10n.Tr("Suppressing this issue type will ignore it in the current report, and exclude it from all future reports.");
+            public static readonly string SuppressAllBody = L10n.Tr("Suppressing these {0} issue types will ignore them in the current report, and exclude them from all future reports.");
+            public static readonly string SuppressReview = L10n.Tr("You can review and manage suppressed issue types by navigating to " + ProjectAuditor.k_PreferencesPath + " > Suppressed Issues.");
+            public static readonly string SuppressConfirm = L10n.Tr("Suppress");
+            public static readonly string SuppressCancel = L10n.Tr("Cancel");
         }
     }
 }

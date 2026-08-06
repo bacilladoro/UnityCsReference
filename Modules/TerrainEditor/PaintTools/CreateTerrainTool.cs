@@ -7,6 +7,7 @@ using System.IO;
 using UnityEngine;
 using UnityEngine.TerrainTools;
 using UnityEngine.TerrainUtils;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.TerrainTools
 {
@@ -36,6 +37,7 @@ namespace UnityEditor.TerrainTools
             public float offset;
         }
 
+        [NoAutoStaticsCleanup] // lazy GUIContent/GUIStyle styles holder; editor infra, no user refs
         private static Styles s_Styles;
 
         [SerializeField] private bool m_FillHeightmapUsingNeighbors = true;

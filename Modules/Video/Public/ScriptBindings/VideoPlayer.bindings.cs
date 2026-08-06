@@ -637,6 +637,7 @@ namespace UnityEngine.Video
     ///</example>
     [RequiredByNativeCode]
     [RequireComponent(typeof(Transform))]
+    [global::UnityEngine.NativeClass("VideoPlayer", PersistentTypeId = 328)]
     [NativeHeader("Modules/Video/Public/VideoPlayer.h")]
     public sealed partial class VideoPlayer : Behaviour
     {

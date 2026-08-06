@@ -101,6 +101,116 @@ namespace Unity.GraphToolkit.Editor
         }
 
         /// <summary>
+        /// The set of types supported by this graph, including all port types, available variable types, and available constant types.
+        /// </summary>
+        /// <remarks>
+        /// Override <see cref="BuildAvailableVariableTypes"/> or <see cref="BuildAvailableConstantTypes"/> to change
+        /// which types are included. Do not call <see cref="SupportedTypes"/> from those methods; use the
+        /// <c>baseSupportedTypes</c> parameter instead to avoid a circular dependency.
+        /// </remarks>
+        public IReadOnlyCollection<Type> SupportedTypes
+        {
+            get
+            {
+                CheckImplementation();
+                return m_Implementation.SupportedTypes;
+            }
+        }
+
+        /// <summary>
+        /// The set of types offered in the blackboard for variable creation.
+        /// </summary>
+        /// <remarks>
+        /// Override <see cref="BuildAvailableVariableTypes"/> to customize this set. Overriding that method also
+        /// affects <see cref="SupportedTypes"/>, which includes this set.
+        /// This controls what the UI offers, not what can be created. Variables of any type can still be created
+        /// programmatically via <see cref="CreateVariable(string, Type, object, VariableKind)"/> regardless of this set.
+        /// </remarks>
+        public IReadOnlyCollection<Type> AvailableVariableTypes
+        {
+            get
+            {
+                CheckImplementation();
+                return m_Implementation.AvailableVariableTypes;
+            }
+        }
+
+        /// <summary>
+        /// Builds the set of variable types offered in the blackboard for variable creation.
+        /// </summary>
+        /// <param name="baseSupportedTypes">Types auto-discovered from the graph's node port definitions, used as the base set to build upon.</param>
+        /// <returns>The types to offer in the blackboard for variable creation, or <see langword="null"/> to offer none.</returns>
+        /// <remarks>
+        /// Override this method to filter or extend the default set. The default implementation returns
+        /// <paramref name="baseSupportedTypes"/> unchanged.
+        /// This controls what the UI offers, not what can be created. Variables of any type can still be created
+        /// programmatically via <see cref="CreateVariable(string, Type, object, VariableKind)"/> regardless of this set.
+        /// Use <paramref name="baseSupportedTypes"/> as the base set; do not call <see cref="SupportedTypes"/> from
+        /// this method, as that would create a circular dependency and throw an <see cref="InvalidOperationException"/>.
+        /// </remarks>
+        /// <example>
+        /// <code><![CDATA[
+        /// protected override IEnumerable<Type> BuildAvailableVariableTypes(IReadOnlyCollection<Type> baseSupportedTypes)
+        /// {
+        ///     // Start from the auto-discovered types, then add or remove as needed.
+        ///     foreach (var t in baseSupportedTypes)
+        ///         if (t != typeof(Untyped))
+        ///             yield return t;
+        ///
+        ///     yield return typeof(Vector3);
+        /// }
+        /// ]]></code>
+        /// </example>
+        protected virtual IEnumerable<Type> BuildAvailableVariableTypes(IReadOnlyCollection<Type> baseSupportedTypes)
+            => baseSupportedTypes;
+
+        /// <summary>
+        /// The set of types offered in the graph item library for constant nodes.
+        /// </summary>
+        /// <remarks>
+        /// Override <see cref="BuildAvailableConstantTypes"/> to customize this set. Overriding that method also
+        /// affects <see cref="SupportedTypes"/>, which includes this set.
+        /// This controls what the UI offers, not what can be created. Constant nodes of any type can still be created
+        /// programmatically via <see cref="CreateConstantNode(UnityEngine.Vector2, Type, object)"/> regardless of this set.
+        /// </remarks>
+        public IReadOnlyCollection<Type> AvailableConstantTypes
+        {
+            get
+            {
+                CheckImplementation();
+                return m_Implementation.AvailableConstantTypes;
+            }
+        }
+
+        /// <summary>
+        /// Builds the set of types offered in the graph item library for constant nodes.
+        /// </summary>
+        /// <param name="baseSupportedTypes">Types auto-discovered from the graph's node port definitions, used as the base set to build upon.</param>
+        /// <returns>The types to offer in the item library for constant nodes, or <see langword="null"/> to offer none.</returns>
+        /// <remarks>
+        /// Override this method to filter or extend the default set. The default implementation returns
+        /// <paramref name="baseSupportedTypes"/> unchanged.
+        /// This controls what the UI offers, not what can be created. Constant nodes of any type can still be created
+        /// programmatically via <see cref="CreateConstantNode(UnityEngine.Vector2, Type, object)"/> regardless of this set.
+        /// Use <paramref name="baseSupportedTypes"/> as the base set; do not call <see cref="SupportedTypes"/> from
+        /// this method, as that would create a circular dependency and throw an <see cref="InvalidOperationException"/>.
+        /// </remarks>
+        /// <example>
+        /// <code><![CDATA[
+        /// protected override IEnumerable<Type> BuildAvailableConstantTypes(IReadOnlyCollection<Type> baseSupportedTypes)
+        /// {
+        ///     // Start from the auto-discovered types, then add or remove as needed.
+        ///     foreach (var t in baseSupportedTypes)
+        ///         yield return t;
+        ///
+        ///     yield return typeof(Vector3);
+        /// }
+        /// ]]></code>
+        /// </example>
+        protected virtual IEnumerable<Type> BuildAvailableConstantTypes(IReadOnlyCollection<Type> baseSupportedTypes)
+            => baseSupportedTypes;
+
+        /// <summary>
         /// Creates and adds a new variable to the graph.
         /// </summary>
         /// <param name="name">The name of the variable.</param>

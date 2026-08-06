@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine.UIElements;
 using UnityEditor.UIElements;
+using Unity.Scripting.LifecycleManagement;
 
 namespace Unity.U2D.Physics.Editor
 {
@@ -194,6 +195,8 @@ namespace Unity.U2D.Physics.Editor
         static readonly string EmptySettingsLabel = $"Select a \"{ObjectNames.NicifyVariableName(nameof(PhysicsCoreSettings2D))}\" Asset to edit ...";
         const string k_AutoEditPrefKey = "PhysicsCore2D.ProjectSettings.autoEditActiveSettings";
 
+        // Editor SettingsProvider singleton; assigned by the settings system when the provider is (re)created, so it is safe to persist across a code reload.
+        [NoAutoStaticsCleanup]
         public static PhysicsCoreSettings2DProvider Instance { get; private set; }
 
         VisualElement m_ProviderRoot;

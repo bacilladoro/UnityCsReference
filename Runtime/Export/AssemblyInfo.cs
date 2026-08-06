@@ -284,10 +284,13 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("Unity.Modules.PlayableGraph.Tests.Editor")]
 [assembly: InternalsVisibleTo("Unity.Modules.PlayableGraph.Tests")]
 [assembly: InternalsVisibleTo("Unity.Modules.GI.RealTimeGI.Tests.Editor")]
+[assembly: InternalsVisibleTo("Unity.Modules.GI.BakedGI.ShaderCompilation.Tests.Editor")]
 [assembly: InternalsVisibleTo("Unity.Modules.GI.BakedGI.EnterPlaymodeOptions.Tests.Editor")]
 [assembly: InternalsVisibleTo("Unity.Modules.GI.API.EditorBakeWithAdditiveScene.Tests.Editor")]
 [assembly: InternalsVisibleTo("Unity.Modules.GI.RealTimeGI.Tests.Runtime")]
 [assembly: InternalsVisibleTo("Unity.Modules.GI.SceneView.Tests.Editor")]
+[assembly: InternalsVisibleTo("Unity.Modules.GI.VisualisationManager.LightmapVisualisation.Tests.Editor")]
+[assembly: InternalsVisibleTo("Unity.Modules.GI.VisualisationManager.FetchPreBakedLightmaps.Tests.Editor")]
 [assembly: InternalsVisibleTo("Unity.Modules.GI.LightingDataAsset.Tests.Editor")]
 [assembly: InternalsVisibleTo("Unity.Transform.Tests.Runtime")]
 [assembly: InternalsVisibleTo("Unity.Transform.Tests.Editor")]
@@ -307,8 +310,15 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("Unity.Modules.SceneTemplateEditor.Tests.Editor")]
 // Tests/SRPTests/Projects/MultipleSRP_Tests - needed for DiagnosticSwitch class
 [assembly: InternalsVisibleTo("Unity.RenderPipelines.Multiple_SRP.EditorTests")]
+[assembly: InternalsVisibleTo("SRPSmoke.Editor.Tests")]
+[assembly: InternalsVisibleTo("Unity.Testing.SRP.Universal.Foundation.Editor")]
+[assembly: InternalsVisibleTo("Unity.Testing.HDRP_EditModeTests")]
 
 // DataModel Tests assemblies
 [assembly: InternalsVisibleTo("TestCodeAssembly")]
 [assembly: InternalsVisibleTo("TestBehaviours")]
+
+[assembly: InternalsVisibleTo("Unity.Modules.Scripting.Scripting.Tests.Playmode")]
+[assembly: InternalsVisibleTo("Unity.Modules.Scripting.Scripting.Tests.Editor")]
+[assembly: InternalsVisibleTo("Unity.Modules.Scripting.ScriptingNonBatch.Tests.Playmode")]
 

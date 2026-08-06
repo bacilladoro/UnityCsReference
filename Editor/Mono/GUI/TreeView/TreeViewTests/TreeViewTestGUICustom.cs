@@ -5,6 +5,7 @@
 using System.ComponentModel;
 using UnityEditor.IMGUI.Controls;
 using UnityEngine;
+using Unity.Scripting.LifecycleManagement;
 using TreeViewController = UnityEditor.IMGUI.Controls.TreeViewController<int>;
 using TreeViewItem = UnityEditor.IMGUI.Controls.TreeViewItem<int>;
 
@@ -15,6 +16,7 @@ namespace UnityEditor.TreeViewExamples
     {
         internal class Styles
         {
+            [NoAutoStaticsCleanup] // GUIStyle from named skin style; survives reload. public field, not made readonly (source-breaking)
             public static GUIStyle foldout = "IN Foldout";
         }
 

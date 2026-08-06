@@ -153,7 +153,7 @@ namespace UnityEngine.Audio
         /// <summary>
         /// Internal representation of flags controlling how a <see cref="ProcessorInstance"/> is handled over the course of its lifetime.
         /// </summary>
-        /// <seealso cref="ControlContext.UpdateSetting"/>
+        /// <seealso cref="ProcessorInstance.UpdateSetting"/>
         [System.Flags]
         internal enum InitializationFlags : UInt32
         {
@@ -170,7 +170,7 @@ namespace UnityEngine.Audio
 
             /// <summary>
             /// Invoke <see cref="ProcessorInstance.IRealtime.Update"/> only if data has been sent from
-            /// <see cref="ProcessorInstance.Pipe.SendData"/> or <see cref="ControlContext.SendData"/> since the last update.
+            /// <see cref="ProcessorInstance.Pipe.SendData"/> or <c>ControlContext.SendData</c> since the last update.
             /// </summary>
             UpdateProcessorIfDataIsAvailable = 1 << 3,
             /// <summary>
@@ -268,7 +268,7 @@ namespace UnityEngine.Audio
             /// <see cref="ProcessorInstance.CreationParameters.controlUpdateSetting"/>.
             /// </remarks>
             /// <seealso cref="ControlContext.Manual.Update"/>
-            /// <seealso cref="ControlContext.UpdateSetting"/>
+            /// <seealso cref="ProcessorInstance.UpdateSetting"/>
             public void Update(ControlContext context, Pipe pipe);
 
             /// <summary>
@@ -716,7 +716,7 @@ namespace UnityEngine.Audio
 
         /// <summary>
         /// Validates the validity of the handle and that you can currently call process/produce etc. with
-        /// <paramref name="header"/>.
+        /// <paramref name="handle"/>.
         /// </summary>
         public static unsafe void ValidateCanProcess(DualThreadHandle handle, in RealtimeContext ctx)
         {

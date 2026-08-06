@@ -20,6 +20,7 @@ namespace UnityEditor.AssetImporters
 
     [NativeHeader("Editor/Src/AssetPipeline/ImportLog.h")]
     [NativeHeader("Editor/Src/AssetPipeline/ImportLog.bindings.h")]
+    [NativeClass("ImportLog", PersistentTypeId = 0x027781BE)]
     [ExcludeFromObjectFactory]
     public sealed class ImportLog : Object
     {

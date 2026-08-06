@@ -116,7 +116,33 @@ namespace Unity.UIToolkit.Editor
         /// <summary>
         /// The property of the binding to create or to edit.
         /// </summary>
-        public IProperty BindableProperty => m_AttributesView.Context?.element != null ? PropertyContainer.GetProperty(m_AttributesView.Context.element, m_BindingPropertyPath) : null;
+        public IProperty BindableProperty
+        {
+            get
+            {
+                if (m_AttributesView.Context?.element == null)
+                    return null;
+                var element = m_AttributesView.Context.element;
+                PropertyContainer.TryGetProperty(ref element, m_BindingPropertyPath, out var property);
+                return property;
+            }
+        }
+
+        /// <summary>
+        /// Whether this view is editing or viewing a binding on the given element.
+        /// </summary>
+        public bool IsEditingElement(VisualElement element)
+        {
+            return Mode != BindingViewMode.Create && m_Element == element;
+        }
+
+        /// <summary>
+        /// Whether this view is editing or viewing the binding for the given element and property.
+        /// </summary>
+        public bool IsEditing(VisualElement element, string bindingPath)
+        {
+            return IsEditingElement(element) && m_BindingPropertyName == bindingPath;
+        }
 
         /// <summary>
         /// Constructor for the BindingAttributesView.
@@ -511,9 +537,9 @@ namespace Unity.UIToolkit.Editor
 
             if (m_TargetPropertyTypeName != null)
             {
-                var propertyType = BindableProperty.DeclaredValueType();
+                var propertyType = BindableProperty?.DeclaredValueType();
 
-                m_TargetPropertyTypeName.text = TypeUtility.GetTypeDisplayName(propertyType);
+                m_TargetPropertyTypeName.text = propertyType != null ? TypeUtility.GetTypeDisplayName(propertyType) : string.Empty;
                 m_TargetPropertyTypeName.tooltip = propertyType?.GetDisplayFullName();
             }
         }

@@ -6,13 +6,16 @@ using System;
 using UnityEngine.Bindings;
 using UnityEngine.Playables;
 using UnityEngine.Scripting;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Playables
 {
     [NativeHeader("Editor/Src/Playables/Playables.bindings.h")]
-    static public class Utility
+    static public partial class Utility
     {
+        [AutoStaticsCleanupOnCodeReload]
         static public event Action<PlayableGraph> graphCreated;
+        [AutoStaticsCleanupOnCodeReload]
         static public event Action<PlayableGraph> destroyingGraph;
 
         [RequiredByNativeCode]

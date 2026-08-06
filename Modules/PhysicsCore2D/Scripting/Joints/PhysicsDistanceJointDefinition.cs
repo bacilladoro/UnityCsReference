@@ -55,6 +55,33 @@ namespace Unity.U2D.Physics
         public PhysicsTransform localAnchorB { readonly get => m_LocalAnchorB; set => m_LocalAnchorB = value; }
 
         /// <summary>
+        /// When set, <see cref="localAnchorA"/> is recomputed from the bodies' current placement at create so both anchor frames coincide in world space.
+        /// </summary>
+        /// <remarks>
+        /// This removes the solver jolt from an inconsistent initial configuration.
+        /// It is applied at create only; the authored <see cref="localAnchorA"/> is ignored while this is set.
+        /// </remarks>
+        public bool autoAnchorA { readonly get => m_AutoAnchorA; set => m_AutoAnchorA = value; }
+
+        /// <summary>
+        /// When set, <see cref="localAnchorB"/> is recomputed from the bodies' current placement at create so both anchor frames coincide in world space.
+        /// </summary>
+        /// <remarks>
+        /// This removes the solver jolt from an inconsistent initial configuration.
+        /// It is applied at create only; the authored <see cref="localAnchorB"/> is ignored while this is set.
+        /// </remarks>
+        public bool autoAnchorB { readonly get => m_AutoAnchorB; set => m_AutoAnchorB = value; }
+
+        /// <summary>
+        /// When set, <see cref="distance"/> is recomputed at create from the world separation of the two anchors.
+        /// </summary>
+        /// <remarks>
+        /// It is measured after any <see cref="autoAnchorA"/>/<see cref="autoAnchorB"/> resolution, so it reflects the anchors actually used.
+        /// It is applied at create only; the authored <see cref="distance"/> is ignored while this is set.
+        /// </remarks>
+        public bool autoDistance { readonly get => m_AutoDistance; set => m_AutoDistance = value; }
+
+        /// <summary>
         /// The desired distance constraint i.e. the rest length of this joint.
         /// This has a lower stable limit of just above zero.
         /// </summary>
@@ -165,6 +192,9 @@ namespace Unity.U2D.Physics
         PhysicsBody m_BodyB;
         [SerializeField] PhysicsTransform m_LocalAnchorA;
         [SerializeField] PhysicsTransform m_LocalAnchorB;
+        [SerializeField] bool m_AutoAnchorA;
+        [SerializeField] bool m_AutoAnchorB;
+        [SerializeField] bool m_AutoDistance;
         [SerializeField] [Min(float.Epsilon)] float m_Distance;
         [SerializeField] bool m_EnableSpring;
         [SerializeField] [Min(0.0f)] float m_SpringFrequency;

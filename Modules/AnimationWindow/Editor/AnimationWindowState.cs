@@ -14,6 +14,7 @@ using TreeViewItem = UnityEditor.IMGUI.Controls.TreeViewItem<int>;
 using static UnityEditor.AnimationUtility;
 using UnityEditor.AnimationWindowBuiltin;
 using UnityEngine.Animations;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditorInternal
 {
@@ -58,6 +59,7 @@ namespace UnityEditorInternal
         [NonSerialized] public Action<float> onFrameRateChange;
         [NonSerialized] public Action onRefresh;
 
+        [AutoStaticsCleanupOnCodeReload]
         private static List<AnimationWindowKeyframe> s_KeyframeClipboard; // For copy-pasting keyframes
 
         private bool m_AllCurvesCacheDirty = true;

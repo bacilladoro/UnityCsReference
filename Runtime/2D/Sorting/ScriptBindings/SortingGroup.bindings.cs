@@ -11,6 +11,7 @@ using UnityEngine.Scripting;
 namespace UnityEngine.Rendering
 {
     [RequireComponent(typeof(Transform))]
+    [global::UnityEngine.NativeClass("SortingGroup", PersistentTypeId = 210)]
     [NativeHeader("Runtime/2D/Sorting/SortingGroup.h")]
     public sealed partial class SortingGroup : Behaviour
     {

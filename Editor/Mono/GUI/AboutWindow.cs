@@ -8,12 +8,14 @@ using UnityEngine.Scripting;
 using UnityEditor.Experimental;
 using UnityEditorInternal;
 using UnityEngine.UIElements;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
-    internal class AboutWindow : EditorWindow
+    internal partial class AboutWindow : EditorWindow
     {
         // s_Instance is nulled when the window is closed (OnDestroy)
+        [AutoStaticsCleanupOnCodeReload]
         static AboutWindow s_Instance;
 
         [RequiredByNativeCode]

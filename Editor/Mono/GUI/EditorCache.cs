@@ -110,10 +110,12 @@ namespace UnityEditor
             System.GC.SuppressFinalize(this);
         }
 
+#pragma warning disable UA5000 // The Avoid Finalizer Analyzer produces compile errors for any new finalizers. This pre-existing finalizer declaration has been suppressed, but should be rewritten if possible.
         ~EditorWrapper()
         {
             Debug.LogError("Failed to dispose EditorWrapper.");
         }
+#pragma warning restore UA5000
     }
 
     internal class EditorCache : System.IDisposable
@@ -182,9 +184,11 @@ namespace UnityEditor
             System.GC.SuppressFinalize(this);
         }
 
+#pragma warning disable UA5000 // The Avoid Finalizer Analyzer produces compile errors for any new finalizers. This pre-existing finalizer declaration has been suppressed, but should be rewritten if possible.
         ~EditorCache()
         {
             Debug.LogError("Failed to dispose EditorCache.");
         }
+#pragma warning restore UA5000
     }
 } // namespace

@@ -56,10 +56,12 @@ namespace UnityEditor.LightBaking
             _ptr = ptr;
             _ownsPtr = false;
         }
+#pragma warning disable UA5000 // The Avoid Finalizer Analyzer produces compile errors for any new finalizers. This pre-existing finalizer declaration has been suppressed, but should be rewritten if possible.
         ~BakePipelineDriver()
         {
             Destroy();
         }
+#pragma warning restore UA5000
 
         public void Dispose()
         {

@@ -50,7 +50,7 @@ namespace UnityEngine
     ///It gives you control over motors, drives and joint limits for each rotation axis and and linear degree of freedom.</remarks>
     [RequireComponent(typeof(Rigidbody))]
     [NativeHeader("Modules/Physics/ConfigurableJoint.h")]
-    [NativeClass("Unity::ConfigurableJoint")]
+    [NativeClass("Unity::ConfigurableJoint", PersistentTypeId = 153)]
     public class ConfigurableJoint : Joint
     {
         ///<summary>The joint's secondary axis.</summary>

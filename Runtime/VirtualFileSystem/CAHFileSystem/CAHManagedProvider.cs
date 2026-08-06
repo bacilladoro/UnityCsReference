@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine.Bindings;
 using UnityEngine.Scripting;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEngine
 {
@@ -18,10 +19,29 @@ namespace UnityEngine
     }
 
     [RequiredByNativeCode]
-    internal static class CAHManagedRouter
+    internal static partial class CAHManagedRouter
     {
+        // Cleared on reload by s_CodeReloadCleanup, which also resets the native m_HasManagedHandlers
+        // flag; field-level cleanup would leave the flag stuck true against an empty list.
+        [NoAutoStaticsCleanup] // reset by s_CodeReloadCleanup
         static readonly List<ICAHArtifactHandler> s_Handlers = new List<ICAHArtifactHandler>();
+        [NoAutoStaticsCleanup] // synchronization primitive; no user refs, safe to persist across code reload
         static readonly ReaderWriterLockSlim s_Lock = new ReaderWriterLockSlim();
+
+        [NoAutoStaticsCleanup] // persists; LifecycleController owns the per-reload invocation
+        static readonly DelegateAutoCleanup s_CodeReloadCleanup = new DelegateAutoCleanup(
+            OnCodeReloadCleanup, typeof(CodeLoadedScope), ScopeTransitionType.Exiting, nameof(CAHManagedRouter));
+
+        // Drop handlers registered by the old ALC and tell native there are none left, keeping
+        // m_HasManagedHandlers in sync with the emptied list until handlers re-register.
+        static void OnCodeReloadCleanup()
+        {
+            using (new WriteLockScope(s_Lock))
+            {
+                s_Handlers.Clear();
+                CAHFileSystem.SetHasManagedHandlers(false);
+            }
+        }
 
         internal static void RegisterHandler(ICAHArtifactHandler handler)
         {

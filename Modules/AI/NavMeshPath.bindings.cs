@@ -40,11 +40,13 @@ namespace UnityEngine.AI
             m_Ptr = InitializeNavMeshPath();
         }
 
+#pragma warning disable UA5000 // The Avoid Finalizer Analyzer produces compile errors for any new finalizers. This pre-existing finalizer declaration has been suppressed, but should be rewritten if possible.
         ~NavMeshPath()
         {
             DestroyNavMeshPath(m_Ptr);
             m_Ptr = IntPtr.Zero;
         }
+#pragma warning restore UA5000
 
         [FreeFunction("NavMeshPathScriptBindings::InitializeNavMeshPath")]
         static extern IntPtr InitializeNavMeshPath();

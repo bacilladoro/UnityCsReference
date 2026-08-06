@@ -5,18 +5,21 @@
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using Unity.Scripting;
 using UnityEngine.UIElements;
 using UnityEngine.UIElements.Experimental;
 
 namespace UnityEditor.PackageManager.UI.Internal
 {
     [UxmlElement]
-    internal partial class ExtendedHelpBox : HelpBox
+    internal partial class ExtendedHelpBox : VisualElement
     {
         private const string k_WithLinksUssClass = "with-links";
+        private const string k_ReadMoreLinkId = "readMore";
         internal static string embeddedLinkColor => EditorGUIUtility.isProSkin ? "#4f80f8" : "#0808fc";
 
         protected readonly IApplicationProxy m_Application;
+        private readonly HelpBox m_HelpBox;
 
         public ExtendedHelpBox() : this(ServicesContainer.instance.Resolve<IApplicationProxy>())
         {
@@ -25,69 +28,98 @@ namespace UnityEditor.PackageManager.UI.Internal
         public ExtendedHelpBox(IApplicationProxy application)
         {
             m_Application = application;
+            m_HelpBox = new HelpBox();
+            Add(m_HelpBox);
         }
 
         private readonly Dictionary<string, string> m_LinkIdToUrlMap = new ();
         private bool m_HasRegisteredLinkCallbacks = false;
-        public new string text
+        private string m_Text = string.Empty;
+
+        [UxmlAttribute, MultilineTextField]
+        public string text
         {
-            get => base.text;
+            get => m_Text;
             set
             {
-                if (value == base.text)
+                var newValue = value ?? string.Empty;
+                if (newValue == m_Text)
                     return;
 
-                ReplaceLinkTagsAndRegisterEventsIfNeeded(value);
+                m_Text = newValue;
+                BuildTextWithLinkTags();
             }
         }
 
-        private void ReplaceLinkTagsAndRegisterEventsIfNeeded(string value)
+        private void BuildTextWithLinkTags()
         {
+            var composed = m_Text;
+            if (!string.IsNullOrEmpty(m_ReadMoreUrl))
+            {
+                var id = string.IsNullOrEmpty(m_ReadMoreAnalyticsId) ? k_ReadMoreLinkId : m_ReadMoreAnalyticsId;
+                var separator = string.IsNullOrEmpty(m_Text) ? string.Empty : " ";
+                composed = $"{m_Text}{separator}<link id=\"{id}\" url=\"{m_ReadMoreUrl}\">{m_ReadMoreText}</link>";
+            }
+
             const string linkTagPattern = @"<link\s+id=""(?<id>[^""]+)""\s+url=""(?<url>[^""]+)"">(?<text>.*?)</link>";
 
             m_LinkIdToUrlMap.Clear();
             // We remove the url from the original text and store it in a dictionary with the id as key, so that we can use it later when the link is clicked.
             // Leaving it in the string will cause the link tag to be rendered as a normal text and the url will be visible to users.
             // We also wrap the link text with a color to make it look like a link since we cannot have uss for link tags.
-            var finalText = Regex.Replace(value, linkTagPattern, match =>
+            var finalText = Regex.Replace(composed, linkTagPattern, match =>
             {
                 var id = match.Groups["id"].Value;
                 var url = match.Groups["url"].Value;
                 var linkDisplayText = match.Groups["text"].Value;
-                m_LinkIdToUrlMap[id] = url;
-                return $"<link=\"{id}\"><color={embeddedLinkColor}>{linkDisplayText}</color></link>";
+                // In case of two links having the same ID, we correct it for the code to work properly,
+                // but log a message internally to raise the issue
+                var suffix = 1;
+                var uniqueId = id;
+                while (m_LinkIdToUrlMap.ContainsKey(uniqueId))
+                    uniqueId = $"{id}-{suffix++}";
+                m_LinkIdToUrlMap[uniqueId] = url;
+                if (Unsupported.IsDeveloperBuild() && uniqueId != id)
+                    Debug.LogError("[Package Manager Window - Internal] Link ID" + id +
+                                   " is used more than once in an ExtendedHelpBox text, use different IDs for different links.");
+
+                return $"<link=\"{uniqueId}\"><color={embeddedLinkColor}>{linkDisplayText}</color></link>";
             });
 
-            base.text = finalText;
+            m_HelpBox.text = finalText;
+
             if (m_LinkIdToUrlMap.Count == 0 || m_HasRegisteredLinkCallbacks)
                 return;
-
             // There could be multiple labels in the helpBox, we do this to make sure we get the correct one
-            var mainLabel = this.Query<Label>().Where(i => i.text == text).First();
+            var mainLabel = m_HelpBox.Query<Label>().Where(i => i.text == finalText).First();
             if (mainLabel == null)
                 return;
 
-            mainLabel.RegisterCallback<PointerUpLinkTagEvent>(evt =>
-            {
-                if (!m_LinkIdToUrlMap.TryGetValue(evt.linkID, out var url))
-                    return;
-                m_Application.OpenURL(url);
-                PackageManagerReadMoreClickedAnalytics.SendEvent(evt.linkID, url);
-            });
+            mainLabel.RegisterCallback<PointerUpLinkTagEvent>(evt => OnPointerUpLinkTagEvent(evt.linkID));
             mainLabel.RegisterCallback<PointerOverLinkTagEvent>(_ => mainLabel.AddToClassList("link-hover"));
             mainLabel.RegisterCallback<PointerOutLinkTagEvent>(_ => mainLabel.RemoveFromClassList("link-hover"));
             m_HasRegisteredLinkCallbacks = true;
         }
 
-        public new HelpBoxMessageType messageType
+        // This function is made internal to be used in tests.
+        internal void OnPointerUpLinkTagEvent(string linkId)
         {
-            get => base.messageType;
+            if (!m_LinkIdToUrlMap.TryGetValue(linkId, out var url))
+                return;
+            m_Application.OpenURL(url);
+            PackageManagerReadMoreClickedAnalytics.SendEvent(linkId, url);
+        }
+
+        [UxmlAttribute]
+        public HelpBoxMessageType messageType
+        {
+            get => m_HelpBox.messageType;
             set
             {
-                if (value == base.messageType)
+                if (value == m_HelpBox.messageType)
                     return;
 
-                base.messageType = value;
+                m_HelpBox.messageType = value;
 
                 if (value != HelpBoxMessageType.None && m_CustomIcon != Icon.None)
                 {
@@ -110,8 +142,8 @@ namespace UnityEditor.PackageManager.UI.Internal
                 if (value == m_CustomIcon)
                     return;
 
-                if (value != Icon.None && base.messageType != HelpBoxMessageType.None)
-                    base.messageType = HelpBoxMessageType.None;
+                if (value != Icon.None && m_HelpBox.messageType != HelpBoxMessageType.None)
+                    m_HelpBox.messageType = HelpBoxMessageType.None;
 
                 m_CustomIcon = value;
                 UpdateCustomIcon(value);
@@ -133,12 +165,12 @@ namespace UnityEditor.PackageManager.UI.Internal
                 if (m_CustomIconElement == null)
                 {
                     m_CustomIconElement = new VisualElement();
-                    m_CustomIconElement.AddToClassList(iconUssClassName);
+                    m_CustomIconElement.AddToClassList(HelpBox.iconUssClassName);
                 }
 
                 m_CustomIconElement.AddToClassList(m_CustomIconClass);
                 if (m_CustomIconElement.parent == null)
-                    this.Q<VisualElement>(className: "unity-help-box__top-container")?.Insert(0, m_CustomIconElement);
+                    m_HelpBox.Q<VisualElement>(className: "unity-help-box__top-container")?.Insert(0, m_CustomIconElement);
             }
         }
 
@@ -154,8 +186,7 @@ namespace UnityEditor.PackageManager.UI.Internal
                 if ((m_ReadMoreText ?? string.Empty) == newValue)
                     return;
                 m_ReadMoreText = newValue;
-                if (m_ReadMoreButton != null)
-                    m_ReadMoreButton.text = m_ReadMoreText;
+                BuildTextWithLinkTags();
             }
         }
 
@@ -171,7 +202,7 @@ namespace UnityEditor.PackageManager.UI.Internal
                 if ((m_ReadMoreUrl ?? string.Empty) == newValue)
                     return;
                 m_ReadMoreUrl = newValue;
-                OnReadMoreUrlChanged();
+                BuildTextWithLinkTags();
             }
         }
 
@@ -187,40 +218,18 @@ namespace UnityEditor.PackageManager.UI.Internal
                 if ((m_ReadMoreAnalyticsId ?? string.Empty) == newValue)
                     return;
                 m_ReadMoreAnalyticsId = newValue;
+                BuildTextWithLinkTags();
             }
         }
-
-        private Button m_ReadMoreButton;
 
         private Button m_CustomLinkButton;
         private VisualElement m_CustomLinkContainer;
-
-        private void OnReadMoreUrlChanged()
-        {
-            var showReadMoreButton = !string.IsNullOrEmpty(m_ReadMoreUrl);
-            if (showReadMoreButton)
-            {
-                if (m_ReadMoreButton == null)
-                {
-                    m_ReadMoreButton = new Button { text = m_ReadMoreText }.WithClassList("link");
-                    m_ReadMoreButton.clickable.clicked += OnReadMoreClicked;
-                }
-
-                m_ReadMoreButton.tooltip = m_ReadMoreUrl;
-                if (m_ReadMoreButton.parent == null)
-                    AddLinkToHierarchy(m_ReadMoreButton);
-
-            }
-            else
-                RemoveLinkFromHierarchy(m_ReadMoreButton);
-            EnableInClassList(k_WithLinksUssClass, showReadMoreButton);
-        }
 
         public void SetCustomLinkButton(string linkButtonText, Action onClick, string linkButtonTooltip = "")
         {
             RemoveLinkFromHierarchy(m_CustomLinkButton);
             var showLinkCustomButton = !string.IsNullOrEmpty(linkButtonText) && onClick != null;
-            EnableInClassList(k_WithLinksUssClass, showLinkCustomButton);
+            m_HelpBox.EnableInClassList(k_WithLinksUssClass, showLinkCustomButton);
             if (!showLinkCustomButton)
                 return;
 
@@ -230,21 +239,12 @@ namespace UnityEditor.PackageManager.UI.Internal
             AddLinkToHierarchy(m_CustomLinkButton);
         }
 
-        private void OnReadMoreClicked()
-        {
-            if (string.IsNullOrEmpty(readMoreUrl))
-                return;
-
-            m_Application.OpenURL(readMoreUrl);
-            PackageManagerReadMoreClickedAnalytics.SendEvent(readMoreAnalyticsId, readMoreUrl);
-        }
-
         private void AddLinkToHierarchy(Button linkButton)
         {
             if (m_CustomLinkContainer == null)
             {
                 m_CustomLinkContainer = new VisualElement { name = "customLinkContainer" };
-                Insert(childCount - 1, m_CustomLinkContainer);
+                m_HelpBox.Insert(m_HelpBox.childCount - 1, m_CustomLinkContainer);
             }
 
             m_CustomLinkContainer.Add(linkButton);

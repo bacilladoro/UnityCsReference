@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Bindings;
 using UnityEngine.Pool;
 
@@ -25,7 +26,7 @@ namespace UnityEngine
     }
 
     [VisibleToOtherModules("UnityEngine.UIElementsModule", "UnityEditor.UIBuilderModule", "UnityEditor.UIToolkitAuthoringModule")]
-    internal static class EnumDataUtility
+    internal static partial class EnumDataUtility
     {
         public enum CachedType
         {
@@ -39,6 +40,7 @@ namespace UnityEngine
             IncludeAllObsolete
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         private static readonly Dictionary<(CachedType, Type), EnumData> s_EnumData = new();
 
         public static EnumData GetCachedEnumData(Type enumType, CachedType cachedType = CachedType.IncludeObsoleteExceptErrors, Func<string, string> nicifyName = null)

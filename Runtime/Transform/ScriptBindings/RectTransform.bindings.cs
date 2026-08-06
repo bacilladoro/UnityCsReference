@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Bindings;
 using UnityEngine.Scripting;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEngine
 {
@@ -45,7 +46,7 @@ namespace UnityEngine
 
     [NativeHeader("Editor/Src/Animation/AnimationModeSnapshot.h")]
     [NativeHeader("Editor/Src/Undo/PropertyUndoManager.h")]
-    public struct DrivenRectTransformTracker
+    public partial struct DrivenRectTransformTracker
     {
         private List<RectTransform> m_Tracked;
 
@@ -69,6 +70,7 @@ namespace UnityEngine
         [FreeFunction("GetPropertyUndoManager().IsUndoingOrRedoing")]
         static extern bool IsUndoingOrRedoing();
 
+        [AutoStaticsCleanupOnCodeReload] // undo-blocking flag; reset to default (recording enabled) after code reload
         private static bool s_BlockUndo;
 
         public static void StopRecordingUndo() { s_BlockUndo = true; }
@@ -120,9 +122,9 @@ namespace UnityEngine
     }
 
     [NativeHeader("Runtime/Transform/RectTransform.h"),
-     NativeClass("UI::RectTransform")]
+     NativeClass("UI::RectTransform", PersistentTypeId = 224)]
     [UIModuleHelpURL("class-RectTransform")]
-    public sealed class RectTransform : Transform
+    public sealed partial class RectTransform : Transform
     {
         public enum Edge { Left = 0, Right = 1, Top = 2, Bottom = 3 }
         public enum Axis { Horizontal = 0, Vertical = 1 }
@@ -137,6 +139,7 @@ namespace UnityEngine
         }
 
         public delegate void ReapplyDrivenProperties(RectTransform driven);
+        [AutoStaticsCleanupOnCodeReload]
         public static event ReapplyDrivenProperties reapplyDrivenProperties;
 
         public extern Rect rect { get; }

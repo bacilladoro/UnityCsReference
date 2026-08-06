@@ -8,6 +8,7 @@ using UnityEngine;
 namespace UnityEditor.Build.Content
 {
     [ExcludeFromPreset]
+    [NativeClass("BuildMetaDataImporter", PersistentTypeId = 0x1805dbbc)]
     internal sealed partial class BuildMetaDataImporter : AssetImporter
     {
     }

@@ -18,6 +18,7 @@ namespace UnityEngine
 {
     [NativeHeader("Runtime/Graphics/Texture.h")]
     [NativeHeader("Runtime/Streaming/TextureStreamingManager.h")]
+    [global::UnityEngine.NativeClass("Texture", PersistentTypeId = 27)]
     [UsedByNativeCode]
     public partial class Texture : Object
     {
@@ -212,6 +213,7 @@ namespace UnityEngine
     [NativeHeader("Runtime/Graphics/GeneratedTextures.h")]
     [HelpURL("texture-type-default")] // 2D texture is considering the 'default' texture, so it hasn't been given it own dedicated 'class-Texture2D' manual page
     [UsedByNativeCode]
+    [global::UnityEngine.NativeClass("Texture2D", PersistentTypeId = 28)]
     [ExcludeFromPreset]
     public sealed partial class Texture2D : Texture
     {
@@ -423,6 +425,7 @@ namespace UnityEngine
     }
 
     [NativeHeader("Runtime/Graphics/CubemapTexture.h")]
+    [global::UnityEngine.NativeClass("Cubemap", PersistentTypeId = 89)]
     [ExcludeFromPreset]
     public sealed partial class Cubemap : Texture
     {
@@ -538,6 +541,7 @@ namespace UnityEngine
     }
 
     [NativeHeader("Runtime/Graphics/Texture3D.h")]
+    [global::UnityEngine.NativeClass("Texture3D", PersistentTypeId = 117)]
     [ExcludeFromPreset]
     public sealed partial class Texture3D : Texture
     {
@@ -622,6 +626,7 @@ namespace UnityEngine
     }
 
     [NativeHeader("Runtime/Graphics/Texture2DArray.h")]
+    [global::UnityEngine.NativeClass("Texture2DArray", PersistentTypeId = 187)]
     [ExcludeFromPreset]
     public sealed partial class Texture2DArray : Texture
     {
@@ -715,6 +720,7 @@ namespace UnityEngine
     }
 
     [NativeHeader("Runtime/Graphics/CubemapArrayTexture.h")]
+    [global::UnityEngine.NativeClass("CubemapArray", PersistentTypeId = 188)]
     [ExcludeFromPreset]
     public sealed partial class CubemapArray : Texture
     {
@@ -793,6 +799,7 @@ namespace UnityEngine
         }
     }
 
+    [global::UnityEngine.NativeClass("SparseTexture", PersistentTypeId = 171)]
     [NativeHeader("Runtime/Graphics/SparseTexture.h")]
     public sealed partial class SparseTexture : Texture
     {
@@ -819,6 +826,7 @@ namespace UnityEngine
     [NativeHeader("Runtime/Graphics/RenderBufferManager.h")]
     [NativeHeader("Runtime/Graphics/GraphicsScriptBindings.h")]
     [NativeHeader("Runtime/Camera/Camera.h")]
+    [global::UnityEngine.NativeClass("RenderTexture", PersistentTypeId = 84)]
     [UsedByNativeCode]
     public partial class RenderTexture : Texture
     {
@@ -967,6 +975,7 @@ namespace UnityEngine
     }
 
     [UsedByNativeCode]
+    [global::UnityEngine.NativeClass("CustomRenderTexture", PersistentTypeId = 86)]
     [NativeHeader("Runtime/Graphics/CustomRenderTexture.h")]
     public sealed partial class CustomRenderTexture : RenderTexture
     {

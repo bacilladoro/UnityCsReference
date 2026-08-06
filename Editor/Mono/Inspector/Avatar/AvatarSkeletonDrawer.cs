@@ -9,6 +9,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEditorInternal;
 using System.Linq;
+using Unity.Scripting.LifecycleManagement;
 
 using Object = UnityEngine.Object;
 
@@ -16,14 +17,15 @@ namespace UnityEditor
 {
     internal class AvatarSkeletonDrawer
     {
+        [NoAutoStaticsCleanup]
         private static bool sPoseError;
 
-        private static Color kSkeletonColor = new Color(103.0f / 255.0f, 103.0f / 255.0f, 103.0f / 255.0f, 0.5f);
-        private static Color kDummyColor = new Color(60.0f / 255.0f, 60.0f / 255.0f, 60.0f / 255.0f, 0.5f);
-        private static Color kHumanColor = new Color(0, 210.0f / 255.0f, 74.0f / 255.0f, 0.5f);
-        private static Color kErrorColor = new Color(1, 0, 0, 0.5f);
-        private static Color kErrorMessageColor = new Color(1, 0, 0, 0.75f);
-        private static Color kSelectedColor = new Color(128.0f / 255.0f, 192.0f / 255.0f, 255.0f / 255.0f, 0.30f);
+        private static readonly Color kSkeletonColor = new Color(103.0f / 255.0f, 103.0f / 255.0f, 103.0f / 255.0f, 0.5f);
+        private static readonly Color kDummyColor = new Color(60.0f / 255.0f, 60.0f / 255.0f, 60.0f / 255.0f, 0.5f);
+        private static readonly Color kHumanColor = new Color(0, 210.0f / 255.0f, 74.0f / 255.0f, 0.5f);
+        private static readonly Color kErrorColor = new Color(1, 0, 0, 0.5f);
+        private static readonly Color kErrorMessageColor = new Color(1, 0, 0, 0.75f);
+        private static readonly Color kSelectedColor = new Color(128.0f / 255.0f, 192.0f / 255.0f, 255.0f / 255.0f, 0.30f);
 
         public static void DrawSkeleton(Transform reference, Dictionary<Transform, bool> actualBones, Handles.BoneRenderer boneRenderer)
         {

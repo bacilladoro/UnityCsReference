@@ -388,7 +388,9 @@ namespace UnityEngine
         public ADInterstitialAd(bool autoReload) {}
         public ADInterstitialAd() {}
 
+#pragma warning disable UA5000 // The Avoid Finalizer Analyzer produces compile errors for any new finalizers. This pre-existing finalizer declaration has been suppressed, but should be rewritten if possible.
         ~ADInterstitialAd() {}
+#pragma warning restore UA5000
 
         public void Show() {}
 

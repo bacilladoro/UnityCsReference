@@ -5,6 +5,7 @@
 using System.Linq;
 using UnityEngine;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
@@ -15,7 +16,9 @@ namespace UnityEditor
 
     internal class PointCreator
     {
+        [NoAutoStaticsCleanup] // value-type scratch buffer (Vector3), no user references
         private static List<Vector3> s_CreationPoints = new List<Vector3>();
+        [NoAutoStaticsCleanup] // transient edit-mode flag, toggled within the creation flow
         private static bool s_IsCreating;
 
         private static bool GetCreationPoint(out Vector3 position, bool useRaycast, LayerMask raycastMask, float raycastNormalOffset)

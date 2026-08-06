@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor.Experimental;
 using UnityEditor.IMGUI.Controls;
 using UnityEditor.StyleSheets;
@@ -28,6 +29,7 @@ namespace UnityEditor
                 public GUIContent pickingDisabledMixed;
             }
 
+            [NoAutoStaticsCleanup] // readonly icon set (GUIContent), safe to persist
             public static readonly IconState iconNormal = new IconState
             {
                 visibleAll = EditorGUIUtility.TrIconContent("scenevis_visible"),
@@ -40,6 +42,7 @@ namespace UnityEditor
                 pickingDisabledMixed = EditorGUIUtility.TrIconContent("scenepicking_notpickable-mixed"),
             };
 
+            [NoAutoStaticsCleanup] // readonly icon set (GUIContent), safe to persist
             public static readonly IconState iconHovered = new IconState
             {
                 visibleAll = EditorGUIUtility.TrIconContent("scenevis_visible_hover"),
@@ -87,6 +90,8 @@ namespace UnityEditor
         private const int k_IconWidth = 16;
 
         private static float k_sceneHeaderOverflow => GameObjectTreeViewGUI.GameObjectStyles.sceneHeaderBg.fixedHeight + 2*GameObjectTreeViewGUI.GameObjectStyles.sceneHeaderWidth - EditorGUIUtility.singleLineHeight;
+
+        [NoAutoStaticsCleanup] // transient per-row GUI flag
         private static bool m_PrevItemWasScene;
 
         public const float utilityBarWidth = k_VisibilityIconPadding * 3 + k_IconWidth * 2;

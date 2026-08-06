@@ -329,6 +329,9 @@ namespace Unity.UI.Builder
             else if (IsComputedStyleBackground(val) && fieldElement is ImageStyleField imageStyleField)
             {
                 imageStyleField.RegisterValueChangedCallback(e => OnFieldValueChange(e, styleName));
+                // Route gradient edits through the gradient writer; pass the bound row
+                // field as refresh target so PostStyleFieldSteps sees the right bindingPath.
+                imageStyleField.gradientField.RegisterValueChangedCallback(e => OnGradientFieldValueChange(e, styleName, imageStyleField));
 
                 var objectField = imageStyleField.Q<ObjectField>();
                 if (objectField != null && BuilderConstants.InspectorStylePropertiesValuesTooltipsDictionary.TryGetValue(
@@ -345,6 +348,10 @@ namespace Unity.UI.Builder
                         e.rect = popupField.visualInput.worldBound;
                     });
                 }
+            }
+            else if (IsComputedStyleBackground(val) && fieldElement is BackgroundGradientField backgroundGradientField)
+            {
+                backgroundGradientField.RegisterValueChangedCallback(e => OnFieldValueChange(e, styleName));
             }
             else if (IsComputedStyleUIAnimationClip(val, styleName) && fieldElement is ObjectField objField)
             {
@@ -1079,6 +1086,13 @@ namespace Unity.UI.Builder
                     imageStyleField.SetValueWithoutNotify(propertyValue);
                     if (propertyValue != null)
                         imageStyleField.SetTypePopupValueWithoutNotify(propertyValue.GetType());
+                    imageStyleField.ResetGradientToAuthoringDefault();
+                    imageStyleField.SyncGradientVisibility();
+                }
+                else if (!value.gradient.IsEmpty())
+                {
+                    // Gradient mode: push the struct and flip the popup, no asset touch.
+                    imageStyleField.SetGradientWithoutNotify(value.gradient);
                 }
                 else
                 {
@@ -1107,8 +1121,17 @@ namespace Unity.UI.Builder
                         imageStyleField.SetValueWithoutNotify(null);
                         imageStyleField.SetTypePopupValueWithoutNotify(typeof(Texture2D));
                     }
+                    imageStyleField.ResetGradientToAuthoringDefault();
+                    imageStyleField.SyncGradientVisibility();
                 }
 
+                return true;
+            }
+
+            if (IsComputedStyleBackground(val) && fieldElement is BackgroundGradientField bgGradientField)
+            {
+                // Compound storage keeps the gradient struct alongside the baked VI — round-trips losslessly.
+                bgGradientField.SetValueWithoutNotify(GetComputedStyleBackgroundValue(val).gradient);
                 return true;
             }
 
@@ -1439,6 +1462,10 @@ namespace Unity.UI.Builder
             else if (IsComputedStyleBackground(val) && fieldElement is ImageStyleField imageStyleField)
             {
                 DispatchChangeEvent(imageStyleField);
+            }
+            else if (IsComputedStyleBackground(val) && fieldElement is BackgroundGradientField bgGradientField)
+            {
+                DispatchChangeEvent(bgGradientField);
             }
             else if (IsComputedStyleCursor(val) && fieldElement is CursorStyleField cursorStyleField)
             {
@@ -2737,6 +2764,22 @@ namespace Unity.UI.Builder
             });
         }
 
+        void OnFieldValueChange(ChangeEvent<BackgroundGradient> e, string styleName)
+        {
+            OnGradientFieldValueChange(e, styleName, e.elementTarget as VisualElement);
+        }
+
+        // refreshTarget overrides which field drives PostStyleFieldSteps (used when the
+        // edit fires from an embedded sub-field and we want the row-level field to refresh).
+        void OnGradientFieldValueChange(ChangeEvent<BackgroundGradient> e, string styleName, VisualElement refreshTarget)
+        {
+            var styleProperty = GetOrCreateStylePropertyByStyleName(styleName);
+            var isNewValue = !styleProperty.HasValue();
+            Undo.RegisterCompleteObjectUndo(styleSheet, BuilderConstants.ChangeUIStyleValueUndoMessage);
+            styleProperty.SetBackgroundGradient(styleSheet, e.newValue);
+            PostStyleFieldSteps(refreshTarget ?? (e.elementTarget as VisualElement), styleProperty, styleName, isNewValue);
+        }
+
         void OnFieldValueChange(ChangeEvent<Cursor> e, string styleName)
         {
             var newValue = e.newValue;
@@ -2828,6 +2871,7 @@ namespace Unity.UI.Builder
             styleProperty.SetRotate(styleSheet, e.newValue);
             PostStyleFieldSteps(e.elementTarget, styleProperty, styleName, isNewValue);
         }
+
 
         void OnFieldValueChangeBackgroundRepeat(ChangeEvent<BackgroundRepeat> e, string styleName)
         {

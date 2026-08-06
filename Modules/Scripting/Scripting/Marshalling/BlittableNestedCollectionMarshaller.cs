@@ -17,13 +17,13 @@ namespace UnityEngine.Bindings
         public int Length;
     }
 
-    [VisibleToOtherModules]
     /// <summary>
-    /// Marshals a collection of collections (e.g. List<int[]>, int[][]) of blittable types into native
+    /// Marshals a collection of collections (e.g. List&lt;int[]&gt;, int[][]) of blittable types into native
     /// This class only marshals data in - no data will be updated
     /// NOTE: This class does multiple allocations and is not particularly efficient
     ///       Instead consider using a multi-dimensional array (e.g. int[,]) which be marshalled to native as a pinned buffer
     /// </summary>
+    [VisibleToOtherModules]
     internal unsafe struct BlittableNestedCollectionMarshaller<T> where T : unmanaged
     {
         private static readonly int AlignOfT;

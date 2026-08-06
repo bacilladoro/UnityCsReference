@@ -9,10 +9,13 @@ using UnityEngine.Bindings;
 using System.Diagnostics;
 using UnityEngine.Scripting;
 using Unity.Burst;
+using Unity.Scripting.LifecycleManagement;
 
 namespace Unity.Jobs.LowLevel.Unsafe
 {
+    // Preserve JobProducerType so Burst can find the attribute, despite no player references (UUM-147717).
     [AttributeUsage(AttributeTargets.Interface)]
+    [RequireAttributeUsages]
     public sealed class JobProducerTypeAttribute : Attribute
     {
         public Type ProducerType { get; }
@@ -51,7 +54,7 @@ namespace Unity.Jobs.LowLevel.Unsafe
 
     [NativeHeader("ManagedKernel/Jobs/ScriptBindings/JobsBindings.h")]
     [NativeHeader("NativeJobs/JobSystem.h")]
-    public static class JobsUtility
+    public static partial class JobsUtility
     {
         [StructLayout(LayoutKind.Sequential)]
         public struct JobScheduleParameters
@@ -215,6 +218,7 @@ namespace Unity.Jobs.LowLevel.Unsafe
 
         internal delegate void PanicFunction_();
 
+        [AutoStaticsCleanupOnCodeReload]
         internal static PanicFunction_ PanicFunction;
 
         [RequiredByNativeCode]

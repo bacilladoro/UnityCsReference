@@ -551,8 +551,8 @@ namespace UnityEngine.UIElements
         /// <remarks>
         /// The default value is <c>true</c>.
         /// When this property is set to to <c>true</c>, the ListView includes a TextField to control the array size.
+        /// See also <c>UnityEditor.UIElements.BindingExtensions.Bind</c>.
         /// </remarks>
-        /// <seealso cref="UnityEditor.UIElements.BindingExtensions.Bind"/>
         [CreateProperty]
         [UxmlAttribute]
         public bool showBoundCollectionSize

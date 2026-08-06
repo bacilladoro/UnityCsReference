@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Scripting;
+using Unity.Scripting.LifecycleManagement;
 
 namespace Unity.PlayMode.Editor
 {
@@ -27,7 +28,7 @@ namespace Unity.PlayMode.Editor
     /// 
     /// For safer operation, always use <c>PlayModeScenarioManager.Start()</c> and <c>PlayModeScenarioManager.Stop()</c> to control Play mode when using custom scenarios.
     /// </remarks>
-    public static class PlayModeScenarioManager
+    public static partial class PlayModeScenarioManager
     {
         internal struct ScenarioTypeData
         {
@@ -36,6 +37,7 @@ namespace Unity.PlayMode.Editor
             public string NewItemName;
         }
 
+        [AutoStaticsCleanupOnCodeReload] // holds references to user-defined PlayModeScenario types registered from user assemblies
         static Dictionary<Type, ScenarioTypeData> s_ScenarioTypes = new();
 
         internal static void RegisterScenarioType<T>(string label, string newItemName = "NewPlayModeScenario") where T : PlayModeScenario

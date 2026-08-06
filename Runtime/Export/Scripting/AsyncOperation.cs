@@ -13,10 +13,12 @@ namespace UnityEngine
         [VisibleToOtherModules]
         internal IntPtr m_Ptr;
 
+#pragma warning disable UA5000 // The Avoid Finalizer Analyzer produces compile errors for any new finalizers. This pre-existing finalizer declaration has been suppressed, but should be rewritten if possible.
         ~AsyncOperation()
         {
             InternalDestroy(m_Ptr);
         }
+#pragma warning restore UA5000
 
         private System.Action<AsyncOperation> m_completeCallback;
 

@@ -8,6 +8,7 @@ using UnityEngine.Bindings;
 namespace UnityEditor
 {
     [NativeHeader("Editor/Src/GI/Enlighten/LightmapParameters.h")]
+    [global::UnityEngine.NativeClass("LightmapParameters", PersistentTypeId = 1113)]
     [PreventReadOnlyInstanceModificationAttribute]
     public sealed partial class LightmapParameters : UnityEngine.Object
     {

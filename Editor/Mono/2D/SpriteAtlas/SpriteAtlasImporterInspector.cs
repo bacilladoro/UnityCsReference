@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using Unity.Jobs;
 using UnityEditor.AssetImporters;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor.Build;
 using UnityEditor.Scripting.ScriptCompilation;
 using UnityEditor.U2D.Common;
@@ -107,6 +108,7 @@ namespace UnityEditor.U2D
             }
         }
 
+        [NoAutoStaticsCleanup] // Lazy GUIStyle/GUIContent cache loaded by fixed name; safe to persist across reloads.
         private static Styles s_Styles;
 
         private static Styles styles

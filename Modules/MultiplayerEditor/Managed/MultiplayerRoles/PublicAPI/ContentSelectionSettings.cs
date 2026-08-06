@@ -62,10 +62,12 @@ namespace Unity.Multiplayer.Editor
             ContentSelectionBuildPreprocessor.OnPreprocessBuildCallback += OnPreprocessBuild;
         }
 
+#pragma warning disable UA5000 // The Avoid Finalizer Analyzer produces compile errors for any new finalizers. This pre-existing finalizer declaration has been suppressed, but should be rewritten if possible.
         ~ContentSelectionSettings()
         {
             ContentSelectionBuildPreprocessor.OnPreprocessBuildCallback -= OnPreprocessBuild;
         }
+#pragma warning restore UA5000
 
         private static void OnPackagesRegistered(PackageRegistrationEventArgs args)
         {

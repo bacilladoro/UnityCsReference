@@ -5,6 +5,7 @@
 using System;
 using System.Text;
 using Unity.Properties;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.UIElements;
 using Object = UnityEngine.Object;
 
@@ -137,27 +138,44 @@ namespace UnityEditor.UIElements
             Add(m_ObjectField);
         }
 
+        [NoAutoStaticsCleanup] // reusable scratch buffer for dialog text; cleared before each use, holds no user references
         private static StringBuilder s_MessageBuilder = new StringBuilder();
+
+        Func<Object, Object, bool> m_ShouldDisplayDialog;
+
+        internal void SetShouldDisplayDialog(Func<Object, Object, bool> shouldDisplayDialog)
+        {
+            m_ShouldDisplayDialog = shouldDisplayDialog;
+        }
 
         private bool ChangeObject(Object newValue)
         {
             if (value != newValue)
             {
-                s_MessageBuilder.Clear();
-
-                // Use removal message if clearing the field, otherwise use the standard message
-                bool isRemoving = newValue == null && value != null;
-
-                if (isRemoving && !string.IsNullOrEmpty(removalMessage))
+                // If the user has provided a delegate to determine whether to display the dialog, call it. Otherwise, default to displaying the dialog.
+                if (m_ShouldDisplayDialog?.Invoke(value, newValue) ?? true)
                 {
-                    s_MessageBuilder.AppendLine(removalMessage);
-                }
+                    s_MessageBuilder.Clear();
 
-                s_MessageBuilder.AppendLine(message);
-                s_MessageBuilder.AppendLine();
-                s_MessageBuilder.AppendLine($"Current Value: {(value ? value.name : "None")}.");
-                s_MessageBuilder.AppendLine($"New Value: {(newValue ? newValue.name : "None")}.");
-                if (EditorUtility.DisplayDialog(title, s_MessageBuilder.ToString(), "Confirm", "Cancel"))
+                    // Use removal message if clearing the field, otherwise use the standard message
+                    bool isRemoving = newValue == null && value != null;
+
+                    if (isRemoving && !string.IsNullOrEmpty(removalMessage))
+                    {
+                        s_MessageBuilder.AppendLine(removalMessage);
+                    }
+
+                    s_MessageBuilder.AppendLine(message);
+                    s_MessageBuilder.AppendLine();
+                    s_MessageBuilder.AppendLine($"Current Value: {(value ? value.name : "None")}.");
+                    s_MessageBuilder.AppendLine($"New Value: {(newValue ? newValue.name : "None")}.");
+                    if (EditorUtility.DisplayDialog(title, s_MessageBuilder.ToString(), "Apply", "Cancel"))
+                    {
+                        value = newValue;
+                        return true;
+                    }
+                }
+                else
                 {
                     value = newValue;
                     return true;

@@ -143,7 +143,9 @@ namespace UnityEditor
         string m_CachedTooltip;
 
         internal SerializedProperty() {}
+#pragma warning disable UA5000 // The Avoid Finalizer Analyzer produces compile errors for any new finalizers. This pre-existing finalizer declaration has been suppressed, but should be rewritten if possible.
         ~SerializedProperty() { Dispose(); }
+#pragma warning restore UA5000
 
         // [[SerializedObject]] this property belongs to (RO).
         public SerializedObject serializedObject { get { return m_SerializedObject; } }

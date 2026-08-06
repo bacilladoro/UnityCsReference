@@ -9,6 +9,8 @@ using UnityEngine.Scripting;
 
 namespace UnityEngine
 {
+    ///<summary>Gives access to subsystems which provide additional functionality through plugins.</summary>
+    ///<remarks>Provides the ability to query for <see cref="SubsystemDescriptor" />s which enumerate features. Given an <see cref="SubsystemDescriptor" />, you can create an <see cref="Subsystem" /> to utilize the subsystem.</remarks>
     [NativeHeader("Modules/Subsystems/SubsystemManager.h")]
     public static partial class SubsystemManager
     {

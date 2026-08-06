@@ -6,6 +6,7 @@
 using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Internal;
 using UnityEngine.Pool;
 
@@ -14,6 +15,8 @@ namespace UnityEngine
     [AsyncMethodBuilder(typeof(Awaitable.AwaitableAsyncMethodBuilder<>))]
     public class Awaitable<T>
     {
+        // Lives in a generic type instantiated per T; per-instantiation static, unloaded with its type on code reload.
+        [NoAutoStaticsCleanup]
         static readonly ThreadLocal<ObjectPool<Awaitable<T>>> _pool =
             new(() => new ObjectPool<Awaitable<T>>(() => new(), collectionCheck: false));
         private Awaitable _awaitable;

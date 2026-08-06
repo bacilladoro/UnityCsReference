@@ -18,7 +18,7 @@ namespace UnityEditor
 
             internal static class Styles
             {
-                public static GUIContent isolationModeExitButton = EditorGUIUtility.TrTextContent("Exit", "Exit isolation mode");
+                public static readonly GUIContent isolationModeExitButton = EditorGUIUtility.TrTextContent("Exit", "Exit isolation mode");
             }
 
             public override bool visible => m_ShouldDisplay;
