@@ -757,9 +757,9 @@ namespace UnityEditor
         {
             var menu = new GenericMenu();
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var objs = AssetDatabase.FindAllAssets(new SearchFilter() { classNames = classNames }).Select(property => property.pptrValue).ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             if (objs.Count > 0)
             {
                 objs.Sort((result1, result2) => EditorUtility.NaturalCompare(result1.name, result2.name));

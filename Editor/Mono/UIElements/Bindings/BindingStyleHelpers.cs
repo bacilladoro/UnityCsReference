@@ -2,17 +2,19 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
 using System;
 using System.Collections.Generic;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.Bindings;
 using UnityEngine.UIElements;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.UIElements
 {
     [VisibleToOtherModules("UnityEditor.UIBuilderModule", "UnityEditor.UIToolkitAuthoringModule")]
-    internal static class BindingsStyleHelpers
+    internal static partial class BindingsStyleHelpers
     {
         enum DrivenPropertyState
         {
@@ -23,10 +25,14 @@ namespace UnityEditor.UIElements
             AnimationRecording
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         internal static event Action<VisualElement, SerializedProperty> updateBindingStateStyle;
 
+        [AutoStaticsCleanupOnCodeReload]
         static EventCallback<PointerUpEvent> s_RightClickMenuCallback;
+        [AutoStaticsCleanupOnCodeReload]
         static Action<VisualElement, SerializedProperty> s_UpdateElementStyleFromProperty;
+        [AutoStaticsCleanupOnCodeReload]
         static Action<VisualElement, SerializedProperty> s_UpdatePrefabStateStyleFromProperty;
 
         const string k_ScrollTrackingHookedKey = "unity-prefab-override-scroll-tracked";
@@ -36,6 +42,7 @@ namespace UnityEditor.UIElements
 
         // Lets us bypass the default right click menu to show our own.
         [VisibleToOtherModules("UnityEditor.UIBuilderModule", "UnityEditor.UIToolkitAuthoringModule")]
+        [AutoStaticsCleanupOnCodeReload]
         internal static HandleRightClickMenuDelegate HandleRightClickMenu;
 
         static BindingsStyleHelpers()
@@ -618,6 +625,7 @@ namespace UnityEditor.UIElements
             return dropdownMenu;
         }
 
+        [NoAutoStaticsCleanup]
         static readonly Dictionary<DropdownMenuAction.Status, Func<DropdownMenuAction, DropdownMenuAction.Status>> s_StatusCallbacks = new()
         {
             { DropdownMenuAction.Status.Normal, DropdownMenuAction.AlwaysEnabled },
@@ -651,3 +659,4 @@ namespace UnityEditor.UIElements
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

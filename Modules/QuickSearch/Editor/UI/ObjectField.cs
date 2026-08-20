@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.Search;
@@ -394,21 +395,27 @@ namespace UnityEditor.Search
         }
     }
 
-    static class ObjectFieldGUI
+    static partial class ObjectFieldGUI
     {
-        static private GUIContent s_SceneMismatch = EditorGUIUtility.TrTextContent("Scene mismatch (cross scene references not supported)");
-        static private GUIContent s_TypeMismatch = EditorGUIUtility.TrTextContent("Type mismatch");
-        static private GUIContent s_Select = EditorGUIUtility.TrTextContent("Select");
+        static private readonly GUIContent s_SceneMismatch = EditorGUIUtility.TrTextContent("Scene mismatch (cross scene references not supported)");
+        static private readonly GUIContent s_TypeMismatch = EditorGUIUtility.TrTextContent("Type mismatch");
+        static private readonly GUIContent s_Select = EditorGUIUtility.TrTextContent("Select");
 
         const string k_PickerClosedCommand = "SearchPickerClosed";
         const string k_PickerUpdatedCommand = "SearchPickerUpdated";
 
+        [AutoStaticsCleanupOnCodeReload]
         static EditorWindow s_DelegateWindow;
+        [AutoStaticsCleanupOnCodeReload]
         static Object s_LastSelectedItem;
+        [AutoStaticsCleanupOnCodeReload]
         static Object s_OriginalItem;
         public static readonly int objectFieldHash = "s_ObjectFieldHash".GetHashCode();
+        [AutoStaticsCleanupOnCodeReload]
         static int s_LastPickerId;
+        [AutoStaticsCleanupOnCodeReload]
         static bool s_LastSelectionWasCanceled;
+        [AutoStaticsCleanupOnCodeReload]
         static int s_ModalUndoGroup = -1;
 
         // Takes object directly, no SerializedProperty.

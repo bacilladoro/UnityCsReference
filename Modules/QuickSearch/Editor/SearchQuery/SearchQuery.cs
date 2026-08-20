@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditorInternal;
 using UnityEngine;
 using UnityEngine.Search;
@@ -47,7 +48,7 @@ namespace UnityEditor.Search
     }
 
     [Serializable]
-    class SearchQuery : ISearchQuery
+    partial class SearchQuery : ISearchQuery
     {
         internal const string k_LastUsedTimePropertyName = "LastUsedTime";
         internal const string k_QueryItemsNumberPropertyName = "TotalQueryItemsNumber";
@@ -65,6 +66,7 @@ namespace UnityEditor.Search
             }
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         private static List<SearchQuery> s_SearchQueries;
         [SerializeField] private string m_GUID;
         [SerializeField] Texture2D m_Thumbnail;
@@ -173,9 +175,9 @@ namespace UnityEditor.Search
             }
         }
 
-        #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+        #pragma warning disable UAC2001 // Avoid Linq
         public static IEnumerable<SearchQuery> userQueries => searchQueries.Where(IsUserQuery);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
         public SearchQuery()
         {
@@ -284,9 +286,9 @@ namespace UnityEditor.Search
             if (!Directory.Exists(folder))
                 Directory.CreateDirectory(folder);
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var allQueryPaths = Directory.EnumerateFiles(folder, "*.query").Select(Utils.CleanPath);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             foreach (var path in allQueryPaths)
             {
                 var query = LoadSearchQuery(path);

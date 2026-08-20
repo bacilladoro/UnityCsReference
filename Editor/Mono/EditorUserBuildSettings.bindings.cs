@@ -795,6 +795,9 @@ namespace UnityEditor
         // The currently active build target.
         public static extern BuildTarget activeBuildTarget { get; }
 
+        // The named build target for the platform and subtarget that the Editor is set to build for.
+        public static NamedBuildTarget activeNamedBuildTarget => EditorUserBuildSettingsUtils.CalculateActiveNamedBuildTarget();
+
         internal static extern GUID GetInternalActivePlatformGuid();
 
         // Internal setter only to be used for testing.

@@ -93,9 +93,9 @@ namespace UnityEditor
         [RequiredByNativeCode]
         internal static string[] GetKeys(JSONObject ht)
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return ht.Keys.Cast<string>().ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         [RequiredByNativeCode]
@@ -136,11 +136,11 @@ namespace UnityEditor
             if (enumerable == null)
                 return null;
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
-#pragma warning disable UA2004 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
+#pragma warning disable UAC2004 // Avoid Linq
             return Enumerable.ElementAt(enumerable.Cast<object>(), index);
-#pragma warning restore UA2001
-#pragma warning restore UA2004
+#pragma warning restore UAC2001
+#pragma warning restore UAC2004
         }
 
         internal static bool TryGetValue(JSONObject data, string key, out object value)

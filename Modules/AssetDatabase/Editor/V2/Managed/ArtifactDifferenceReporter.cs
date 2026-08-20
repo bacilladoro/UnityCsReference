@@ -122,10 +122,10 @@ namespace UnityEditor
 
         internal List<string> GatherDifferences(ArtifactInfo oldInfo, ArtifactInfo newInfo, ref List<ArtifactInfoDifference> differences)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             m_AllDiffs = newInfo.dependencies.Except(oldInfo.dependencies)
                 .Concat(oldInfo.dependencies.Except(newInfo.dependencies))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 .Select(e => e.Key)
                 .Distinct()
                 .Select(key =>
@@ -346,12 +346,12 @@ namespace UnityEditor
 
         private static void PostProcessorVersionHashModified(ref ArtifactInfoDifference diff, List<string> msgsList)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var oldPostProcessorKey = diff.oldDependencies.Keys.FirstOrDefault(key => key.StartsWith(kImporterRegistry_PostProcessorVersionHash, StringComparison.Ordinal));
-#pragma warning restore UA2001
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+            #pragma warning disable UAC2001 // Avoid Linq
             var newPostProcessorKey = diff.newDependencies.Keys.FirstOrDefault(key => key.StartsWith(kImporterRegistry_PostProcessorVersionHash, StringComparison.Ordinal));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             if (!string.IsNullOrEmpty(oldPostProcessorKey) && !string.IsNullOrEmpty(newPostProcessorKey) && oldPostProcessorKey != newPostProcessorKey)
             {

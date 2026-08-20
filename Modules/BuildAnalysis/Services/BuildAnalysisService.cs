@@ -23,11 +23,12 @@ namespace UnityEditor.Build.Analysis
         private readonly IBuildAnalyzer m_Analyzer;
         private readonly IBuildAnalysisFileSystem m_FileSystem;
         private readonly IBuildHistoryProvider m_BuildHistory;
-        private readonly LRUCache<GUID, BuildAnalysis> m_Cache;
+        private readonly IBuildLogReader m_LogReader;
+        private readonly LRUCache<GUID, AnalyzedBuild> m_Cache;
 
         // In-flight de-duplication: a second request for a build that is already loading/generating awaits
         // the same Task instead of recomputing.
-        private readonly Dictionary<GUID, Task<BuildAnalysis>> m_InFlight = new Dictionary<GUID, Task<BuildAnalysis>>();
+        private readonly Dictionary<GUID, Task<AnalyzedBuild>> m_InFlight = new Dictionary<GUID, Task<AnalyzedBuild>>();
         private readonly object m_InFlightLock = new object();
 
         // Cancels all in-flight work on teardown (window close / domain reload). The window builds a fresh
@@ -39,13 +40,15 @@ namespace UnityEditor.Build.Analysis
             IBuildEnumerator enumerator,
             IBuildAnalyzer analyzer,
             IBuildAnalysisFileSystem fileSystem,
-            IBuildHistoryProvider buildHistory)
+            IBuildHistoryProvider buildHistory,
+            IBuildLogReader logReader)
         {
             m_Enumerator = enumerator ?? throw new ArgumentNullException(nameof(enumerator));
             m_Analyzer = analyzer ?? throw new ArgumentNullException(nameof(analyzer));
             m_FileSystem = fileSystem ?? throw new ArgumentNullException(nameof(fileSystem));
             m_BuildHistory = buildHistory ?? throw new ArgumentNullException(nameof(buildHistory));
-            m_Cache = new LRUCache<GUID, BuildAnalysis>(20);
+            m_LogReader = logReader ?? throw new ArgumentNullException(nameof(logReader));
+            m_Cache = new LRUCache<GUID, AnalyzedBuild>(20);
         }
 
         /// <summary>
@@ -141,7 +144,7 @@ namespace UnityEditor.Build.Analysis
         /// Get analysis for a specific build, off the main thread. Returns the cached instance synchronously
         /// when available, joins an in-flight load/generation when one exists, otherwise starts one.
         /// </summary>
-        public Task<BuildAnalysis> GetBuildAnalysisAsync(GUID buildSessionGUID)
+        public Task<AnalyzedBuild> GetBuildAnalysisAsync(GUID buildSessionGUID)
         {
             if (buildSessionGUID.Empty())
                 throw new ArgumentException("BuildSessionGUID is empty.", nameof(buildSessionGUID));
@@ -159,7 +162,7 @@ namespace UnityEditor.Build.Analysis
             if (!m_Enumerator.TryGetBuild(buildSessionGUID, out var entry))
             {
                 Debug.LogWarning($"{BuildAnalysisConstants.k_ConsoleLogPrefix} No build found for BuildSessionGUID '{buildSessionGUID}'.");
-                return Task.FromResult<BuildAnalysis>(null);
+                return Task.FromResult(AnalyzedBuild.Unavailable);
             }
 
             return Register(buildSessionGUID, () => LoadOrGenerateAsync(buildSessionGUID, entry, regenerate: false));
@@ -169,7 +172,7 @@ namespace UnityEditor.Build.Analysis
         /// Force regeneration of BuildAnalysis.json for the given build and update the cache. Bypasses both the
         /// memory cache and the on-disk file, and supersedes any in-flight load for the same build.
         /// </summary>
-        public Task<BuildAnalysis> RegenerateBuildAnalysisAsync(GUID buildSessionGUID)
+        public Task<AnalyzedBuild> RegenerateBuildAnalysisAsync(GUID buildSessionGUID)
         {
             if (buildSessionGUID.Empty())
                 throw new ArgumentException("BuildSessionGUID is empty.", nameof(buildSessionGUID));
@@ -199,11 +202,11 @@ namespace UnityEditor.Build.Analysis
         }
 
         // Registers a freshly-started task as the in-flight entry for a build, and removes it on completion
-        private Task<BuildAnalysis> Register(GUID guid, Func<Task<BuildAnalysis>> factory)
+        private Task<AnalyzedBuild> Register(GUID guid, Func<Task<AnalyzedBuild>> factory)
         {
-            Task<BuildAnalysis> task = null;
+            Task<AnalyzedBuild> task = null;
 
-            async Task<BuildAnalysis> Tracked()
+            async Task<AnalyzedBuild> Tracked()
             {
                 try
                 {
@@ -228,29 +231,30 @@ namespace UnityEditor.Build.Analysis
             return task;
         }
 
-        private async Task<BuildAnalysis> LoadOrGenerateAsync(GUID guid, BuildEntry entry, bool regenerate)
+        private async Task<AnalyzedBuild> LoadOrGenerateAsync(GUID guid, BuildEntry entry, bool regenerate)
         {
             try
             {
-                BuildAnalysis analysis = null;
-                if (!regenerate && TryGetBuildAnalysisPath(guid, out var analysisPath))
-                {
-                    var cached = await Task.Run(() => LoadBuildAnalysisFromDisk(analysisPath), m_Cts.Token);
+                // BuildHistory path lookups read editor settings and the native root directory, so they
+                // are main-thread only. Resolve before any await; the off-thread read takes only a path.
+                var logPath = m_BuildHistory.TryGetFilePath(guid, BuildAnalysisConstants.k_BuildLogFileName, out var resolved)
+                    ? resolved
+                    : null;
 
-                    // Only serve a cache written by the current schema. If not regenerate from the source
-                    // BuildReport instead of serving stale data. Keeping this a simple version
-                    // compare makes every future schema bump self-healing.
-                    // If the source report has since been pruned, GenerateAsync throws and the catch below returns
-                    // null; that rare stale-cache-without-report case degrades to empty, which is acceptable.
-                    if (cached.Version == BuildAnalysisConstants.k_SchemaVersion)
-                        analysis = cached;
+                // Sequential rather than overlapped. Running the two together measured slower, not faster:
+                // both passes allocate heavily and a collection suspends every managed thread, so they stall each other.
+                var analysis = await GetAnalysisAsync(guid, entry, regenerate);
+                var messages = await Task.Run(() => m_LogReader.Read(logPath), m_Cts.Token);
+                if (messages.Status == BuildLogStatus.FileMissing)
+                {
+                    Debug.LogWarning($"{BuildAnalysisConstants.k_ConsoleLogPrefix} " +
+                                     $"{BuildAnalysisConstants.k_BuildLogFileName} not found for build '{guid}'. " +
+                                     "Messages will be empty.");
                 }
 
-                if (analysis == null)
-                    analysis = await m_Analyzer.GenerateAsync(entry, m_Cts.Token);
-
-                m_Cache.Put(guid, analysis);
-                return analysis;
+                var result = new AnalyzedBuild(analysis, messages);
+                m_Cache.Put(guid, result);
+                return result;
             }
             catch (OperationCanceledException)
             {
@@ -259,8 +263,26 @@ namespace UnityEditor.Build.Analysis
             catch (Exception e)
             {
                 Debug.LogError($"{BuildAnalysisConstants.k_ConsoleLogPrefix} Failed to get analysis for '{guid}': {e.Message}");
-                return null;
+                return AnalyzedBuild.Unavailable;
             }
+        }
+
+        private async Task<BuildAnalysis> GetAnalysisAsync(GUID guid, BuildEntry entry, bool regenerate)
+        {
+            if (!regenerate && TryGetBuildAnalysisPath(guid, out var analysisPath))
+            {
+                var cached = await Task.Run(() => LoadBuildAnalysisFromDisk(analysisPath), m_Cts.Token);
+
+                // Only serve a cache written by the current schema, otherwise regenerate from the source
+                // BuildReport rather than serving stale data. Keeping this a simple version compare makes
+                // every future schema bump self-healing. If the source report has since been pruned,
+                // GenerateAsync throws and the caller degrades to Unavailable, which is acceptable for
+                // that rare stale-cache-without-report case.
+                if (cached.Version == BuildAnalysisConstants.k_SchemaVersion)
+                    return cached;
+            }
+
+            return await m_Analyzer.GenerateAsync(entry, m_Cts.Token);
         }
 
         private bool TryGetBuildAnalysisPath(GUID buildSessionGUID, out string path)

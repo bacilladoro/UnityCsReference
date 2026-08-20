@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using Unity.Collections;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 
 namespace Unity.GraphToolkit.Editor
@@ -15,6 +16,7 @@ namespace Unity.GraphToolkit.Editor
     /// </summary>
     class SubgraphFromSelectionAction
     {
+        [NoAutoStaticsCleanup] // sentinel value representing an invalid action; safe to persist across reload
         static internal readonly SubgraphFromSelectionActionData InvalidData
             = new SubgraphFromSelectionActionData() { IsValid = false };
 
@@ -24,14 +26,14 @@ namespace Unity.GraphToolkit.Editor
 
             public List<GraphElementModel> elementsToInclude;
             public List<GraphElementModel> elementsToDelete;
-            public List<SubgraphNodeModel> assetSubgraphNodes;
-            public List<SubgraphNodeModel> localSubgraphNodes;
+            public List<ISubgraphNodeInternal> assetSubgraphNodes;
+            public List<ISubgraphNodeInternal> localSubgraphNodes;
 
             public string defaultName;
             public bool shouldConvertToPlacemat;
         }
 
-        internal static SubgraphFromSelectionActionData CollectData(GraphView view, GraphTemplate template, Func<SubgraphNodeModel, GraphTemplate, bool> isSameGraphTypeFunc)
+        internal static SubgraphFromSelectionActionData CollectData(GraphView view, GraphTemplate template, Func<ISubgraphNodeInternal, GraphTemplate, bool> isSameGraphTypeFunc)
         {
             if (!view.GraphModel.AllowSubgraphCreation)
                 return InvalidData;
@@ -46,8 +48,8 @@ namespace Unity.GraphToolkit.Editor
                 return InvalidData;
 
             var transferredModels = new HashSet<GraphElementModel>();
-            List<SubgraphNodeModel> assetSubgraphNodes = null;
-            List<SubgraphNodeModel> localSubgraphNodes = null;
+            List<ISubgraphNodeInternal> assetSubgraphNodes = null;
+            List<ISubgraphNodeInternal> localSubgraphNodes = null;
 
             var placematCount = 0;
             PlacematModel encompassingPlacemat = null;
@@ -60,16 +62,16 @@ namespace Unity.GraphToolkit.Editor
                 if (model is not StickyNoteModel)
                     allStickyNotes = false;
 
-                if (model is SubgraphNodeModel subgraphNode && (isSameGraphTypeFunc == null || isSameGraphTypeFunc.Invoke(subgraphNode, template)))
+                if (model is ISubgraphNodeInternal subgraphNode && (isSameGraphTypeFunc == null || isSameGraphTypeFunc.Invoke(subgraphNode, template)))
                 {
                     if (subgraphNode.GetSubgraphModel()?.GraphObject == null || !subgraphNode.IsReferencingLocalSubgraph)
                     {
-                        assetSubgraphNodes ??= new List<SubgraphNodeModel>();
+                        assetSubgraphNodes ??= new List<ISubgraphNodeInternal>();
                         assetSubgraphNodes.Add(subgraphNode);
                     }
                     else
                     {
-                        localSubgraphNodes ??= new List<SubgraphNodeModel>();
+                        localSubgraphNodes ??= new List<ISubgraphNodeInternal>();
                         localSubgraphNodes.Add(subgraphNode);
                     }
                 }
@@ -139,7 +141,7 @@ namespace Unity.GraphToolkit.Editor
             {
                 IsValid = true,
                 elementsToInclude = new List<GraphElementModel>(transferredModels),
-                defaultName = shouldConvertToPlacemat ? encompassingPlacemat?.Title : SubgraphCreationHelper.defaultLocalSubgraphName,
+                defaultName = shouldConvertToPlacemat ? encompassingPlacemat?.Title : SubgraphCreationHelper.DefaultLocalSubgraphName,
                 elementsToDelete = shouldConvertToPlacemat ? new List<GraphElementModel> { encompassingPlacemat } : null,
                 assetSubgraphNodes = assetSubgraphNodes,
                 localSubgraphNodes = localSubgraphNodes,

@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using Unity.GraphToolkit.CSO;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.Pool;
 
@@ -150,6 +151,7 @@ namespace Unity.GraphToolkit.Editor
             }
         }
 
+        [NoAutoStaticsCleanup] // empty sentinel list; never holds model references
         static IReadOnlyList<GraphElementModel> s_EmptyList = new List<GraphElementModel>();
 
         [SerializeField, Obsolete]

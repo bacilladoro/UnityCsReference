@@ -12,14 +12,14 @@ using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEngine
 {
-    partial class Mesh
+    public partial class Mesh
     {
         [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
         [Obsolete("Property Mesh.uv1 has been deprecated. Use Mesh.uv2 instead (UnityUpgradable) -> uv2", true)]
         public Vector2[] uv1 { get { return null; } set {} }
     }
 
-    partial class Renderer
+    public partial class Renderer
     {
         [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
         [Obsolete("Property lightmapTilingOffset has been deprecated. Use lightmapScaleOffset (UnityUpgradable) -> lightmapScaleOffset", true)]
@@ -30,7 +30,7 @@ namespace UnityEngine
         public Transform lightProbeAnchor { get { return probeAnchor; } set { probeAnchor = value; } }
     }
 
-    partial class Projector
+    public partial class Projector
     {
         [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
         [Obsolete("Property isOrthoGraphic has been deprecated. Use orthographic instead (UnityUpgradable) -> orthographic", true)]
@@ -41,7 +41,7 @@ namespace UnityEngine
         public float orthoGraphicSize { get { return -1f; } set {} }
     }
 
-    partial class Graphics
+    public partial class Graphics
     {
         [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
         [Obsolete("Method DrawMesh has been deprecated. Use Graphics.DrawMeshNow instead (UnityUpgradable) -> DrawMeshNow(*)", true)]
@@ -103,7 +103,7 @@ namespace UnityEngine
         [UnityEngine.Internal.ExcludeFromDocs] public static void WaitOnGPUFence(GPUFence fence) {}
     }
 
-    partial class Screen
+    public partial class Screen
     {
         [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
         [Obsolete("Property GetResolution has been deprecated. Use resolutions instead (UnityUpgradable) -> resolutions", true)]
@@ -115,7 +115,7 @@ namespace UnityEngine
         static public bool showCursor { get; set; }
     }
 
-    partial class LightmapData
+    public partial class LightmapData
     {
         [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
         [Obsolete("Property LightmapData.lightmap has been deprecated. Use LightmapData.lightmapColor instead (UnityUpgradable) -> lightmapColor", true)]
@@ -130,7 +130,7 @@ namespace UnityEngine
         public Texture2D lightmapNear { get { return null; } set {} }
     }
 
-    partial class Shader
+    public partial class Shader
     {
         [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
         [Obsolete("SetGlobalTexGenMode is not supported anymore. Use programmable shaders to achieve the same effect.", true)]
@@ -148,7 +148,7 @@ namespace UnityEngine
         Directional = 2,
     }
 
-    partial class LightmapSettings
+    public partial class LightmapSettings
     {
         [Obsolete("Use lightmapsMode instead.", false)]
         public static LightmapsModeLegacy lightmapsModeLegacy { get { return LightmapsModeLegacy.Single; } set {} }
@@ -156,7 +156,7 @@ namespace UnityEngine
         public static ColorSpace bakedColorSpace { get { return QualitySettings.desiredColorSpace; } set {} }
     }
 
-    partial class LightProbes
+    public partial class LightProbes
     {
         [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
         [Obsolete("Use GetInterpolatedProbe instead.", true)]
@@ -166,13 +166,13 @@ namespace UnityEngine
         public float[] coefficients { get { return Array.Empty<float>(); } set {} }
     }
 
-    partial class TrailRenderer
+    public partial class TrailRenderer
     {
         [Obsolete("Use positionCount instead (UnityUpgradable) -> positionCount", false)]
         public int numPositions { get { return positionCount; } }
     }
 
-    partial class LineRenderer
+    public partial class LineRenderer
     {
         [Obsolete("Use startWidth, endWidth or widthCurve instead.", false)]
         public void SetWidth(float start, float end)
@@ -198,7 +198,7 @@ namespace UnityEngine
         public int numPositions { get { return positionCount; } set { positionCount = value; } }
     }
 
-    partial class MaterialPropertyBlock
+    public partial class MaterialPropertyBlock
     {
         [Obsolete("Use SetFloat instead (UnityUpgradable) -> SetFloat(*)", true)]
         public void AddFloat(string name, float value) { SetFloat(Shader.PropertyToID(name), value); }
@@ -226,13 +226,13 @@ namespace UnityEngine
         public void AddTexture(int nameID, Texture value)   { SetTexture(nameID, value); }
     }
 
-    partial class QualitySettings
+    public partial class QualitySettings
     {
         [Obsolete("Use GetQualityLevel and SetQualityLevel", false)]
         public static QualityLevel currentLevel { get { return (QualityLevel)GetQualityLevel(); } set { SetQualityLevel((int)value, true); } }
     }
 
-    partial class Renderer
+    public partial class Renderer
     {
         [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
         [Obsolete("Use shadowCastingMode instead.", false)]
@@ -257,13 +257,13 @@ namespace UnityEngine
         }
     }
 
-    partial class RenderSettings
+    public partial class RenderSettings
     {
         [Obsolete("Use RenderSettings.ambientIntensity instead (UnityUpgradable) -> ambientIntensity", false)]
         public static float ambientSkyboxAmount { get { return ambientIntensity; } set { ambientIntensity = value; } }
     }
 
-    partial class Screen
+    public partial class Screen
     {
         [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
         [Obsolete("Use Cursor.lockState and Cursor.visible instead.", false)]
@@ -278,7 +278,7 @@ namespace UnityEngine
         }
     }
 
-    partial class Shader
+    public partial class Shader
     {
         [Obsolete("Use Graphics.activeTier instead (UnityUpgradable) -> UnityEngine.Graphics.activeTier", true)]
         public static UnityEngine.Rendering.ShaderHardwareTier globalShaderHardwareTier
@@ -288,7 +288,7 @@ namespace UnityEngine
         }
     }
 
-    partial class Material
+    public partial class Material
     {
         [Obsolete("Creating materials from shader source string will be removed in the future. Use Shader assets instead.", true)]
         public static Material Create(string scriptContents)

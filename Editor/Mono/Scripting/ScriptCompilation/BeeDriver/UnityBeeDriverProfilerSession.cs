@@ -7,15 +7,21 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Bee.Core;
 using NiceIO;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Scripting.ScriptCompilation
 {
     static class UnityBeeDriverProfilerSession
     {
+        [NoAutoStaticsCleanup] // transient per-build profiler session state, reset by Start(), safe to persist
         private static NPath m_CurrentPlayerBuildProfilerOutputFile;
+        [NoAutoStaticsCleanup] // transient per-build profiler session state, reset by Start(), safe to persist
         private static int m_BeeDriverForCurrentPlayerBuildIndex;
+        [NoAutoStaticsCleanup] // transient per-build profiler session state, reset by Start(), safe to persist
         private static TinyProfiler2 _tinyProfiler;
+        [NoAutoStaticsCleanup] // transient per-build profiler session state, safe to persist
         private static Stack<IDisposable> m_ProfilerSections = new Stack<IDisposable>();
+        [NoAutoStaticsCleanup] // transient per-build profiler session state, safe to persist
         private static List<Task> m_TasksToWaitForBeforeFinishing = new();
 
         public static TinyProfiler2 ProfilerInstance => _tinyProfiler;
@@ -33,17 +39,22 @@ namespace UnityEditor.Scripting.ScriptCompilation
             if (m_CurrentPlayerBuildProfilerOutputFile == null)
                 return;
 
+            // Clear the session before writing, so a failed write still leaves it finished. Otherwise the
+            // next Finish() retries the write and reports the same failure again.
+            var outputFile = m_CurrentPlayerBuildProfilerOutputFile;
+            var tinyProfiler = _tinyProfiler;
+            m_CurrentPlayerBuildProfilerOutputFile = null;
+            _tinyProfiler = null;
+
             foreach (var task in m_TasksToWaitForBeforeFinishing)
                 task.Wait();
 
-            _tinyProfiler.Write(m_CurrentPlayerBuildProfilerOutputFile.ToString(), new ChromeTraceOptions
+            tinyProfiler.Write(outputFile.ToString(), new ChromeTraceOptions
             {
                 ProcessName = "Unity",
                 ProcessId = System.Diagnostics.Process.GetCurrentProcess().Id,
                 ProcessSortIndex = -100
             });
-            m_CurrentPlayerBuildProfilerOutputFile = null;
-            _tinyProfiler = null;
         }
 
         static public void BeginSection(string name)

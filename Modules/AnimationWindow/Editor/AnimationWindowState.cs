@@ -1550,9 +1550,9 @@ namespace UnityEditorInternal
 
         public List<AnimationWindowKeyframe> GetAggregateKeys(AnimationWindowHierarchyNode hierarchyNode)
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             DopeLine dopeline = dopelines.FirstOrDefault(e => e.hierarchyNodeID == hierarchyNode.id);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             if (dopeline == null)
                 return null;
             return dopeline.keys;

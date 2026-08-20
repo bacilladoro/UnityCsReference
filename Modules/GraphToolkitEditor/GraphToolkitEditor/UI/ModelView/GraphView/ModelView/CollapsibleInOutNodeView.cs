@@ -4,6 +4,7 @@
 
 using System;
 using Unity.GraphToolkit.InternalBridge;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -92,6 +93,7 @@ namespace Unity.GraphToolkit.Editor
 
         // This is used to disable the one frame delay before the node appears in the tests and should no be used anywhere else.
         // Tests become unstable if the node is not displayed immediately.
+        [NoAutoStaticsCleanup] // test-only flag; default false is always set before use; safe to persist across reload
         internal static bool s_DisableHiddenNodeAtCreation = false;
 
         /// <inheritdoc />

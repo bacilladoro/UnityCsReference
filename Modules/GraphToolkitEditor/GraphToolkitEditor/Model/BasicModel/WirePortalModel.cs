@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using Unity.GraphToolkit.Editor.ContextualMenuItems;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 
 namespace Unity.GraphToolkit.Editor
@@ -20,7 +21,7 @@ namespace Unity.GraphToolkit.Editor
     /// </remarks>
     [Serializable]
     [UnityRestricted]
-    internal abstract class WirePortalModel : NodeModel, IHasDeclarationModel, IRenamable, ICloneable
+    internal abstract partial class WirePortalModel : NodeModel, IHasDeclarationModel, IRenamable, ICloneable
     {
         [SerializeField]
         int m_EvaluationOrder;
@@ -240,7 +241,8 @@ namespace Unity.GraphToolkit.Editor
             }
         }
 
-        static readonly List<ContextualMenuItem> k_ContextualMenuItems = new() {
+        [AutoStaticsCleanupOnCodeReload]
+        static List<ContextualMenuItem> k_ContextualMenuItems = new() {
             ContextualMenuHelpers.createOppositePortalItem,
             ContextualMenuHelpers.revertToWireItem,
             ContextualMenuHelpers.revertAllToWiresItem,

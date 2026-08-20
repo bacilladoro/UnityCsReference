@@ -329,9 +329,9 @@ namespace UnityEditor.Search
 
         void HandleItemsSelected(IEnumerable<int> indices)
         {
-#pragma warning disable UA2002 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2002 // Avoid Linq
             if (indices != null && indices.Any())
-#pragma warning restore UA2002
+#pragma warning restore UAC2002
             {
                 var itemIndex = SearchQueryPanelTreeUtils.GetFirstElement(indices);
                 var rootElement = m_TreeView.GetRootElementForIndex(itemIndex);

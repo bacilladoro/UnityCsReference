@@ -184,9 +184,9 @@ namespace UnityEditor.Search
         public static IEnumerable<SearchProposition> GetPropositions<TData>(this QueryEngine<TData> queryEngine, CombiningOperatorPropositions props = CombiningOperatorPropositions.Default)
         {
             var filters = queryEngine.GetAllFilters();
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             return GetCombiningOperatorPropositions(props).Concat(filters.SelectMany(f => f.GetPropositions()));
-            #pragma warning restore UA2001
+            #pragma warning restore UAC2001
         }
 
         public static IEnumerable<SearchProposition> GetPropositions(this IQueryEngineFilter filter)
@@ -197,27 +197,27 @@ namespace UnityEditor.Search
             if (filter.metaInfo == null || filter.metaInfo.Count == 0)
                 return Array.Empty<SearchProposition>();
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var propositionKeys = filter.metaInfo.Keys.Where(key => key.StartsWith(k_BaseSearchPropositionDataKey, StringComparison.Ordinal)).ToList();
-            #pragma warning restore UA2001
+            #pragma warning restore UAC2001
             if (propositionKeys.Count == 0)
                 return Array.Empty<SearchProposition>();
 
             var globalProposition = GetGlobalProposition(filter);
             if (!globalProposition.valid)
                 globalProposition = GetDefaultValidProposition();
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var validPropositions = propositionKeys.Select(key => filter.GetPropositionFromKey(key)).Where(p => p.valid);
-            #pragma warning restore UA2001
+            #pragma warning restore UAC2001
             var customPropositions = MergePropositions(globalProposition, validPropositions);
             return MergePropositions(globalProposition, customPropositions);
         }
 
         static IEnumerable<SearchProposition> MergePropositions(IEnumerable<SearchProposition> basePropositions, IEnumerable<SearchProposition> overridePropositions)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var overrideMap = overridePropositions.ToDictionary(p => p.label);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             foreach (var baseProposition in basePropositions)
             {
                 if (!overrideMap.TryGetValue(baseProposition.label, out var overrideProposition))
@@ -270,9 +270,9 @@ namespace UnityEditor.Search
         static IEnumerable<SearchProposition> GetPropositionsFromType(IQueryEngineFilter filter, Type type, string category = null, Type blockType = null, int priority = 0, Texture2D icon = null, Color color = default)
         {
             var filterId = filter.token;
-            #pragma warning disable UA2011 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2011 // Avoid Linq
             var defaultOperator = filter.supportedOperators?.FirstOrDefault() ?? ":";
-#pragma warning restore UA2011
+#pragma warning restore UAC2011
             if (type.IsEnum)
                 return SearchUtils.FetchEnumPropositions(type, category, filterId, defaultOperator, blockType, priority, icon, color);
 

@@ -173,29 +173,29 @@ namespace Unity.U2D.Physics
 
         PhysicsBody m_BodyA;
         PhysicsBody m_BodyB;
-        [SerializeField] PhysicsTransform m_LocalAnchorA;
-        [SerializeField] PhysicsTransform m_LocalAnchorB;
-        [SerializeField] bool m_AutoAnchorA;
-        [SerializeField] bool m_AutoAnchorB;
+        [SerializeField] internal PhysicsTransform m_LocalAnchorA;
+        [SerializeField] internal PhysicsTransform m_LocalAnchorB;
+        [SerializeField] internal bool m_AutoAnchorA;
+        [SerializeField] internal bool m_AutoAnchorB;
 
-	    [SerializeField] Vector2 m_LinearVelocity;
-	    [SerializeField] float m_AngularVelocity;
-	    [SerializeField] [Min(0.0f)] float m_MaxForce;
-	    [SerializeField] [Min(0.0f)] float m_MaxTorque;
-	    [SerializeField] [Min(0.0f)] float m_SpringLinearFrequency;
-	    [SerializeField] [Min(0.0f)] float m_SpringAngularFrequency;
-	    [SerializeField] [Min(0.0f)] float m_SpringLinearDamping;
-	    [SerializeField] [Min(0.0f)] float m_SpringAngularDamping;
-	    [SerializeField] [Min(0.0f)] float m_SpringMaxForce;
-	    [SerializeField] [Min(0.0f)] float m_SpringMaxTorque;
+	    [SerializeField] internal Vector2 m_LinearVelocity;
+	    [SerializeField] internal float m_AngularVelocity;
+	    [SerializeField] [Min(0.0f)] internal float m_MaxForce;
+	    [SerializeField] [Min(0.0f)] internal float m_MaxTorque;
+	    [SerializeField] [Min(0.0f)] internal float m_SpringLinearFrequency;
+	    [SerializeField] [Min(0.0f)] internal float m_SpringAngularFrequency;
+	    [SerializeField] [Min(0.0f)] internal float m_SpringLinearDamping;
+	    [SerializeField] [Min(0.0f)] internal float m_SpringAngularDamping;
+	    [SerializeField] [Min(0.0f)] internal float m_SpringMaxForce;
+	    [SerializeField] [Min(0.0f)] internal float m_SpringMaxTorque;
 
-        [SerializeField] [Min(0.0f)] float m_ForceThreshold;
-        [SerializeField] [Min(0.0f)] float m_TorqueThreshold;
-        [SerializeField] [Range(0.0f, 1000.0f)] float m_TuningFrequency;
-        [SerializeField] [Range(0.0f, 10.0f)] float m_TuningDamping;
-        [SerializeField] [Range(0.0001f, 10.0f)] float m_DrawScale;
-        [SerializeField] bool m_WorldDrawing;
-        [SerializeField] bool m_CollideConnected;
+        [SerializeField] [Min(0.0f)] internal float m_ForceThreshold;
+        [SerializeField] [Min(0.0f)] internal float m_TorqueThreshold;
+        [SerializeField] [Range(0.0f, 1000.0f)] internal float m_TuningFrequency;
+        [SerializeField] [Range(0.0f, 10.0f)] internal float m_TuningDamping;
+        [SerializeField] [Range(0.0001f, 10.0f)] internal float m_DrawScale;
+        [SerializeField] internal bool m_WorldDrawing;
+        [SerializeField] internal bool m_CollideConnected;
 
         #endregion
     }

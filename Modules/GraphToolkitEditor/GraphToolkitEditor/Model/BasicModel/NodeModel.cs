@@ -575,9 +575,9 @@ namespace Unity.GraphToolkit.Editor
             if (Modes.ElementAtOrDefault(newModeIndex) == null)
                 return;
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var existingWires = GetConnectedWires().ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             var oldInputConstants = m_InputConstantsById.ToList();
             m_InputConstantsById.Clear();
 
@@ -638,21 +638,21 @@ namespace Unity.GraphToolkit.Editor
                 if (oldPort.PortType != PortType.MissingPort)
                 {
                     // Second choice: Connect to the first compatible port that is not taken.
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2001 // Avoid Linq
                     newPort = compatiblePorts.FirstOrDefault(p => p.GetConnectedWires().Count == 0);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 }
                 else
                 {
                     // When the old port is a missing port, its unique name is most likely different from its title. Connect with the compatible port with the same title.
                     // When both ports are missing ports, the type cannot be retrieved. Connect with the port that has the same title.
                     newPort = otherPort.PortType == PortType.MissingPort ?
-                        #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                        #pragma warning disable UAC2001 // Avoid Linq
                         newModePorts.FirstOrDefault(p => p.Title == oldPort.Title) :
-#pragma warning restore UA2001
-                        #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+                        #pragma warning disable UAC2001 // Avoid Linq
                         compatiblePorts.FirstOrDefault(p => p.Title == oldPort.Title);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 }
 
                 // Last choice: Become a missing port
@@ -879,9 +879,9 @@ namespace Unity.GraphToolkit.Editor
         void RemoveObsoleteWiresAndConstants()
         {
             var removedPortModels = new List<PortModel>();
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             foreach (var kv in m_InputPortInfos.previousPorts
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                      .Where<KeyValuePair<string, PortModel>>(kv => !m_InputPortInfos.portsById.ContainsKey(kv.Key)))
             {
                 if (!kv.Value.Options.HasFlag(PortModelOptions.IsNodeOption) && kv.Value.PortType != PortType.MissingPort)
@@ -897,9 +897,9 @@ namespace Unity.GraphToolkit.Editor
                 }
             }
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             foreach (var kv in m_OutputPortInfos.previousPorts
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                      .Where<KeyValuePair<string, PortModel>>(kv => !m_OutputPortInfos.portsById.ContainsKey(kv.Key)))
             {
                 if (!kv.Value.Options.HasFlag(PortModelOptions.IsNodeOption) && kv.Value.PortType != PortType.MissingPort)
@@ -922,11 +922,11 @@ namespace Unity.GraphToolkit.Editor
             }
 
             // remove input constants that aren't used
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var idsToDeletes = m_InputConstantsById
                 .Select(kv => kv.Key)
                 .Where(id => !m_InputPortInfos.portsById.ContainsKey(id) && m_NodeOptions.TrueForAll(o => o.PortModel.UniqueName != id)).ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             foreach (var id in idsToDeletes)
             {
                 m_InputConstantsById.Remove(id);
@@ -939,9 +939,9 @@ namespace Unity.GraphToolkit.Editor
             void CleanupExpandedPortDictionary(ref PortInfos portInfos)
             {
                 var portsById = portInfos.portsById;
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 var idsToDelete = portInfos.expandedPortsById
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     .Select(kv => kv.Key)
                     .Where(id => !portsById.ContainsKey(id)).ToList();
                 foreach (var id in idsToDelete)
@@ -1390,14 +1390,14 @@ namespace Unity.GraphToolkit.Editor
         void CopyInputConstantValues(List<KeyValuePair<string, Constant>> otherInputConstants)
         {
             var index = 0;
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             foreach (var id in m_InputConstantsById.Keys.ToList())
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 // First choice: constant with the same id
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 var constantWithSameId = otherInputConstants.FirstOrDefault(c => id == c.Key).Value;
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 if (constantWithSameId != null)
                 {
                     if (m_InputConstantsById[id].IsAssignableFrom(constantWithSameId.Type))

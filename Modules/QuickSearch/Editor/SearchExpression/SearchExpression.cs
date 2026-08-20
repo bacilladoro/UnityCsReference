@@ -465,15 +465,15 @@ namespace UnityEditor.Search
         public static bool Check(SearchExpression e, SearchExpressionContext c)
         {
             var result = e.Execute(c);
-            #pragma warning disable UA2005 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2005 // Avoid Linq
             var count = result.Count();
-#pragma warning restore UA2005
+#pragma warning restore UAC2005
             if (count == 0)
                 return false;
             if (count == 1)
-                #pragma warning disable UA2010 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2010 // Avoid Linq
                 return IsTrue(result.First());
-#pragma warning restore UA2010
+#pragma warning restore UAC2010
             return true;
         }
 

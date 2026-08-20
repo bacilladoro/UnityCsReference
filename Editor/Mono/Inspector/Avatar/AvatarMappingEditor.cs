@@ -694,13 +694,13 @@ namespace UnityEditor
 
             // Does this transfrom is already set
             //List<BoneWrapper> match = ArrayUtility.FindAll (m_BoneWrappers, delegate (Transform t) { return t == m_BoneWrappers[i].bone; });
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             IEnumerable<AvatarSetupTool.BoneWrapper> match = m_Bones.Where(f => f.bone == bone.bone);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             // when we search in the list we must add 1 because the bone is in this list
-#pragma warning disable UA2005 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2005 // Avoid Linq
             if (match.Count() > 1)
-#pragma warning restore UA2005
+#pragma warning restore UAC2005
             {
                 error = bone.messageName + " is also assigned to ";
                 bool first = true;
@@ -847,9 +847,9 @@ namespace UnityEditor
                 string boneName = humanTemplate.Find(m_Bones[i].humanBoneName);
                 if (boneName.Length > 0)
                 {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                     Transform transform = modelBones.Keys.FirstOrDefault(f => AvatarMappingEditor.MatchName(f.name, boneName));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     m_Bones[i].bone = transform;
                 }
                 else

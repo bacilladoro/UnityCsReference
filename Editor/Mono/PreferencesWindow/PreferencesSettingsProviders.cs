@@ -367,9 +367,9 @@ By default, Windows will combine these under a single taskbar item.");
         [SettingsProvider]
         internal static SettingsProvider CreateColorsProvider()
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var settings = new PreferencesProvider("Preferences/Colors", GetSearchKeywordsFromGUIContentProperties<ColorsProperties>().Concat(OrderPrefs(PrefSettings.Prefs<PrefColor>()).Values.SelectMany(l => l).Select(pair => pair.Key)));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             settings.guiHandler = searchContext => { OnGUI(searchContext, settings.ShowColors); };
             return settings;
         }
@@ -1404,12 +1404,12 @@ By default, Windows will combine these under a single taskbar item.");
                 foundScriptEditorPaths[apps] = CodeEditor.Editor.GetInstallationForPath(apps).Name;
             }
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             m_ScriptApps = new[] { "" }.Concat(foundScriptEditorPaths.Keys).ToArray();
-#pragma warning restore UA2001
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+#pragma warning disable UAC2001 // Avoid Linq
             m_ScriptAppDisplayNames = new[] { "Open by file extension" }.Concat(foundScriptEditorPaths.Values).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             m_ImageApps = BuildAppPathList(m_ImageAppPath, kRecentImageAppsKey, "");
 

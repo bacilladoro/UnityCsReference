@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 
 namespace Unity.GraphToolkit.Editor
 {
@@ -13,6 +14,7 @@ namespace Unity.GraphToolkit.Editor
     [UnityRestricted]
     internal class ChangeHint : Enumeration
     {
+        [NoAutoStaticsCleanup] // ID counter initialized once by static ctor; value is stable across reloads
         static int s_NextId;
 
         static ChangeHint()
@@ -42,51 +44,62 @@ namespace Unity.GraphToolkit.Editor
         /// <summary>
         /// Unspecified changes. Assume anything could have change.
         /// </summary>
+        [NoAutoStaticsCleanup] // enum-like hint constant; value is a fixed identifier
         public static readonly ChangeHint Unspecified;
 
         /// <summary>
         /// The position or dimension of the element changed.
         /// </summary>
+        [NoAutoStaticsCleanup] // enum-like hint constant; value is a fixed identifier
         public static readonly ChangeHint Layout;
 
         /// <summary>
         /// The visual style (color, etc.) of the element changed.
         /// </summary>
+        [NoAutoStaticsCleanup] // enum-like hint constant; value is a fixed identifier
         public static readonly ChangeHint Style;
 
         /// <summary>
         /// Model data (for example, an inspectable field) changed.
         /// </summary>
+        [NoAutoStaticsCleanup] // enum-like hint constant; value is a fixed identifier
         public static readonly ChangeHint Data;
 
         /// <summary>
         /// Graph topology changed; typically, a wire was connected or disconnected.
         /// </summary>
+        [NoAutoStaticsCleanup] // enum-like hint constant; value is a fixed identifier
         public static readonly ChangeHint GraphTopology;
 
         /// <summary>
         /// Grouping of variable in the blackboard changed.
         /// </summary>
+        [NoAutoStaticsCleanup] // enum-like hint constant; value is a fixed identifier
         public static readonly ChangeHint Grouping;
 
         /// <summary>
         /// UI hints changed.
         /// </summary>
+        [NoAutoStaticsCleanup] // enum-like hint constant; value is a fixed identifier
         public static readonly ChangeHint UIHints;
 
         /// <summary>
         /// Animation state of the element changed.
         /// </summary>
+        [NoAutoStaticsCleanup] // enum-like hint constant; value is a fixed identifier
         public static readonly ChangeHint Animation;
 
         /// <summary>
         /// No model change, but a redraw is needed.
         /// </summary>
+        [NoAutoStaticsCleanup] // enum-like hint constant; value is a fixed identifier
         public static readonly ChangeHint NeedsRedraw;
 
         /// <summary>
         /// The view for this model must be torn down and recreated, e.g. because the view type changed.
         /// </summary>
+        [NoAutoStaticsCleanup] // enum-like hint constant; value is a fixed identifier
         public static readonly ChangeHint RecreateView;
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

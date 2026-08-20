@@ -140,7 +140,7 @@ namespace Unity.GraphToolkit.Editor
                 undoStateUpdater.SaveStates(selectionHelper.SelectionStates);
             }
 
-            SubgraphNodeModel subgraphNodeModel;
+            ISubgraphNodeInternal subgraphNodeModel;
             GraphObject graphObject = null;
             if (command.AssetPath == null)
             {
@@ -164,21 +164,23 @@ namespace Unity.GraphToolkit.Editor
                     command.Guid,
                     command.ElementsToDelete);
 
-                // Set the graph bounds. Necessary to know the bounds without opening the subgraph.
-                SubgraphCreationHelper.ComputeSubgraphBounds(command.ElementsToAddToSubgraph, command.GraphView, graphObject.GraphModel);
-
-                graphUpdater.MarkUpdated(changeScope.ChangeDescription);
+                if (subgraphNodeModel != null)
+                {
+                    // Set the graph bounds. Necessary to know the bounds without opening the subgraph.
+                    SubgraphCreationHelper.ComputeSubgraphBounds(command.ElementsToAddToSubgraph, command.GraphView, graphObject.GraphModel);
+                    graphUpdater.MarkUpdated(changeScope.ChangeDescription);
+                }
             }
 
             graphObject.Save();
 
-            if (subgraphNodeModel != null)
+            if (subgraphNodeModel is GraphElementModel elementToSelect)
             {
                 using (var selectionUpdaters = selectionHelper.UpdateScopes)
                 {
                     foreach (var updater in selectionUpdaters)
                         updater.ClearSelection();
-                    selectionUpdaters.MainUpdateScope.SelectElement(subgraphNodeModel, true);
+                    selectionUpdaters.MainUpdateScope.SelectElement(elementToSelect, true);
                 }
             }
         }
@@ -281,13 +283,14 @@ namespace Unity.GraphToolkit.Editor
             // Create the local subgraph model.
             var localSubgraph = graphModel.CreateLocalSubgraph(
                 command.Template?.GraphModelType ?? graphModel.GetType(),
-                string.IsNullOrEmpty(command.DefaultName) ? SubgraphCreationHelper.defaultLocalSubgraphName : command.DefaultName,
+                string.IsNullOrEmpty(command.DefaultName) ? SubgraphCreationHelper.DefaultLocalSubgraphName : command.DefaultName,
                 command.Template);
 
             if (localSubgraph is null)
                 return;
 
-            SubgraphNodeModel subgraphNodeModel;
+            PortNodeModel subgraphNodeModel;
+
             var portIdsToAlign = new List<string>();
 
             using (var graphUpdater = graphModelState.UpdateScope)
@@ -300,16 +303,18 @@ namespace Unity.GraphToolkit.Editor
                     command.Position,
                     command.Guid,
                     command.ElementsToDelete,
-                    portIdsToAlign);
+                    portIdsToAlign) as PortNodeModel;
 
-                // Set the graph bounds. Necessary to know the bounds without opening the subgraph.
-                SubgraphCreationHelper.ComputeSubgraphBounds(command.ElementsToAddToSubgraph, command.GraphView, localSubgraph);
-
-                graphUpdater.MarkForRename(subgraphNodeModel);
-                graphUpdater.MarkUpdated(changeScope.ChangeDescription);
+                if (subgraphNodeModel is not null)
+                {
+                    // Set the graph bounds. Necessary to know the bounds without opening the subgraph.
+                    SubgraphCreationHelper.ComputeSubgraphBounds(command.ElementsToAddToSubgraph, command.GraphView, localSubgraph);
+                    graphUpdater.MarkForRename(subgraphNodeModel);
+                    graphUpdater.MarkUpdated(changeScope.ChangeDescription);
+                }
             }
 
-            if (subgraphNodeModel != null)
+            if (subgraphNodeModel is not null)
             {
                 using (var autoPlacementUpdater = autoPlacementState.UpdateScope)
                 {
@@ -405,7 +410,7 @@ namespace Unity.GraphToolkit.Editor
                 undoStateUpdater.SaveStates(selectionHelper.SelectionStates);
             }
 
-            SubgraphNodeModel subgraphNodeModel;
+            ISubgraphNodeInternal subgraphNodeModel;
             using (var graphUpdater = graphModelState.UpdateScope)
             using (var changeScope = graphModelState.GraphModel.ChangeDescriptionScope)
             {
@@ -415,13 +420,14 @@ namespace Unity.GraphToolkit.Editor
                 graphUpdater.MarkUpdated(changeScope.ChangeDescription);
             }
 
-            if (subgraphNodeModel != null)
+            if (subgraphNodeModel is GraphElementModel elementToSelect)
             {
                 using (var selectionUpdaters = selectionHelper.UpdateScopes)
                 {
                     foreach (var updater in selectionUpdaters)
                         updater.ClearSelection();
-                    selectionUpdaters.MainUpdateScope.SelectElement(subgraphNodeModel, true);
+
+                    selectionUpdaters.MainUpdateScope.SelectElement(elementToSelect, true);
                 }
             }
         }
@@ -437,7 +443,7 @@ namespace Unity.GraphToolkit.Editor
         /// <summary>
         /// The subgraph nodes to convert.
         /// </summary>
-        public List<SubgraphNodeModel> SubgraphNodeModels;
+        public List<ISubgraphNodeInternal> SubgraphNodeModels;
 
         /// <summary>
         /// The template to create the subgraph.
@@ -457,7 +463,7 @@ namespace Unity.GraphToolkit.Editor
         /// </summary>
         /// <param name="subgraphNodeModels">The subgraph nodes to convert.</param>
         /// <param name="template">The template to create the subgraph.</param>
-        public ConvertAssetToLocalSubgraphCommand(List<SubgraphNodeModel> subgraphNodeModels, GraphTemplate template)
+        public ConvertAssetToLocalSubgraphCommand(List<ISubgraphNodeInternal> subgraphNodeModels, GraphTemplate template)
             : this()
         {
             SubgraphNodeModels = subgraphNodeModels;
@@ -488,7 +494,7 @@ namespace Unity.GraphToolkit.Editor
                 var subgraphNode = command.SubgraphNodeModels[i];
 
                 // Create the local subgraph asset.
-                var localSubgraph = GraphObjectCreationHelpers.ConvertAssetToLocalGraph(subgraphNode.GetSubgraphModel().GraphObject, subgraphNode.GraphModel, command.Template);
+                var localSubgraph = GraphObjectCreationHelpers.ConvertAssetToLocalGraph(subgraphNode.GetSubgraphModel().GraphObject, graphModel, command.Template);
                 if (localSubgraph is null)
                     continue;
 
@@ -516,7 +522,7 @@ namespace Unity.GraphToolkit.Editor
         /// <summary>
         /// The subgraph nodes to convert.
         /// </summary>
-        public List<SubgraphNodeModel> SubgraphNodeModels;
+        public List<ISubgraphNodeInternal> SubgraphNodeModels;
 
         /// <summary>
         /// The path of the newly created asset when there is no prompt to create the asset subgraph.
@@ -541,7 +547,7 @@ namespace Unity.GraphToolkit.Editor
         /// </summary>
         /// <param name="subgraphNodeModels">The subgraph nodes to convert.</param>
         /// <param name="template">The template to create the subgraph.</param>
-        public ConvertLocalToAssetSubgraphCommand(List<SubgraphNodeModel> subgraphNodeModels, GraphTemplate template)
+        public ConvertLocalToAssetSubgraphCommand(List<ISubgraphNodeInternal> subgraphNodeModels, GraphTemplate template)
             : this()
         {
             SubgraphNodeModels = subgraphNodeModels;
@@ -554,7 +560,7 @@ namespace Unity.GraphToolkit.Editor
         /// <param name="subgraphNodeModels">The subgraph nodes to convert.</param>
         /// <param name="template">The template to create the subgraph.</param>
         /// <param name="assetPath">The path of the asset.</param>
-        public ConvertLocalToAssetSubgraphCommand(List<SubgraphNodeModel> subgraphNodeModels, GraphTemplate template, string assetPath)
+        public ConvertLocalToAssetSubgraphCommand(List<ISubgraphNodeInternal> subgraphNodeModels, GraphTemplate template, string assetPath)
             : this(subgraphNodeModels, template)
         {
             AssetPath = assetPath;
@@ -599,8 +605,8 @@ namespace Unity.GraphToolkit.Editor
                 if (!subgraphNode.IsReferencingLocalSubgraph)
                     continue;
 
-                var promptTitle = string.Format(k_PromptToCreateTitle, subgraphNode.Title);
-                var prompt = string.Format(k_PromptToCreate, subgraphNode.Title);
+                var promptTitle = string.Format(k_PromptToCreateTitle, (subgraphNode as IHasTitle)?.Title);
+                var prompt = string.Format(k_PromptToCreate, (subgraphNode as IHasTitle)?.Title);
 
                 var subgraphModel = subgraphNode.GetSubgraphModel();
                 var assetGraph = GraphObjectCreationHelpers.ConvertLocalToAssetGraph(subgraphModel, promptTitle, prompt, command.AssetPath, command.Template, ValidatePath);
@@ -614,7 +620,7 @@ namespace Unity.GraphToolkit.Editor
 
                     // Assign the asset subgraph to the subgraph node.
                     subgraphNode.SetSubgraphModel(assetGraph.GraphModel.GetGraphReference(true));
-                    subgraphNode.GraphModel.RemoveLocalSubgraph(subgraphModel);
+                    graphModel.RemoveLocalSubgraph(subgraphModel);
                     graphUpdater.MarkUpdated(changeScope.ChangeDescription);
                 }
             }
@@ -630,7 +636,7 @@ namespace Unity.GraphToolkit.Editor
         /// <summary>
         /// The subgraph node to expand.
         /// </summary>
-        public SubgraphNodeModel SubgraphNode;
+        public AbstractNodeModel Node;
 
         /// <summary>
         /// The graph model which will contain the placemat.
@@ -656,13 +662,13 @@ namespace Unity.GraphToolkit.Editor
         /// Initializes a new <see cref="ExpandSubgraphCommand"/>.
         /// </summary>
         /// <param name="targetGraphModel">The graph model which will contain the placemat.</param>
-        /// <param name="subgraphNode">The subgraph node to expand.</param>
+        /// <param name="node">The subgraph node to expand.</param>
         /// <param name="position">The position where to create the placemat.</param>
-        public ExpandSubgraphCommand(GraphModel targetGraphModel, SubgraphNodeModel subgraphNode, Vector2 position)
+        public ExpandSubgraphCommand(GraphModel targetGraphModel, AbstractNodeModel node, Vector2 position)
             : this()
         {
             TargetGraphModel = targetGraphModel;
-            SubgraphNode = subgraphNode;
+            Node = node;
             Position = position;
         }
 
@@ -680,7 +686,10 @@ namespace Unity.GraphToolkit.Editor
             if (!graphModel.AllowSubgraphCreation)
                 return;
 
-            var subgraphGraphModel = command.SubgraphNode.GetSubgraphModel();
+            if (command.Node is not ISubgraphNodeInternal subgraphNode)
+                return;
+
+            var subgraphGraphModel = subgraphNode.GetSubgraphModel();
             if (subgraphGraphModel == null)
                 return;
 
@@ -782,14 +791,13 @@ namespace Unity.GraphToolkit.Editor
                 var elementsToRemove = new List<GraphElementModel>();
 
                 // Patch up wires in the target graph.
-                var existingWiresConnectedToSubgraphNode = new List<WireModel>(command.SubgraphNode.GetConnectedWires());
-                foreach (var existingWire in existingWiresConnectedToSubgraphNode)
+                foreach (var existingWire in new List<WireModel>(command.Node.GetConnectedWires()))
                 {
                     elementsToRemove.Add(existingWire);
                     if (nodeMapping.Count == 0)
                         continue;
 
-                    var isConnectedToSubgraphNodeInput = existingWire.ToPort.NodeModel == command.SubgraphNode;
+                    var isConnectedToSubgraphNodeInput = existingWire.ToPort.NodeModel == command.Node;
 
                     var portOnSubgraphNode = isConnectedToSubgraphNodeInput ? existingWire.ToPort : existingWire.FromPort;
                     var portOnOtherNode = isConnectedToSubgraphNodeInput ? existingWire.FromPort : existingWire.ToPort;
@@ -798,7 +806,9 @@ namespace Unity.GraphToolkit.Editor
                         continue;
 
                     // Get the variable declaration in the subgraph associated to the port on the subgraph node.
-                    var portsToVariables = isConnectedToSubgraphNodeInput ? command.SubgraphNode.InputPortToVariableDeclarationDictionary : command.SubgraphNode.OutputPortToVariableDeclarationDictionary;
+                    if (subgraphNode is not SubgraphNodeModel portSubgraphNode)
+                        continue;
+                    var portsToVariables = isConnectedToSubgraphNodeInput ? portSubgraphNode.InputPortToVariableDeclarationDictionary : portSubgraphNode.OutputPortToVariableDeclarationDictionary;
                     portsToVariables.TryGetValue(portOnSubgraphNode, out var variableDeclaration);
 
                     if (variableDeclaration is null)
@@ -885,11 +895,11 @@ namespace Unity.GraphToolkit.Editor
 
                 subgraphBounds.size += placematExtraMargin;
                 var placemat = command.TargetGraphModel.CreatePlacemat(subgraphBounds);
-                placemat.Title = command.SubgraphNode.Title;
+                placemat.Title = command.Node.Title;
                 selectionUpdater.SelectElement(placemat, true);
 
                 // Delete the subgraph node and obsolete wires.
-                elementsToRemove.Add(command.SubgraphNode);
+                elementsToRemove.Add(command.Node);
                 command.TargetGraphModel.DeleteElements(elementsToRemove);
 
                 graphUpdater.MarkUpdated(changeScope.ChangeDescription);

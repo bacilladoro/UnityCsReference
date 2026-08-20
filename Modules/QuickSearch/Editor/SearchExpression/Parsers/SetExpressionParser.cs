@@ -3,11 +3,13 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System.Linq;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Search
 {
     static partial class Parsers
     {
+        [NoAutoStaticsCleanup] // Immutable evaluator handle resolved from a fixed builtin name; safe to persist across reload.
         static readonly SearchExpressionEvaluator SetEvaluator = EvaluatorManager.GetConstantEvaluatorByName("set");
 
         [SearchExpressionParser("fixedset", BuiltinParserPriority.Set)]
@@ -21,9 +23,9 @@ namespace UnityEditor.Search
             if (expressions.Length != 1 || expressions[0].startIndex != text.startIndex || expressions[0].length != text.length)
                 return null;
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var parameters = ParserUtils.ExtractArguments(text)
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 .Select(paramText => ParserManager.Parse(args.With(paramText).With(SearchExpressionParserFlags.ImplicitLiterals)))
                 .ToArray();
 
@@ -48,9 +50,9 @@ namespace UnityEditor.Search
             if (!rootHasParameters)
                 return null;
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var parameters = ParserUtils.ExtractArguments(text)
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 .Select(paramText => ParserManager.Parse(args.With(paramText).Without(SearchExpressionParserFlags.ImplicitLiterals)))
                 .ToArray();
 

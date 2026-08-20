@@ -35,9 +35,9 @@ If your project uses a custom build script, ensure that it passes the <b>BuildOp
         public override void AddIssues(IEnumerable<ReportItem> allIssues)
         {
             base.AddIssues(allIssues);
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             m_MetaData.AddRange(allIssues.Where(i => i.Category == IssueCategory.BuildSummary));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         public override void Clear()
@@ -67,9 +67,9 @@ If your project uses a custom build script, ensure that it passes the <b>BuildOp
 
         public override void DrawDetails(ReportItem[] selectedIssues)
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var selectedDescriptors = selectedIssues.Select(i => i.GetCustomProperty(0)).Distinct().ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             string selectedText = k_NoSelectionText;
             if (selectedDescriptors.Length > 1)

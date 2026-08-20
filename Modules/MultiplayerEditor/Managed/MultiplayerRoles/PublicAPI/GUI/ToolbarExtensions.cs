@@ -4,6 +4,7 @@
 
 using System;
 using System.Reflection;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEditor.Toolbars;
 using UnityEditor.UIElements;
@@ -15,8 +16,9 @@ using UnityEditor.PackageManager;
 
 namespace Unity.Multiplayer.Editor
 {
-    internal static class ToolbarExtensions
+    internal static partial class ToolbarExtensions
     {
+        [AutoStaticsCleanupOnCodeReload] // editor toolbar element; stale after reload
         private static EditorToolbarDropdown s_ToolbarButton;
 
         [InitializeOnLoadMethod]

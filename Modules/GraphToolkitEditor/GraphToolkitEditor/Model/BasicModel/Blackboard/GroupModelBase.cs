@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using Unity.GraphToolkit.Editor.ContextualMenuItems;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Pool;
 
 namespace Unity.GraphToolkit.Editor
@@ -14,7 +15,7 @@ namespace Unity.GraphToolkit.Editor
     /// </summary>
     [Serializable]
     [UnityRestricted]
-    internal abstract class GroupModelBase : GraphElementModel, IGroupItemModel, IGraphElementContainer, IRenamable, IHasTitle
+    internal abstract partial class GroupModelBase : GraphElementModel, IGroupItemModel, IGraphElementContainer, IRenamable, IHasTitle
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="GroupModelBase" /> class.
@@ -139,7 +140,8 @@ namespace Unity.GraphToolkit.Editor
         /// <inheritdoc />
         public override IReadOnlyList<ContextualMenuItem> ContextualMenuItems => k_ContextualMenuItems;
 
-        static readonly ContextualMenuItem[] k_ContextualMenuItems =
+        [AutoStaticsCleanupOnCodeReload]
+        static ContextualMenuItem[] k_ContextualMenuItems =
         [
             ContextualMenuHelpers.createVariableItem,
             ContextualMenuHelpers.createGroupItem,

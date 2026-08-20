@@ -19,14 +19,16 @@ using UnityEngine;
 using CompilerMessage = UnityEditor.Scripting.Compilers.CompilerMessage;
 using CompilerMessageType = UnityEditor.Scripting.Compilers.CompilerMessageType;
 using Unity.Collections;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Scripting.ScriptCompilation
 {
-    internal static class BeeScriptCompilation
+    internal static partial class BeeScriptCompilation
     {
         internal static string ExecutableExtension => Application.platform == RuntimePlatform.WindowsEditor ? ".exe" : "";
-        private static string projectPath = Path.GetDirectoryName(Application.dataPath);
+        private static readonly string projectPath = Path.GetDirectoryName(Application.dataPath);
 
+        [AutoStaticsCleanupOnCodeReload] // Lazy cache reset on reload so the Roslyn SDK path re-resolves against the current install
         private static Lazy<string> _RoslynPath = new(() => {
             NPath sdkPath = new NPath(EditorApplication.applicationScriptingPath).Combine("DotNetSdk/sdk");
             var dirs = sdkPath.Directories(recurse: false);
@@ -156,9 +158,9 @@ namespace UnityEditor.Scripting.ScriptCompilation
         }
 
         private static ScriptAssembly[] CodeGenAssemblies(ScriptAssembly[] assemblies) =>
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             assemblies
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 .Where(assembly => UnityCodeGenHelpers.IsCodeGen(FileUtil.GetPathWithoutExtension(assembly.Filename)))
                 .SelectMany(assembly => assembly.AllRecursiveScripAssemblyReferencesIncludingSelf())
                 .Distinct()
@@ -168,9 +170,9 @@ namespace UnityEditor.Scripting.ScriptCompilation
         private static AssemblyData[] AssemblyDataFrom(ScriptAssembly[] assemblies)
         {
             Array.Sort(assemblies, (a1, a2) => string.Compare(a1.Filename, a2.Filename, StringComparison.Ordinal));
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return assemblies.Select((scriptAssembly, index) =>
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 using (new ProfilerMarker($"AssemblyDataFrom {scriptAssembly.Filename}").Auto())
                     return AssemblyDataFrom(scriptAssembly, assemblies, index);
@@ -248,9 +250,9 @@ namespace UnityEditor.Scripting.ScriptCompilation
             while (totalErrors < 10 && nextResultToAugment < result.Length)
             {
                 UnitySpecificCompilerMessages.AugmentMessagesInCompilationErrorsWithUnitySpecificAdvice(result[nextResultToAugment]);
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 totalErrors += result[nextResultToAugment].Count(m => m.type == CompilerMessageType.Error);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 ++nextResultToAugment;
             }
 
@@ -280,9 +282,9 @@ namespace UnityEditor.Scripting.ScriptCompilation
                 ? (CompilerOutputParserBase) new PostProcessorOutputParser()
                 : (CompilerOutputParserBase) new MicrosoftCSharpCompilerOutputParser();
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return parser
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 .Parse(
                 (nodeResult.Output ?? string.Empty).Split(new[] {'\r', '\n'},
                     StringSplitOptions.RemoveEmptyEntries),

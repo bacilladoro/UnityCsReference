@@ -27,15 +27,15 @@ namespace UnityEditor.Presets
             AdvancedDropdownItem root = new PresetTypeDropdownItem(L10n.Tr("Add Default Type"));
 
             var type = UnityType.FindTypeByName("AssetImporter");
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var presetTypes = UnityType.GetTypes()
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 .Where(t => t.IsDerivedFrom(type) && !t.isAbstract)
                 .Select(t => new PresetType(t.persistentTypeID))
                 .Union(
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2001 // Avoid Linq
                     TypeCache.GetTypesDerivedFrom<ScriptedImporter>()
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                         .Where(t => !t.IsAbstract)
                         .Select(t => new PresetType(t))
                 )
@@ -79,9 +79,9 @@ namespace UnityEditor.Presets
                         m_SearchableElements.Add(element);
                         continue;
                     }
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2001 // Avoid Linq
                     var group = (PresetTypeDropdownItem)parent.childList.SingleOrDefault(c => c.name == path);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     if (group == null)
                     {
                         group = new PresetTypeDropdownItem(path);
@@ -111,9 +111,9 @@ namespace UnityEditor.Presets
                         m_SearchableElements.Add(element);
                         continue;
                     }
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2001 // Avoid Linq
                     var group = parent.childList.SingleOrDefault(c => c.name == path);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     if (group == null)
                     {
                         group = new PresetTypeDropdownItem(path);
@@ -156,9 +156,9 @@ namespace UnityEditor.Presets
             {
                 menuDictionary.Add(menus[i], commands[i]);
             }
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             return menuDictionary.ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         private int CompareItems(KeyValuePair<string, string> x, KeyValuePair<string, string> y)

@@ -1237,12 +1237,33 @@ namespace UnityEngine
             internal int Value;
         }
         
-        internal LightProbes()
+        public LightProbes(int size)
         {
-            Internal_Create(this);
+            if (size < 0)
+                throw new ArgumentOutOfRangeException(nameof(size), "Size must be non-negative.");
+
+            Internal_Create(this, size);
         }
 
-        extern static void Internal_Create([Writable] LightProbes self);
+        internal LightProbes()
+        {
+            Internal_Create(this, 0);
+        }
+
+        extern static void Internal_Create([Writable] LightProbes self, int size);
+
+        [FreeFunction]
+        [NativeName("AppendLightProbes")]
+        public static extern void Append(LightProbes lightProbes);
+
+        [FreeFunction]
+        [NativeName("RemoveLightProbes")]
+        public static extern void Remove(LightProbes lightProbes);
+
+        [FreeFunction]
+        [NativeName("GetLightProbeReferenceCount")]
+        public static extern int GetReferenceCount(LightProbes lightProbes);
+        public static bool IsActive(LightProbes lightProbes) => GetReferenceCount(lightProbes) > 0;
 
         [AutoStaticsCleanupOnCodeReload]
         public static event Action lightProbesUpdated;
@@ -1339,6 +1360,14 @@ namespace UnityEngine
         [FreeFunction(HasExplicitThis = true)]
         [NativeName("SetLightProbePositionsSelf")]
         public extern bool SetPositionsSelf(Vector3[] positions, bool checkForDuplicatePositions);
+
+        [FreeFunction(HasExplicitThis = true)]
+        [NativeName("GetLightProbeSHCoefficientsSelf")]
+        public extern SphericalHarmonicsL2[] GetSHCoefficientsSelf();
+
+        [FreeFunction(HasExplicitThis = true)]
+        [NativeName("SetLightProbeSHCoefficientsSelf")]
+        public extern bool SetSHCoefficientsSelf(SphericalHarmonicsL2[] coefficients);
 
         public extern UnityEngine.Rendering.SphericalHarmonicsL2[] bakedProbes
         {

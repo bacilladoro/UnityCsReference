@@ -32,9 +32,9 @@ namespace Unity.Timeline.Foundation.ViewModel
         {
             foreach (Item item in items)
             {
-#pragma warning disable UA2007 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2007 // Avoid Linq
                 if (filterOut != null && filterOut.Contains(item))
-#pragma warning restore UA2007
+#pragma warning restore UAC2007
                     continue;
 
                 if (item.isClip)

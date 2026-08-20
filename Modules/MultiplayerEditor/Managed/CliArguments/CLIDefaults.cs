@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEditor.Build;
 using UnityEditor.Callbacks;
@@ -111,7 +112,8 @@ namespace Unity.DedicatedServer
             }
         }
 
-        static CLIDefault[] Defaults =
+        [NoAutoStaticsCleanup] // fixed configuration array, allocated once; stable across reloads
+        static readonly CLIDefault[] Defaults =
         {
             new CLIDefaultInt("port",       7777,     SettingsContent.listenPort),
             new CLIDefaultInt("framerate",  30,       SettingsContent.targetFramerate),

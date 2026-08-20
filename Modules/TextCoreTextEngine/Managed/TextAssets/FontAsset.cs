@@ -9,6 +9,7 @@ using System.Linq;
 using System.Threading;
 using Unity.Jobs.LowLevel.Unsafe;
 using Unity.Profiling;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Bindings;
 using UnityEngine.Serialization;
 using UnityEngine.TextCore.LowLevel;
@@ -404,6 +405,7 @@ namespace UnityEngine.TextCore.Text
         [VisibleToOtherModules("UnityEngine.IMGUIModule", "UnityEngine.UIElementsModule")]
         internal bool IsRaster() => m_AtlasRenderMode == FontAssetFactory.k_RasterEditorBitmapGlyphRenderMode;
 
+        [VisibleToOtherModules("UnityEngine.IMGUIModule")]
         internal bool IsColor() => ((GlyphRasterModes)m_AtlasRenderMode).HasFlag(GlyphRasterModes.RASTER_MODE_COLOR);
 
         /// <summary>
@@ -799,17 +801,28 @@ namespace UnityEngine.TextCore.Text
         // ================================================================================
 
         // Editor Only Callbacks
+        [AutoStaticsCleanupOnCodeReload]
         internal static Action<Texture, FontAsset> OnFontAssetTextureChanged;
+        [AutoStaticsCleanupOnCodeReload]
         internal static Action<FontAsset> RegisterResourceForUpdate;
+        [AutoStaticsCleanupOnCodeReload]
         internal static Action<FontAsset> RegisterResourceForReimport;
+        [AutoStaticsCleanupOnCodeReload]
         internal static Action<Texture2D, bool> SetAtlasTextureIsReadable;
+        [AutoStaticsCleanupOnCodeReload]
         internal static Func<string, Font> GetSourceFontRef;
+        [AutoStaticsCleanupOnCodeReload]
         internal static Func<Font, string> SetSourceFontGUID;
+        [AutoStaticsCleanupOnCodeReload]
         internal static Func<bool> EditorApplicationIsUpdating;
 
         /// <summary>
         /// Weak reference to all <see cref="FontAsset"/> instances.
         /// </summary>
+        // FontAsset instances survive code reload and only register here via ReadFontAssetDefinition,
+        // which does not re-run for already-initialized instances, so the list must persist to keep
+        // cross-instance fallback invalidation working. Weak references cannot pin unloaded code.
+        [NoAutoStaticsCleanup]
         static readonly List<WeakReference<FontAsset>> s_CallbackInstances = new();
 
         /// <summary>
@@ -838,16 +851,16 @@ namespace UnityEngine.TextCore.Text
         }
 
         // Profiler Marker declarations
-        private static ProfilerMarker k_ReadFontAssetDefinitionMarker = new ProfilerMarker("FontAsset.ReadFontAssetDefinition");
-        private static ProfilerMarker k_AddSynthesizedCharactersMarker = new ProfilerMarker("FontAsset.AddSynthesizedCharacters");
-        private static ProfilerMarker k_TryAddGlyphMarker = new ProfilerMarker("FontAsset.TryAddGlyph");
-        private static ProfilerMarker k_TryAddCharacterMarker = new ProfilerMarker("FontAsset.TryAddCharacter");
-        private static ProfilerMarker k_TryAddCharactersMarker = new ProfilerMarker("FontAsset.TryAddCharacters");
-        private static ProfilerMarker k_UpdateLigatureSubstitutionRecordsMarker = new ProfilerMarker("FontAsset.UpdateLigatureSubstitutionRecords");
-        private static ProfilerMarker k_UpdateGlyphAdjustmentRecordsMarker = new ProfilerMarker("FontAsset.UpdateGlyphAdjustmentRecords");
-        private static ProfilerMarker k_UpdateDiacriticalMarkAdjustmentRecordsMarker = new ProfilerMarker("FontAsset.UpdateDiacriticalAdjustmentRecords");
-        private static ProfilerMarker k_ClearFontAssetDataMarker = new ProfilerMarker("FontAsset.ClearFontAssetData");
-        private static ProfilerMarker k_UpdateFontAssetDataMarker = new ProfilerMarker("FontAsset.UpdateFontAssetData");
+        private static readonly ProfilerMarker k_ReadFontAssetDefinitionMarker = new ProfilerMarker("FontAsset.ReadFontAssetDefinition");
+        private static readonly ProfilerMarker k_AddSynthesizedCharactersMarker = new ProfilerMarker("FontAsset.AddSynthesizedCharacters");
+        private static readonly ProfilerMarker k_TryAddGlyphMarker = new ProfilerMarker("FontAsset.TryAddGlyph");
+        private static readonly ProfilerMarker k_TryAddCharacterMarker = new ProfilerMarker("FontAsset.TryAddCharacter");
+        private static readonly ProfilerMarker k_TryAddCharactersMarker = new ProfilerMarker("FontAsset.TryAddCharacters");
+        private static readonly ProfilerMarker k_UpdateLigatureSubstitutionRecordsMarker = new ProfilerMarker("FontAsset.UpdateLigatureSubstitutionRecords");
+        private static readonly ProfilerMarker k_UpdateGlyphAdjustmentRecordsMarker = new ProfilerMarker("FontAsset.UpdateGlyphAdjustmentRecords");
+        private static readonly ProfilerMarker k_UpdateDiacriticalMarkAdjustmentRecordsMarker = new ProfilerMarker("FontAsset.UpdateDiacriticalAdjustmentRecords");
+        private static readonly ProfilerMarker k_ClearFontAssetDataMarker = new ProfilerMarker("FontAsset.ClearFontAssetData");
+        private static readonly ProfilerMarker k_UpdateFontAssetDataMarker = new ProfilerMarker("FontAsset.UpdateFontAssetData");
 
 
         // ================================================================================
@@ -913,7 +926,7 @@ namespace UnityEngine.TextCore.Text
             }
         }
 
-        private static string s_DefaultMaterialSuffix = " Atlas Material";
+        private static readonly string s_DefaultMaterialSuffix = " Atlas Material";
 
         /// <summary>
         /// Reads the various data tables of the font asset and populates various data structures to allow for faster lookup of related font asset data.
@@ -1386,9 +1399,9 @@ namespace UnityEngine.TextCore.Text
         internal void SortCharacterTable()
         {
             if (m_CharacterTable != null && m_CharacterTable.Count > 0)
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 m_CharacterTable = m_CharacterTable.OrderBy(c => c.unicode).ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         /// <summary>
@@ -1397,9 +1410,9 @@ namespace UnityEngine.TextCore.Text
         internal void SortGlyphTable()
         {
             if (m_GlyphTable != null && m_GlyphTable.Count > 0)
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 m_GlyphTable = m_GlyphTable.OrderBy(c => c.index).ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         internal void SortFontFeatureTable()
@@ -1422,6 +1435,7 @@ namespace UnityEngine.TextCore.Text
         /// <summary>
         /// HashSet of font asset instance ID used in the process of searching for through fallback font assets for a given character or characters.
         /// </summary>
+        [AutoStaticsCleanupOnCodeReload]
         private static HashSet<EntityId> k_SearchedFontAssetLookup;
 
 

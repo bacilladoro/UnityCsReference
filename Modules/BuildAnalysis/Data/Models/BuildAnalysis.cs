@@ -14,7 +14,6 @@ namespace UnityEditor.Build.Analysis
         public string GeneratedAtUtc;
         public BuildAnalysisSummary Summary;
         public BuildAnalysisTables Tables = new BuildAnalysisTables();
-        public BuildAnalysisMessage[] Messages = Array.Empty<BuildAnalysisMessage>();
         public BuildAnalysisComputed Computed = new BuildAnalysisComputed();
 
         // Where the Assets table came from. Populated when this build recorded no assets of its own
@@ -110,14 +109,6 @@ namespace UnityEditor.Build.Analysis
     }
 
     [Serializable]
-    internal struct BuildAnalysisMessage
-    {
-        public string Severity;
-        public int StepId;
-        public string Text;
-    }
-
-    [Serializable]
     internal class BuildAnalysisComputed
     {
         public BuildAnalysisCounts Counts;
@@ -130,8 +121,5 @@ namespace UnityEditor.Build.Analysis
         public int AssetCount;
         public int SceneCount;
         public int RootAssetCount;
-        public int ErrorMessageCount;
-        public int WarningMessageCount;
-        public int InfoMessageCount;
     }
 }

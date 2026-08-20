@@ -4,7 +4,6 @@
 
 using System;
 using System.Collections.Generic;
-using Unity.GraphToolkit.CSO;
 using Unity.GraphToolkit.InternalBridge;
 using UnityEditor;
 using UnityEngine;
@@ -30,6 +29,11 @@ namespace Unity.GraphToolkit.Editor
 
         static readonly string k_PropertiesContainerName = "properties-container";
 
+        const string k_StylesheetName = "StateTransitionsInspector.uss";
+        const string k_SelfTransitionIconPath = "StateMachine/Transitions/SelfTransition.png";
+        const string k_IncomingTransitionIconPath = "Port/ExecutionInput@4x.png";
+        const string k_OutgoingTransitionIconPath = "Port/ExecutionOutput@4x.png";
+
         TransitionSelectionManager<ISelectableTransition> m_SelectionManager;
 
         List<ModelView> m_TransitionSupportEditors = new();
@@ -47,7 +51,7 @@ namespace Unity.GraphToolkit.Editor
         {
             focusable = true;
             m_SelectionManager = new TransitionSelectionManager<ISelectableTransition>();
-            this.AddPackageStylesheet("StateTransitionsInspector.uss");
+            this.AddPackageStylesheet(k_StylesheetName);
             AddToClassList(ussClassName);
 
             RegisterCallback<MouseUpEvent>(OnMouseUpEvent);
@@ -60,26 +64,18 @@ namespace Unity.GraphToolkit.Editor
             m_FilterButton.RegisterCallback<ChangeEvent<ToggleButtonGroupState>>(OnFilterChanged);
             m_FilterButton.AddToClassList(filterUssClassName);
 
-            m_FilterButton.Add(new Button()
-            {
-                text = "OnEnter",
-                iconImage = Background.FromTexture2D(AssetDatabase.LoadAssetAtPath<Texture2D>(
-                    EditorGUIUtility.isProSkin ?
-                    $"{GraphElementHelper.k_IconFolder}/StateMachine/Transitions/d_OnEnterTransition.png" :
-                    $"{GraphElementHelper.k_IconFolder}StateMachine/Transitions/OnEnterTransition.png"))
-            });
-            m_FilterButton.Add(new Button()
-            {
-                text = "Local",
-                iconImage = Background.FromTexture2D(AssetDatabase.LoadAssetAtPath<Texture2D>(
-                    EditorGUIUtility.isProSkin ?
-                    $"{GraphElementHelper.k_IconFolder}StateMachine/Transitions/d_AnyStateTransition.png" :
-                    $"{GraphElementHelper.k_IconFolder}StateMachine/Transitions/AnyStateTransition.png"))
-            });
             var button = new Button()
             {
+                text = "Self",
+                iconImage = EditorGUIUtility.LoadIcon($"{GraphElementHelper.k_IconFolder}{k_SelfTransitionIconPath}")
+            };
+            button.AddToClassList(filterUssClassName.WithUssElement("self-button"));
+            m_FilterButton.Add(button);
+
+            button = new Button()
+            {
                 text = "Incoming",
-                iconImage = Background.FromTexture2D(AssetDatabase.LoadAssetAtPath<Texture2D>($"{GraphElementHelper.k_IconFolder}Port/ExecutionInput@4x.png"))
+                iconImage = EditorGUIUtility.LoadIcon($"{GraphElementHelper.k_IconFolder}{k_IncomingTransitionIconPath}")
             };
             button.AddToClassList(filterUssClassName.WithUssElement("incoming-button"));
             m_FilterButton.Add(button);
@@ -87,15 +83,15 @@ namespace Unity.GraphToolkit.Editor
             button = new Button()
             {
                 text = "Outgoing",
-                iconImage = Background.FromTexture2D(AssetDatabase.LoadAssetAtPath<Texture2D>($"{GraphElementHelper.k_IconFolder}Port/ExecutionOutput@4x.png"))
+                iconImage = EditorGUIUtility.LoadIcon($"{GraphElementHelper.k_IconFolder}{k_OutgoingTransitionIconPath}")
             };
             button.AddToClassList(filterUssClassName.WithUssElement("outgoing-button"));
             m_FilterButton.Add(button);
 
             Add(m_FilterButton);
 
-            var filterPref = EditorPrefs.GetInt(filterUssClassName, 1 << 0 | 1 << 1 | 1 << 2 | 1 << 3);
-            m_FilterButton.value = new ToggleButtonGroupState((ulong)filterPref, 4);
+            var filterPref = EditorPrefs.GetInt(filterUssClassName, 1 << 0 | 1 << 1 | 1 << 2);
+            m_FilterButton.value = new ToggleButtonGroupState((ulong)filterPref, 3);
         }
 
         /// <inheritdoc />
@@ -197,8 +193,9 @@ namespace Unity.GraphToolkit.Editor
             }
             else if (evt.commandName == EventCommandNamesBridge.Rename)
             {
-                var selected = m_SelectionManager.SelectedElements[^1];
-                selected.BeginEditing();
+                // Only individual transitions can be renamed; transition supports are not renamable.
+                if (m_SelectionManager.SelectedElements[^1] is TransitionPropertiesEditor editor)
+                    editor.BeginEditing();
                 evt.StopPropagation();
             }
 
@@ -239,53 +236,44 @@ namespace Unity.GraphToolkit.Editor
         {
             UpdateFilter();
             var value = m_FilterButton.value;
-            EditorPrefs.SetInt(filterUssClassName, (value[0] ? 1 : 0) << 0 | (value[1] ? 1 : 0) << 1 | (value[2] ? 1 : 0) << 2 | (value[3] ? 1 : 0) << 3);
+            EditorPrefs.SetInt(filterUssClassName, (value[0] ? 1 : 0) << 0 | (value[1] ? 1 : 0) << 1 | (value[2] ? 1 : 0) << 2);
         }
 
         void UpdateFilter()
         {
             var value = m_FilterButton.value;
 
-            bool[] hasOne = new bool[4];
+            bool[] hasOne = new bool[3];
 
             foreach (var transitionSupport in m_TransitionSupportEditors)
             {
                 if (transitionSupport.Model is not TransitionSupportModel transitionSupportModel)
                     continue;
-                switch (transitionSupportModel.TransitionSupportKind)
+                switch (transitionSupportModel)
                 {
-                    case TransitionSupportKind.OnEnter:
+                    case SelfTransitionModel:
                         transitionSupport.style.display = value[0] ? DisplayStyle.Flex : DisplayStyle.None;
                         hasOne[0] = true;
                         break;
-                    case TransitionSupportKind.Local:
-                        transitionSupport.style.display = value[1] ? DisplayStyle.Flex : DisplayStyle.None;
-                        hasOne[1] = true;
-                        break;
-                    case TransitionSupportKind.StateToState:
+                    case StateToStateTransitionModel:
                         if (Models.Contains(transitionSupportModel.ToPort.NodeModel))
+                        {
+                            transitionSupport.style.display = value[1] ? DisplayStyle.Flex : DisplayStyle.None;
+                            hasOne[1] = true;
+                        }
+                        else
                         {
                             transitionSupport.style.display = value[2] ? DisplayStyle.Flex : DisplayStyle.None;
                             hasOne[2] = true;
                         }
-                        else
-                        {
-                            transitionSupport.style.display = value[3] ? DisplayStyle.Flex : DisplayStyle.None;
-                            hasOne[3] = true;
-                        }
 
-                        break;
-                    case TransitionSupportKind.Self:
-                        transitionSupport.style.display = value[2] || value[3] ? DisplayStyle.Flex : DisplayStyle.None;
-                        hasOne[2] = true;
-                        hasOne[3] = true;
                         break;
                 }
 
                 if (transitionSupport.style.display == DisplayStyle.None && transitionSupport is ISelectableTransition selectableTransition)
                     m_SelectionManager.Remove(selectableTransition);
             }
-            for (int i = 0; i < 4; ++i)
+            for (int i = 0; i < 3; ++i)
             {
                 m_FilterButton[i].SetEnabled(hasOne[i]);
             }
@@ -301,7 +289,7 @@ namespace Unity.GraphToolkit.Editor
                 {
                     foreach (var wire in baseStateModel.GraphModel.WireModels)
                     {
-                        if (wire is TransitionSupportModel && (wire.FromPort.NodeModel == baseStateModel || wire.ToPort.NodeModel == baseStateModel))
+                        if (wire is TransitionSupportModel && (wire.FromPort?.NodeModel == baseStateModel || wire.ToPort?.NodeModel == baseStateModel))
                         {
                             return false;
                         }
@@ -331,18 +319,24 @@ namespace Unity.GraphToolkit.Editor
                 return -1;
             }
 
-            static int[] s_Map = new int[] { 0, 2, 1, 3 };
+            static int GetSortOrder(TransitionSupportModel transitionSupport) => transitionSupport switch
+            {
+                SelfTransitionModel => 0,
+                StateToStateTransitionModel => 1,
+                _ => 2
+            };
+
             public int Compare(TransitionSupportModel x, TransitionSupportModel y)
             {
                 if (x == null)
                     return -1;
                 if (y == null)
                     return 1;
-                int kindCompare = Comparer<int>.Default.Compare(s_Map[(int)x.TransitionSupportKind], s_Map[(int)y.TransitionSupportKind]);
+                int kindCompare = Comparer<int>.Default.Compare(GetSortOrder(x), GetSortOrder(y));
                 if (kindCompare != 0)
                     return kindCompare;
                 // For transition with the same kind, put incoming before outgoing, then use the order of the inspector Models
-                if (x.TransitionSupportKind == TransitionSupportKind.StateToState)
+                if (x is StateToStateTransitionModel)
                 {
                     int xModelIndex = ListIndexOf(m_Models, x.ToPort.NodeModel);
                     int yModelIndex = ListIndexOf(m_Models, y.ToPort.NodeModel);
@@ -373,6 +367,17 @@ namespace Unity.GraphToolkit.Editor
 
                         if (toPortCompare != 0)
                             return toPortCompare;
+                    }
+                }
+                else if (x is SelfTransitionModel)
+                {
+                    // Self transitions are shown in their order in the graph's wire list.
+                    var wireModels = x.GraphModel?.WireModels;
+                    if (wireModels != null)
+                    {
+                        int orderCompare = Comparer<int>.Default.Compare(ListIndexOf(wireModels, x), ListIndexOf(wireModels, y));
+                        if (orderCompare != 0)
+                            return orderCompare;
                     }
                 }
 

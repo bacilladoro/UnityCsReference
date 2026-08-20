@@ -60,7 +60,7 @@ namespace Unity.GraphToolkit.Editor
                     ItemLibraryItem.ExtractPathAndNameFromFullName(attribute.Path, out var categoryPath, out var name);
                     var node = new GraphNodeModelLibraryItem(
                         name,
-                        new NodeItemLibraryData(type),
+                        new NodeItemLibraryData(type, m_GraphModel.IsStateMachineGraph),
                         data => data.CreateBlock(type, contextTypeToCreate: m_ContextType))
                     {
                         CategoryPath = categoryPath,

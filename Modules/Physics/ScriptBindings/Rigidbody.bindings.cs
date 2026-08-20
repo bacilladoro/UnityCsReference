@@ -1048,6 +1048,16 @@ namespace UnityEngine
             return GetAccumulatedTorque(Time.fixedDeltaTime);
         }
 
+        ///<summary>Clears all pending forces accumulated on this <see cref="Rigidbody" />.</summary>
+        ///<remarks>Removes any forces that have been applied with <see cref="AddForce" /> since the last simulation step.
+        ///Has no effect on kinematic or inactive rigidbodies.</remarks>
+        extern internal void ClearForce();
+
+        ///<summary>Clears all pending torques accumulated on this <see cref="Rigidbody" />.</summary>
+        ///<remarks>Removes any torques that have been applied with <see cref="AddTorque" /> since the last simulation step.
+        ///Has no effect on kinematic or inactive rigidbodies.</remarks>
+        extern internal void ClearTorque();
+
         ///<summary>Adds a force to the <see cref="Rigidbody" />.</summary>
         ///<remarks>Force is applied continuously along the direction of the <c>force</c> vector. Specifying the <see cref="ForceMode" /><c>mode</c> allows the type of force to be changed to an Acceleration, Impulse or Velocity Change.
         ///

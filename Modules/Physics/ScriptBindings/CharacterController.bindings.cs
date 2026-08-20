@@ -457,7 +457,7 @@ namespace UnityEngine
         ///}
         ///]]></code>
         ///</example>
-        extern public Vector3 velocity { get; }
+        extern public Vector3 velocity { get; internal set; }
         ///<summary>Was the CharacterController touching the ground during the last move?</summary>
         ///<remarks>Indicates whether the CharacterController was touching the ground during the most recent call to CharacterController.Move or CharacterController.SimpleMove.
         ///
@@ -510,7 +510,7 @@ namespace UnityEngine
         ///}
         ///]]></code>
         ///</example>
-        extern public CollisionFlags collisionFlags { get; }
+        extern public CollisionFlags collisionFlags { get; internal set; }
         ///<summary>The radius of the character's capsule.</summary>
         ///<example>
         ///  <code><![CDATA[

@@ -66,7 +66,11 @@ namespace UnityEngine.UIElements
         abstract class ResolvedIntProperty : ResolvedStyleProperty<int>
         {
         }
-  
+
+        abstract class ResolvedStyleIntProperty : ResolvedStyleProperty<StyleInt>
+        {
+        }
+
         abstract class ResolvedRotateProperty : ResolvedStyleProperty<Rotate>
         {
         }
@@ -96,6 +100,10 @@ namespace UnityEngine.UIElements
         }
 
         abstract class ResolvedRatioProperty : ResolvedStyleProperty<Ratio>
+        {
+        }
+
+        abstract class ResolvedGridLineProperty : ResolvedStyleProperty<GridLine>
         {
         }
 

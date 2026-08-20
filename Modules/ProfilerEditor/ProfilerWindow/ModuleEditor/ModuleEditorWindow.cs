@@ -140,16 +140,16 @@ namespace UnityEditor.Profiling.ModuleEditor
         void CreateModule()
         {
             // Find first free module name
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var namesList = m_Modules.Select(x => x.name).Distinct();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             var moduleName = String.Format(k_NewProfilerModuleDefaultName, "-");
             for (; m_LastModuleNameIndex < kMaxModuleIndex; m_LastModuleNameIndex++)
             {
                 var newModuleName = String.Format(k_NewProfilerModuleDefaultName, m_LastModuleNameIndex);
-                #pragma warning disable UA2007 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2007 // Avoid Linq
                 if (namesList.Contains(newModuleName))
-#pragma warning restore UA2007
+#pragma warning restore UAC2007
                     continue;
 
                 moduleName = newModuleName;

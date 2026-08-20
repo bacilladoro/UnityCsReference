@@ -90,6 +90,14 @@ namespace Unity.U2D.Physics
         public readonly bool isValid => SegmentGeometry_IsValid(this);
 
         /// <summary>
+        /// Whether <see cref="SegmentGeometry.point1"/> and <see cref="SegmentGeometry.point2"/> are far enough apart to form a valid edge.
+        /// </summary>
+        /// <remarks>
+        /// See <see cref="PhysicsWorld.minEdgeLength"/>.
+        /// </remarks>
+        public readonly bool areEdgesValid => (point2 - point1).sqrMagnitude > PhysicsWorld.minEdgeLength * PhysicsWorld.minEdgeLength;
+
+        /// <summary>
         /// The first point.
         /// </summary>
         public Vector2 point1 { readonly get => m_Point1; set => m_Point1 = value; }

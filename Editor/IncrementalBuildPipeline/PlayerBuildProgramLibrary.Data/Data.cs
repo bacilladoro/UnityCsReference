@@ -104,7 +104,6 @@ namespace PlayerBuildProgramLibrary.Data
         public string SysRootPath;
         public string ToolChainPath;
         public string RelativeDataPath;
-        public string BclDistributionPath;
         public bool GenerateUsymFile;
         public string UsymtoolPath;
         public BuildProgramLTOMode LtoMode;

@@ -106,6 +106,14 @@ namespace Unity.U2D.Physics
         public readonly bool isValid => CapsuleGeometry_IsValid(this);
 
         /// <summary>
+        /// Whether <see cref="CapsuleGeometry.center1"/> and <see cref="CapsuleGeometry.center2"/> are far enough apart to form a valid edge.
+        /// </summary>
+        /// <remarks>
+        /// See <see cref="PhysicsWorld.minEdgeLength"/>.
+        /// </remarks>
+        public readonly bool areEdgesValid => (center2 - center1).sqrMagnitude > PhysicsWorld.minEdgeLength * PhysicsWorld.minEdgeLength;
+
+        /// <summary>
         /// Local center of the first semi-circle.
         /// </summary>
         public Vector2 center1 { readonly get => m_Center1; set => m_Center1 = value; }

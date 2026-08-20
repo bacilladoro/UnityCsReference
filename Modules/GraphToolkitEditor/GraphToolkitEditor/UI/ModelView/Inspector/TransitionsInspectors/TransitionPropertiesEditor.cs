@@ -5,6 +5,7 @@
 using System;
 using System.Reflection;
 using Unity.GraphToolkit.InternalBridge;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEditor.Toolbars;
 using UnityEngine;
@@ -16,7 +17,7 @@ namespace Unity.GraphToolkit.Editor
     /// The editor for a transition in the inspector.
     /// </summary>
     [UnityRestricted]
-    internal class TransitionPropertiesEditor : ModelView, ISelectableTransition, ICollapsibleContainer
+    internal partial class TransitionPropertiesEditor : ModelView, ISelectableTransition, ICollapsibleContainer
     {
         /// <summary>
         /// The USS class name added to this element.
@@ -42,7 +43,6 @@ namespace Unity.GraphToolkit.Editor
         /// </summary>
         public static readonly string selectedUssClassName = ussClassName.WithUssModifier(GraphElementHelper.selectedUssModifier);
 
-        const string k_DefaultTransitionTitle = "Transition";
         internal static readonly string k_ExpandMenuName = "Expand _RIGHT";
         internal static readonly string k_CollapseMenuName = "Collapse _LEFT";
 
@@ -51,7 +51,8 @@ namespace Unity.GraphToolkit.Editor
         static readonly string k_MoveTopOption = "Move to top";
         static readonly string k_MoveBottomOption = "Move to bottom";
 
-        static readonly FieldInfo k_TransitionEnabledField = typeof(TransitionModel).GetField("m_Enabled", BindingFlags.NonPublic | BindingFlags.Instance);
+        [AutoStaticsCleanupOnCodeReload]
+        static FieldInfo k_TransitionEnabledField = typeof(TransitionModel).GetField("m_Enabled", BindingFlags.NonPublic | BindingFlags.Instance);
 
         TransitionSupportEditor m_TransitionSupportEditor;
         VisualElement m_Header;
@@ -176,7 +177,7 @@ namespace Unity.GraphToolkit.Editor
         {
             var contextMenuManipulator = new ContextualMenuManipulator(OnPopupMenuContextualPopulate);
             contextMenuManipulator.activators.Add(new ManipulatorActivationFilter { button = MouseButton.LeftMouse, clickCount = 1 });
-            m_OptionButton = new EditorToolbarButton(EditorGUIUtility.IconContent("_Menu").image as Texture2D, null) { name = k_OptionButtonName };
+            m_OptionButton = new EditorToolbarButton(EditorGUIUtility.LoadIcon("_Menu"), null) { name = k_OptionButtonName };
             m_OptionButton.clickable = null; // if the clickable is left on the button then the context menu manipulator may fail to trigger
             m_OptionButton.AddManipulator(contextMenuManipulator);
             m_OptionButton.AddToClassList(ussClassName.WithUssElement(k_OptionButtonName));
@@ -210,8 +211,7 @@ namespace Unity.GraphToolkit.Editor
         /// <inheritdoc />
         public override void UpdateUIFromModel(UpdateFromModelVisitor visitor)
         {
-            var value = String.IsNullOrEmpty(TransitionModel.Title) ? k_DefaultTransitionTitle : TransitionModel.Title;
-            m_TitleLabel.SetValueWithoutNotify(value);
+            m_TitleLabel.SetValueWithoutNotify(TransitionModel.Title);
 
             m_EnableToggle.SetValueWithoutNotify(TransitionModel.Enabled);
         }
@@ -312,7 +312,9 @@ namespace Unity.GraphToolkit.Editor
             }, m_TransitionSupportEditor.CanMoveTransitions(selectedTransitions, false) ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
         }
 
-        /// <inheritdoc />
+        /// <summary>
+        /// Starts editing the transition's title: focus is given to the title text field.
+        /// </summary>
         public void BeginEditing()
         {
             m_TitleLabel.BeginEditing();

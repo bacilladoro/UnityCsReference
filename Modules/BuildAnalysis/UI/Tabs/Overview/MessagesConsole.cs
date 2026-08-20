@@ -20,6 +20,7 @@ namespace UnityEditor.Build.Analysis
         private const string k_StepFilterTooltip = "Filter messages by build step";
         private const string k_UxmlPath = "BuildAnalysis/UXML/MessagesConsole.uxml";
         private const int k_NoStepFilter = -1;
+        private const string k_UnknownStep = "Unknown";
 
         // Severity int IDs are stable so sort/filter can compare ints rather than parsing strings each time.
         private const int k_SeverityError = 0;
@@ -40,8 +41,15 @@ namespace UnityEditor.Build.Analysis
         private readonly ZebraEmptyBody m_EmptyBody;
         private readonly Label m_DetailText;
         private readonly Label m_FooterCountLabel;
+        private readonly HelpBox m_Banner;
 
-        private BuildAnalysisMessage[] m_Messages;
+        // Hidden together when there are no messages to be had, so the console does not offer filters over
+        // data it does not have.
+        private readonly VisualElement m_Toolbar;
+        private readonly VisualElement m_ContentArea;
+        private readonly VisualElement m_Footer;
+
+        private BuildLogMessage[] m_Messages;
         private int[] m_SeverityIds = Array.Empty<int>();
         private int[] m_StepNameIds = Array.Empty<int>();
 
@@ -94,8 +102,15 @@ namespace UnityEditor.Build.Analysis
 
             // Host inside content-area (the TwoPaneSplitView's parent) rather than the splitter
             // itself, so the absolute overlay never competes with the splitter's pane children.
+            m_Banner = this.Q<HelpBox>("messages-banner");
+            m_Banner.style.display = DisplayStyle.None;
+
+            m_Toolbar = this.Q<VisualElement>(className: "data-list__toolbar");
+            m_ContentArea = this.Q<VisualElement>("content-area");
+            m_Footer = this.Q<VisualElement>("footer");
+
             m_EmptyBody = new ZebraEmptyBody(m_ListView);
-            this.Q<VisualElement>("content-area").Add(m_EmptyBody);
+            m_ContentArea.Add(m_EmptyBody);
             m_ListView.makeNoneElement = () => new VisualElement();
             m_ListView.columns["column-type"].makeCell = MakeTypeCell;
             m_ListView.columns["column-type"].bindCell = BindTypeCell;
@@ -141,11 +156,16 @@ namespace UnityEditor.Build.Analysis
             };
         }
 
-        public void Bind(BuildAnalysis analysis)
+        /// <param name="rootStepName">
+        /// Name shown for messages the log could not attribute to a step. The build's top-level step
+        /// starts before BuildLog exists and ends after it closes, so the log never records it, even
+        /// though messages are emitted while it is the only step running.
+        /// </param>
+        public void Bind(BuildLogMessages messages, string rootStepName)
         {
             using (s_BindMarker.Auto())
             {
-                m_Messages = analysis.Messages;
+                m_Messages = messages.Messages;
                 var n = m_Messages.Length;
 
                 // Reuse parallel arrays across binds when possible; only grow when capacity is exceeded.
@@ -157,17 +177,46 @@ namespace UnityEditor.Build.Analysis
                 m_CollapseKeysBuilt = false;
 
                 BuildSeverityIds(n);
-                BuildStepNamePoolAndIds(analysis.Tables.Steps, n);
+                BuildStepNamePoolAndIds(messages.StepNames, n, rootStepName);
                 BuildStepDropdownChoices();
 
-                var counts = analysis.Computed.Counts;
-                m_ErrorToggleCount.text = FormatUtility.FormatCappedCount(counts.ErrorMessageCount);
-                m_WarnToggleCount.text = FormatUtility.FormatCappedCount(counts.WarningMessageCount);
-                m_InfoToggleCount.text = FormatUtility.FormatCappedCount(counts.InfoMessageCount);
+                m_ErrorToggleCount.text = FormatUtility.FormatCappedCount(messages.ErrorCount);
+                m_WarnToggleCount.text = FormatUtility.FormatCappedCount(messages.WarningCount);
+                m_InfoToggleCount.text = FormatUtility.FormatCappedCount(messages.InfoCount);
+                BindBanner(messages);
 
                 ResetFilterState();
                 ShowNoDetail();
                 ApplyFilters();
+            }
+        }
+
+        private void BindBanner(BuildLogMessages messages)
+        {
+            var readable = messages.Status != BuildLogStatus.FileMissing;
+            var dataDisplay = readable ? DisplayStyle.Flex : DisplayStyle.None;
+            m_Toolbar.style.display = dataDisplay;
+            m_ContentArea.style.display = dataDisplay;
+            m_Footer.style.display = dataDisplay;
+            m_Banner.EnableInClassList("messages-banner--alone", !readable);
+
+            switch (messages.Status)
+            {
+                case BuildLogStatus.FileMissing:
+                    m_Banner.text = $"Build log not found. Messages are read from " +
+                                    $"{BuildAnalysisConstants.k_BuildLogFileName} in the build folder, which is no longer present.";
+                    m_Banner.style.display = DisplayStyle.Flex;
+                    break;
+
+                case BuildLogStatus.PartiallyRead:
+                    m_Banner.text = "Build log is incomplete — showing the " +
+                                    $"{messages.Messages.Length} messages that could be read.";
+                    m_Banner.style.display = DisplayStyle.Flex;
+                    break;
+
+                default:
+                    m_Banner.style.display = DisplayStyle.None;
+                    break;
             }
         }
 
@@ -177,18 +226,17 @@ namespace UnityEditor.Build.Analysis
                 m_SeverityIds[i] = SeverityToId(m_Messages[i].Severity);
         }
 
-        private void BuildStepNamePoolAndIds(BuildAnalysisStep[] steps, int n)
+        private void BuildStepNamePoolAndIds(string[] stepNames, int n, string rootStepName)
         {
-            var stepIdToName = new Dictionary<int, string>(steps.Length);
-            foreach (var step in steps)
-                stepIdToName[step.Id] = step.Name ?? "Unknown";
+            var unattributed = string.IsNullOrEmpty(rootStepName) ? k_UnknownStep : rootStepName;
 
             var insertionMap = new Dictionary<string, int>(StringComparer.Ordinal);
             var insertionPool = new List<string>();
 
             for (int i = 0; i < n; i++)
             {
-                var stepName = stepIdToName.TryGetValue(m_Messages[i].StepId, out var resolved) ? resolved : "Unknown";
+                var stepIndex = m_Messages[i].StepIndex;
+                var stepName = stepIndex >= 0 && stepIndex < stepNames.Length ? stepNames[stepIndex] : unattributed;
                 if (!insertionMap.TryGetValue(stepName, out var id))
                 {
                     id = insertionPool.Count;
@@ -373,12 +421,13 @@ namespace UnityEditor.Build.Analysis
             _                 => true
         };
 
-        private static int SeverityToId(string severity) => severity switch
+        // Ids order errors first so sorting by Type groups by descending severity.
+        private static int SeverityToId(BuildLogSeverity severity) => severity switch
         {
-            BuildMessageSeverity.Error   => k_SeverityError,
-            BuildMessageSeverity.Warning => k_SeverityWarning,
-            BuildMessageSeverity.Info    => k_SeverityInfo,
-            _                            => k_SeverityOther
+            BuildLogSeverity.Error   => k_SeverityError,
+            BuildLogSeverity.Warning => k_SeverityWarning,
+            BuildLogSeverity.Info    => k_SeverityInfo,
+            _                        => k_SeverityOther
         };
 
         private void ApplySort()

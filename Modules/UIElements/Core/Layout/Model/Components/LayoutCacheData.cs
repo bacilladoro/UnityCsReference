@@ -2,6 +2,8 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
+using Unity.Scripting.LifecycleManagement;
 using System;
 using System.Runtime.InteropServices;
 using UnityEngine.Bindings;
@@ -12,6 +14,7 @@ namespace UnityEngine.UIElements.Layout;
 [StructLayout(LayoutKind.Sequential)]
 struct LayoutCacheData
 {
+    [NoAutoStaticsCleanup]
     public static LayoutCacheData Default = new()
     {
         CachedLayout = LayoutCachedMeasurement.Default
@@ -62,6 +65,7 @@ struct LayoutCacheData
 [StructLayout(LayoutKind.Sequential)]
 unsafe struct LayoutCachedMeasurement
 {
+    [NoAutoStaticsCleanup]
     public static LayoutCachedMeasurement Default = new()
     {
         AvailableWidth = 0f,
@@ -92,3 +96,4 @@ unsafe struct LayoutCachedMeasurement
         return $"Available: {AvailableWidth}/{AvailableHeight}   Parent: {ParentWidth}/{ParentHeight}   MeasureMode: {WidthMeasureMode}/{HeightMeasureMode},   Computed: {ComputedWidth}/{ComputedHeight}";
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

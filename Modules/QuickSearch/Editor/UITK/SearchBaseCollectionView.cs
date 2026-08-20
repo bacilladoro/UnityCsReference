@@ -87,9 +87,9 @@ namespace UnityEditor.Search
 
         private void OnItemsChosen(IEnumerable<object> chosenItems)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var convertedItems = chosenItems.Select(item => (SearchItem)item).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             m_ViewModel.ExecuteAction(null, convertedItems, true);
         }
 
@@ -186,9 +186,9 @@ namespace UnityEditor.Search
                 return;
 
             var selectedIndexes = selection.indexes;
-            #pragma warning disable UA2014 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2014 // Avoid Linq
             if (m_ListView.selectedIndicesList.SequenceEqual(selectedIndexes))
-                #pragma warning restore UA2014
+                #pragma warning restore UAC2014
                 return;
 
             var firstSelection = selectedIndexes.Count > 0 ? selectedIndexes[0] : -1;
@@ -216,9 +216,9 @@ namespace UnityEditor.Search
 
         private void HandleItemsSelected(IEnumerable<int> selection)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var selArray = selection.ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             SelectionChanged?.Invoke(selArray);
         }
 

@@ -2,9 +2,11 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Bindings;
 
 namespace UnityEngine.UIElements
@@ -85,10 +87,13 @@ namespace UnityEngine.UIElements
             }
         }
 
+
+        [NoAutoStaticsCleanup] // shared empty list, never mutated; safe to persist across reload
         private static readonly List<StylePropertyValidation> s_Empty = new();
         readonly List<StylePropertyValidation> m_PersistentValidation;
         readonly List<StylePropertyValidation> m_Validation;
 
+        [NoAutoStaticsCleanup]
         public static StylePropertyValidationCollection Empty { get; } = new ();
 
         [VisibleToOtherModules("UnityEditor.UIToolkitAuthoringModule")]
@@ -129,3 +134,4 @@ namespace UnityEngine.UIElements
             => GetEnumerator();
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

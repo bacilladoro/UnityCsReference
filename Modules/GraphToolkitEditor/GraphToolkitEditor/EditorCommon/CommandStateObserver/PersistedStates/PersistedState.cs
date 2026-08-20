@@ -4,6 +4,7 @@
 
 using System;
 using Unity.GraphToolkit.CSO;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 
 namespace Unity.GraphToolkit.Editor
@@ -14,6 +15,7 @@ namespace Unity.GraphToolkit.Editor
     [UnityRestricted]
     internal static class PersistedState
     {
+        [NoAutoStaticsCleanup] // StateCache wraps disk I/O to a fixed path; safe to reuse across reloads
         static readonly StateCache k_StateCache = new StateCache("Library/StateCache/ToolState/");
 
         /// <summary>

@@ -3,7 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
 namespace Unity.Multiplayer.PlayMode.Editor
 {
@@ -11,32 +11,31 @@ namespace Unity.Multiplayer.PlayMode.Editor
     {
         const int k_ProjectIdentifierLength = 8;
 
-        [JsonProperty] readonly string m_Id;
-        [JsonProperty] readonly string m_Prefix;
-
-        [JsonIgnore] public string Prefix => m_Prefix;
+        // JSON property names kept as "m_Id"/"m_Prefix" for compatibility with data serialized by Newtonsoft.Json.
+        [JsonPropertyName("m_Id")] public string Id { get; }
+        [JsonPropertyName("m_Prefix")] public string Prefix { get; }
 
         [JsonConstructor]
         VirtualProjectIdentifier(string id, string prefix = "")
         {
-            m_Id = id;
-            m_Prefix = prefix;
+            Id = id;
+            Prefix = prefix;
         }
 
         public override string ToString()
         {
-            return $"{m_Prefix}{m_Id:N}";
+            return $"{Prefix}{Id}";
         }
 
         public override bool Equals(object obj)
         {
             return obj is VirtualProjectIdentifier identifier
-                   && Equals(m_Id, identifier.m_Id);
+                   && Equals(Id, identifier.Id);
         }
 
         public override int GetHashCode()
         {
-            return m_Id.GetHashCode();
+            return Id.GetHashCode();
         }
 
         public static bool operator ==(VirtualProjectIdentifier lhs, VirtualProjectIdentifier rhs)

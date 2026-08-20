@@ -17,6 +17,209 @@ using UnityEngine.UIElements.Unmanaged;
 
 namespace UnityEngine.UIElements
 {
+    [StructLayout(LayoutKind.Sequential, Size = 48)]
+    internal struct AnimationData : IStyleDataGroup<AnimationData>, IEquatable<AnimationData>
+    {
+        public UnmanagedRefCountedList<float> animationDelay;
+        public UnmanagedRefCountedList<AnimationDirection> animationDirection;
+        public UnmanagedRefCountedList<float> animationDuration;
+        public UnmanagedRefCountedList<AnimationIterationCount> animationIterationCount;
+        public UnmanagedRefCountedList<EntityId> animationNames;
+        public UnmanagedRefCountedList<AnimationPlayState> animationPlayStates;
+
+        public AnimationData GetDefault()
+        {
+            return default;
+        }
+
+        public AnimationData Copy()
+        {
+            var data = new AnimationData();
+            data.animationDelay.CopyFrom(animationDelay);
+            data.animationDirection.CopyFrom(animationDirection);
+            data.animationDuration.CopyFrom(animationDuration);
+            data.animationIterationCount.CopyFrom(animationIterationCount);
+            data.animationNames.CopyFrom(animationNames);
+            data.animationPlayStates.CopyFrom(animationPlayStates);
+            return data;
+        }
+
+        public void CopyFrom(ref AnimationData other)
+        {
+            animationDelay.CopyFrom(other.animationDelay);
+            animationDirection.CopyFrom(other.animationDirection);
+            animationDuration.CopyFrom(other.animationDuration);
+            animationIterationCount.CopyFrom(other.animationIterationCount);
+            animationNames.CopyFrom(other.animationNames);
+            animationPlayStates.CopyFrom(other.animationPlayStates);
+        }
+
+        public void Dispose()
+        {
+            animationDelay.Clear();
+            animationDirection.Clear();
+            animationDuration.Clear();
+            animationIterationCount.Clear();
+            animationNames.Clear();
+            animationPlayStates.Clear();
+        }
+
+        public static bool operator ==(AnimationData lhs, AnimationData rhs)
+        {
+            return lhs.animationDelay == rhs.animationDelay &&
+                lhs.animationDirection == rhs.animationDirection &&
+                lhs.animationDuration == rhs.animationDuration &&
+                lhs.animationIterationCount == rhs.animationIterationCount &&
+                lhs.animationNames == rhs.animationNames &&
+                lhs.animationPlayStates == rhs.animationPlayStates;
+        }
+
+        public static bool operator !=(AnimationData lhs, AnimationData rhs)
+        {
+            return !(lhs == rhs);
+        }
+
+        public bool Equals(AnimationData other)
+        {
+            return other == this;
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj))
+                return false;
+            return obj is AnimationData &&
+                Equals((AnimationData)obj);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                var hashCode = animationDelay.GetHashCode();
+                hashCode = (hashCode * 397) ^ animationDirection.GetHashCode();
+                hashCode = (hashCode * 397) ^ animationDuration.GetHashCode();
+                hashCode = (hashCode * 397) ^ animationIterationCount.GetHashCode();
+                hashCode = (hashCode * 397) ^ animationNames.GetHashCode();
+                hashCode = (hashCode * 397) ^ animationPlayStates.GetHashCode();
+                return hashCode;
+            }
+        }
+    }
+
+    [StructLayout(LayoutKind.Sequential, Size = 64)]
+    internal struct GridData : IStyleDataGroup<GridData>, IEquatable<GridData>
+    {
+        public UnmanagedRefCountedList<GridTrackSize> gridAutoColumns;
+        public UnmanagedRefCountedList<GridTrackSize> gridAutoRows;
+        public UnmanagedRefCountedList<GridTrackSize> gridTemplateColumns;
+        public UnmanagedRefCountedList<GridTrackSize> gridTemplateRows;
+        public GridAutoFlow gridAutoFlow;
+        public GridLine gridColumnEnd;
+        public GridLine gridColumnStart;
+        public GridLine gridRowEnd;
+        public GridLine gridRowStart;
+        public Align justifyItems;
+        public Align justifySelf;
+
+        public GridData GetDefault()
+        {
+            return default;
+        }
+
+        public GridData Copy()
+        {
+            var data = new GridData();
+            data.gridAutoColumns.CopyFrom(gridAutoColumns);
+            data.gridAutoFlow = gridAutoFlow;
+            data.gridAutoRows.CopyFrom(gridAutoRows);
+            data.gridColumnEnd = gridColumnEnd;
+            data.gridColumnStart = gridColumnStart;
+            data.gridRowEnd = gridRowEnd;
+            data.gridRowStart = gridRowStart;
+            data.gridTemplateColumns.CopyFrom(gridTemplateColumns);
+            data.gridTemplateRows.CopyFrom(gridTemplateRows);
+            data.justifyItems = justifyItems;
+            data.justifySelf = justifySelf;
+            return data;
+        }
+
+        public void CopyFrom(ref GridData other)
+        {
+            gridAutoColumns.CopyFrom(other.gridAutoColumns);
+            gridAutoFlow = other.gridAutoFlow;
+            gridAutoRows.CopyFrom(other.gridAutoRows);
+            gridColumnEnd = other.gridColumnEnd;
+            gridColumnStart = other.gridColumnStart;
+            gridRowEnd = other.gridRowEnd;
+            gridRowStart = other.gridRowStart;
+            gridTemplateColumns.CopyFrom(other.gridTemplateColumns);
+            gridTemplateRows.CopyFrom(other.gridTemplateRows);
+            justifyItems = other.justifyItems;
+            justifySelf = other.justifySelf;
+        }
+
+        public void Dispose()
+        {
+            gridAutoColumns.Clear();
+            gridAutoRows.Clear();
+            gridTemplateColumns.Clear();
+            gridTemplateRows.Clear();
+        }
+
+        public static bool operator ==(GridData lhs, GridData rhs)
+        {
+            return lhs.gridAutoColumns == rhs.gridAutoColumns &&
+                lhs.gridAutoFlow == rhs.gridAutoFlow &&
+                lhs.gridAutoRows == rhs.gridAutoRows &&
+                lhs.gridColumnEnd == rhs.gridColumnEnd &&
+                lhs.gridColumnStart == rhs.gridColumnStart &&
+                lhs.gridRowEnd == rhs.gridRowEnd &&
+                lhs.gridRowStart == rhs.gridRowStart &&
+                lhs.gridTemplateColumns == rhs.gridTemplateColumns &&
+                lhs.gridTemplateRows == rhs.gridTemplateRows &&
+                lhs.justifyItems == rhs.justifyItems &&
+                lhs.justifySelf == rhs.justifySelf;
+        }
+
+        public static bool operator !=(GridData lhs, GridData rhs)
+        {
+            return !(lhs == rhs);
+        }
+
+        public bool Equals(GridData other)
+        {
+            return other == this;
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj))
+                return false;
+            return obj is GridData &&
+                Equals((GridData)obj);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                var hashCode = gridAutoColumns.GetHashCode();
+                hashCode = (hashCode * 397) ^ (int)gridAutoFlow;
+                hashCode = (hashCode * 397) ^ gridAutoRows.GetHashCode();
+                hashCode = (hashCode * 397) ^ gridColumnEnd.GetHashCode();
+                hashCode = (hashCode * 397) ^ gridColumnStart.GetHashCode();
+                hashCode = (hashCode * 397) ^ gridRowEnd.GetHashCode();
+                hashCode = (hashCode * 397) ^ gridRowStart.GetHashCode();
+                hashCode = (hashCode * 397) ^ gridTemplateColumns.GetHashCode();
+                hashCode = (hashCode * 397) ^ gridTemplateRows.GetHashCode();
+                hashCode = (hashCode * 397) ^ (int)justifyItems;
+                hashCode = (hashCode * 397) ^ (int)justifySelf;
+                return hashCode;
+            }
+        }
+    }
+
     [StructLayout(LayoutKind.Sequential, Size = 176)]
     internal struct InheritedData : IStyleDataGroup<InheritedData>, IEquatable<InheritedData>
     {
@@ -162,15 +365,13 @@ namespace UnityEngine.UIElements
         }
     }
 
-    [StructLayout(LayoutKind.Sequential, Size = 104)]
+    [StructLayout(LayoutKind.Sequential, Size = 96)]
     internal struct RareData : IStyleDataGroup<RareData>, IEquatable<RareData>
     {
         public Color unityBackgroundImageTintColor;
         public UnmanagedRefCountedList<UnmanagedFilterFunction> backdropFilter;
         public Cursor cursor;
         public UnmanagedRefCountedList<UnmanagedFilterFunction> filter;
-        public EntityId unityAnimationClip;
-        public AnimationPlayState animationPlayState;
         public TextOverflow textOverflow;
         public OverflowClipBox unityOverflowClipBox;
         public int unitySliceBottom;
@@ -180,6 +381,7 @@ namespace UnityEngine.UIElements
         public int unitySliceTop;
         public SliceType unitySliceType;
         public TextOverflowPosition unityTextOverflowPosition;
+        public int zIndex;
 
         public RareData GetDefault()
         {
@@ -189,12 +391,10 @@ namespace UnityEngine.UIElements
         public RareData Copy()
         {
             var data = new RareData();
-            data.animationPlayState = animationPlayState;
             data.backdropFilter.CopyFrom(backdropFilter);
             data.cursor = cursor;
             data.filter.CopyFrom(filter);
             data.textOverflow = textOverflow;
-            data.unityAnimationClip = unityAnimationClip;
             data.unityBackgroundImageTintColor = unityBackgroundImageTintColor;
             data.unityOverflowClipBox = unityOverflowClipBox;
             data.unitySliceBottom = unitySliceBottom;
@@ -204,17 +404,16 @@ namespace UnityEngine.UIElements
             data.unitySliceTop = unitySliceTop;
             data.unitySliceType = unitySliceType;
             data.unityTextOverflowPosition = unityTextOverflowPosition;
+            data.zIndex = zIndex;
             return data;
         }
 
         public void CopyFrom(ref RareData other)
         {
-            animationPlayState = other.animationPlayState;
             backdropFilter.CopyFrom(other.backdropFilter);
             cursor = other.cursor;
             filter.CopyFrom(other.filter);
             textOverflow = other.textOverflow;
-            unityAnimationClip = other.unityAnimationClip;
             unityBackgroundImageTintColor = other.unityBackgroundImageTintColor;
             unityOverflowClipBox = other.unityOverflowClipBox;
             unitySliceBottom = other.unitySliceBottom;
@@ -224,6 +423,7 @@ namespace UnityEngine.UIElements
             unitySliceTop = other.unitySliceTop;
             unitySliceType = other.unitySliceType;
             unityTextOverflowPosition = other.unityTextOverflowPosition;
+            zIndex = other.zIndex;
         }
 
         public void Dispose()
@@ -234,12 +434,10 @@ namespace UnityEngine.UIElements
 
         public static bool operator ==(RareData lhs, RareData rhs)
         {
-            return lhs.animationPlayState == rhs.animationPlayState &&
-                lhs.backdropFilter == rhs.backdropFilter &&
+            return lhs.backdropFilter == rhs.backdropFilter &&
                 lhs.cursor == rhs.cursor &&
                 lhs.filter == rhs.filter &&
                 lhs.textOverflow == rhs.textOverflow &&
-                lhs.unityAnimationClip == rhs.unityAnimationClip &&
                 lhs.unityBackgroundImageTintColor == rhs.unityBackgroundImageTintColor &&
                 lhs.unityOverflowClipBox == rhs.unityOverflowClipBox &&
                 lhs.unitySliceBottom == rhs.unitySliceBottom &&
@@ -248,7 +446,8 @@ namespace UnityEngine.UIElements
                 lhs.unitySliceScale == rhs.unitySliceScale &&
                 lhs.unitySliceTop == rhs.unitySliceTop &&
                 lhs.unitySliceType == rhs.unitySliceType &&
-                lhs.unityTextOverflowPosition == rhs.unityTextOverflowPosition;
+                lhs.unityTextOverflowPosition == rhs.unityTextOverflowPosition &&
+                lhs.zIndex == rhs.zIndex;
         }
 
         public static bool operator !=(RareData lhs, RareData rhs)
@@ -273,12 +472,10 @@ namespace UnityEngine.UIElements
         {
             unchecked
             {
-                var hashCode = (int)animationPlayState;
-                hashCode = (hashCode * 397) ^ backdropFilter.GetHashCode();
+                var hashCode = backdropFilter.GetHashCode();
                 hashCode = (hashCode * 397) ^ cursor.GetHashCode();
                 hashCode = (hashCode * 397) ^ filter.GetHashCode();
                 hashCode = (hashCode * 397) ^ (int)textOverflow;
-                hashCode = (hashCode * 397) ^ unityAnimationClip.GetHashCode();
                 hashCode = (hashCode * 397) ^ unityBackgroundImageTintColor.GetHashCode();
                 hashCode = (hashCode * 397) ^ (int)unityOverflowClipBox;
                 hashCode = (hashCode * 397) ^ unitySliceBottom;
@@ -288,6 +485,7 @@ namespace UnityEngine.UIElements
                 hashCode = (hashCode * 397) ^ unitySliceTop;
                 hashCode = (hashCode * 397) ^ (int)unitySliceType;
                 hashCode = (hashCode * 397) ^ (int)unityTextOverflowPosition;
+                hashCode = (hashCode * 397) ^ zIndex;
                 return hashCode;
             }
         }

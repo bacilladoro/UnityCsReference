@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using Unity.GraphToolkit.CSO;
+using Unity.Scripting.LifecycleManagement;
 
 namespace Unity.GraphToolkit.Editor
 {
@@ -17,51 +18,61 @@ namespace Unity.GraphToolkit.Editor
         /// <summary>
         /// Change hint list for unspecified changes.
         /// </summary>
+        [NoAutoStaticsCleanup] // pre-allocated ChangeHintList constant; references persistent enum-like ChangeHint values
         public static readonly ChangeHintList Unspecified = new(ChangeHint.Unspecified);
 
         /// <summary>
         /// Change hint list for layout changes.
         /// </summary>
+        [NoAutoStaticsCleanup] // pre-allocated ChangeHintList constant; references persistent enum-like ChangeHint values
         public static readonly ChangeHintList Layout = new(ChangeHint.Layout);
 
         /// <summary>
         /// Change hint list for style changes.
         /// </summary>
+        [NoAutoStaticsCleanup] // pre-allocated ChangeHintList constant; references persistent enum-like ChangeHint values
         public static readonly ChangeHintList Style = new(ChangeHint.Style);
 
         /// <summary>
         /// Change hint list for data changes.
         /// </summary>
+        [NoAutoStaticsCleanup] // pre-allocated ChangeHintList constant; references persistent enum-like ChangeHint values
         public static readonly ChangeHintList Data = new(ChangeHint.Data);
 
         /// <summary>
         /// Change hint list for graph topology changes.
         /// </summary>
+        [NoAutoStaticsCleanup] // pre-allocated ChangeHintList constant; references persistent enum-like ChangeHint values
         public static readonly ChangeHintList GraphTopology = new(ChangeHint.GraphTopology);
 
         /// <summary>
         /// Change hint list for grouping changes.
         /// </summary>
+        [NoAutoStaticsCleanup] // pre-allocated ChangeHintList constant; references persistent enum-like ChangeHint values
         public static readonly ChangeHintList Grouping = new(ChangeHint.Grouping);
 
         /// <summary>
         /// Change hint list for UI hint changes.
         /// </summary>
+        [NoAutoStaticsCleanup] // pre-allocated ChangeHintList constant; references persistent enum-like ChangeHint values
         public static readonly ChangeHintList UIHints = new(ChangeHint.UIHints);
 
         /// <summary>
         /// Change hint list for animation changes.
         /// </summary>
+        [NoAutoStaticsCleanup] // pre-allocated ChangeHintList constant; references persistent enum-like ChangeHint values
         public static readonly ChangeHintList Animation = new(ChangeHint.Animation);
 
         /// <summary>
         /// Change hint list for redraw changes.
         /// </summary>
+        [NoAutoStaticsCleanup] // pre-allocated ChangeHintList constant; references persistent enum-like ChangeHint values
         public static readonly ChangeHintList NeedsRedraw = new(ChangeHint.NeedsRedraw);
 
         /// <summary>
         /// Change hint list for view recreation changes.
         /// </summary>
+        [NoAutoStaticsCleanup] // pre-allocated ChangeHintList constant; references persistent enum-like ChangeHint values
         public static readonly ChangeHintList RecreateView = new(ChangeHint.RecreateView);
 
         readonly List<ChangeHint> m_ChangeHints;

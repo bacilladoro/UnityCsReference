@@ -8,6 +8,7 @@ using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using NodesToStringPosition = System.Collections.Generic.Dictionary<UnityEditor.Search.IQueryNode, UnityEditor.Search.QueryToken>;
 
@@ -71,6 +72,7 @@ namespace UnityEditor.Search
         /// <summary>
         /// Default value when no ParsetResult are available.
         /// </summary>
+        [NoAutoStaticsCleanup] // immutable default/empty sentinel for a readonly value-type struct; no references to clean up
         public static readonly ParseResult<T> none = new ParseResult<T>(false, default(T));
     }
 
@@ -188,6 +190,7 @@ namespace UnityEditor.Search
         Regex m_BooleanFilterRx = new Regex(QueryRegexValues.k_FilterNamePattern +
             QueryRegexValues.k_FilterFunctionPattern, RegexOptions.Compiled);
 
+        [NoAutoStaticsCleanup]
         static readonly Dictionary<string, Func<IQueryNode>> k_CombiningTokenGenerators = new Dictionary<string, Func<IQueryNode>>
         {
             {"and", () => new AndNode()},
@@ -1027,11 +1030,11 @@ namespace UnityEditor.Search
                 return null;
             }
 
-#pragma warning disable UA2006 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
-#pragma warning disable UA2002 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2006 // Avoid Linq
+#pragma warning disable UAC2002 // Avoid Linq
             if (!validationOptions.validateSyntaxOnly && filter.supportedOperators.Any() && !filter.supportedOperators.Any(filterOp => filterOp.Equals(op.token)))
-#pragma warning restore UA2006
-#pragma warning restore UA2002
+#pragma warning restore UAC2006
+#pragma warning restore UAC2002
             {
                 args.errors.Add(new QueryError(args.filterOperatorIndex, args.filterOperator.length, $"The operator \"{op.token}\" is not supported for this filter."));
                 return null;
@@ -1195,11 +1198,11 @@ namespace UnityEditor.Search
                 }
 
                 var opToken = op.token;
-#pragma warning disable UA2006 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
-#pragma warning disable UA2002 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2006 // Avoid Linq
+#pragma warning disable UAC2002 // Avoid Linq
                 if (!validationOptions.validateSyntaxOnly && filter.supportedOperators.Any() && !filter.supportedOperators.Any(filterOp => filterOp.Equals(opToken)))
-#pragma warning restore UA2006
-#pragma warning restore UA2002
+#pragma warning restore UAC2006
+#pragma warning restore UAC2002
                 {
                     args.errors.Add(new QueryError(args.filterOperatorIndex, args.filterOperator.length, $"The operator \"{op.token}\" is not supported for this filter."));
                     return null;
@@ -1275,9 +1278,9 @@ namespace UnityEditor.Search
             }
 
             // Check custom parsers first
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             foreach (var typeParser in filter.typeParsers.Concat(m_TypeParsers))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 parseResult = typeParser.Parse(filterValue);
                 if (parseResult.success)
@@ -1359,9 +1362,9 @@ namespace UnityEditor.Search
 
         IParseResult ParseSpecificType(string filterValue, Type type, IFilter filter)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             foreach (var typeParser in filter.typeParsers.Concat(m_TypeParsers))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 if (type != typeParser.type)
                     continue;
@@ -1746,9 +1749,9 @@ namespace UnityEditor.Search
             where TFilterAttribute : QueryEngineFilterAttribute
             where TTransformerAttribute : QueryEngineParameterTransformerAttribute
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var filters = TypeCache.GetMethodsWithAttribute<TFilterAttribute>()
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 .Select(CreateFilterFromFilterAttribute<TFilterAttribute, TTransformerAttribute>)
                 .Where(filter => filter != null);
             foreach (var filter in filters)
@@ -2009,9 +2012,9 @@ namespace UnityEditor.Search
 
         static Func<string, TParam> GetParameterTransformerFunction<TParam>(MethodInfo mi, string functionName, Type transformerAttributeType)
         {
-#pragma warning disable UA2001, UA2011 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001, UAC2011 // Avoid Linq
             var transformerMethod = TypeCache.GetMethodsWithAttribute(transformerAttributeType)
-#pragma warning restore UA2001, UA2011
+#pragma warning restore UAC2001, UAC2011
                 .Where(transformerMethodInfo =>
                 {
                     var sameType = transformerMethodInfo.ReturnType == typeof(TParam);
@@ -2070,9 +2073,9 @@ namespace UnityEditor.Search
             if (!FilterHasCustomTokenHandlers(filter))
                 return;
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var operators = m_FilterOperators.Keys.Concat(filter.operators.Keys);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             AddCustomFilterTokenHandler(filter, filterId, operators, false);
             AddCustomPartialFilterTokenHandler(filter, filterId, operators, false);
@@ -2103,9 +2106,9 @@ namespace UnityEditor.Search
                 return;
 
             var filterId = filter.GetHashCode();
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var operators = m_FilterOperators.Keys.Concat(filter.operators.Keys);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             AddFilterQuoteTokenHandlers(filter, filterId, operators, in textDelimiter, sort);
         }
 

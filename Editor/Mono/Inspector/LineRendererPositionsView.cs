@@ -72,6 +72,7 @@ namespace UnityEditor
 
             if (col == 0)
             {
+                cellRect.xMin += k_DragRectWidth;
                 EditorGUI.LabelField(cellRect, item.displayName);
             }
             else
@@ -145,9 +146,9 @@ namespace UnityEditor
         protected override void SelectionChanged(IList<int> selectedIds)
         {
             if (selectionChangedCallback != null)
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 selectionChangedCallback(selectedIds.ToList());
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         protected override bool CanMultiSelect(TreeViewItem item)
@@ -232,9 +233,9 @@ namespace UnityEditor
                     m_Positions.GetArrayElementAtIndex(i).vector3Value = newList[i];
                 }
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 SetSelection(Enumerable.Range(args.insertAtIndex - draggedRows.Count(o => o < args.insertAtIndex), draggedRows.Count).ToList());
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             }
             return DragAndDropVisualMode.Move;
         }

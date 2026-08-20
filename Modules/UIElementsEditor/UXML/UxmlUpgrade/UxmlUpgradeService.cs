@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -9,6 +10,7 @@ using UnityEngine;
 using UnityEngine.Bindings;
 using UnityEngine.Pool;
 using UnityEngine.UIElements;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.UIElements
 {
@@ -22,6 +24,7 @@ namespace UnityEditor.UIElements
         readonly List<bool> m_UpgradersEnabled = new List<bool>();
         readonly VisualTreeAssetExporter m_Exporter = new VisualTreeAssetExporter();
 
+        [NoAutoStaticsCleanup]
         static readonly VisualTreeAssetExporter.ExportOptions s_ExportOptions = new VisualTreeAssetExporter.ExportOptions
         {
             ignoreAttributeList = ["__unity-builder-selected-element"],
@@ -281,3 +284,4 @@ namespace UnityEditor.UIElements
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

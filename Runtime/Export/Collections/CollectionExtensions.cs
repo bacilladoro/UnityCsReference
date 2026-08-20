@@ -105,6 +105,7 @@ namespace Unity.Collections
             }
             return min;
         }
+
         /// <summary>
         /// Gets the maximum element from the list.
         /// </summary>
@@ -299,9 +300,9 @@ namespace Unity.Collections
             if (list is List<T> l)
                 return l.Contains(item);
 
-#pragma warning disable UA2007 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2007 // Avoid Linq
             return System.Linq.Enumerable.Contains(list, item);
-#pragma warning restore UA2007
+#pragma warning restore UAC2007
         }
 
         /// <summary>
@@ -366,9 +367,9 @@ namespace Unity.Collections
             // Profiling using DotNetBenchmark showed that even on NET 8, which contains optimizations
             // for Spans, having detection of arrays and lists resulted in a 2.5-3.0x performance
             // benefit compared to calling System.Linq.Any directly.
-#pragma warning disable UA2006 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2006 // Avoid Linq
             return System.Linq.Enumerable.Any(enumerable, match.Invoke);
-#pragma warning restore UA2006
+#pragma warning restore UAC2006
         }
 
         /// <summary>
@@ -433,9 +434,9 @@ namespace Unity.Collections
             // Profiling using DotNetBenchmark showed that even on NET 8, which contains optimizations
             // for Spans, having detection of arrays and lists resulted in a 2.5-3.0x performance
             // benefit compared to calling System.Linq.All directly.
-#pragma warning disable UA2008 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2008 // Avoid Linq
             return System.Linq.Enumerable.All(enumerable, match.Invoke);
-#pragma warning restore UA2008
+#pragma warning restore UAC2008
         }
 
         /// <summary>

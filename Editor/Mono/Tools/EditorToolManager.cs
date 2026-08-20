@@ -341,9 +341,9 @@ namespace UnityEditor.EditorTools
                     // apples to oranges. Ie, the transform tools will be different despite being the same `Tool` enum value.
 
                     var toolEnum = Tools.GetCurrent(stateToolOwnerType);
-    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+    #pragma warning disable UAC2001 // Avoid Linq
                     var wasAdditionalContextTool = toolEnum == Tool.Custom && additionalContextToolTypesCache.Contains(activeTool.GetType());
-    #pragma warning restore UA2001
+    #pragma warning restore UAC2001
                     var previousCtx = m_ActiveToolContext;
                     if (previousCtx != null)
                     {
@@ -382,9 +382,9 @@ namespace UnityEditor.EditorTools
                     // when moving to that new context
                     else if (wasAdditionalContextTool)
                     {
-    #pragma warning disable UA2007 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+    #pragma warning disable UAC2007 // Avoid Linq
                         var isAdditionalContextTool = m_ActiveToolContext.GetAdditionalToolTypes().Contains(activeTool.GetType());
-    #pragma warning restore UA2007
+    #pragma warning restore UAC2007
 
                         if(!isAdditionalContextTool)
                             RestorePreviousPersistentTool();
@@ -534,9 +534,9 @@ namespace UnityEditor.EditorTools
 
             void RestoreCustomEditorTool()
             {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 var restored = componentTools.FirstOrDefault(previousComponentToolCache.IsEqual);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
                 if (restored != null)
                 {
@@ -714,21 +714,21 @@ namespace UnityEditor.EditorTools
 
             void SelectedObjectWasDestroyed(EntityId id)
             {
-#pragma warning disable UA2006 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2006 // Avoid Linq
                 bool componentToolActive = componentTools.Any(
-#pragma warning restore UA2006
+#pragma warning restore UAC2006
                                                x => x?.GetEditor<EditorTool>() == activeTool)
-#pragma warning disable UA2006 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2006 // Avoid Linq
                                            && activeTool.m_Targets.Any(x => x == null || x.GetEntityId() == id);
-#pragma warning restore UA2006
+#pragma warning restore UAC2006
 
-#pragma warning disable UA2006 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2006 // Avoid Linq
                 bool componentContextActive = componentContexts.Any(
-#pragma warning restore UA2006
+#pragma warning restore UAC2006
                                                   x => x?.GetEditor<EditorToolContext>() == activeToolContext)
-#pragma warning disable UA2006 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2006 // Avoid Linq
                                               && activeToolContext.targets.Any(x => x == null || x.GetEntityId() == id);
-#pragma warning restore UA2006
+#pragma warning restore UAC2006
 
                 if (componentToolActive || componentContextActive)
                 {
@@ -759,9 +759,9 @@ namespace UnityEditor.EditorTools
                     {
                         // Because this function collects all variants when appending to the list, we can safely assume that
                         // if a variant group exists in the tools list the tool is also already appended.
-    #pragma warning disable UA2006 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+    #pragma warning disable UAC2006 // Avoid Linq
                         if (tools.Any(x => x.variantGroup == meta.variantGroup
-    #pragma warning restore UA2006
+    #pragma warning restore UAC2006
                                         && x.componentTool == entry.componentTool))
                             return;
 
@@ -821,9 +821,9 @@ namespace UnityEditor.EditorTools
                          tool.typeAssociation.targetContext == context.GetType())
                         && tool.editorType != null // The editor type can be null on domain reload after renaming an EditorTool (UUM-113403)
                         && !tool.lockedInspector
-#pragma warning disable UA2006 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2006 // Avoid Linq
                         && !tools.Any(entry => entry.tools.Any(x => x == tool.editor)))
-#pragma warning restore UA2006
+#pragma warning restore UAC2006
                     {
                         AddToolEntry(tool.editorType,
                             tool.typeAssociation.group == null ? ToolEntry.Scope.Component : ToolEntry.Scope.Grouped);
@@ -943,9 +943,9 @@ namespace UnityEditor.EditorTools
                     {
                         toolType = customTool ? tool.GetType() : null;
                         targetObject = tool.target;
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                         targetObjects = tool.targets.ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     }
                 }
 
@@ -961,9 +961,9 @@ namespace UnityEditor.EditorTools
                     return false;
 
                 // todo need to cache ComponentEditor targets
-#pragma warning disable UA2014 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2014 // Avoid Linq
                 return toolType == editor.GetType() && targetObjects.SequenceEqual(editor.targets);
-#pragma warning restore UA2014
+#pragma warning restore UAC2014
             }
 
             public override string ToString()
@@ -1182,9 +1182,9 @@ namespace UnityEditor.EditorTools
         {
             if (includeLockedInspectorTools)
                 return instance.defaultState.componentTools.Count;
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return instance.defaultState.componentTools.Count(x => !x.lockedInspector);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         // Used by tests.

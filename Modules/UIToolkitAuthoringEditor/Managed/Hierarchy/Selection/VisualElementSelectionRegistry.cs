@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitAuthoringFramework not yet converted
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
@@ -473,6 +474,14 @@ internal sealed partial class VisualElementSelectionRegistry : IVisualElementCha
             m_StableIndex[new StableKey(entry.Scope, entry.Path)] = entry;
     }
 
+    public void ResyncStablePathsForAllPanels()
+    {
+        foreach (var panel in m_TrackedScenePanels)
+            ResyncStablePaths(panel);
+        foreach (var stage in m_StagePanels)
+            ResyncStablePaths(stage.GetAuthoringPanel());
+    }
+
     UISelectionObject CreateSelectionObject(VisualElement element, Panel panel)
     {
         var editFlags = GetEditFlags(element, panel);
@@ -608,3 +617,4 @@ internal sealed partial class VisualElementSelectionRegistry : IVisualElementCha
         Object.DestroyImmediate(selectionObject);
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

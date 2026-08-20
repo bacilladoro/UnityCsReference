@@ -5,14 +5,17 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 using Unity.BuildService;
 using UnityEditor.Compilation;
 using UnityEditor.MSBuild;
 using Unity.AsmDefToCSProj;
+using UnityEditor.Build;
 using Unity.Scripting;
 using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
+using UnityEngine.Bindings;
 
 namespace UnityEditor.Scripting.ScriptCompilation.MsBuild;
 
@@ -32,9 +35,25 @@ enum CompileTarget
     PlayerWithTests
 }
 
+[VisibleToOtherModules("UnityEditor.ProjectAuditorModule")]
 partial class MsBuildCompilation
 {
-    private static MSBuildHostProgram _hostProgram = new MSBuildHostProgram();
+    internal class CompilationMessage
+    {
+        public string AssemblyName;
+        public LogMessage Msg;
+    }
+
+    [VisibleToOtherModules("UnityEditor.ProjectAuditorModule")]
+    internal class CompilationMessages
+    {
+        public bool Success;
+        public string[] Assemblies = Array.Empty<string>();
+        public CompilationMessage[] Messages = Array.Empty<CompilationMessage>();
+    }
+
+    [NoAutoStaticsCleanup] // singleton managing the external MSBuild host process; persists across reload, the compiler client reconnects
+    private static readonly MSBuildHostProgram _hostProgram = new MSBuildHostProgram();
     private Task<BuildResultMessage> _currentBuildTask;
 
     private MSBuildCompilationBuildState _currentBuildState;
@@ -50,6 +69,7 @@ partial class MsBuildCompilation
 
     private static readonly TimeSpan _connectionTimeout = TimeSpan.FromMinutes(10);
     static ICompilerClient CompilerClient => _compilerClient.Value;
+    [AutoStaticsCleanupOnCodeReload] // reset the lazy client on reload so [OnCodeLoaded] PrimeCompilerClient rebuilds the connection
     private static Lazy<ICompilerClient> _compilerClient = new (() =>
     {
         var socketOrNamedPipe = _hostProgram.EnsureRunningAndGetSocketOrNamedPipe();
@@ -130,6 +150,13 @@ partial class MsBuildCompilation
     {
         if (!_requestedBuild && _currentBuildTask == null)
             return EditorCompilation.CompileStatus.Idle;
+
+        // An out-of-band analysis build (RequestAnalysisCompilationAsync) holds _currentBuildState without a
+        // _currentBuildTask. Don't start or post-process a normal compile until it finishes — this serializes
+        // the two against the host's shared per-build state. The pending _requestedBuild stays set and starts
+        // once the analysis build clears _currentBuildState (or is cancelled by RequestMsBuildScriptCompilation).
+        if (_currentBuildTask == null && _currentBuildState != null)
+            return EditorCompilation.CompileStatus.Compiling;
 
         // If build is running return compiling
         if (_currentBuildTask != null && !_currentBuildTask.IsCompleted)
@@ -355,6 +382,151 @@ partial class MsBuildCompilation
         {
             UnityEngine.Debug.LogWarning(warning);
         }
+    }
+
+    internal async Task<CompilationMessages> RequestAnalysisCompilationAsync(string configuration, CancellationToken cancellationToken)
+    {
+        // Reject if a build is already active or pending; conversely, once this build owns
+        // _currentBuildState the tick loop won't start a normal compile until it finishes (see
+        // TickCompilationPipeline). Reusing the same fields the normal path uses means IsCompiling() reports
+        // true and a later RequestMsBuildScriptCompilation cancels this build cleanly.
+        if (_requestedBuild || _currentBuildTask != null || _currentBuildState != null)
+        {
+            return new CompilationMessages
+            {
+                Success = false,
+                Messages =
+                [
+                    new CompilationMessage
+                    {
+                        Msg = new LogMessage()
+                        {
+                            MessageType = LogMessageType.Error,
+                            Message = "An MSBuild compilation is already in progress; retry once it completes."
+                        }
+                    },
+                ],
+            };
+        }
+
+        _currentBuildState = new MSBuildCompilationBuildState(CompilerClient);
+        using var _ = cancellationToken.Register(() => _currentBuildState.CancellationTokenSource.Cancel());
+        try
+        {
+            return await RunScriptCompilationAsync(configuration);
+        }
+        catch (OperationCanceledException)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            throw;
+        }
+        finally
+        {
+            _currentBuildState = null;
+        }
+    }
+
+    private async Task<CompilationMessages> RunScriptCompilationAsync(string configuration)
+    {
+        // Mirror the regular compilation path (TickCompilationPipeline): refresh the deferrable
+        // props (defines, references, plugins, search paths, analyzers) before building.
+        var buildTarget = EditorUserBuildSettings.activeBuildTarget;
+        var globalAnalyzers = _globalAnalyzers.Length > 0
+            ? _globalAnalyzers
+            : UnityEditorMSBuildPropsTargetsGeneration.GetBuiltinRoslynAnalyzerPaths();
+        UnityEditorMSBuildPropsTargetsGeneration.UpdateDeferrablePropsInParallel(buildTarget, GetAnalysisCompilationOptions(configuration, buildTarget), globalAnalyzers);
+
+        var generateBinLog = (bool)UnityEngine.Debug.GetDiagnosticSwitch("ScriptCompilationMsBuildBinlog").value
+            || Application.HasARGV("generate-binlog");
+
+        var buildTask = _currentBuildState.BuildAsync(
+            restore: false,
+            generateBinLog: generateBinLog,
+            configuration: configuration,
+            useNugetRestore: false);
+
+        var buildResult = await buildTask;
+        return BuildScriptCompilationMessages(buildResult);
+    }
+
+    // Map EditorCompilationInterface.GetManagedCodeVariantOptions to the MSBuild flags
+    private static MSBuildCompilationOptions GetAnalysisCompilationOptions(string configuration, BuildTarget buildTarget)
+    {
+        EditorScriptCompilationOptions variantOptions;
+        if (configuration.EndsWith("+Analysis", StringComparison.Ordinal))
+        {
+            // Player-target analysis: match the active target's player build (variant + IL2CPP backend, which
+            // managed option sets never carry so it's added explicitly).
+            var namedBuildTarget = NamedBuildTarget.FromActiveSettings(buildTarget);
+            variantOptions = EditorCompilationInterface.GetManagedCodeVariantOptions(namedBuildTarget);
+            if (PlayerSettings.GetScriptingBackend(namedBuildTarget) == ScriptingImplementation.IL2CPP)
+                variantOptions |= EditorScriptCompilationOptions.BuildingForIl2Cpp;
+        }
+        else
+        {
+            // Editor-target 'Analysis': match the editor build, whose managed code variant is Debug when
+            // script debug info is on (codeOptimization Debug) and Checked otherwise — see
+            // ScriptCompilationPipeline.cpp GetManagedCodeVariantForCompile. That yields asserts +
+            // instrumentation always, plus no-optimization (DEBUG) in Debug.
+            var editorVariant = CompilationPipeline.codeOptimization == CodeOptimization.Debug
+                ? ManagedCodeVariant.Debug
+                : ManagedCodeVariant.Checked;
+            variantOptions = EditorCompilationInterface.GetManagedCodeVariantOptions(editorVariant);
+        }
+
+        var options = MSBuildCompilationOptions.BuildingEmpty;
+        if (variantOptions.HasFlag(EditorScriptCompilationOptions.BuildingForIl2Cpp))
+            options |= MSBuildCompilationOptions.BuildingForIl2Cpp;
+        if (variantOptions.HasFlag(EditorScriptCompilationOptions.BuildingWithAsserts))
+            options |= MSBuildCompilationOptions.BuildingWithAsserts;
+        if (variantOptions.HasFlag(EditorScriptCompilationOptions.BuildingWithInstrumentation))
+            options |= MSBuildCompilationOptions.BuildingWithInstrumentation;
+        if (variantOptions.HasFlag(EditorScriptCompilationOptions.BuildingWithoutOptimization))
+            options |= MSBuildCompilationOptions.BuildingWithDebug;
+
+        return options;
+    }
+
+    private static CompilationMessages BuildScriptCompilationMessages(BuildResultMessage buildResult)
+    {
+        var assemblies = new List<string>();
+        var messages = new List<CompilationMessage>();
+
+        foreach (var kvp in buildResult.GetProjectResults())
+        {
+            var projectResult = kvp.Value;
+            if (!string.IsNullOrEmpty(projectResult.AssemblyName))
+                assemblies.Add(projectResult.AssemblyName);
+
+            foreach (var msg in projectResult.GetLogMessages())
+            {
+                if (msg.MessageType == LogMessageType.Message)
+                    continue;
+                messages.Add(new CompilationMessage
+                {
+                    AssemblyName = projectResult.AssemblyName,
+                    Msg = msg
+                });
+            }
+        }
+
+        foreach (var msg in buildResult.GetLogMessages())
+        {
+            if (msg.MessageType == LogMessageType.Message)
+                continue;
+            messages.Add(new CompilationMessage
+            {
+                AssemblyName = null,
+                Msg = msg
+            });
+        }
+
+        return new CompilationMessages
+        {
+            Success = buildResult.Success,
+            Assemblies = assemblies.ToArray(),
+            Messages = messages.ToArray(),
+        };
     }
 
     private string ConvertPath(string path)

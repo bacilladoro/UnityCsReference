@@ -9,6 +9,7 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
+using System.Threading.Tasks;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 using Unity.Collections;
@@ -18,6 +19,7 @@ using Unity.ProjectAuditor.Editor.Core;
 using Unity.ProjectAuditor.Editor.Utils;
 using UnityEditor;
 using UnityEditor.Compilation;
+using UnityEditor.Scripting.ScriptCompilation.MsBuild;
 using UnityEngine;
 using PropertyDefinition = Unity.ProjectAuditor.Editor.Core.PropertyDefinition;
 using ThreadPriority = System.Threading.ThreadPriority;
@@ -179,9 +181,9 @@ namespace Unity.ProjectAuditor.Editor.Modules
         {
             base.Initialize();
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             m_OpCodes = new List<OpCode>(GetAnalyzers().OfType<CodeModuleInstructionAnalyzer>().Select(a => a.opCodes).SelectMany(c => c).Distinct());
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             ProjectIssueExtensions.AddCustomComparer(IssueCategory.Assembly, PropertyTypeUtil.FromCustom(AssemblyProperty.CompileTime),
                 (a, b) =>
@@ -195,6 +197,26 @@ namespace Unity.ProjectAuditor.Editor.Modules
 
                     return longA < longB ? -1 : longA > longB ? 1 : 0;
                 });
+        }
+
+        // Compiles all scripts using an MSBuild analysis configuration ("Analysis" for the editor target, or
+        // "<Target>+Analysis" for a player target) and returns a report of the compiler messages produced.
+        static Task<MsBuildCompilation.CompilationMessages> RequestCompilationAsync(string analysisConfiguration, CancellationToken cancellationToken = default)
+        {
+            if (!MsBuildCompilationInterface.IsEnabled())
+                throw new InvalidOperationException($"{nameof(RequestCompilationAsync)} is only supported when the MSBuild compilation pipeline is enabled.");
+
+            static bool IsAnalysisConfiguration(string configuration) =>
+                configuration is "Analysis" || (configuration is not null && configuration.EndsWith("+Analysis", StringComparison.Ordinal));
+
+            if (!IsAnalysisConfiguration(analysisConfiguration))
+            {
+                throw new ArgumentException(
+                    $"'{analysisConfiguration}' is not an analysis configuration. Expected \"Analysis\" or \"<Target>+Analysis\"; " +
+                    "use RequestScriptCompilation() for a normal Editor compilation.", nameof(analysisConfiguration));
+            }
+
+            return MsBuildCompilationInterface.RequestAnalysisCompilationAsync(analysisConfiguration, cancellationToken);
         }
 
         public override IEnumerator Audit(AnalysisParams analysisParams, IProgress progress)
@@ -265,14 +287,14 @@ namespace Unity.ProjectAuditor.Editor.Modules
             yield return null;
 
             // find all roslyn analyzer DLLs by label
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var roslynAnalyzerAssets = new List<string>(AssetDatabase.FindAssets("l:RoslynAnalyzer").Select(AssetDatabase.GUIDToAssetPath));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             // report all roslyn analyzers as PrecompiledAssembly issues
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var roslynAnalyzerIssues = roslynAnalyzerAssets
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 .Distinct()
                 .Select(roslynAnalyzerDllPath => (ReportItem)context.CreateInsight(
                 IssueCategory.PrecompiledAssembly,
@@ -295,7 +317,7 @@ namespace Unity.ProjectAuditor.Editor.Modules
                 CodeOwnerFlags = analysisParams.CodeOwnerFlags,
                 Platform = analysisParams.Platform,
                 // TODO: reminder to add list of analyzers to metadata
-                RoslynAnalyzers = UserPreferences.UseRoslynAnalyzers ? roslynAnalyzerAssets.ToArray() : null,
+                RoslynAnalyzers = roslynAnalyzerAssets.ToArray(),
                 AssemblyNames = analysisParams.AssemblyNames
             };
 
@@ -314,17 +336,17 @@ namespace Unity.ProjectAuditor.Editor.Modules
 
             if (analysisParams.AssemblyNames != null)
             {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 compiledEditorAssemblyPaths = new List<AssemblyInfo>(compiledEditorAssemblyPaths.Where(a => Array.IndexOf(analysisParams.AssemblyNames, a.Name) != -1));
                 compiledPlayerAssemblyPaths = new List<AssemblyInfo>(compiledPlayerAssemblyPaths.Where(a => Array.IndexOf(analysisParams.AssemblyNames, a.Name) != -1));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             }
 
             if (compiledEditorAssemblyPaths.Count > 0)
             {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 var issues = compiledEditorAssemblyPaths.Select(assemblyInfo => (ReportItem)context.CreateInsight(IssueCategory.Assembly, assemblyInfo.Name)
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     .WithCustomProperties(
                     [
                         assemblyInfo.IsReadOnly,
@@ -340,7 +362,7 @@ namespace Unity.ProjectAuditor.Editor.Modules
             // Add these manually because they aren't actually compiled, even though they are part of the player (they are pre-compiled)
             if (compiledPlayerAssemblyPaths.Count > 0)
             {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 var issues = compiledPlayerAssemblyPaths
                     .Where(assemblyInfo => assemblyInfo.IsUnityInternalAssembly)
                     .Select(assemblyInfo => (ReportItem)context.CreateInsight(IssueCategory.Assembly, assemblyInfo.Name)
@@ -352,15 +374,15 @@ namespace Unity.ProjectAuditor.Editor.Modules
                     ])
                     .WithLocation(assemblyInfo.AsmDefPath))
                     .ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 if (issues.Length > 0)
                     analysisParams.OnIncomingIssues(issues);
             }
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var assemblyInfos = compiledEditorAssemblyPaths.Concat(compiledPlayerAssemblyPaths)
                 .Where(a => AssemblyPackageFilter(a, analysisParams)).ToArray();
-            #pragma warning restore UA2001
+            #pragma warning restore UAC2001
 
             if (progress?.IsCancelled ?? false)
             {
@@ -369,11 +391,11 @@ namespace Unity.ProjectAuditor.Editor.Modules
             }
             
             AsyncProgressState assemblyProgressState = progress?.Start("Analyzing Assemblies", assemblyInfos.Length);
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             // Process successfully compiled assemblies
             var localAssemblyInfos = assemblyInfos.Where(info => !info.IsReadOnly).ToArray();
             var readOnlyAssemblyInfos = assemblyInfos.Where(info => info.IsReadOnly).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             var foundIssues = new List<ReportItem>();
             var onIssueFoundInternal = new Action<ReportItem>(foundIssues.Add);
 
@@ -509,9 +531,9 @@ namespace Unity.ProjectAuditor.Editor.Modules
                 foreach (var path in assemblyDirectories)
                     assemblyResolver.AddSearchDirectory(path);
 
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 foreach (var dir in assemblyInfos.Select(info => Path.GetDirectoryName(info.Path)).Distinct())
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     assemblyResolver.AddSearchDirectory(dir);
 
                 // Analyze all assemblies

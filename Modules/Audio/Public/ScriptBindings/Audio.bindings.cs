@@ -2323,10 +2323,9 @@ namespace UnityEngine
                     configPtr = &config;
                 }
 
-                var header = (GeneratorInstance.GeneratorHeader*)
-                    SampleProviderBindings.CreateGeneratorHeader(this, context.Header, configPtr);
+                var handle = SampleProviderBindings.CreateGenerator(this, context.Header, configPtr);
 
-                return new GeneratorInstance(header);
+                return new GeneratorInstance(handle);
             }
         }
 
@@ -2802,20 +2801,9 @@ namespace UnityEngine
 
         ///<summary>A handle to the currently playing <c>Generator</c>, if it can be controlled by scripting.</summary>
         ///<remarks>You can use <see cref="ControlContext.builtIn" /> to script and issue commands to the <c>Generator</c>. Since the <see cref="AudioSource" /> owns the <c>Generator</c>, you can check for the existence using <see cref="ControlContext.Exists" />.</remarks>
-        public unsafe ProcessorInstance generatorInstance
-        {
-            get
-            {
-                var header = (GeneratorInstance.GeneratorHeader*)generatorHeader;
+        public ProcessorInstance generatorInstance => new GeneratorInstance(generatorInstanceHandle);
 
-                if (header != null)
-                    return new GeneratorInstance(header);
-
-                return default;
-            }
-        }
-
-        extern internal unsafe void* generatorHeader { get; }
+        extern internal DualThreadHandle generatorInstanceHandle { get; }
 
         extern internal Object generatorObject { get; set; }
 
@@ -4410,6 +4398,8 @@ namespace UnityEngine
 
     ///<summary>Use this class to record to an <see cref="AudioClip" /> using a connected microphone.</summary>
     ///<remarks>You can get a list of connected microphones from the <see cref="devices" /> property and then use the <see cref="Start" /> and <see cref="End" /> functions to start or end a recording session using one of the available devices.
+    ///
+    ///**Note:** Unity mutes microphone recordings while the application is paused, for example when you pause it manually or when it loses focus and <see cref="Application.runInBackground" /> is disabled. The recording position keeps advancing, but the <see cref="AudioClip" /> receives silence until the application resumes.
     ///
     ///**Note:** On Unity Web, the <c>Microphone</c> class requires user authorization to function. Request authorization via <see cref="Application.RequestUserAuthorization" /> before use.</remarks>
     [StaticAccessor("GetAudioManager()", StaticAccessorType.Dot)]

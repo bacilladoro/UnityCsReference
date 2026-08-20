@@ -121,9 +121,9 @@ namespace UnityEditor
             int orgSize = expandedSet.Count;
 
             var propertyIterator = CreateHierarchyProperty();
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             EntityId[] ancestors = propertyIterator.FindAllAncestors(validItemIDs.ToArray());
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             // Add all parents above id
             foreach (var itemID in ancestors)
@@ -134,9 +134,9 @@ namespace UnityEditor
             if (orgSize != expandedSet.Count)
             {
                 // Bulk set expanded ids (is sorted in SetExpandedIDs)
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 SetExpandedIDs(expandedSet.ToArray());
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
                 // Refresh immediately if any Item was expanded
                 if (m_NeedRefreshRows)

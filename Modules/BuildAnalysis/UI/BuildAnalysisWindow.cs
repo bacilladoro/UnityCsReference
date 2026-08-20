@@ -117,7 +117,8 @@ namespace UnityEditor.Build.Analysis
             var converter = new BuildReportConverter();
             var assetResolver = new SourceBuildAssetResolver(buildHistory, converter);
             var analyzer = new BuildAnalyzer(converter, fileSystem, buildHistory, assetResolver);
-            m_Service = new BuildAnalysisService(enumerator, analyzer, fileSystem, buildHistory);
+            var logReader = new BuildLogReader();
+            m_Service = new BuildAnalysisService(enumerator, analyzer, fileSystem, buildHistory, logReader);
 
             m_Watcher = new BuildHistoryWatcher(buildHistory);
             m_Watcher.BuildHistoryChanged += RefreshBuildList;
@@ -240,7 +241,7 @@ namespace UnityEditor.Build.Analysis
 
             m_TabHost.NotifyCurrentTabVisibility();
             m_TabHost.SetInspectorOpen(m_InspectorToggle.value);
-            m_TabHost.SetSelection(null, null);
+            m_TabHost.Apply(null);
         }
 
         private void UpdateInspectorToggleEnabled(Tab activeTab)
@@ -270,7 +271,7 @@ namespace UnityEditor.Build.Analysis
             {
                 // Invalidate any in-flight load (so its continuation is dropped as stale) and clear the view.
                 m_Gate.Clear();
-                m_TabHost.SetSelection(null, null);
+                m_TabHost.Apply(null);
                 m_LoadingOverlay.Hide();
                 return;
             }
@@ -284,17 +285,17 @@ namespace UnityEditor.Build.Analysis
 
         // Apply for both selection and regenerate: show the overlay, await the result, and
         // update the tabs only if this is still the latest request and the window is still alive.
-        private async Task LoadAndApplyAsync(BuildEntry build, Func<Task<BuildAnalysis>> load)
+        private async Task LoadAndApplyAsync(BuildEntry build, Func<Task<AnalyzedBuild>> load)
         {
             var seq = m_Gate.Begin(build.BuildSessionGUID);
 
             // Show the loading overlay over the active tab's content before we await.
             m_LoadingOverlay.Show(k_LoadingMessage);
 
-            BuildAnalysis analysis;
+            AnalyzedBuild analyzed;
             try
             {
-                analysis = await load();
+                analyzed = await load();
             }
             catch (OperationCanceledException)
             {
@@ -307,7 +308,7 @@ namespace UnityEditor.Build.Analysis
             {
                 if (!m_Gate.IsStale(seq))
                 {
-                    m_TabHost.SetSelection(null, null); // clear to no-selection
+                    m_TabHost.Apply(null); // clear to no-selection
                     m_LoadingOverlay.Hide();
                     m_Gate.Clear(); // a failed load isn't shown — drop the target so re-selecting retries
                     Debug.LogError($"{BuildAnalysisConstants.k_ConsoleLogPrefix} Failed to analyze build: {e.Message}");
@@ -318,11 +319,11 @@ namespace UnityEditor.Build.Analysis
             if (m_Gate.IsStale(seq))
                 return;
 
-            m_TabHost.SetSelection(build, analysis);
+            m_TabHost.Apply(new BuildAnalysisView(build, analyzed));
             m_LoadingOverlay.Hide();
 
             // A build that produced no analysis isn't shown — drop the target so re-selecting retries.
-            if (analysis == null)
+            if (analyzed.Analysis == null)
                 m_Gate.Clear();
         }
 

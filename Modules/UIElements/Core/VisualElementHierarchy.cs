@@ -2,6 +2,8 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
+using Unity.Scripting.LifecycleManagement;
 using System;
 using System.Collections.Generic;
 using Unity.Properties;
@@ -99,6 +101,7 @@ namespace UnityEngine.UIElements
             }
         }
 
+        [NoAutoStaticsCleanup]
         static readonly List<VisualElement> s_EmptyList = new List<VisualElement>();
         private List<VisualElement> m_Children;
 
@@ -687,6 +690,9 @@ namespace UnityEngine.UIElements
 
                 child.hierarchy.SetParent(m_Owner);
 
+                if (child.computedStyle.zIndex != int.MinValue)
+                    m_Owner.transformFlags |= VisualElementTransformFlags.MayHaveZIndexedChildren;
+
                 if (childWasEnabledInHierarchy && !m_Owner.enabledInHierarchy)
                     child.BlurHierarchyImmediately();
 
@@ -1245,6 +1251,23 @@ namespace UnityEngine.UIElements
             return null;
         }
 
+        /// <summary>Returns the nearest visual ancestor establishing a stacking context, stopping before boundary (exclusive); null if none before the panel root.</summary>
+        [VisibleToOtherModules("UnityEditor.UIBuilderModule", "UnityEditor.UIToolkitAuthoringModule")]
+        internal static VisualElement FindStackingContextRootElement(VisualElement element, VisualElement boundary)
+        {
+            var ancestor = element?.hierarchy.parent;
+            while (ancestor != null && ancestor != boundary)
+            {
+                if (ancestor.computedStyle.zIndex != int.MinValue
+                    || (ancestor.renderHints & RenderHints.GroupTransform) != 0
+                    || ancestor.useRenderTexture
+                    || ancestor.hasBackdropFilter)
+                    return ancestor;
+                ancestor = ancestor.hierarchy.parent;
+            }
+            return null;
+        }
+
         /// <summary>
         /// Checks if this element is an ancestor of the specified child element.
         /// </summary>
@@ -1486,3 +1509,4 @@ namespace UnityEngine.UIElements
 
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

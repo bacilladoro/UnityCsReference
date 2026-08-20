@@ -108,7 +108,7 @@ namespace Unity.GraphToolkit.Editor
             var targetState = m_TransitionModel.ToNodeGuid;
             var targetSide = m_TransitionModel.ToNodeAnchorSide;
 
-            var targetStateUI = targetState.GetView<State>(GraphView);
+            var targetStateUI = targetState.GetView<StateView>(GraphView);
             if (targetStateUI == null)
                 return;
 

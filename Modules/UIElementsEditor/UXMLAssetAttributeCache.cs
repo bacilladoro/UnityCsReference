@@ -2,9 +2,11 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
 using System;
 using System.Collections.Generic;
 using Unity.Profiling;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.UIElements
 {
@@ -25,6 +27,7 @@ namespace UnityEditor.UIElements
             return m_Cache.Keys;
         }
 
+        [NoAutoStaticsCleanup]
         static ProfilerMarker s_RegisterMarker = new ProfilerMarker(ProfilerCategory.UIToolkit, "UxmlAssetAttributeCache.LoadAssetAttributesForType");
 
         void LoadAssetAttributesForType(string fullTypeName)
@@ -57,3 +60,4 @@ namespace UnityEditor.UIElements
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

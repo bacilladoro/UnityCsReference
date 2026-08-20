@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.Collections;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Assertions;
@@ -171,6 +172,7 @@ namespace Unity.GraphToolkit.Editor
             }
         }
 
+        [NoAutoStaticsCleanup] // singleton sentinel used when no graph change description is on the stack; safe to persist
         static NullGraphChangeDescription s_NullGraphChangeDescription = new();
         Stack<GraphChangeDescription> m_GraphChangeDescriptionStack;
         Stack<DirtyScope> m_DirtyScopes;
@@ -234,7 +236,8 @@ namespace Unity.GraphToolkit.Editor
         /// <summary>
         /// Creates a helper for creating subgraph nodes within the graph.
         /// </summary>
-        protected virtual SubgraphCreationHelper CreateSubgraphCreationHelper() => new SubgraphCreationHelper();
+        protected virtual SubgraphCreationHelper CreateSubgraphCreationHelper()
+            => IsStateMachineGraph ? new StateMachineSubgraphCreationHelper() : new SubgraphCreationHelper();
 
         /// <inheritdoc />
         string IHasTitle.Title
@@ -271,7 +274,7 @@ namespace Unity.GraphToolkit.Editor
         /// <summary>
         /// Whether it is allowed to create sub-graphs.
         /// </summary>
-        public virtual bool AllowSubgraphCreation => !IsStateMachineGraph; // State machine graphs do not allow subgraphs.
+        public virtual bool AllowSubgraphCreation => true;
 
         /// <summary>
         /// Whether the graph is a state machine graph.
@@ -302,9 +305,9 @@ namespace Unity.GraphToolkit.Editor
         public virtual bool MoveNodeDependenciesByDefault => false;
 
         /// <inheritdoc />
-        #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+        #pragma warning disable UAC2001 // Avoid Linq
         public virtual IEnumerable<GraphElementModel> GetGraphElementModels() => GetElementsByGuid().Values.Where(t => ReferenceEquals(t.Container, this));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
         /// <summary>
         /// The nodes of the graph.
@@ -329,9 +332,9 @@ namespace Unity.GraphToolkit.Editor
                 {
                     if (nodeModel is ContextNodeModel contextModel)
                     {
-                        #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                        #pragma warning disable UAC2001 // Avoid Linq
                         allModels = allModels.Concat(contextModel.GetGraphElementModels().OfType<AbstractNodeModel>());
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     }
                 }
 
@@ -569,7 +572,11 @@ namespace Unity.GraphToolkit.Editor
         public GraphModel CreateLocalSubgraph(Type graphModelType, string graphName, GraphTemplate graphTemplate = null)
         {
             if (!AllowSubgraphCreation)
+            {
+                var graphStr = IsStateMachineGraph ? "State machine" : "Graph";
+                Debug.LogWarning($"{graphStr} {Name} does not support subgraph creation.");
                 return null;
+            }
 
             var localSubgraph = GraphObject.CreateGraphModel(graphModelType);
             m_LocalSubgraphs ??= new List<GraphModel>();
@@ -776,9 +783,9 @@ namespace Unity.GraphToolkit.Editor
 
             if (VariableDeclarations == null) return;
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             foreach (var variable in VariableDeclarations.Where(v => v != null))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 if (!variablesInGroup.Contains(variable))
                     GetSectionModel(GetVariableSection(variable)).InsertItem(variable);
@@ -836,9 +843,9 @@ namespace Unity.GraphToolkit.Editor
                 m_PortWireIndex?.WireReordered(wireModel, reorderType);
                 ApplyReorderToGraph(fromPort);
 
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 var siblingWires = fromPort.GetConnectedWires().ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 CurrentGraphChangeDescription.AddChangedModels(siblingWires, ChangeHint.GraphTopology);
                 CurrentGraphChangeDescription.AddChangedModel(fromPort, ChangeHint.GraphTopology);
             }
@@ -949,9 +956,9 @@ namespace Unity.GraphToolkit.Editor
         /// <returns>All ports in the graph.</returns>
         public IEnumerable<PortModel> GetPortModels()
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             return GetElementsByGuid().Values.OfType<PortModel>();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         /// <summary>
@@ -1004,9 +1011,9 @@ namespace Unity.GraphToolkit.Editor
         /// <returns>A list of ports that can be connected to <paramref name="startPortModel"/>.</returns>
         public virtual List<PortModel> GetCompatiblePorts(IReadOnlyList<PortModel> portModels, PortModel startPortModel)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             return portModels.Where(pModel =>
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 return IsCompatiblePort(startPortModel, pModel);
             })
@@ -1330,32 +1337,32 @@ namespace Unity.GraphToolkit.Editor
         {
             using var assetDirtyScope = AssetDirtyScope();
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var initialVariables = new HashSet<VariableDeclarationModelBase>(VariableDeclarations.Where(v => v != null && v.IsInputOrOutput));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             var elementsByType = new ElementsByType(graphElementModels);
 
             // Add nodes that would be backed by declaration models.
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             elementsByType.NodeModels.UnionWith(elementsByType.VariableDeclarationsModels.SelectMany(FindReferencesInGraph<AbstractNodeModel>));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             // Add wires connected to the deleted nodes.
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var allWires = WireModels.Union(Placeholders.OfType<WireModel>()).ToList();
-#pragma warning restore UA2001
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+            #pragma warning disable UAC2001 // Avoid Linq
             foreach (var portModel in elementsByType.NodeModels.OfType<PortNodeModel>().SelectMany(n => n.GetPorts()))
-#pragma warning restore UA2001
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+                #pragma warning disable UAC2001 // Avoid Linq
                 elementsByType.WireModels.UnionWith(allWires.Where(e => e != null && (e.ToPort == portModel || e.FromPort == portModel)));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             var statePortModels = new HashSet<StatePortModel>();
             foreach (var wireModel in elementsByType.WireModels)
             {
-                if (wireModel is TransitionSupportModel transitionSupportModel && transitionSupportModel.TransitionSupportKind != TransitionSupportKind.StateToState && transitionSupportModel.ToPort is StatePortModel toPortModel)
+                if (wireModel is SelfTransitionModel transitionSupportModel && transitionSupportModel.ToPort is StatePortModel toPortModel)
                 {
                     statePortModels.Add(toPortModel);
                 }
@@ -1899,7 +1906,7 @@ namespace Unity.GraphToolkit.Editor
         /// <param name="guid">The guid to assign to the newly created item.</param>
         /// <param name="spawnFlags">The flags specifying how the node is to be spawned.</param>
         /// <returns>The newly created subgraph node.</returns>
-        public virtual SubgraphNodeModel CreateSubgraphNode(GraphModel subgraphModel, Vector2 position, Hash128 guid = default, SpawnFlags spawnFlags = SpawnFlags.Default)
+        public virtual ISubgraphNodeInternal CreateSubgraphNode(GraphModel subgraphModel, Vector2 position, Hash128 guid = default, SpawnFlags spawnFlags = SpawnFlags.Default)
         {
             if (!AllowSubgraphCreation)
             {
@@ -1919,16 +1926,16 @@ namespace Unity.GraphToolkit.Editor
             }
 
             var nodeType = SubgraphNodeType;
-            Debug.Assert(typeof(SubgraphNodeModel).IsAssignableFrom(nodeType));
+            Debug.Assert(typeof(ISubgraphNodeInternal).IsAssignableFrom(nodeType));
 
             var initializationCallback = new Action<AbstractNodeModel>(n =>
             {
-                var subgraphNodeModel = n as SubgraphNodeModel;
+                var subgraphNodeModel = n as ISubgraphNodeInternal;
                 Debug.Assert(subgraphNodeModel != null);
                 subgraphNodeModel.SetSubgraphModel(subgraphModel.GetGraphReference(true));
             });
 
-            return CreateNode(nodeType, subgraphModel.Name, position, guid, initializationCallback, spawnFlags) as SubgraphNodeModel;
+            return CreateNode(nodeType, subgraphModel.Name, position, guid, initializationCallback, spawnFlags) as ISubgraphNodeInternal;
         }
 
         /// <summary>
@@ -2043,18 +2050,18 @@ namespace Unity.GraphToolkit.Editor
                 {
                     InputOutputPortsNodeModel inputOutputPortsNodeModel => inputOutputPortsNodeModel.InputsById[sourceWire.ToPortId],
                     StateModel stateModel => stateModel.GetInPort(),
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2001 // Avoid Linq
                     _ => (targetInputNode as PortNodeModel)?.GetPorts().FirstOrDefault(p => p.UniqueName == sourceWire.ToPortId)
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 };
 
                 outputPortModel = targetOutputNode switch
                 {
                     InputOutputPortsNodeModel outputPortsNodeModel => outputPortsNodeModel.OutputsById[sourceWire.FromPortId],
                     StateModel stateModel => stateModel.GetOutPort(),
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2001 // Avoid Linq
                     _ => (targetOutputNode as PortNodeModel)?.GetPorts().FirstOrDefault(p => p.UniqueName == sourceWire.FromPortId)
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 };
             }
 
@@ -2140,9 +2147,9 @@ namespace Unity.GraphToolkit.Editor
             var portalRefs = new List<WirePortalModel>();
             var deletedElementsByContainer = new Dictionary<IGraphElementContainer, List<GraphElementModel>>();
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             foreach (var nodeModel in nodeModels.Where(n => n.IsDeletable()))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 if (!deletedElementsByContainer.TryGetValue(nodeModel.Container, out var deletedElements))
                 {
@@ -2154,9 +2161,9 @@ namespace Unity.GraphToolkit.Editor
 
                 if (deleteConnections)
                 {
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2001 // Avoid Linq
                     var connectedWires = nodeModel.GetConnectedWires().ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     DeleteWires(connectedWires);
                 }
 
@@ -2180,7 +2187,7 @@ namespace Unity.GraphToolkit.Editor
                     }
                 }
 
-                if (nodeModel is SubgraphNodeModel { IsReferencingLocalSubgraph: true } subgraphNodeModel)
+                if (nodeModel is ISubgraphNodeInternal { IsReferencingLocalSubgraph: true } subgraphNodeModel)
                 {
                     RemoveLocalSubgraph(subgraphNodeModel.GetSubgraphModel());
                 }
@@ -2209,32 +2216,19 @@ namespace Unity.GraphToolkit.Editor
         }
 
         /// <summary>
-        /// Gets the type of transition to instantiate between two states in a state machine.
-        /// </summary>
-        /// <param name="toPort">The destination port.</param>
-        /// <param name="fromPort">The origin port.</param>
-        /// <param name="transitionSupportKind">The kind of <see cref="TransitionSupportModel"/>.</param>
-        /// <returns>The transition support model type.</returns>
-        /// <remarks>Override this method to return a custom transition type. The custom transition type must derive from <see cref="TransitionSupportModel"/>.</remarks>
-        public virtual Type GetTransitionType(PortModel toPort, PortModel fromPort, TransitionSupportKind transitionSupportKind)
-        {
-            return typeof(TransitionSupportModel);
-        }
-
-        /// <summary>
-        /// Creates a transition support on a state (for initial, global and self transitions) and adds it to the graph.
+        /// Creates a transition support on a state (for self transitions) and adds it to the graph.
         /// </summary>
         /// <param name="stateModel">The state on which to add the transition.</param>
-        /// <param name="transitionSupportKind">The kind of transition to create.</param>
+        /// <param name="transitionSupportType">The type of transition to create. Must derive from <see cref="SelfTransitionModel"/>.</param>
         /// <param name="guid">The guid to assign to the newly created item.</param>
         /// <returns>The newly created wire</returns>
-        public TransitionSupportModel CreateSingleStateTransitionSupport(StateModel stateModel,
-            TransitionSupportKind transitionSupportKind,
+        public TransitionSupportModel CreateSelfTransitionSupport(StateModel stateModel,
+            Type transitionSupportType,
             Hash128 guid = default)
         {
             var anchorPos = stateModel.GetInPort().ComputeOffsetForNewSingleStateTransition();
             return CreateTransitionSupport(stateModel.GetInPort(), AnchorSide.Top, anchorPos,
-                stateModel.GetOutPort(), AnchorSide.None, 0, transitionSupportKind, guid);
+                stateModel.GetOutPort(), AnchorSide.None, 0, transitionSupportType, guid);
         }
 
         /// <summary>
@@ -2331,9 +2325,9 @@ namespace Unity.GraphToolkit.Editor
             using var dirtyScope = AssetDirtyScope();
 
             // Call ToList on the collection to prevent iteration over the PortWireIndex.m_WiresByPort
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             foreach (var wireModel in wireModels.ToList())
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 DeleteWire(wireModel);
             }
@@ -2494,7 +2488,7 @@ namespace Unity.GraphToolkit.Editor
         /// <summary>
         /// The type of subgraph node to instantiate.
         /// </summary>
-        protected virtual Type SubgraphNodeType => typeof(SubgraphNodeModel);
+        protected virtual Type SubgraphNodeType => IsStateMachineGraph ? typeof(SubgraphStateModel) : typeof(SubgraphNodeModel);
 
         /// <summary>
         /// The type of constant node to instantiate.
@@ -2548,16 +2542,16 @@ namespace Unity.GraphToolkit.Editor
         /// Renames an existing local subgraph node in the graph.
         /// Does not rename asset subgraph nodes.
         /// </summary>
-        /// <param name="subgraphNodeModel">The local subgraph node to rename.</param>
+        /// <param name="subgraphNode">The local subgraph node to rename.</param>
         /// <param name="expectedNewName">The new name we want to give to the subgraph node.</param>
-        public virtual void RenameSubgraphNode(SubgraphNodeModel subgraphNodeModel, string expectedNewName)
+        public virtual void RenameSubgraphNode(ISubgraphNodeInternal subgraphNode, string expectedNewName)
         {
-            if (!subgraphNodeModel.IsReferencingLocalSubgraph)
+            if (!subgraphNode.IsReferencingLocalSubgraph || subgraphNode is not GraphElementModel model)
                 return;
 
-            subgraphNodeModel.GetSubgraphModel().Name = expectedNewName;
-            subgraphNodeModel.GetSubgraphModel().SetGraphObjectDirty();
-            CurrentGraphChangeDescription.AddChangedModel(subgraphNodeModel, ChangeHint.Data);
+            subgraphNode.GetSubgraphModel().Name = expectedNewName;
+            subgraphNode.GetSubgraphModel().SetGraphObjectDirty();
+            CurrentGraphChangeDescription.AddChangedModel(model, ChangeHint.Data);
         }
 
         /// <summary>
@@ -2960,9 +2954,9 @@ namespace Unity.GraphToolkit.Editor
         /// <returns>The unique name for the variable declaration.</returns>
         protected virtual string GenerateGraphVariableDeclarationUniqueName(string originalName)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var names = m_ExistingVariableNames.ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             var name = ObjectNames.GetUniqueName(names, originalName);
             return name;
         }
@@ -3644,9 +3638,9 @@ namespace Unity.GraphToolkit.Editor
         {
             if (portalModel is ISingleInputPortNodeModel)
             {
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 return this.FindReferencesInGraph<WirePortalModel>(portalModel.DeclarationModel).Where(n => n is ISingleOutputPortNodeModel);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             }
 
             return Array.Empty<WirePortalModel>();
@@ -3735,9 +3729,9 @@ namespace Unity.GraphToolkit.Editor
             (nodeModel as NodeModel)?.DefineNode();
             if (nodeModel is IGraphElementContainer container)
             {
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 foreach (var subNodeModel in container.GetGraphElementModels().OfType<AbstractNodeModel>())
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 {
                     RecurseDefineNode(subNodeModel);
                 }
@@ -3796,6 +3790,8 @@ namespace Unity.GraphToolkit.Editor
         {
             if (AllowMultipleDataOutputInstances == AllowMultipleDataOutputInstances.AllowWithWarning)
                 GetGraphProcessorContainer().AddGraphProcessor(new VariableNodeGraphProcessor(this));
+
+            GetGraphProcessorContainer().AddGraphProcessor(new MissingTypeGraphProcessor(this));
         }
 
         /// <summary>
@@ -3838,9 +3834,9 @@ namespace Unity.GraphToolkit.Editor
             // since the graph may already have been loaded by the AssetDatabase a long time ago.
 
             // The goal of this is to create the missing ports when subgraph variables get deleted.
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             foreach (var nodeModel in NodeModels.OfType<NodeModel>())
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 nodeModel.DefineNode();
 
             foreach (var wireModel in WireModels)
@@ -3902,9 +3898,9 @@ namespace Unity.GraphToolkit.Editor
 
         void CheckNodeList()
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var nodesAndBlocks = NodeAndBlockModels.ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             var existingGuids = new Dictionary<Hash128, int>(nodesAndBlocks.Count);
 
             for (var i = 0; i < nodesAndBlocks.Count; i++)
@@ -3929,13 +3925,13 @@ namespace Unity.GraphToolkit.Editor
 
                 if (node is VariableNodeModel variableNode && variableNode.DeclarationModel != null)
                 {
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2001 // Avoid Linq
                     var originalDeclarations = VariableDeclarations.Where(d => d.Guid == variableNode.DeclarationModel.Guid).ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     Assert.IsTrue(originalDeclarations.Count <= 1);
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2001 // Avoid Linq
                     var originalDeclaration = originalDeclarations.SingleOrDefault();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     Assert.IsNotNull(originalDeclaration, $"Variable Node {i} {variableNode.Title} has a declaration model, but it was not present in the graph's variable declaration list");
                     Assert.IsTrue(ReferenceEquals(originalDeclaration, variableNode.DeclarationModel), $"Variable Node {i} {variableNode.Title} has a declaration model that was not ReferenceEquals() to the matching one in the graph");
                 }
@@ -4001,9 +3997,9 @@ namespace Unity.GraphToolkit.Editor
         {
             Assert.IsTrue(ReferenceEquals(this, groupModel.GraphModel), $"Group {groupModel} graph is not matching its actual graph");
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             foreach (var groupItemModel in groupModel.Items.OfType<GroupModel>())
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 CheckSectionsAndGroupsRecursive(groupItemModel);
             }
@@ -4037,51 +4033,51 @@ namespace Unity.GraphToolkit.Editor
             }
 
             // Set the graph model on all elements.
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             foreach (var model in m_GraphNodeModels.Where(m => m != null))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 model.GraphModel = this;
             }
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             foreach (var model in m_GraphWireModels.Where(m => m != null))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 model.GraphModel = this;
             }
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             foreach (var model in m_GraphStickyNoteModels.Where(m => m != null))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 model.GraphModel = this;
             }
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             foreach (var model in m_GraphPlacematModels.Where(m => m != null))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 model.GraphModel = this;
             }
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             foreach (var model in m_GraphVariableModels.Where(m => m != null))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 model.GraphModel = this;
             }
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             foreach (var model in m_GraphPortalModels.Where(m => m != null))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 model.GraphModel = this;
             }
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             foreach (var model in m_SectionModels.Where(m => m != null))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 model.GraphModel = this;
             }
@@ -4166,9 +4162,9 @@ namespace Unity.GraphToolkit.Editor
             }
 
             var sectionHash = new HashSet<string>(sectionNames);
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             foreach (var section in m_SectionModels.ToList())
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 if (!sectionHash.Contains(section.Title) && section.Title != DefaultSectionName)
                 {
@@ -4205,9 +4201,9 @@ namespace Unity.GraphToolkit.Editor
                             foundSection = m_SectionModels[i];
                         else
                         {
-                            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                            #pragma warning disable UAC2001 // Avoid Linq
                             foreach (var item in m_SectionModels[i].Items.ToList())
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                             {
                                 foundSection.InsertItem(item);
                             }
@@ -4284,9 +4280,9 @@ namespace Unity.GraphToolkit.Editor
                 DuplicateWire(sourceWire, newInput as AbstractNodeModel, newOutput as AbstractNodeModel);
             }
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             foreach (var sourceVariableNode in sourceGraphModel.NodeModels.Where(model => model is VariableNodeModel))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 elementMapping.TryGetValue(sourceVariableNode.Guid.ToString(), out var newNode);
 
@@ -4320,9 +4316,9 @@ namespace Unity.GraphToolkit.Editor
                 }
                 else
                 {
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2001 // Avoid Linq
                     newSection.RemoveContainerElements(newSection.Items.Cast<GraphElementModel>().ToList());
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 }
 
                 newSection.CopyFrom(section, variableMapping);
@@ -4343,9 +4339,9 @@ namespace Unity.GraphToolkit.Editor
                 var node = NodeModels[i];
                 if (node == null)
                 {
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
-                    var metadata = m_GraphElementMetaData.Where(m => m.Category is ManagedMissingTypeModelCategory.Node or ManagedMissingTypeModelCategory.ContextNode).FirstOrDefault(m => m.Index == i);
-#pragma warning restore UA2001
+                    #pragma warning disable UAC2001 // Avoid Linq
+                    var metadata = m_GraphElementMetaData.Where(m => m.Category is ManagedMissingTypeModelCategory.Node or ManagedMissingTypeModelCategory.ContextNode or ManagedMissingTypeModelCategory.State).FirstOrDefault(m => m.Index == i);
+#pragma warning restore UAC2001
                     if (metadata != null)
                         remainingNullModelIndexes.Add((metadata.Category, i));
                 }
@@ -4403,9 +4399,9 @@ namespace Unity.GraphToolkit.Editor
             // Create placeholders for null models for which the data is not serialized anymore.
             foreach (var(category, index) in remainingNullModelIndexes)
             {
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 var metadata = m_GraphElementMetaData.FirstOrDefault(m => m.Category == category && m.Index == index);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 if (metadata != null)
                 {
                     if (metadata.ToRemove)
@@ -4426,7 +4422,8 @@ namespace Unity.GraphToolkit.Editor
                                 CreateVariableDeclarationPlaceholder(PlaceholderModelHelper.missingTypeWontBeRestored, metadata.Guid);
                                 break;
                             case ManagedMissingTypeModelCategory.Wire:
-                                RemoveWire(WireModels[index]); // We don't have the data for the ports.
+                                // We don't have the data for the ports, so the wire can't be recreated.
+                                metadata.ToRemove = true;
                                 break;
                             case ManagedMissingTypeModelCategory.PortalDeclaration:
                                 CreatePortalDeclarationPlaceholder(PlaceholderModelHelper.missingTypeWontBeRestored, metadata.Guid);
@@ -4434,6 +4431,12 @@ namespace Unity.GraphToolkit.Editor
                             case ManagedMissingTypeModelCategory.ContextNode:
                                 if (m_PlaceholderData.ContainsKey(metadata.Guid))
                                     CreateContextNodePlaceholder(PlaceholderModelHelper.missingTypeWontBeRestored, m_PlaceholderData[metadata.Guid].Position, metadata.Guid);
+                                else
+                                    metadata.ToRemove = true;
+                                break;
+                            case ManagedMissingTypeModelCategory.State:
+                                if (m_PlaceholderData.ContainsKey(metadata.Guid))
+                                    CreateStatePlaceholder(PlaceholderModelHelper.missingTypeWontBeRestored, m_PlaceholderData[metadata.Guid].Position, metadata.Guid);
                                 else
                                     metadata.ToRemove = true;
                                 break;
@@ -4458,9 +4461,10 @@ namespace Unity.GraphToolkit.Editor
         void SaveNodePositionForMetadata(IPlaceholder createdPlaceholder)
         {
             // The node position needs to be kept in the metadata to be able to recreate the placeholder at the right position.
-            if (createdPlaceholder is not NodePlaceholder nodeModel)
+            if (createdPlaceholder is not NodePlaceholder and not StatePlaceholder)
                 return;
 
+            var nodeModel = (AbstractNodeModel)createdPlaceholder;
             if (m_PlaceholderData.TryGetValue(nodeModel.Guid, out var placeholderData))
                 placeholderData.Position = nodeModel.Position;
             else
@@ -4490,9 +4494,9 @@ namespace Unity.GraphToolkit.Editor
             // Clear the serialized data related to the null object the user wants to remove.
             SerializationUtility.ClearManagedReferenceWithMissingType(GraphObject, placeholder.ReferenceId);
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var metadata = m_GraphElementMetaData.FirstOrDefault(m => m.Guid == placeholder.Guid);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             // It is not possible to distinguish the index of objects with a missing type in the serialization. Hence, we keep a flag and remove the corresponding null object on the next graph reload.
             if (metadata != null)
@@ -4511,6 +4515,7 @@ namespace Unity.GraphToolkit.Editor
             {
                 case ManagedMissingTypeModelCategory.Node:
                 case ManagedMissingTypeModelCategory.ContextNode:
+                case ManagedMissingTypeModelCategory.State:
                     m_GraphNodeModels.RemoveAt(metadata.Index);
                     SetGraphObjectDirty();
                     break;
@@ -4546,6 +4551,20 @@ namespace Unity.GraphToolkit.Editor
             return node;
         }
 
+        internal StatePlaceholder CreateStatePlaceholder(string nodeName, Vector2 position, Hash128 guid, long referenceId = -1)
+        {
+            var node = InstantiateNode(typeof(StatePlaceholder), nodeName, position, guid) as StatePlaceholder;
+            RegisterElement(node);
+            CurrentGraphChangeDescription.AddNewModel(node);
+
+            if (node != null && referenceId != -1)
+                node.ReferenceId = referenceId;
+
+            m_Placeholders.Add(node);
+
+            return node;
+        }
+
         internal ContextNodePlaceholder CreateContextNodePlaceholder(string nodeName, Vector2 position, Hash128 guid, IEnumerable<BlockNodeModel> blocks = null, long referenceId = -1)
         {
             var contextNode = InstantiateNode(typeof(ContextNodePlaceholder), nodeName, position, guid) as ContextNodePlaceholder;
@@ -4559,9 +4578,9 @@ namespace Unity.GraphToolkit.Editor
 
             if (contextNode is ContextNodeModel contextNodeModel)
             {
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 var blockGuids = blocks?.Select(b => b.Guid).ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 if (blockGuids == null)
                 {
                     if (m_PlaceholderData.TryGetValue(guid, out var data))
@@ -4679,6 +4698,7 @@ namespace Unity.GraphToolkit.Editor
             {
                 case ManagedMissingTypeModelCategory.Node:
                 case ManagedMissingTypeModelCategory.ContextNode:
+                case ManagedMissingTypeModelCategory.State:
                     m_GraphNodeModels.Insert(index, null);
                     break;
                 case ManagedMissingTypeModelCategory.VariableDeclaration:
@@ -4704,6 +4724,7 @@ namespace Unity.GraphToolkit.Editor
 
             RemoveNullReferences(ManagedMissingTypeModelCategory.Node, m_GraphNodeModels);
             RemoveNullReferences(ManagedMissingTypeModelCategory.ContextNode, m_GraphNodeModels);
+            RemoveNullReferences(ManagedMissingTypeModelCategory.State, m_GraphNodeModels);
             RemoveNullReferences(ManagedMissingTypeModelCategory.VariableDeclaration, m_GraphVariableModels);
             RemoveNullReferences(ManagedMissingTypeModelCategory.Wire, m_GraphWireModels);
             RemoveNullReferences(ManagedMissingTypeModelCategory.PortalDeclaration, m_GraphPortalModels);
@@ -4716,9 +4737,9 @@ namespace Unity.GraphToolkit.Editor
                     var wireModel = graphElementModels[i];
                     if (wireModel is null)
                     {
-                        #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                        #pragma warning disable UAC2001 // Avoid Linq
                         var metadata = m_GraphElementMetaData.FirstOrDefault(m => m.Category == category && m.Index == i);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                         if (metadata != null)
                             RemoveMetaDataModel(metadata);
                     }
@@ -4754,16 +4775,16 @@ namespace Unity.GraphToolkit.Editor
             dirty |= m_GraphNodeModels.RemoveAll(t => t is null or IPlaceholder) != 0;
             dirty |= m_GraphNodeModels.RemoveAll(t => t is VariableNodeModel variable && variable.DeclarationModel == null) != 0;
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             foreach (var container in m_GraphNodeModels.OfType<IGraphElementContainer>())
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 dirty |= container.Repair();
             }
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var validGuids = new HashSet<Hash128>(m_GraphNodeModels.Select(t => t.Guid));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
            dirty |= m_GraphWireModels.RemoveAll(t => t is null or IPlaceholder) != 0;
            dirty |= m_GraphWireModels.RemoveAll(t => !validGuids.Contains(t.FromNodeGuid) || !validGuids.Contains(t.ToNodeGuid)) != 0;
@@ -4817,7 +4838,7 @@ namespace Unity.GraphToolkit.Editor
         /// <param name="nodeGuid">The desired guid of the subgraph node.</param>
         /// <param name="elementsToDelete">Additional graph elements to delete, if any.</param>
         /// <param name="portIdsToAlign">Ids of ports on the subgraph node that need their connections to be aligned.</param>
-        public virtual SubgraphNodeModel CreateSubgraphNodeFromSelection(GraphModel subgraphModel, List<GraphElementModel> selection, Vector2 nodePosition, Hash128 nodeGuid, List<GraphElementModel> elementsToDelete = null, List<string> portIdsToAlign = null)
+        public virtual ISubgraphNodeInternal CreateSubgraphNodeFromSelection(GraphModel subgraphModel, List<GraphElementModel> selection, Vector2 nodePosition, Hash128 nodeGuid, List<GraphElementModel> elementsToDelete = null, List<string> portIdsToAlign = null)
         {
             if (!AllowSubgraphCreation)
             {
@@ -4830,7 +4851,7 @@ namespace Unity.GraphToolkit.Editor
             var subgraphNodeModel = CreateSubgraphNode(subgraphModel, nodePosition, nodeGuid);
 
             // Populate the subgraph and create the connections to the subgraph node in the main graph.
-            CreateSubgraphCreationHelper().HandleSubgraphNodeCreation(subgraphNodeModel, selection, elementsToDelete, portIdsToAlign);
+            CreateSubgraphCreationHelper().HandleSubgraphNodeCreation(this, subgraphNodeModel, selection, elementsToDelete, portIdsToAlign);
 
             return subgraphNodeModel;
         }
@@ -5024,9 +5045,9 @@ namespace Unity.GraphToolkit.Editor
         public virtual IEnumerable<GraphElementModel> GetModelsDisplayableInInspector(IEnumerable<GraphElementModel> models)
         {
             // PF: This should probably live in ModelInspectorViewModel
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             return models.Where(t => t is AbstractNodeModel or VariableDeclarationModelBase or PlacematModel or WireModel or GroupModel or StickyNoteModel);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         /// <summary>

@@ -5,10 +5,11 @@
 using System;
 using System.Collections;
 using System.Collections.Concurrent;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Search
 {
-    public static class Dispatcher
+    public static partial class Dispatcher
     {
         readonly struct Task
         {
@@ -40,14 +41,23 @@ namespace UnityEditor.Search
             }
         }
 
-        private static readonly ConcurrentQueue<Task> s_ExecutionQueue = new ConcurrentQueue<Task>();
-        private static readonly SearchEventManager s_SearchEventManager = new SearchEventManager();
+        [AutoStaticsCleanupOnCodeReload]
+        private static ConcurrentQueue<Task> s_ExecutionQueue = new ConcurrentQueue<Task>();
+        [AutoStaticsCleanupOnCodeReload]
+        private static SearchEventManager s_SearchEventManager = new SearchEventManager();
 
         internal static int QueueCount => s_ExecutionQueue.Count;
 
-        static Dispatcher()
+        [OnCodeLoaded]
+        static void Initialize()
         {
             Utils.tick += Update;
+        }
+
+        [OnCodeUnloading]
+        static void Shutdown()
+        {
+            Utils.tick -= Update;
         }
 
         public static void Enqueue(Action action)

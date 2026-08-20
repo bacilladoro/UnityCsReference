@@ -81,6 +81,7 @@ namespace Unity.Collections.LowLevel.Unsafe
         }
 
         // Reinterprets reference type as different reference type.
+        [VisibleToOtherModules("UnityEngine.MarshallingModule")]
         internal static T As<T>(object from) where T : class
         {
             return UnsafeUtilityInternal.As<T>(from);

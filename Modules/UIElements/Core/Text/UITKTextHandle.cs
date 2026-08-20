@@ -2,6 +2,8 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
+using Unity.Scripting.LifecycleManagement;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
@@ -56,7 +58,9 @@ namespace UnityEngine.UIElements
         internal float ATGRoundedWidth { get; set; }
 
 
+        [AutoStaticsCleanupOnCodeReload]
         internal static Func<int, FontAsset, bool, FontAsset> GetBlurryFontAssetMapping;
+        [AutoStaticsCleanupOnCodeReload]
         internal static Func<int, bool, bool> GenerateBitmapFallbackFontAssets;
         internal TextEventHandler m_TextEventHandler;
         protected TextElement m_TextElement;
@@ -394,3 +398,4 @@ namespace UnityEngine.UIElements
 
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

@@ -131,7 +131,7 @@ namespace UnityEditor.Build.Analysis
             m_TreeView.style.height = 0;
         }
 
-        public void Bind(BuildAnalysis analysis)
+        public void Bind(BuildAnalysis analysis, BuildLogMessages messages)
         {
             var steps = analysis.Tables.Steps;
             if (steps == null || steps.Length == 0)
@@ -150,7 +150,7 @@ namespace UnityEditor.Build.Analysis
             if (totalMs <= 0)
                 totalMs = 1;
 
-            var badges = ComputeStepBadges(analysis.Messages);
+            var badges = ComputeStepBadges(steps, messages);
             var items = BuildTreeViewItems(steps, totalMs, badges);
 
             m_TreeView.SetRootItems(items);
@@ -233,25 +233,26 @@ namespace UnityEditor.Build.Analysis
             return badge;
         }
 
-        private static Dictionary<int, (int Warnings, int Errors)> ComputeStepBadges(BuildAnalysisMessage[] messages)
+        // The build log reconstructs its own step list, so its counts cross over to the report's steps by
+        // name. Steps that share a name would show the same badge, which no observed build produces.
+        internal static Dictionary<int, (int Warnings, int Errors)> ComputeStepBadges(
+            BuildAnalysisStep[] steps, BuildLogMessages messages)
         {
             var result = new Dictionary<int, (int Warnings, int Errors)>();
-            if (messages == null)
+            if (messages == null || messages.StepNames.Length == 0)
                 return result;
 
-            for (var i = 0; i < messages.Length; i++)
-            {
-                var msg = messages[i];
-                result.TryGetValue(msg.StepId, out var counts);
+            var countsByName = new Dictionary<string, BuildLogStepCounts>(messages.StepNames.Length, StringComparer.Ordinal);
+            for (var i = 0; i < messages.StepNames.Length; i++)
+                countsByName[messages.StepNames[i]] = messages.StepCounts[i];
 
-                if (string.Equals(msg.Severity, BuildMessageSeverity.Warning, StringComparison.Ordinal))
-                    counts.Warnings++;
-                else if (string.Equals(msg.Severity, BuildMessageSeverity.Error, StringComparison.Ordinal))
-                    counts.Errors++;
-                else
+            foreach (var step in steps)
+            {
+                if (step.Name == null || !countsByName.TryGetValue(step.Name, out var counts))
                     continue;
 
-                result[msg.StepId] = counts;
+                if (counts.Warnings > 0 || counts.Errors > 0)
+                    result[step.Id] = (counts.Warnings, counts.Errors);
             }
 
             return result;

@@ -6,7 +6,7 @@ using System;
 
 namespace UnityEngine
 {
-    partial class Camera
+    public partial class Camera
     {
         [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
         [Obsolete("Property isOrthoGraphic has been deprecated. Use orthographic (UnityUpgradable) -> orthographic", true)]

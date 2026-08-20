@@ -30,9 +30,9 @@ namespace UnityEditor.Build
         // Streaming Assets
         private Dictionary<NPath, NPath> StreamingAssetFiles { get; } = new Dictionary<NPath, NPath>();
         private List<string> AdditionalBuildReportDirectories = new List<string>();
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
         internal IEnumerable<(NPath dst, NPath src)> StreamingAssets => StreamingAssetFiles.Select(e => (e.Key, e.Value));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
         ///<summary>Adds a build report directory to <see cref="BuildPlayerOptions.previousBuildReportDirectories"/> for this build.
         ///</summary>

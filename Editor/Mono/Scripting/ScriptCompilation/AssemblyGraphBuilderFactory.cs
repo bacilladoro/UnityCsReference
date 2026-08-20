@@ -5,20 +5,21 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Scripting.ScriptCompilation
 {
-    internal static class AssemblyGraphBuilderFactory
+    internal static partial class AssemblyGraphBuilderFactory
     {
         class AssemblyGraphBuilderKey
         {
             public bool Equals(AssemblyGraphBuilderKey other)
             {
                 return string.Equals(projectPath, other.projectPath, StringComparison.Ordinal)
-#pragma warning disable UA2014 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2014 // Avoid Linq
                     && assemblies.SequenceEqual(other.assemblies)
                     && customScriptAssemblyReferences.SequenceEqual(other.customScriptAssemblyReferences);
-#pragma warning restore UA2014
+#pragma warning restore UAC2014
             }
 
             public override bool Equals(object obj)
@@ -39,6 +40,7 @@ namespace UnityEditor.Scripting.ScriptCompilation
             public IReadOnlyCollection<CustomScriptAssemblyReference> customScriptAssemblyReferences;
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         private static Dictionary<AssemblyGraphBuilderKey, AssemblyGraphBuilder> m_AlreadyInitializedAssemblyGraphBuilder =
             new Dictionary<AssemblyGraphBuilderKey, AssemblyGraphBuilder>();
 

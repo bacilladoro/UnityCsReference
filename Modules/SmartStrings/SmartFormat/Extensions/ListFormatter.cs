@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
 //
 // Copyright SmartFormat Project maintainers and contributors.
 // Licensed under the MIT license.
@@ -14,6 +15,7 @@ using System.Threading;
 using Unity.SmartStrings.Core.Extensions;
 using Unity.SmartStrings.Core.Parsing;
 using Unity.SmartStrings.Core.Settings;
+using Unity.Scripting.LifecycleManagement;
 using Unity.SmartStrings.Pooling.SmartPools;
 namespace Unity.SmartStrings.Extensions;
 
@@ -117,12 +119,15 @@ public class ListFormatter : FormatterBase, ISource, IInitializer, IFormatterLit
 
     // Note: CollectionIndex must be initialized ONLY ONCE, NOT once per thread (aka ThreadStatic).
     // Note: Multi threading support generates some garbage
+    [NoAutoStaticsCleanup] // must be initialized only once (see note above); holds only ints
     static readonly AsyncLocal<int> s_CollectionIndexThreadSafe = new();
+    [NoAutoStaticsCleanup] // per-format scratch index; plain value
     static int s_CollectionIndexSingleThread = -1;
 
     /// <summary>
     /// Gets, whether the <see cref="ListFormatter"/> is in thread safe mode.
     /// </summary>
+    [NoAutoStaticsCleanup] // plain-value mode flag
     internal static bool IsThreadSafeMode { get; set; } = SmartSettings.IsThreadSafeMode;
 
     /// <summary>
@@ -344,3 +349,4 @@ public class ListFormatter : FormatterBase, ISource, IInitializer, IFormatterLit
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

@@ -26,9 +26,9 @@ namespace Unity.GraphToolkit.Editor
             var view = modelView.RootView;
             var context = modelView.Context;
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var contextualizedView = m_ContextualizedModelViews.FirstOrDefault(cge
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 => cge.View == view && cge.Context == context);
 
             if (contextualizedView == null)
@@ -48,9 +48,9 @@ namespace Unity.GraphToolkit.Editor
             var view = modelView.RootView;
             var context = modelView.Context;
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var contextualizedView = m_ContextualizedModelViews.FirstOrDefault(cge
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 => cge.View == view && cge.Context == context);
 
             if (contextualizedView == null)
@@ -70,9 +70,9 @@ namespace Unity.GraphToolkit.Editor
             if (modelView.Model == null)
                 return;
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var contextualizedView = m_ContextualizedModelViews.FirstOrDefault(cge => cge.View == modelView.RootView && cge.Context == modelView.Context);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             // Don't remove the mapping if another view with this guid already exists
             if (contextualizedView != null && contextualizedView.ModelViews.ContainsKey(modelView.Model.Guid) && modelView != contextualizedView.ModelViews[modelView.Model.Guid])
@@ -86,9 +86,9 @@ namespace Unity.GraphToolkit.Editor
             if (modelView.Models == null || modelView.Models.Count == 0)
                 return;
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var contextualizedView = m_ContextualizedModelViews.FirstOrDefault(cge => cge.View == modelView.RootView && cge.Context == modelView.Context);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             foreach (var model in modelView.Models)
             {

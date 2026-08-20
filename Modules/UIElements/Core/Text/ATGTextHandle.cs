@@ -2,10 +2,12 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Unity.Collections.LowLevel.Unsafe;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.TextCore;
 using UnityEngine.TextCore.Text;
 
@@ -61,15 +63,17 @@ namespace UnityEngine.UIElements
 
             EnsureNonEmptyBufferForInputField();
 
-            if (widthMode == VisualElement.MeasureMode.Undefined || float.IsNaN(width) || float.IsNegative(width))
+            if (widthMode == VisualElement.MeasureMode.Undefined || widthMode == VisualElement.MeasureMode.MinContent || float.IsNaN(width) || float.IsNegative(width))
                 nativeSettings.screenWidth = TextLib.k_unconstrainedScreenSize;
             else
                 nativeSettings.screenWidth = (int)(width * 64.0f);
 
-            if (heightMode == VisualElement.MeasureMode.Undefined || float.IsNaN(height) || float.IsNegative(height))
+            if (heightMode == VisualElement.MeasureMode.Undefined || heightMode == VisualElement.MeasureMode.MinContent || float.IsNaN(height) || float.IsNegative(height))
                 nativeSettings.screenHeight = TextLib.k_unconstrainedScreenSize;
             else
                 nativeSettings.screenHeight = (int)(height * 64.0f);
+
+            nativeSettings.minContentMeasure = widthMode == VisualElement.MeasureMode.MinContent;
 
             if (textGenerationInfo == IntPtr.Zero)
             {
@@ -237,6 +241,7 @@ namespace UnityEngine.UIElements
             var textSettings = TextUtilities.GetTextSettingsFrom(m_TextElement);
 
             nativeSettings.preProcessFlags = PreProcessFlags.None;
+            nativeSettings.minContentMeasure = false;
 
             // A managed string is only required for an explicit measure request
             string? text = textToMeasure;
@@ -429,7 +434,7 @@ namespace UnityEngine.UIElements
             if (asset != null)
                 return asset;
 
-            Debug.LogError("ICU Data not available. The data should be automatically assigned to the PanelSettings in the editor if the advanced text option is enable in the project settings. It will not be present on PanelSettings created at runtime, so make sure the build contains at least one PanelSettings asset");
+            Debug.LogWarning("ICU Data not available: falling back to minimal text segmentation (basic line breaking rules only, emoji sequences may not render correctly). The data is automatically assigned to the PanelSettings in the editor if the advanced text option is enabled in the project settings. It will not be present on PanelSettings created at runtime, so make sure the build contains at least one PanelSettings asset to get full international text support.");
             return null;
         }
 
@@ -445,3 +450,4 @@ namespace UnityEngine.UIElements
 
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

@@ -201,6 +201,7 @@ namespace UnityEngine
             meshLodSelectionBias = 0.0f;
             sortingLayerID = 0; // Default Sorting Layer
             sortingOrder = 0;
+            rendererShaderUserValue = 0;
         }
 
         public int layer {get; set;}
@@ -232,6 +233,7 @@ namespace UnityEngine
         public float meshLodSelectionBias { get; set; }
         public int sortingLayerID { get; set; }
         public int sortingOrder { get; set; }
+        public uint rendererShaderUserValue { get; set; }
     }
 
     public readonly struct SpriteParams
@@ -263,14 +265,16 @@ namespace UnityEngine
             offsetObjectToWorld = t == typeof(Matrix4x4) ? 0 : Marshal.OffsetOf(t, "objectToWorld").ToInt32();
 
             // fill optional data members
-            try {offsetPrevObjectToWorld = Marshal.OffsetOf(t, "prevObjectToWorld").ToInt32();} catch (ArgumentException) {offsetPrevObjectToWorld = -1;}
-            try {offsetRenderingLayerMask = Marshal.OffsetOf(t, "renderingLayerMask").ToInt32();} catch (ArgumentException) {offsetRenderingLayerMask = -1;}
+            try { offsetPrevObjectToWorld = Marshal.OffsetOf(t, "prevObjectToWorld").ToInt32(); } catch (ArgumentException) { offsetPrevObjectToWorld = -1; }
+            try { offsetRenderingLayerMask = Marshal.OffsetOf(t, "renderingLayerMask").ToInt32(); } catch (ArgumentException) { offsetRenderingLayerMask = -1; }
+            try { offsetRendererShaderUserValue = Marshal.OffsetOf(t, "rendererShaderUserValue").ToInt32(); } catch (ArgumentException) { offsetRendererShaderUserValue = -1; }
         }
 
         public int size {get;}
         public int offsetObjectToWorld {get;}
         public int offsetPrevObjectToWorld {get;}
         public int offsetRenderingLayerMask {get;}
+        public int offsetRendererShaderUserValue { get; }
     }
 
     internal readonly struct RenderSpriteInstancedDataLayout
@@ -283,12 +287,14 @@ namespace UnityEngine
             // fill optional data members
             try { offsetSpriteColor = Marshal.OffsetOf(t, "spriteColor").ToInt32(); } catch (ArgumentException) { offsetSpriteColor = -1; }
             try { offsetRenderingLayerMask = Marshal.OffsetOf(t, "renderingLayerMask").ToInt32(); } catch (ArgumentException) { offsetRenderingLayerMask = -1; }
+            try { offsetRendererShaderUserValue = Marshal.OffsetOf(t, "rendererShaderUserValue").ToInt32(); } catch (ArgumentException) { offsetRendererShaderUserValue = -1; }
         }
 
         public int size { get; }
         public int offsetObjectToWorld { get; }
         public int offsetSpriteColor { get; }
         public int offsetRenderingLayerMask { get; }
+        public int offsetRendererShaderUserValue { get; }
     }
 }
 

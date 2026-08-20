@@ -2,10 +2,12 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
 using System;
 using System.Collections.Generic;
 using System.Reflection;
 using Unity.Properties;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Bindings;
 
 namespace UnityEngine.UIElements
@@ -52,9 +54,12 @@ namespace UnityEngine.UIElements
         internal const string k_SourceToUiConvertersTooltip = "Define one or more converter groups for this binding that will be used between the data source to the target UI.";
         internal const string k_UiToSourceConvertersTooltip = "Define one or more converter groups for this binding that will be used between the target UI to the data source.";
 
+
+        [NoAutoStaticsCleanup] // reflection cache for immutable method metadata
         private static MethodInfo s_UpdateUIMethodInfo;
         internal static MethodInfo updateUIMethod => s_UpdateUIMethodInfo ??= CacheReflectionInfo();
 
+        [NoAutoStaticsCleanup]
         internal static readonly UniqueStyleString textElementInnerInputFieldUssClassNameUnique =
             new("unity-text-element--inner-input-field-component");
 
@@ -346,3 +351,4 @@ namespace UnityEngine.UIElements
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

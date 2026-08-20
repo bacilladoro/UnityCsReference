@@ -360,6 +360,30 @@ namespace Unity.UIToolkit.Editor
                     }
                     return false;
 
+                case StylePropertyRecordingChannel.Gradient:
+                    // background-image carries the whole Background (asset slot + gradient
+                    // metadata); ApplyPropertyAnimation copies it into visualData via CopyFrom.
+                    if (typeof(T) == typeof(StyleBackground))
+                    {
+                        var sbg = Unsafe.As<T, StyleBackground>(ref v);
+                        if (sbg.keyword != StyleKeyword.Undefined)
+                            return false;
+                        cs.ApplyPropertyAnimation(element, id, sbg.value);
+                        return true;
+                    }
+                    if (typeof(T) == typeof(Background))
+                    {
+                        cs.ApplyPropertyAnimation(element, id, Unsafe.As<T, Background>(ref v));
+                        return true;
+                    }
+                    if (typeof(T) == typeof(EntityId))
+                    {
+                        // Legacy asset-only shape: no gradient data to carry over.
+                        cs.ApplyPropertyAnimation(element, id, Background.From(Unsafe.As<T, EntityId>(ref v)));
+                        return true;
+                    }
+                    return false;
+
                 default:
                     return false;
             }
@@ -686,6 +710,23 @@ namespace Unity.UIToolkit.Editor
                     {
                         var tmp = cs.ReadPropertyAnimationCursor(stylePropertyId);
                         previousValue = Unsafe.As<UnityEngine.UIElements.Cursor, T>(ref tmp);
+                        return true;
+                    }
+                    return false;
+
+                case StylePropertyRecordingChannel.Gradient:
+                    // Snapshot lives on UIAnimationBinder; UnmanagedBackground's refcounted
+                    // gradient list is not visible here.
+                    if (typeof(T) == typeof(StyleBackground))
+                    {
+                        var tmp = new StyleBackground(UIAnimationBinder.ReadBackgroundSnapshot(element));
+                        previousValue = Unsafe.As<StyleBackground, T>(ref tmp);
+                        return true;
+                    }
+                    if (typeof(T) == typeof(Background))
+                    {
+                        var tmp = UIAnimationBinder.ReadBackgroundSnapshot(element);
+                        previousValue = Unsafe.As<Background, T>(ref tmp);
                         return true;
                     }
                     return false;
@@ -1147,6 +1188,33 @@ namespace Unity.UIToolkit.Editor
                     AnimationRecordingStyleBridge.AddObjectModification(list, target, elementPath, propName, ".image", prevCursor.texture, curCursor.texture);
                     AnimationRecordingStyleBridge.AddModification(list, target, elementPath, propName, ".hotspot.x", prevCursor.hotspot.x, curCursor.hotspot.x);
                     AnimationRecordingStyleBridge.AddModification(list, target, elementPath, propName, ".hotspot.y", prevCursor.hotspot.y, curCursor.hotspot.y);
+                    return true;
+                }
+
+                case StylePropertyRecordingChannel.Gradient:
+                {
+                    // AddGradientMods owns the 32-channel layout (.image + .gradient.* sub-channels).
+                    Background prevBg;
+                    Background curBg;
+                    if (typeof(T) == typeof(StyleBackground))
+                    {
+                        var sbgPrev = Unsafe.As<T, StyleBackground>(ref p);
+                        var sbgCur = Unsafe.As<T, StyleBackground>(ref c);
+                        if (sbgPrev.keyword != StyleKeyword.Undefined || sbgCur.keyword != StyleKeyword.Undefined)
+                            return false;
+                        prevBg = sbgPrev.value;
+                        curBg = sbgCur.value;
+                    }
+                    else if (typeof(T) == typeof(Background))
+                    {
+                        prevBg = Unsafe.As<T, Background>(ref p);
+                        curBg = Unsafe.As<T, Background>(ref c);
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                    AnimationRecordingStyleBridge.AddGradientMods(list, target, elementPath, propName, prevBg, curBg);
                     return true;
                 }
 

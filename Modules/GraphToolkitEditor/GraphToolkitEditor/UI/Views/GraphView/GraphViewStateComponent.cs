@@ -80,8 +80,8 @@ namespace Unity.GraphToolkit.Editor
             }
         }
 
-        internal static Vector3 defaultScale = Vector3.one;
-        internal static Vector3 defaultPosition = Vector3.zero;
+        internal static readonly Vector3 defaultScale = Vector3.one;
+        internal static readonly Vector3 defaultPosition = Vector3.zero;
 
         [SerializeField]
         Vector3 m_Scale = defaultScale;

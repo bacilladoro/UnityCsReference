@@ -41,7 +41,7 @@ namespace UnityEditor.Overlays
                 ? OverlayInsertIndicator.InsertIndicatorStyle.Toolbar
                 : OverlayInsertIndicator.InsertIndicatorStyle.Normal;
 
-            insertIndicator.Setup(targetContainer.isHorizontal, insertIndicatorStyle, true); //Horizontal container has vertical insert indicators
+            insertIndicator.Setup(targetContainer.isHorizontal, insertIndicatorStyle, true, m_TargetSection != OverlayContainerSection.AfterSpacer); //Horizontal container has vertical insert indicators
         }
 
         public override void EndHover()

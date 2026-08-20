@@ -42,9 +42,9 @@ namespace Unity.CodeEditor
                     // try to resolve first found visual studio installation and enable it
                     try
                     {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                         var vs = m_ExternalCodeEditors.FirstOrDefault(e => e.GetType().Name == "VisualStudioEditor");
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                         var installs = vs?.Installations;
                         if (installs != null && installs.Length > 0)
                         {
@@ -159,9 +159,9 @@ namespace Unity.CodeEditor
         {
             var result = new Dictionary<string, string>();
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             foreach (var installation in m_ExternalCodeEditors.SelectMany(codeEditor => codeEditor.Installations))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 AddIfPathExists(installation.Name, installation.Path, result);
             }
@@ -219,11 +219,11 @@ namespace Unity.CodeEditor
 
         public static void Register(IExternalCodeEditor externalCodeEditor)
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
-#pragma warning disable UA2006 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
+#pragma warning disable UAC2006 // Avoid Linq
             if (Editor.m_ExternalCodeEditors.Select(editor => editor.GetType()).Any(editorType => editorType == externalCodeEditor.GetType()))
-#pragma warning restore UA2001
-#pragma warning restore UA2006
+#pragma warning restore UAC2001
+#pragma warning restore UAC2006
                 return;
             Editor.m_ExternalCodeEditors.Add(externalCodeEditor);
             if (IsCurrentEditorPathExplicitlySet)

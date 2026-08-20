@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Search
 {
@@ -106,6 +107,7 @@ namespace UnityEditor.Search
         /// </summary>
         public bool valid => !string.IsNullOrEmpty(token);
 
+        [NoAutoStaticsCleanup]
         internal static QueryFilterOperator invalid = new QueryFilterOperator(null, FilterOperatorType.Custom, null);
 
         internal QueryFilterOperator(string token, FilterOperatorType type, IQueryEngineImplementation engine)

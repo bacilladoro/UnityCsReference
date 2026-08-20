@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.Pool;
 
@@ -15,6 +16,7 @@ namespace Unity.GraphToolkit.Editor
     [UnityRestricted]
     internal static class VirtualWireBuilder
     {
+        [NoAutoStaticsCleanup] // marshaling list; cleared at the start of each producer method before use, safe to persist
         static List<(VirtualWire wire, bool remove)> s_Changes = new();
 
         static void ApplyChanges(ICollection<VirtualWire> virtualWires, PortWireIndex<VirtualWire> portWireIndex)

@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 
 namespace UnityEditor.Search
@@ -15,7 +16,9 @@ namespace UnityEditor.Search
     /// </summary>
     class SearchServiceProvider : SearchProvider
     {
-        static SearchProvider s_Provider;
+        static readonly ScopedLazy<SearchServiceProvider, CodeLoadedScope> s_ScopedLazy = new(() => new SearchServiceProvider());
+
+        public static SearchProvider Instance => s_ScopedLazy.Value;
 
         public SearchServiceProvider()
             : base("default", "Default")
@@ -28,13 +31,6 @@ namespace UnityEditor.Search
             showDetailsOptions = ShowDetailsOptions.Inspector;
             toObject = ToObject;
             fetchPropositions = FetchPropositions;
-        }
-
-        internal static SearchProvider CreateProvider()
-        {
-            if (s_Provider == null)
-                s_Provider = new SearchServiceProvider();
-            return s_Provider;
         }
 
         private IEnumerable<SearchProposition> FetchPropositions(SearchContext context, SearchPropositionOptions options)
@@ -51,17 +47,17 @@ namespace UnityEditor.Search
                 var token = options.tokens[0][0];
                 if (token == '#')
                 {
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2001 // Avoid Linq
                     foreach (var c in PropertySelectors.Enumerate(context.searchView.results.Take(10)))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                         yield return new SearchProposition(category: category, label: $"{token}{c.content.text ?? c.path}", $"{c.selector}\t", $"Property ({c.selector})");
                 }
 
                 if (token == '@')
                 {
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2001 // Avoid Linq
                     foreach (var s in SelectorManager.selectors.Where(s => s.printable))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                         yield return new SearchProposition(category: category, label: $"{token}{s.label}", help: s.description ?? "Selector", replacement: $"@{s.label}\t");
                 }
             }
@@ -69,12 +65,13 @@ namespace UnityEditor.Search
 
         public static new SearchItem CreateItem(SearchContext context, string id, int score, string label, string description, Texture2D thumbnail, object @ref)
         {
-            return s_Provider.CreateItem(context, id, score, label, description, thumbnail, @ref);
+            return Instance.CreateItem(context, id, score, label, description, thumbnail, @ref);
         }
 
         internal static SearchItem CreateItem(string id, string label, string description, object value)
         {
-            var newItem = s_Provider.CreateItem(s_Provider.defaultContext, id, 0, label, description, null, null);
+            var provider = Instance;
+            var newItem = provider.CreateItem(provider.defaultContext, id, 0, label, description, null, null);
             newItem.value = value;
             return newItem;
         }

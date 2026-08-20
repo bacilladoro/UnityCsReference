@@ -59,6 +59,7 @@ namespace UnityEngine.UIElements.StyleSheets.Syntax
         Ratio, // <ratio>
         LinearGradient, // <linear-gradient>
         RadialGradient, // <radial-gradient>
+        TrackSize, // <track-size>: CSS Grid track sizing
     }
 
     // In order of precedence

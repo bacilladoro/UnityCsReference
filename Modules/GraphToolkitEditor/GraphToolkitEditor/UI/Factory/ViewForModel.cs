@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using JetBrains.Annotations;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 
 namespace Unity.GraphToolkit.Editor
@@ -13,8 +14,9 @@ namespace Unity.GraphToolkit.Editor
     /// Utility to get the <see cref="ModelView"/> that have been created for a <see cref="GraphElementModel"/>.
     /// </summary>
     [UnityRestricted]
-    internal static class ViewForModel
+    internal static partial class ViewForModel
     {
+        [AutoStaticsCleanupOnCodeReload]
         static ModelViewMapping s_ViewForModel = new();
 
         internal static void AddOrReplaceModelView(ModelView modelView)

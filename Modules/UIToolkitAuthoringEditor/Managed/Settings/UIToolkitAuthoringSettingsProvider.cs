@@ -25,6 +25,7 @@ internal class UIToolkitAuthoringSettingsProvider : IUIToolkitSettingsProviderEx
     private const string k_AutoOpenUIViewportWindowText = "UI Viewport";
     private const string k_AutoOpenStyleSheetsWindowText = "Style Sheets";
     private const string k_RectangleSelectionModeText = "Rectangle Selection Mode";
+    private const string k_EnableZIndexText = "Enable Z-Index";
 
     private const string k_VisualTreeAsset = "UIToolkitAuthoring/Settings/UIToolkitAuthoringSettings.uxml";
 
@@ -60,6 +61,8 @@ internal class UIToolkitAuthoringSettingsProvider : IUIToolkitSettingsProviderEx
         if (k_AutoOpenUIViewportWindowText.IndexOf(searchContext, System.StringComparison.OrdinalIgnoreCase) != -1)
             return true;
         if (k_AutoOpenStyleSheetsWindowText.IndexOf(searchContext, System.StringComparison.OrdinalIgnoreCase) != -1)
+            return true;
+        if (k_EnableZIndexText.IndexOf(searchContext, System.StringComparison.OrdinalIgnoreCase) != -1)
             return true;
         return false;
     }
@@ -141,6 +144,13 @@ internal class UIToolkitAuthoringSettingsProvider : IUIToolkitSettingsProviderEx
         rectangleSelectionMode.RegisterValueChangedCallback(evt =>
         {
             UIToolkitAuthoringSettings.RectangleSelectionMode = (RectangleSelectionMode)evt.newValue;
+        });
+
+        var enableZIndex = rootElement.Q<Toggle>("uitoolkit-authoring-settings__enable-z-index");
+        enableZIndex.value = UIToolkitAuthoringSettings.EnableZIndex;
+        enableZIndex.RegisterValueChangedCallback(evt =>
+        {
+            UIToolkitAuthoringSettings.EnableZIndex = evt.newValue;
         });
 
         void UpdateNewHierarchyHelpBox()

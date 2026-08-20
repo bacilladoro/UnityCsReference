@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.GraphToolkit.Editor.ContextualMenuItems;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -16,18 +17,13 @@ namespace Unity.GraphToolkit.Editor
     /// </summary>
     [Serializable]
     [UnityRestricted]
-    internal class SubgraphNodeModel : NodeModel, IRenamable, IObjectClonedCallbackReceiver
+    internal partial class SubgraphNodeModel : NodeModel, IRenamable, IObjectClonedCallbackReceiver, ISubgraphNodeInternal
     {
-        [Obsolete("Use m_SubgraphReference instead.")]
-        [SerializeReference, HideInInspector]
-        Subgraph m_Subgraph;
-
-        [Obsolete("Use m_SubgraphReference instead.")]
-        [SerializeReference, HideInInspector]
-        SubgraphAssetReference m_SubgraphAssetReference;
-
         [SerializeField, HideInInspector]
         GraphReference m_SubgraphReference;
+
+        [SerializeReference]
+        GraphModel m_CopyPasteLocalSubgraphModelReference;
 
         [SerializeField, NodeOption(true)]
         new string m_Subtitle;
@@ -36,53 +32,27 @@ namespace Unity.GraphToolkit.Editor
         [SerializeField, NodeOption(true)]
         SubgraphAssetProperty m_AssetProperty;
 
-        // This is used to serialize the referenced local subgraph model in copy/paste operations.
-        // This should always be null, except during copy/paste operations.
-        [SerializeReference]
-        GraphModel m_CopyPasteLocalSubgraphModelReference;
-
         readonly Color m_DefaultColorValue = new(107 / 255f, 204 / 255f, 134 / 255f, 1f);
 
         bool m_UpdateWasCalled;
 
         /// <summary>
-        /// The default subtitle when the subgraph is a local graph.
-        /// </summary>
-        public virtual string DefaultLocalSubtitle => "Local Subgraph";
-
-        /// <summary>
-        /// The default subtitle when the subgraph is a separate asset.
-        /// </summary>
-        public virtual string DefaultAssetSubtitle => "Asset Subgraph";
-
-        /// <summary>
         /// Whether this specific subgraph node model can be expanded into its parent graph, meaning all the nodes
         /// contained in the subgraph are moved to the parent graph.
         /// </summary>
-        public virtual bool CanBeExpanded => true;
+        /// <remarks>
+        /// If the parent graph is a state machine and the referenced subgraph is not, then the subgraph node cannot be expanded into the parent graph.
+        /// </remarks>
+        public virtual bool CanBeExpanded => !GraphModel.IsStateMachineGraph || GetSubgraphModel().IsStateMachineGraph;
 
         /// <inheritdoc />
         public override string Title
         {
-            get => string.IsNullOrEmpty(m_Title) ? GetSubgraphModel()?.Name ?? string.Empty : m_Title;
+            get => SubgraphNodeModelHelper.GetTitle(GraphModel, m_Title, m_SubgraphReference, m_CopyPasteLocalSubgraphModelReference);
             set
             {
-                var newName = value?.Trim();
-
-
-                if (string.IsNullOrEmpty(newName))
-                    newName = string.Empty;
-                else
-                {
-                    var subGraphModel = GetSubgraphModel();
-                    if (subGraphModel != null && subGraphModel.Name == newName)
-                    {
-                        newName = string.Empty;
-                    }
-                }
-
-                m_Title = newName;
-                Tooltip = newName;
+                m_Title = SubgraphNodeModelHelper.ComputeNewTitle(GraphModel, value, m_SubgraphReference, m_CopyPasteLocalSubgraphModelReference);
+                Tooltip = m_Title;
                 GraphModel?.CurrentGraphChangeDescription.AddChangedModel(this, ChangeHint.Data);
             }
         }
@@ -90,18 +60,8 @@ namespace Unity.GraphToolkit.Editor
         /// <inheritdoc />
         public override string Subtitle => m_Subtitle;
 
-        /// <summary>
-        /// The icon type string for subgraph nodes referencing a local subgraph.
-        /// </summary>
-        public static readonly string k_LocalSubgraphIconTypeString = "subgraph";
-
-        /// <summary>
-        /// The icon type string for subgraph nodes referencing an asset subgraph.
-        /// </summary>
-        public static readonly string k_AssetSubgraphIconTypeString = "graph-object";
-
         /// <inheritdoc />
-        public override string IconTypeString => IsReferencingLocalSubgraph ? k_LocalSubgraphIconTypeString : k_AssetSubgraphIconTypeString;
+        public override string IconTypeString => SubgraphNodeModelHelper.IsReferencingLocalSubgraph(GraphModel, m_SubgraphReference, m_CopyPasteLocalSubgraphModelReference) ? SubgraphNodeModelHelper.k_LocalSubgraphIconTypeString : SubgraphNodeModelHelper.k_AssetSubgraphIconTypeString;
 
         /// <inheritdoc />
         public override bool UseColorAlpha => false;
@@ -115,37 +75,27 @@ namespace Unity.GraphToolkit.Editor
         /// Gets the graph model referenced by the subgraph node.
         /// </summary>
         /// <returns>The graph model of the subgraph.</returns>
-        public GraphModel GetSubgraphModel() => GraphModel?.ResolveGraphModelFromReference(m_SubgraphReference) ?? m_CopyPasteLocalSubgraphModelReference;
+        public GraphModel GetSubgraphModel() => SubgraphNodeModelHelper.GetSubgraphModel(GraphModel, m_SubgraphReference, m_CopyPasteLocalSubgraphModelReference);
 
-        public bool IsReferencingLocalSubgraph => GetSubgraphModel()?.IsLocalSubgraph ?? false;
+        public bool IsReferencingLocalSubgraph => SubgraphNodeModelHelper.IsReferencingLocalSubgraph(GraphModel, m_SubgraphReference, m_CopyPasteLocalSubgraphModelReference);
 
         /// <summary>
         /// Sets the graph referenced by the subgraph node.
         /// </summary>
         public void SetSubgraphModel(GraphReference value)
         {
-            if (m_SubgraphReference.Equals(value))
+            if (!SubgraphNodeModelHelper.SetSubgraphReference(GraphModel, value, ref m_SubgraphReference, m_CopyPasteLocalSubgraphModelReference, out var assetProp, out var referenceIsValid, out var isReferencingLocal))
                 return;
 
-            if (! m_SubgraphReference.HasAssetReference)
-            {
-                var previousLocalSubGraph = GetSubgraphModel();
-                if (previousLocalSubGraph != null && previousLocalSubGraph.IsLocalSubgraph)
-                {
-                    GraphModel.RemoveLocalSubgraph(previousLocalSubGraph);
-                }
-            }
+            m_AssetProperty = assetProp;
 
-            m_SubgraphReference = value;
-            m_AssetProperty = new SubgraphAssetProperty(m_SubgraphReference);
-
-            if (GraphModelReferenceIsValid)
+            if (referenceIsValid)
             {
                 m_Title = null;
-                m_Subtitle = IsReferencingLocalSubgraph ? DefaultLocalSubtitle : DefaultAssetSubtitle;
+                m_Subtitle = isReferencingLocal ? SubgraphNodeModelHelper.DefaultLocalSubtitle : SubgraphNodeModelHelper.DefaultAssetSubtitle;
             }
 
-            SetCapability(Editor.Capabilities.Renamable, GraphModelReferenceIsValid);
+            SetCapability(Editor.Capabilities.Renamable, referenceIsValid);
             DefineNode();
             GraphModel?.CurrentGraphChangeDescription?.AddChangedModel(this, ChangeHint.Data);
         }
@@ -160,7 +110,7 @@ namespace Unity.GraphToolkit.Editor
         /// </summary>
         public Dictionary<PortModel, VariableDeclarationModelBase> OutputPortToVariableDeclarationDictionary { get; } = new();
 
-        bool GraphModelReferenceIsValid => GraphModel.ResolveGraphModelFromReference(m_SubgraphReference) != null;
+        bool GraphModelReferenceIsValid => SubgraphNodeModelHelper.GraphModelReferenceIsValid(GraphModel, m_SubgraphReference);
 
         /// <inheritdoc />
         public void Rename(string name)
@@ -182,23 +132,8 @@ namespace Unity.GraphToolkit.Editor
         /// <inheritdoc />
         public override void OnDuplicateNode(AbstractNodeModel sourceNode)
         {
-            if (sourceNode is SubgraphNodeModel sourceSubgraphNode &&
-                (sourceSubgraphNode.IsReferencingLocalSubgraph ||
-                    sourceSubgraphNode.m_CopyPasteLocalSubgraphModelReference != null))
-            {
-                var sourceGraphModel = sourceSubgraphNode.GetSubgraphModel();
-
-                if (sourceGraphModel is null)
-                {
-                    SetSubgraphModel(default);
-                }
-                else
-                {
-                    // Each duplicated local subgraph node should have their own instance of graph model
-                    var newSubgraph = GraphModel.DuplicateLocalSubGraph(sourceGraphModel, sourceNode.Title);
-                    SetSubgraphModel(newSubgraph.GetGraphReference(true));
-                }
-            }
+            if (sourceNode is SubgraphNodeModel sourceSubgraphNode)
+                SubgraphNodeModelHelper.HandleDuplicate(GraphModel, sourceSubgraphNode.GraphModel, sourceSubgraphNode.m_SubgraphReference, sourceSubgraphNode.m_CopyPasteLocalSubgraphModelReference, sourceNode.Title, SetSubgraphModel);
 
             base.OnDuplicateNode(sourceNode);
         }
@@ -210,17 +145,17 @@ namespace Unity.GraphToolkit.Editor
         public List<GraphElementModel> Update()
         {
             // Get connected wires before the obsolete ones get removed in DefineNode.
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var wiresBeforeDefineNode = GetConnectedWires().ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             DefineNode();
 
             var elementsToUpdate = new List<GraphElementModel> { this };
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             foreach (var wireModel in wiresBeforeDefineNode.OfType<WireModel>())
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 wireModel.UpdatePortFromCache();
                 wireModel.ResetPortCache();
@@ -328,127 +263,47 @@ namespace Unity.GraphToolkit.Editor
             portModel.ToolTip = variableDeclaration.Tooltip == variableDeclaration.DefaultTooltip ? portModel.DefaultTooltip : variableDeclaration.Tooltip;
         }
 
-        /// <inheritdoc />
-        public override void OnAfterDeserialize()
-        {
-            base.OnAfterDeserialize();
-
-#pragma warning disable CS0618
-            if (m_Subgraph != null)
-            {
-                var graphObject = m_Subgraph.GetGraphAssetWithoutLoading();
-                m_SubgraphAssetReference = new SubgraphAssetReference(graphObject);
-                m_Subgraph = null;
-            }
-#pragma warning restore CS0618
-        }
-
         /// <summary>
-        /// Migrates sub graphs saved as sub assets to subgraphs stored in the graph model.
-        /// Upgrades graph references from <see cref="GraphAssetReference"/> and <see cref="SubgraphAssetReference"/>
-        /// to <see cref="GraphReference"/>.
+        /// Upgrades graph references: asset subgraph name was empty by default. Now they have the node title by default.
         /// </summary>
         public void UpgradeGraphReference()
         {
-#pragma warning disable CS0618 // Type or member is obsolete
-            if (m_SubgraphReference == default && m_SubgraphAssetReference != null)
-            {
-                m_SubgraphReference = m_SubgraphAssetReference.ConvertToGraphReference(GraphModel);
-                m_SubgraphAssetReference = null;
-                m_AssetProperty = new SubgraphAssetProperty(m_SubgraphReference);
-
-                GetSubgraphModel()?.UpgradeGraphReferences();
-            }
-#pragma warning restore CS0618 // Type or member is obsolete
-
-            // Asset subgraph name was empty by default. Now they have the node title by default.
             var subgraphModel = GetSubgraphModel();
             if (subgraphModel != null && string.IsNullOrEmpty(subgraphModel.Name))
                 subgraphModel.Name = Title;
-
         }
 
         /// <inheritdoc />
         public void CloneAssets(List<Object> clones, Dictionary<Object, Object> originalToCloneMap)
-        {
-            if (IsReferencingLocalSubgraph)
-            {
-                GetSubgraphModel().CloneAssets(clones, originalToCloneMap);
-            }
-        }
+            => SubgraphNodeModelHelper.CloneAssets(GraphModel, m_SubgraphReference, m_CopyPasteLocalSubgraphModelReference, clones, originalToCloneMap);
 
         /// <inheritdoc />
         public void OnAfterAssetClone(IReadOnlyDictionary<Object, Object> originalToCloneMap)
-        {
-            if (IsReferencingLocalSubgraph)
-            {
-                // m_SubgraphReference has just been updated: GetSubgraphModel() will return the graph model in the cloned asset.
-                GetSubgraphModel().OnAfterAssetClone(originalToCloneMap);
-            }
-        }
+            => SubgraphNodeModelHelper.OnAfterAssetClone(GraphModel, m_SubgraphReference, m_CopyPasteLocalSubgraphModelReference, originalToCloneMap);
 
         /// <inheritdoc />
         public override void OnBeforeCopy()
         {
             base.OnBeforeCopy();
-
-            // Local subgraphs need to be duplicated by the copy/paste operation.
-            if (IsReferencingLocalSubgraph)
-            {
-                m_CopyPasteLocalSubgraphModelReference = GetSubgraphModel();
-                if (m_CopyPasteLocalSubgraphModelReference is ICopyPasteCallbackReceiver copyPasteCallbackReceiver)
-                    copyPasteCallbackReceiver.OnBeforeCopy();
-                m_SubgraphReference = default;
-            }
-            else
-            {
-                m_CopyPasteLocalSubgraphModelReference = null;
-            }
+            SubgraphNodeModelHelper.BeginCopy(GraphModel, ref m_SubgraphReference, ref m_CopyPasteLocalSubgraphModelReference);
         }
 
+        /// <inheritdoc />
         public override void OnAfterCopy()
         {
             base.OnAfterCopy();
-
-            if (m_CopyPasteLocalSubgraphModelReference != null)
-            {
-                m_SubgraphReference = GraphModel.GetGraphModelReference(m_CopyPasteLocalSubgraphModelReference, true);
-                // Set the reference back to null, as we do not want to serialize the local subgraph model to disk.
-                m_CopyPasteLocalSubgraphModelReference = null;
-            }
+            SubgraphNodeModelHelper.EndCopy(GraphModel, ref m_SubgraphReference, ref m_CopyPasteLocalSubgraphModelReference);
         }
 
         /// <inheritdoc />
         public override void OnAfterPaste()
         {
             base.OnAfterPaste();
-
-            m_CopyPasteLocalSubgraphModelReference = null;
+            SubgraphNodeModelHelper.ClearPaste(ref m_CopyPasteLocalSubgraphModelReference);
         }
 
         /// <inheritdoc />
-        public override IReadOnlyList<ContextualMenuItem> ContextualMenuItems
-        {
-            get
-            {
-                var menuItems = new List<ContextualMenuItem>(base.ContextualMenuItems);
-                menuItems.AddRange(IsReferencingLocalSubgraph ? s_LocalSubgraphContextualMenuItems : s_AssetSubgraphContextualMenuItems);
-                return menuItems;
-            }
-        }
-
-        static List<ContextualMenuItem> s_LocalSubgraphContextualMenuItems = new() {
-            ContextualMenuHelpers.extractContentsToPlacematItem,
-            ContextualMenuHelpers.openLocalSubgraphItem,
-            ContextualMenuHelpers.convertToAssetSubgraphItem,
-        };
-
-        static List<ContextualMenuItem> s_AssetSubgraphContextualMenuItems = new() {
-            ContextualMenuHelpers.extractContentsToPlacematItem,
-            ContextualMenuHelpers.openAssetSubgraphItem,
-            ContextualMenuHelpers.unpackToLocalSubgraphItem,
-            ContextualMenuHelpers.findAssetInProjectItem,
-        };
+        public override IReadOnlyList<ContextualMenuItem> ContextualMenuItems => SubgraphNodeModelHelper.GetContextualMenuItems(GraphModel, m_SubgraphReference, m_CopyPasteLocalSubgraphModelReference, base.ContextualMenuItems);
 
         public class TestAccess
         {

@@ -50,7 +50,7 @@ namespace Unity.GraphToolkit.Editor
             var maxOffset = 0.0f;
             foreach (var wire in GetConnectedWires())
             {
-                if (wire is TransitionSupportModel transitionModel && transitionModel.TransitionSupportKind != TransitionSupportKind.StateToState)
+                if (wire is SelfTransitionModel transitionModel)
                 {
                     if (transitionModel.ToNodeAnchorSide == AnchorSide.Top && transitionModel.ToNodeAnchorOffset > maxOffset)
                     {
@@ -70,7 +70,7 @@ namespace Unity.GraphToolkit.Editor
             var maxOffset = transitionWidth;
             foreach (var wire in GetConnectedWires())
             {
-                if (wire is TransitionSupportModel transitionModel && transitionModel.TransitionSupportKind != TransitionSupportKind.StateToState)
+                if (wire is SelfTransitionModel transitionModel)
                 {
                     if (transitionModel.ToNodeAnchorSide == AnchorSide.Top)
                     {

@@ -20,6 +20,6 @@ namespace Unity.GraphToolkit.Editor
         public virtual Vector2 ToWorldPoint { get; set; } = Vector2.zero;
 
         /// <inheritdoc />
-        public override bool IsSingleStateTransition => false;
+        public override bool IsSelfTransition => false;
     }
 }

@@ -2,6 +2,8 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
+using Unity.Scripting.LifecycleManagement;
 using System;
 using System.Collections.Generic;
 using UnityEngine.Assertions;
@@ -22,7 +24,7 @@ namespace UnityEngine.UIElements
 
     [HelpURL("UIE-VisualTree-landing")]
     [Serializable]
-    public class VisualTreeAsset : ScriptableObject
+    public partial class VisualTreeAsset : ScriptableObject
     {
         /// <undoc/>
         internal delegate void AuthoringIdConflictResolvedHandler(UxmlAsset asset, int oldId, int newId);
@@ -87,14 +89,17 @@ namespace UnityEngine.UIElements
             set => m_ImportedWithObsoleteAttributeNames = value;
         }
 
+        [NoAutoStaticsCleanup]
         private static readonly Dictionary<string, VisualElement> s_TemporarySlotInsertionPoints = new Dictionary<string, VisualElement>();
+        [NoAutoStaticsCleanup]
         private static readonly List<int> s_VeaIdsPath = new List<int>();
 
         [Serializable]
         [VisibleToOtherModules("UnityEditor.UIBuilderModule")]
-        internal struct UsingEntry
+        internal partial struct UsingEntry
         {
             [VisibleToOtherModules("UnityEditor.UIBuilderModule")]
+            [NoAutoStaticsCleanup]
             internal static readonly IComparer<UsingEntry> comparer = new UsingEntryComparer();
 
             [SerializeField] public string alias;
@@ -357,7 +362,7 @@ namespace UnityEngine.UIElements
             SetupReferences();
         }
 
-        [VisibleToOtherModules("UnityEditor.UIBuilderModule")]
+        [VisibleToOtherModules("UnityEditor.UIBuilderModule", "UnityEditor.UIToolkitAuthoringModule")]
         internal void SetupReferences()
         {
             foreach (var asset in DepthFirstTraversal())
@@ -1333,7 +1338,7 @@ namespace UnityEngine.UIElements
     /// <summary>
     /// This structure holds information used during UXML template instantiation.
     /// </summary>
-    public struct CreationContext : IEquatable<CreationContext>
+    public partial struct CreationContext : IEquatable<CreationContext>
     {
         [VisibleToOtherModules("UnityEditor.UIBuilderModule")]
         internal struct AttributeOverrideRange
@@ -1365,6 +1370,7 @@ namespace UnityEngine.UIElements
 
         /// <undoc/>
         // TODO why is this public? It's not used internally and could be obtained by default(CreationContext)
+        [NoAutoStaticsCleanup]
         public static readonly CreationContext Default = new CreationContext();
 
         /// <summary>
@@ -1484,3 +1490,4 @@ namespace UnityEngine.UIElements
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

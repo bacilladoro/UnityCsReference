@@ -2,6 +2,8 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
+using Unity.Scripting.LifecycleManagement;
 using System;
 
 namespace UnityEngine.UIElements
@@ -14,8 +16,11 @@ namespace UnityEngine.UIElements
     [AddComponentMenu("UI Toolkit/Panel Input Configuration", 1), ExecuteAlways, DisallowMultipleComponent]
     public sealed partial class PanelInputConfiguration : MonoBehaviour, IPanelInputProvider
     {
+        [NoAutoStaticsCleanup]
         internal static PanelInputConfiguration current { get; set; }
 
+
+        [NoAutoStaticsCleanup]
         internal static int s_ActiveInstances = 0;
 
 
@@ -272,3 +277,4 @@ namespace UnityEngine.UIElements
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

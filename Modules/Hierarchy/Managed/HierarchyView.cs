@@ -710,7 +710,24 @@ namespace Unity.Hierarchy
         /// </summary>
         public void ToggleSelection()
         {
-            m_HierarchyViewModel.ToggleFlags(HierarchyNodeFlags.Selected);
+            m_HierarchyViewModel.ToggleFlags(m_HierarchyViewModel.AsReadOnlySpan(), HierarchyNodeFlags.Selected);
+            Update();
+        }
+
+        /// <summary>
+        /// Toggles the selection state of the current selection.
+        /// </summary>
+        /// /// <param name="exposedOnly">
+        /// When <see langword="true"/>, selects only exposed nodes (excludes hidden or unreachable nodes).
+        /// When <see langword="false"/>, selects all nodes regardless of exposure state.
+        /// <b>Note:</b> Nodes outside the viewport are still selected if they are exposed.
+        /// </param>
+        public void ToggleSelection(bool exposedOnly)
+        {
+            if (exposedOnly)
+                m_HierarchyViewModel.ToggleFlags(m_HierarchyViewModel.AsReadOnlySpan(), HierarchyNodeFlags.Selected);
+            else
+                m_HierarchyViewModel.ToggleFlags(HierarchyNodeFlags.Selected);
             Update();
         }
 

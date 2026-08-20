@@ -3,22 +3,24 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System.Linq;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor.ShortcutManagement;
 using UnityEngine;
 
 namespace UnityEditor.SearchService
 {
-    static class OpenSearchHelper
+    static partial class OpenSearchHelper
     {
         static class Styles
         {
-            public static GUIContent gotoSearch = EditorGUIUtility.TrIconContent("SearchJump Icon");
+            public static readonly GUIContent gotoSearch = EditorGUIUtility.TrIconContent("SearchJump Icon");
         }
 
         internal const string k_SearchMenuName = "Edit/Search/Search All...";
         internal const string k_SearchAllShortcutName = $"Main Menu/{k_SearchMenuName}";
         public const string k_OpenSearchInContextCommand = "OpenQuickSearchInContext";
 
+        [NoAutoStaticsCleanup]
         static ShortcutBinding s_ShortcutBinding = ShortcutBinding.empty;
         public static ShortcutBinding shortcutBinding
         {
@@ -33,7 +35,8 @@ namespace UnityEditor.SearchService
             }
         }
 
-        static OpenSearchHelper()
+        [OnCodeLoaded]
+        static void DelayInitialize()
         {
             EditorApplication.delayCall += UpdateBindingAndTooltip;
         }
@@ -59,9 +62,9 @@ namespace UnityEditor.SearchService
                 return null;
 
             var keyCombination = KeyCombination.FromKeyboardInput(evt);
-#pragma warning disable UA2006 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2006 // Avoid Linq
             if (shortcutBinding.keyCombinationSequence.Any(shortcutCombination => keyCombination.Equals(shortcutCombination)))
-#pragma warning restore UA2006
+#pragma warning restore UAC2006
             {
                 evt.Use();
                 return OpenSearchInContext(window, searchText, "jumpShortcut");
@@ -92,9 +95,9 @@ namespace UnityEditor.SearchService
         public static bool IsShortcutAvailable()
         {
             var shortcutIds = ShortcutManager.instance.GetAvailableShortcutIds();
-#pragma warning disable UA2006 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2006 // Avoid Linq
             return shortcutIds.Any(path => path == k_SearchAllShortcutName);
-#pragma warning restore UA2006
+#pragma warning restore UAC2006
         }
     }
 }

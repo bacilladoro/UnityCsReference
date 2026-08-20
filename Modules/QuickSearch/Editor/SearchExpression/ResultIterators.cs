@@ -111,9 +111,9 @@ namespace UnityEditor.Search
 
         public IEnumerator<SearchExpression> GetEnumerator()
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             foreach (var argument in context.args.Skip(m_ArgumentSkipCount))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 m_OnArgument(context.runtime.current, argument);
                 if (context.IsBreaking())

@@ -428,9 +428,9 @@ namespace UnityEditor.Search.Providers
                     if (!c || (c.hideFlags & HideFlags.HideInInspector) == HideFlags.HideInInspector)
                         continue;
 
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2001 // Avoid Linq
                     attrs.AddRange(c.GetType().GetInterfaces().Select(t => t.Name.ToLowerInvariant()));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 }
 
                 god.attrs = attrs.ToArray();
@@ -520,9 +520,9 @@ namespace UnityEditor.Search.Providers
         {
             if (m_PropertyPrositions != null)
                 return m_PropertyPrositions;
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             m_PropertyPrositions = new List<SearchProposition>(m_Objects.SelectMany(go =>
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 var propositions = new List<SearchProposition>();
                 var gocs = go.GetComponents<Component>();

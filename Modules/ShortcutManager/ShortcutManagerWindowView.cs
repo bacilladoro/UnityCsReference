@@ -217,9 +217,9 @@ namespace UnityEditor.ShortcutManagement
 
             if (!string.IsNullOrWhiteSpace(tag.text)) contextElement.tooltip += $" ({tag.text})";
             bindingTextElement.text = KeyCombination.SequenceToString(shortcutEntry.combinations);
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             bindingField.SetValueWithoutNotify(shortcutEntry.combinations.ToList());
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             bindingField.RegisterValueChangedCallback(EditingShortcutEntryBindingChanged);
             bindingField.RegisterCallback<WheelEvent>(EditingShortcutEntryBindingChangedToScrollWheel);
 
@@ -299,9 +299,9 @@ namespace UnityEditor.ShortcutManagement
 
         void CategorySelectionChanged(IEnumerable<object> selection)
         {
-#pragma warning disable UA2005 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2005 // Avoid Linq
             var count = selection.Count();
-#pragma warning restore UA2005
+#pragma warning restore UAC2005
             Assert.AreEqual(1, count);
 
             m_ShortcutsTable.selectedIndex = -1;
@@ -309,9 +309,9 @@ namespace UnityEditor.ShortcutManagement
             if (count == 0)
                 m_ViewController.SetCategorySelected(null);
             else
-                #pragma warning disable UA2010 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2010 // Avoid Linq
                 m_ViewController.SetCategorySelected((string)selection.First());
-#pragma warning restore UA2010
+#pragma warning restore UAC2010
         }
 
         void BuildSearchField(VisualElement root)
@@ -662,9 +662,9 @@ namespace UnityEditor.ShortcutManagement
 
         GenericMenu GetContextMenuForEntries(IEnumerable<ShortcutEntry> entries)
         {
-#pragma warning disable UA2002 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2002 // Avoid Linq
             if (entries == null || !entries.Any() || m_IgnoreContext)
-#pragma warning restore UA2002
+#pragma warning restore UAC2002
             {
                 m_IgnoreContext = false;
                 return null;
@@ -726,9 +726,9 @@ namespace UnityEditor.ShortcutManagement
 
         void ShortcutTableEntryChosen(IEnumerable<object> objects)
         {
-            #pragma warning disable UA2010 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2010 // Avoid Linq
             var entry = (ShortcutEntry)objects.First();
-#pragma warning restore UA2010
+#pragma warning restore UAC2010
             var row = m_ShortcutsTable.Query<VisualElement>().Checked().First();
             StartRebind(entry, row);
         }
@@ -807,13 +807,13 @@ namespace UnityEditor.ShortcutManagement
 
         void ShortcutSelectionChanged(IEnumerable<object> selection)
         {
-#pragma warning disable UA2002 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2002 // Avoid Linq
             if (selection.Any())
-#pragma warning restore UA2002
+#pragma warning restore UAC2002
             {
-                #pragma warning disable UA2010 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2010 // Avoid Linq
                 var newSelection = (ShortcutEntry)selection.First();
-#pragma warning restore UA2010
+#pragma warning restore UAC2010
                 if (newSelection != m_ViewController.selectedEntry)
                 {
                     m_ViewController.ShortcutEntrySelected(newSelection);

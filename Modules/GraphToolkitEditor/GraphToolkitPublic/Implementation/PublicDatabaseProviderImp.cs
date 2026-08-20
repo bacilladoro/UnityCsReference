@@ -26,10 +26,8 @@ namespace Unity.GraphToolkit.Editor.Implementation
             m_GraphDatabases ??= new ItemLibraryDatabaseBase[2];
             if (GraphModel is GraphModelImp graphModelImp)
             {
-                var graphAttribute = graphModelImp.Graph.GetType().GetCustomAttribute<GraphAttribute>();
-                if (graphAttribute != null && graphAttribute.Options.HasFlag(GraphOptions.SupportsSubgraphs))
+                if (graphModelImp.AllowSubgraphCreation)
                 {
-                    // Only add subgraph items if the graph supports subgraphs
                     m_GraphDatabases[0] = InitialGraphElementDatabase().AddSubgraphs().Build();
                 }
                 else
@@ -46,7 +44,10 @@ namespace Unity.GraphToolkit.Editor.Implementation
         {
             var db = new PublicGraphElementItemDatabase(GraphModel);
 
-            AddNodes(db);
+            if (GraphModel.IsStateMachineGraph)
+                AddStates(db);
+            else
+                AddNodes(db);
 
             return db;
         }
@@ -78,7 +79,8 @@ namespace Unity.GraphToolkit.Editor.Implementation
         {
             var db = new GraphElementItemDatabase(GraphModel);
 
-            db.AddConstants(((GraphModelImp)GraphModel).AvailableConstantTypes);
+            if (!GraphModel.IsStateMachineGraph)
+                db.AddConstants(((GraphModelImp)GraphModel).AvailableConstantTypes);
 
             return db;
         }
@@ -91,7 +93,7 @@ namespace Unity.GraphToolkit.Editor.Implementation
                 var nodeAttribute = nodeType.GetCustomAttribute<NodeAttribute>();
                 var nodeDef = new GraphNodeModelLibraryItem(
                     nodeType.Name,
-                    new NodeItemLibraryData(nodeType),
+                    new NodeItemLibraryData(nodeType, GraphModel.IsStateMachineGraph),
                     d => isContextNode ? GraphModelImp.CreateContextNodeFromData(d, nodeType) : GraphModelImp.CreateNodeFromData(d, nodeType))
                 {
                     Name = string.IsNullOrEmpty(nodeAttribute?.Title) ? nodeType.Name : nodeAttribute.Title,
@@ -102,6 +104,26 @@ namespace Unity.GraphToolkit.Editor.Implementation
                 db.Items.Add(nodeDef);
             }
         }
+
+        void AddStates(GraphElementItemDatabase db)
+        {
+            foreach (var stateType in ((StateMachineImp)GraphModel).SupportedNodes)
+            {
+                var stateAttribute = stateType.GetCustomAttribute<StateAttribute>();
+                var nodeDef = new GraphNodeModelLibraryItem(
+                    stateType.Name,
+                    new NodeItemLibraryData(stateType, GraphModel.IsStateMachineGraph),
+                    d => StateMachineImp.CreateStateFromData(d, stateType))
+                {
+                    Name = string.IsNullOrEmpty(stateAttribute?.Title) ? stateType.Name.Nicify() : stateAttribute.Title,
+                    CategoryPath = stateAttribute?.CategoryPath ?? "States",
+                    IconPath = stateAttribute?.IconPath ?? ""
+                };
+
+                db.Items.Add(nodeDef);
+            }
+        }
+
         static void AddBlocks(UserContextNodeModelImp imp, GraphElementItemDatabase db)
         {
             var graphType = ((GraphModelImp)imp.GraphModel).Graph.GetType();
@@ -112,7 +134,7 @@ namespace Unity.GraphToolkit.Editor.Implementation
                 var nodeAttribute = blockType.GetCustomAttribute<NodeAttribute>();
                 var nodeDef = new GraphNodeModelLibraryItem(
                     blockType.Name,
-                    new NodeItemLibraryData(blockType),
+                    new NodeItemLibraryData(blockType, imp.GraphModel.IsStateMachineGraph),
                     d => GraphModelImp.CreateContextFromBlockData(d, blockType, contextType))
                 {
                     Name = string.IsNullOrEmpty(nodeAttribute?.Title) ? blockType.Name : nodeAttribute.Title,

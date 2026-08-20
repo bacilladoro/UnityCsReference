@@ -2,6 +2,8 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
+using Unity.Scripting.LifecycleManagement;
 using System;
 using UnityEngine.Rendering;
 
@@ -10,14 +12,23 @@ namespace UnityEngine.UIElements
     internal static class FilterFunctionDefinitionUtils
     {
         // These definition are initialized once at first use and are shared across all filter functions.
+        [NoAutoStaticsCleanup]
         private static FilterFunctionDefinition s_BlurDef;
+        [NoAutoStaticsCleanup]
         private static FilterFunctionDefinition s_TintDef;
+        [NoAutoStaticsCleanup]
         private static FilterFunctionDefinition s_OpacityDef;
+        [NoAutoStaticsCleanup]
         private static FilterFunctionDefinition s_InvertDef;
+        [NoAutoStaticsCleanup]
         private static FilterFunctionDefinition s_GrayscaleDef;
+        [NoAutoStaticsCleanup]
         private static FilterFunctionDefinition s_SepiaDef;
+        [NoAutoStaticsCleanup]
         private static FilterFunctionDefinition s_ContrastDef;
+        [NoAutoStaticsCleanup]
         private static FilterFunctionDefinition s_HueRotateDef;
+        [NoAutoStaticsCleanup]
         private static FilterFunctionDefinition s_DropShadowDef;
 
         public static string GetBuiltinFilterName(FilterFunctionType type)
@@ -271,7 +282,8 @@ namespace UnityEngine.UIElements
                     material = blurMaterial,
                     passIndex = 0,
                     readMargins = new(),
-                    writeMargins = new()
+                    writeMargins = new(),
+                    expandsBackdropCapture = true
                 },
                 // Pass 1: vertical blur
                 new PostProcessingPass
@@ -279,7 +291,8 @@ namespace UnityEngine.UIElements
                     material = blurMaterial,
                     passIndex = 1,
                     readMargins = new(),
-                    writeMargins = new()
+                    writeMargins = new(),
+                    expandsBackdropCapture = true
                 },
                 // Pass 2: composite — reads V-blur output AND the texture that fed pass 0.
                 new PostProcessingPass
@@ -289,6 +302,7 @@ namespace UnityEngine.UIElements
                     readMargins = new(),
                     writeMargins = new(),
                     requiredInputTextureName = "Source",
+                    expandsBackdropCapture = true
                 },
             };
 
@@ -494,3 +508,4 @@ namespace UnityEngine.UIElements
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

@@ -4,11 +4,13 @@
 
 using System;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 
 namespace Unity.GraphToolkit.Editor
 {
-    static class InterfaceGetterExtension
+    static partial class InterfaceGetterExtension
     {
+        [AutoStaticsCleanupOnCodeReload]
         static Dictionary<Type, IReadOnlyList<Type>> s_InterfacesCache = new();
         public static IReadOnlyList<Type> GetDirectInterfaces(this Type type)
         {

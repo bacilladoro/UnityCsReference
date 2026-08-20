@@ -180,9 +180,9 @@ namespace Unity.GraphToolkit.ItemLibrary.Editor
 
         void OnTreeviewSelectionChange(IReadOnlyList<ITreeItemView> selection)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var selectedItems = selection
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 .OfType<IItemView>()
                 .Select(siv => siv.Item)
                 .ToList();
@@ -219,7 +219,7 @@ namespace Unity.GraphToolkit.ItemLibrary.Editor
             {
                 var type = nodeModel.GetType();
                 var portEntryName = string.IsNullOrEmpty(portToAdd.Title) ? $"Port {portWithEmptyTitleCount++}" : portToAdd.Title;
-                var portItem = new GraphNodeModelLibraryItem(portEntryName, new NodeItemLibraryData(type, portToAdd), nodeItem)
+                var portItem = new GraphNodeModelLibraryItem(portEntryName, new NodeItemLibraryData(type, portToAdd, graphModel.IsStateMachineGraph), nodeItem)
                 {
                     CategoryPath = selectedItem.FullName,
                     Help = selectedItem.Help
@@ -402,9 +402,9 @@ namespace Unity.GraphToolkit.ItemLibrary.Editor
 
         static string GetAutoCompletionSuggestion(string query, IReadOnlyList<ItemLibraryItem> results)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var bestMatch = results
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 .Select(si => si.Name)
                 .FirstOrDefault(n => n.StartsWith(query, StringComparison.OrdinalIgnoreCase));
             if (bestMatch != null && bestMatch.Length > query.Length && bestMatch[query.Length] != ' ')

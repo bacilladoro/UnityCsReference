@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Unity.Collections;
 using Unity.GraphToolkit.ItemLibrary.Editor;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -17,7 +18,7 @@ namespace Unity.GraphToolkit.Editor
     /// Helper class providing Item Library related functionality in GraphTools Foundation.
     /// </summary>
     [UnityRestricted]
-    internal static class ItemLibraryService
+    internal static partial class ItemLibraryService
     {
         /// <summary>
         /// Defines the usage context for the item library.
@@ -44,7 +45,8 @@ namespace Unity.GraphToolkit.Editor
             public const string Types = "types";
         }
 
-        public static readonly Comparison<ItemLibraryItem> TypeComparison = (x, y) =>
+        [AutoStaticsCleanupOnCodeReload]
+        public static Comparison<ItemLibraryItem> TypeComparison = (x, y) =>
         {
             return string.Compare(x.Name, y.Name, StringComparison.Ordinal);
         };
@@ -195,9 +197,9 @@ namespace Unity.GraphToolkit.Editor
             if (dbProvider == null)
                 return;
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var dbs = dbProvider.GetGraphElementsDatabases(null).ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             ShowDatabases(view, worldPosition, callback, dbs, filter, adapter, Usage.CreateNode);
         }
 
@@ -223,9 +225,9 @@ namespace Unity.GraphToolkit.Editor
 
             var blackboardModel = (view.Window as GraphViewEditorWindow)?.BlackboardView?.BlackboardRootViewModel?.BlackboardContentState?.BlackboardModel;
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var dbs = dbProvider.GetGraphElementsDatabases(blackboardModel)
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 .Concat(dbProvider.GetDynamicDatabases((PortModel)null))
                 .ToList();
 
@@ -239,9 +241,9 @@ namespace Unity.GraphToolkit.Editor
             Action<FindInGraphAdapter.FindItem> selectionDelegate
         )
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var items = graphView.GraphModel.NodeModels
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 .Where(x => x is IHasTitle titled && !string.IsNullOrEmpty(titled.Title))
                 .Select(x => MakeFindItems(x, x.Title))
                 .ToList();
@@ -268,9 +270,9 @@ namespace Unity.GraphToolkit.Editor
             Vector2 position,
             Action<Enum, int> callback)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var items = Enum.GetValues(enumType)
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 .Cast<Enum>()
                 .Select(v => new EnumValuesAdapter.EnumValueItem(v) as ItemLibraryItem)
                 .ToList();
@@ -300,9 +302,9 @@ namespace Unity.GraphToolkit.Editor
         public static ItemLibraryWindow ShowValues(RootView rootView, Preferences preferences, string title, IEnumerable<string> values, Vector2 position,
             Action<string> callback)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var items = values.Select(v => new ItemLibraryItem(v)).ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             return ShowValues(EditorWindow.focusedWindow, rootView, preferences, title, items, position, callback);
         }
 
@@ -519,9 +521,9 @@ namespace Unity.GraphToolkit.Editor
             var dynamicDatabases = dbProvider.GetDynamicDatabases(portModels);
             var variableDatabaseBases = dbProvider.GetGraphVariablesDatabases();
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             return graphElementDatabases.Concat(dynamicDatabases).Concat(variableDatabaseBases);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
     }
 }

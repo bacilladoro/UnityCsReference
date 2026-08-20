@@ -129,6 +129,11 @@ namespace UnityEditor.Modules
         [RequiredByNativeCode]
         static void EndProfile() => UnityBeeDriverProfilerSession.Finish();
 
+        // The session only writes its output file when it is finished, so consumers of that file can use
+        // this to check they are not running too early.
+        [RequiredByNativeCode]
+        static bool IsProfilerSessionActive() => UnityBeeDriverProfilerSession.PerformingPlayerBuild;
+
         [RequiredByNativeCode]
         static void BeginBuildSection(string name) => UnityBeeDriverProfilerSession.BeginSection(name);
 
@@ -143,9 +148,9 @@ namespace UnityEditor.Modules
         {
             return new PluginsData
             {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 Plugins = GetPluginBuildTargetsFor(args).SelectMany(buildTarget => GetPluginsFor(buildTarget, args)).ToArray()
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             };
         }
 
@@ -171,9 +176,9 @@ namespace UnityEditor.Modules
         {
             var compilationContext = new EditorBuildRules.SymbolDefinitionContext(args.defineConstraints);
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return PluginImporter.GetImporters(args.target)
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 // Only desktop C++ plugin files
                 .Where(imp => DesktopPluginImporterExtension.IsCppPluginFile(imp.assetPath))
 
@@ -267,18 +272,18 @@ namespace UnityEditor.Modules
             // In other modes (when stripping is desired), we pass only a smaller set of user assemblies (assemblies from
             // packages if used in any scenes, as well as any assembly from the Assets folder) as roots.
             var assembliesToProcess = strippingLevel == ManagedStrippingLevel.Disabled
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 ? GetFilesWithRoleFromBuildReport(args.report, "ManagedLibrary", "ManagedEngineAPI").Select(f => f.FileName)
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 : args.usedClassRegistry.GetUsedUserAssemblies();
 
             return new LinkerConfig
             {
                 LinkXmlFiles = AssemblyStripper.GetLinkXmlFiles(args, linkerInputDirectory),
                 EditorToLinkerData = AssemblyStripper.WriteEditorData(args, linkerInputDirectory),
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 AssembliesToProcess = assembliesToProcess.ToArray(),
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 Runtime = scriptingBackend.ToString().ToLowerInvariant(),
                 Profile = IL2CPPUtils.ApiCompatibilityLevelToDotNetProfileArgument(
                     PlayerSettings.GetApiCompatibilityLevel(namedBuildTarget), args.target, scriptingBackend),
@@ -393,10 +398,6 @@ namespace UnityEditor.Modules
             var allowDebugging = GetAllowDebugging(args);
             var profile = IL2CPPUtils.ApiCompatibilityLevelToDotNetProfileArgument(
                 PlayerSettings.GetApiCompatibilityLevel(namedBuildTarget), args.target, scriptingBackend);
-            string bclDistributionPath = null;
-            // Profile is null when BCL should be used
-            if (profile == null)
-                bclDistributionPath = IL2CPPUtils.GetIl2CppBclDistributionDirectory(args.target, args.options);
 
             NPath extraTypesFile = null;
             if (PlayerBuildInterface.ExtraTypesProvider != null)
@@ -408,9 +409,9 @@ namespace UnityEditor.Modules
                 }
 
                 extraTypesFile = "Temp/extra-types.txt";
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 extraTypesFile.WriteAllLines(extraTypes.ToArray());
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             }
 
             return new Il2CppConfig
@@ -445,7 +446,6 @@ namespace UnityEditor.Modules
                 SysRootPath = sysrootPath,
                 ToolChainPath = toolchainPath,
                 RelativeDataPath = relativeDataPath,
-                BclDistributionPath = bclDistributionPath,
                 ExtraTypes = extraTypesFile?.ToString(),
                 GenerateUsymFile = PlayerSettings.GetIl2CppStacktraceInformation(namedBuildTarget) == Il2CppStacktraceInformation.MethodFileLineNumber,
                 UsymtoolPath = GetUsymtoolPath(),
@@ -483,9 +483,9 @@ namespace UnityEditor.Modules
                 {
                     var setupResult = processor.PrepareOnMainThread(new () { report = args.report });
                     if (setupResult.additionalInputFiles != null)
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                         settings.AdditionalInputFiles = settings.AdditionalInputFiles.Concat(setupResult.additionalInputFiles).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     if (setupResult.displayName != null)
                         settings.DisplayName = setupResult.displayName;
                     settings.HasCallback = true;
@@ -519,15 +519,15 @@ namespace UnityEditor.Modules
                 EnablePerformanceReporting = UnityEngine.Analytics.PerformanceReporting.enabled,
                 EnableUnityConnect = UnityEngine.Connect.UnityConnectSettings.enabled,
             },
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             StreamingAssetsFiles = BuildPlayerContext.ActiveInstance.StreamingAssets
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 .Select(e => new StreamingAssetsFile { File = e.src.ToString(), RelativePath = e.dst.ToString() })
                 .ToArray(),
             UseNewInputSystem = IsNewInputSystemEnabled(),
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             ManagedAssemblies = GetFilesWithRoleFromBuildReport(args.report, "ManagedLibrary", "DependentManagedLibrary", "ManagedEngineAPI")
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 .Select(p => p.ToString())
                 .ToArray()
         };
@@ -607,9 +607,9 @@ namespace UnityEditor.Modules
                 : UnityBeeDriver.CacheMode.ReadWrite;
 
             var buildRequest = UnityBeeDriver.BuildRequestFor(args.target, args.options, buildProgram, DagName(args), DagDirectory.ToString(), false, "",ilpp, cacheMode, UnityBeeDriver.StdOutModeForPlayerBuilds, BeeBackendProgram(args));
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             buildRequest.DataForBuildProgram.Add(() => GetDataForBuildProgramFor(args).Where(o=> o is not null));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             return buildRequest;
         }
@@ -732,9 +732,9 @@ namespace UnityEditor.Modules
             if (printErrors)
             {
                 var errorKey = "error:";
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 foreach (var error in lines.Where(l =>
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     l.StartsWith(errorKey, StringComparison.InvariantCultureIgnoreCase)))
                     Debug.LogError($"{output}: {error.Substring(errorKey.Length).TrimStart()}");
             }
@@ -742,9 +742,9 @@ namespace UnityEditor.Modules
             if (printWarnings)
             {
                 var warningKey = "warning:";
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 foreach (var warning in lines.Where(l =>
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     l.StartsWith(warningKey, StringComparison.InvariantCultureIgnoreCase)))
                     Debug.LogWarning($"{output}: {warning.Substring(warningKey.Length).TrimStart()}");
             }
@@ -780,15 +780,15 @@ namespace UnityEditor.Modules
             // Once all platforms use the Bee backend, we can remove a lot
             // of code to add file entries in the native build pipeline.
             var filesOutput = BeeDriverResult.DataFromBuildProgram.Get<BuiltFilesOutput>();
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             args.report.ReplaceAllFileEntries(filesOutput.Files.ToNPaths().Where(f => f.FileExists() && !f.IsSymbolicLink));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             var config = filesOutput.BootConfigArtifact.ToNPath().ReadAllLines();
             var guidKey = "build-guid=";
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var guidLine = config.FirstOrDefault(l => l.StartsWith(guidKey));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             if (guidLine != null)
             {
                 var guid = guidLine.Substring(guidKey.Length);

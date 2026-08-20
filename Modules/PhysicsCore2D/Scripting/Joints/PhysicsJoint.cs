@@ -351,6 +351,15 @@ namespace Unity.U2D.Physics
         public readonly void SetOwnerUserData(PhysicsUserData physicsUserData, int ownerKey = 0) => PhysicsJoint_SetOwnerUserData(this, physicsUserData, ownerKey);
 
         /// <summary>
+        /// Set <see cref="PhysicsUserData"/> on a batch of joints that can be used for any purpose, typically by the owner only.
+        /// The joints and userDatas spans must be the same length; joints[n] receives userDatas[n].
+        /// </summary>
+        /// <param name="joints">The joints to set the owner user data on.</param>
+        /// <param name="userDatas">The user data to set, one entry per joint.</param>
+        /// <param name="ownerKey">Optional owner key returned when using <see cref="PhysicsJoint.SetOwner(UnityEngine.Object)"/>.</param>
+        public static void SetOwnerUserData(ReadOnlySpan<PhysicsJoint> joints, ReadOnlySpan<PhysicsUserData> userDatas, int ownerKey = 0) => PhysicsJoint_SetOwnerUserDataSpan(joints, userDatas, ownerKey);
+
+        /// <summary>
         /// Controls whether this joint is automatically drawn when the world is drawn.
         /// </summary>
         public readonly bool worldDrawing { get => PhysicsJoint_GetWorldDrawing(this); set => PhysicsJoint_SetWorldDrawing(this, value); }
@@ -479,7 +488,18 @@ namespace Unity.U2D.Physics
         /// Any invalid joints will be ignored.
         /// </summary>
         /// <param name="joints">The joints to destroy.</param>
-        public static void DestroyBatch(ReadOnlySpan<PhysicsJoint> joints) => PhysicsJoint_DestroyBatch(joints);
+        public static void DestroyBatch(ReadOnlySpan<PhysicsJoint> joints) => DestroyBatch(joints, 0);
+
+        /// <summary>
+        /// Destroy a batch of joints.
+        /// Any invalid joints are ignored.
+        /// A joint owned by a different owner key is skipped and left valid; a joint with no owner, or one matching the given owner key, is destroyed.
+        /// One summary warning reports how many joints were skipped this way, rather than one warning per joint.
+        /// </summary>
+        /// <remarks>See <see cref="PhysicsJoint.SetOwner(UnityEngine.Object)"/>.</remarks>
+        /// <param name="joints">The joints to destroy.</param>
+        /// <param name="ownerKey">Optional owner key returned when using <see cref="PhysicsJoint.SetOwner(UnityEngine.Object)"/>.</param>
+        public static void DestroyBatch(ReadOnlySpan<PhysicsJoint> joints, int ownerKey) => PhysicsJoint_DestroyBatch(joints, ownerKey);
 
         #endregion
     }

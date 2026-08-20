@@ -90,16 +90,20 @@ namespace Unity.GraphToolkit.Editor
         /// </summary>
         public GraphReference SubgraphReference { get; }
 
+        public bool IsInStateMachine { get; }
+
         /// <summary>
         /// Initializes a new instance of the NodeItemLibraryData class.
         /// </summary>
         /// <param name="type">Type of the node represented by the item.</param>
         /// <param name="subgraphReference">A reference to the subgraph to create.</param>
-        public NodeItemLibraryData(Type type, GraphReference subgraphReference)
+        /// <param name="isInStateMachine">Whether the node is in a state machine.</param>
+        public NodeItemLibraryData(Type type, GraphReference subgraphReference, bool isInStateMachine = false)
         {
             Type = type;
             PortToConnect = null;
             SubgraphReference = subgraphReference;
+            IsInStateMachine = isInStateMachine;
         }
 
         /// <summary>
@@ -107,22 +111,26 @@ namespace Unity.GraphToolkit.Editor
         /// </summary>
         /// <param name="type">Type of the node represented by the item.</param>
         /// <param name="portToConnect">The port to which the node will be connected, if created.</param>
-        public NodeItemLibraryData(Type type, PortModel portToConnect)
+        /// <param name="isInStateMachine">Whether the node is in a state machine.</param>
+        public NodeItemLibraryData(Type type, PortModel portToConnect, bool isInStateMachine = false)
         {
             Type = type;
             PortToConnect = portToConnect;
             SubgraphReference = default;
+            IsInStateMachine = isInStateMachine;
         }
 
         /// <summary>
         /// Initializes a new instance of the NodeItemLibraryData class.
         /// </summary>
         /// <param name="type">Type of the node represented by the item.</param>
-        public NodeItemLibraryData(Type type)
+        /// <param name="isInStateMachine">Whether the node is in a state machine.</param>
+        public NodeItemLibraryData(Type type, bool isInStateMachine = false)
         {
             Type = type;
             PortToConnect = null;
             SubgraphReference = default;
+            IsInStateMachine = isInStateMachine;
         }
     }
 }

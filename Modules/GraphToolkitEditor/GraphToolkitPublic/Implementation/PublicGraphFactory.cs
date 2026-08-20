@@ -6,32 +6,41 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEditor.Callbacks;
 using UnityEditor.ShortcutManagement;
 using UnityEngine;
 using UnityEngine.Pool;
-using InstanceID = System.Int32;
 
 namespace Unity.GraphToolkit.Editor.Implementation
 {
-    static class PublicGraphFactory
+    static partial class PublicGraphFactory
     {
         class GraphTypeInfos
         {
             public GraphAttribute attribute;
             public List<Type> subgraphTypes;
             public List<Type> nodeTypes;
+            public List<Type> stateTypes;
+            public List<Type> conditionTypes;
+            public List<Type> stateTransitionTypes;
             public Dictionary<Type, List<Type>> blockTypes;
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         static Dictionary<string, Type> s_ExtensionToGraphTypes = new ();
+        [AutoStaticsCleanupOnCodeReload]
         static Dictionary<Type, string> s_GraphTypeToExtensions = new ();
+        [AutoStaticsCleanupOnCodeReload]
         static Dictionary<Type, GraphTypeInfos> s_GraphInfos = new ();
+        [AutoStaticsCleanupOnCodeReload]
+        static Dictionary<Type, Type> s_GraphModelImpTypes = new ();
 
-        static PublicGraphFactory()
+        [OnCodeLoaded]
+        static void Initialize()
         {
-            var graphTypes = TypeCache.GetTypesDerivedFrom<Graph>();
+            var graphTypes = TypeCache.GetTypesDerivedFrom<IGraphInternal>();
 
             foreach (var graphType in graphTypes)
             {
@@ -66,7 +75,9 @@ namespace Unity.GraphToolkit.Editor.Implementation
 
                 var graphInfos = s_GraphInfos[kv.Value];
 
-                if (graphInfos.attribute.Options.HasFlag(GraphOptions.SupportsSubgraphs))
+                var supportsSubgraphs = graphInfos.attribute.Options.HasFlag(GraphOptions.SupportsSubgraphs) ||
+                    (graphInfos.attribute is StateMachineAttribute sm && sm.Options.HasFlag(StateMachineOptions.SupportsSubgraphs));
+                if (supportsSubgraphs)
                 {
                     if (graphInfos.subgraphTypes == null || graphInfos.subgraphTypes.Count == 0)
                     {
@@ -179,14 +190,14 @@ namespace Unity.GraphToolkit.Editor.Implementation
             void HandleSubGraphAttribute(Type graphType)
             {
                 var subGraphAttribute = graphType.GetCustomAttribute<SubgraphAttribute>(false);
-                if( subGraphAttribute == null) return;
+                if (subGraphAttribute == null) return;
                 if (subGraphAttribute.MainGraphType == null)
                 {
                     Debug.LogError($"{graphType.FullName} has a SubgraphAttribute with a null mainGraphType. Specify a valid mainGraphType.");
                     return;
                 }
 
-                if (!typeof(Graph).IsAssignableFrom(subGraphAttribute.MainGraphType))
+                if (!typeof(Graph).IsAssignableFrom(subGraphAttribute.MainGraphType) && !typeof(StateMachine).IsAssignableFrom(subGraphAttribute.MainGraphType))
                 {
                     Debug.LogError($"{graphType.FullName} has a SubgraphAttribute with a mainGraphType that isn't a subclass of Graph: {subGraphAttribute.MainGraphType.FullName}. Specify a valid mainGraphType.");
                     return;
@@ -222,6 +233,23 @@ namespace Unity.GraphToolkit.Editor.Implementation
             return null;
         }
 
+        /// <summary>
+        /// Gets the <see cref="GraphModelImp"/> subtype that backs the given public graph type.
+        /// </summary>
+        public static Type GetGraphModelImpType(Type graphType)
+        {
+            if (graphType == null)
+                return typeof(GraphModelImp);
+
+            if (!s_GraphModelImpTypes.TryGetValue(graphType, out var graphModelImpType))
+            {
+                graphModelImpType = typeof(StateMachine).IsAssignableFrom(graphType) ? typeof(StateMachineImp) : typeof(GraphModelImp);
+                s_GraphModelImpTypes.Add(graphType, graphModelImpType);
+            }
+
+            return graphModelImpType;
+        }
+
         public static IReadOnlyList<Type> GetSubGraphTypes(Type graphType)
         {
             var graphInfos  = s_GraphInfos[graphType];
@@ -239,7 +267,7 @@ namespace Unity.GraphToolkit.Editor.Implementation
             {
                 graphInfos.blockTypes = new Dictionary<Type, List<Type>>();
 
-                var dispose = HashSetPool<Type>.Get(out var nodeTypes);
+                using var dispose = HashSetPool<Type>.Get(out var nodeTypes);
                 nodeTypes.UnionWith(GetNodeTypes(graphType));
 
                 var blockTypes = TypeCache.GetTypesWithAttribute<UseWithContextAttribute>();
@@ -309,7 +337,7 @@ namespace Unity.GraphToolkit.Editor.Implementation
                 // Todo this could be done only once in a static constructor
                 var nodeTypes = TypeCache.GetTypesDerivedFrom<Node>();
 
-                var addedTypes = new HashSet<Type>();
+                using var dispose = HashSetPool<Type>.Get(out var addedTypes);
                 foreach (var nodeType in nodeTypes)
                 {
                     var attribute = nodeType.GetCustomAttribute<UseWithGraphAttribute>();
@@ -317,7 +345,7 @@ namespace Unity.GraphToolkit.Editor.Implementation
                         continue;
 
                     addedTypes.Add(nodeType);
-                    if( ! attribute.IsGraphTypeSupported(graphType))
+                    if (!attribute.IsGraphTypeSupported(graphType))
                         continue;
 
                     HandleNodeType(nodeType);
@@ -335,11 +363,11 @@ namespace Unity.GraphToolkit.Editor.Implementation
 
                 if (graphAttribute != null && !graphAttribute.Options.HasFlag(GraphOptions.DisableAutoInclusionOfNodesFromGraphAssembly))
                 {
-                    foreach (var type in graphType.Assembly.GetTypes())
+                    foreach (var type in nodeTypes)
                     {
-                        if (addedTypes.Contains(type))
+                        if (type.Assembly != graphType.Assembly)
                             continue;
-                        if (!typeof(Node).IsAssignableFrom(type))
+                        if (addedTypes.Contains(type))
                             continue;
 
                         HandleNodeType(type);
@@ -357,6 +385,192 @@ namespace Unity.GraphToolkit.Editor.Implementation
             }
 
             return graphInfos.nodeTypes;
+        }
+
+        public static IReadOnlyList<Type> GetStateTypes(Type graphType)
+        {
+            if (!s_GraphInfos.TryGetValue(graphType, out var graphInfos))
+                return Array.Empty<Type>();
+
+            if (graphInfos.stateTypes == null)
+            {
+                graphInfos.stateTypes = new List<Type>();
+
+                var stateTypes = TypeCache.GetTypesDerivedFrom<State>();
+
+                using var dispose = HashSetPool<Type>.Get(out var addedTypes);
+                foreach (var stateType in stateTypes)
+                {
+                    var attribute = stateType.GetCustomAttribute<UseWithStateMachineAttribute>();
+                    if (attribute == null)
+                        continue;
+
+                    addedTypes.Add(stateType);
+                    if (!attribute.IsStateMachineTypeSupported(graphType))
+                        continue;
+
+                    HandleStateType(stateType);
+                    var subStateTypes = TypeCache.GetTypesDerivedFrom(stateType);
+                    foreach (var subStateType in subStateTypes)
+                    {
+                        if( GetSpecificAttribute<UseWithStateMachineAttribute>(subStateType, stateType) != null) // if it has its own attribute, it will be handled in the loop above
+                            continue;
+                        addedTypes.Add(subStateType);
+                        HandleStateType(subStateType);
+                    }
+                }
+
+                var graphAttribute = graphType.GetCustomAttribute<GraphAttribute>();
+
+                if (graphAttribute != null && !graphAttribute.Options.HasFlag(GraphOptions.DisableAutoInclusionOfNodesFromGraphAssembly))
+                {
+                    foreach (var type in stateTypes)
+                    {
+                        if (type.Assembly != graphType.Assembly)
+                            continue;
+                        if (addedTypes.Contains(type))
+                            continue;
+
+                        HandleStateType(type);
+                    }
+                }
+
+                void HandleStateType(Type type)
+                {
+                    if( type.IsAbstract)
+                        return;
+
+                    graphInfos.stateTypes.Add(type);
+                }
+            }
+
+            return graphInfos.stateTypes;
+        }
+
+        /// <summary>
+        /// Gets the <see cref="Condition"/> types that can be used with the given graph type.
+        /// </summary>
+        /// <param name="graphType">The graph type.</param>
+        /// <returns>The condition types that can be used with the given graph type.</returns>
+        public static IReadOnlyList<Type> GetConditionTypes(Type graphType)
+        {
+            if (!s_GraphInfos.TryGetValue(graphType, out var graphInfos))
+                return Array.Empty<Type>();
+
+            if (graphInfos.conditionTypes == null)
+            {
+                graphInfos.conditionTypes = new List<Type>();
+
+                var conditionTypes = TypeCache.GetTypesDerivedFrom<Condition>();
+
+                var addedTypes = new HashSet<Type>();
+                foreach (var conditionType in conditionTypes)
+                {
+                    var attribute = conditionType.GetCustomAttribute<UseWithStateMachineAttribute>();
+                    if (attribute == null)
+                        continue;
+
+                    addedTypes.Add(conditionType);
+                    if (!attribute.IsStateMachineTypeSupported(graphType))
+                        continue;
+
+                    HandleConditionType(conditionType);
+                    var subConditionTypes = TypeCache.GetTypesDerivedFrom(conditionType);
+                    foreach (var subConditionType in subConditionTypes)
+                    {
+                        // if it has its own attribute, it will be handled in the loop above
+                        if (GetSpecificAttribute<UseWithStateMachineAttribute>(subConditionType, conditionType) != null)
+                            continue;
+                        addedTypes.Add(subConditionType);
+                        HandleConditionType(subConditionType);
+                    }
+                }
+
+                var graphAttribute = graphType.GetCustomAttribute<GraphAttribute>();
+
+                if (graphAttribute != null && !graphAttribute.Options.HasFlag(GraphOptions.DisableAutoInclusionOfNodesFromGraphAssembly))
+                {
+                    foreach (var type in graphType.Assembly.GetTypes())
+                    {
+                        if (addedTypes.Contains(type))
+                            continue;
+                        if (!typeof(Condition).IsAssignableFrom(type))
+                            continue;
+
+                        HandleConditionType(type);
+                    }
+                }
+
+                void HandleConditionType(Type type)
+                {
+                    if (type.IsAbstract || type.ContainsGenericParameters)
+                        return;
+
+                    graphInfos.conditionTypes.Add(type);
+                }
+            }
+
+            return graphInfos.conditionTypes;
+        }
+
+        public static IReadOnlyList<Type> GetSelfTransitionTypes(Type graphType)
+        {
+            if (!s_GraphInfos.TryGetValue(graphType, out var graphInfos))
+                return Array.Empty<Type>();
+
+            if (graphInfos.stateTransitionTypes == null)
+            {
+                graphInfos.stateTransitionTypes = new List<Type>();
+
+                var stateTransitionTypes = TypeCache.GetTypesDerivedFrom<SelfTransition>();
+
+                var addedTypes = new HashSet<Type>();
+                foreach (var stateTransitionType in stateTransitionTypes)
+                {
+                    var attribute = stateTransitionType.GetCustomAttribute<UseWithStateMachineAttribute>();
+                    if (attribute == null)
+                        continue;
+
+                    addedTypes.Add(stateTransitionType);
+                    if (!attribute.IsStateMachineTypeSupported(graphType))
+                        continue;
+
+                    HandleStateTransitionType(stateTransitionType);
+                    var subStateTransitionTypes = TypeCache.GetTypesDerivedFrom(stateTransitionType);
+                    foreach (var subStateTransitionType in subStateTransitionTypes)
+                    {
+                        if (GetSpecificAttribute<UseWithStateMachineAttribute>(subStateTransitionType, stateTransitionType) != null) // if it has its own attribute, it will be handled in the loop above
+                            continue;
+                        addedTypes.Add(subStateTransitionType);
+                        HandleStateTransitionType(subStateTransitionType);
+                    }
+                }
+
+                var graphAttribute = graphType.GetCustomAttribute<GraphAttribute>();
+
+                if (graphAttribute != null && !graphAttribute.Options.HasFlag(GraphOptions.DisableAutoInclusionOfNodesFromGraphAssembly))
+                {
+                    foreach (var type in stateTransitionTypes)
+                    {
+                        if (type.Assembly != graphType.Assembly)
+                            continue;
+                        if (addedTypes.Contains(type))
+                            continue;
+
+                        HandleStateTransitionType(type);
+                    }
+                }
+
+                void HandleStateTransitionType(Type type)
+                {
+                    if (type.IsAbstract)
+                        return;
+
+                    graphInfos.stateTransitionTypes.Add(type);
+                }
+            }
+
+            return graphInfos.stateTransitionTypes;
         }
 
         [OnOpenAsset(999)]
@@ -379,7 +593,7 @@ namespace Unity.GraphToolkit.Editor.Implementation
             if (graphObject.GraphModel is not GraphModelImp graphModel)
                 return false;
 
-            if (graphModel.GetType() != typeof(GraphModelImp))
+            if (graphModel.GetType() != GetGraphModelImpType(graphType))
                 return false;
 
             if( graphModel.Graph.GetType() != graphType)

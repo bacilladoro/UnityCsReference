@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using System.Collections.Generic;
 using Unity.UIToolkit.Editor.Utilities;
 using UnityEditor;
 using UnityEditor.AnimationWindowBuiltin;
@@ -26,6 +27,10 @@ namespace Unity.UIToolkit.Editor
         protected IAnimationWindowController m_Controller;
         protected UIAnimationClip m_UIClip;
         protected AnimationWindowClip m_Clip;
+
+        // Full ordered clip list for the dropdown; the active clip (m_UIClip) is always one of these.
+        readonly List<UIAnimationClip> m_UIClips = new();
+        readonly List<UIAnimationClip> m_ScratchClips = new();
 
         protected static readonly string k_OnboardingLabelFormat = L10n.Tr("To begin animating {0}, create a UI Animation Clip.");
         protected UIToolkitAnimationSelectionItemBase(AnimationWindow window)
@@ -58,13 +63,21 @@ namespace Unity.UIToolkit.Editor
         // (inline VTA sheet for a VisualElement, ...).
         protected abstract void AssignClipToTarget(UIAnimationClip newClip);
 
-        // Bookkeeping after the asset has been created and assigned. Default wires the new clip
-        // into the shared clip-state fields so the Animation Window surfaces the new curves immediately.
-        protected virtual void OnClipAssigned(UIAnimationClip newClip) => SetUIClip(newClip);
+        // Bookkeeping after the asset has been created and assigned. Wires the new clip into the shared clip-state fields and the dropdown list.
+        protected virtual void OnClipAssigned(UIAnimationClip newClip)
+        {
+            if (newClip != null && !m_UIClips.Contains(newClip))
+            {
+                m_UIClips.Add(newClip);
+                m_ClipsCacheDirty = true;
+            }
+            SetUIClip(newClip);
+        }
 
         // Re-point the shared clip-state fields at a (possibly null) UIAnimationClip, creating the
         // inner AnimationClip on demand. Subclasses go through this so the curve editor /
-        // dope sheet always sees a consistent wrapper.
+        // dope sheet always sees a consistent wrapper. This changes the ACTIVE clip only; the
+        // dropdown list (m_UIClips) is maintained separately by ReconcileClips / OnClipAssigned.
         protected void SetUIClip(UIAnimationClip uiClip)
         {
             if (uiClip != null && uiClip.animationClip == null)
@@ -72,7 +85,8 @@ namespace Unity.UIToolkit.Editor
 
             m_UIClip = uiClip;
             var inner = uiClip != null ? uiClip.animationClip : null;
-            m_Clip = inner != null ? new VisualElementAnimationWindowClip(inner) : null;
+            m_Clip = inner != null ? new VisualElementAnimationWindowClip(uiClip) : null;
+            m_ClipsCacheDirty = true;
         }
 
         // Without an inner AnimationClip, `disabled` reports true and the Animation Window paints
@@ -96,13 +110,16 @@ namespace Unity.UIToolkit.Editor
             }
         }
 
-        // Drop the current clip and let subclasses tear down their controller-side state.
+        // Drop the current clip + list and let subclasses tear down their controller-side state.
         protected void ClearClip()
         {
-            if (m_Clip == null)
+            bool hadClip = m_Clip != null;
+            if (!hadClip && m_UIClips.Count == 0)
                 return;
 
-            OnClipCleared();
+            if (hadClip)
+                OnClipCleared();
+            m_UIClips.Clear();
             SetUIClip(null);
         }
 
@@ -146,11 +163,39 @@ namespace Unity.UIToolkit.Editor
         public virtual IAnimationWindowClip clip
         {
             get => m_Clip;
-            set => m_Clip = value as AnimationWindowClip;
+            // The dropdown sets clip to the picked wrapper; re-point the active UIAnimationClip so the controller follows, or store m_Clip for an unrecognized wrapper.
+            set
+            {
+                var incoming = value as AnimationWindowClip;
+                var matched = FindUIClipFor(incoming);
+                if (matched != null && matched != m_UIClip)
+                    SetUIClip(matched);
+                else
+                    m_Clip = incoming;
+            }
+        }
+
+        // Match a dropdown wrapper to its UIAnimationClip by inner AnimationClip identity (AnimationWindowClip's equality).
+        UIAnimationClip FindUIClipFor(AnimationWindowClip wrapper)
+        {
+            var inner = wrapper?.animationClip;
+            if (inner == null)
+                return null;
+            for (int i = 0; i < m_UIClips.Count; i++)
+            {
+                var candidate = m_UIClips[i];
+                if (candidate != null && candidate.animationClip == inner)
+                    return candidate;
+            }
+            // The active clip may not have been reconciled into the list yet (fresh create).
+            if (m_UIClip != null && m_UIClip.animationClip == inner)
+                return m_UIClip;
+            return null;
         }
 
         public virtual bool disabled => m_Clip == null || !m_Clip.isValid;
-        public bool isReadOnly => m_Clip != null && m_Clip.isReadOnly;
+        // AnimationWindowClip.isReadOnly reads the inner clip's hideFlags without a null check, so guard on isValid first (a destroyed clip would throw).
+        public bool isReadOnly => m_Clip != null && m_Clip.isValid && m_Clip.isReadOnly;
         public virtual bool canChangeClip => true;
         // Gating on `disabled` keeps the toolbar "+" popup and the inline tree-row "Add Property"
         // button in sync; otherwise the popup lists properties that CreateDefaultCurves would
@@ -158,17 +203,135 @@ namespace Unity.UIToolkit.Editor
         public virtual bool canAddCurves => !disabled && !isReadOnly;
         public abstract bool canCreateClips { get; }
 
-        private IAnimationWindowClip[] m_ClipsCache;
+        IAnimationWindowClip[] m_ClipsCache;
+        bool m_ClipsCacheDirty = true;
+
+        // The active clip's entry is m_Clip itself, so selection.clip stays reference-equal to its dropdown entry.
         public virtual IAnimationWindowClip[] GetClips()
         {
-            if (m_Clip == null || !m_Clip.isValid)
-                return Array.Empty<IAnimationWindowClip>();
-
-            if (m_ClipsCache == null || m_ClipsCache[0] != m_Clip)
+            // Before the first Synchronize the list is empty; surface just the active clip.
+            if (m_UIClips.Count == 0)
             {
-                m_ClipsCache = new IAnimationWindowClip[] { m_Clip };
+                if (m_Clip == null || !m_Clip.isValid)
+                    return Array.Empty<IAnimationWindowClip>();
+                if (m_ClipsCache == null || m_ClipsCache.Length != 1 || m_ClipsCache[0] != m_Clip)
+                    m_ClipsCache = new IAnimationWindowClip[] { m_Clip };
+                return m_ClipsCache;
             }
+
+            if (m_ClipsCacheDirty || m_ClipsCache == null || m_ClipsCache.Length != CountValidClips())
+                RebuildClipsCache();
             return m_ClipsCache;
+        }
+
+        int CountValidClips()
+        {
+            int count = 0;
+            for (int i = 0; i < m_UIClips.Count; i++)
+            {
+                var c = m_UIClips[i];
+                if (c != null && c.animationClip != null)
+                    count++;
+            }
+            return count;
+        }
+
+        void RebuildClipsCache()
+        {
+            int count = CountValidClips();
+            if (count == 0)
+            {
+                m_ClipsCache = Array.Empty<IAnimationWindowClip>();
+                m_ClipsCacheDirty = false;
+                return;
+            }
+
+            var cache = new IAnimationWindowClip[count];
+            int w = 0;
+            for (int i = 0; i < m_UIClips.Count; i++)
+            {
+                var c = m_UIClips[i];
+                if (c == null || c.animationClip == null)
+                    continue;
+                cache[w++] = (c == m_UIClip && m_Clip != null && m_Clip.isValid)
+                    ? m_Clip
+                    : new VisualElementAnimationWindowClip(c);
+            }
+            m_ClipsCache = cache;
+            m_ClipsCacheDirty = false;
+        }
+
+        // Preserves the active clip if it survived the refresh (so a dropdown pick / in-flight preview sticks), else falls back to the first clip.
+        protected void ReconcileClips(IEnumerable<UIAnimationClip> resolvedClips)
+        {
+            m_ScratchClips.Clear();
+            if (resolvedClips != null)
+            {
+                foreach (var uiClip in resolvedClips)
+                {
+                    if (uiClip == null || m_ScratchClips.Contains(uiClip))
+                        continue;
+                    m_ScratchClips.Add(uiClip);
+                }
+            }
+
+            if (m_ScratchClips.Count == 0)
+            {
+                ClearClip();
+                return;
+            }
+
+            bool ensuredInner = false;
+            for (int i = 0; i < m_ScratchClips.Count; i++)
+            {
+                var c = m_ScratchClips[i];
+                if (c.animationClip == null)
+                {
+                    EnsureInnerAnimationClip(c);
+                    ensuredInner = true;
+                }
+            }
+
+            if (!SameSequence(m_UIClips, m_ScratchClips))
+            {
+                m_UIClips.Clear();
+                m_UIClips.AddRange(m_ScratchClips);
+                m_ClipsCacheDirty = true;
+            }
+            else if (ensuredInner)
+            {
+                m_ClipsCacheDirty = true;
+            }
+
+            var active = (m_UIClip != null && m_UIClips.Contains(m_UIClip)) ? m_UIClip : m_UIClips[0];
+            if (active != m_UIClip || m_Clip == null || m_Clip.animationClip != active.animationClip)
+                SetUIClip(active);
+        }
+
+        static bool SameSequence(List<UIAnimationClip> a, List<UIAnimationClip> b)
+        {
+            if (a.Count != b.Count)
+                return false;
+            for (int i = 0; i < a.Count; i++)
+            {
+                if (!ReferenceEquals(a[i], b[i]))
+                    return false;
+            }
+            return true;
+        }
+
+        protected List<UIAnimationClip> BuildClipListWithAppended(UIAnimationClip newClip)
+        {
+            var list = new List<UIAnimationClip>(m_UIClips.Count + 1);
+            for (int i = 0; i < m_UIClips.Count; i++)
+            {
+                var c = m_UIClips[i];
+                if (c != null && c != newClip)
+                    list.Add(c);
+            }
+            if (newClip != null)
+                list.Add(newClip);
+            return list;
         }
 
         public virtual void Synchronize() { }

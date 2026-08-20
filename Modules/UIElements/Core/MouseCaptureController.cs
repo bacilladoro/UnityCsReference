@@ -2,17 +2,21 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
 using System;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEngine.UIElements
 {
     /// <summary>
     /// Class that manages capturing mouse events.
     /// </summary>
-    public static class MouseCaptureController
+    public static partial class MouseCaptureController
     {
 #pragma warning disable 414
+        [AutoStaticsCleanupOnCodeReload]
         static bool m_IsMouseCapturedWarningEmitted = false;
+        [AutoStaticsCleanupOnCodeReload]
         static bool m_ReleaseMouseWarningEmitted = false;
 #pragma warning restore 414
 
@@ -78,3 +82,4 @@ namespace UnityEngine.UIElements
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

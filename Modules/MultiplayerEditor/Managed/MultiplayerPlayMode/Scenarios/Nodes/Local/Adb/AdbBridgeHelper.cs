@@ -4,6 +4,7 @@
 
 using System;
 using System.Reflection;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEditor;
 using Object = System.Object;
@@ -16,7 +17,7 @@ namespace Unity.Multiplayer.PlayMode.Editor
     /// It solves the problem where if you have mppm package installed, but there's no Android Support installed, you won't get compiler errors
     /// It also enables to use certain android features of the mppm package when active platform is not Android
     /// </summary>
-    class AdbBridgeHelper
+    partial class AdbBridgeHelper
     {
         enum ExtensionState
         {
@@ -25,7 +26,9 @@ namespace Unity.Multiplayer.PlayMode.Editor
             Available
         }
 
+        [AutoStaticsCleanupOnCodeReload] // lazy detection of Android extension assembly; must re-detect after reload
         private static ExtensionState s_AndroidExtensionsState = ExtensionState.Undefined;
+        [AutoStaticsCleanupOnCodeReload] // cached assembly reference; stale after reload
         private static Assembly s_AndroidExtensions;
         private static readonly string kAndroidLogcatWarningIssued = nameof(kAndroidLogcatWarningIssued);
 
@@ -67,11 +70,15 @@ namespace Unity.Multiplayer.PlayMode.Editor
 
         internal static bool AndroidExtensionsInstalled => AndroidExtensions != null;
 
-        internal class ADB
+        internal partial class ADB
         {
+            [AutoStaticsCleanupOnCodeReload] // cached reflection type; stale after reload
             private static Type s_ADBType;
+            [AutoStaticsCleanupOnCodeReload] // cached reflection method; stale after reload
             private static MethodInfo s_GetInstanceMethodInfo;
+            [AutoStaticsCleanupOnCodeReload] // cached reflection method; stale after reload
             private static MethodInfo s_GetADBPathMethodInfo;
+            [AutoStaticsCleanupOnCodeReload] // cached reflection method; stale after reload
             private static MethodInfo s_RunMethodInfo;
 
             private readonly System.Object m_ADBObject;
@@ -149,9 +156,11 @@ namespace Unity.Multiplayer.PlayMode.Editor
             }
         }
 
-        internal class Device
+        internal partial class Device
         {
+            [AutoStaticsCleanupOnCodeReload] // cached reflection type; stale after reload
             private static Type s_AndroidDeviceType;
+            [AutoStaticsCleanupOnCodeReload] // cached reflection property; stale after reload
             private static PropertyInfo s_PropertiesPropertyInfo;
 
             private System.Object m_AndroidDeviceObject;
@@ -210,10 +219,13 @@ namespace Unity.Multiplayer.PlayMode.Editor
             public PropertiesTable Properties => new PropertiesTable(PropertiesPropertyInfo.GetValue(m_AndroidDeviceObject, null));
         }
 
-        internal class ExternalToolsSettings
+        internal partial class ExternalToolsSettings
         {
+            [AutoStaticsCleanupOnCodeReload] // cached reflection type; stale after reload
             private static Type s_AndroidExternalToolsSettingsType;
+            [AutoStaticsCleanupOnCodeReload] // cached reflection property; stale after reload
             private static PropertyInfo s_NdkRootPathProperty;
+            [AutoStaticsCleanupOnCodeReload] // cached reflection property; stale after reload
             private static PropertyInfo s_SdkRootPathProperty;
 
             private static Type UnderlyingType

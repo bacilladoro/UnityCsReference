@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 
 namespace Unity.Multiplayer.PlayMode.Editor
@@ -30,22 +31,30 @@ namespace Unity.Multiplayer.PlayMode.Editor
         Player4
     }
 
-    static class MultiplayerPlaymode
+    static partial class MultiplayerPlaymode
     {
         const string k_EditorModeName = "com.unity.mppm.clone";
         const string k_VPPrefix = "mppm";
 
+        [AutoStaticsCleanupOnCodeReload] // init gate; must reset so initialization re-runs after reload
         public static bool IsVirtualProjectWorkflowInitialized { get; set; }
 
+        [AutoStaticsCleanupOnCodeReload] // player object; stale after reload
         public static UnityPlayer PlayerOne { get; private set; }
+        [AutoStaticsCleanupOnCodeReload] // player object; stale after reload
         public static UnityPlayer PlayerTwo { get; private set; }
+        [AutoStaticsCleanupOnCodeReload] // player object; stale after reload
         public static UnityPlayer PlayerThree { get; private set; }
+        [AutoStaticsCleanupOnCodeReload] // player object; stale after reload
         public static UnityPlayer PlayerFour { get; private set; }
 
+        [AutoStaticsCleanupOnCodeReload] // player array; stale after reload
         public static UnityPlayer[] Players { get; private set; }
+        [AutoStaticsCleanupOnCodeReload] // player tags object; stale after reload
         public static UnityPlayerTags PlayerTags { get; private set; }
 
-        static MultiplayerPlaymode()
+        [OnCodeLoaded]
+        static void InitializeOnLoad()
         {
             VirtualProjectWorkflow.OnInitialized += isMainEditor =>
             {

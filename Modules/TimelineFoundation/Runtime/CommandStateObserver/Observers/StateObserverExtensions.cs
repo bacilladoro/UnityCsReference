@@ -32,9 +32,9 @@ namespace Unity.Timeline.Foundation.CSO
         /// <returns>An <see cref="IEnumerable{Observation}"/> object.</returns>
         public static IEnumerable<Observation> ObserveStates(this IStateObserver observer, IEnumerable<IStateComponent> stateComponents)
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return stateComponents.Select(s => new Observation(observer, s));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         /// <summary>

@@ -7,6 +7,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.GraphToolkit.Editor.ContextualMenuItems;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 
 namespace Unity.GraphToolkit.Editor
@@ -16,7 +17,7 @@ namespace Unity.GraphToolkit.Editor
     /// </summary>
     [Serializable]
     [UnityRestricted]
-    internal class ConstantNodeModel : NodeModel, ISingleOutputPortNodeModel, ICloneable
+    internal partial class ConstantNodeModel : NodeModel, ISingleOutputPortNodeModel, ICloneable
     {
         const string k_OutputPortId = "Output_0";
 
@@ -40,9 +41,9 @@ namespace Unity.GraphToolkit.Editor
         public override string Title => string.Empty;
 
         /// <inheritdoc />
-        #pragma warning disable UA2011 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+        #pragma warning disable UAC2011 // Avoid Linq
         public PortModel OutputPort => OutputsById.Values.FirstOrDefault();
-#pragma warning restore UA2011
+#pragma warning restore UAC2011
 
         /// <summary>
         /// The value of the node.
@@ -177,7 +178,8 @@ namespace Unity.GraphToolkit.Editor
             }
         }
 
-        static readonly List<ContextualMenuItem> k_ContextualMenuItems =  new() {
+        [AutoStaticsCleanupOnCodeReload]
+        static List<ContextualMenuItem> k_ContextualMenuItems =  new() {
             ContextualMenuHelpers.convertToVariableItem,
             new ContextualMenuItem(ContextualMenuHelpers.itemizeItem, 0),
         };

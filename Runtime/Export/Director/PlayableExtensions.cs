@@ -39,13 +39,10 @@ namespace UnityEngine.Playables
             return playable.GetHandle().GetGraph();
         }
 
-        [Obsolete("SetPlayState() has been deprecated. Use Play(), Pause() or SetDelay() instead", false)]
+        [Obsolete("SetPlayState() has been deprecated. Use Play() or Pause() instead", true)]
         public static void SetPlayState<U>(this U playable, PlayState value)
             where U : struct, IPlayable
         {
-            if (value == PlayState.Delayed)
-                throw new ArgumentException("Can't set Delayed: use SetDelay() instead");
-
             switch (value)
             {
                 case PlayState.Playing:
@@ -246,33 +243,34 @@ namespace UnityEngine.Playables
             return inputIndex;
         }
 
-        [Obsolete("SetDelay is obsolete; use a custom ScriptPlayable to implement this feature", false)]
+        [Obsolete("SetDelay is obsolete; use a custom ScriptPlayable to implement this feature", true)]
         public static void SetDelay<U>(this U playable, double delay)
             where U : struct, IPlayable
         {
-            playable.GetHandle().SetDelay(delay);
         }
 
-        [Obsolete("GetDelay is obsolete; use a custom ScriptPlayable to implement this feature", false)]
+        [Obsolete("GetDelay is obsolete; use a custom ScriptPlayable to implement this feature", true)]
         public static double GetDelay<U>(this U playable)
             where U : struct, IPlayable
         {
-            return playable.GetHandle().GetDelay();
+            return 0;
         }
 
-        [Obsolete("IsDelayed is obsolete; use a custom ScriptPlayable to implement this feature", false)]
+        [Obsolete("IsDelayed is obsolete; use a custom ScriptPlayable to implement this feature", true)]
         public static bool IsDelayed<U>(this U playable)
             where U : struct, IPlayable
         {
-            return playable.GetHandle().IsDelayed();
+            return false;
         }
 
+        [Obsolete("SetLeadTime is obsolete. It was used to trigger PlayableBehaviour.PrepareData as part of the now obsolete Playable Delay functionality. Since this deprecation SetLeadTime has no effect and will be removed in a future version. You can emulate this functionality by implementing your own delay mechanism as part of a PlayableBehaviour", false)]
         public static void SetLeadTime<U>(this U playable, float value)
             where U : struct, IPlayable
         {
             playable.GetHandle().SetLeadTime(value);
         }
 
+        [Obsolete("GetLeadTime is obsolete. It was used to trigger PlayableBehaviour.PrepareData as part of the now obsolete Playable Delay functionality. Since this deprecation GetLeadTime has no effect and will be removed in a future version. You can emulate this functionality by implementing your own delay mechanism as part of a PlayableBehaviour", false)]
         public static float GetLeadTime<U>(this U playable)
             where U : struct, IPlayable
         {

@@ -44,8 +44,8 @@ namespace Unity.ProjectAuditor.Editor.UI
             var header = m_Table.multiColumnHeader;
             header.canSort = true;
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
-#pragma warning disable UA2005 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
+#pragma warning disable UAC2005 // Avoid Linq
             var list = new List<GroupStats>(
                 m_Issues.GroupBy(i => i.GetCustomProperty(BuildReportFileProperty.RuntimeType)).Select(g => new GroupStats
                 {
@@ -55,8 +55,8 @@ namespace Unity.ProjectAuditor.Editor.UI
                 }));
             list.Sort((a, b) => b.size.CompareTo(a.size));
             m_GroupStats = list.Take(k_MaxGroupCount).ToArray();
-#pragma warning restore UA2001
-#pragma warning restore UA2005
+#pragma warning restore UAC2001
+#pragma warning restore UAC2005
         }
 
         public override void Clear()
@@ -81,9 +81,9 @@ namespace Unity.ProjectAuditor.Editor.UI
                 EditorGUI.indentLevel++;
 
                 var width = 220;
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 var dataSize = m_GroupStats.Sum(g => g.size);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 EditorGUILayout.BeginHorizontal();
                 EditorGUILayout.LabelField("Total Assets size (Uncompressed)", SharedStyles.Label, GUILayout.Width(width));
                 EditorGUILayout.LabelField(Formatting.FormatSize((ulong)dataSize), SharedStyles.Label);
@@ -93,9 +93,9 @@ namespace Unity.ProjectAuditor.Editor.UI
 
                 EditorGUILayout.BeginVertical();
 
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 var maxGroupSize = (float)m_GroupStats.Max(g => g.size);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 foreach (var group in m_GroupStats)
                 {
                     var groupSize = group.size;

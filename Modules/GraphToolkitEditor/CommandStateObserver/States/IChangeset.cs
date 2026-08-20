@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using Unity.GraphToolkit.Editor;
+using Unity.Scripting.LifecycleManagement;
 
 namespace Unity.GraphToolkit.CSO
 {
@@ -14,6 +15,7 @@ namespace Unity.GraphToolkit.CSO
     [UnityRestricted]
     internal interface IChangeset
     {
+        [NoAutoStaticsCleanup] // temporary buffer cleared after each Copy call; never holds persistent references
         private static List<IChangeset> s_SingleChangesetList = new(1);
 
         /// <summary>

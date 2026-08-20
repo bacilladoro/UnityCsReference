@@ -624,11 +624,16 @@ namespace Unity.GraphToolkit.Editor
         /// <summary>
         /// Called after the graph has changed.
         /// </summary>
-        /// <param name="graphLogger">The <see cref="GraphLogger"/> that receives any errors or warnings related to the graph.</param>
+        /// <param name="graphLogger">The <see cref="GraphLogger"/> that receives any errors or warnings related to the graph,
+        /// and provides access to information about what changed (added/deleted/modified nodes).</param>
         /// <remarks>
-        /// Unity calls this method after any change to the graph. Override it to validate the graph's integrity
-        /// and report issues using the provided <see cref="GraphLogger"/>. Use this method to detect invalid configurations,
-        /// highlight issues in the editor, or provide user feedback.
+        /// Unity calls this method after any change to the graph. Override it to validate the graph's integrity,
+        /// log issues using the provided <see cref="GraphLogger"/>, or react to specific changes via
+        /// <see cref="GraphLogger.GraphChanges"/>.
+        ///
+        /// Use this method to detect invalid configurations, highlight issues in the editor, or provide user feedback.
+        /// You can iterate the changed nodes efficiently without checking all nodes in the graph.
+        ///
         /// Do not modify the graph within this method, as it may cause instability or recursive updates.
         /// </remarks>
         public virtual void OnGraphChanged(GraphLogger graphLogger) { }
@@ -650,6 +655,49 @@ namespace Unity.GraphToolkit.Editor
         {
             CheckImplementation();
             m_Implementation.UndoBeginRecordGraph(actionName);
+        }
+
+        /// <summary>
+        /// Signals the beginning of an undoable operation and opts specific nodes into full serialized-state capture.
+        /// </summary>
+        /// <param name="actionName">The name of the operation, which is displayed in the undo menu.</param>
+        /// <param name="nodesToRecord">
+        /// The nodes whose serialized state you plan to mutate inside this scope. Each node must belong to this graph.
+        /// </param>
+        /// <exception cref="InvalidOperationException">
+        /// Thrown if an undo operation has already been registered to the Graph.
+        /// </exception>
+        /// <remarks>
+        /// Use this overload when your custom <see cref="Node"/> subclasses expose <c>[SerializeField]</c> fields that you
+        /// mutate directly (for example, from a <see cref="NodeView{T}"/> callback), rather than through the built-in
+        /// graph modification methods.
+        ///
+        /// Passing nodes here has two effects at <see cref="UndoEndRecordGraph"/> time:
+        /// <list type="bullet">
+        /// <item><description>
+        /// Unity's undo system captures the full serialized state of the containing graph asset at Begin, so undo restores
+        /// the previous values of your <c>[SerializeField]</c> fields.
+        /// </description></item>
+        /// <item><description>
+        /// The nodes are reported as changed to <see cref="OnGraphChanged"/> and the graph asset is marked dirty.
+        /// </description></item>
+        /// </list>
+        ///
+        /// <para>
+        /// The change-notification side effects (<see cref="OnGraphChanged"/> and automatic dirty-marking) run
+        /// inside <see cref="UndoEndRecordGraph"/> only when the graph is currently being displayed in a GraphView
+        /// window. From an editor script or other headless context with no open window, undo capture via
+        /// <c>Undo.RegisterCompleteObjectUndo</c> still occurs and undo restores your <c>[SerializeField]</c> values
+        /// as expected, but <see cref="OnGraphChanged"/> is not invoked and the asset is not automatically marked dirty.
+        /// To persist your changes in that case, call <see cref="GraphDatabase.SaveGraph"/> explicitly.
+        /// </para>
+        ///
+        /// If you only call the built-in graph modification methods, use the parameterless <see cref="UndoBeginRecordGraph(string)"/> overload instead.
+        /// </remarks>
+        public void UndoBeginRecordGraph(string actionName, params Node[] nodesToRecord)
+        {
+            CheckImplementation();
+            m_Implementation.UndoBeginRecordGraph(actionName, nodesToRecord);
         }
 
         /// <summary>

@@ -4,7 +4,7 @@
 
 using System;
 using System.Collections.Generic;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
 namespace Unity.Multiplayer.PlayMode.Editor
 {
@@ -17,14 +17,14 @@ namespace Unity.Multiplayer.PlayMode.Editor
     [Serializable]
     class PlayerStateJson
     {
-        [JsonProperty] public string Name { get; internal set; } // can be changed in Editor
-        [JsonProperty] public List<string> Tags { get; internal set; }
-        [JsonProperty] public bool Active { get; internal set; } // can be changed at Runtime
-        [JsonProperty] public int Index { get; internal set; } // can NOT be changed
-        [JsonProperty] public PlayerType Type { get; internal set; } // can NOT be changed
-        [JsonProperty] public PlayerIdentifier PlayerIdentifier { get; internal set; } // can NOT be changed (assigned at player creation)
-        [JsonProperty] public TypeDependentPlayerInfo TypeDependentPlayerInfo { get; internal set; } // changed depending on a players needs
-        [JsonProperty] public int MultiplayerRole { get; internal set; }    // this is used only when UNITY_USE_MULTIPLAYER_ROLES is active
+        [JsonInclude] public string Name { get; internal set; } // can be changed in Editor
+        [JsonInclude] public List<string> Tags { get; internal set; }
+        [JsonInclude] public bool Active { get; internal set; } // can be changed at Runtime
+        [JsonInclude] public int Index { get; internal set; } // can NOT be changed
+        [JsonInclude] public PlayerType Type { get; internal set; } // can NOT be changed
+        [JsonInclude] public PlayerIdentifier PlayerIdentifier { get; internal set; } // can NOT be changed (assigned at player creation)
+        [JsonInclude] public TypeDependentPlayerInfo TypeDependentPlayerInfo { get; internal set; } // changed depending on a players needs
+        [JsonInclude] public int MultiplayerRole { get; internal set; }    // this is used only when UNITY_USE_MULTIPLAYER_ROLES is active
 
         public static PlayerStateJson NewMain()
         {

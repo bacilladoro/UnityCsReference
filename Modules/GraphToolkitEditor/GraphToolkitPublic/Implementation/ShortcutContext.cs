@@ -8,7 +8,7 @@ using UnityEngine.UIElements;
 
 namespace Unity.GraphToolkit.Editor.Implementation
 {
-    class GraphToolkitShortcuts<T> : IShortcutContextHandler, IShortcutContext where T : Graph
+    class GraphToolkitShortcuts<T> : IShortcutContextHandler, IShortcutContext where T : IGraphInternal
     {
         public bool active => EditorWindow.focusedWindow is GraphViewEditorWindowImp graphWindow && graphWindow.GraphTool.ToolState.GraphModel is GraphModelImp graphModel && graphModel.Graph is T;
 

@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 
 namespace Unity.GraphToolkit.Editor
 {
@@ -23,6 +24,7 @@ namespace Unity.GraphToolkit.Editor
         /// 'VariableCreationContext' represents the context for creating the <see cref="BlackboardField"/> of a variable, which displays the variable in the blackboard without its quick access section
         /// The quick access section is created separately in a different context (see <see cref="VariablePropertyCreationContext"/>).
         /// </remarks>
+        [NoAutoStaticsCleanup] // singleton context instance used as a factory key; safe to persist across reload
         public static readonly BlackboardCreationContext VariableCreationContext = new BlackboardCreationContext();
 
         /// <summary>
@@ -33,6 +35,7 @@ namespace Unity.GraphToolkit.Editor
         /// settings section in the blackboard. This section displays various properties of the variable for easy access. The main UI for the variable itself is created in a separate
         /// context (see <see cref="VariableCreationContext"/>).
         /// </remarks>
+        [NoAutoStaticsCleanup] // singleton context instance used as a factory key; safe to persist across reload
         public static readonly BlackboardCreationContext VariablePropertyCreationContext = new BlackboardCreationContext();
 
         public bool Equals(IViewContext other)

@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitAuthoringFramework not yet converted
 using System;
 using UnityEngine.Bindings;
 using UnityEngine.UIElements;
@@ -129,6 +130,7 @@ abstract class Command : IDisposable
 /// The CRTP pattern ensures each command type gets its own static pool while maintaining type safety.
 /// The constraint 'where T : Command&lt;T&gt;, new()' enforces that T must be the same type as the inheriting class.
 /// </remarks>
+[VisibleToOtherModules("UnityEditor.UIBuilderModule")]
 internal abstract class Command<T> : Command where T : Command<T>, new()
 {
     static readonly ObjectPool<T> s_Pool = new(() => new T());
@@ -165,3 +167,4 @@ internal abstract class Command<T> : Command where T : Command<T>, new()
         s_Pool.Release((T)this);
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

@@ -34,11 +34,11 @@ namespace Unity.GraphToolkit.Editor
         [SerializeField]
         string m_Title;
 
-        public static string uniqueIdFieldName = nameof(m_UniqueId);
+        public const string uniqueIdFieldName = nameof(m_UniqueId);
 #pragma warning disable CS0612
-        public static string obsoleteNodeModelGuidFieldName = nameof(m_NodeModelGuid);
+        public const string obsoleteNodeModelGuidFieldName = nameof(m_NodeModelGuid);
 #pragma warning restore CS0612
-        public static string nodeModelGuidFieldName = nameof(m_NodeModelHashGuid);
+        public const string nodeModelGuidFieldName = nameof(m_NodeModelHashGuid);
 
         GraphModel m_GraphModel;
 

@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 
 namespace Unity.Multiplayer.PlayMode.Editor
@@ -19,15 +20,18 @@ namespace Unity.Multiplayer.PlayMode.Editor
         SystemDataPlayersHaveInvalidIdentifiers,
     }
 
-    class SystemDataStore
+    partial class SystemDataStore
     {
         internal const string Filename = "SystemData.json";
         const string SystemDataKey = "SystemData";
 
+        [AutoStaticsCleanupOnCodeReload] // lazy main data store singleton; stale after reload
         private static SystemDataStore s_SystemDataStoreMain;
         static readonly string DataStorePathRelativeToMainEditor = Paths.CurrentProjectVirtualProjectsFolder;
         static readonly string DataStorePathRelativeToCloneEditor = Paths.GetCurrentProjectDataPath("..", "..");
+        [AutoStaticsCleanupOnCodeReload] // holds delegates to local static methods; after reload they point to old ALC
         static FileSystemDelegates s_FileSystemDelegates;
+        [NoAutoStaticsCleanup] // delegates reference stable external Newtonsoft.Json methods; no ALC pinning concern
         static ParsingSystemDelegates s_ParsingSystemDelegates;
 
         readonly InMemoryRepository<string, SystemData> m_Cache = new();

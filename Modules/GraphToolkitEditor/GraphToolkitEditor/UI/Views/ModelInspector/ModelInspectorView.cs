@@ -8,6 +8,7 @@ using System.Linq;
 using System.Reflection;
 using Unity.Collections;
 using Unity.GraphToolkit.CSO;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -18,7 +19,7 @@ namespace Unity.GraphToolkit.Editor
     /// A view to display the model inspector.
     /// </summary>
     [UnityRestricted]
-    internal class ModelInspectorView : RootView, IHasItemLibrary
+    internal partial class ModelInspectorView : RootView, IHasItemLibrary
     {
         /// <summary>
         /// Determines if a field should be displayed in the node options section of a node.
@@ -56,6 +57,7 @@ namespace Unity.GraphToolkit.Editor
             return SerializedFieldsInspector.CanBeInspected(f) && f.GetCustomAttributesData().TrueForAll(a => a.AttributeType != typeof(NodeOptionAttribute));
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         static readonly List<ChildView> k_UpdateAllUIs = new();
 
         public new static readonly string ussClassName = "model-inspector-view";
@@ -83,6 +85,7 @@ namespace Unity.GraphToolkit.Editor
         bool m_DisplayingTransitions;
         bool m_IgnoreScrollNotifications;
 
+        [AutoStaticsCleanupOnCodeReload]
         static List<ViewUpdateVisitor> s_CollapsibleUpdateVisitors;
 
         /// <summary>
@@ -157,7 +160,7 @@ namespace Unity.GraphToolkit.Editor
             registrar.RegisterDefaultCommandHandler<MoveConditionCommand>();
             registrar.RegisterDefaultCommandHandler<SetGroupConditionOperationCommand>();
             registrar.RegisterDefaultCommandHandler<SetVariableConditionVariableCommand>();
-            registrar.RegisterDefaultCommandHandler<SetVariableConditionComparisonCommand>();
+            registrar.RegisterDefaultCommandHandler<SetConditionComparisonCommand>();
 
             // The DeleteElementsCommand require the SelectionState from the GraphView.
             registrar.AddStateComponent(((GraphViewEditorWindow)Window).GraphView.GraphViewModel.SelectionState);
@@ -188,7 +191,7 @@ namespace Unity.GraphToolkit.Editor
             }
         }
 
-        void UpdateSelectionObserver(IState state, IStateComponent stateComponent)
+        void UpdateSelectionObserver(CSO.IState state, IStateComponent stateComponent)
         {
             if (Window == null || !Window.hasFocus)
                 return;
@@ -228,13 +231,13 @@ namespace Unity.GraphToolkit.Editor
         {
             if (m_SelectionObserver == null && GraphTool != null)
             {
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 var selectionStates = GraphTool.State.AllStateComponents.OfType<SelectionStateComponent>();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 m_SelectionObserver = new InspectorSelectionObserver(GraphTool.ToolState, ModelInspectorViewModel.GraphModelState,
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2001 // Avoid Linq
                     selectionStates.ToList(), ModelInspectorViewModel.ModelInspectorState);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
                 GraphTool?.ObserverManager?.RegisterObserver(m_SelectionObserver);
             }

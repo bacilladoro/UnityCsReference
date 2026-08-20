@@ -490,9 +490,9 @@ namespace UnityEditor
                 DeviceAndPlatform[] devicesAndPlatforms = Lightmapping.GetLightmappingGpuDevices();
                 if (devicesAndPlatforms.Length > 0)
                 {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                     int[] lightmappingDeviceIndices = Enumerable.Range(0, devicesAndPlatforms.Length).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     GUIContent[] lightmappingDeviceStrings = Array.ConvertAll(devicesAndPlatforms, x => new GUIContent(x.name));
 
                     int bakingDeviceAndPlatform = -1;

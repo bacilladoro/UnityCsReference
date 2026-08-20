@@ -261,9 +261,9 @@ sealed partial class AudioContainerWindow : EditorWindow
 
                 m_Day0RootVisualElement.style.display = DisplayStyle.None;
                 m_ContainerRootVisualElement.style.display = DisplayStyle.Flex;
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 m_CachedElements = State.AudioContainer.elements.ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 m_ClipsListView.Rebuild(); // Force a list rebuild when the list has changed or it will not always render correctly due to a UI toolkit bug.
             }
         }
@@ -354,9 +354,9 @@ sealed partial class AudioContainerWindow : EditorWindow
         if (State.AudioContainer == null)
             m_CachedElements.Clear();
         else
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             m_CachedElements = State.AudioContainer.elements.ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
     }
 
     void OnSerializedObjectChanged(SerializedObject obj)
@@ -869,9 +869,9 @@ sealed partial class AudioContainerWindow : EditorWindow
     {
         State.OnAudioClipListChanged();
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
         var indicesArray = indices as int[] ?? indices.ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         const string undoName = $"Add {nameof(AudioRandomContainer)} element";
         var groupUndoName = undoName;
 
@@ -881,9 +881,9 @@ sealed partial class AudioContainerWindow : EditorWindow
         }
 
         Undo.SetCurrentGroupName(groupUndoName);
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
         var elements = State.AudioContainer.elements.ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         m_AddedElements.Clear();
 
         foreach (var index in indicesArray)
@@ -910,9 +910,9 @@ sealed partial class AudioContainerWindow : EditorWindow
     {
         State.OnAudioClipListChanged();
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
         var indicesArray = indices as int[] ?? indices.ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
         // Confusingly, this callback is sometimes invoked post-delete and sometimes pre-delete,
         // i.e. the AudioRandomContainer.elements property may or may not be updated at this time,
@@ -955,9 +955,9 @@ sealed partial class AudioContainerWindow : EditorWindow
 
         Undo.RegisterCompleteObjectUndo(State.AudioContainer, groupUndoName);
         Undo.SetCurrentGroupName(groupUndoName);
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
         var elements = State.AudioContainer.elements.ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         m_AddedElements.Clear();
 
         foreach (var audioClip in audioClips)
@@ -1010,9 +1010,9 @@ sealed partial class AudioContainerWindow : EditorWindow
         }
 
         // Update the cached list of elements
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
         m_CachedElements = State.AudioContainer.elements.ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
         // Force a list rebuild when the list has changed or it will not always render correctly
         m_ClipsListView.Rebuild();

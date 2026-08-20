@@ -155,17 +155,17 @@ namespace UnityEditor.SceneTemplate
 
         public bool GetPinState(string id)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var p = templatePinStates.FirstOrDefault(ps => ps.templateId == id);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             return p != null && p.isEnabled;
         }
 
         public void SetPinState(string id, bool isEnabled)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var p = templatePinStates.FirstOrDefault(ps => ps.templateId == id);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             if (p == null)
             {
                 p = new PinState()
@@ -406,9 +406,9 @@ namespace UnityEditor.SceneTemplate
                     if (m_AllTypesPropositions == null)
                     {
                         var allTypes = TypeCache.GetTypesDerivedFrom<UnityEngine.Object>();
-                        #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                        #pragma warning disable UAC2001 // Avoid Linq
                         m_AllTypesPropositions = BuildPropositionsFromTypes(allTypes).ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     }
                 },
                 label = L10n.Tr("Scene Template"),
@@ -431,9 +431,9 @@ namespace UnityEditor.SceneTemplate
         {
             if (m_MaxLabelWidth == 0)
             {
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 m_MaxLabelWidth = Get().dependencyTypeInfos.Select(ti => ti.content).Max(content => EditorStyles.label.CalcSize(content).x);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 m_MaxLabelWidth = Mathf.Min(kMaxLabelWidth, m_MaxLabelWidth);
             }
 
@@ -508,13 +508,13 @@ namespace UnityEditor.SceneTemplate
                     var listDropDownBtnRect = EditorGUILayout.GetControlRect(false, GUILayout.Width(Styles.addTypeButtonWidth));
                     if (EditorGUI.DropdownButton(listDropDownBtnRect, Styles.addTypeContent, FocusType.Passive, GUI.skin.button))
                     {
-                        #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                        #pragma warning disable UAC2001 // Avoid Linq
                         var alreadyAddedTypeIds = settings.dependencyTypeInfos.Select(d => d.type);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                         var typeIdsSet = new HashSet<string>(alreadyAddedTypeIds);
-                        #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                        #pragma warning disable UAC2001 // Avoid Linq
                         var availablePropositions = m_AllTypesPropositions.Where(p => !typeIdsSet.Contains(p.type.FullName)).ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                         ListSelectionWindow.Open(listDropDownBtnRect, availablePropositions, selectedIndex =>
                         {
                             if (selectedIndex != -1)

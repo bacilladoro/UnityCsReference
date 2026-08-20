@@ -2,18 +2,20 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+using System;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEditor.Multiplayer.Internal;
-using System;
 using UnityEditor.Build.Profile;
 using Unity.Multiplayer.Internal;
 using UnityEditor.PackageManager;
 
 namespace Unity.Multiplayer.Editor
 {
-    internal static class BuildOptionsExtensions
+    internal static partial class BuildOptionsExtensions
     {
+        [AutoStaticsCleanupOnCodeReload] // holds interface implementations; may reference user-derived types
         private static List<IMultiplayerBuildOptionsSection> s_BuildOptionsSections;
 
         [InitializeOnLoadMethod]

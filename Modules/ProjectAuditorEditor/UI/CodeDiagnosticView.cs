@@ -24,10 +24,10 @@ namespace Unity.ProjectAuditor.Editor.UI
 
             if (m_Desc.Category == IssueCategory.Code)
             {
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 var compilerMessages = allIssues.Where(i => i.Category == IssueCategory.CodeCompilerMessage);
                 m_NumCompilerErrors += compilerMessages.Count(i => i.Severity == Severity.Error);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             }
         }
 

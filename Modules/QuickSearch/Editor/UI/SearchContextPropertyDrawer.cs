@@ -66,16 +66,16 @@ namespace UnityEditor.Search
 
         internal static SearchContext CreateContextFromAttribute(SearchContextAttribute attribute)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var providers = attribute.providerIds.Select(id => SearchService.GetProvider(id))
-#pragma warning restore UA2001
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+                #pragma warning disable UAC2001 // Avoid Linq
                 .Concat(attribute.instantiableProviders.Select(type => SearchService.GetProvider(type))).Where(p => p != null);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
-#pragma warning disable UA2002 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2002 // Avoid Linq
             if (!providers.Any())
-#pragma warning restore UA2002
+#pragma warning restore UAC2002
                 providers = SearchService.GetObjectProviders();
 
             var searchText = attribute.query;

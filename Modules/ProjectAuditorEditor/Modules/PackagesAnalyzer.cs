@@ -10,6 +10,7 @@ using UnityEditorInternal;
 
 namespace Unity.ProjectAuditor.Editor.Modules
 {
+    [MigratedToRulesPackage(2)]
     internal class PackagesAnalyzer : PackagesModuleAnalyzer
     {
         internal const string PAP0001 = nameof(PAP0001);

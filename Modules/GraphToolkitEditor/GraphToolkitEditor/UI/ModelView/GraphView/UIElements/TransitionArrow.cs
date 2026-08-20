@@ -4,6 +4,7 @@
 
 using System;
 using Unity.GraphToolkit.InternalBridge;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -15,17 +16,26 @@ namespace Unity.GraphToolkit.Editor
     [UnityRestricted]
     internal class TransitionArrow : VisualElement
     {
-        static CustomStyleProperty<Color> s_ArrowWireColorProperty = new("--wire-color");
-        static CustomStyleProperty<float> s_ArrowWireWidthProperty = new("--wire-width");
+        [NoAutoStaticsCleanup] // CSS custom property descriptor; value is a fixed CSS property name
+        static readonly CustomStyleProperty<Color> s_ArrowWireColorProperty = new("--wire-color");
+        [NoAutoStaticsCleanup] // CSS custom property descriptor; value is a fixed CSS property name
+        static readonly CustomStyleProperty<float> s_ArrowWireWidthProperty = new("--wire-width");
 
-        static CustomStyleProperty<Color> s_ArrowInnerLineColorProperty = new("--inner-line-color");
-        static CustomStyleProperty<float> s_ArrowInnerLineWidthProperty = new("--inner-line-width");
+        [NoAutoStaticsCleanup] // CSS custom property descriptor; value is a fixed CSS property name
+        static readonly CustomStyleProperty<Color> s_ArrowInnerLineColorProperty = new("--inner-line-color");
+        [NoAutoStaticsCleanup] // CSS custom property descriptor; value is a fixed CSS property name
+        static readonly CustomStyleProperty<float> s_ArrowInnerLineWidthProperty = new("--inner-line-width");
 
-        static CustomStyleProperty<Color> s_ArrowFillColorProperty = new("--arrow-fill-color");
-        static CustomStyleProperty<float> s_ArrowWidthProperty = new("--arrow-width");
-        static CustomStyleProperty<float> s_ArrowLengthProperty = new("--arrow-length");
-        static CustomStyleProperty<float> s_ArrowBorderRadiusProperty = new("--arrow-border-radius");
-        static CustomStyleProperty<float> s_ArrowTriangleLengthProperty = new("--arrow-triangle-length");
+        [NoAutoStaticsCleanup] // CSS custom property descriptor; value is a fixed CSS property name
+        static readonly CustomStyleProperty<Color> s_ArrowFillColorProperty = new("--arrow-fill-color");
+        [NoAutoStaticsCleanup] // CSS custom property descriptor; value is a fixed CSS property name
+        static readonly CustomStyleProperty<float> s_ArrowWidthProperty = new("--arrow-width");
+        [NoAutoStaticsCleanup] // CSS custom property descriptor; value is a fixed CSS property name
+        static readonly CustomStyleProperty<float> s_ArrowLengthProperty = new("--arrow-length");
+        [NoAutoStaticsCleanup] // CSS custom property descriptor; value is a fixed CSS property name
+        static readonly CustomStyleProperty<float> s_ArrowBorderRadiusProperty = new("--arrow-border-radius");
+        [NoAutoStaticsCleanup] // CSS custom property descriptor; value is a fixed CSS property name
+        static readonly CustomStyleProperty<float> s_ArrowTriangleLengthProperty = new("--arrow-triangle-length");
 
         static readonly float k_DefaultArrowWidth = 12.0f;
         static readonly float k_DefaultArrowLength = 16.0f;
@@ -46,6 +56,7 @@ namespace Unity.GraphToolkit.Editor
         bool m_InnerLineWidthOverridden;
 
         Color m_FillColor = Color.grey;
+        bool m_FillColorOverridden;
 
         float m_ArrowWidth = k_DefaultArrowWidth;
         float m_ArrowLength = k_DefaultArrowLength;
@@ -129,8 +140,27 @@ namespace Unity.GraphToolkit.Editor
             }
         }
 
+        /// <summary>
+        /// The fill color of the arrow.
+        /// </summary>
+        /// <remarks>Setting this overrides the fill color resolved from the style sheet.</remarks>
+        public Color FillColor
+        {
+            get => m_FillColor;
+            set
+            {
+                if (m_FillColor != value && value != default)
+                {
+                    m_FillColorOverridden = true;
+                    m_FillColor = value;
+                    MarkDirtyRepaint();
+                }
+            }
+        }
+
         Color StyleOuterLineColor { get; set; } = WireUtilities.DefaultWireColor;
         Color StyleInnerLineColor { get; set; } = WireUtilities.DefaultWireColor;
+        Color StyleFillColor { get; set; } = Color.grey;
         float StyleOuterLineWidth { get; set; } = k_DefaultArrowWireWidth;
         float StyleInnerLineWidth { get; set; }
 
@@ -173,8 +203,13 @@ namespace Unity.GraphToolkit.Editor
 
             if (e.customStyle.TryGetValue(s_ArrowFillColorProperty, out var fillColorValue))
             {
-                m_FillColor = fillColorValue;
-                shouldRepaint = true;
+                StyleFillColor = fillColorValue;
+
+                if (!m_FillColorOverridden)
+                {
+                    m_FillColor = StyleFillColor;
+                    shouldRepaint = true;
+                }
             }
 
             if (e.customStyle.TryGetValue(s_ArrowWidthProperty, out var arrowWidthValue))

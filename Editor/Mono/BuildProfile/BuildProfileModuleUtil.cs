@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: BuildSettingsWindow not yet converted
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -19,6 +20,7 @@ using PlatformPackageList = UnityEditor.BuildTargetDiscovery.PlatformPackageList
 using InternalEditorUtility = UnityEditorInternal.InternalEditorUtility;
 using System.IO;
 using UnityEngine.Events;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Build.Profile
 {
@@ -26,7 +28,7 @@ namespace UnityEditor.Build.Profile
     /// Internal utility class for Build Profile Module.
     /// </summary>
     [VisibleToOtherModules("UnityEditor.BuildAnalysisModule", "UnityEditor.BuildProfileModule")]
-    internal class BuildProfileModuleUtil
+    internal partial class BuildProfileModuleUtil
     {
         const string k_AssetFolderPath = "Assets/Settings/Build Profiles";
         const string k_BuyProUrl = "https://store.unity.com/products/unity-pro";
@@ -54,12 +56,14 @@ namespace UnityEditor.Build.Profile
         static readonly string k_RestartNeeded = L10n.Tr("Please restart the Unity Editor to load the module.");
         static readonly string k_RestartEditor = L10n.Tr("Restart Unity Editor");
         static readonly GUIContent k_ActivateDerivedPlatform = EditorGUIUtility.TrTextContent("Enable Platform");
-        static HashSet<string> s_BuildProfileIconModules = new()
+        [NoAutoStaticsCleanup] // static config set, allocated once, contains only string literals
+        static readonly HashSet<string> s_BuildProfileIconModules = new()
         {
             "Switch",
         };
 
-        static HashSet<GUID> s_PlatformsPendingRestart = new HashSet<GUID>();
+        [NoAutoStaticsCleanup] // tracks platforms awaiting a full editor restart; not reset by code reload
+        static readonly HashSet<GUID> s_PlatformsPendingRestart = new HashSet<GUID>();
 
         /// <summary>
         /// Mark a platform as having been installed but pending editor restart.
@@ -102,18 +106,21 @@ namespace UnityEditor.Build.Profile
         /// Internal callback for BuildProfileModule to be notified of
         /// reset initiated through the inspector context menu.
         /// </summary>
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<BuildProfile> OnUpdateActiveEditors;
 
         /// <summary>
         /// Internal static callback requesting an update of the build profile window when
         /// editor settings change.
         /// </summary>
+        [AutoStaticsCleanupOnCodeReload]
         public static Action OnEditorSettingsChanged;
 
         /// <summary>
         /// Internal static callback requesting an update of platform requirements UI
         /// (e.g., when a module is installed).
         /// </summary>
+        [AutoStaticsCleanupOnCodeReload]
         public static Action<GUID> OnPlatformModuleInstallationChanged;
 
         public static void UpdateActiveEditors(BuildProfile profile)
@@ -1664,3 +1671,4 @@ namespace UnityEditor.Build.Profile
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

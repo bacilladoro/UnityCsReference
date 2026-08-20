@@ -2,18 +2,20 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: BuildSettingsWindow not yet converted
 using System;
 using System.Collections.Generic;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.Bindings;
 using UnityEngine.UIElements;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Build.Profile
 {
     [VisibleToOtherModules("UnityEditor.BuildProfileModule")]
     [CustomEditor(typeof(BuildProfileQualitySettings))]
-    sealed class BuildProfileQualitySettingsEditor : Editor
+    sealed partial class BuildProfileQualitySettingsEditor : Editor
     {
         const string k_Uxml = "BuildProfile/UXML/BuildProfileQualitySettings.uxml";
         const string k_StyleSheet = "BuildProfile/StyleSheets/BuildProfile.uss";
@@ -24,7 +26,17 @@ namespace UnityEditor.Build.Profile
         static readonly string k_EmptyQualitySettingsWarning =
             L10n.Tr("When no Quality levels are listed, the build will take from the global list of Quality levels.");
         static readonly string k_SetDefaultQualityLevelMenuText = L10n.Tr("Set as Default");
+        // Best-effort count cache (-1 = needs refresh). Refreshed on quality-settings asset create/remove.
+        // The count is derived from the set of loaded build profiles, which can change on a code reload
+        // (in-memory profiles are lost - see BuildProfile.GetAllBuildProfiles). Pre-CoreCLR a domain reload
+        // reset this static to its -1 initializer, re-arming the recount; ResetCacheOnCodeReload preserves
+        // that. The field itself only holds an int (pins nothing), so it is [NoAutoStaticsCleanup] - we must
+        // reset to the -1 sentinel explicitly, not to default(int) 0 which is a valid count.
+        [NoAutoStaticsCleanup]
         static int s_CachedBuildProfilesWithSettingsOverrideCount = -1;
+
+        [OnCodeLoaded]
+        static void ResetCacheOnCodeReload() => s_CachedBuildProfilesWithSettingsOverrideCount = -1;
 
         SerializedProperty m_QualityLevels;
         SerializedProperty m_DefaultQualityLevel;
@@ -279,3 +291,4 @@ namespace UnityEditor.Build.Profile
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

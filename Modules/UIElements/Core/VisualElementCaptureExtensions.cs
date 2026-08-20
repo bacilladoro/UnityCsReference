@@ -15,6 +15,10 @@ namespace UnityEngine.UIElements
     /// You can capture elements that are part of an editor panel or a runtime panel, except
     /// if the element draws directly into a camera (for example, a world space runtime panel).
     /// These methods render the whole panel, so any elements drawn on top of the captured element are reflected in the result.
+    ///
+    /// The content of an <see cref="IMGUIContainer"/> is captured only when you call the capture method
+    /// from within IMGUI event processing in the Editor, for example from an OnGUI callback.
+    /// In any other context, the <see cref="IMGUIContainer"/>'s content is blank in the result.
     /// </remarks>
     public static class VisualElementCaptureExtensions
     {

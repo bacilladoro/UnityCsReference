@@ -6,6 +6,7 @@ using System;
 using System.Runtime.InteropServices;
 using System.Threading;
 using UnityEngine.Bindings;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Search
 {
@@ -25,6 +26,7 @@ namespace UnityEditor.Search
         CancellationTokenRegistration? m_CancellationTokenRegistration;
         ReaderWriterLockSlim m_Lock;
 
+        [NoAutoStaticsCleanup] // Immutable empty "None" sentinel (IntPtr.Zero, never created); holds no user-code references, safe to persist across reloads.
         public static readonly SearchCancellationToken None = new(IntPtr.Zero);
 
         public bool IsCreated => m_Ptr != IntPtr.Zero;

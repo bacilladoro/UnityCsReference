@@ -7,14 +7,16 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Unity.GraphToolsAuthoringFramework.InternalEditorBridge;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEditor.ShortcutManagement;
 using UnityEngine;
 
 namespace Unity.GraphToolkit.Editor
 {
-    sealed class ShortcutProviderProxy : IDiscoveryShortcutProviderProxy
+    sealed partial class ShortcutProviderProxy : IDiscoveryShortcutProviderProxy
     {
+        [AutoStaticsCleanupOnCodeReload]
         static ShortcutProviderProxy s_ShortcutProviderProxy;
 
         public static ShortcutProviderProxy GetInstance()
@@ -64,9 +66,9 @@ namespace Unity.GraphToolkit.Editor
 
         public IEnumerable<ShortcutDefinition> GetDefinedShortcuts()
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var shortcutEventTypes = TypeCache.GetTypesWithAttribute<ToolShortcutEventAttribute>()
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 .Where(t => typeof(IShortcutEvent).IsAssignableFrom(t) && AssemblyCache.CachedAssemblies.Contains(t.Assembly))
                 .ToList();
 

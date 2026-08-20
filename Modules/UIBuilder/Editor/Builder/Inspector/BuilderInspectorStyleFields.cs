@@ -144,6 +144,21 @@ namespace Unity.UI.Builder
 
             m_Inspector.RegisterFieldToInlineEditingEvents(fieldElement);
 
+            // CSS Grid track lists (List<GridTrackSize>) have no built-in Builder field: a hidden TextField
+            // carries the binding and a visual GridTrackAxisEditor does the editing (see +Grid.cs).
+            if (IsGridTrackListStyle(styleName) && fieldElement is TextField gridTrackField)
+            {
+                BindGridTrackField(styleRow, styleName, gridTrackField);
+                return;
+            }
+
+            // CSS Grid line placements (GridLine) are edited as a text field (auto | <n> | span <n>).
+            if (IsGridLineStyle(styleName) && fieldElement is TextField gridLineField)
+            {
+                BindGridLineField(styleRow, styleName, gridLineField);
+                return;
+            }
+
             // We don't care which element we get the value for here as we're only interested
             // in the type of Enum it might be (and for validation), but not it's actual value.
             var val = StyleDebug.GetComputedStyleValue(fieldElement.computedStyle, styleName);
@@ -444,11 +459,11 @@ namespace Unity.UI.Builder
                         }
                         else
                         {
-                            uiField.Add(new Button()
-                            {
-                                name = enumAsDash,
-                                tooltip = tooltip
-                            });
+                            var enumButton = new Button() { name = enumAsDash, tooltip = tooltip };
+                            // Grid enum toggles have no icons yet; label them so they aren't blank squares.
+                            if (TryGetGridEnumButtonLabel(styleName, enumAsDash, out var gridLabel))
+                                enumButton.text = gridLabel;
+                            uiField.Add(enumButton);
                         }
                     }
 
@@ -716,20 +731,42 @@ namespace Unity.UI.Builder
             var styleType = StyleDebug.GetComputedStyleType(styleName);
             if (styleType == null)
             {
-                // Transitions are made from 4 different properties and does not have a dedicated C# property on ComputedStyle.
+                // Transitions and the `animation` shorthand have no dedicated C# property on ComputedStyle
                 if (!string.IsNullOrEmpty(styleName) &&
-                    StylePropertyUtil.propertyNameToStylePropertyId.TryGetValue(styleName, out var id) &&
-                    id.IsTransitionId() &&
-                    fieldElement is TransitionsListView listView)
-                    RefreshStyleField(listView);
+                    StylePropertyUtil.propertyNameToStylePropertyId.TryGetValue(styleName, out var shorthandId))
+                {
+                    if (shorthandId.IsTransitionId() && fieldElement is TransitionsListView transitionsListView)
+                        RefreshStyleField(transitionsListView);
+                    else if (shorthandId.IsAnimationId() && fieldElement is StyleAnimationListView animationListView)
+                        RefreshStyleField(animationListView);
+                }
                 return false;
             }
+
+            // Unlike transitions, the animation longhands have real ComputedStyle properties, but the StyleAnimationListView reads each itself.
+            if (!string.IsNullOrEmpty(styleName) &&
+                StylePropertyUtil.propertyNameToStylePropertyId.TryGetValue(styleName, out var animationLonghandId) &&
+                animationLonghandId.IsAnimationId())
+                return false;
 
             var val = StyleDebug.GetComputedStyleValue(currentVisualElement.computedStyle, styleName);
             var cSharpStyleName = BuilderNameUtilities.ConvertUssNameToStyleName(styleName);
             var styleProperty = GetLastStyleProperty(currentRule, cSharpStyleName);
             var hasBinding = BuilderInspectorUtilities.HasBinding(m_Inspector, fieldElement);
             var useStyleProperty = styleProperty != null && !styleProperty.ContainsVariable() && (!hasBinding || forceInlineValue);
+
+            // CSS Grid track lists are edited via a visual GridTrackAxisEditor backed by a hidden TextField (see +Grid.cs).
+            if (IsGridTrackListStyle(styleName) && fieldElement is TextField gridTrackField)
+            {
+                RefreshGridTrackField(styleName, gridTrackField);
+                return true;
+            }
+
+            if (IsGridLineStyle(styleName) && fieldElement is TextField gridLineField)
+            {
+                RefreshGridLineField(styleName, gridLineField);
+                return true;
+            }
 
             if (IsComputedStyleFloat(val) && fieldElement is FloatField)
             {
@@ -1302,17 +1339,6 @@ namespace Unity.UI.Builder
                 return true;
             }
 
-            if (IsComputedStyleUIAnimationClip(val, styleName) && fieldElement is ObjectField)
-            {
-                var uiField = fieldElement as ObjectField;
-                var value = GetComputedStyleUIClipValue(val);
-                if (useStyleProperty && styleProperty.TryGetAssetReference<UIAnimationClip>(styleSheet, out var propertyValue))
-                    value = propertyValue;
-
-                uiField.SetValueWithoutNotify(value);
-                return true;
-            }
-
             return false;
         }
 
@@ -1402,7 +1428,17 @@ namespace Unity.UI.Builder
 
             var val = StyleDebug.GetComputedStyleValue(fieldElement.computedStyle, styleName);
 
-            if (IsComputedStyleFloat(val) && fieldElement is FloatField floatField)
+            // CSS Grid track lists (List<GridTrackSize>) and line placements (GridLine) are edited through a
+            // TextField (hidden for track lists); dispatch on it so its change callback writes the value.
+            if (IsGridTrackListStyle(styleName) && fieldElement is TextField gridTrackDispatchField)
+            {
+                DispatchChangeEvent(gridTrackDispatchField);
+            }
+            else if (IsGridLineStyle(styleName) && fieldElement is TextField gridLineDispatchField)
+            {
+                DispatchChangeEvent(gridLineDispatchField);
+            }
+            else if (IsComputedStyleFloat(val) && fieldElement is FloatField floatField)
             {
                 DispatchChangeEvent(floatField);
             }
@@ -2429,9 +2465,9 @@ namespace Unity.UI.Builder
 
             var list = m_StyleFields[styleName];
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             foreach (var item in list.Where(item => item != target))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 RefreshStyleField(styleName, item);
             }
@@ -2979,6 +3015,10 @@ namespace Unity.UI.Builder
             {
                 return styleLength.keyword;
             }
+            else if (val is int intVal && intVal == int.MinValue)
+            {
+                return StyleKeyword.Auto;
+            }
 
             return StyleKeyword.Undefined;
         }
@@ -3123,7 +3163,7 @@ namespace Unity.UI.Builder
 
         static public bool IsComputedStyleUIAnimationClip(object val, string styleName)
         {
-            return val is StyleUIAnimationClip || val is UIAnimationClip || styleName == "-unity-animation-clip";
+            return val is StyleUIAnimationClip || val is UIAnimationClip || styleName == "animation-name";
         }
 
         // Getters
@@ -3316,6 +3356,8 @@ namespace Unity.UI.Builder
                 return val as Enum;
 
             var propInfo = valType.GetProperty("value");
+            if (propInfo == null)
+                return null;
             var enumValue = propInfo.GetValue(val, null) as Enum;
             return enumValue;
         }
@@ -3327,19 +3369,6 @@ namespace Unity.UI.Builder
 
             var style = (StyleRatio)val;
             return style.value;
-        }
-        static public UIAnimationClip GetComputedStyleUIClipValue(object val)
-        {
-            if (val == null)
-                return null;
-
-            if (val is UIAnimationClip clip)
-                return clip;
-
-            if (val is StyleUIAnimationClip style)
-                return style.value;
-
-            return null;
         }
     }
 }

@@ -39,6 +39,8 @@ sealed class ExtractInlineStyleToStyleRuleCommand : Command<ExtractInlineStyleTo
 
     public override string UndoName => CommandUndoName;
 
+    public override CommandCategory Category => CommandCategory.Styling | CommandCategory.Variables;
+
     protected override void Init()
     {
         ElementAsset = null;
@@ -64,6 +66,10 @@ sealed class ExtractInlineStyleToStyleRuleCommand : Command<ExtractInlineStyleTo
 
     public override void Prepare(in PrepareContext context)
     {
+        // Record the document first: the inline sheet is a sub-object of the VisualTreeAsset, so editing it
+        // changes the .uxml. Without this the document is never marked dirty and its save is skipped, leaving
+        // the extracted rule in the .uss while the .uxml keeps the old inline style on disk.
+        context.RecordUndo(VisualTreeAsset);
         context.RecordUndo(VisualTreeAsset.inlineSheet);
         context.RecordUndo(TargetStyleSheet);
     }

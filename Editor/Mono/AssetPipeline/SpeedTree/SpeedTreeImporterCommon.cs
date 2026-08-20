@@ -76,6 +76,19 @@ namespace UnityEditor.SpeedTree.Importer
             internal static readonly string VBSetupBillboardID = "VB_SETUP_BILLBOARD";
             internal static readonly string VBSetupID = "VB_SETUP";
             internal static readonly string BillboardID = "_BILLBOARD";
+
+            internal static readonly string WindSharedID = "WIND_SHARED";
+            internal static readonly string WindBranch1ID = "WIND_BRANCH1";
+            internal static readonly string WindBranch2ID = "WIND_BRANCH2";
+            internal static readonly string WindRippleID = "WIND_RIPPLE";
+            internal static readonly string WindShimmerID = "WIND_SHIMMER";
+
+            internal static readonly string EffectBillboardID = "EFFECT_BILLBOARD";
+            internal static readonly string EffectLeafFacingID = "EFFECT_LEAF_FACING";
+            internal static readonly string EffectHueVariationID = "EFFECT_HUE_VARIATION";
+            internal static readonly string EffectBumpID = "EFFECT_BUMP";
+            internal static readonly string EffectExtraTexID = "EFFECT_EXTRA_TEX";
+            internal static readonly string EffectSubsurfaceID = "EFFECT_SUBSURFACE";
         }
     }
 

@@ -2,11 +2,13 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
 using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.UIElements;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.UIElements.Inspector
 {
@@ -17,6 +19,7 @@ namespace UnityEditor.UIElements.Inspector
         const string k_InspectorVisualTreeAssetPath = "UIPackageResources/UXML/Inspector/PanelSettingsInspector.uxml";
         private const string k_StyleClassThemeMissing = "unity-panel-settings-inspector--theme-warning--hidden";
 
+        [NoAutoStaticsCleanup]
         private static StyleSheet k_DefaultStyleSheet = null;
 
         private VisualElement m_RootVisualElement;
@@ -81,6 +84,7 @@ namespace UnityEditor.UIElements.Inspector
             m_UITKTextSettings.objectType = typeof(PanelTextSettings);
 
             m_RenderModeField = m_RootVisualElement.MandatoryQ<EnumField>("render-mode");
+            AddRenderModeDocumentationIcon();
             m_ColliderUpdateModeField = m_RootVisualElement.MandatoryQ<EnumField>("worldinput-mode");
             m_ColliderIsTriggerField = m_RootVisualElement.MandatoryQ<Toggle>("worldinput-trigger");
 
@@ -142,6 +146,47 @@ namespace UnityEditor.UIElements.Inspector
 
             m_TargetTextureField.parent.Add(m_TargetDisplayField);
             m_TargetDisplayField.PlaceInFront(m_TargetTextureField);
+        }
+
+        // Adds an inline documentation "?" icon right after the Render Mode label text: some effects
+        // (e.g. backdrop-filter) only apply in specific render modes (UUM-147138).
+        private void AddRenderModeDocumentationIcon()
+        {
+            var label = m_RenderModeField.labelElement;
+            if (label == null || label.Q("documentation-link-icon") != null)
+                return;
+
+            // Links to the existing Panel Settings manual page, which documents the render-mode
+            // limitations (e.g. backdrop-filter is Screen Space-only) (UUM-147138).
+            var docIcon = new Image
+            {
+                name = "documentation-link-icon",
+                image = EditorGUIUtility.IconContent("_Help").image,
+                tooltip = "Some effects like Backdrop Filter only apply in specific rendering modes. Click to learn more.",
+                pickingMode = PickingMode.Position,
+            };
+            docIcon.style.position = Position.Absolute;
+            docIcon.style.width = 16;
+            docIcon.style.height = 16;
+            docIcon.style.opacity = 0.8f;
+            docIcon.RegisterCallback<MouseEnterEvent>(_ => docIcon.style.opacity = 1f);
+            docIcon.RegisterCallback<MouseLeaveEvent>(_ => docIcon.style.opacity = 0.8f);
+            // Isolate the icon from the field so clicking it doesn't focus/open the EnumField.
+            docIcon.RegisterCallback<PointerDownEvent>(evt => evt.StopPropagation());
+            docIcon.RegisterCallback<ClickEvent>(evt => evt.StopPropagation());
+            docIcon.AddManipulator(new Clickable(() =>
+                Help.BrowseURL("https://docs.unity3d.com/Manual/UIE-Runtime-Panel-Settings.html")));
+
+            // Keep the field's built-in label as the source of truth (don't blank labelElement.text):
+            // the aligned column keeps its fixed width, and the icon is absolutely positioned just
+            // after the rendered label text so it hugs the label while the control stays aligned.
+            label.Add(docIcon);
+            label.RegisterCallback<GeometryChangedEvent>(_ =>
+            {
+                var textWidth = label.MeasureTextSize(label.text, 0, VisualElement.MeasureMode.Undefined, 0, VisualElement.MeasureMode.Undefined).x;
+                docIcon.style.left = textWidth + 4f;
+                docIcon.style.top = Mathf.Max(0f, (label.contentRect.height - 16f) / 2f);
+            });
         }
 
         private void BindFields()
@@ -367,3 +412,4 @@ namespace UnityEditor.UIElements.Inspector
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

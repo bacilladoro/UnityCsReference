@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 
 namespace Unity.GraphToolkit.Editor
@@ -28,6 +29,7 @@ namespace Unity.GraphToolkit.Editor
         /// <summary>
         /// Used to send 1 wire to the list reordering method.
         /// </summary>
+        [NoAutoStaticsCleanup] // sentinel single-element list used for allocation avoidance; contains null, safe to persist
         static readonly List<TWire> k_OneWireList = new List<TWire>(1) { null };
 
         IReadOnlyList<TWire> m_WireModels;

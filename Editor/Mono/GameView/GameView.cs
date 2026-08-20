@@ -600,12 +600,12 @@ namespace UnityEditor
                 var availableTypes = GetAvailableWindowTypes();
                 if (availableTypes.Count > 1)
                 {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                     var typeNames = availableTypes.Values.ToList();
-#pragma warning restore UA2001
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+#pragma warning disable UAC2001 // Avoid Linq
                     var types = availableTypes.Keys.ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     int viewIndex = EditorGUILayout.Popup(typeNames.IndexOf(titleContent.text), typeNames.ToArray(),
                         EditorStyles.toolbarPopup,
                         GUILayout.Width(90));

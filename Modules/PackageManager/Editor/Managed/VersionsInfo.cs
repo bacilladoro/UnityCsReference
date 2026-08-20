@@ -43,16 +43,16 @@ namespace UnityEditor.PackageManager
             string recommended,
             IEnumerable<string> deprecated)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             m_All = (all ?? Array.Empty<string>()).ToArray();
-#pragma warning restore UA2001
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+            #pragma warning disable UAC2001 // Avoid Linq
             m_Compatible = (compatible ?? Array.Empty<string>()).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             m_Recommended = recommended ?? string.Empty;
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             m_Deprecated = (deprecated ?? Array.Empty<string>()).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         public string[] all { get { return m_All; } }

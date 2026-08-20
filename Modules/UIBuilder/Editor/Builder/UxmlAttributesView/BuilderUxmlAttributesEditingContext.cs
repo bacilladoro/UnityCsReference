@@ -245,9 +245,9 @@ namespace Unity.UI.Builder
                     var valueFlagsField = rootSerializedObject.FindProperty(stateProperty.propertyPath + UxmlSerializedData.AttributeFlagSuffix);
                     valueFlagsField.intValue = (int)UxmlSerializedData.UxmlAttributeFlags.OverriddenInUxml;
 
-#pragma warning disable UA2005 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2005 // Avoid Linq
                     var buttonCount = group.Query<Button>().Build().Count();
-#pragma warning restore UA2005
+#pragma warning restore UAC2005
                     if (buttonCount != length && buttonCount < ToggleButtonGroupState.maxLength)
                     {
                         var value = group.value;

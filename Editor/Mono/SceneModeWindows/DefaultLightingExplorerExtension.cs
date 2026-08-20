@@ -58,9 +58,9 @@ namespace UnityEditor
             public static readonly int[] LightShapeValues = { (int)LightType.Rectangle, (int)LightType.Disc };
 
             public static readonly GUIContent[] Light2DTypeTitles = { EditorGUIUtility.TrTextContent("Freeform"), EditorGUIUtility.TrTextContent("Sprite"), EditorGUIUtility.TrTextContent("Spot"), EditorGUIUtility.TrTextContent("Global") };
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             public static readonly int[] Light2DTypeValues = Enumerable.Range(0, Light2DTypeTitles.Length).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         public virtual LightingExplorerTab[] GetContentTabs()
@@ -85,9 +85,9 @@ namespace UnityEditor
 
         protected static System.Collections.Generic.IEnumerable<T> GetObjectsForLightingExplorer<T>() where T : UnityEngine.Component
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var objects = Resources.FindObjectsOfTypeAll<T>().Where((T obj) =>
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 return !EditorUtility.IsPersistent(obj) && !obj.hideFlags.HasFlag(HideFlags.HideInHierarchy) && !obj.hideFlags.HasFlag(HideFlags.HideAndDontSave);
             });
@@ -104,9 +104,9 @@ namespace UnityEditor
                     StageNavigationManager.instance.contextRenderMode == StageUtility.ContextRenderMode.Normal)
             {
                 // Return all object instances in the scene and objects in the opened prefab asset, but not objects in the opened prefab instance.
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 return objects.Where((T obj) =>
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 {
                     return !StageUtility.IsPrefabInstanceHiddenForInContextEditing(obj.gameObject);
                 });
@@ -115,9 +115,9 @@ namespace UnityEditor
             else
             {
                 // Return only objects in the opened prefab asset.
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 return objects.Where((T obj) =>
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 {
                     return EditorSceneManager.IsPreviewSceneObject(obj);
                 });
@@ -126,16 +126,16 @@ namespace UnityEditor
 
         protected internal virtual UnityEngine.Object[] GetLights()
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return GetObjectsForLightingExplorer<Light>().ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         protected internal virtual UnityEngine.Object[] Get2DLights()
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return GetObjectsForLightingExplorer<Light2DBase>().ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         protected virtual LightingExplorerTableColumn[] Get2DLightColumns()
@@ -401,9 +401,9 @@ namespace UnityEditor
 
         protected internal virtual UnityEngine.Object[] GetReflectionProbes()
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return GetObjectsForLightingExplorer<ReflectionProbe>().ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         protected virtual LightingExplorerTableColumn[] GetReflectionProbeColumns()
@@ -430,9 +430,9 @@ namespace UnityEditor
 
         protected internal virtual UnityEngine.Object[] GetLightProbes()
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return GetObjectsForLightingExplorer<LightProbeGroup>().ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         protected virtual LightingExplorerTableColumn[] GetLightProbeColumns()
@@ -446,9 +446,9 @@ namespace UnityEditor
 
         protected internal virtual UnityEngine.Object[] GetEmissives()
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return GetObjectsForLightingExplorer<MeshRenderer>().Where((MeshRenderer mr) =>
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 return GameObjectUtility.AreStaticEditorFlagsSet(mr.gameObject, StaticEditorFlags.ContributeGI);
             }).SelectMany(meshRenderer => meshRenderer.sharedMaterials).Where((Material m) =>

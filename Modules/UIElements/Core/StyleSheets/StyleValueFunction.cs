@@ -26,7 +26,11 @@ namespace UnityEngine.UIElements
         FilterHueRotate,
         FilterDropShadow,
         MaterialProperty,
-        RadialGradient
+        RadialGradient,
+        // CSS Grid track functions.
+        Minmax,
+        Repeat,
+        FitContent
     }
 
     internal static class StyleValueFunctionExtension
@@ -47,6 +51,9 @@ namespace UnityEngine.UIElements
         public const string k_FilterHueRotate = "hue-rotate";
         public const string k_FilterDropShadow = "drop-shadow";
         public const string k_MaterialProperty = "prop";
+        public const string k_Minmax = "minmax";
+        public const string k_Repeat = "repeat";
+        public const string k_FitContent = "fit-content";
 
         public static StyleValueFunction FromUssString(string ussValue)
         {
@@ -85,6 +92,12 @@ namespace UnityEngine.UIElements
                     return StyleValueFunction.FilterDropShadow;
                 case k_MaterialProperty:
                     return StyleValueFunction.MaterialProperty;
+                case k_Minmax:
+                    return StyleValueFunction.Minmax;
+                case k_Repeat:
+                    return StyleValueFunction.Repeat;
+                case k_FitContent:
+                    return StyleValueFunction.FitContent;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(ussValue), ussValue, "Unknown function name");
             }
@@ -126,6 +139,12 @@ namespace UnityEngine.UIElements
                     return k_FilterDropShadow;
                 case StyleValueFunction.MaterialProperty:
                     return k_MaterialProperty;
+                case StyleValueFunction.Minmax:
+                    return k_Minmax;
+                case StyleValueFunction.Repeat:
+                    return k_Repeat;
+                case StyleValueFunction.FitContent:
+                    return k_FitContent;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(svf), svf, $"Unknown {nameof(StyleValueFunction)}");
             }

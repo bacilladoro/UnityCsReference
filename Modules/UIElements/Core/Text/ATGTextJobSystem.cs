@@ -2,6 +2,8 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
+using Unity.Scripting.LifecycleManagement;
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
@@ -14,7 +16,7 @@ using UnityEngine.TextCore.Text;
 using UnityEngine.UIElements.UIR;
 namespace UnityEngine.UIElements;
 
-internal class ATGTextJobSystem
+internal partial class ATGTextJobSystem
 {
     class ManagedJobData
     {
@@ -70,6 +72,7 @@ internal class ATGTextJobSystem
     List<ManagedJobData> textJobDatas = new List<ManagedJobData>();
     bool hasPendingTextWork;
 
+    [NoAutoStaticsCleanup]
     static readonly UnityEngine.Pool.ObjectPool<ManagedJobData> s_JobDataPool =
        new(() => new ManagedJobData(),   // Creates a new instance with its own collections
            null,                          // No action needed on get
@@ -77,7 +80,8 @@ internal class ATGTextJobSystem
            null,
            false);
 
-    static UnityEngine.Pool.ObjectPool<Dictionary<EntityId, HashSet<uint>>> s_AggregatedMissingGlyphsPool = new(() =>
+    [NoAutoStaticsCleanup]
+    static readonly UnityEngine.Pool.ObjectPool<Dictionary<EntityId, HashSet<uint>>> s_AggregatedMissingGlyphsPool = new(() =>
     {
         var inst = new Dictionary<EntityId, HashSet<uint>>();
         return inst;
@@ -297,8 +301,10 @@ internal class ATGTextJobSystem
         }
     }
 
-    static List<uint> s_GlyphsToAddBuffer = new List<uint>();
-    static List<NativeTextInfo> s_TextInfoBuffer = new List<NativeTextInfo>();
+    [NoAutoStaticsCleanup]
+    static readonly List<uint> s_GlyphsToAddBuffer = new List<uint>();
+    [NoAutoStaticsCleanup]
+    static readonly List<NativeTextInfo> s_TextInfoBuffer = new List<NativeTextInfo>();
 
     void PopulateGlyphs(MeshGenerationContext mgc, object _)
     {
@@ -532,3 +538,4 @@ internal class ATGTextJobSystem
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

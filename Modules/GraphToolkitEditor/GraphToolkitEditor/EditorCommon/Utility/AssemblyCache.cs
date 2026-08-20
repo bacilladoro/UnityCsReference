@@ -6,13 +6,14 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using Unity.Collections;
 using UnityEngine.Assemblies;
 
 namespace Unity.GraphToolkit.Editor
 {
-    static class AssemblyCache
+    static partial class AssemblyCache
     {
         static readonly string[] k_BlackListedAssemblies =
         {
@@ -30,15 +31,16 @@ namespace Unity.GraphToolkit.Editor
             "visualscriptingassembly-csharp"
         };
 
+        [AutoStaticsCleanupOnCodeReload]
         static List<Assembly> s_Assemblies;
 
         public static IReadOnlyList<Assembly> CachedAssemblies
         {
             get
             {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 return s_Assemblies ??= CurrentAssemblies.GetLoadedAssemblies()
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     .Where(a => !a.IsDynamic
                         && !Array.Exists(k_BlackListedAssemblies, b => a.GetName().Name.ToLower().Contains(b)))
                     .ToList();
@@ -52,18 +54,18 @@ namespace Unity.GraphToolkit.Editor
         {
             static Type GetMethodFirstParameterType(MethodInfo m) => m.GetParameters()[0].ParameterType.IsArray ? m.GetParameters()[0].ParameterType.GetElementType() : m.GetParameters()[0].ParameterType;
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             return TypeCache.GetTypesWithAttribute<TAttribute>()
-#pragma warning restore UA2001
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+                #pragma warning disable UAC2001 // Avoid Linq
                 .Where(t => assemblies.Contains(t.Assembly) && t.IsClass)
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 .SelectMany(t => t.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.DeclaredOnly))
                 .Where(m => m.GetParameters().Length > 0)
                 .GroupBy(GetMethodFirstParameterType)
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 .ToDictionary(g => g.Key, g => g.ToList());
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
     }
 }

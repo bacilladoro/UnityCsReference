@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using Unity.GraphToolkit.Editor.ContextualMenuItems;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 
 namespace Unity.GraphToolkit.Editor
@@ -14,7 +15,7 @@ namespace Unity.GraphToolkit.Editor
     /// </summary>
     [Serializable]
     [UnityRestricted]
-    internal class VariableNodeModel : NodeModel, ISingleInputPortNodeModel, ISingleOutputPortNodeModel, IHasDeclarationModel, ICloneable
+    internal partial class VariableNodeModel : NodeModel, ISingleInputPortNodeModel, ISingleOutputPortNodeModel, IHasDeclarationModel, ICloneable
     {
         protected const string k_MainPortName = "MainPortName";
         protected const string k_ValuePortName = "Value";
@@ -226,7 +227,8 @@ namespace Unity.GraphToolkit.Editor
             }
         }
 
-        static readonly List<ContextualMenuItem> k_ContextualMenuItems = new() {
+        [AutoStaticsCleanupOnCodeReload]
+        static List<ContextualMenuItem> k_ContextualMenuItems = new() {
             ContextualMenuHelpers.convertToConstantItem,
             new ContextualMenuItem(ContextualMenuHelpers.itemizeItem, 0),
         };

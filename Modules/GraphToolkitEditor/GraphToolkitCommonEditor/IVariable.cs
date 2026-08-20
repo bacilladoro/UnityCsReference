@@ -58,9 +58,16 @@ namespace Unity.GraphToolkit.Editor
         int NodeCount { get; }
 
         /// <summary>
-        /// The <see cref="Graph"/> that owns this variable.
+        /// The <see cref="Graph"/> that owns this variable, or <c>null</c> if the variable belongs to a
+        /// <see cref="StateMachine"/> (use <see cref="StateMachine"/> in that case).
         /// </summary>
-        Graph Graph => (((VariableDeclarationModelBase)this).GraphModel as GraphModelImp)?.Graph;
+        Graph Graph => (((VariableDeclarationModelBase)this).GraphModel as GraphModelImp)?.Graph as Graph;
+
+        /// <summary>
+        /// The <see cref="StateMachine"/> that owns this variable, or <c>null</c> if the variable belongs
+        /// to a regular <see cref="Graph"/> (use <see cref="Graph"/> in that case).
+        /// </summary>
+        StateMachine StateMachine => (((VariableDeclarationModelBase)this).GraphModel as GraphModelImp)?.Graph as StateMachine;
 
         /// <summary>
         /// The globally unique identifier for this variable declaration.

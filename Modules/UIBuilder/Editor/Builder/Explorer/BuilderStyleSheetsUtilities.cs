@@ -77,9 +77,9 @@ namespace Unity.UI.Builder
             else
             {
                 // Removed selected elements
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 var styleSheetIndexes = selectedElements.Where(x => BuilderSharedStyles.IsStyleSheetElement(x) &&
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     string.IsNullOrEmpty(x.GetProperty(BuilderConstants.ExplorerItemLinkedUXMLFileName) as string))
                     .Select(x => (int)x.GetProperty(BuilderConstants.ElementLinkedStyleSheetIndexVEPropertyName))
                     .OrderByDescending(x => x)

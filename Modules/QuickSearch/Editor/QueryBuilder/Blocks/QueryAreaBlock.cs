@@ -50,12 +50,12 @@ namespace UnityEditor.Search
 
         public static IEnumerable<SearchProposition> FetchPropositions(SearchContext context)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             foreach (var p in context.GetProviders().Where(p => !p.isExplicitProvider).Concat(
-#pragma warning restore UA2001
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+                #pragma warning disable UAC2001 // Avoid Linq
                 context.GetProviders().Where(p => p.isExplicitProvider)))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 if (ExcludeProviderProposition(p.id))
                     continue;

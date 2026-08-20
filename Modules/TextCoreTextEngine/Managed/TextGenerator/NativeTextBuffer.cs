@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+using Unity.Scripting.LifecycleManagement;
 using System;
 using System.Text;
 using Unity.Collections;
@@ -96,6 +97,7 @@ namespace UnityEngine.TextCore
         // payloads of any length need neither a large stack buffer nor a heap allocation.
         const int k_Utf8ChunkSize = 256;
 
+        [NoAutoStaticsCleanup] // BCL decoder, Reset() before each use; holds no user-code refs
         static Decoder s_Utf8Decoder;
 
         static Decoder GetUtf8Decoder()
@@ -209,6 +211,17 @@ namespace UnityEngine.TextCore
                 m_Buffer = default;
             }
             m_Length = 0;
+        }
+
+        /// <summary>
+        /// Hands off the backing allocation to the caller and resets this buffer
+        /// </summary>
+        public NativeArray<char> ReleaseBuffer()
+        {
+            var buffer = m_Buffer;
+            m_Buffer = default;
+            m_Length = 0;
+            return buffer;
         }
     }
 }

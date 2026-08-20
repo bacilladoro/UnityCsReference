@@ -8,8 +8,8 @@
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <EnableDefaultItems>false</EnableDefaultItems>
-    <DefineConstants>$(DefineConstants);ALLOW_IMPLICIT_INTERNAL_VISIBILITY;COMBINED_ASSEMBLIES;DEBUGGER_LISTENS_FIXED_PORT;EDITOR_ONLY_NAVMESH_BUILDER_DEPRECATED;ENABLE_ACCELERATOR_CLIENT_DEBUGGING;ENABLE_ALTERNATIVE_LISTEN_PORT;ENABLE_AMD;ENABLE_AR;ENABLE_AUDIO;ENABLE_AUDIO_MANAGER_BASED_SCHEDULING;ENABLE_AUDIO_SCRIPTABLE_PIPELINE;ENABLE_BURST;ENABLE_CACHING;ENABLE_CLOTH;ENABLE_CLOUD_LICENSE;ENABLE_CLOUD_SERVICES;ENABLE_CLOUD_SERVICES_ADS;ENABLE_CLOUD_SERVICES_ANALYTICS;ENABLE_CLOUD_SERVICES_BUILD;ENABLE_CLOUD_SERVICES_CRASH_REPORTING;ENABLE_CLOUD_SERVICES_ENGINE_DIAGNOSTICS;ENABLE_CLOUD_SERVICES_PURCHASING;ENABLE_CLOUD_SERVICES_USE_WEBREQUEST;ENABLE_CLUSTERINPUT;ENABLE_CLUSTER_SYNC;ENABLE_CRUNCH_TEXTURE_COMPRESSION;ENABLE_DIRECTOR_AUDIO;ENABLE_DIRECTOR_TEXTURE;ENABLE_EDITOR_GAME_SERVICES;ENABLE_EDITOR_HUB_LICENSE;ENABLE_ETC_COMPRESSION;ENABLE_EVENT_QUEUE;ENABLE_GAMECENTER_API;ENABLE_GENERATE_NATIVE_PLUGINS_FOR_ASSEMBLIES_API;ENABLE_LZMA;ENABLE_MANAGED_ANIMATION_JOBS;ENABLE_MANAGED_AUDIO_JOBS;ENABLE_MANAGED_JOBS;ENABLE_MANAGED_TRANSFORM_JOBS;ENABLE_MANAGED_UNITYTLS;ENABLE_MARSHALLING_TESTS;ENABLE_MICROPHONE;ENABLE_MULTIPLE_DISPLAYS;ENABLE_NAVIGATION_OFFMESHLINK_TO_NAVMESHLINK;ENABLE_NETWORK;ENABLE_NVIDIA;ENABLE_PHYSICS;ENABLE_RUNTIME_GI;ENABLE_SCRIPTING_GC_WBARRIERS;ENABLE_SMARTSTRINGS;ENABLE_TEXTURE_STREAMING;ENABLE_UNITYEVENTS;ENABLE_UNITYWEBREQUEST;ENABLE_UNITY_CLOUD_IDENTIFIERS;ENABLE_UNITY_COLLECTIONS_CHECKS;ENABLE_UNITY_COLLECTIONS_CHECKS;ENABLE_UNITY_CONSENT;ENABLE_UNITY_GAME_SERVICES_ANALYTICS_SUPPORT;ENABLE_VERSION_CONTROL_INTEGRATION;ENABLE_VIDEO;ENABLE_VIRTUALTEXTURING;ENABLE_VR;ENABLE_WEBCAM;ENABLE_WEBSOCKET_CLIENT;ENABLE_WWW;INCLUDE_DYNAMIC_GI;INCLUDE_UNIFIED_RAYTRACING_COMPUTE_BACKEND;INCLUDE_UNIFIED_RAYTRACING_HARDWARE_BACKEND;NET_BCL_ATTRS_VISIBLE_TO_MODULES;PLATFORM_SUPPORTS_GAMEPAD_AUDIO;PLATFORM_SUPPORTS_MONO;PLAYERCONNECTION_LISTENS_FIXED_PORT;RENDER_SOFTWARE_CURSOR;TEXTCORE_1_0_OR_NEWER;TRACE;UNITY_ANDROID_API;UNITY_ASSEMBLIES_API;UNITY_ASSERTIONS;UNITY_ASSERTIONS;UNITY_CURL_BUILT_IN;UNITY_EDITOR;UNITY_EDITOR_API;UNITY_IPHONE_API;UNITY_METRO_API;UNITY_PS4_API;UNITY_PS5_API;UNITY_STANDALONE_LINUX_API;UNITY_STANDALONE_OSX_API;UNITY_STANDALONE_WIN_API;UNITY_TINYPROFILING_INTERNAL;UNITY_TVOS_API;UNITY_WEBGL_API;USE_PROPERTIES_MODULE</DefineConstants>
-    <LangVersion>12.0</LangVersion>
+    <DefineConstants>$(DefineConstants);ALLOW_IMPLICIT_INTERNAL_VISIBILITY;ALLOW_IMPLICIT_INTERNAL_VISIBILITY;COMBINED_ASSEMBLIES;DEBUGGER_LISTENS_FIXED_PORT;EDITOR_ONLY_NAVMESH_BUILDER_DEPRECATED;ENABLE_ACCELERATOR_CLIENT_DEBUGGING;ENABLE_ALTERNATIVE_LISTEN_PORT;ENABLE_AMD;ENABLE_AR;ENABLE_AUDIO;ENABLE_AUDIO_MANAGER_BASED_SCHEDULING;ENABLE_AUDIO_SCRIPTABLE_PIPELINE;ENABLE_BURST;ENABLE_CACHING;ENABLE_CLOTH;ENABLE_CLOUD_LICENSE;ENABLE_CLOUD_SERVICES;ENABLE_CLOUD_SERVICES_ADS;ENABLE_CLOUD_SERVICES_ANALYTICS;ENABLE_CLOUD_SERVICES_BUILD;ENABLE_CLOUD_SERVICES_CRASH_REPORTING;ENABLE_CLOUD_SERVICES_ENGINE_DIAGNOSTICS;ENABLE_CLOUD_SERVICES_PURCHASING;ENABLE_CLOUD_SERVICES_USE_WEBREQUEST;ENABLE_CLUSTERINPUT;ENABLE_CLUSTER_SYNC;ENABLE_CRUNCH_TEXTURE_COMPRESSION;ENABLE_DIRECTOR_AUDIO;ENABLE_DIRECTOR_TEXTURE;ENABLE_EDITOR_GAME_SERVICES;ENABLE_EDITOR_HUB_LICENSE;ENABLE_ETC_COMPRESSION;ENABLE_EVENT_QUEUE;ENABLE_GAMECENTER_API;ENABLE_GENERATE_NATIVE_PLUGINS_FOR_ASSEMBLIES_API;ENABLE_LZMA;ENABLE_MANAGED_ANIMATION_JOBS;ENABLE_MANAGED_AUDIO_JOBS;ENABLE_MANAGED_JOBS;ENABLE_MANAGED_TRANSFORM_JOBS;ENABLE_MANAGED_UNITYTLS;ENABLE_MARSHALLING_TESTS;ENABLE_MICROPHONE;ENABLE_MULTIPLE_DISPLAYS;ENABLE_NAVIGATION_OFFMESHLINK_TO_NAVMESHLINK;ENABLE_NETWORK;ENABLE_NVIDIA;ENABLE_PHYSICS;ENABLE_RUNTIME_GI;ENABLE_SCRIPTING_GC_WBARRIERS;ENABLE_SMARTSTRINGS;ENABLE_TEXTURE_STREAMING;ENABLE_UNITYEVENTS;ENABLE_UNITYWEBREQUEST;ENABLE_UNITY_CLOUD_IDENTIFIERS;ENABLE_UNITY_COLLECTIONS_CHECKS;ENABLE_UNITY_COLLECTIONS_CHECKS;ENABLE_UNITY_CONSENT;ENABLE_UNITY_GAME_SERVICES_ANALYTICS_SUPPORT;ENABLE_VERSION_CONTROL_INTEGRATION;ENABLE_VIDEO;ENABLE_VIRTUALTEXTURING;ENABLE_VR;ENABLE_WEBCAM;ENABLE_WEBSOCKET_CLIENT;ENABLE_WWW;INCLUDE_DYNAMIC_GI;INCLUDE_UNIFIED_RAYTRACING_COMPUTE_BACKEND;INCLUDE_UNIFIED_RAYTRACING_HARDWARE_BACKEND;NET_BCL_ATTRS_VISIBLE_TO_MODULES;PLATFORM_SUPPORTS_GAMEPAD_AUDIO;PLATFORM_SUPPORTS_MONO;PLAYERCONNECTION_LISTENS_FIXED_PORT;RENDER_SOFTWARE_CURSOR;TEXTCORE_1_0_OR_NEWER;TRACE;UNITY_ANDROID_API;UNITY_ASSEMBLIES_API;UNITY_ASSERTIONS;UNITY_ASSERTIONS;UNITY_CURL_BUILT_IN;UNITY_EDITOR;UNITY_EDITOR_API;UNITY_IPHONE_API;UNITY_METRO_API;UNITY_PS4_API;UNITY_PS5_API;UNITY_STANDALONE_LINUX_API;UNITY_STANDALONE_OSX_API;UNITY_STANDALONE_WIN_API;UNITY_TINYPROFILING_INTERNAL;UNITY_TVOS_API;UNITY_WEBGL_API;USE_PROPERTIES_MODULE</DefineConstants>
+    <LangVersion>14.0</LangVersion>
     <NoWarn>1701;626;8632</NoWarn>
     <Nullable>disable</Nullable>
     <EnableUnsafeBinaryFormatterSerialization>false</EnableUnsafeBinaryFormatterSerialization>
@@ -100,6 +100,9 @@
     </Compile>
     <Compile Include="..\..\External\ScriptingCore\Unity.Scripting\CoreAttributes\RequiredMemberAttribute.cs">
       <Link>External\ScriptingCore\Unity.Scripting\CoreAttributes\RequiredMemberAttribute.cs</Link>
+    </Compile>
+    <Compile Include="..\..\External\ScriptingCore\Unity.Scripting\CoreAttributes\StubBodyIfTypeNotUsedAttribute.cs">
+      <Link>External\ScriptingCore\Unity.Scripting\CoreAttributes\StubBodyIfTypeNotUsedAttribute.cs</Link>
     </Compile>
     <Compile Include="..\..\External\ScriptingCore\Unity.Scripting\DelegateWithContext.cs">
       <Link>External\ScriptingCore\Unity.Scripting\DelegateWithContext.cs</Link>
@@ -374,8 +377,14 @@
     <Compile Include="..\..\Modules\AdaptivePerformance\AssemblyInfo.cs">
       <Link>Modules\AdaptivePerformance\AssemblyInfo.cs</Link>
     </Compile>
+    <Compile Include="..\..\Modules\AdaptivePerformance\Core\AdaptivePerformanceBatteryModeProvider.cs">
+      <Link>Modules\AdaptivePerformance\Core\AdaptivePerformanceBatteryModeProvider.cs</Link>
+    </Compile>
     <Compile Include="..\..\Modules\AdaptivePerformance\Core\AdaptivePerformanceBottleneckDetection.cs">
       <Link>Modules\AdaptivePerformance\Core\AdaptivePerformanceBottleneckDetection.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\AdaptivePerformance\Core\AdaptivePerformanceIdleTimeTracker.cs">
+      <Link>Modules\AdaptivePerformance\Core\AdaptivePerformanceIdleTimeTracker.cs</Link>
     </Compile>
     <Compile Include="..\..\Modules\AdaptivePerformance\Core\AdaptivePerformanceInit.cs">
       <Link>Modules\AdaptivePerformance\Core\AdaptivePerformanceInit.cs</Link>
@@ -385,6 +394,9 @@
     </Compile>
     <Compile Include="..\..\Modules\AdaptivePerformance\Core\AdaptivePerformanceManagerSpawner.cs">
       <Link>Modules\AdaptivePerformance\Core\AdaptivePerformanceManagerSpawner.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\AdaptivePerformance\Core\AdaptivePerformanceNormalModeProvider.cs">
+      <Link>Modules\AdaptivePerformance\Core\AdaptivePerformanceNormalModeProvider.cs</Link>
     </Compile>
     <Compile Include="..\..\Modules\AdaptivePerformance\Core\AdaptiverPerformanceLog.cs">
       <Link>Modules\AdaptivePerformance\Core\AdaptiverPerformanceLog.cs</Link>
@@ -404,6 +416,9 @@
     <Compile Include="..\..\Modules\AdaptivePerformance\Core\GpuTime.cs">
       <Link>Modules\AdaptivePerformance\Core\GpuTime.cs</Link>
     </Compile>
+    <Compile Include="..\..\Modules\AdaptivePerformance\Core\IAdaptivePerformanceModeProvider.cs">
+      <Link>Modules\AdaptivePerformance\Core\IAdaptivePerformanceModeProvider.cs</Link>
+    </Compile>
     <Compile Include="..\..\Modules\AdaptivePerformance\Core\RunningAverage.cs">
       <Link>Modules\AdaptivePerformance\Core\RunningAverage.cs</Link>
     </Compile>
@@ -418,6 +433,9 @@
     </Compile>
     <Compile Include="..\..\Modules\AdaptivePerformance\IDevicePerformanceControl.cs">
       <Link>Modules\AdaptivePerformance\IDevicePerformanceControl.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\AdaptivePerformance\IOperationModeStatus.cs">
+      <Link>Modules\AdaptivePerformance\IOperationModeStatus.cs</Link>
     </Compile>
     <Compile Include="..\..\Modules\AdaptivePerformance\IPerformanceModeStatus.cs">
       <Link>Modules\AdaptivePerformance\IPerformanceModeStatus.cs</Link>
@@ -493,6 +511,9 @@
     </Compile>
     <Compile Include="..\..\Modules\AdaptivePerformance\Scalers\AdaptiveMSAA.cs">
       <Link>Modules\AdaptivePerformance\Scalers\AdaptiveMSAA.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\AdaptivePerformance\Scalers\AdaptiveOnDemandRendering.cs">
+      <Link>Modules\AdaptivePerformance\Scalers\AdaptiveOnDemandRendering.cs</Link>
     </Compile>
     <Compile Include="..\..\Modules\AdaptivePerformance\Scalers\AdaptivePhysics.cs">
       <Link>Modules\AdaptivePerformance\Scalers\AdaptivePhysics.cs</Link>
@@ -1549,6 +1570,9 @@
     </Compile>
     <Compile Include="..\..\Modules\Localization\Public\LocalizationAsset.bindings.cs">
       <Link>Modules\Localization\Public\LocalizationAsset.bindings.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\Marshalling\InvokeTests.cs">
+      <Link>Modules\Marshalling\InvokeTests.cs</Link>
     </Compile>
     <Compile Include="..\..\Modules\Marshalling\MarshallingTests.bindings.cs">
       <Link>Modules\Marshalling\MarshallingTests.bindings.cs</Link>
@@ -4907,6 +4931,15 @@
     <Compile Include="..\..\Modules\UIElements\Core\Style\Angle.cs">
       <Link>Modules\UIElements\Core\Style\Angle.cs</Link>
     </Compile>
+    <Compile Include="..\..\Modules\UIElements\Core\Style\AnimationClipStyleCompat.cs">
+      <Link>Modules\UIElements\Core\Style\AnimationClipStyleCompat.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\UIElements\Core\Style\AnimationIterationCount.PropertyBag.cs">
+      <Link>Modules\UIElements\Core\Style\AnimationIterationCount.PropertyBag.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\UIElements\Core\Style\AnimationIterationCount.cs">
+      <Link>Modules\UIElements\Core\Style\AnimationIterationCount.cs</Link>
+    </Compile>
     <Compile Include="..\..\Modules\UIElements\Core\Style\Background.PropertyBag.cs">
       <Link>Modules\UIElements\Core\Style\Background.PropertyBag.cs</Link>
     </Compile>
@@ -5008,6 +5041,15 @@
     </Compile>
     <Compile Include="..\..\Modules\UIElements\Core\Style\Generated\UIToolkitConverters.gen.cs">
       <Link>Modules\UIElements\Core\Style\Generated\UIToolkitConverters.gen.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\UIElements\Core\Style\GridLine.PropertyBag.cs">
+      <Link>Modules\UIElements\Core\Style\GridLine.PropertyBag.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\UIElements\Core\Style\GridLine.cs">
+      <Link>Modules\UIElements\Core\Style\GridLine.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\UIElements\Core\Style\GridTrackSize.cs">
+      <Link>Modules\UIElements\Core\Style\GridTrackSize.cs</Link>
     </Compile>
     <Compile Include="..\..\Modules\UIElements\Core\Style\IResolvedStyle.cs">
       <Link>Modules\UIElements\Core\Style\IResolvedStyle.cs</Link>
@@ -5113,6 +5155,9 @@
     </Compile>
     <Compile Include="..\..\Modules\UIElements\Core\Style\StyleFontDefinition.cs">
       <Link>Modules\UIElements\Core\Style\StyleFontDefinition.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\UIElements\Core\Style\StyleGridLine.cs">
+      <Link>Modules\UIElements\Core\Style\StyleGridLine.cs</Link>
     </Compile>
     <Compile Include="..\..\Modules\UIElements\Core\Style\StyleHashUtility.cs">
       <Link>Modules\UIElements\Core\Style\StyleHashUtility.cs</Link>
@@ -5224,6 +5269,9 @@
     </Compile>
     <Compile Include="..\..\Modules\UIElements\Core\Text\ATGTextJobSystem.cs">
       <Link>Modules\UIElements\Core\Text\ATGTextJobSystem.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Modules\UIElements\Core\Text\NativeTextBufferReclaimer.cs">
+      <Link>Modules\UIElements\Core\Text\NativeTextBufferReclaimer.cs</Link>
     </Compile>
     <Compile Include="..\..\Modules\UIElements\Core\Text\PanelTextSettings.cs">
       <Link>Modules\UIElements\Core\Text\PanelTextSettings.cs</Link>
@@ -6869,6 +6917,9 @@
     <Compile Include="..\..\Runtime\Export\Scripting\TrackedReference.cs">
       <Link>Runtime\Export\Scripting\TrackedReference.cs</Link>
     </Compile>
+    <Compile Include="..\..\Runtime\Export\Scripting\TypeManagerV2.cs">
+      <Link>Runtime\Export\Scripting\TypeManagerV2.cs</Link>
+    </Compile>
     <Compile Include="..\..\Runtime\Export\Scripting\UnhandledExceptionHandler.bindings.cs">
       <Link>Runtime\Export\Scripting\UnhandledExceptionHandler.bindings.cs</Link>
     </Compile>
@@ -6932,14 +6983,56 @@
     <Compile Include="..\..\Runtime\Export\Serialization\IDictionaryIgnoredEntriesCache.cs">
       <Link>Runtime\Export\Serialization\IDictionaryIgnoredEntriesCache.cs</Link>
     </Compile>
+    <Compile Include="..\..\Runtime\Export\Serialization\ManagedCommands\Callbacks.cs">
+      <Link>Runtime\Export\Serialization\ManagedCommands\Callbacks.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Runtime\Export\Serialization\ManagedCommands\Dictionary.cs">
+      <Link>Runtime\Export\Serialization\ManagedCommands\Dictionary.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Runtime\Export\Serialization\ManagedCommands\EntityIdArray.cs">
+      <Link>Runtime\Export\Serialization\ManagedCommands\EntityIdArray.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Runtime\Export\Serialization\ManagedCommands\FixedBuffer.cs">
+      <Link>Runtime\Export\Serialization\ManagedCommands\FixedBuffer.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Runtime\Export\Serialization\ManagedCommands\Gather.cs">
+      <Link>Runtime\Export\Serialization\ManagedCommands\Gather.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Runtime\Export\Serialization\ManagedCommands\GatherWireFormat.cs">
+      <Link>Runtime\Export\Serialization\ManagedCommands\GatherWireFormat.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Runtime\Export\Serialization\ManagedCommands\LinearCollection.cs">
+      <Link>Runtime\Export\Serialization\ManagedCommands\LinearCollection.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Runtime\Export\Serialization\ManagedCommands\LinearCollectionShuffle.cs">
+      <Link>Runtime\Export\Serialization\ManagedCommands\LinearCollectionShuffle.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Runtime\Export\Serialization\ManagedCommands\ReadExecutor.cs">
+      <Link>Runtime\Export\Serialization\ManagedCommands\ReadExecutor.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Runtime\Export\Serialization\ManagedCommands\SerializationBackendManagedCommands.bindings.cs">
+      <Link>Runtime\Export\Serialization\ManagedCommands\SerializationBackendManagedCommands.bindings.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Runtime\Export\Serialization\ManagedCommands\Strings.cs">
+      <Link>Runtime\Export\Serialization\ManagedCommands\Strings.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Runtime\Export\Serialization\ManagedCommands\UnityObjectArray.cs">
+      <Link>Runtime\Export\Serialization\ManagedCommands\UnityObjectArray.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Runtime\Export\Serialization\ManagedCommands\ValueReference.cs">
+      <Link>Runtime\Export\Serialization\ManagedCommands\ValueReference.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Runtime\Export\Serialization\ManagedCommands\WireFormat.cs">
+      <Link>Runtime\Export\Serialization\ManagedCommands\WireFormat.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Runtime\Export\Serialization\ManagedCommands\WriteExecutor.cs">
+      <Link>Runtime\Export\Serialization\ManagedCommands\WriteExecutor.cs</Link>
+    </Compile>
     <Compile Include="..\..\Runtime\Export\Serialization\ManagedReferenceUtility.bindings.cs">
       <Link>Runtime\Export\Serialization\ManagedReferenceUtility.bindings.cs</Link>
     </Compile>
     <Compile Include="..\..\Runtime\Export\Serialization\Serialization.cs">
       <Link>Runtime\Export\Serialization\Serialization.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Runtime\Export\Serialization\SerializationBackendManagedCommands.bindings.cs">
-      <Link>Runtime\Export\Serialization\SerializationBackendManagedCommands.bindings.cs</Link>
     </Compile>
     <Compile Include="..\..\Runtime\Export\Serialization\SerializationCommandObjectTable.cs">
       <Link>Runtime\Export\Serialization\SerializationCommandObjectTable.cs</Link>
@@ -7363,7 +7456,7 @@
     </PropertyGroup>
   </Target>
   <ItemGroup>
-    <Analyzer Include="/tmp/uitoolkit_gen__2wk85wp/Unity.UIToolkit.SourceGenerator.dll" />
+    <Analyzer Include="/tmp/uitoolkit_gen_1la1q1fv/Unity.UIToolkit.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.8" />

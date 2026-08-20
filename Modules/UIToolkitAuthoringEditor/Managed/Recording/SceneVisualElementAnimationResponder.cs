@@ -23,6 +23,11 @@ namespace Unity.UIToolkit.Editor
             if (!UIToolkitProjectSettings.s_EnablePanelRendererAnimationAtBoot)
                 return false;
 
+            // A bare UIAnimationClip asset (Project-window selection, or double-click via
+            // UIAnimationClipAssetOpener) edits the clip directly, independent of any stage or scene element.
+            if (selectedObject is UIAnimationClip clipAsset)
+                return TryEditClipAsset(window, clipAsset, out newSelection);
+
             bool inStage = StageUtility.GetCurrentStage() is VisualElementEditingStage;
 
             if (selectedObject is VisualElementSelection visualElementSelection)
@@ -40,6 +45,33 @@ namespace Unity.UIToolkit.Editor
                 return TryEditPanelRoot(window, visualTreeAssetSelection.PanelComponent, out newSelection);
 
             return false;
+        }
+
+        static bool TryEditClipAsset(AnimationWindow window, UIAnimationClip uiClip, out IAnimationWindowSelectionItem newSelection)
+        {
+            // If the window is already animating this clip through a live element or style rule (that
+            // target is the current selection), keep it: opening the clip asset must not downgrade a
+            // full element-context session to the element-less asset view.
+            if (window.selection is UIToolkitAnimationSelectionItemBase liveTarget
+                && liveTarget is not UIAnimationClipAssetSelectionItem
+                && liveTarget.uiAnimationClip == uiClip)
+            {
+                liveTarget.Synchronize();
+                newSelection = liveTarget;
+                return true;
+            }
+
+            // Reuse the existing selection when it already targets this asset so its playhead state
+            // survives the ControllerChanged refresh.
+            if (window.selection is UIAnimationClipAssetSelectionItem existing && existing.IsCompatibleWith(uiClip))
+            {
+                existing.Synchronize();
+                newSelection = existing;
+                return true;
+            }
+
+            newSelection = UIAnimationClipAssetSelectionItem.Create(window, uiClip);
+            return true;
         }
 
         static bool TryEditVisualElement(AnimationWindow window, VisualElement element, bool inStage, out IAnimationWindowSelectionItem newSelection)
@@ -98,7 +130,7 @@ namespace Unity.UIToolkit.Editor
         {
             // If the existing selection already targets the same clip owner, reuse it so
             // the controller's preview state is preserved. Synchronize() will pick up the
-            // current resolved clip if it changed under us.
+            // current resolved clips if they changed under us.
             if (window.selection is VisualElementAnimationSelectionItem existing && existing.clipOwner == clipOwner)
             {
                 existing.Synchronize();
@@ -106,7 +138,10 @@ namespace Unity.UIToolkit.Editor
                 return true;
             }
 
-            newSelection = VisualElementAnimationSelectionItem.Create(window, panelRenderer, clipOwner, uiClip);
+            var item = VisualElementAnimationSelectionItem.Create(window, panelRenderer, clipOwner, uiClip);
+            // Create seeds only the active clip; Synchronize fills in the element's full clip list for the dropdown.
+            item.Synchronize();
+            newSelection = item;
             return true;
         }
 

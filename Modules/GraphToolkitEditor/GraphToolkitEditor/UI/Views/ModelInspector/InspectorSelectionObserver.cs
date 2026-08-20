@@ -38,9 +38,9 @@ namespace Unity.GraphToolkit.Editor
         {
             m_ToolState = toolState;
             m_GraphModelStateComponent = graphModelState;
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             m_SelectionStates = selectionStates.ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             m_ModelInspectorState = modelInspectorState;
         }
 
@@ -65,10 +65,10 @@ namespace Unity.GraphToolkit.Editor
                         {
                             using (var updater = m_ModelInspectorState.UpdateScope)
                             {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                                 var selection = m_SelectionStates.SelectMany(s => s.GetSelection(graphModel));
                                 var selectedModels = m_ToolState.GraphModel.GetModelsDisplayableInInspector(selection).Distinct().ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                                 updater.SetInspectedModels(selectedModels, graphModel);
                             }
                         }

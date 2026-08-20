@@ -10,7 +10,7 @@ using static UnityEngine.UIElements.UIR.UIRenderDevice;
 
 namespace UnityEngine.UIElements.UIR
 {
-    abstract class MeshManager : IDisposable
+    abstract partial class MeshManager : IDisposable
     {
         protected readonly LinkedPool<MeshHandle> m_MeshHandles = new LinkedPool<MeshHandle>(() => new MeshHandle(), mh => { });
 

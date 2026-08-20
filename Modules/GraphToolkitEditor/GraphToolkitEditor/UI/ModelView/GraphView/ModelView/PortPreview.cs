@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -12,10 +13,15 @@ namespace Unity.GraphToolkit.Editor;
 /// </summary>
 class PortPreview : Marker
 {
+    [NoAutoStaticsCleanup] // CSS custom property descriptor; value is a fixed CSS property name
     static readonly CustomStyleProperty<int> k_HorizontalPaddingProperty = new("--horizontal-padding");
+    [NoAutoStaticsCleanup] // CSS custom property descriptor; value is a fixed CSS property name
     static readonly CustomStyleProperty<int> k_VerticalPaddingProperty = new("--vertical-padding");
+    [NoAutoStaticsCleanup] // CSS custom property descriptor; value is a fixed CSS property name
     static readonly CustomStyleProperty<int> k_BorderRadiusProperty = new("--border-radius");
+    [NoAutoStaticsCleanup] // CSS custom property descriptor; value is a fixed CSS property name
     static readonly CustomStyleProperty<Color> k_BackgroundColorProperty = new("--background-color");
+    [NoAutoStaticsCleanup] // CSS custom property descriptor; value is a fixed CSS property name
     static readonly CustomStyleProperty<Color> k_BorderColorProperty = new("--border-color");
 
     /// <summary>
@@ -432,3 +438,4 @@ class PortPreview : Marker
         return direction.y >= 0f ? SpriteAlignment.BottomCenter : SpriteAlignment.TopCenter;
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

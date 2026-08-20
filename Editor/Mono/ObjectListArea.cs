@@ -188,9 +188,9 @@ namespace UnityEditor
         public string[] GetCurrentVisibleNames()
         {
             var list = m_LocalAssets.GetVisibleNameAndEntityIds();
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return list.Select(x => x.Key).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         public void Init(Rect rect, HierarchyType hierarchyType, SearchFilter searchFilter, bool checkThumbnails)
@@ -245,12 +245,12 @@ namespace UnityEditor
                     return new SearchService.ProjectSearchContext
                     {
                         requiredTypeNames = searchFilter.classNames,
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                         requiredTypes = searchFilter.classNames.Select(name =>
-#pragma warning restore UA2001
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+#pragma warning disable UAC2001 // Avoid Linq
                             TypeCache.GetTypesDerivedFrom<UnityEngine.Object>()
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                                 .FirstOrDefault(t => name == t.FullName || name == t.Name)),
                         searchFilter = searchFilter
                     };
@@ -993,11 +993,14 @@ namespace UnityEditor
 
         int GetSelectedAssetIdx()
         {
-            // Find index of selection
-            int offsetIdx = m_LocalAssets.IndexOf(m_State.m_LastClickedEntityId);
-            if (offsetIdx != -1)
-                return offsetIdx;
-            return -1;
+            // Find index of selection.
+            //
+            // Deliberately not IndexOf: that one cannot find the asset being created, but
+            // SetSelectedAssetByIdx stores whatever AssetIdAtIndex resolved -- including that asset,
+            // for the slot it is drawn in. Resolving through IndexOf would report the current
+            // selection as not visible, so IsLastClickedItemVisible would be false and HandleKeyboard
+            // would fall through to SelectFirst on every arrow key instead of offsetting from it.
+            return m_LocalAssets.IndexOfNavigationTarget(m_State.m_LastClickedEntityId);
         }
 
         bool SkipGroup(Group group)

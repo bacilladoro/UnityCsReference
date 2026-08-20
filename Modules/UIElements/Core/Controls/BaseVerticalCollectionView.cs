@@ -2,6 +2,8 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
+using Unity.Scripting.LifecycleManagement;
 using System;
 using System.Buffers;
 using System.Collections;
@@ -695,9 +697,9 @@ namespace UnityEngine.UIElements
                 get
                 {
                     if (m_MinIndex == -1)
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                         m_MinIndex = indices.Min();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     return m_MinIndex;
                 }
             }
@@ -707,9 +709,9 @@ namespace UnityEngine.UIElements
                 get
                 {
                     if (m_MaxIndex == -1)
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                         m_MaxIndex = indices.Max();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     return m_MaxIndex;
                 }
             }
@@ -817,7 +819,8 @@ namespace UnityEngine.UIElements
         private ListViewDragger m_Dragger;
 
         internal const float ItemHeightUnset = -1;
-        internal static CustomStyleProperty<int> s_ItemHeightProperty = new CustomStyleProperty<int>("--unity-item-height");
+        [NoAutoStaticsCleanup]
+        internal static readonly CustomStyleProperty<int> s_ItemHeightProperty = new("--unity-item-height");
 
         // View controller callbacks
         readonly Action<int, int> m_ItemIndexChangedCallback;
@@ -1156,9 +1159,9 @@ namespace UnityEngine.UIElements
         /// </remarks>
         public VisualElement GetRootElementForId(int id)
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return activeItems.FirstOrDefault(t => t.id == id)?.rootElement;
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         /// <summary>
@@ -1965,9 +1968,9 @@ namespace UnityEngine.UIElements
             if (indices == null)
                 return;
 
-#pragma warning disable UA2005 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2005 // Avoid Linq
             var count = indices.Count();
-#pragma warning restore UA2005
+#pragma warning restore UAC2005
             if (count == 0)
             {
                 SetSelectionInternal(stackalloc int[0], sendNotification);
@@ -2155,3 +2158,4 @@ namespace UnityEngine.UIElements
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

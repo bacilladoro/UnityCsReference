@@ -2,12 +2,14 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
 using System;
 using System.Collections.Generic;
 using Unity.Profiling;
 using UnityEngine;
 using UnityEngine.UIElements;
 using Object = UnityEngine.Object;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.UIElements
 {
@@ -22,12 +24,14 @@ namespace UnityEditor.UIElements
     {
         const string k_UxmlSerializedDataDependencyPrefix = "UxmlSerializedData/";
 
+        [NoAutoStaticsCleanup]
         internal static UxmlCodeDependencies instance { get; } = new UxmlCodeDependencies();
 
         readonly HashSet<string> m_Set = new();
 
         internal string FormatSerializedDependencyKeyName(string uxmlQualifiedName) => k_UxmlSerializedDataDependencyPrefix + uxmlQualifiedName;
 
+        [NoAutoStaticsCleanup]
         static ProfilerMarker s_UxmlSerializationRegisterMarker = new(ProfilerCategory.UIToolkit, "UxmlCodeDependencies.UxmlSerialization.RegisterAssetAttributeDependencies");
 
         internal void RegisterUxmlSerializedDataDependencies(Dictionary<string, Type> serializedDataTypes)
@@ -65,3 +69,4 @@ namespace UnityEditor.UIElements
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

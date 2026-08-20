@@ -55,6 +55,11 @@ namespace UnityEditor.Build.Reporting
         ///<summary>The platform group the build was created for.</summary>
         ///<remarks>See <see cref="BuildTargetGroup" /> for possible values.</remarks>
         public BuildTargetGroup platformGroup { get; }
+        ///<summary>The named build target that the build was created for.</summary>
+        ///<remarks>The value combines <see cref="platform"/> with the build's standalone subtarget, so a Dedicated Server build reports
+        /// <see cref="NamedBuildTarget.Server"/> rather than <see cref="NamedBuildTarget.Standalone"/>.
+        /// Use this property to look up the platform settings a build used, for example with <see cref="PlayerSettings"/>.</remarks>
+        public NamedBuildTarget namedBuildTarget => NamedBuildTarget.FromTargetAndSubtarget(platform, subtarget);
         internal int subtarget { [VisibleToOtherModules("UnityEditor.BurstModule")] get; }
         ///<summary>The <see cref="BuildOptions" /> used for the build, as passed to <see cref="BuildPipeline.BuildPlayer" />.</summary>
         public BuildOptions options { get; }

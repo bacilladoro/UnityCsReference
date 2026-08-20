@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using Unity.DedicatedServer.Editor.Internal;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEditor.Build;
 using UnityEditor.Build.Profile;
@@ -14,6 +15,7 @@ namespace Unity.Multiplayer.Editor
     {
         public int callbackOrder => 0;
 
+        [NoAutoStaticsCleanup] // transient build state; null when not in a build, code reload doesn't occur during builds
         private static MultiplayerRoleFlags? s_PreviousRole = null;
 
         public void OnPreprocessBuild(BuildReport report)

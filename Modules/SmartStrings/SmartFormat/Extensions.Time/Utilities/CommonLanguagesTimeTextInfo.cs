@@ -2,11 +2,13 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
 // 
 // Copyright SmartFormat Project maintainers and contributors.
 // Licensed under the MIT license.
 
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using Unity.SmartStrings.Utilities;
 
 namespace Unity.SmartStrings.Extensions.Time.Utilities;
@@ -14,8 +16,9 @@ namespace Unity.SmartStrings.Extensions.Time.Utilities;
 /// <summary>
 /// The class contains <see cref="TimeTextInfo"/> definitions for common languages.
 /// </summary>
-static class CommonLanguagesTimeTextInfo
+static partial class CommonLanguagesTimeTextInfo
 {
+    [AutoStaticsCleanupOnCodeReload] // custom entries hold user PluralRuleDelegate instances; clear on reload
     internal static readonly Dictionary<string, TimeTextInfo> s_CustomLanguage = new();
 
     /// <summary>
@@ -185,3 +188,4 @@ static class CommonLanguagesTimeTextInfo
         };
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

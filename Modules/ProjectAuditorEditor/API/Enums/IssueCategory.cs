@@ -171,6 +171,8 @@ namespace Unity.ProjectAuditor.Editor
     internal static class IssueCategoryExtensions
     {
         public static bool IsSummary(this IssueCategory category) => category == IssueCategory.OptimizationSummary || category == IssueCategory.UpgradeSummary;
+
+        public static bool IsPopulatedByPlayerBuild(this IssueCategory category) => category == IssueCategory.ShaderVariant || category == IssueCategory.ComputeShaderVariant;
         public static readonly IssueCategory FirstCustomCategory = ((IReadOnlyList<IssueCategory>)System.Enum.GetValues(typeof(IssueCategory))).Max() + 1;
     }
 }

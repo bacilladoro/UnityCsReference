@@ -3,6 +3,10 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using System.Collections.Generic;
+using System.Text;
+using Unity.Scripting.LifecycleManagement;
+using UnityEditor;
 
 namespace Unity.ProjectAuditor.Editor
 {
@@ -72,12 +76,89 @@ namespace Unity.ProjectAuditor.Editor
         /// </summary>
         Upgrade = 1 << 10,
 
-        // Add new items in alphabetical order and adjust the values (including "All") accordingly.
-        // Areas are serialised as strings, so it doesn't matter if the values change between package versions so long as old reports have been saved.
+        /// <summary>
+        /// Migration To CoreCLR. Issues that prevent you from switching from Mono to the CoreCLR scripting backend.
+        /// </summary>
+        MigrationToCoreCLR = 1 << 11,
 
         /// <summary>
-        /// Bitmask value representing all areas
+        /// Migration To URP. Issues that prevent you from migrating to the Universal Render Pipeline.
         /// </summary>
-        All = (1 << 11) - 1
+        MigrationToURP = 1 << 12
+    }
+
+    internal static class AreasExtensions
+    {
+        public static readonly Areas All = Union(Enum.GetValues(typeof(Areas)));
+
+        static Areas Union(Array array)
+        {
+            Areas result = Areas.None;
+
+            foreach (Areas area in array)
+                result |= area;
+
+            return result;
+        }
+		
+        [NoAutoStaticsCleanup] // Lazy-initialized cache of area strings; data is still valid after code reload
+        static Dictionary<Areas, string> s_FrontendStrings;
+
+        // The individual area flags (i.e. excluding "None" and the "All" bitmask), in alphabetical order by name
+        internal static Areas[] AlphabeticalAreas => s_AlphabeticalAreas;
+        static readonly Areas[] s_AlphabeticalAreas = GetAlphabeticalAreas();
+
+        internal static string ToFrontendString(this Areas areas)
+        {
+            if (s_FrontendStrings == null)
+                s_FrontendStrings = new Dictionary<Areas, string>();
+            if (s_FrontendStrings.TryGetValue(areas, out var frontendString))
+                return frontendString;
+
+            frontendString = BuildFrontendString(areas);
+            s_FrontendStrings[areas] = frontendString;
+            return frontendString;
+        }
+
+        static string BuildFrontendString(Areas areas)
+        {
+            var sb = new StringBuilder();
+
+            if (areas == Areas.None)
+                return "None";
+            if (areas == All)
+                return "All";
+
+            foreach (var area in s_AlphabeticalAreas)
+            {
+                if ((areas & area) == 0)
+                    continue;
+
+                if (sb.Length > 0)
+                    sb.Append(", ");
+
+                if (area == Areas.MigrationToCoreCLR)
+                    sb.Append("Migration To CoreCLR"); // ToString creates "Core CLR" with an extra space
+                else
+                    sb.Append(area.ToString());
+            }
+
+            // Fall back on the enum's own formatting for "None", "All", and any undefined flags
+            return ObjectNames.NicifyVariableName(sb.Length > 0 ? sb.ToString() : areas.ToString());
+        }
+
+        static Areas[] GetAlphabeticalAreas()
+        {
+            var names = new List<string>(Enum.GetNames(typeof(Areas)));
+
+            // We're not interested in "None"
+            names.Remove(nameof(Areas.None));
+            names.Sort(StringComparer.OrdinalIgnoreCase);
+
+            var areas = new Areas[names.Count];
+            for (var i = 0; i < names.Count; ++i)
+                areas[i] = (Areas)Enum.Parse(typeof(Areas), names[i]);
+            return areas;
+        }
     }
 }

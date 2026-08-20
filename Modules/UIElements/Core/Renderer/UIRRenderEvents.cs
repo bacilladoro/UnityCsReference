@@ -39,18 +39,21 @@ namespace UnityEngine.UIElements.UIR
             bool hierarchical = (renderData.dirtiedValues & RenderDataDirtyTypes.OpacityHierarchy) != 0;
             stats.recursiveOpacityUpdates++;
 
-            // A nested render tree root has no parent link into the outer tree, so it draws its ancestor
-            // composite from the owner's outer subTreeQuad renderData.
             float parentCompositeOpacity;
             if (renderData.isNestedRenderTreeRoot)
             {
+                // A nested render tree root has no parent link into the outer tree, so it draws its ancestor
+                // composite from the owner's outer subTreeQuad renderData.
                 Debug.Assert(renderData.owner.renderData != null, "Nested render tree root should always have an outer renderData");
                 parentCompositeOpacity = renderData.owner.renderData.compositeOpacity;
             }
             else
-                parentCompositeOpacity = renderData.parent != null ? renderData.parent.compositeOpacity : 1.0f;
+            {
+                RenderData inheritanceParent = renderData.GetInheritanceParent(renderData.parent);
+                parentCompositeOpacity = inheritanceParent != null ? inheritanceParent.compositeOpacity : 1.0f;
+            }
 
-            DepthFirstOnOpacityChanged(renderTreeManager, parentCompositeOpacity, renderData, dirtyID, hierarchical, ref stats);
+            DepthFirstOnOpacityChanged(renderTreeManager, parentCompositeOpacity, renderData, dirtyID, hierarchical, false, ref stats);
         }
 
         internal static void ProcessOnColorChanged(RenderTreeManager renderTreeManager, RenderData renderData, uint dirtyID, ref ChainBuilderStats stats)
@@ -113,6 +116,8 @@ namespace UnityEngine.UIElements.UIR
 
             RenderData renderData;
             RenderData parentRenderData = null;
+            int zIndex = ve.computedStyle.zIndex;
+            bool isReparentedAcrossDepth = false;
 
             // Regular RenderData
             renderData = renderTreeManager.GetPooledRenderData();
@@ -132,7 +137,17 @@ namespace UnityEngine.UIElements.UIR
             }
             else
             {
-                parentRenderData = parent.nestedRenderData ?? parent.renderData;
+                var visualParentRenderData = parent.nestedRenderData ?? parent.renderData;
+                parentRenderData = visualParentRenderData;
+
+                // z-index promotion cannot cross a useRenderTexture (nested render tree) boundary, since draws cannot be emitted into another render tree.
+                if (RenderData.HasZIndex(zIndex) && parent.nestedRenderData == null && parentRenderData.parent != null)
+                {
+                    parentRenderData = FindStackingContextRoot(renderTreeManager, parentRenderData);
+                }
+
+                isReparentedAcrossDepth = parentRenderData != visualParentRenderData;
+
                 renderData.parent = parentRenderData;
                 renderData.renderTree = renderData.parent.renderTree;
                 renderData.depthInRenderTree = renderData.parent.depthInRenderTree + 1;
@@ -186,53 +201,61 @@ namespace UnityEngine.UIElements.UIR
             // and initially have no children.
             if (parentRenderData != null)
             {
-                // Search for the previous sibling in our parent. They are potentially not yet in the render tree
-                // because of the delayed VisualElement additions. Consider the following example:
-                //
-                //        Root
-                //        /  \
-                //       C    A
-                //           /
-                //          B
-                //
-                // If element B is added first, followed by C, then even though C is part of the VisualElement
-                // hierarchy, it is not yet in the render tree because of the postponed additions. Because of that,
-                // we search through the parent's left siblings to find the first one that's actually part of the
-                // render tree. If none is found, we fallback to the parent case.
-                RenderData prevSibling = null;
-                for (int i = index - 1; i >= 0; --i)
+                if (RenderData.HasZIndex(zIndex))
                 {
-                    prevSibling = parent.hierarchy[i].renderData;
-                    if (prevSibling != null)
-                        break;
-                }
-
-                RenderData nextSibling;
-                if (prevSibling != null)
-                {
-                    nextSibling = prevSibling.nextSibling;
-                    prevSibling.nextSibling = renderData;
-                    renderData.prevSibling = prevSibling;
+                    InsertAtZIndexPosition(renderData, parentRenderData, zIndex);
+                    ++renderTreeManager.zIndexElementCount;
                 }
                 else
                 {
-                    nextSibling = parentRenderData.firstChild;
-                    parentRenderData.firstChild = renderData;
-                }
+                    // Search for the previous sibling in our parent. They are potentially not yet in the render tree
+                    // because of the delayed VisualElement additions. Consider the following example:
+                    //
+                    //        Root
+                    //        /  \
+                    //       C    A
+                    //           /
+                    //          B
+                    //
+                    // If element B is added first, followed by C, then even though C is part of the VisualElement
+                    // hierarchy, it is not yet in the render tree because of the postponed additions. Because of that,
+                    // we search through the parent's left siblings to find the first one that's actually part of the
+                    // render tree. If none is found, we fallback to the parent case.
+                    RenderData prevSibling = null;
+                    for (int i = index - 1; i >= 0; --i)
+                    {
+                        prevSibling = parent.hierarchy[i].renderData;
+                        if (prevSibling != null)
+                        {
+                            if (prevSibling.parent != parentRenderData || prevSibling.hasZIndex)
+                            {
+                                prevSibling = null;
+                                continue;
+                            }
+                            break;
+                        }
+                    }
 
-                if (nextSibling != null)
-                {
-                    renderData.nextSibling = nextSibling;
-                    nextSibling.prevSibling = renderData;
+                    if (prevSibling == null)
+                    {
+                        var child = parentRenderData.firstChild;
+                        while (child != null && child.zIndex != int.MinValue && child.zIndex < 0)
+                        {
+                            prevSibling = child;
+                            child = child.nextSibling;
+                        }
+                    }
+
+                    SpliceAfter(renderData, prevSibling, parentRenderData);
                 }
-                else
-                    parentRenderData.lastChild = renderData;
             }
 
+            renderData.zIndex = zIndex;
+
             // TransformID
-            // Non-identity rotation/scale, or a Z-translation, makes this a sticky bone. Z must go
-            // through the full bone matrix because the ElementInfo offset only carries X/Y.
-            if (!renderData.isGroupTransform && (!ve.hasDefaultRotationAndScale || ve.has3DTranslation))
+            // Non-identity rotation/scale or a Z-translation makes this a sticky bone, since the ElementInfo offset only carries X/Y.
+            // A z-index element reparented past intervening visual ancestors also becomes a bone: the offset to the render-tree root cannot encode an ancestor's rotation/scale.
+            if (!renderData.isGroupTransform && (!ve.hasDefaultRotationAndScale || ve.has3DTranslation || isReparentedAcrossDepth))
                 renderData.flags |= RenderDataFlags.IsStickyBone;
 
             Debug.Assert(!RenderData.AllocatesID(renderData.transformID));
@@ -266,6 +289,10 @@ namespace UnityEngine.UIElements.UIR
             else
                 renderTreeManager.shaderInfoAllocator.SetTransformValue(renderData.transformID, GetTransformIDTransformInfo(renderData));
 
+            // A cross-depth promoted element sits outside its visual parent's render subtree, so dirty it directly; the visuals pass has no visual-child walk to reach it.
+            if (isReparentedAcrossDepth)
+                renderTreeManager.UIEOnVisualsChanged(ve, true);
+
             // Recurse on children
             int childrenCount = ve.hierarchy.childCount;
             uint deepCount = 0;
@@ -276,9 +303,6 @@ namespace UnityEngine.UIElements.UIR
 
         internal static uint DepthFirstOnElementRemoving(RenderTreeManager renderTreeManager, VisualElement ve)
         {
-            // NOTE: When we support Z-index, when recursing on the renderData, if a renderData
-            // doesn't change the Z-index, we should skip the reconnections of the renderData's hierarchy.
-
             if (ve.insertionIndex >= 0)
             {
                 // This element is pending insertion, cancel it
@@ -344,12 +368,14 @@ namespace UnityEngine.UIElements.UIR
             while (child != null)
             {
                 RenderData nextChild = child.nextSibling;
-                DoDepthFirstRemoveRenderData(renderTreeManager, child);
+                // Reparented children (explicit z-index) are owned by the stacking context root and handled by DisconnectSubTree in DepthFirstOnElementRemoving.
+                if (!child.hasZIndex)
+                    DoDepthFirstRemoveRenderData(renderTreeManager, child);
                 child = nextChild;
             }
         }
 
-        static void DisconnectSubTree(RenderData renderData)
+        internal static void DisconnectSubTree(RenderData renderData)
         {
             RenderData parentRenderData = renderData.parent;
             if (parentRenderData != null)
@@ -366,6 +392,87 @@ namespace UnityEngine.UIElements.UIR
 
             if (renderData.nextSibling != null)
                 renderData.nextSibling.prevSibling = renderData.prevSibling;
+        }
+
+        internal static RenderData FindStackingContextRoot(RenderTreeManager renderTreeManager, RenderData renderData)
+        {
+            while (renderData.parent != null)
+            {
+                // A group transform is a coordinate and scissor-clip boundary; a z-index element must not escape it or its draw commands fall outside the group's scissor range.
+                if (renderData.zIndex != int.MinValue || renderData.isGroupTransform || EstablishesStatefulClipBoundary(renderTreeManager, renderData))
+                    return renderData;
+                renderData = renderData.parent;
+            }
+            return renderData;
+        }
+
+        // Scissor/stencil clip is stateful (push/pop around the clipper's draw range); a z-index element reparented past it would draw outside that range and escape the clip.
+        static bool EstablishesStatefulClipBoundary(RenderTreeManager renderTreeManager, RenderData renderData)
+        {
+            if (renderTreeManager.drawInCameras)
+                return false;
+
+            var ve = renderData.owner;
+            if (!ve.ShouldClip())
+                return false;
+
+            return (ve.renderHints & RenderHints.ClipWithScissors) != 0
+                || renderTreeManager.elementBuilder.RequiresStencilMask(ve);
+        }
+
+        static bool IsReparentedZIndexChild(RenderData childRenderData, RenderData visualParentRenderData)
+        {
+            return childRenderData != null
+                && childRenderData.hasZIndex
+                && childRenderData.parent != visualParentRenderData;
+        }
+
+        internal static void InsertAtZIndexPosition(RenderData renderData, RenderData parentRenderData, int zIndex)
+        {
+            RenderData insertAfter = null;
+            var child = parentRenderData.firstChild;
+
+            while (child != null)
+            {
+                int childZIndex = child.zIndex;
+
+                // Negative z-index elements must not advance past auto or non-negative children.
+                if (zIndex < 0 && (childZIndex == int.MinValue || childZIndex >= 0))
+                    break;
+
+                if (childZIndex <= zIndex)
+                    insertAfter = child;
+                else
+                    break;
+
+                child = child.nextSibling;
+            }
+
+            SpliceAfter(renderData, insertAfter, parentRenderData);
+        }
+
+        static void SpliceAfter(RenderData node, RenderData insertAfter, RenderData parent)
+        {
+            RenderData nextSibling;
+            if (insertAfter != null)
+            {
+                nextSibling = insertAfter.nextSibling;
+                insertAfter.nextSibling = node;
+                node.prevSibling = insertAfter;
+            }
+            else
+            {
+                nextSibling = parent.firstChild;
+                parent.firstChild = node;
+            }
+
+            if (nextSibling != null)
+            {
+                node.nextSibling = nextSibling;
+                nextSibling.prevSibling = node;
+            }
+            else
+                parent.lastChild = node;
         }
 
         static void DisconnectRenderTreeFromParent(RenderTree parentTree, RenderTree nestedTree)
@@ -386,6 +493,9 @@ namespace UnityEngine.UIElements.UIR
 
         static void ResetRenderData(RenderTreeManager renderTreeManager, RenderData renderData)
         {
+            if (renderData.hasZIndex)
+                --renderTreeManager.zIndexElementCount;
+
             // Captured before renderData.renderTree is cleared below; the backdrop-filter teardown needs it. UI-5170.
             RenderTree renderTree = renderData.renderTree;
             renderTree.ChildWillBeRemoved(renderData);
@@ -490,6 +600,13 @@ namespace UnityEngine.UIElements.UIR
                 renderTree.UnregisterBackdropFilter(renderData);
             }
 
+            // Removal can occur without the chain ever becoming empty, so drop any registration the
+            // sync paths didn't; the blocks themselves were already returned by FreeExtraData above.
+            if (renderData.isRegisteredForFilterCallbacks)
+                renderTreeManager.UnregisterFilterCallbackElement(renderData, RenderDataFlags.RegisteredForFilterCallbacks);
+            if (renderData.isRegisteredForBackdropFilterCallbacks)
+                renderTreeManager.UnregisterFilterCallbackElement(renderData, RenderDataFlags.RegisteredForBackdropFilterCallbacks);
+
             renderTreeManager.ReturnPoolRenderData(renderData);
         }
 
@@ -563,7 +680,8 @@ namespace UnityEngine.UIElements.UIR
                     // they provide a new baseline with the _PixelClipRect instead.
                     if (!renderData.isGroupTransform)
                     {
-                        newClipRectID = ((newClippingMethod != ClipMethod.Scissor) && (parentRenderData != null)) ? parentRenderData.clipRectID : ShaderInfoAllocator.infiniteClipRect;
+                        RenderData clipSource = renderData.GetInheritanceParent(parentRenderData);
+                        newClipRectID = ((newClippingMethod != ClipMethod.Scissor) && (clipSource != null)) ? clipSource.clipRectID : ShaderInfoAllocator.infiniteClipRect;
                         newClipRectID.ownedState = OwnedState.Inherited;
                     }
                 }
@@ -657,6 +775,13 @@ namespace UnityEngine.UIElements.UIR
                 var child = renderData.firstChild;
                 while (child != null)
                 {
+                    // Skip reparented z-index children; they are processed from their visual parent below.
+                    if (child.hasZIndex && child.owner.hierarchy.parent != renderData.owner)
+                    {
+                        child = child.nextSibling;
+                        continue;
+                    }
+
                     DepthFirstOnClippingChanged(
                         renderTreeManager,
                         renderData,
@@ -673,13 +798,41 @@ namespace UnityEngine.UIElements.UIR
 
                     child = child.nextSibling;
                 }
+
+                // Walk visual children to find reparented z-index elements and process them with the
+                // visual parent's clip context instead of the stacking context root's.
+                if (renderTreeManager.hasZIndex)
+                {
+                    var ve = renderData.owner;
+                    int childCount = ve.hierarchy.childCount;
+                    for (int i = 0; i < childCount; i++)
+                    {
+                        var childRD = ve.hierarchy[i].renderData;
+                        if (IsReparentedZIndexChild(childRD, renderData))
+                        {
+                            DepthFirstOnClippingChanged(
+                                renderTreeManager,
+                                renderData,
+                                childRD,
+                                dirtyID,
+                                hierarchical,
+                                false,
+                                isPendingHierarchicalRepaint,
+                                clipRectIDChanged,
+                                maskingChanged,
+                                ref stats);
+                        }
+                    }
+                }
             }
         }
 
         static void DepthFirstOnOpacityChanged(RenderTreeManager renderTreeManager, float parentCompositeOpacity, RenderData renderData,
-            uint dirtyID, bool hierarchical, ref ChainBuilderStats stats)
+            uint dirtyID, bool hierarchical, bool inheritedCompositeChanged, ref ChainBuilderStats stats)
         {
-            if (dirtyID == renderData.dirtyID)
+            // inheritedCompositeChanged overrides the early-out so a reparented element visited before its
+            // visual parent can be recomputed when that parent's later children walk re-enters it.
+            if (dirtyID == renderData.dirtyID && !inheritedCompositeChanged)
                 return;
 
             renderData.dirtyID = dirtyID; // Prevent reprocessing of the same element in the same pass
@@ -745,11 +898,12 @@ namespace UnityEngine.UIElements.UIR
             else if (renderData.opacityID.ownedState == OwnedState.Inherited)
             {
                 // Just follow my parent's alloc
-                if (renderData.parent != null &&
-                    !renderData.opacityID.Equals(renderData.parent.opacityID))
+                RenderData opacityParent = renderData.GetInheritanceParent(renderData.parent);
+                if (opacityParent != null &&
+                    !renderData.opacityID.Equals(opacityParent.opacityID))
                 {
                     changedOpacityID = true;
-                    renderData.opacityID = renderData.parent.opacityID;
+                    renderData.opacityID = opacityParent.opacityID;
                     renderData.opacityID.ownedState = OwnedState.Inherited;
                 }
             }
@@ -763,15 +917,37 @@ namespace UnityEngine.UIElements.UIR
             if (changedOpacityID)
                 renderTreeManager.MarkElementInfoDirty(renderData);
 
-            if (compositeOpacityChanged || changedOpacityID || hierarchical)
+            var propagateOpacityChange = compositeOpacityChanged || changedOpacityID;
+            if (propagateOpacityChange || hierarchical)
             {
                 // Recurse on children
                 var child = renderData.firstChild;
                 while (child != null)
                 {
-                    DepthFirstOnOpacityChanged(renderTreeManager, newOpacity, child, dirtyID, hierarchical, ref stats);
+                    // Skip reparented z-index children; they are processed from their visual parent below.
+                    if (child.hasZIndex && child.owner.hierarchy.parent != renderData.owner)
+                    {
+                        child = child.nextSibling;
+                        continue;
+                    }
+
+                    DepthFirstOnOpacityChanged(renderTreeManager, newOpacity, child, dirtyID, hierarchical, propagateOpacityChange, ref stats);
 
                     child = child.nextSibling;
+                }
+
+                // Walk visual children to find reparented z-index elements and process them so their
+                // composite opacity and opacityID inherit from the visual parent, not the stacking root.
+                if (renderTreeManager.hasZIndex)
+                {
+                    var ve = renderData.owner;
+                    int childCount = ve.hierarchy.childCount;
+                    for (int i = 0; i < childCount; i++)
+                    {
+                        var childRD = ve.hierarchy[i].renderData;
+                        if (IsReparentedZIndexChild(childRD, renderData))
+                            DepthFirstOnOpacityChanged(renderTreeManager, newOpacity, childRD, dirtyID, hierarchical, propagateOpacityChange, ref stats);
+                    }
                 }
             }
         }
@@ -913,8 +1089,29 @@ namespace UnityEngine.UIElements.UIR
                 var child = renderData.firstChild;
                 while (child != null)
                 {
+                    // Skip reparented z-index children; they are processed from their visual parent below.
+                    if (child.hasZIndex && child.owner.hierarchy.parent != renderData.owner)
+                    {
+                        child = child.nextSibling;
+                        continue;
+                    }
+
                     DepthFirstOnTransformOrSizeChanged(renderTreeManager, child, dirtyID, isAncestorOfChangeSkinned, transformChanged, childParentBoneChanged, ref stats);
                     child = child.nextSibling;
+                }
+
+                // Walk visual children to find reparented z-index elements and process them so that
+                // clip rect values (SetClipRectValue) are updated correctly.
+                if (renderTreeManager.hasZIndex)
+                {
+                    var ve = renderData.owner;
+                    int childCount = ve.hierarchy.childCount;
+                    for (int i = 0; i < childCount; i++)
+                    {
+                        var childRD = ve.hierarchy[i].renderData;
+                        if (IsReparentedZIndexChild(childRD, renderData))
+                            DepthFirstOnTransformOrSizeChanged(renderTreeManager, childRD, dirtyID, isAncestorOfChangeSkinned, transformChanged, childParentBoneChanged, ref stats);
+                    }
                 }
             }
             else if (transformChanged)
@@ -1000,7 +1197,7 @@ namespace UnityEngine.UIElements.UIR
                 return rectClipMethod;
 
             int inheritedMaskDepth = 0;
-            var parent = renderData.parent;
+            var parent = renderData.GetInheritanceParent(renderData.parent);
             if (parent != null)
                 inheritedMaskDepth = parent.childrenMaskDepth;
 
@@ -1166,6 +1363,9 @@ namespace UnityEngine.UIElements.UIR
                 {
                     renderTreeManager.panel?.IncrementBackdropFilterCount();
                     renderData.renderTree.RegisterBackdropFilter(renderData);
+
+                    // isEnabled already excludes the nested-tree root; the subtree quad is the RenderData that records the backdrop (DrawVisualElementBackdrop), so it must register too.
+                    renderTreeManager.RegisterFilterCallbackElement(renderData, RenderDataFlags.RegisteredForBackdropFilterCallbacks);
                 }
             }
             else
@@ -1173,6 +1373,35 @@ namespace UnityEngine.UIElements.UIR
                 BackdropFilterHelper.ReleaseBackdropFilterResources(renderTreeManager, renderData);
                 renderTreeManager.panel?.DecrementBackdropFilterCount();
                 renderData.renderTree.UnregisterBackdropFilter(renderData);
+
+                renderTreeManager.UnregisterFilterCallbackElement(renderData, RenderDataFlags.RegisteredForBackdropFilterCallbacks);
+            }
+        }
+
+        // Pre-build sync of the `filter` style: registers/unregisters on empty <-> non-empty transitions.
+        // No GPU-resource allocation here, unlike backdrop-filter — the compositor manages its own draw ops.
+        public static void SyncFilterState(RenderTreeManager renderTreeManager, RenderData renderData)
+        {
+            // A filtered element has two RenderData (subtree quad + nested tree root) with the same
+            // owner; the compositor only reads the blocks of owner.renderData, so skip the nested
+            // root to avoid invoking user callbacks twice per frame for the same element.
+            if (renderData.isNestedRenderTreeRoot)
+                return;
+
+            bool wasEnabled = renderData.isRegisteredForFilterCallbacks;
+            bool isEnabled = renderData.owner.computedStyle.filter.Length > 0;
+
+            if (wasEnabled == isEnabled)
+                return;
+
+            if (isEnabled)
+            {
+                renderTreeManager.RegisterFilterCallbackElement(renderData, RenderDataFlags.RegisteredForFilterCallbacks);
+            }
+            else
+            {
+                FilterHelper.ReleaseFilterCallbackResources(renderTreeManager, renderData);
+                renderTreeManager.UnregisterFilterCallbackElement(renderData, RenderDataFlags.RegisteredForFilterCallbacks);
             }
         }
 

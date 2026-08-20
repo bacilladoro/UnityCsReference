@@ -55,6 +55,7 @@ namespace UnityEngine.UIElements.StyleSheets
         protected abstract bool MatchCustomIdent();
         protected abstract bool MatchLinearGradient();
         protected abstract bool MatchRadialGradient();
+        protected abstract bool MatchTrackSize();
 
         public abstract int valueCount { get; }
         public abstract bool isCurrentVariable { get; }
@@ -443,6 +444,9 @@ namespace UnityEngine.UIElements.StyleSheets
                     case DataType.RadialGradient:
                         result = MatchRadialGradient();
                         break;
+                    case DataType.TrackSize:
+                        result = MatchTrackSize();
+                        break;
                 }
             }
 
@@ -555,6 +559,25 @@ namespace UnityEngine.UIElements.StyleSheets
 
             match = s_ZeroRegex.Match(value);
             return match.Success;
+        }
+
+        // CSS Grid <track-size>: a length/percentage, a fractional (fr) unit, one of the
+        // content keywords, or a minmax()/repeat()/fit-content() function.
+        static readonly Regex s_FractionRegex = new Regex(@"^[+-]?\d+(?:\.\d+)?fr$", RegexOptions.Compiled);
+        static readonly Regex s_TrackFunctionRegex = new Regex(@"^(?:minmax|repeat|fit-content)\(.+\)$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        protected override bool MatchTrackSize()
+        {
+            if (MatchLength() || MatchPercentage())
+                return true;
+
+            var value = current;
+            if (s_FractionRegex.IsMatch(value))
+                return true;
+            if (string.Equals(value, "auto", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(value, "min-content", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(value, "max-content", StringComparison.OrdinalIgnoreCase))
+                return true;
+            return s_TrackFunctionRegex.IsMatch(value);
         }
 
         static readonly Regex s_HexColorRegex = new Regex(@"^#[a-fA-F0-9]{3}(?:[a-fA-F0-9]{3})?$", RegexOptions.Compiled);
@@ -811,6 +834,27 @@ namespace UnityEngine.UIElements.StyleSheets
             }
 
             return false;
+        }
+
+        protected override bool MatchTrackSize()
+        {
+            var value = current;
+            if (value.handle.valueType == StyleValueType.Dimension)
+            {
+                var dimension = value.sheet.ReadDimension(value.handle);
+                return dimension.unit is Dimension.Unit.Pixel or Dimension.Unit.Percent or Dimension.Unit.Fraction;
+            }
+            if (value.handle.valueType == StyleValueType.Float)
+                return Mathf.Approximately(0f, value.sheet.ReadFloat(value.handle));
+            if (value.handle.valueType is StyleValueType.Keyword or StyleValueType.Enum)
+            {
+                var s = value.sheet.ReadAsString(value.handle);
+                return string.Equals(s, "auto", StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(s, "min-content", StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(s, "max-content", StringComparison.OrdinalIgnoreCase);
+            }
+            // minmax()/repeat()/fit-content() arrive as a function handle in resolved values.
+            return value.handle.valueType == StyleValueType.Function;
         }
 
         protected override bool MatchResource()

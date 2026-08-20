@@ -10,7 +10,14 @@ namespace UnityEngine.AdaptivePerformance
     public class AdaptiveFramerate : AdaptivePerformanceScaler
     {
         int m_DefaultFPS;
-        int m_FirstTimeStart = 0; // APB-34 When initiated Unity might not have set the target framerate correctly and when disabling the scaler initially it would override the wrong framerate.
+        /// <summary>
+        /// Sets the targeted framerate for the application. 
+        /// </summary>
+        /// <param name="framerate">The target framerate to set for the application.</param>
+        public void SetFrameRate(int framerate)
+        {
+            Application.targetFrameRate = framerate;
+        }
 
         /// <summary>
         /// Ensures settings are applied during startup.
@@ -18,10 +25,9 @@ namespace UnityEngine.AdaptivePerformance
         protected override void Awake()
         {
             base.Awake();
-            m_FirstTimeStart = 0;
             if (m_Settings == null)
                 return;
-            ApplyDefaultSetting(m_Settings.scalerSettings.AdaptiveFramerate);
+            ApplyProfileSettings(m_Settings.scalerSettings.AdaptiveFramerate);
         }
 
         /// <summary>
@@ -29,11 +35,6 @@ namespace UnityEngine.AdaptivePerformance
         /// </summary>
         protected override void OnDisabled()
         {
-            if (m_FirstTimeStart<2)
-            {
-                m_FirstTimeStart++;
-                return;
-            }
             Application.targetFrameRate = m_DefaultFPS;
         }
 
@@ -42,11 +43,9 @@ namespace UnityEngine.AdaptivePerformance
         /// </summary>
         protected override void OnEnabled()
         {
-            if (m_FirstTimeStart < 2)
-                return;
-
             m_DefaultFPS = Application.targetFrameRate;
-            Application.targetFrameRate = (int)MaxBound;
+            if(IndexerOperationMode == OperationMode.NormalMode)
+                Application.targetFrameRate = (int)MaxBound;
         }
 
         /// <summary>
@@ -54,8 +53,6 @@ namespace UnityEngine.AdaptivePerformance
         /// </summary>
         protected override void OnLevelIncrease()
         {
-            base.OnLevelIncrease();
-
             var framerateDecrease = 1;
 
             if (Holder.Instance.Indexer.PerformanceAction == StateAction.FastDecrease)
@@ -72,8 +69,6 @@ namespace UnityEngine.AdaptivePerformance
         /// </summary>
         protected override void OnLevelDecrease()
         {
-            base.OnLevelDecrease();
-
             var fps = Application.targetFrameRate + 5;
             if (fps >= MinBound && fps <= MaxBound)
                 Application.targetFrameRate = fps;

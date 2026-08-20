@@ -77,7 +77,15 @@ namespace UnityEngine.AdaptivePerformance.Provider
         /// <summary>
         /// See <see cref="PerformanceDataRecord.GpuUtilization"/>
         /// </summary>
-        GpuUtilization = 0x4000
+        GpuUtilization = 0x4000,
+        /// <summary>
+        /// See <see cref="PerformanceDataRecord.LowPowerMode"/>
+        /// </summary>
+        LowPowerMode = 0x8000,
+        /// <summary>
+        /// See <see cref="IDevicePerformanceLevelControl.SetEnergyEfficiencyMode"/>
+        /// </summary>
+        EnergyEfficiencyMode = 0x10000
     }
 
     /// <summary>
@@ -202,6 +210,14 @@ namespace UnityEngine.AdaptivePerformance.Provider
         /// </summary>
         /// <value>GPU utilization in the range of [0.0, 1.0] or -1.0</value>
         public float GpuUtilization { get; set; }
+
+        /// <summary>
+        /// True when the platform reports a low-power condition (iOS Low Power Mode,
+        /// Android Battery Saver, etc.). Has changed when <see cref="Feature.LowPowerMode"/>
+        /// bit is set in <see cref="ChangeFlags"/>.
+        /// </summary>
+        /// <value>True when the device is under a low-power condition.</value>
+        public bool LowPowerMode { get; set; }
     }
 
     /// <summary>
@@ -271,6 +287,21 @@ namespace UnityEngine.AdaptivePerformance.Provider
         /// If <see cref="Feature.GpuPerformanceBoost"/> is not supported (see <see cref="AdaptivePerformanceSubsystem.Capabilities"/>), this function is ignored.
         /// <returns>Returns true on success. When this fails, it means that the system took control and does not allow boosts.</returns>
         bool EnableGpuBoost();
+
+        /// <summary>
+        /// Hint the subsystem to bias device-level configurations toward energy efficiency over
+        /// peak performance (e.g. Android's power-efficiency hint on the ADPF hint session). If
+        /// <see cref="Feature.EnergyEfficiencyMode"/> is not supported (see
+        /// <see cref="AdaptivePerformanceSubsystem.Capabilities"/>), this function is ignored and
+        /// returns false.
+        /// </summary>
+        /// <param name="enable">True to enable the energy-efficiency hint; false to release it.</param>
+        /// <returns>True on success; false when the capability is unsupported or the platform rejected the hint.</returns>
+        bool SetEnergyEfficiencyMode(bool enable)
+        {
+            return false;
+        }
+
     }
 
     /// <summary>

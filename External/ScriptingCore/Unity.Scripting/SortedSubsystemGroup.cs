@@ -56,13 +56,13 @@ namespace Unity.Scripting
         private void SortAndFreeze()
         {
             SubsystemEntry[] sorted = TopologicalSort();
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             m_InitDelegates = sorted.Where(s => s.InitDelegate != null).Select(s => s.InitDelegate!).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             m_CleanupDelegates = sorted.AsEnumerable().Reverse().Where(s => s.CleanupDelegate != null).Select(s => s.CleanupDelegate!).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         private SortedSubsystemGroup<TInitDelegate, TCleanupDelegate>.SubsystemEntry[] TopologicalSort()

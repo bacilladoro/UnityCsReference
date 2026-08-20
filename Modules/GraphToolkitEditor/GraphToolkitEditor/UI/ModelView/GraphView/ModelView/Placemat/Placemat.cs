@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Pool;
@@ -191,6 +192,7 @@ namespace Unity.GraphToolkit.Editor
             return true;
         }
 
+        [NoAutoStaticsCleanup] // empty scratch list; cleared after each use, never holds persistent element references
         static readonly List<ChildView> k_AddForwardDependenciesAllUIs = new();
 
         /// <inheritdoc/>
@@ -258,6 +260,7 @@ namespace Unity.GraphToolkit.Editor
                 }
         }
 
+        [NoAutoStaticsCleanup] // empty scratch list; cleared after each use, never holds persistent element references
         static readonly List<GraphElement> k_ActOnGraphElementsOver2AllUIs = new();
         protected internal bool ActOnGraphElementsInside(Func<GraphElement, bool> act)
         {
@@ -331,6 +334,7 @@ namespace Unity.GraphToolkit.Editor
             return false;
         }
 
+        [NoAutoStaticsCleanup] // empty scratch list; cleared before each use, never holds persistent element references
         static readonly List<GraphElement> k_ShrinkToFitElements = new List<GraphElement>();
 
         internal Rect ComputeShrinkToFitElementsRect()

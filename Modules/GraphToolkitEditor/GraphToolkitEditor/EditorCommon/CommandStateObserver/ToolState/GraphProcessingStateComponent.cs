@@ -68,7 +68,7 @@ namespace Unity.GraphToolkit.Editor
         public IReadOnlyList<BaseGraphProcessingResult> Results { get; private set; }
 
         /// <inheritdoc/>
-        public override void OnRemovedFromState(IState state)
+        public override void OnRemovedFromState(CSO.IState state)
         {
             base.OnRemovedFromState(state);
             Results = null;

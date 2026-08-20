@@ -4,6 +4,7 @@
 
 using System;
 using Unity.GraphToolkit.InternalBridge;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -16,9 +17,13 @@ namespace Unity.GraphToolkit.Editor
     [UnityRestricted]
     internal class GridBackground : VisualElement
     {
+        [NoAutoStaticsCleanup] // CSS custom property descriptor; value is a fixed CSS property name
         static readonly CustomStyleProperty<float> k_SpacingProperty = new CustomStyleProperty<float>("--spacing");
+        [NoAutoStaticsCleanup] // CSS custom property descriptor; value is a fixed CSS property name
         static readonly CustomStyleProperty<int> k_ThickLinesProperty = new CustomStyleProperty<int>("--thick-lines");
+        [NoAutoStaticsCleanup] // CSS custom property descriptor; value is a fixed CSS property name
         static readonly CustomStyleProperty<Color> k_LineColorProperty = new CustomStyleProperty<Color>("--line-color");
+        [NoAutoStaticsCleanup] // CSS custom property descriptor; value is a fixed CSS property name
         static readonly CustomStyleProperty<Color> k_ThickLineColorProperty = new CustomStyleProperty<Color>("--thick-line-color");
 
         static float DefaultSpacing => 50f;

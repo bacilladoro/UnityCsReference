@@ -218,9 +218,9 @@ namespace UnityEditor.Presets
         void UpdateVisualBindings()
         {
             var newExclusion = ((Preset)target).excludedProperties;
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var changes = new HashSet<string>(newExclusion.Except(m_ExcludedProperties).Concat(m_ExcludedProperties.Except(newExclusion)));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             var oldBind = new Dictionary<string, VisualElement>(m_BoundElements);
             foreach (var boundElement in oldBind)
             {
@@ -264,9 +264,9 @@ namespace UnityEditor.Presets
             m_PresetTypeName = first.GetTargetFullTypeName();
             m_HeaderTitle = $"{m_PresetTypeName} Presets ({targets.Length})";
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             foreach (Preset preset in targets.Skip(1))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 var type = preset.GetTargetFullTypeName();
                 if (type != m_PresetTypeName)
@@ -615,9 +615,9 @@ namespace UnityEditor.Presets
             Undo.RecordObjects(targets, "Inspector");
 
             var toAdd = new[] { propertyPath };
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             foreach (var preset in targets.OfType<Preset>())
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 // set excludedProperties to an empty array for PropertyModifications to return all properties.
                 var excluded = preset.excludedProperties;
@@ -625,13 +625,13 @@ namespace UnityEditor.Presets
 
                 // We need to calculate children for each selected Presets
                 // because the list may differ with polymorphic serialization.
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 var childrenProperties = GetPresetProperties(preset)
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     .Where(p => p.StartsWith(propertyPath + ".", StringComparison.Ordinal));
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 preset.excludedProperties = excluded
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     .Except(childrenProperties)
                     .Concat(toAdd)
                     .ToArray();
@@ -646,9 +646,9 @@ namespace UnityEditor.Presets
             serializedObject.ApplyModifiedProperties();
             Undo.RecordObjects(targets, "Inspector");
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             foreach (var preset in targets.OfType<Preset>())
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 // set excludedProperties to an empty array for PropertyModifications to return all properties.
                 var excluded = preset.excludedProperties;
@@ -658,15 +658,15 @@ namespace UnityEditor.Presets
                 // because the list may differs with polymorphic serialization.
                 var properties = GetPresetProperties(preset);
 
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 var childrenAndSelf = properties
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     .Where(p => p.StartsWith(propertyPath + ".", StringComparison.Ordinal) || p == propertyPath);
 
                 var count = excluded.Length;
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 var removed = excluded.Except(childrenAndSelf).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 if (removed.Length != count)
                 {
                     // we found something to remove for exclusion, lets stop here.
@@ -689,22 +689,22 @@ namespace UnityEditor.Presets
                     if (!removed.Contains(propPath))
                         continue;
 
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2001 // Avoid Linq
                     var pathDepth = propPath.Count(c => c == '.');
-#pragma warning restore UA2001
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+                    #pragma warning disable UAC2001 // Avoid Linq
                     var toExclude = properties
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                         .Where(p => p.StartsWith(propPath + ".", StringComparison.Ordinal)
                         && !p.StartsWith(propertyPath + ".", StringComparison.Ordinal)
                         && p != propertyPath
-                        #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                        #pragma warning disable UAC2001 // Avoid Linq
                         && p.Count(c => c == '.') == pathDepth + 1);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2001 // Avoid Linq
                     preset.excludedProperties = removed
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                         .Except(new[] {propPath})
                         .Concat(toExclude)
                         .ToArray();
@@ -718,9 +718,9 @@ namespace UnityEditor.Presets
         {
             // We have to use PropertyModifications instead of directly a SerializedProperty
             // because some properties may be excluded from Preset and we don't want them in excludedProperties
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             return preset.PropertyModifications
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 .Select(pm => pm.propertyPath)
                 .SelectMany(SplitPropertyPath)
                 .Distinct();
@@ -814,9 +814,9 @@ namespace UnityEditor.Presets
             {
                 preset.excludedProperties = Array.Empty<string>();
                 preset.excludedProperties =
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2001 // Avoid Linq
                     preset.PropertyModifications
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                         .Select(p => GetRootProperty(p.propertyPath))
                         .Distinct()
                         .ToArray();

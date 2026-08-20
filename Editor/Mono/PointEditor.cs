@@ -68,9 +68,9 @@ namespace UnityEditor
                         handlePos = points.GetPosition(selection[0]);
                         break;
                     case PivotMode.Center:
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                         handlePos = selection.Aggregate(handlePos, (current, index) => current + points.GetPosition(index)) / selection.Count;
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                         break;
                     default: // PivotMode.Custom
                         handlePos = Tools.GetHandlePosition();
@@ -121,12 +121,12 @@ namespace UnityEditor
 
             if (found.Count <= 0) return -1;
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var sorted = found.OrderBy(x => x.Value);
-#pragma warning restore UA2001
-#pragma warning disable UA2010 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+#pragma warning disable UAC2010 // Avoid Linq
             return sorted.First().Key;
-#pragma warning restore UA2010
+#pragma warning restore UAC2010
         }
 
         [NoAutoStaticsCleanup] // value-type index list, no user references
@@ -282,9 +282,9 @@ namespace UnityEditor
                     break;
             }
             if (selectionChanged)
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 selection = selection.Distinct().ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             return selectionChanged;
         }
 

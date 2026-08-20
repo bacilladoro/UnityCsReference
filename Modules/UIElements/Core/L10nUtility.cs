@@ -2,6 +2,8 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
+using Unity.Scripting.LifecycleManagement;
 using System;
 
 namespace UnityEngine.UIElements
@@ -9,11 +11,12 @@ namespace UnityEngine.UIElements
     /// <summary>
     /// A utility class for overriding the translation method on strings.
     /// </summary>
-    internal static class L10nUtility
+    internal static partial class L10nUtility
     {
         /// <summary>
         /// By default, it returns the input string unchanged.
         /// </summary>
+        [NoAutoStaticsCleanup]
         static Func<string, string> TranslateString = TranslateFunc;
 
         /// <summary>
@@ -49,3 +52,4 @@ namespace UnityEngine.UIElements
         public static string GetTranslation(string str) => TranslateString?.Invoke(str) ?? str;
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

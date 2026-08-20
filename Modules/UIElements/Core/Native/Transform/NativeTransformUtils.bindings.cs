@@ -2,6 +2,8 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
+using Unity.Scripting.LifecycleManagement;
 using System;
 using System.Runtime.InteropServices;
 using Unity.Profiling;
@@ -43,7 +45,7 @@ internal static class NativeTransformUtils
     // In the meantime, we keep a static class for the API and an instance class for the data,
     // and we have a managed copy of the instance data as well as a native one.
     // This works because the data only consists of fixed pointers and immutable values.
-    private unsafe struct Manager
+    private unsafe partial struct Manager
     {
         readonly UnmanagedDataStore m_Nodes;
         readonly UnmanagedDataStore m_Panels;
@@ -61,6 +63,7 @@ internal static class NativeTransformUtils
         }
 
         private delegate bool ContainsPointDelegate(UnmanagedDataHandle handle, float x, float y);
+        [NoAutoStaticsCleanup]
         private static readonly ContainsPointDelegate k_ContainsPointDelegate = ContainsPoint;
 
         static readonly ProfilerMarker k_InvokeContainsPointMarker = new("InvokeContainsPoint");
@@ -86,3 +89,4 @@ internal static class NativeTransformUtils
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

@@ -2,10 +2,12 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
 using System;
 using System.Runtime.InteropServices;
 using UnityEngine.Bindings;
 using UnityEngine.UIElements.Layout;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEngine.UIElements
 {
@@ -66,6 +68,7 @@ namespace UnityEngine.UIElements
 
         // One-shot per session to avoid flooding the console when a stylesheet with a
         // >MaxStops gradient is applied to many elements.
+        [NoAutoStaticsCleanup] // one-shot warning flag; safe to persist across reload
         static bool s_WarnedTruncatedStops;
 
         public GradientType type;                                       //  4
@@ -175,3 +178,4 @@ namespace UnityEngine.UIElements
         public static bool operator !=(BackgroundGradient a, UnmanagedBackgroundGradient b) => !((UnmanagedBackgroundGradient)a).Equals(b);
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

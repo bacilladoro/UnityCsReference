@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using Unity.GraphToolkit.Editor.ContextualMenuItems;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -55,7 +56,7 @@ namespace Unity.GraphToolkit.Editor
     /// </summary>
     [Serializable]
     [UnityRestricted]
-    internal class WireModel : GraphElementModel, IPortWireIndexModel, IAnimatable
+    internal partial class WireModel : GraphElementModel, IPortWireIndexModel, IAnimatable
     {
         [SerializeField, FormerlySerializedAs("m_OutputPortReference")]
         PortReference m_FromPortReference;
@@ -529,7 +530,8 @@ namespace Unity.GraphToolkit.Editor
         /// <inheritdoc />
         public override IReadOnlyList<ContextualMenuItem> ContextualMenuItems => k_ContextualMenuItems;
 
-        static readonly List<ContextualMenuItem> k_ContextualMenuItems = new() {
+        [AutoStaticsCleanupOnCodeReload]
+        static List<ContextualMenuItem> k_ContextualMenuItems = new() {
             ContextualMenuHelpers.insertNodeItem,
             ContextualMenuHelpers.insertJunctionPointItem,
             ContextualMenuHelpers.convertToPortalsItem,

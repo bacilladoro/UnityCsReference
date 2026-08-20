@@ -152,6 +152,23 @@ namespace Unity.U2D.Physics
         /// </summary>
         public bool worldDrawing { readonly get => m_WorldDrawing; set => m_WorldDrawing = value; }
 
+        /// <summary>
+        /// Selects which of the mass, rotational inertia and center of mass are overridden with the authored values instead of being computed from the attached shapes.
+        /// Anything without a matching bit is computed from the attached shapes as normal.
+        /// Only applies to a Dynamic body.
+        ///
+        /// See <see cref="PhysicsBody.massOverride"/>.
+        /// </summary>
+        public PhysicsBody.MassOverride massOverride { readonly get => m_MassOverride; set => m_MassOverride = value; }
+
+        /// <summary>
+        /// The authored mass configuration applied for the overridden values.
+        /// Anything without a matching override bit is ignored.
+        ///
+        /// See <see cref="PhysicsBodyDefinition.massOverride"/> and <see cref="PhysicsBody.massConfiguration"/>.
+        /// </summary>
+        public PhysicsBody.MassConfiguration massConfiguration { readonly get => m_MassConfiguration; set => m_MassConfiguration = value; }
+
         #region Internal
 
         [SerializeField] PhysicsBody.BodyType m_BodyType;
@@ -173,6 +190,8 @@ namespace Unity.U2D.Physics
         [SerializeField] bool m_Awake;
         [SerializeField] bool m_Enabled;
         [SerializeField] bool m_WorldDrawing;
+        [SerializeField] PhysicsBody.MassOverride m_MassOverride;
+        [SerializeField] PhysicsBody.MassConfiguration m_MassConfiguration;
 
         #endregion
     }

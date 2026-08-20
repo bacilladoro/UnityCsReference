@@ -263,8 +263,8 @@ internal sealed partial class VisualElementInspector : UIInspector
                 m_StyleInspector.contentContainer.Add(m_StyleInspectorDefaultContent = StyleInspectorDefaultContent.Get());
                 InitializeVariablesSection();
                 InitializeAnimationSectionVisibility();
+                InitializeZIndexFieldVisibility();
                 UICommandQueue.RegisterHandlerForCategory(CommandCategory.Variables, OnVariableChange);
-                Undo.undoRedoPerformed += OnUndoRedoPerformed;
                 break;
             }
             case DetachFromPanelEvent detachFromPanelEvent:
@@ -275,9 +275,10 @@ internal sealed partial class VisualElementInspector : UIInspector
                 {
                     m_StyleInspectorDefaultContent.contentWasGenerated -= OnDefaultContentGeneratedForVariables;
                     m_StyleInspectorDefaultContent.contentWasGenerated -= OnDefaultContentGeneratedForAnimation;
+                    m_StyleInspectorDefaultContent.contentWasGenerated -= OnDefaultContentGeneratedForZIndex;
                 }
+                UIToolkitAuthoringSettings.EnableZIndexChanged -= OnEnableZIndexChanged;
                 UICommandQueue.UnregisterHandlerForCategory(CommandCategory.Variables, OnVariableChange);
-                Undo.undoRedoPerformed -= OnUndoRedoPerformed;
                 m_StyleInspectorDefaultContent?.RemoveFromHierarchy();
                 StyleInspectorDefaultContent.Release(m_StyleInspectorDefaultContent);
                 m_StyleInspectorDefaultContent = null;
@@ -329,20 +330,12 @@ internal sealed partial class VisualElementInspector : UIInspector
         }
     }
 
-    void OnUndoRedoPerformed()
-    {
-        var inlineSheet = m_Element?.visualTreeAssetSource?.inlineSheet;
-        if (inlineSheet == null)
-            return;
-        inlineSheet.RequestRebuild(StyleSheet.RebuildOptions.Synchronous);
-        OnVariableChange(default);
-    }
-
     void InitializeAnimationSectionVisibility()
     {
         if (m_StyleInspectorDefaultContent.Q(StyleRuleInspector.AnimationFoldoutName) != null)
         {
             UpdateAnimationSectionVisibility(m_StyleInspectorDefaultContent);
+            StyleRuleInspector.HookGridSectionVisibility(m_StyleInspectorDefaultContent);
             AnimationClipNewButtonController.ConnectButton(m_StyleInspectorDefaultContent, GetAnimationClipDialogSubject);
             return;
         }
@@ -354,6 +347,7 @@ internal sealed partial class VisualElementInspector : UIInspector
     {
         content.contentWasGenerated -= OnDefaultContentGeneratedForAnimation;
         UpdateAnimationSectionVisibility(content);
+        StyleRuleInspector.HookGridSectionVisibility(content);
         AnimationClipNewButtonController.ConnectButton(content, GetAnimationClipDialogSubject);
     }
 
@@ -372,6 +366,39 @@ internal sealed partial class VisualElementInspector : UIInspector
             // Use StyleKeyword.Null (not DisplayStyle.Flex) to avoid setting an inline style when enabling.
             // It breaks the behavior of inspector search otherwise.
             animationSection.style.display = UIToolkitProjectSettings.s_EnablePanelRendererAnimationAtBoot ? StyleKeyword.Null : DisplayStyle.None;
+    }
+
+    void InitializeZIndexFieldVisibility()
+    {
+        if (m_StyleInspectorDefaultContent.Q<ZIndexStyleIntField>() != null)
+        {
+            UpdateZIndexFieldVisibility(m_StyleInspectorDefaultContent);
+            UIToolkitAuthoringSettings.EnableZIndexChanged += OnEnableZIndexChanged;
+            return;
+        }
+
+        m_StyleInspectorDefaultContent.contentWasGenerated += OnDefaultContentGeneratedForZIndex;
+    }
+
+    void OnDefaultContentGeneratedForZIndex(StyleInspectorDefaultContent content)
+    {
+        content.contentWasGenerated -= OnDefaultContentGeneratedForZIndex;
+        UpdateZIndexFieldVisibility(content);
+        UIToolkitAuthoringSettings.EnableZIndexChanged += OnEnableZIndexChanged;
+    }
+
+    void OnEnableZIndexChanged()
+    {
+        if (m_StyleInspectorDefaultContent != null)
+            UpdateZIndexFieldVisibility(m_StyleInspectorDefaultContent);
+    }
+
+    static void UpdateZIndexFieldVisibility(VisualElement content)
+    {
+        var zIndexField = content.Q<ZIndexStyleIntField>();
+        var row = zIndexField?.GetFirstAncestorOfType<OverrideRow>();
+        if (row != null)
+            row.style.display = UIToolkitAuthoringSettings.EnableZIndex ? StyleKeyword.Null : DisplayStyle.None;
     }
 
     StyleRule GetInlineStyleRule()

@@ -463,14 +463,14 @@ namespace UnityEditor.Experimental.GraphView
 
         void CollectConnectedEdges(HashSet<GraphElement> edgeSet)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             edgeSet.UnionWith(inputContainer.Children().OfType<Port>().SelectMany(c => c.connections)
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 .Where(d => (d.capabilities & Capabilities.Deletable) != 0)
                 .Cast<GraphElement>());
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             edgeSet.UnionWith(outputContainer.Children().OfType<Port>().SelectMany(c => c.connections)
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 .Where(d => (d.capabilities & Capabilities.Deletable) != 0)
                 .Cast<GraphElement>());
         }

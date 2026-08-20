@@ -18,13 +18,13 @@ namespace UnityEditor.Scripting.ScriptCompilation
             }
 
             scriptAssembly.Defines = AddAdditionalToArray(scriptAssembly.Defines, compilationExtension.GetAdditionalDefines());
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             scriptAssembly.References = AddAdditionalToArray(scriptAssembly.References, compilationExtension.GetAdditionalAssemblyReferences()
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 .Concat(compilationExtension.GetWindowsMetadataReferences()).ToArray());
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             scriptAssembly.Files = AddAdditionalToArray(scriptAssembly.Files, compilationExtension.GetAdditionalSourceFiles().ToArray());
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         private static string[] AddAdditionalToArray(string[] source, string[] extras)

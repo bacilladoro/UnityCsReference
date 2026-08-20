@@ -10,6 +10,7 @@ using System.Reflection;
 using Unity.Collections;
 using Unity.GraphToolkit.CSO;
 using Unity.GraphToolkit.InternalBridge;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
@@ -28,13 +29,14 @@ namespace Unity.GraphToolkit.Editor
     /// Base class to display a UI to edit a property or field on a <see cref="GraphElementModel"/>.
     /// </summary>
     [UnityRestricted]
-    internal abstract class CustomizableModelPropertyField : BaseModelPropertyField
+    internal abstract partial class CustomizableModelPropertyField : BaseModelPropertyField
     {
         /// <summary>
         /// The USS class added to <see cref="CustomizableModelPropertyField"/> when it has multi lines.
         /// </summary>
         public static readonly string multilineUssClassName = ussClassName.WithUssModifier(GraphElementHelper.multilineUssModifier);
 
+        [AutoStaticsCleanupOnCodeReload]
         static Dictionary<Type, Type> s_CustomPropertyFieldBuilders;
 
         Func<object, object> m_ValueToDisplay = null;
@@ -80,9 +82,9 @@ namespace Unity.GraphToolkit.Editor
                         continue;
 
                     var interfaces = customPropertyBuilderType.GetInterfaces();
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2001 // Avoid Linq
                     var cpfInterface = interfaces.FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(ICustomPropertyFieldBuilder<>));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
                     if (cpfInterface != null)
                     {
@@ -135,6 +137,7 @@ namespace Unity.GraphToolkit.Editor
         /// <summary>
         /// The types that have a default field in the <see cref="CustomizableModelPropertyField"/>.
         /// </summary>
+        [NoAutoStaticsCleanup] // fixed constant array of well-known system types; no user-code references
         public static readonly Type[] DefaultSupportedTypes = new[]
         {
             typeof(long),
@@ -248,9 +251,9 @@ namespace Unity.GraphToolkit.Editor
 
             CheckAttributesCompatibility(type, attributes);
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             bool isDelayed = attributes?.FirstOrDefault(t => t is DelayedAttribute) != null;
-            #pragma warning restore UA2001
+            #pragma warning restore UAC2001
 
 
             if (TypeExtensions.IsListOrArray(type))

@@ -3,7 +3,6 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
-using Unity.Scripting.LifecycleManagement;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor.Scripting;
@@ -15,6 +14,7 @@ using UnityEngine.Scripting;
 using sc = UnityEditor.Scripting.ScriptCompilation;
 using UnityEngine.Bindings;
 using Unity.Collections;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Compilation
 {
@@ -115,9 +115,9 @@ namespace UnityEditor.Compilation
         public AssemblyFlags flags { get; private set; }
         public ScriptCompilerOptions compilerOptions { get; internal set; }
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
         public string[] allReferences { get { return assemblyReferences.Select(a => a.outputPath).Concat(compiledAssemblyReferences).ToArray(); } }
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
         public Assembly(string name,
                         string outputPath,
@@ -459,9 +459,9 @@ namespace UnityEditor.Compilation
         {
             if (assemblyDefinitionPlatforms == null)
             {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 assemblyDefinitionPlatforms = CustomScriptAssembly.Platforms.Select(p => new AssemblyDefinitionPlatform(p.Name, p.DisplayName, p.BuildTarget, p.HasSubTarget, p.SubTarget)).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 Array.Sort(assemblyDefinitionPlatforms, CompareAssemblyDefinitionPlatformByDisplayName);
             }
 
@@ -519,9 +519,9 @@ namespace UnityEditor.Compilation
 
         internal static string[] GetPrecompiledAssemblyNames(PrecompiledAssemblyProviderBase precompiledAssemblyProvider)
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return precompiledAssemblyProvider.GetPrecompiledAssemblies(
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 EditorScriptCompilationOptions.BuildingForEditor | EditorScriptCompilationOptions.BuildingWithAsserts | EditorScriptCompilationOptions.BuildingWithInstrumentation,
                 EditorUserBuildSettings.activeBuildTarget)
                 .Where(x => (x.Flags & sc.AssemblyFlags.UserAssembly) == sc.AssemblyFlags.UserAssembly)
@@ -577,21 +577,21 @@ namespace UnityEditor.Compilation
             if ((precompiledAssemblySources & PrecompiledAssemblySources.UserAssembly) != 0)
                 flags |= sc.AssemblyFlags.UserAssembly;
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var precompiledAssemblies = precompiledAssemblyProvider.GetPrecompiledAssemblies(
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 EditorScriptCompilationOptions.BuildingForEditor | EditorScriptCompilationOptions.BuildingWithAsserts | EditorScriptCompilationOptions.BuildingWithInstrumentation,
                 buildTarget)
                 .Concat(precompiledAssemblyProvider.GetUnityAssemblies(true, buildTarget));
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             foreach (var a in precompiledAssemblies.Where(x => (x.Flags & flags) != 0))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 assemblyNames.Add(a.Path);
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return assemblyNames.ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         public static string GetPrecompiledAssemblyPathFromAssemblyName(string assemblyName)
@@ -632,9 +632,9 @@ namespace UnityEditor.Compilation
                 var outputPath = scriptAssembly.FullPath;
                 var sourceFiles = scriptAssembly.Files;
                 var defines = scriptAssembly.Defines;
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 var compiledAssemblyReferences = scriptAssembly.References.Select(FileUtil.GetPhysicalPath).Concat(targetingPackFiles.referenceAssemblies.Select(p=>p.MakeAbsolute().ToString())).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
                 var flags = AssemblyFlags.None;
 
@@ -644,12 +644,12 @@ namespace UnityEditor.Compilation
                 var compilerOptions = scriptAssembly.CompilerOptions;
                 compilerOptions.ResponseFiles = scriptAssembly.GetResponseFiles();
                 // inject analyzers
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 compilerOptions.RoslynAnalyzerDllPaths = (compilerOptions.RoslynAnalyzerDllPaths ?? Array.Empty<string>()).Concat(
-#pragma warning restore UA2001
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+#pragma warning disable UAC2001 // Avoid Linq
                     targetingPackFiles.analyzers.Select(p => p.MakeAbsolute().ToString())).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
                 assemblies[i] = new Assembly(name,
                     outputPath,
@@ -670,9 +670,9 @@ namespace UnityEditor.Compilation
             for (int i = 0; i < scriptAssemblies.Length; ++i)
             {
                 var scriptAssembly = scriptAssemblies[i];
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 var assemblyReferences = scriptAssembly.ScriptAssemblyReferences.Select(a => scriptAssemblyToAssembly[a]).Where(a => !IsInternalPlugin(a.outputPath)).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
                 assemblies[i].assemblyReferences = assemblyReferences;
             }

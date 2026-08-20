@@ -279,9 +279,9 @@ namespace UnityEditor
 
         static void ShowVertexInfo(Mesh mesh, VertexAttributeDescriptor[] attributes)
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var vertexSize = attributes.Sum(attr => ConvertFormatToSize(attr.format) * attr.dimension);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             var bufferSizeStr = EditorUtility.FormatBytes((long)mesh.vertexCount * vertexSize);
             EditorGUILayout.LabelField($"Vertices: {mesh.vertexCount} ({bufferSizeStr})", EditorStyles.boldLabel);
 

@@ -44,6 +44,12 @@ namespace UnityEngine.TextCore.Text
                 node = node.Next;
             }
         }
+
+        internal void Clear()
+        {
+            delegates.Clear();
+            lookup.Clear();
+        }
     }
 
     ///<exclude />
@@ -81,6 +87,12 @@ namespace UnityEngine.TextCore.Text
                 node.Value(a);
                 node = node.Next;
             }
+        }
+
+        internal void Clear()
+        {
+            delegates.Clear();
+            lookup.Clear();
         }
     }
 
@@ -120,6 +132,12 @@ namespace UnityEngine.TextCore.Text
                 node = node.Next;
             }
         }
+
+        internal void Clear()
+        {
+            delegates.Clear();
+            lookup.Clear();
+        }
     }
 
     ///<exclude />
@@ -157,6 +175,12 @@ namespace UnityEngine.TextCore.Text
                 node.Value(a, b, c);
                 node = node.Next;
             }
+        }
+
+        internal void Clear()
+        {
+            delegates.Clear();
+            lookup.Clear();
         }
     }
 }

@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using Unity.GraphToolkit.Editor.ContextualMenuItems;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 
 namespace Unity.GraphToolkit.Editor
@@ -14,12 +15,12 @@ namespace Unity.GraphToolkit.Editor
     /// </summary>
     [Serializable]
     [UnityRestricted]
-    internal abstract class BlockNodeModel : NodeModel, IRenamable
+    internal abstract partial class BlockNodeModel : NodeModel, IRenamable
     {
         [SerializeReference]
         ContextNodeModel m_ContextNodeModel;
 
-        internal static string contextNodeModelFieldName = nameof(m_ContextNodeModel);
+        internal const string contextNodeModelFieldName = nameof(m_ContextNodeModel);
 
         /// <summary>
         /// Whether this block must display a title.
@@ -102,7 +103,8 @@ namespace Unity.GraphToolkit.Editor
             }
         }
 
-        static readonly List<ContextualMenuItem> k_ContextualMenuItems = new() {
+        [AutoStaticsCleanupOnCodeReload]
+        static List<ContextualMenuItem> k_ContextualMenuItems = new() {
             new ContextualMenuItem(ContextualMenuHelpers.insertBlockAboveItem, 0),
             new ContextualMenuItem(ContextualMenuHelpers.insertBlockBelowItem, 1),
         };

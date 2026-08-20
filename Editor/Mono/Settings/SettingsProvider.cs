@@ -168,7 +168,7 @@ namespace UnityEditor
         #region Helper
         public static IEnumerable<string> GetSearchKeywordsFromGUIContentProperties<T>()
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return typeof(T).GetFields(BindingFlags.Static | BindingFlags.Public)
                 .Where(field => typeof(GUIContent).IsAssignableFrom(field.FieldType))
                 .Select(field => ((GUIContent)field.GetValue(null)).text)
@@ -178,7 +178,7 @@ namespace UnityEditor
                 .Where(content => content != null)
                 .Select(content => content.ToLowerInvariant())
                 .Distinct();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         public static IEnumerable<string> GetSearchKeywordsFromSerializedObject(SerializedObject serializedObject)

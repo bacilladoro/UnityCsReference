@@ -27,19 +27,19 @@ namespace Unity.Timeline.Foundation.ViewModel
             if (sequence == null)
                 return new SequenceLookup(new Dictionary<UniqueID, Track>(), new Dictionary<UniqueID, Item>());
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             Dictionary<UniqueID, Track> tracks = sequence.GetFlattenedChildren().ToDictionary(t => t.ID);
             Dictionary<UniqueID, Item> items = tracks.Values.SelectMany(t => t.Items).ToDictionary(t => t.ID);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             return new SequenceLookup(tracks, items);
         }
 
         public static SequenceLookup CreateFrom(SequenceLookup previous, SequenceDiff diff)
         {
-#pragma warning disable UA2006 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2006 // Avoid Linq
             if (diff.trackChanges.Any(tc => tc.IsChangeOfType(TrackChange.Type.Content)) ||
-#pragma warning restore UA2006
+#pragma warning restore UAC2006
                 diff.hierarchyChanges.addedTracks.Count > 0 ||
                 diff.hierarchyChanges.removedTracks.Count > 0)
             {

@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEditor.UIElements;
+using UnityEngine.Pool;
 using UnityEngine.UIElements;
 
 namespace Unity.UIToolkit.Editor;
@@ -124,6 +125,25 @@ internal sealed class UnsetAllAttributesCommand : Command<UnsetAllAttributesComm
                     AttributesUxmlOwner.RemoveAttribute(attribute.name);
 
                 attribute.SyncDefaultValue(OwnerSerializedData, true);
+            }
+
+            // Skip the BindingView path (IgnoredAttributeNames set): it edits a binding's sub-attributes on a different owner, not the element's bindings.
+            if (IgnoredAttributeNames == null && VisualElement != null)
+            {
+                using (ListPool<BindingId>.Get(out var boundIds))
+                {
+                    foreach (var bindingInfo in VisualElement.GetBindingInfos())
+                        boundIds.Add(bindingInfo.bindingId);
+
+                    foreach (var bindingId in boundIds)
+                        VisualElement.ClearBinding(bindingId);
+                }
+
+                Description.FindAttributeWithUxmlName("Bindings")?.SyncSerializedData(VisualElement, OwnerSerializedData);
+
+                // Reset the live element to the now-default serialized data so a subsequent live-property sync does not read stale values.
+                OwnerSerializedData.Deserialize(VisualElement, UxmlSerializedData.UxmlAttributeFlags.OverriddenInUxml | UxmlSerializedData.UxmlAttributeFlags.DefaultValue);
+                VisualElement.IncrementVersion(VersionChangeType.Bindings);
             }
         }
 

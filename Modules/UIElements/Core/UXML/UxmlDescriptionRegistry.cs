@@ -2,7 +2,9 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
 using System;
+using Unity.Scripting.LifecycleManagement;
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine.Bindings;
@@ -75,9 +77,10 @@ namespace UnityEngine.UIElements
     /// This is used by the code generator when a control is using <see cref="UxmlElementAttribute"/> and
     /// <see cref="UxmlAttributeAttribute"/>.
     /// </remarks>
-    public static class UxmlDescriptionCache
+    public static partial class UxmlDescriptionCache
     {
-        private static readonly Dictionary<Type, CachedDescription> s_NamesPerType = new ();
+        [AutoStaticsCleanupOnCodeReload]
+        private static Dictionary<Type, CachedDescription> s_NamesPerType = new ();
 
         internal struct CachedDescription
         {
@@ -142,8 +145,9 @@ namespace UnityEngine.UIElements
     }
 
     [VisibleToOtherModules("UnityEditor.UIToolkitAuthoringModule")]
-    internal readonly struct UxmlTypeDescription
+    internal readonly partial struct UxmlTypeDescription
     {
+        [NoAutoStaticsCleanup]
         private static readonly Type s_UxmlSerializedDataType = typeof(UxmlSerializedData);
 
         public readonly Type type;
@@ -340,9 +344,10 @@ namespace UnityEngine.UIElements
     }
 
     [VisibleToOtherModules("UnityEditor.UIToolkitAuthoringModule")]
-    internal static class UxmlDescriptionRegistry
+    internal static partial class UxmlDescriptionRegistry
     {
-        private static readonly Dictionary<Type, UxmlTypeDescription> s_UxmlDescriptions = new();
+        [AutoStaticsCleanupOnCodeReload]
+        private static Dictionary<Type, UxmlTypeDescription> s_UxmlDescriptions = new();
 
         public static UxmlTypeDescription GetDescription(Type type)
         {
@@ -358,3 +363,4 @@ namespace UnityEngine.UIElements
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

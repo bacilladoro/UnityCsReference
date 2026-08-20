@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Pool;
@@ -16,9 +17,10 @@ namespace Unity.GraphToolkit.Editor
     /// Manipulator to select elements by drawing a lasso around them.
     /// </summary>
     [UnityRestricted]
-    internal class FreehandSelector : MouseManipulator
+    internal partial class FreehandSelector : MouseManipulator
     {
-        static readonly List<GraphElement> k_OnMouseUpAllUIs = new();
+        [AutoStaticsCleanupOnCodeReload]
+        static List<GraphElement> k_OnMouseUpAllUIs = new();
 
         readonly FreehandElement m_FreehandElement;
         bool m_Active;
@@ -168,9 +170,9 @@ namespace Unity.GraphToolkit.Editor
                 k_OnMouseUpAllUIs.Clear();
             }
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var selectedModels = newSelection.OfType<ModelView>().Select(elem => elem.Model).OfType<GraphElementModel>().ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             return selectedModels;
         }
 
@@ -278,8 +280,11 @@ namespace Unity.GraphToolkit.Editor
                 }
             }
 
+            [NoAutoStaticsCleanup] // CSS custom property descriptor; value is a fixed CSS property name
             static readonly CustomStyleProperty<float> k_SegmentSizeProperty = new CustomStyleProperty<float>("--segment-size");
+            [NoAutoStaticsCleanup] // CSS custom property descriptor; value is a fixed CSS property name
             static readonly CustomStyleProperty<Color> k_SegmentColorProperty = new CustomStyleProperty<Color>("--segment-color");
+            [NoAutoStaticsCleanup] // CSS custom property descriptor; value is a fixed CSS property name
             static readonly CustomStyleProperty<Color> k_DeleteSegmentColorProperty = new CustomStyleProperty<Color>("--delete-segment-color");
 
             static float DefaultSegmentSize => 5f;

@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Scripting.ScriptCompilation
 {
@@ -37,6 +38,7 @@ namespace UnityEditor.Scripting.ScriptCompilation
             return m_IsValid(Left, Right, version);
         }
 
+        [NoAutoStaticsCleanup] // immutable sentinel value, safe to persist across reload
         public static VersionDefineExpression<TVersion> Invalid { get; } = new VersionDefineExpression<TVersion>(
             (unused1, unused2, unused3) => false, default(TVersion), default(TVersion));
     }

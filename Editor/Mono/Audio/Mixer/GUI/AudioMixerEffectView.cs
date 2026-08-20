@@ -53,9 +53,9 @@ namespace UnityEditor
                 {
                     var types = assembly.GetTypes();
                     //Debug.Log("Contained types: " + types.ToString());
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                     foreach (Type t in types.Where(t => !t.IsAbstract && pluginType.IsAssignableFrom(t)))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     {
                         //Debug.Log("Instantiating type: " + t.FullName);
                         RegisterCustomGUI(Activator.CreateInstance(t) as IAudioEffectPluginGUI);
@@ -558,9 +558,9 @@ namespace UnityEditor
                         {
                             if (m_MovingDstIndex != -1 && m_MovingEffectAllowed)
                             {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                                 var effects = group.effects.ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                                 if (AudioMixerController.MoveEffect(ref effects, m_MovingSrcIndex, ref effects, m_MovingDstIndex))
                                     group.effects = effects.ToArray();
                             }

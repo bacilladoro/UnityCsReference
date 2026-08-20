@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using Unity.GraphToolkit.Editor.ContextualMenuItems;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 
 namespace Unity.GraphToolkit.Editor
@@ -43,7 +44,7 @@ namespace Unity.GraphToolkit.Editor
     /// </summary>
     [Serializable]
     [UnityRestricted]
-    internal class StickyNoteModel : GraphElementModel, IMovable, IHasTitle, IRenamable, IResizable
+    internal partial class StickyNoteModel : GraphElementModel, IMovable, IHasTitle, IRenamable, IResizable
     {
         [SerializeField, HideInInspector]
         string m_Title;
@@ -227,7 +228,8 @@ namespace Unity.GraphToolkit.Editor
             }
         }
 
-        static readonly List<ContextualMenuItem> k_ContextualMenuItems = new() {
+        [AutoStaticsCleanupOnCodeReload]
+        static List<ContextualMenuItem> k_ContextualMenuItems = new() {
             new ContextualMenuItem(ContextualMenuHelpers.fitToTextItem, 1),
             new ContextualMenuItem(ContextualMenuHelpers.fontSizeAndThemeItem, 2)
         };

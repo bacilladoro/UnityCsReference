@@ -2,11 +2,13 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using Unity.Properties;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEngine.UIElements
 {
@@ -857,26 +859,30 @@ namespace UnityEngine.UIElements
             Callbacks.OnLabelOrDragPointerDownStartEditing.Unregister(labelElement);
         }
 
-        private static class Callbacks
+        private static partial class Callbacks
         {
             // Use with ?. syntax to avoid possible exceptions on events during DetachFromPanel
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             private static BaseSlider<TValueType> GetBaseSlider(VisualElement child) =>
                 child.GetFirstAncestorOfType<BaseSlider<TValueType>>();
 
+            [NoAutoStaticsCleanup]
             public static readonly EventCallbackDefinition<VisualElement> OnDragGeometryChangedUpdatePosition =
                 EventCallback.Create<GeometryChangedEvent, VisualElement>(static (e, dragElement) =>
                     GetBaseSlider(dragElement)?.UpdateDragElementPosition(e));
 
+            [NoAutoStaticsCleanup]
             public static readonly EventCallbackDefinition<VisualElement> OnLabelOrDragPointerDownStartEditing =
                 EventCallback.Create<PointerDownEvent, VisualElement>(
                     static (e, labelOrDrag) => GetBaseSlider(labelOrDrag)?.StartEditing(e),
                     CallbackOptions.TrickleDown);
 
+            [NoAutoStaticsCleanup]
             public static readonly EventCallbackDefinition<VisualElement> OnDragPointerUpEndEditing =
                 EventCallback.Create<PointerUpEvent, VisualElement>(
                     static (e, dragContainer) => GetBaseSlider(dragContainer)?.EndEditing(e));
 
+            [NoAutoStaticsCleanup]
             public static readonly EventCallbackGroup<BaseSlider<TValueType>> OnKeyFocusNavigation = new(
                 EventCallback.Create<KeyDownEvent, BaseSlider<TValueType>>(static (e, self) => self.OnKeyDown(e)),
                 EventCallback.Create<FocusInEvent, BaseSlider<TValueType>>(static (e, self) => self.OnFocusIn(e)),
@@ -884,6 +890,7 @@ namespace UnityEngine.UIElements
                 EventCallback.Create<NavigationSubmitEvent, BaseSlider<TValueType>>(static (e, self) => self.OnNavigationSubmit(e)),
                 EventCallback.Create<NavigationMoveEvent, BaseSlider<TValueType>>(static (e, self) => self.OnNavigationMove(e)));
 
+            [NoAutoStaticsCleanup]
             public static readonly EventCallbackGroup<TextField> OnInputTextFieldFocusValue = new(
                 EventCallback.Create<FocusInEvent, TextField>(static (e, textField) =>
                     GetBaseSlider(textField)?.OnTextFieldFocusIn(e)),
@@ -894,3 +901,4 @@ namespace UnityEngine.UIElements
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

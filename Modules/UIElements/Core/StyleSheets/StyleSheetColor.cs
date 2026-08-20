@@ -2,8 +2,10 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
 using System;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Bindings;
 
 namespace UnityEngine.UIElements.StyleSheets
@@ -20,7 +22,8 @@ namespace UnityEngine.UIElements.StyleSheets
             return result;
         }
 
-        private static Dictionary<string, Color32> s_NameToColor = new Dictionary<string, Color32>(StringComparer.OrdinalIgnoreCase)
+        [NoAutoStaticsCleanup]
+        private static readonly Dictionary<string, Color32> s_NameToColor = new Dictionary<string, Color32>(StringComparer.OrdinalIgnoreCase)
         {
             {"aliceblue", HexToColor32(0xf0f8ff)},
             {"antiquewhite", HexToColor32(0xfaebd7)},
@@ -183,3 +186,4 @@ namespace UnityEngine.UIElements.StyleSheets
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

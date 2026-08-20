@@ -53,11 +53,11 @@ namespace Unity.Timeline.Foundation.View
 
         public static DiscreteTime? GetRippleStartMoveIndicator(Track track, IReadOnlyList<Item> manipulatedItems, SequenceLookup sequenceLookup)
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
-#pragma warning disable UA2011 // Pre-existing usage of FirstOrDefault.
+#pragma warning disable UAC2001 // Avoid Linq
+#pragma warning disable UAC2011 // Pre-existing usage of FirstOrDefault.
             var manipulatedItem = manipulatedItems.OnlyClips().Where(i => i.parent.ID == track.ID).OrderBy(i => i.GetVisibleRange().start).FirstOrDefault();
-#pragma warning restore UA2011
-#pragma warning restore UA2001
+#pragma warning restore UAC2011
+#pragma warning restore UAC2001
             if (!manipulatedItem.IsValid())
                 return null;
             var item = sequenceLookup.GetItemFromId(manipulatedItem.ID);
@@ -124,18 +124,18 @@ namespace Unity.Timeline.Foundation.View
 
         public static DiscreteTime? GetReplaceStartTrimIndicator(Item item, IEnumerable<TimeRange> previousItemsRanges)
         {
-#pragma warning disable UA2006 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2006 // Avoid Linq
             if (!item.IsValid() || !previousItemsRanges.Any(r => r.Overlaps(item.GetVisibleRange())))
-#pragma warning restore UA2006
+#pragma warning restore UAC2006
                 return null;
             return item.GetVisibleRange().start;
         }
 
         public static DiscreteTime? GetReplaceEndTrimIndicator(Item item, IEnumerable<TimeRange> nextItemsRanges)
         {
-#pragma warning disable UA2006 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2006 // Avoid Linq
             if (!item.IsValid() || !nextItemsRanges.Any(r => r.Overlaps(item.GetVisibleRange())))
-#pragma warning restore UA2006
+#pragma warning restore UAC2006
                 return null;
             return item.GetVisibleRange().end;
         }

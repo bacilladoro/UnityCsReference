@@ -111,13 +111,15 @@ namespace UnityEngine.UIElements
 
             // Check if we now need to render to a texture or not. If this change, this is equivalent to
             // changing the DynamicPostprocessing render hint.
+            bool renderTextureChanged = false;
             bool stackingContextChanged = false;
             if (ve.renderData != null)
             {
-                stackingContextChanged = ve.useRenderTexture == ((ve.renderData.flags & RenderDataFlags.IsSubTreeQuad) == 0);
+                renderTextureChanged = ve.useRenderTexture == ((ve.renderData.flags & RenderDataFlags.IsSubTreeQuad) == 0);
+                stackingContextChanged = (ve.renderData.zIndex == int.MinValue) != (ve.computedStyle.zIndex == int.MinValue);
             }
 
-            if (renderHintsChanged || stackingContextChanged)
+            if (renderHintsChanged || renderTextureChanged || stackingContextChanged)
                 renderTreeManager.UIEOnRenderHintsChanged(ve);
 
             if (transformChanged || sizeChanged || borderWidthChanged)
@@ -134,6 +136,10 @@ namespace UnityEngine.UIElements
 
             if (repaintChanged)
                 renderTreeManager.UIEOnVisualsChanged(ve, false);
+
+            if (repaintChanged && ve.renderData != null
+                && ve.computedStyle.zIndex != ve.renderData.zIndex && !stackingContextChanged)
+                renderTreeManager.UIEOnZIndexChanged(ve);
 
             if (disableRenderingChanged && !repaintChanged) // The disable rendering will be taken care of by the repaint (it clear all commands)
                 renderTreeManager.UIEOnDisableRenderingChanged(ve);

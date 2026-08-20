@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitAuthoringFramework not yet converted
 using System;
 using System.Collections.Generic;
 using JetBrains.Annotations;
@@ -110,7 +111,7 @@ partial class UIViewportWindow : EditorWindow
             if (m_StageId == value)
                 return;
 
-            ReleaseStage(m_StageId);
+            ReleaseStage();
             m_StageId = value;
             AcquireStage(m_StageId);
         }
@@ -177,7 +178,7 @@ partial class UIViewportWindow : EditorWindow
 
     void OnDestroy()
     {
-        ReleaseStage(StageId);
+        ReleaseStage();
     }
 
     void OnStageChanged(Stage stage)
@@ -314,8 +315,12 @@ partial class UIViewportWindow : EditorWindow
             m_Canvas.PanelElement.ThemeStyleSheet = null;
     }
 
-    void ReleaseStage(EntityId stageId)
+    void ReleaseStage()
     {
+        // The window can be destroyed before CreateGUI runs, for example while a window layout is loaded.
+        if (m_Canvas == null)
+            return;
+
         m_Canvas.DestroySettingsPermanently();
         ClearThemeMenu();
 
@@ -346,3 +351,4 @@ partial class UIViewportWindow : EditorWindow
         GetCanvasThemeQuery.QueryPayload.Execute(CommandSources.Viewport, theme);
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

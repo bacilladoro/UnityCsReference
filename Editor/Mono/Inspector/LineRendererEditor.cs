@@ -81,11 +81,11 @@ namespace UnityEditor
 
             public override bool IsAvailable()
             {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
-#pragma warning disable UA2002 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
+#pragma warning disable UAC2002 // Avoid Linq
                 return !targets.Skip(1).Any(); // TODO - multi-edit disabled for now. Need to make LineRendererEditor support multiple targets, and fix m_IsGameObjectEditable
-#pragma warning restore UA2001
-#pragma warning restore UA2002
+#pragma warning restore UAC2001
+#pragma warning restore UAC2002
             }
 
             public abstract void DrawToolbar(SerializedProperty positions);
@@ -307,12 +307,12 @@ namespace UnityEditor
             {
                 menu.AddItem(Styles.propertyMenuContent, false, () =>
                 {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                     var selection = m_PositionsView.GetSelection().ToList();
-#pragma warning restore UA2001
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+#pragma warning disable UAC2001 // Avoid Linq
                     var query = selection.OrderByDescending(c => c);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
                     foreach (var index in query)
                     {
@@ -423,9 +423,9 @@ namespace UnityEditor
                 m_PreviewPoints = new Vector3[lineRenderer.positionCount];
                 lineRenderer.GetPositions(m_PreviewPoints);
                 var simplePoints = new List<Vector3>();
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 LineUtility.Simplify(m_PreviewPoints.ToList(), simplifyTolerance, simplePoints);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 if (lineRenderer.loop)
                     simplePoints.Add(simplePoints[0]);
                 m_PreviewPoints = simplePoints.ToArray();

@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Assertions;
 using UnityEngine.Scripting.APIUpdating;
 
@@ -35,6 +36,7 @@ namespace Unity.Multiplayer.PlayMode
     [MovedFrom(true, "Unity.Multiplayer.Playmode", "Unity.Multiplayer.Playmode")]
     public static partial class CurrentPlayer
     {
+        [AutoStaticsCleanupOnCodeReload(CleanupStrategy = CleanupStrategy.ResetToDefaultValue)] // lazy init via reflection; old ALC instance would be stale after reload
         static CurrentPlayerApi s_CurrentPlayerApi;
 
         internal static void EnsureInitialized()

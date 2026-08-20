@@ -2,7 +2,9 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
 using Unity.Properties;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Bindings;
 
 namespace UnityEngine.UIElements
@@ -90,7 +92,7 @@ namespace UnityEngine.UIElements
         /// Unity creates a <see cref="Label"/> automatically if one does not exist.
         /// </remarks>
         [UxmlAttribute]
-        [CreateProperty, MultilineTextField]
+        [CreateProperty, MultilineTextField(lines = 3)]
         public string text
         {
             get { return m_Label?.text; }
@@ -245,14 +247,18 @@ namespace UnityEngine.UIElements
             Callbacks.OnPointerUpStartEditing.Unregister(this);
         }
 
-        private static class Callbacks
+        private static partial class Callbacks
         {
+            [NoAutoStaticsCleanup]
             public static readonly EventCallbackDefinition<BaseBoolField> OnNavigationSubmit =
                 EventCallback.Create<NavigationSubmitEvent, BaseBoolField>(static (evt, self) => self.OnNavigationSubmit(evt));
+            [NoAutoStaticsCleanup]
             public static readonly EventCallbackDefinition<BaseBoolField> OnPointerUpStartEditing =
                 EventCallback.Create<PointerUpEvent, BaseBoolField>(static (evt, self) => self.StartEditing(evt));
+            [NoAutoStaticsCleanup]
             public static readonly EventCallbackDefinition<BaseBoolField> OnFocusOutEndEditing =
                 EventCallback.Create<FocusOutEvent, BaseBoolField>(static (evt, self) => self.EndEditing(evt));
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

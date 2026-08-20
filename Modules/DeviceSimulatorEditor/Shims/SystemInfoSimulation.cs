@@ -25,21 +25,21 @@ namespace UnityEditor.DeviceSimulation
             {
                 if (device.deviceInfo.IsAndroidDevice())
                 {
-#pragma warning disable UA2001, UA2011 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001, UAC2011 // Avoid Linq
                     m_GraphicsSystemInfo = (
                         from selected in playerSettings.androidGraphicsAPIs
                         from gfxDevice in m_SystemInfo.graphicsDependentData
                         where selected == gfxDevice.graphicsDeviceType select gfxDevice).FirstOrDefault();
-#pragma warning restore UA2001, UA2011
+#pragma warning restore UAC2001, UAC2011
                 }
                 else if (device.deviceInfo.IsiOSDevice())
                 {
-#pragma warning disable UA2001, UA2011 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001, UAC2011 // Avoid Linq
                     m_GraphicsSystemInfo = (
                         from selected in playerSettings.iOSGraphicsAPIs
                         from gfxDevice in m_SystemInfo.graphicsDependentData
                         where selected == gfxDevice.graphicsDeviceType select gfxDevice).FirstOrDefault();
-#pragma warning restore UA2001, UA2011
+#pragma warning restore UAC2001, UAC2011
                 }
                 if (m_GraphicsSystemInfo == null)
                 {

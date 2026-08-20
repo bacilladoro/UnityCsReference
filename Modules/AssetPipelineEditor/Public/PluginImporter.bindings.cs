@@ -45,9 +45,9 @@ namespace UnityEditor
             // Contains all unique finalPaths. Used to remove overridable plugins from the finalImporters list
             Dictionary<string, PluginImporter> uniqueFinalPathToImporterMap = new Dictionary<string, PluginImporter>();
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             PluginImporter[] allImporters = GetAllImporters().Where(imp => imp.GetCompatibleWithPlatformOrAnyPlatformBuildTarget(platformName)).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             IPluginImporterExtension pluginImporterExtension = ModuleManager.GetPluginImporterExtension(platformName);
 
             if (pluginImporterExtension == null)
@@ -101,9 +101,9 @@ namespace UnityEditor
 
         public static PluginImporter[] GetImporters(string buildTargetGroup, string buildTarget)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             return GetAllImporters().Where(imp => imp.GetCompatibleWithPlatformOrAnyPlatformBuildGroupAndTarget(buildTargetGroup, buildTarget)).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         public static PluginImporter[] GetImporters(BuildTargetGroup buildTargetGroup, BuildTarget buildTarget)
@@ -144,7 +144,7 @@ namespace UnityEditor
         public delegate bool IncludeInBuildDelegate(string path);
 
         // this is implemented as a static map so that it can survive a garbage collection on the PluginImporter and not get lost
-        [AutoStaticsCleanupOnCodeReload]
+        [AutoStaticsCleanupOnCodeReload] // holds user-registered delegates; clear on reload to avoid pinning the old ALC
         private static readonly Dictionary<string, IncludeInBuildDelegate> s_includeInBuildDelegateMap = new Dictionary<string, IncludeInBuildDelegate>();
         public void SetIncludeInBuildDelegate(IncludeInBuildDelegate includeInBuildDelegate)
         {

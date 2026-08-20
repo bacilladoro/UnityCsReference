@@ -4,21 +4,29 @@
 
 using System;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 
 namespace Unity.Multiplayer.PlayMode.Editor
 {
-    [InitializeOnLoad]
-    internal static class RecompileTracker
+    internal static partial class RecompileTracker
     {
         private const int k_MaxTrackedRecompiles = 100;
         private const string k_EditorPrefsKey = "RecompileTracker_Times";
 
+        [AutoStaticsCleanupOnCodeReload] // lazy cache; must re-load from EditorPrefs after reload
         private static List<DateTime> s_CachedRecompileTimes;
 
-        static RecompileTracker()
+        [OnCodeLoaded]
+        static void InitializeOnLoad()
         {
             UnityEditor.Compilation.CompilationPipeline.compilationFinished += OnCompilationFinished;
+        }
+
+        [OnCodeUnloading]
+        static void OnCodeUnloading()
+        {
+            UnityEditor.Compilation.CompilationPipeline.compilationFinished -= OnCompilationFinished;
         }
 
         private static List<DateTime> GetRecompileTimes()

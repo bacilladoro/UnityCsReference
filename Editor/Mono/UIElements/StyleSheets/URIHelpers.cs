@@ -2,10 +2,12 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
 using System;
 using System.IO;
 using UnityEngine.Bindings;
 using Object = UnityEngine.Object;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.UIElements.StyleSheets
 {
@@ -378,7 +380,9 @@ namespace UnityEditor.UIElements.StyleSheets
 
         // pre-allocate these containers to avoid repeated managed allocations
         // JSON serialization only works on classes
+        [NoAutoStaticsCleanup]
         private static readonly PPtrContainer s_PPtrContainer = new PPtrContainer();
+        [NoAutoStaticsCleanup]
         private static readonly RawPPtrContainer s_RawPPtrContainer = new RawPPtrContainer();
         private static readonly char[] s_Separator = {'&'};
 
@@ -468,3 +472,4 @@ namespace UnityEditor.UIElements.StyleSheets
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

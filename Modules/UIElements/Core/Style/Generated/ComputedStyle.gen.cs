@@ -19,6 +19,8 @@ namespace UnityEngine.UIElements
 {
     internal partial struct ComputedStyle
     {
+        public StyleDataRef<AnimationData> animationData;
+        public StyleDataRef<GridData> gridData;
         public StyleDataRef<InheritedData> inheritedData;
         public StyleDataRef<LayoutData> layoutData;
         public StyleDataRef<RareData> rareData;
@@ -33,7 +35,12 @@ namespace UnityEngine.UIElements
         public Align alignContent => layoutData.Read().alignContent;
         public Align alignItems => layoutData.Read().alignItems;
         public Align alignSelf => layoutData.Read().alignSelf;
-        public AnimationPlayState animationPlayState => rareData.Read().animationPlayState;
+        public ReadOnlySpan<float> animationDelay => animationData.Read().animationDelay;
+        public ReadOnlySpan<AnimationDirection> animationDirection => animationData.Read().animationDirection;
+        public ReadOnlySpan<float> animationDuration => animationData.Read().animationDuration;
+        public ReadOnlySpan<AnimationIterationCount> animationIterationCount => animationData.Read().animationIterationCount;
+        public ReadOnlySpan<EntityId> animationNames => animationData.Read().animationNames;
+        public ReadOnlySpan<AnimationPlayState> animationPlayStates => animationData.Read().animationPlayStates;
         public Ratio aspectRatio => layoutData.Read().aspectRatio;
         public ReadOnlySpan<UnmanagedFilterFunction> backdropFilter => rareData.Read().backdropFilter;
         public Color backgroundColor => visualData.Read().backgroundColor;
@@ -66,8 +73,19 @@ namespace UnityEngine.UIElements
         public float flexShrink => layoutData.Read().flexShrink;
         public Wrap flexWrap => layoutData.Read().flexWrap;
         public Length fontSize => inheritedData.Read().fontSize;
+        public ReadOnlySpan<GridTrackSize> gridAutoColumns => gridData.Read().gridAutoColumns;
+        public GridAutoFlow gridAutoFlow => gridData.Read().gridAutoFlow;
+        public ReadOnlySpan<GridTrackSize> gridAutoRows => gridData.Read().gridAutoRows;
+        public GridLine gridColumnEnd => gridData.Read().gridColumnEnd;
+        public GridLine gridColumnStart => gridData.Read().gridColumnStart;
+        public GridLine gridRowEnd => gridData.Read().gridRowEnd;
+        public GridLine gridRowStart => gridData.Read().gridRowStart;
+        public ReadOnlySpan<GridTrackSize> gridTemplateColumns => gridData.Read().gridTemplateColumns;
+        public ReadOnlySpan<GridTrackSize> gridTemplateRows => gridData.Read().gridTemplateRows;
         public Length height => layoutData.Read().height;
         public Justify justifyContent => layoutData.Read().justifyContent;
+        public Align justifyItems => gridData.Read().justifyItems;
+        public Align justifySelf => gridData.Read().justifySelf;
         public Length left => layoutData.Read().left;
         public Length letterSpacing => inheritedData.Read().letterSpacing;
         public Length marginBottom => layoutData.Read().marginBottom;
@@ -98,7 +116,6 @@ namespace UnityEngine.UIElements
         public ReadOnlySpan<StylePropertyId> transitionProperty => transitionData.Read().transitionProperty;
         public ReadOnlySpan<EasingFunction> transitionTimingFunction => transitionData.Read().transitionTimingFunction;
         public Translate translate => transformData.Read().translate;
-        public EntityId unityAnimationClip => rareData.Read().unityAnimationClip;
         public Color unityBackgroundImageTintColor => rareData.Read().unityBackgroundImageTintColor;
         public EditorTextRenderingMode unityEditorTextRenderingMode => inheritedData.Read().unityEditorTextRenderingMode;
         public EntityId unityFont => inheritedData.Read().unityFont;
@@ -123,6 +140,7 @@ namespace UnityEngine.UIElements
         public WhiteSpace whiteSpace => inheritedData.Read().whiteSpace;
         public Length width => layoutData.Read().width;
         public Length wordSpacing => inheritedData.Read().wordSpacing;
+        public int zIndex => rareData.Read().zIndex;
 
 
         public static ComputedStyle Create(ref ComputedStyle parentStyle)
@@ -132,6 +150,8 @@ namespace UnityEngine.UIElements
             {
                 dpiScaling = 1f
             };
+            cs.animationData = initialStyle.animationData.Acquire();
+            cs.gridData = initialStyle.gridData.Acquire();
             cs.inheritedData = parentStyle.inheritedData.Acquire();
             cs.layoutData = initialStyle.layoutData.Acquire();
             cs.rareData = initialStyle.rareData.Acquire();
@@ -148,6 +168,8 @@ namespace UnityEngine.UIElements
             {
                 dpiScaling = 1f
             };
+            cs.animationData = StyleDataRef<AnimationData>.Create();
+            cs.gridData = StyleDataRef<GridData>.Create();
             cs.inheritedData = StyleDataRef<InheritedData>.Create();
             cs.layoutData = StyleDataRef<LayoutData>.Create();
             cs.rareData = StyleDataRef<RareData>.Create();
@@ -160,6 +182,8 @@ namespace UnityEngine.UIElements
 
         public ComputedStyle Acquire()
         {
+            animationData.Acquire();
+            gridData.Acquire();
             inheritedData.Acquire();
             layoutData.Acquire();
             rareData.Acquire();
@@ -172,6 +196,8 @@ namespace UnityEngine.UIElements
 
         public void Release()
         {
+            animationData.Release();
+            gridData.Release();
             inheritedData.Release();
             layoutData.Release();
             rareData.Release();
@@ -183,6 +209,8 @@ namespace UnityEngine.UIElements
 
         public void SafeRelease()
         {
+            animationData.SafeRelease();
+            gridData.SafeRelease();
             inheritedData.SafeRelease();
             layoutData.SafeRelease();
             rareData.SafeRelease();
@@ -194,6 +222,8 @@ namespace UnityEngine.UIElements
 
         public void CopyFrom(ref ComputedStyle other)
         {
+            animationData.CopyFrom(other.animationData);
+            gridData.CopyFrom(other.gridData);
             inheritedData.CopyFrom(other.inheritedData);
             layoutData.CopyFrom(other.layoutData);
             rareData.CopyFrom(other.rareData);
@@ -225,8 +255,26 @@ namespace UnityEngine.UIElements
                         break;
                     case StylePropertyId.All:
                         break;
-                    case StylePropertyId.AnimationPlayState:
-                        rareData.Write().animationPlayState = (AnimationPlayState)reader.ReadEnum(StyleEnumType.AnimationPlayState, 0);
+                    case StylePropertyId.Animation:
+                        ShorthandApplicator.ApplyAnimation(reader, ref this);
+                        break;
+                    case StylePropertyId.AnimationDelay:
+                        reader.ReadListFloat(ref animationData.Write().animationDelay, 0);
+                        break;
+                    case StylePropertyId.AnimationDirection:
+                        reader.ReadListAnimationDirection(ref animationData.Write().animationDirection, 0);
+                        break;
+                    case StylePropertyId.AnimationDuration:
+                        reader.ReadListFloat(ref animationData.Write().animationDuration, 0);
+                        break;
+                    case StylePropertyId.AnimationIterationCount:
+                        reader.ReadListAnimationIterationCount(ref animationData.Write().animationIterationCount, 0);
+                        break;
+                    case StylePropertyId.AnimationNames:
+                        reader.ReadListEntityId(ref animationData.Write().animationNames, 0);
+                        break;
+                    case StylePropertyId.AnimationPlayStates:
+                        reader.ReadListAnimationPlayState(ref animationData.Write().animationPlayStates, 0);
                         break;
                     case StylePropertyId.AspectRatio:
                         layoutData.Write().aspectRatio = reader.ReadRatio(0);
@@ -342,11 +390,50 @@ namespace UnityEngine.UIElements
                     case StylePropertyId.Gap:
                         ShorthandApplicator.ApplyGap(reader, ref this);
                         break;
+                    case StylePropertyId.GridAutoColumns:
+                        reader.ReadListGridTrackSize(ref gridData.Write().gridAutoColumns, 0);
+                        break;
+                    case StylePropertyId.GridAutoFlow:
+                        gridData.Write().gridAutoFlow = (GridAutoFlow)reader.ReadEnum(StyleEnumType.GridAutoFlow, 0);
+                        break;
+                    case StylePropertyId.GridAutoRows:
+                        reader.ReadListGridTrackSize(ref gridData.Write().gridAutoRows, 0);
+                        break;
+                    case StylePropertyId.GridColumn:
+                        ShorthandApplicator.ApplyGridColumn(reader, ref this);
+                        break;
+                    case StylePropertyId.GridColumnEnd:
+                        gridData.Write().gridColumnEnd = reader.ReadGridLine(0);
+                        break;
+                    case StylePropertyId.GridColumnStart:
+                        gridData.Write().gridColumnStart = reader.ReadGridLine(0);
+                        break;
+                    case StylePropertyId.GridRow:
+                        ShorthandApplicator.ApplyGridRow(reader, ref this);
+                        break;
+                    case StylePropertyId.GridRowEnd:
+                        gridData.Write().gridRowEnd = reader.ReadGridLine(0);
+                        break;
+                    case StylePropertyId.GridRowStart:
+                        gridData.Write().gridRowStart = reader.ReadGridLine(0);
+                        break;
+                    case StylePropertyId.GridTemplateColumns:
+                        reader.ReadListGridTrackSize(ref gridData.Write().gridTemplateColumns, 0);
+                        break;
+                    case StylePropertyId.GridTemplateRows:
+                        reader.ReadListGridTrackSize(ref gridData.Write().gridTemplateRows, 0);
+                        break;
                     case StylePropertyId.Height:
                         layoutData.Write().height = reader.ReadLength(0);
                         break;
                     case StylePropertyId.JustifyContent:
                         layoutData.Write().justifyContent = (Justify)reader.ReadEnum(StyleEnumType.Justify, 0);
+                        break;
+                    case StylePropertyId.JustifyItems:
+                        gridData.Write().justifyItems = (Align)reader.ReadEnum(StyleEnumType.Align, 0);
+                        break;
+                    case StylePropertyId.JustifySelf:
+                        gridData.Write().justifySelf = (Align)reader.ReadEnum(StyleEnumType.Align, 0);
                         break;
                     case StylePropertyId.Left:
                         layoutData.Write().left = reader.ReadLength(0);
@@ -448,7 +535,7 @@ namespace UnityEngine.UIElements
                         transformData.Write().translate = reader.ReadTranslate(0);
                         break;
                     case StylePropertyId.UnityAnimationClip:
-                        rareData.Write().unityAnimationClip = reader.ReadUIAnimationClip(0);
+                        ShorthandApplicator.ApplyUnityAnimationClip(reader, ref this);
                         break;
                     case StylePropertyId.UnityBackgroundImageTintColor:
                         rareData.Write().unityBackgroundImageTintColor = reader.ReadColor(0);
@@ -528,6 +615,9 @@ namespace UnityEngine.UIElements
                     case StylePropertyId.WordSpacing:
                         inheritedData.Write().wordSpacing = reader.ReadLength(0);
                         break;
+                    case StylePropertyId.ZIndex:
+                        rareData.Write().zIndex = reader.IsKeyword(0, StyleValueKeyword.Auto) ? int.MinValue : reader.ReadInt(0);
+                        break;
                     case StylePropertyId.Custom:
                         ApplyCustomStyleProperty(reader);
                         break;
@@ -560,9 +650,6 @@ namespace UnityEngine.UIElements
                     layoutData.Write().alignSelf = (Align)sv.number;
                     if (sv.keyword == StyleKeyword.Auto)
                         layoutData.Write().alignSelf = Align.Auto;
-                    break;
-                case StylePropertyId.AnimationPlayState:
-                    rareData.Write().animationPlayState = (AnimationPlayState)sv.number;
                     break;
                 case StylePropertyId.AspectRatio:
                     layoutData.Write().aspectRatio = (Ratio)sv.number;
@@ -647,11 +734,36 @@ namespace UnityEngine.UIElements
                 case StylePropertyId.FontSize:
                     inheritedData.Write().fontSize = sv.length;
                     break;
+                case StylePropertyId.GridAutoFlow:
+                    gridData.Write().gridAutoFlow = (GridAutoFlow)sv.number;
+                    break;
+                case StylePropertyId.GridColumnEnd:
+                    gridData.Write().gridColumnEnd = GridLine.FromRawValue((int)sv.number);
+                    break;
+                case StylePropertyId.GridColumnStart:
+                    gridData.Write().gridColumnStart = GridLine.FromRawValue((int)sv.number);
+                    break;
+                case StylePropertyId.GridRowEnd:
+                    gridData.Write().gridRowEnd = GridLine.FromRawValue((int)sv.number);
+                    break;
+                case StylePropertyId.GridRowStart:
+                    gridData.Write().gridRowStart = GridLine.FromRawValue((int)sv.number);
+                    break;
                 case StylePropertyId.Height:
                     layoutData.Write().height = sv.length;
                     break;
                 case StylePropertyId.JustifyContent:
                     layoutData.Write().justifyContent = (Justify)sv.number;
+                    break;
+                case StylePropertyId.JustifyItems:
+                    gridData.Write().justifyItems = (Align)sv.number;
+                    if (sv.keyword == StyleKeyword.Auto)
+                        gridData.Write().justifyItems = Align.Auto;
+                    break;
+                case StylePropertyId.JustifySelf:
+                    gridData.Write().justifySelf = (Align)sv.number;
+                    if (sv.keyword == StyleKeyword.Auto)
+                        gridData.Write().justifySelf = Align.Auto;
                     break;
                 case StylePropertyId.Left:
                     layoutData.Write().left = sv.length;
@@ -776,6 +888,11 @@ namespace UnityEngine.UIElements
                 case StylePropertyId.WordSpacing:
                     inheritedData.Write().wordSpacing = sv.length;
                     break;
+                case StylePropertyId.ZIndex:
+                    rareData.Write().zIndex = (int)sv.number;
+                    if (sv.keyword == StyleKeyword.Auto)
+                        rareData.Write().zIndex = int.MinValue;
+                    break;
                 default:
                     Debug.LogAssertion($"Unexpected property id {sv.id}");
                     break;
@@ -788,6 +905,42 @@ namespace UnityEngine.UIElements
                 return;
             switch (sv.id)
             {
+                case StylePropertyId.AnimationDelay:
+                    if (sv.keyword is StyleKeyword.Initial or StyleKeyword.Null)
+                        animationData.Write().animationDelay.CopyFrom(InitialStyle.Get().animationData.Read().animationDelay);
+                    else
+                        animationData.Write().animationDelay.CopyFrom(sv.value as List<float>);
+                    break;
+                case StylePropertyId.AnimationDirection:
+                    if (sv.keyword is StyleKeyword.Initial or StyleKeyword.Null)
+                        animationData.Write().animationDirection.CopyFrom(InitialStyle.Get().animationData.Read().animationDirection);
+                    else
+                        animationData.Write().animationDirection.CopyFrom(sv.value as List<AnimationDirection>);
+                    break;
+                case StylePropertyId.AnimationDuration:
+                    if (sv.keyword is StyleKeyword.Initial or StyleKeyword.Null)
+                        animationData.Write().animationDuration.CopyFrom(InitialStyle.Get().animationData.Read().animationDuration);
+                    else
+                        animationData.Write().animationDuration.CopyFrom(sv.value as List<float>);
+                    break;
+                case StylePropertyId.AnimationIterationCount:
+                    if (sv.keyword is StyleKeyword.Initial or StyleKeyword.Null)
+                        animationData.Write().animationIterationCount.CopyFrom(InitialStyle.Get().animationData.Read().animationIterationCount);
+                    else
+                        animationData.Write().animationIterationCount.CopyFrom(sv.value as List<AnimationIterationCount>);
+                    break;
+                case StylePropertyId.AnimationNames:
+                    if (sv.keyword is StyleKeyword.Initial or StyleKeyword.Null)
+                        animationData.Write().animationNames.CopyFrom(InitialStyle.Get().animationData.Read().animationNames);
+                    else
+                        animationData.Write().animationNames.CopyFrom(sv.value as List<UIAnimationClip>);
+                    break;
+                case StylePropertyId.AnimationPlayStates:
+                    if (sv.keyword is StyleKeyword.Initial or StyleKeyword.Null)
+                        animationData.Write().animationPlayStates.CopyFrom(InitialStyle.Get().animationData.Read().animationPlayStates);
+                    else
+                        animationData.Write().animationPlayStates.CopyFrom(sv.value as List<AnimationPlayState>);
+                    break;
                 case StylePropertyId.BackdropFilter:
                     if (sv.keyword is StyleKeyword.Initial or StyleKeyword.Null)
                         rareData.Write().backdropFilter.CopyFrom(InitialStyle.Get().rareData.Read().backdropFilter);
@@ -802,6 +955,30 @@ namespace UnityEngine.UIElements
                         rareData.Write().filter.CopyFrom(InitialStyle.Get().rareData.Read().filter);
                     else
                         rareData.Write().filter.CopyFrom(sv.value as List<FilterFunction>);
+                    break;
+                case StylePropertyId.GridAutoColumns:
+                    if (sv.keyword is StyleKeyword.Initial or StyleKeyword.Null)
+                        gridData.Write().gridAutoColumns.CopyFrom(InitialStyle.Get().gridData.Read().gridAutoColumns);
+                    else
+                        gridData.Write().gridAutoColumns.CopyFrom(sv.value as List<GridTrackSize>);
+                    break;
+                case StylePropertyId.GridAutoRows:
+                    if (sv.keyword is StyleKeyword.Initial or StyleKeyword.Null)
+                        gridData.Write().gridAutoRows.CopyFrom(InitialStyle.Get().gridData.Read().gridAutoRows);
+                    else
+                        gridData.Write().gridAutoRows.CopyFrom(sv.value as List<GridTrackSize>);
+                    break;
+                case StylePropertyId.GridTemplateColumns:
+                    if (sv.keyword is StyleKeyword.Initial or StyleKeyword.Null)
+                        gridData.Write().gridTemplateColumns.CopyFrom(InitialStyle.Get().gridData.Read().gridTemplateColumns);
+                    else
+                        gridData.Write().gridTemplateColumns.CopyFrom(sv.value as List<GridTrackSize>);
+                    break;
+                case StylePropertyId.GridTemplateRows:
+                    if (sv.keyword is StyleKeyword.Initial or StyleKeyword.Null)
+                        gridData.Write().gridTemplateRows.CopyFrom(InitialStyle.Get().gridData.Read().gridTemplateRows);
+                    else
+                        gridData.Write().gridTemplateRows.CopyFrom(sv.value as List<GridTrackSize>);
                     break;
                 case StylePropertyId.TransitionDelay:
                     if (sv.keyword is StyleKeyword.Initial or StyleKeyword.Null)
@@ -826,9 +1003,6 @@ namespace UnityEngine.UIElements
                         transitionData.Write().transitionTimingFunction.CopyFrom(InitialStyle.Get().transitionData.Read().transitionTimingFunction);
                     else
                         transitionData.Write().transitionTimingFunction.CopyFrom(sv.value as List<EasingFunction>);
-                    break;
-                case StylePropertyId.UnityAnimationClip:
-                    rareData.Write().unityAnimationClip = sv.GetResource<UnityEngine.UIElements.UIAnimationClip>()?.GetEntityId() ?? EntityId.None;
                     break;
                 case StylePropertyId.UnityFont:
                     inheritedData.Write().unityFont = sv.GetResource<UnityEngine.Font>()?.GetEntityId() ?? EntityId.None;
@@ -873,8 +1047,23 @@ namespace UnityEngine.UIElements
                 case StylePropertyId.AlignSelf:
                     layoutData.Write().alignSelf = other.layoutData.Read().alignSelf;
                     break;
-                case StylePropertyId.AnimationPlayState:
-                    rareData.Write().animationPlayState = other.rareData.Read().animationPlayState;
+                case StylePropertyId.AnimationDelay:
+                    animationData.Write().animationDelay.CopyFrom(other.animationData.Read().animationDelay);
+                    break;
+                case StylePropertyId.AnimationDirection:
+                    animationData.Write().animationDirection.CopyFrom(other.animationData.Read().animationDirection);
+                    break;
+                case StylePropertyId.AnimationDuration:
+                    animationData.Write().animationDuration.CopyFrom(other.animationData.Read().animationDuration);
+                    break;
+                case StylePropertyId.AnimationIterationCount:
+                    animationData.Write().animationIterationCount.CopyFrom(other.animationData.Read().animationIterationCount);
+                    break;
+                case StylePropertyId.AnimationNames:
+                    animationData.Write().animationNames.CopyFrom(other.animationData.Read().animationNames);
+                    break;
+                case StylePropertyId.AnimationPlayStates:
+                    animationData.Write().animationPlayStates.CopyFrom(other.animationData.Read().animationPlayStates);
                     break;
                 case StylePropertyId.AspectRatio:
                     layoutData.Write().aspectRatio = other.layoutData.Read().aspectRatio;
@@ -972,11 +1161,44 @@ namespace UnityEngine.UIElements
                 case StylePropertyId.FontSize:
                     inheritedData.Write().fontSize = other.inheritedData.Read().fontSize;
                     break;
+                case StylePropertyId.GridAutoColumns:
+                    gridData.Write().gridAutoColumns.CopyFrom(other.gridData.Read().gridAutoColumns);
+                    break;
+                case StylePropertyId.GridAutoFlow:
+                    gridData.Write().gridAutoFlow = other.gridData.Read().gridAutoFlow;
+                    break;
+                case StylePropertyId.GridAutoRows:
+                    gridData.Write().gridAutoRows.CopyFrom(other.gridData.Read().gridAutoRows);
+                    break;
+                case StylePropertyId.GridColumnEnd:
+                    gridData.Write().gridColumnEnd = other.gridData.Read().gridColumnEnd;
+                    break;
+                case StylePropertyId.GridColumnStart:
+                    gridData.Write().gridColumnStart = other.gridData.Read().gridColumnStart;
+                    break;
+                case StylePropertyId.GridRowEnd:
+                    gridData.Write().gridRowEnd = other.gridData.Read().gridRowEnd;
+                    break;
+                case StylePropertyId.GridRowStart:
+                    gridData.Write().gridRowStart = other.gridData.Read().gridRowStart;
+                    break;
+                case StylePropertyId.GridTemplateColumns:
+                    gridData.Write().gridTemplateColumns.CopyFrom(other.gridData.Read().gridTemplateColumns);
+                    break;
+                case StylePropertyId.GridTemplateRows:
+                    gridData.Write().gridTemplateRows.CopyFrom(other.gridData.Read().gridTemplateRows);
+                    break;
                 case StylePropertyId.Height:
                     layoutData.Write().height = other.layoutData.Read().height;
                     break;
                 case StylePropertyId.JustifyContent:
                     layoutData.Write().justifyContent = other.layoutData.Read().justifyContent;
+                    break;
+                case StylePropertyId.JustifyItems:
+                    gridData.Write().justifyItems = other.gridData.Read().justifyItems;
+                    break;
+                case StylePropertyId.JustifySelf:
+                    gridData.Write().justifySelf = other.gridData.Read().justifySelf;
                     break;
                 case StylePropertyId.Left:
                     layoutData.Write().left = other.layoutData.Read().left;
@@ -1068,9 +1290,6 @@ namespace UnityEngine.UIElements
                 case StylePropertyId.Translate:
                     transformData.Write().translate = other.transformData.Read().translate;
                     break;
-                case StylePropertyId.UnityAnimationClip:
-                    rareData.Write().unityAnimationClip = other.rareData.Read().unityAnimationClip;
-                    break;
                 case StylePropertyId.UnityBackgroundImageTintColor:
                     rareData.Write().unityBackgroundImageTintColor = other.rareData.Read().unityBackgroundImageTintColor;
                     break;
@@ -1142,6 +1361,9 @@ namespace UnityEngine.UIElements
                     break;
                 case StylePropertyId.WordSpacing:
                     inheritedData.Write().wordSpacing = other.inheritedData.Read().wordSpacing;
+                    break;
+                case StylePropertyId.ZIndex:
+                    rareData.Write().zIndex = other.rareData.Read().zIndex;
                     break;
                 default:
                     Debug.LogAssertion($"Unexpected property id {id}");
@@ -1395,6 +1617,42 @@ namespace UnityEngine.UIElements
                     }
 
                     break;
+                case StylePropertyId.GridColumnEnd:
+                    if (gridData.Read().gridColumnEnd != GridLine.FromRawValue(newValue))
+                    {
+                        gridData.Write().gridColumnEnd = GridLine.FromRawValue(newValue);
+                        ve.layoutNode.MarkDirty();
+                        ve.IncrementVersion(VersionChangeType.Layout);
+                    }
+
+                    break;
+                case StylePropertyId.GridColumnStart:
+                    if (gridData.Read().gridColumnStart != GridLine.FromRawValue(newValue))
+                    {
+                        gridData.Write().gridColumnStart = GridLine.FromRawValue(newValue);
+                        ve.layoutNode.MarkDirty();
+                        ve.IncrementVersion(VersionChangeType.Layout);
+                    }
+
+                    break;
+                case StylePropertyId.GridRowEnd:
+                    if (gridData.Read().gridRowEnd != GridLine.FromRawValue(newValue))
+                    {
+                        gridData.Write().gridRowEnd = GridLine.FromRawValue(newValue);
+                        ve.layoutNode.MarkDirty();
+                        ve.IncrementVersion(VersionChangeType.Layout);
+                    }
+
+                    break;
+                case StylePropertyId.GridRowStart:
+                    if (gridData.Read().gridRowStart != GridLine.FromRawValue(newValue))
+                    {
+                        gridData.Write().gridRowStart = GridLine.FromRawValue(newValue);
+                        ve.layoutNode.MarkDirty();
+                        ve.IncrementVersion(VersionChangeType.Layout);
+                    }
+
+                    break;
                 case StylePropertyId.JustifyContent:
                     if (layoutData.Read().justifyContent != (Justify)newValue)
                     {
@@ -1502,6 +1760,10 @@ namespace UnityEngine.UIElements
                     }
 
                     break;
+                case StylePropertyId.ZIndex:
+                    rareData.Write().zIndex = newValue;
+                    ve.IncrementVersion(VersionChangeType.Repaint);
+                    break;
                 default:
                     throw new ArgumentException("Invalid animation property id. Can't apply value of type 'int' to property '" + id + "'. Please make sure that this property is animatable.", nameof(id));
             }
@@ -1600,6 +1862,23 @@ namespace UnityEngine.UIElements
                     break;
                 default:
                     throw new ArgumentException("Invalid animation property id. Can't apply value of type 'Color' to property '" + id + "'. Please make sure that this property is animatable.", nameof(id));
+            }
+        }
+
+        public void ApplyPropertyAnimation(VisualElement ve, StylePropertyId id, Background newValue)
+        {
+            switch (id)
+            {
+                case StylePropertyId.BackgroundImage:
+                    if (!visualData.Read().backgroundImage.ValueEquals(newValue))
+                    {
+                        visualData.Write().backgroundImage.CopyFrom(newValue);
+                        ve.IncrementVersion(VersionChangeType.Overflow | VersionChangeType.Repaint);
+                    }
+
+                    break;
+                default:
+                    throw new ArgumentException("Invalid animation property id. Can't apply value of type 'Background' to property '" + id + "'. Please make sure that this property is animatable.", nameof(id));
             }
         }
 
@@ -1733,15 +2012,6 @@ namespace UnityEngine.UIElements
         {
             switch (id)
             {
-                case StylePropertyId.BackgroundImage:
-                    if (visualData.Read().backgroundImage.imageEntityId != newValue)
-                    {
-                        visualData.Write().backgroundImage.imageEntityId = newValue;
-                        visualData.Write().backgroundImage.gradient.Clear();
-                        ve.IncrementVersion(VersionChangeType.Overflow | VersionChangeType.Repaint);
-                    }
-
-                    break;
                 case StylePropertyId.UnityFont:
                     if (inheritedData.Read().unityFont != newValue)
                     {
@@ -1873,6 +2143,14 @@ namespace UnityEngine.UIElements
                     return (int)layoutData.Read().flexDirection;
                 case StylePropertyId.FlexWrap:
                     return (int)layoutData.Read().flexWrap;
+                case StylePropertyId.GridColumnEnd:
+                    return gridData.Read().gridColumnEnd.rawValue;
+                case StylePropertyId.GridColumnStart:
+                    return gridData.Read().gridColumnStart.rawValue;
+                case StylePropertyId.GridRowEnd:
+                    return gridData.Read().gridRowEnd.rawValue;
+                case StylePropertyId.GridRowStart:
+                    return gridData.Read().gridRowStart.rawValue;
                 case StylePropertyId.JustifyContent:
                     return (int)layoutData.Read().justifyContent;
                 case StylePropertyId.Overflow:
@@ -1903,6 +2181,8 @@ namespace UnityEngine.UIElements
                     return (int)inheritedData.Read().visibility;
                 case StylePropertyId.WhiteSpace:
                     return (int)inheritedData.Read().whiteSpace;
+                case StylePropertyId.ZIndex:
+                    return rareData.Read().zIndex;
                 default:
                     throw new ArgumentException("Invalid animation property id. Can't apply value of type 'Int' to property '" + id + "'. Please make sure that this property is animatable.", nameof(id));
             }
@@ -1965,6 +2245,17 @@ namespace UnityEngine.UIElements
                     return inheritedData.Read().unityTextOutlineColor;
                 default:
                     throw new ArgumentException("Invalid animation property id. Can't apply value of type 'Color' to property '" + id + "'. Please make sure that this property is animatable.", nameof(id));
+            }
+        }
+
+        public Background ReadPropertyAnimationBackground(StylePropertyId id)
+        {
+            switch (id)
+            {
+                case StylePropertyId.BackgroundImage:
+                    return Background.From(visualData.Read().backgroundImage);
+                default:
+                    throw new ArgumentException("Invalid animation property id. Can't apply value of type 'Background' to property '" + id + "'. Please make sure that this property is animatable.", nameof(id));
             }
         }
 
@@ -2049,8 +2340,6 @@ namespace UnityEngine.UIElements
         {
             switch (id)
             {
-                case StylePropertyId.BackgroundImage:
-                    return (EntityId)visualData.Read().backgroundImage;
                 case StylePropertyId.UnityFont:
                     return inheritedData.Read().unityFont;
                 case StylePropertyId.UnityFontDefinition:
@@ -2109,7 +2398,7 @@ namespace UnityEngine.UIElements
 
                 case StylePropertyId.BackgroundImage:
                 {
-                    return element.styleAnimation.Start(StylePropertyId.BackgroundImage, (EntityId)oldStyle.visualData.Read().backgroundImage, (EntityId)newStyle.visualData.Read().backgroundImage, durationMs, delayMs, easingCurve);
+                    return element.styleAnimation.Start(StylePropertyId.BackgroundImage, Background.From(oldStyle.visualData.Read().backgroundImage), Background.From(newStyle.visualData.Read().backgroundImage), durationMs, delayMs, easingCurve);
                 }
 
                 case StylePropertyId.BackgroundPosition:
@@ -2345,6 +2634,42 @@ namespace UnityEngine.UIElements
                     result |= element.styleAnimation.Start(StylePropertyId.RowGap, oldStyle.layoutData.Read().rowGap, newStyle.layoutData.Read().rowGap, durationMs, delayMs, easingCurve);
                     result |= element.styleAnimation.Start(StylePropertyId.ColumnGap, oldStyle.layoutData.Read().columnGap, newStyle.layoutData.Read().columnGap, durationMs, delayMs, easingCurve);
                     return result;
+                }
+
+                case StylePropertyId.GridColumn:
+                {
+                    bool result = false;
+                    result |= element.styleAnimation.StartEnum(StylePropertyId.GridColumnStart, oldStyle.gridData.Read().gridColumnStart.rawValue, newStyle.gridData.Read().gridColumnStart.rawValue, durationMs, delayMs, easingCurve);
+                    result |= element.styleAnimation.StartEnum(StylePropertyId.GridColumnEnd, oldStyle.gridData.Read().gridColumnEnd.rawValue, newStyle.gridData.Read().gridColumnEnd.rawValue, durationMs, delayMs, easingCurve);
+                    return result;
+                }
+
+                case StylePropertyId.GridColumnEnd:
+                {
+                    return element.styleAnimation.StartEnum(StylePropertyId.GridColumnEnd, oldStyle.gridData.Read().gridColumnEnd.rawValue, newStyle.gridData.Read().gridColumnEnd.rawValue, durationMs, delayMs, easingCurve);
+                }
+
+                case StylePropertyId.GridColumnStart:
+                {
+                    return element.styleAnimation.StartEnum(StylePropertyId.GridColumnStart, oldStyle.gridData.Read().gridColumnStart.rawValue, newStyle.gridData.Read().gridColumnStart.rawValue, durationMs, delayMs, easingCurve);
+                }
+
+                case StylePropertyId.GridRow:
+                {
+                    bool result = false;
+                    result |= element.styleAnimation.StartEnum(StylePropertyId.GridRowStart, oldStyle.gridData.Read().gridRowStart.rawValue, newStyle.gridData.Read().gridRowStart.rawValue, durationMs, delayMs, easingCurve);
+                    result |= element.styleAnimation.StartEnum(StylePropertyId.GridRowEnd, oldStyle.gridData.Read().gridRowEnd.rawValue, newStyle.gridData.Read().gridRowEnd.rawValue, durationMs, delayMs, easingCurve);
+                    return result;
+                }
+
+                case StylePropertyId.GridRowEnd:
+                {
+                    return element.styleAnimation.StartEnum(StylePropertyId.GridRowEnd, oldStyle.gridData.Read().gridRowEnd.rawValue, newStyle.gridData.Read().gridRowEnd.rawValue, durationMs, delayMs, easingCurve);
+                }
+
+                case StylePropertyId.GridRowStart:
+                {
+                    return element.styleAnimation.StartEnum(StylePropertyId.GridRowStart, oldStyle.gridData.Read().gridRowStart.rawValue, newStyle.gridData.Read().gridRowStart.rawValue, durationMs, delayMs, easingCurve);
                 }
 
                 case StylePropertyId.Height:
@@ -2665,6 +2990,11 @@ namespace UnityEngine.UIElements
                     return element.styleAnimation.Start(StylePropertyId.WordSpacing, oldStyle.inheritedData.Read().wordSpacing, newStyle.inheritedData.Read().wordSpacing, durationMs, delayMs, easingCurve);
                 }
 
+                case StylePropertyId.ZIndex:
+                {
+                    return element.styleAnimation.Start(StylePropertyId.ZIndex, oldStyle.rareData.Read().zIndex, newStyle.rareData.Read().zIndex, durationMs, delayMs, easingCurve);
+                }
+
                 default:
                     return false;
             }
@@ -2676,6 +3006,36 @@ namespace UnityEngine.UIElements
             UsageHints usageHints = UsageHints.None;
 
             bool hasRunningAnimation = element.hasRunningAnimations;
+            if (hasRunningAnimation ||
+                !oldStyle.gridData.Equals(newStyle.gridData))
+            {
+                ref readonly var oldData = ref oldStyle.gridData.Read();
+                ref readonly var newData = ref newStyle.gridData.Read();
+                if (hasRunningAnimation ||
+                    oldData.gridColumnEnd != newData.gridColumnEnd)
+                {
+                    result |= element.styleAnimation.StartEnum(StylePropertyId.GridColumnEnd, oldData.gridColumnEnd.rawValue, newData.gridColumnEnd.rawValue, durationMs, delayMs, easingCurve);
+                }
+
+                if (hasRunningAnimation ||
+                    oldData.gridColumnStart != newData.gridColumnStart)
+                {
+                    result |= element.styleAnimation.StartEnum(StylePropertyId.GridColumnStart, oldData.gridColumnStart.rawValue, newData.gridColumnStart.rawValue, durationMs, delayMs, easingCurve);
+                }
+
+                if (hasRunningAnimation ||
+                    oldData.gridRowEnd != newData.gridRowEnd)
+                {
+                    result |= element.styleAnimation.StartEnum(StylePropertyId.GridRowEnd, oldData.gridRowEnd.rawValue, newData.gridRowEnd.rawValue, durationMs, delayMs, easingCurve);
+                }
+
+                if (hasRunningAnimation ||
+                    oldData.gridRowStart != newData.gridRowStart)
+                {
+                    result |= element.styleAnimation.StartEnum(StylePropertyId.GridRowStart, oldData.gridRowStart.rawValue, newData.gridRowStart.rawValue, durationMs, delayMs, easingCurve);
+                }
+            }
+
             if (hasRunningAnimation ||
                 !oldStyle.inheritedData.Equals(newStyle.inheritedData))
             {
@@ -3096,6 +3456,12 @@ namespace UnityEngine.UIElements
                 {
                     result |= element.styleAnimation.StartEnum(StylePropertyId.UnityTextOverflowPosition, (int)oldData.unityTextOverflowPosition, (int)newData.unityTextOverflowPosition, durationMs, delayMs, easingCurve);
                 }
+
+                if (hasRunningAnimation ||
+                    oldData.zIndex != newData.zIndex)
+                {
+                    result |= element.styleAnimation.Start(StylePropertyId.ZIndex, oldData.zIndex, newData.zIndex, durationMs, delayMs, easingCurve);
+                }
             }
 
             if (hasRunningAnimation ||
@@ -3172,7 +3538,7 @@ namespace UnityEngine.UIElements
                 if (hasRunningAnimation ||
                     oldData.backgroundImage != newData.backgroundImage)
                 {
-                    result |= element.styleAnimation.Start(StylePropertyId.BackgroundImage, (EntityId)oldData.backgroundImage, (EntityId)newData.backgroundImage, durationMs, delayMs, easingCurve);
+                    result |= element.styleAnimation.Start(StylePropertyId.BackgroundImage, Background.From(oldData.backgroundImage), Background.From(newData.backgroundImage), durationMs, delayMs, easingCurve);
                 }
 
                 if (hasRunningAnimation ||
@@ -3506,6 +3872,30 @@ namespace UnityEngine.UIElements
                     return element.styleAnimation.Start(StylePropertyId.FontSize, computedStyle.inheritedData.Read().fontSize, to, durationMs, delayMs, easingCurve);
                 }
 
+                case StylePropertyId.GridColumnEnd:
+                {
+                    var to = sv.keyword == StyleKeyword.Initial ? InitialStyle.Get().gridData.Read().gridColumnEnd : GridLine.FromRawValue((int)sv.number);
+                    return element.styleAnimation.StartEnum(StylePropertyId.GridColumnEnd, computedStyle.gridData.Read().gridColumnEnd.rawValue, to.rawValue, durationMs, delayMs, easingCurve);
+                }
+
+                case StylePropertyId.GridColumnStart:
+                {
+                    var to = sv.keyword == StyleKeyword.Initial ? InitialStyle.Get().gridData.Read().gridColumnStart : GridLine.FromRawValue((int)sv.number);
+                    return element.styleAnimation.StartEnum(StylePropertyId.GridColumnStart, computedStyle.gridData.Read().gridColumnStart.rawValue, to.rawValue, durationMs, delayMs, easingCurve);
+                }
+
+                case StylePropertyId.GridRowEnd:
+                {
+                    var to = sv.keyword == StyleKeyword.Initial ? InitialStyle.Get().gridData.Read().gridRowEnd : GridLine.FromRawValue((int)sv.number);
+                    return element.styleAnimation.StartEnum(StylePropertyId.GridRowEnd, computedStyle.gridData.Read().gridRowEnd.rawValue, to.rawValue, durationMs, delayMs, easingCurve);
+                }
+
+                case StylePropertyId.GridRowStart:
+                {
+                    var to = sv.keyword == StyleKeyword.Initial ? InitialStyle.Get().gridData.Read().gridRowStart : GridLine.FromRawValue((int)sv.number);
+                    return element.styleAnimation.StartEnum(StylePropertyId.GridRowStart, computedStyle.gridData.Read().gridRowStart.rawValue, to.rawValue, durationMs, delayMs, easingCurve);
+                }
+
                 case StylePropertyId.Height:
                 {
                     var to = sv.keyword == StyleKeyword.Initial ? InitialStyle.Get().layoutData.Read().height : sv.length;
@@ -3758,6 +4148,12 @@ namespace UnityEngine.UIElements
                     return element.styleAnimation.Start(StylePropertyId.WordSpacing, computedStyle.inheritedData.Read().wordSpacing, to, durationMs, delayMs, easingCurve);
                 }
 
+                case StylePropertyId.ZIndex:
+                {
+                    var to = sv.keyword == StyleKeyword.Initial ? InitialStyle.Get().rareData.Read().zIndex : (int)sv.number;
+                    return element.styleAnimation.Start(StylePropertyId.ZIndex, computedStyle.rareData.Read().zIndex, to, durationMs, delayMs, easingCurve);
+                }
+
                 default:
                     return false;
             }
@@ -3781,9 +4177,9 @@ namespace UnityEngine.UIElements
 
                 case StylePropertyId.BackgroundImage:
                 {
-                    var from = (EntityId)computedStyle.visualData.Read().backgroundImage;
-                    EntityId to; if  ( sv . keyword == StyleKeyword . Initial ) to  =  ( EntityId ) InitialStyle . backgroundImage ;  else  if  ( sv . value  is  Background  bg ) { Background . To ( bg ,  out  to ) ;  } else  { to  =  ( sv . value  as  UnityEngine . Object ) ? . GetEntityId ( ) ?? EntityId . None ;  }
-                    return element.styleAnimation.Start(StylePropertyId.BackgroundImage, (EntityId)from, (EntityId)to, durationMs, delayMs, easingCurve);
+                    var from = Background.From(computedStyle.visualData.Read().backgroundImage);
+                    Background to; if  ( sv . keyword == StyleKeyword . Initial ) to  =  Background . From ( InitialStyle . backgroundImage ) ;  else  if  ( sv . value  is  Background  bg ) { to  =  bg ;  } else  { to  =  Background . FromObject ( sv . value ) ;  }
+                    return element.styleAnimation.Start(StylePropertyId.BackgroundImage, from, to, durationMs, delayMs, easingCurve);
                 }
 
                 case StylePropertyId.Filter:
@@ -3880,8 +4276,31 @@ namespace UnityEngine.UIElements
                     break;
                 case StylePropertyId.All:
                     break;
-                case StylePropertyId.AnimationPlayState:
-                    rareData.Write().animationPlayState = InitialStyle.Get().rareData.Read().animationPlayState;
+                case StylePropertyId.Animation:
+                    animationData.Write().animationNames.CopyFrom(InitialStyle.Get().animationData.Read().animationNames);
+                    animationData.Write().animationDuration.CopyFrom(InitialStyle.Get().animationData.Read().animationDuration);
+                    animationData.Write().animationDelay.CopyFrom(InitialStyle.Get().animationData.Read().animationDelay);
+                    animationData.Write().animationIterationCount.CopyFrom(InitialStyle.Get().animationData.Read().animationIterationCount);
+                    animationData.Write().animationDirection.CopyFrom(InitialStyle.Get().animationData.Read().animationDirection);
+                    animationData.Write().animationPlayStates.CopyFrom(InitialStyle.Get().animationData.Read().animationPlayStates);
+                    break;
+                case StylePropertyId.AnimationDelay:
+                    animationData.Write().animationDelay.CopyFrom(InitialStyle.Get().animationData.Read().animationDelay);
+                    break;
+                case StylePropertyId.AnimationDirection:
+                    animationData.Write().animationDirection.CopyFrom(InitialStyle.Get().animationData.Read().animationDirection);
+                    break;
+                case StylePropertyId.AnimationDuration:
+                    animationData.Write().animationDuration.CopyFrom(InitialStyle.Get().animationData.Read().animationDuration);
+                    break;
+                case StylePropertyId.AnimationIterationCount:
+                    animationData.Write().animationIterationCount.CopyFrom(InitialStyle.Get().animationData.Read().animationIterationCount);
+                    break;
+                case StylePropertyId.AnimationNames:
+                    animationData.Write().animationNames.CopyFrom(InitialStyle.Get().animationData.Read().animationNames);
+                    break;
+                case StylePropertyId.AnimationPlayStates:
+                    animationData.Write().animationPlayStates.CopyFrom(InitialStyle.Get().animationData.Read().animationPlayStates);
                     break;
                 case StylePropertyId.AspectRatio:
                     layoutData.Write().aspectRatio = InitialStyle.Get().layoutData.Read().aspectRatio;
@@ -4010,11 +4429,52 @@ namespace UnityEngine.UIElements
                     layoutData.Write().rowGap = InitialStyle.Get().layoutData.Read().rowGap;
                     layoutData.Write().columnGap = InitialStyle.Get().layoutData.Read().columnGap;
                     break;
+                case StylePropertyId.GridAutoColumns:
+                    gridData.Write().gridAutoColumns.CopyFrom(InitialStyle.Get().gridData.Read().gridAutoColumns);
+                    break;
+                case StylePropertyId.GridAutoFlow:
+                    gridData.Write().gridAutoFlow = InitialStyle.Get().gridData.Read().gridAutoFlow;
+                    break;
+                case StylePropertyId.GridAutoRows:
+                    gridData.Write().gridAutoRows.CopyFrom(InitialStyle.Get().gridData.Read().gridAutoRows);
+                    break;
+                case StylePropertyId.GridColumn:
+                    gridData.Write().gridColumnStart = InitialStyle.Get().gridData.Read().gridColumnStart;
+                    gridData.Write().gridColumnEnd = InitialStyle.Get().gridData.Read().gridColumnEnd;
+                    break;
+                case StylePropertyId.GridColumnEnd:
+                    gridData.Write().gridColumnEnd = InitialStyle.Get().gridData.Read().gridColumnEnd;
+                    break;
+                case StylePropertyId.GridColumnStart:
+                    gridData.Write().gridColumnStart = InitialStyle.Get().gridData.Read().gridColumnStart;
+                    break;
+                case StylePropertyId.GridRow:
+                    gridData.Write().gridRowStart = InitialStyle.Get().gridData.Read().gridRowStart;
+                    gridData.Write().gridRowEnd = InitialStyle.Get().gridData.Read().gridRowEnd;
+                    break;
+                case StylePropertyId.GridRowEnd:
+                    gridData.Write().gridRowEnd = InitialStyle.Get().gridData.Read().gridRowEnd;
+                    break;
+                case StylePropertyId.GridRowStart:
+                    gridData.Write().gridRowStart = InitialStyle.Get().gridData.Read().gridRowStart;
+                    break;
+                case StylePropertyId.GridTemplateColumns:
+                    gridData.Write().gridTemplateColumns.CopyFrom(InitialStyle.Get().gridData.Read().gridTemplateColumns);
+                    break;
+                case StylePropertyId.GridTemplateRows:
+                    gridData.Write().gridTemplateRows.CopyFrom(InitialStyle.Get().gridData.Read().gridTemplateRows);
+                    break;
                 case StylePropertyId.Height:
                     layoutData.Write().height = InitialStyle.Get().layoutData.Read().height;
                     break;
                 case StylePropertyId.JustifyContent:
                     layoutData.Write().justifyContent = InitialStyle.Get().layoutData.Read().justifyContent;
+                    break;
+                case StylePropertyId.JustifyItems:
+                    gridData.Write().justifyItems = InitialStyle.Get().gridData.Read().justifyItems;
+                    break;
+                case StylePropertyId.JustifySelf:
+                    gridData.Write().justifySelf = InitialStyle.Get().gridData.Read().justifySelf;
                     break;
                 case StylePropertyId.Left:
                     layoutData.Write().left = InitialStyle.Get().layoutData.Read().left;
@@ -4125,7 +4585,7 @@ namespace UnityEngine.UIElements
                     transformData.Write().translate = InitialStyle.Get().transformData.Read().translate;
                     break;
                 case StylePropertyId.UnityAnimationClip:
-                    rareData.Write().unityAnimationClip = InitialStyle.Get().rareData.Read().unityAnimationClip;
+                    animationData.Write().animationNames.CopyFrom(InitialStyle.Get().animationData.Read().animationNames);
                     break;
                 case StylePropertyId.UnityBackgroundImageTintColor:
                     rareData.Write().unityBackgroundImageTintColor = InitialStyle.Get().rareData.Read().unityBackgroundImageTintColor;
@@ -4208,6 +4668,9 @@ namespace UnityEngine.UIElements
                     break;
                 case StylePropertyId.WordSpacing:
                     inheritedData.Write().wordSpacing = InitialStyle.Get().inheritedData.Read().wordSpacing;
+                    break;
+                case StylePropertyId.ZIndex:
+                    rareData.Write().zIndex = InitialStyle.Get().rareData.Read().zIndex;
                     break;
                 default:
                     Debug.LogAssertion($"Unexpected property id {id}");
@@ -4409,6 +4872,19 @@ namespace UnityEngine.UIElements
                 }
             }
 
+            if (!x.animationData.ReferenceEquals(y.animationData))
+            {
+                if (x.animationDelay != y.animationDelay ||
+                    x.animationDirection != y.animationDirection ||
+                    x.animationDuration != y.animationDuration ||
+                    x.animationIterationCount != y.animationIterationCount ||
+                    x.animationNames != y.animationNames ||
+                    x.animationPlayStates != y.animationPlayStates)
+                {
+                    changes |= VersionChangeType.AnimationProperty;
+                }
+            }
+
             if (!x.visualData.ReferenceEquals(y.visualData))
             {
                 if ((changes & VersionChangeType.Color) == 0 && (x.backgroundColor != y.backgroundColor ||
@@ -4449,14 +4925,9 @@ namespace UnityEngine.UIElements
 
             if (!x.rareData.ReferenceEquals(y.rareData))
             {
-                if (x.unityAnimationClip != y.unityAnimationClip ||
-                    x.animationPlayState != y.animationPlayState)
-                {
-                    changes |= VersionChangeType.AnimationProperty;
-                }
-
                 if ((changes & VersionChangeType.Repaint) == 0 && (x.backdropFilter != y.backdropFilter ||
                     x.filter != y.filter ||
+                    x.zIndex != y.zIndex ||
                     x.unityOverflowClipBox != y.unityOverflowClipBox ||
                     x.unitySliceBottom != y.unitySliceBottom ||
                     x.unitySliceLeft != y.unitySliceLeft ||
@@ -4482,6 +4953,24 @@ namespace UnityEngine.UIElements
                 if (x.unityBackgroundImageTintColor != y.unityBackgroundImageTintColor)
                 {
                     changes |= VersionChangeType.Color;
+                }
+            }
+
+            if (!x.gridData.ReferenceEquals(y.gridData))
+            {
+                if ((changes & VersionChangeType.Layout) == 0 && (x.gridAutoFlow != y.gridAutoFlow ||
+                    x.justifyItems != y.justifyItems ||
+                    x.justifySelf != y.justifySelf ||
+                    x.gridTemplateColumns != y.gridTemplateColumns ||
+                    x.gridTemplateRows != y.gridTemplateRows ||
+                    x.gridAutoColumns != y.gridAutoColumns ||
+                    x.gridAutoRows != y.gridAutoRows ||
+                    x.gridColumnStart != y.gridColumnStart ||
+                    x.gridRowStart != y.gridRowStart ||
+                    x.gridColumnEnd != y.gridColumnEnd ||
+                    x.gridRowEnd != y.gridRowEnd))
+                {
+                    changes |= VersionChangeType.Layout;
                 }
             }
 

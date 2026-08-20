@@ -19,11 +19,16 @@ namespace Unity.UIToolkit.Editor;
 /// for grouping commands by functionality without reflection overhead.
 /// Commands are always executed immediately when enqueued. Command groups provide undo scoping:
 /// they deduplicate undo object recording and defer dirty marking until the outermost group closes.
+/// A command executed outside of a group runs in an implicit single-command group, so group observers
+/// are notified of the modified objects even for standalone commands.
 /// </summary>
 [VisibleToOtherModules("UnityEditor.UIBuilderModule")]
 internal sealed class CommandSystem
 {
     public delegate void CommandHandler(in CommandContext context);
+
+    public delegate void GroupBeganHandler(string undoName);
+    public delegate void GroupEndedHandler(in GroupEndedContext context);
 
     // Pre-filtered to only include single-bit flags (excludes None and composite values)
     static readonly CommandCategory[] s_IndividualFlags = BuildIndividualFlags();
@@ -40,14 +45,16 @@ internal sealed class CommandSystem
     /// The undo name passed to the outermost <see cref="BeginGroup"/> / <see cref="BeginCommandGroup"/> is provided.
     /// Listeners can use this signal to begin batching expensive operations across the group's commands.
     /// </summary>
-    public event Action<string> GroupBegan;
+    public event GroupBeganHandler GroupBegan;
 
     /// <summary>
     /// Raised after the outermost command group closes and dirty marking has been applied.
-    /// Nested groups do not raise this event. The outermost group's undo name is provided.
+    /// Nested groups do not raise this event. A <see cref="GroupEndedContext"/> is provided carrying the
+    /// outermost group's undo name and the set of objects recorded for undo across all of the group's
+    /// commands, so listeners can react to exactly which objects were modified.
     /// Listeners can use this signal to flush any batched work started in <see cref="GroupBegan"/>.
     /// </summary>
-    public event Action<string> GroupEnded;
+    public event GroupEndedHandler GroupEnded;
 
     const int k_MaxScopePoolSize = 4;
     readonly Stack<CommandGroupScope> m_ScopePool = new();
@@ -177,7 +184,10 @@ internal sealed class CommandSystem
 
     /// <summary>
     /// Executes a command immediately and returns the resulting <see cref="CommandContext"/>.
-    /// When inside a command group, the group's undo context is used for deduplication and dirty deferral.
+    /// Commands always execute within a command group: when already inside a group, the command
+    /// participates in it; otherwise an implicit group scoped to the command's <see cref="Command.UndoName"/>
+    /// is created around this execution. This guarantees group observers (<see cref="GroupBegan"/> /
+    /// <see cref="GroupEnded"/>) are notified of the modified objects even for a single command.
     /// The command system acquires a reference to the command for the duration of execution and releases
     /// it afterward. The caller retains ownership and is responsible for disposing the command.
     /// </summary>
@@ -187,7 +197,20 @@ internal sealed class CommandSystem
     {
         Assert.IsNotNull(command, "Command cannot be null");
         command.Acquire();
-        return ExecuteCommandAndInvokeHandlers(command);
+
+        if (m_CommandGroupDepth > 0)
+            return ExecuteCommandAndInvokeHandlers(command);
+
+        // Wrap standalone commands in an implicit group so group observers still receive a notification.
+        BeginCommandGroup(command.UndoName);
+        try
+        {
+            return ExecuteCommandAndInvokeHandlers(command);
+        }
+        finally
+        {
+            EndCommandGroup();
+        }
     }
 
     /// <summary>
@@ -242,17 +265,32 @@ internal sealed class CommandSystem
         if (m_CommandGroupDepth != 0)
             return;
 
-        if (m_ActiveGroupUndoObjects is { Count: > 0 })
-        {
-            foreach (var obj in m_ActiveGroupUndoObjects)
-                SetDirty(obj);
-
-            m_ActiveGroupUndoObjects.Clear();
-        }
+        // Detach the group's undo set before running anything that can execute user code. The depth is already
+        // back to 0, so both the dirty marking below (MarkVisualTreeAssetAsChanged pumps every panel's live
+        // reload system) and the GroupEnded observers (which may execute a nested command) can re-enter
+        // BeginCommandGroup — which would Clear() the very set we are iterating and about to hand out.
+        var undoObjects = m_ActiveGroupUndoObjects;
+        m_ActiveGroupUndoObjects = null;
 
         var outermostUndoName = m_OutermostGroupUndoName;
         m_OutermostGroupUndoName = null;
-        GroupEnded?.Invoke(outermostUndoName);
+
+        if (undoObjects is { Count: > 0 })
+        {
+            foreach (var obj in undoObjects)
+                SetDirty(obj);
+        }
+
+        // Notify observers with the objects modified across the whole group before releasing the set.
+        var groupEndedContext = new GroupEndedContext(outermostUndoName, undoObjects);
+        GroupEnded?.Invoke(in groupEndedContext);
+
+        // Recycle the set for the next outermost group, unless a re-entrant group already installed its own.
+        if (m_ActiveGroupUndoObjects == null)
+        {
+            undoObjects?.Clear();
+            m_ActiveGroupUndoObjects = undoObjects;
+        }
     }
 
     CommandContext ExecuteCommandAndInvokeHandlers(Command command)
@@ -271,13 +309,12 @@ internal sealed class CommandSystem
             return failedContext;
         }
 
-        var insideGroup = m_CommandGroupDepth > 0;
-        var undoObjects = insideGroup ? m_ActiveGroupUndoObjects : HashSetPool<UnityEngine.Object>.Get();
-
+        // Execute always runs inside a command group (an implicit one is created for standalone commands),
+        // so the group's shared undo set is used for deduplication and dirty marking is deferred to
+        // EndCommandGroup.
         try
         {
-            var undoName = insideGroup ? m_OutermostGroupUndoName : command.UndoName;
-            var prepareContext = new PrepareContext(undoObjects, undoName);
+            var prepareContext = new PrepareContext(m_ActiveGroupUndoObjects, m_OutermostGroupUndoName);
             command.Prepare(in prepareContext);
 
             CommandExecutionStatus status;
@@ -291,12 +328,6 @@ internal sealed class CommandSystem
                 status = CommandExecutionStatus.ExecutionFailed;
             }
 
-            if (!insideGroup)
-            {
-                foreach (var obj in undoObjects)
-                    SetDirty(obj);
-            }
-
             var context = new CommandContext(command, command.Source, status);
             InvokeHandlers(command, context);
             return context;
@@ -304,8 +335,6 @@ internal sealed class CommandSystem
         finally
         {
             command.Release();
-            if (!insideGroup)
-                HashSetPool<UnityEngine.Object>.Release(undoObjects);
         }
     }
 

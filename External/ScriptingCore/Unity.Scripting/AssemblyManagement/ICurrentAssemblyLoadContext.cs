@@ -1,3 +1,4 @@
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: ScriptingRuntime not yet converted
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
@@ -37,3 +38,4 @@ namespace Unity.Scripting.AssemblyManagement
         internal bool IsAssemblyInUserCodeALC(Assembly assembly);
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

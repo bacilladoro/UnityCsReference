@@ -20,7 +20,7 @@ namespace UnityEngine.Playables
     {
         Paused = 0,
         Playing = 1,
-        [Obsolete("Delayed is obsolete; use a custom ScriptPlayable to implement this feature", false)]
+        [Obsolete("Delayed is obsolete; use a custom ScriptPlayable to implement this feature", true)]
         Delayed = 2
     }
 
@@ -281,18 +281,6 @@ namespace UnityEngine.Playables
         [VisibleToOtherModules]
         [FreeFunction("PlayableHandleBindings::SetInputWeight", HasExplicitThis = true, ThrowsException = true)]
         extern internal void SetInputWeight(PlayableHandle input, float weight);
-
-        [VisibleToOtherModules]
-        [FreeFunction("PlayableHandleBindings::SetDelay", HasExplicitThis = true, ThrowsException = true)]
-        extern internal void SetDelay(double delay);
-
-        [VisibleToOtherModules]
-        [FreeFunction("PlayableHandleBindings::GetDelay", HasExplicitThis = true, ThrowsException = true)]
-        extern internal double GetDelay();
-
-        [VisibleToOtherModules]
-        [FreeFunction("PlayableHandleBindings::IsDelayed", HasExplicitThis = true, ThrowsException = true)]
-        extern internal bool IsDelayed();
 
         [VisibleToOtherModules]
         [FreeFunction("PlayableHandleBindings::GetPreviousTime", HasExplicitThis = true, ThrowsException = true)]

@@ -194,12 +194,12 @@ namespace UnityEditor
         {
             System.Array.Resize(ref m_Results, entityIdsSet.Count);
             var currentResultIndex = 0;
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var rootPaths = idsUnderEachRoot.Keys.ToArray();
-#pragma warning restore UA2001
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+#pragma warning disable UAC2001 // Avoid Linq
             var idCounts = idsUnderEachRoot.Values.ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             for (var i = 0; i < rootPaths.Length; ++i)
             {
                 var rootPath = rootPaths[i];
@@ -279,9 +279,9 @@ namespace UnityEditor
                         searchFilter = m_SearchFilter,
                         rootIterator = property,
                         requiredTypeNames = m_SearchFilter.classNames,
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                         requiredTypes = searchFilter.classNames.Select(name => TypeCache.GetTypesDerivedFrom<Object>().FirstOrDefault(t => name == t.FullName || name == t.Name))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     };
                 }, m_SearchSessionOptions);
 

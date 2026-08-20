@@ -683,9 +683,9 @@ namespace UnityEditor
                                 var replaceTargets = new List<UnityObject>(targets);
                                 replaceTargets.Reverse();
                                 if (targets.Length > 1)
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                                     PrefabUtility.ReplacePrefabAssetOfPrefabInstances(replaceTargets.Select(e => (GameObject)e).ToArray(), newAsset, InteractionMode.UserAction);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                                 else
                                     PrefabUtility.ReplacePrefabAssetOfPrefabInstance((GameObject)target, newAsset, InteractionMode.UserAction);
                                 CalculatePrefabStatus(); // Updates the cached m_FirstPrefabInstanceOutermostRootAsset to the newly selected Prefab
@@ -802,9 +802,9 @@ namespace UnityEditor
                             }
                         }
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                         Selection.objects = selectedAssets.ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                         if (Selection.objects.Length != 0)
                             EditorGUIUtility.PingObject(Selection.activeObject);
                     }
@@ -1360,9 +1360,9 @@ namespace UnityEditor
                         if (HandleUtility.ignoreRaySnapObjects == null)
                             HandleUtility.ignoreRaySnapObjects = m_DragObject.GetComponentsInChildren<Transform>();
                         else
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                             HandleUtility.ignoreRaySnapObjects = HandleUtility.ignoreRaySnapObjects.Union(m_DragObject.GetComponentsInChildren<Transform>()).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
                         PrefabStage prefabStage = PrefabStageUtility.GetCurrentPrefabStage();
                         if (prefabStage != null)
@@ -1481,9 +1481,9 @@ namespace UnityEditor
             {
                 // Since this inspector code executes for each dragged GameObject we should retain
                 // selection to all of them by joining them to the previous selection list
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 Selection.objects = Selection.gameObjects.Union(new[] { draggedObject }).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             }
 
             HandleUtility.ignoreRaySnapObjects = null;

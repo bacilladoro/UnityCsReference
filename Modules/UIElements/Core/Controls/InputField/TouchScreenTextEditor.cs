@@ -2,16 +2,22 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
+using Unity.Scripting.LifecycleManagement;
+
 namespace UnityEngine.UIElements
 {
-    internal class TouchScreenTextEditorEventHandler : TextEditorEventHandler
+    internal partial class TouchScreenTextEditorEventHandler : TextEditorEventHandler
     {
         private IVisualElementScheduledItem m_TouchKeyboardPoller = null;
         private bool m_IsClicking = false;
 
+
         // For UI Test Framework.
+        [NoAutoStaticsCleanup] // frame counter; resets naturally each frame
         internal static long Frame { get; private set; }
         // For UI Test Framework.
+        [AutoStaticsCleanupOnCodeReload] // reset on reload: owning TextElement + scheduled Close() die with the ALC
         internal static TouchScreenKeyboard activeTouchScreenKeyboard { get; private set; }
 
         public TouchScreenTextEditorEventHandler(TextElement textElement, TextEditingUtilities editingUtilities)
@@ -295,3 +301,4 @@ namespace UnityEngine.UIElements
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

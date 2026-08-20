@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 
 namespace Unity.Multiplayer.PlayMode.Editor
@@ -19,8 +20,9 @@ namespace Unity.Multiplayer.PlayMode.Editor
         AdbLogcatBase CreateLogcat(string deviceName);
     }
 
-    class AdbService : IAdbService
+    partial class AdbService : IAdbService
     {
+        [AutoStaticsCleanupOnCodeReload] // lazy singleton; old ALC instance would be stale after reload
         static AdbService s_Instance;
         public static AdbService GetInstance()
         {

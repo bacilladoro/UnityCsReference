@@ -4,6 +4,7 @@
 
 using System;
 using System.Linq;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.UIElements;
 
 namespace Unity.GraphToolkit.Editor
@@ -12,12 +13,16 @@ namespace Unity.GraphToolkit.Editor
     /// An abstract part to build the UI for the ports of a node.
     /// </summary>
     [UnityRestricted]
-    internal abstract class BasePortContainerPart : GraphViewPart
+    internal abstract partial class BasePortContainerPart : GraphViewPart
     {
-        public static readonly Func<PortModel, bool> horizontalPortFilter = p => p.Orientation == PortOrientation.Horizontal;
-        public static readonly Func<PortModel, bool> verticalPortFilter = p => p.Orientation == PortOrientation.Vertical;
-        public static readonly Func<PortModel, bool> inputPortFilter = p => p.Direction == PortDirection.Input;
-        public static readonly Func<PortModel, bool> outputPortFilter = p => p.Direction == PortDirection.Output;
+        [NoAutoStaticsCleanup]
+        public static Func<PortModel, bool> horizontalPortFilter = p => p.Orientation == PortOrientation.Horizontal;
+        [NoAutoStaticsCleanup]
+        public static Func<PortModel, bool> verticalPortFilter = p => p.Orientation == PortOrientation.Vertical;
+        [NoAutoStaticsCleanup]
+        public static Func<PortModel, bool> inputPortFilter = p => p.Direction == PortDirection.Input;
+        [NoAutoStaticsCleanup]
+        public static Func<PortModel, bool> outputPortFilter = p => p.Direction == PortDirection.Output;
 
         protected string m_UssClassName;
         protected string m_PortUssClassName;
@@ -87,9 +92,9 @@ namespace Unity.GraphToolkit.Editor
         {
             if (m_Model is PortNodeModel portHolder)
             {
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 var ports = portHolder.GetPorts().Where(PortFilter);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 PortContainer?.UpdatePorts(visitor, ports, m_OwnerElement.RootView);
             }
         }

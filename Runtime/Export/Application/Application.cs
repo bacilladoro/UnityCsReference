@@ -91,7 +91,7 @@ namespace UnityEngine
         SandboxBroken = 3
     }
 
-    partial class Application
+    public partial class Application
     {
         public delegate void AdvertisingIdentifierCallback(string advertisingId, bool trackingEnabled, string errorMsg);
 

@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitAuthoringFramework not yet converted
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -54,12 +55,15 @@ namespace Unity.UIToolkit.Editor
         const string k_UxmlProviderId = "uiuxml";
         const string k_MenuPath = "Window/UI Toolkit/UI Library";
         const string k_WindowTitle = "UI Library";
+        const string k_EngineNamespaceRoot = "UnityEngine";
 
         static Texture2D s_FolderIcon;
         static Texture2D FolderIcon => s_FolderIcon != null ? s_FolderIcon : s_FolderIcon = EditorGUIUtility.FindTexture("Folder Icon");
         static readonly List<ISearchView> s_OpenLibraryViews = new();
         static bool s_RefreshScheduled;
         const string k_VisibilityButtonClassName = "search-groupbar__visibility-button";
+        const string k_NativeVisibilityButtonName = "SearchVisibilityOptions";
+        const string k_ControlsVisibilityButtonName = "UILibraryControlsVisibility";
 
         [MenuItem(k_MenuPath, false, 3010, secondaryPriority = 5)]
         internal static void OpenUIElementsPicker()
@@ -95,21 +99,68 @@ namespace Unity.UIToolkit.Editor
                 EditorApplication.projectChanged += OnProjectChanged;
 
             s_OpenLibraryViews.Add(view);
-            HideVisibilityOptionsButton(view);
+            InstallControlsVisibilityDropdown(view);
         }
 
-        // We can remove it once Search has a flag to remove the visibility button or customize the visibility option(s)
-        static void HideVisibilityOptionsButton(ISearchView view)
+        // The native Search visibility dropdown is hardcoded and offers no hook for custom options, so we hide it
+        // and inject our own dropdown with the library's controls-visibility toggles in the same groupbar spot.
+        static void InstallControlsVisibilityDropdown(ISearchView view)
         {
             if (view is not EditorWindow window)
                 return;
 
             window.rootVisualElement.schedule.Execute(() =>
             {
-                var button = window.rootVisualElement.Q(className: k_VisibilityButtonClassName);
-                if (button != null)
-                    button.style.display = DisplayStyle.None;
+                var nativeButton = window.rootVisualElement.Q(name: k_NativeVisibilityButtonName);
+                if (nativeButton == null)
+                    return;
+
+                nativeButton.style.display = DisplayStyle.None;
+
+                var parent = nativeButton.parent;
+                if (parent == null || parent.Q(name: k_ControlsVisibilityButtonName) != null)
+                    return;
+
+                var button = new Button(() => ShowControlsVisibilityMenu(view))
+                {
+                    name = k_ControlsVisibilityButtonName,
+                    tooltip = "Filter the controls shown in the library"
+                };
+                button.AddToClassList("search-groupbar__button");
+                button.AddToClassList(k_VisibilityButtonClassName);
+                parent.Insert(parent.IndexOf(nativeButton), button);
             });
+        }
+
+        static void ShowControlsVisibilityMenu(ISearchView view)
+        {
+            var menu = new GenericMenu();
+            menu.AddItem(new GUIContent("Show Internal Controls"), LibraryContent.ShowInternalControls, () =>
+            {
+                LibraryContent.ShowInternalControls = !LibraryContent.ShowInternalControls;
+                InvalidateAndRefresh();
+            });
+            menu.AddItem(new GUIContent("Show Package Controls"), LibraryContent.ShowPackageControls, () =>
+            {
+                LibraryContent.ShowPackageControls = !LibraryContent.ShowPackageControls;
+                InvalidateAndRefresh();
+            });
+            menu.ShowAsContext();
+        }
+
+        static void InvalidateAndRefresh()
+        {
+            s_CachedTypesByCategory.Clear();
+            s_SortedTypes = null;
+            s_CachedTypesHash = 0;
+
+            for (var i = s_OpenLibraryViews.Count - 1; i >= 0; i--)
+            {
+                if (s_OpenLibraryViews[i] is EditorWindow window && window)
+                    s_OpenLibraryViews[i].Refresh(RefreshFlags.StructureChanged);
+                else
+                    s_OpenLibraryViews.RemoveAt(i);
+            }
         }
 
         [SearchItemProvider]
@@ -380,7 +431,7 @@ namespace Unity.UIToolkit.Editor
         static List<LibraryTypeKey> GetCachedFilteredTypes(string categoryId, Func<LibraryTypeKey, bool> filter)
         {
             var libraryTypes = LibraryContent.GetAllLibraryTypes();
-            var currentHash = libraryTypes.GetHashCode();
+            var currentHash = HashCode.Combine(libraryTypes.GetHashCode(), LibraryContent.ShowInternalControls, LibraryContent.ShowPackageControls);
 
             // Invalidate all caches if library content changed
             if (s_CachedTypesHash != currentHash)
@@ -394,7 +445,11 @@ namespace Unity.UIToolkit.Editor
                     if (LibraryContent.IsVisibleInLibrary(typeKey.type))
                         s_SortedTypes.Add(typeKey);
                 }
-                s_SortedTypes.Sort((a, b) => string.Compare(b.name, a.name, StringComparison.Ordinal));
+                s_SortedTypes.Sort(static (a, b) =>
+                {
+                    var byCuratedOrder = LibraryOrdering.GetOrder(b.type).CompareTo(LibraryOrdering.GetOrder(a.type));
+                    return byCuratedOrder != 0 ? byCuratedOrder : string.Compare(b.name, a.name, StringComparison.Ordinal);
+                });
             }
 
             // Return cached result
@@ -431,6 +486,17 @@ namespace Unity.UIToolkit.Editor
 
             var separator = descriptor.Id.Contains('/') ? '/' : '.';
             descriptor.Id.GetStringView().Split(stackalloc char[1] { separator }, StringSplitOptions.RemoveEmptyEntries, idsSubstrings);
+
+            // We wanted to fold "UnityEngine" out when in the Engine tab but be present when in the All tab.
+            if (ShouldFoldEngineNamespaceRoot(context.searchView?.currentGroup, idsSubstrings))
+                idsSubstrings.RemoveAt(0);
+        }
+
+        internal static bool ShouldFoldEngineNamespaceRoot(string currentGroup, List<StringView> idsSubstrings)
+        {
+            return idsSubstrings.Count > 1
+                && currentGroup == k_EngineProviderId
+                && idsSubstrings[0].Equals(k_EngineNamespaceRoot, StringComparison.Ordinal);
         }
 
         static SearchAction CreateAddElementAction(string providerId)
@@ -502,3 +568,4 @@ namespace Unity.UIToolkit.Editor
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

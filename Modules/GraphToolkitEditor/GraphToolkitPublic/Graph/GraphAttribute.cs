@@ -26,7 +26,7 @@ namespace Unity.GraphToolkit.Editor
     /// </code>
     /// </example>
     [AttributeUsage(AttributeTargets.Class)]
-    public sealed class GraphAttribute : Attribute
+    public class GraphAttribute : Attribute
     {
         /// <summary>
         /// Gets the file extension associated with the <see cref="Graph"/>.

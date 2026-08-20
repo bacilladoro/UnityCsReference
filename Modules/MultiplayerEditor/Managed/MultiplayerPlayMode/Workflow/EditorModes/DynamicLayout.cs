@@ -4,7 +4,8 @@
 
 using System;
 using System.Collections.Generic;
-using Newtonsoft.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Unity.Multiplayer.PlayMode.Editor
 {
@@ -16,38 +17,38 @@ namespace Unity.Multiplayer.PlayMode.Editor
         [Serializable]
         internal class DynamicView
         {
-            [JsonProperty("class_name", DefaultValueHandling = DefaultValueHandling.IgnoreAndPopulate)]
+            [JsonInclude, JsonPropertyName("class_name"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
             public string ClassName { get; internal set; }
 
-            [JsonProperty("horizontal", DefaultValueHandling = DefaultValueHandling.IgnoreAndPopulate)]
+            [JsonInclude, JsonPropertyName("horizontal"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
             public bool Horizontal { get; internal set; }
 
-            [JsonProperty("vertical", DefaultValueHandling = DefaultValueHandling.IgnoreAndPopulate)]
+            [JsonInclude, JsonPropertyName("vertical"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
             public bool Vertical { get; internal set; }
 
-            [JsonProperty("tabs", DefaultValueHandling = DefaultValueHandling.IgnoreAndPopulate)]
+            [JsonInclude, JsonPropertyName("tabs"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
             public bool Tabs { get; internal set; }
 
-            [JsonProperty("size", DefaultValueHandling = DefaultValueHandling.IgnoreAndPopulate)]
+            [JsonInclude, JsonPropertyName("size"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
             public float Size { get; internal set; }
 
-            [JsonProperty("children", DefaultValueHandling = DefaultValueHandling.IgnoreAndPopulate)]
+            [JsonInclude, JsonPropertyName("children"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
             public List<DynamicView> Children { get; internal set; }
 
-            [JsonProperty("mppm_id", DefaultValueHandling = DefaultValueHandling.IgnoreAndPopulate)]
+            [JsonInclude, JsonPropertyName("mppm_id"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
             public string Id { get; internal set; }
 
-            [JsonProperty("mppm_panel", DefaultValueHandling = DefaultValueHandling.IgnoreAndPopulate)]
+            [JsonInclude, JsonPropertyName("mppm_panel"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
             public string Panel { get; internal set; }
         }
 
-        [JsonProperty("restore_saved_layout", Required = Required.Always)]
+        [JsonInclude, JsonPropertyName("restore_saved_layout"), JsonRequired]
         public bool RestoreSavedLayout { get; internal set; }
 
-        [JsonProperty("top_view", Required = Required.Always)]
+        [JsonInclude, JsonPropertyName("top_view"), JsonRequired]
         public DynamicView TopView { get; internal set; }
 
-        [JsonProperty("center_view", Required = Required.Always)]
+        [JsonInclude, JsonPropertyName("center_view"), JsonRequired]
         public DynamicView CenterView { get; internal set; }
 
         internal static string Serialize(ParsingSystemDelegates parsing, DynamicLayout layout)
@@ -57,11 +58,17 @@ namespace Unity.Multiplayer.PlayMode.Editor
 
         internal static bool TryDeserialize(ParsingSystemDelegates parsing, string data, out DynamicLayout layout)
         {
+            if (string.IsNullOrEmpty(data))
+            {
+                layout = null;
+                return false;
+            }
+
             try
             {
                 layout = (DynamicLayout)parsing.DeserializeObjectFunc(data, typeof(DynamicLayout));
             }
-            catch (JsonException e) when (e is JsonSerializationException or JsonReaderException)
+            catch (JsonException e)
             {
                 MppmLog.Warning($"Dynamic layout De-serialization failure: {e.Message}");
                 layout = null;

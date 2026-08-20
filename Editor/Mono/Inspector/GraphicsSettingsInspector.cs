@@ -51,6 +51,7 @@ namespace UnityEditor
         List<GraphicsSettingsInspectorUtility.GlobalSettingsContainer> m_GlobalSettings;
         HelpBox m_BuildProfileGraphicsSettingsOverrideWarning;
         ObjectFieldWithPrompt m_DefaultRenderPipelineField;
+        EnumField m_DefaultMeshBufferTargetField;
         HelpBox m_BiRPDeprecationInfoBox;
         [AutoStaticsCleanupOnCodeReload]
         internal static Action OnActiveProfileGraphicsSettingsChanged;
@@ -113,6 +114,7 @@ namespace UnityEditor
             m_VisibilityController.Dispose();
 
             Undo.undoRedoEvent -= OnUndoRedoPerformed;
+            EditorApplication.playModeStateChanged -= UpdateDefaultMeshBufferTargetFieldState;
             OnActiveProfileGraphicsSettingsChanged -= UpdateBuildProfileGraphicsSettingsOverrideWarning;
             m_FinishedInitialization = false;
         }
@@ -132,17 +134,20 @@ namespace UnityEditor
 
             SetupBiRPDeprecationInfoBox(m_CurrentRoot);
 
-            BindEnumFieldWithFadeGroup(m_CurrentRoot, "Lightmap", ShaderUtil.CalculateLightmapStrippingFromCurrentScene);
-            BindEnumFieldWithFadeGroup(m_CurrentRoot, "Fog", ShaderUtil.CalculateFogStrippingFromCurrentScene);
-            BindEnumFieldToLightProbe(m_CurrentRoot);
-            BindEnumFieldToDefaultLightBaker(m_CurrentRoot);
+            BindEnumFieldWithFadeGroup(m_CurrentRoot, "Lightmap", CalculateLightmapStrippingFromCurrentScene);
+            BindEnumFieldWithFadeGroup(m_CurrentRoot, "Fog", CalculateFogStrippingFromCurrentScene);
+            BindEnumField<LightProbeOutsideHullStrategy>(m_CurrentRoot,"LightProbe");
 
             var lightBakerSection = m_CurrentRoot.Q<VisualElement>("LightBakerSection");
-            if (lightBakerSection != null)
-            {
-                lightBakerSection.style.display = DisplayStyle.Flex;
-                SetupUnityComputeLightBakerInfoBox(lightBakerSection);
-            }
+            lightBakerSection.style.display = DisplayStyle.Flex;
+            SetupUnityComputeLightBakerInfoBox(lightBakerSection);
+            BindEnumField<LightBaker>(m_CurrentRoot, "DefaultLightBaker");
+
+            BindEnumField<DefaultMeshBufferTarget>(m_CurrentRoot, "DefaultMeshBufferTarget");
+            m_DefaultMeshBufferTargetField = m_CurrentRoot.MandatoryQ<EnumField>("DefaultMeshBufferTarget");
+            UpdateDefaultMeshBufferTargetFieldState();
+            EditorApplication.playModeStateChanged -= UpdateDefaultMeshBufferTargetFieldState;
+            EditorApplication.playModeStateChanged += UpdateDefaultMeshBufferTargetFieldState;
 
             GraphicsStateCollectionSettingsUI.BindGraphicsStateCollection(m_CurrentRoot, serializedObject);
             BindShaderPreload(m_CurrentRoot);
@@ -173,6 +178,18 @@ namespace UnityEditor
             m_ScrollView.contentContainer.RegisterCallback<GeometryChangedEvent>(OnMainScrollViewGeometryChanged);
 
             m_CurrentRoot.Bind(serializedObject);
+        }
+
+        void CalculateLightmapStrippingFromCurrentScene()
+        {
+            Undo.RegisterCompleteObjectUndo(target, L10n.Tr("Calculate Lightmap Stripping From Current Scene"));
+            ShaderUtil.CalculateLightmapStrippingFromCurrentScene();
+        }
+
+        void CalculateFogStrippingFromCurrentScene()
+        {
+            Undo.RegisterCompleteObjectUndo(target, L10n.Tr("Calculate Fog Stripping From Current Scene"));
+            ShaderUtil.CalculateFogStrippingFromCurrentScene();
         }
 
         void BindShaderPreload(VisualElement root)
@@ -397,21 +414,19 @@ namespace UnityEditor
             content.MandatoryQ<Button>($"Import{id}FromCurrentScene").clicked += buttonCallback;
         }
 
-        void BindEnumFieldToLightProbe(VisualElement content)
+        // Binds the enum field to access and modify the serialized data on disk directly.
+        void BindEnumField<T>(VisualElement content, string fieldName) where T : struct, Enum
         {
-            var enumMode = content.MandatoryQ<EnumField>("LightProbe");
-            var enumModeProperty = serializedObject.FindProperty(enumMode.bindingPath);
-            UIElementsEditorUtility.BindSerializedProperty<LightProbeOutsideHullStrategy>(enumMode, enumModeProperty);
+            var enumField = content.MandatoryQ<EnumField>(fieldName);
+            var enumFieldProperty = serializedObject.FindProperty(enumField.bindingPath);
+            UIElementsEditorUtility.BindSerializedProperty<T>(enumField, enumFieldProperty);
         }
 
-        void BindEnumFieldToDefaultLightBaker(VisualElement content)
+        void UpdateDefaultMeshBufferTargetFieldState(PlayModeStateChange state) => UpdateDefaultMeshBufferTargetFieldState();
+
+        void UpdateDefaultMeshBufferTargetFieldState()
         {
-            var enumMode = content.Q<EnumField>("DefaultLightBaker");
-            if (enumMode != null)
-            {
-                var enumModeProperty = serializedObject.FindProperty(enumMode.bindingPath);
-                UIElementsEditorUtility.BindSerializedProperty<LightBaker>(enumMode, enumModeProperty);
-            }
+            m_DefaultMeshBufferTargetField.SetEnabled(!EditorApplication.isPlayingOrWillChangePlaymode);
         }
 
         void SetupTransparencySortMode(VisualElement root)
@@ -767,6 +782,7 @@ namespace UnityEditor
             { "m_FogKeepExp" , "Exponential" },
             { "m_FogKeepExp2" , "Exponential Squared" },
             { "m_DefaultLightBaker" , "Default Light Baker" },
+            { "m_DefaultMeshBufferTarget" , "Default Mesh Buffer Target" },
             { "m_InstancingStripping" , "Instancing Variants" },
             { "m_BrgStripping" , "Batch Renderer Group Variants" },
             { "m_LogWhenShaderIsCompiled" , "Log Shader Compilation" },

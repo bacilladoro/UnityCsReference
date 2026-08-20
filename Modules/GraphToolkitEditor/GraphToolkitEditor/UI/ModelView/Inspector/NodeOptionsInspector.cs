@@ -70,9 +70,9 @@ namespace Unity.GraphToolkit.Editor
 
             m_MutableFieldInfos.Clear();
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var targets = GetInspectedObjects().ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             var inspectorOrderFields = new SortedDictionary<int, List<BaseModelPropertyField>>();
 
@@ -166,13 +166,13 @@ namespace Unity.GraphToolkit.Editor
                     }
 
                     // If multiple models are inspected, we only want to display the node options that are present in all models.
-#pragma warning disable UA2001, UA2002 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001, UAC2002 // Avoid Linq
                     foreach (var id in nodeOptionsDict.Keys.ToList())
                     {
                         var otherOptions = nodeModel.NodeOptions.Where(o =>
                             id == o.Id && o.PortModel.DataTypeHandle == nodeOptionsDict[id][0].PortModel.DataTypeHandle);
                         if (otherOptions.Any())
-#pragma warning restore UA2001, UA2002
+#pragma warning restore UAC2001, UAC2002
                             nodeOptionsDict[id].AddRange(otherOptions);
                         else
                             nodeOptionsDict.Remove(id);
@@ -180,9 +180,9 @@ namespace Unity.GraphToolkit.Editor
                 }
             }
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             return nodeOptionsDict.Values.ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         /// <inheritdoc />
@@ -213,9 +213,9 @@ namespace Unity.GraphToolkit.Editor
 
             var isInspectorModelView = OwnerRootView is ModelInspectorView;
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             foreach (var oldNCurrent in nodeModel.NodeOptions.Zip(m_MutableFieldInfos, (a, b) => new { old = b, current = a }))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 if (oldNCurrent.current.PortModel.Title != oldNCurrent.old.name)
                     return true;

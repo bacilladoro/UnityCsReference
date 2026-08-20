@@ -12,7 +12,7 @@ namespace UnityEditor.Build.Analysis
 {
     internal class BuildAnalysisTabHost
     {
-        static readonly ProfilerMarker s_SetSelectionMarker = new ProfilerMarker("BuildAnalysisTabHost.SetSelection");
+        static readonly ProfilerMarker s_ApplyMarker = new ProfilerMarker("BuildAnalysisTabHost.Apply");
 
         private readonly TabView m_TabView;
         private readonly List<TabRegistration> m_TabRegistrations = new List<TabRegistration>();
@@ -70,12 +70,12 @@ namespace UnityEditor.Build.Analysis
             }, TrickleDown.TrickleDown);
         }
 
-        public void SetSelection(BuildEntry selection, BuildAnalysis analysis)
+        public void Apply(BuildAnalysisView view)
         {
-            using (s_SetSelectionMarker.Auto())
+            using (s_ApplyMarker.Auto())
             {
                 foreach (var registration in m_TabRegistrations)
-                    registration.TabView.SetSelection(selection, analysis);
+                    registration.TabView.Apply(view);
             }
         }
 

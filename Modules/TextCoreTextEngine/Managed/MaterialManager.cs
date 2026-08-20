@@ -4,6 +4,7 @@
 
 using System.Collections.Generic;
 using Unity.Jobs.LowLevel.Unsafe;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Bindings;
 
 #pragma warning disable CS0618 // TextShaderUtilities is obsolete; ATG is moving away from the material-per-font approach
@@ -11,8 +12,9 @@ using UnityEngine.Bindings;
 namespace UnityEngine.TextCore.Text
 {
     [VisibleToOtherModules("UnityEngine.IMGUIModule")]
-    static class MaterialManager
+    static partial class MaterialManager
     {
+        [AutoStaticsCleanupOnCodeReload]
         static Dictionary<long, Material> s_FallbackMaterials = new Dictionary<long, Material>();
 
         /// <summary>

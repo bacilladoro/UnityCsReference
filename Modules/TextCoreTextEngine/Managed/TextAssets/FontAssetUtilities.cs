@@ -5,14 +5,16 @@
 using System;
 using System.Collections.Generic;
 using Unity.Jobs.LowLevel.Unsafe;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEngine.TextCore.Text
 {
-    internal static class FontAssetUtilities
+    internal static partial class FontAssetUtilities
     {
         /// <summary>
         /// HashSet containing instance ID of font assets already searched.
         /// </summary>
+        [AutoStaticsCleanupOnCodeReload]
         static HashSet<int> k_SearchedAssets;
 
         /// <summary>

@@ -265,9 +265,9 @@ namespace UnityEditor
 
         internal static ContainerWindow FindMainWindow()
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return Resources.FindObjectsOfTypeAll<ContainerWindow>().FirstOrDefault(w => w.showMode == ShowMode.MainWindow);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         internal static ContainerWindow ShowWindowWithDynamicLayout(string windowId, string layoutDataPath)
@@ -302,9 +302,9 @@ namespace UnityEditor
             GetLayoutViewInfo(layoutData, availableEditorWindowTypes, ref topViewInfo);
             GetLayoutViewInfo(layoutData, availableEditorWindowTypes, ref bottomViewInfo);
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var window = Resources.FindObjectsOfTypeAll<ContainerWindow>().FirstOrDefault(w => w.windowID == windowId);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             InitContainerWindow(ref window, windowId, layoutData);
             GenerateLayout(window, ShowMode.Utility, availableEditorWindowTypes, centerViewInfo, topViewInfo, bottomViewInfo, layoutData);
             window.m_DontSaveToLayout = !Convert.ToBoolean(layoutData["restore_saved_layout"]);
@@ -530,9 +530,9 @@ namespace UnityEditor
             // if that fails, fall back to layouts for this mode from other unity versions in descending order
             if (Directory.Exists(directory))
             {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 var paths = Directory.GetFiles(directory, layoutSearchPattern)
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                                      .Where(p => string.Compare(p, preferred, StringComparison.OrdinalIgnoreCase) != 0)
                                      .OrderByDescending(p => p, StringComparer.OrdinalIgnoreCase);
 
@@ -646,9 +646,9 @@ namespace UnityEditor
             string[] layoutPaths = Array.Empty<string>();
             if (Directory.Exists(layoutsModePreferencesPath))
             {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 layoutPaths = Directory.GetFiles(layoutsModePreferencesPath).Where(path => path.EndsWith(".wlt")).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 foreach (var layoutPath in layoutPaths)
                 {
                     var name = Path.GetFileNameWithoutExtension(layoutPath);
@@ -1632,9 +1632,9 @@ namespace UnityEditor
             }
 
             if (all.Count > 0)
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 InternalEditorUtility.SaveToSerializedFileAndForget(all.Where(o => o).ToArray(), path, true);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         static string CanCreateLayout(string name)

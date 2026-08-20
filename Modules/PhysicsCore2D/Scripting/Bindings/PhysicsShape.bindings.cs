@@ -18,9 +18,9 @@ namespace Unity.U2D.Physics
         [NativeMethod(Name = "PhysicsShape::CreateCapsuleShape", IsThreadSafe = true)] extern internal static PhysicsShape PhysicsShape_CreateCapsuleShape(PhysicsBody body, CapsuleGeometry geometry, PhysicsShapeDefinition definition);
         [NativeMethod(Name = "PhysicsShape::CreateSegmentShape", IsThreadSafe = true)] extern internal static PhysicsShape PhysicsShape_CreateSegmentShape(PhysicsBody body, SegmentGeometry geometry, PhysicsShapeDefinition definition);
         [NativeMethod(Name = "PhysicsShape::CreateChainSegmentShape", IsThreadSafe = true)] extern internal static PhysicsShape PhysicsShape_CreateChainSegmentShape(PhysicsBody body, ChainSegmentGeometry geometry, PhysicsShapeDefinition definition);
-        [NativeMethod(Name = "PhysicsShape::CreateShapeBatch", IsThreadSafe = true)] extern internal static PhysicsBuffer PhysicsShape_CreateShapeBatch(PhysicsBody body, PhysicsBuffer spanGeometry, PhysicsShape.ShapeType shapeType, PhysicsShapeDefinition definition, Allocator allocator);
+        [NativeMethod(Name = "PhysicsShape::CreateShapeBatch", IsThreadSafe = true)] extern internal static PhysicsBuffer PhysicsShape_CreateShapeBatch(PhysicsBody body, PhysicsBuffer spanGeometry, PhysicsShape.ShapeType shapeType, PhysicsShapeDefinition definition, UnityEngine.Object ownerObject, int ownerKey, Allocator allocator);
         [NativeMethod(Name = "PhysicsShape::Destroy", IsThreadSafe = true)] extern internal static bool PhysicsShape_Destroy(PhysicsShape shape, bool updateBodyMass, int ownerKey);
-        [NativeMethod(Name = "PhysicsShape::DestroyBatch", IsThreadSafe = true)] extern internal static void PhysicsShape_DestroyBatch(ReadOnlySpan<PhysicsShape> shapes, bool updateBodyMass);
+        [NativeMethod(Name = "PhysicsShape::DestroyBatch", IsThreadSafe = true)] extern internal static void PhysicsShape_DestroyBatch(ReadOnlySpan<PhysicsShape> shapes, bool updateBodyMass, int ownerKey);
         [NativeMethod(Name = "PhysicsShape::ApplyBuoyancy", IsThreadSafe = true)] extern internal static void PhysicsShape_ApplyBuoyancy(PhysicsBody.BuoyancyInput input, ReadOnlySpan<PhysicsShape> shapes, float deltaTime);
         [NativeMethod(Name = "PhysicsShape::WriteDefinition")] extern internal static void PhysicsShape_WriteDefinition(PhysicsShape shape, PhysicsShapeDefinition definition, bool onlyExtendedProperties);
         [NativeMethod(Name = "PhysicsShape::ReadDefinition")] extern internal static PhysicsShapeDefinition PhysicsShape_ReadDefinition(PhysicsShape shape);
@@ -110,6 +110,7 @@ namespace Unity.U2D.Physics
         [NativeMethod(Name = "PhysicsShape::SetUserData", IsThreadSafe = true)] extern internal static void PhysicsShape_SetUserData(PhysicsShape shape, PhysicsUserData physicsUserData);
         [NativeMethod(Name = "PhysicsShape::GetUserData", IsThreadSafe = true)] extern internal static PhysicsUserData PhysicsShape_GetUserData(PhysicsShape shape);
         [NativeMethod(Name = "PhysicsShape::SetOwnerUserData", IsThreadSafe = true)] extern internal static void PhysicsShape_SetOwnerUserData(PhysicsShape shape, PhysicsUserData physicsUserData, int ownerKey);
+        [NativeMethod(Name = "PhysicsShape::SetOwnerUserDataSpan", IsThreadSafe = true)] extern internal static void PhysicsShape_SetOwnerUserDataSpan(ReadOnlySpan<PhysicsShape> shapes, ReadOnlySpan<PhysicsUserData> userDatas, int ownerKey);
         [NativeMethod(Name = "PhysicsShape::GetOwnerUserData", IsThreadSafe = true)] extern internal static PhysicsUserData PhysicsShape_GetOwnerUserData(PhysicsShape shape);
 
         [NativeMethod(Name = "PhysicsCore2D::ContactFilter::CanContact", IsThreadSafe = true)] extern internal static bool PhysicsShape_ContactFilter_CanContact(PhysicsShape.ContactFilter filterA, PhysicsShape.ContactFilter filterB);

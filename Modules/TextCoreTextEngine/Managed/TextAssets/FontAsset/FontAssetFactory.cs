@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using Unity.Jobs.LowLevel.Unsafe;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Bindings;
 using UnityEngine.TextCore.LowLevel;
 
@@ -20,6 +21,7 @@ internal class FontAssetFactory
     // of the public RASTER_HINTED, which is reserved for faithful 1-bit rasters of arbitrary user fonts and must
     // not change behavior for end users of the Font Asset Creator. See UUM-142852.
     internal const GlyphRenderMode k_RasterEditorBitmapGlyphRenderMode = GlyphRenderModeInternal.RASTER_HINTED_STRONG;
+    [NoAutoStaticsCleanup] // Scratch set cleared at the start of every traversal; never holds references across reloads.
     static readonly HashSet<FontAsset> visitedFontAssets = new();
 
     public static FontAsset? CloneFontAssetWithBitmapRendering(FontAsset baseFontAsset, int fontSize, bool isRaster)

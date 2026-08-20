@@ -66,7 +66,7 @@ namespace Unity.GraphToolkit.Editor
             {
                 if (transitionModel != null)
                 {
-                    m_Counter.SetCount(newCount, !transitionModel.IsSingleStateTransition);
+                    m_Counter.SetCount(newCount, !transitionModel.IsSelfTransition);
                 }
                 else
                 {

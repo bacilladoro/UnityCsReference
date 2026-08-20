@@ -6,6 +6,7 @@ using System;
 using System.IO;
 using System.Text;
 using Unity.Collections.LowLevel.Unsafe;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEditor.Experimental;
 using UnityEditor.Multiplayer.Internal;
@@ -15,7 +16,7 @@ using UnityEngine.Multiplayer.Internal;
 
 namespace Unity.Multiplayer.PlayMode.Editor
 {
-    static class EditorModesUtility
+    static partial class EditorModesUtility
     {
         private const string k_LayoutConfigFile = "Multiplayer/Layouts/clone_window_layout_config.json";
         private const string k_LayoutProxyDir = "Temp/Layouts";
@@ -74,14 +75,26 @@ namespace Unity.Multiplayer.PlayMode.Editor
             }
         }
 
+        [NoAutoStaticsCleanup] // sourced from FileSystem.Delegates, itself local to this long-living module assembly; never goes stale on ordinary CodeReload
         private static FileSystemDelegates s_FileSystemDelegates;
+        [NoAutoStaticsCleanup] // delegates reference stable external Newtonsoft.Json methods; no ALC pinning concern
         private static ParsingSystemDelegates s_ParsingSystemDelegates;
 
-        static EditorModesUtility()
+        [OnCodeLoaded]
+        static void InitializeOnLoad()
         {
+            s_FileSystemDelegates = FileSystem.Delegates;
+            s_ParsingSystemDelegates = ParsingSystem.Delegates;
+
+            if (s_FileSystemDelegates.ExistsDirectoryFunc(k_LayoutProxyDir))
+                s_FileSystemDelegates.DeleteDirectoryFunc(k_LayoutProxyDir);
+            s_FileSystemDelegates.CreateDirectoryFunc(k_LayoutProxyDir);
+
             if (!VirtualProjectsEditor.IsClone)
                 return;
-            Initialize(FileSystem.Delegates, ParsingSystem.Delegates);
+
+            var flagsFile = VirtualProjectWorkflow.WorkflowCloneContext.CloneDataFile;
+            CloneDataFile.LoadFromFile(flagsFile);
         }
 
         private static void Initialize(FileSystemDelegates fileSystemDelegates,

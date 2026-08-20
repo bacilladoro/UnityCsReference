@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -15,7 +16,7 @@ namespace Unity.Multiplayer.PlayMode.Editor
     /// <summary>
     /// The content of the status window that is shown when a user clicks the status dropdown
     /// </summary>
-    class PlaymodeStatusPopupContent : PopupWindowContent
+    partial class PlaymodeStatusPopupContent : PopupWindowContent
     {
         const string k_Stylesheet = "Multiplayer/UI/PlaymodeStatusPopupContent.uss";
         const string k_StylesheetDark = "Multiplayer/UI/PlaymodeStatusPopupContentDark.uss";
@@ -28,6 +29,7 @@ namespace Unity.Multiplayer.PlayMode.Editor
         const string k_Title = "Instances Status";
 
         public static readonly Vector2 windowSize = new Vector2(300, 175);
+        [AutoStaticsCleanupOnCodeReload] // maps editor views to instance objects; both stale after reload
         static Dictionary<InstanceView, Instance> m_ViewToInstance = new();
 
         public override Vector2 GetWindowSize()

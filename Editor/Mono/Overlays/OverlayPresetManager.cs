@@ -210,6 +210,9 @@ namespace UnityEditor.Overlays
 
         public static IOverlayPreset GetDefaultPreset(Type windowType)
         {
+            if (windowType == typeof(MainToolbarWindow))
+                return new UnityOnlyToolbarPreset();
+
             if (TryGetPreset(windowType, defaultPresetName, out OverlayPreset preset))
                 return preset;
 
@@ -313,9 +316,9 @@ namespace UnityEditor.Overlays
             {
                 if (!Directory.Exists(parentLayoutFolder))
                     Directory.CreateDirectory(parentLayoutFolder);
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 InternalEditorUtility.SaveToSerializedFileAndForget(presets.Cast<Object>().ToArray(), path, true);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             }
         }
 

@@ -2,6 +2,8 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
+using Unity.Scripting.LifecycleManagement;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
@@ -163,6 +165,7 @@ namespace UnityEngine.UIElements
             PlaymodeOnly = 2,
         }
 
+        [NoAutoStaticsCleanup] // enum state; reset not needed across reload
         static CaptureMode s_ActiveCaptureMode = CaptureMode.Disabled;
 
         // Registered into native via Native_RegisterManagedCallbacks at managed init time so
@@ -174,7 +177,9 @@ namespace UnityEngine.UIElements
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         delegate void RecordProfilerPanelMetadataForCaptureDelegate();
 
+        [NoAutoStaticsCleanup] // native callback delegate registered once; targets a static method, no user refs
         static readonly SetActiveCaptureModeDelegate s_SetActiveCaptureModeDelegate = SetActiveCaptureMode;
+        [NoAutoStaticsCleanup] // native callback delegate registered once; targets a static method, no user refs
         static readonly RecordProfilerPanelMetadataForCaptureDelegate s_RecordProfilerPanelMetadataForCaptureDelegate = RecordProfilerPanelMetadataForCapture;
 
         [FreeFunction("ProfilerUIToolkit_RegisterManagedCallbacks")]
@@ -259,7 +264,9 @@ namespace UnityEngine.UIElements
         // Per-frame in-flight buffer for events captured by EventDispatcher. Backed by a managed
         // array (rather than List<T> or NativeArray) so the flush path can pin it via `fixed`
         // without per-frame allocations.
+        [AutoStaticsCleanupOnCodeReload]
         static UIToolkitPanelEventInfo[] s_PendingEvents = new UIToolkitPanelEventInfo[64];
+        [AutoStaticsCleanupOnCodeReload]
         static int s_PendingEventsCount;
 
         // Per-session de-duplicated string pool for captured events: event type names plus each
@@ -288,9 +295,15 @@ namespace UnityEngine.UIElements
         const ushort k_InternedStringNone = 0;
         const ushort k_InternedStringOverflow = ushort.MaxValue;     // 0xFFFF
         const int k_InternedStringPoolMax = ushort.MaxValue - 1;     // 0xFFFE distinct strings/session
+        // Wiped on code reload (mirrors the old domain-reload behavior): the Type keys and pooled
+        // strings would otherwise pin the unloaded ALC, and a fresh session re-interns from scratch.
+        [AutoStaticsCleanupOnCodeReload]
         static readonly Dictionary<Type, ushort> s_EventTypeNameIndices = new();
+        [AutoStaticsCleanupOnCodeReload]
         static readonly Dictionary<int, ushort> s_StyleStringIndices = new();
+        [AutoStaticsCleanupOnCodeReload]
         static readonly List<string> s_InternedStrings = new();
+        [AutoStaticsCleanupOnCodeReload]
         static int s_EmittedInternedStringCount;
 
         // Called from EventDispatcher.ProcessEvent after every dispatched event; captures it into the
@@ -484,8 +497,9 @@ namespace UnityEngine.UIElements
     /// separate so the native entry point does not reference types that pull in blacklisted UI
     /// controls via static analysis.
     /// </summary>
-    internal static class ProfilerUIToolkitPanelMetadataCapture
+    internal static partial class ProfilerUIToolkitPanelMetadataCapture
     {
+        [NoAutoStaticsCleanup]
         static EntityId[] s_PanelEntityIdsScratch;
 
         static void EnsurePanelEntityIdsScratchCapacity(int minLength)
@@ -572,3 +586,4 @@ namespace UnityEngine.UIElements
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

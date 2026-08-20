@@ -110,9 +110,9 @@ namespace Unity.GraphToolkit.Editor
         /// <summary>
         /// The explicitly selected <see cref="VariableDeclarationModelBase"/>s to paste.
         /// </summary>
-        #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+        #pragma warning disable UAC2001 // Avoid Linq
         public IReadOnlyList<VariableDeclarationModelBase> VariableDeclarations => m_VariableDeclarations.Select(v => v.m_Model).ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
         /// <summary>
         /// The implicitly selected <see cref="VariableDeclarationModelBase"/>s to paste, usually from <see cref="VariableNodeModel"/>s.
@@ -137,43 +137,43 @@ namespace Unity.GraphToolkit.Editor
 
         public CopyPasteData(BlackboardViewStateComponent bbState, IReadOnlyCollection<Model> graphElementModels)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var originalNodes = graphElementModels.OfType<AbstractNodeModel>().ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var variableDeclarationsToCopy = graphElementModels
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 .OfType<VariableDeclarationModelBase>()
                 .ToList();
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var stickyNotesToCopy = graphElementModels
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 .OfType<StickyNoteModel>()
                 .ToList();
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var placematsToCopy = graphElementModels
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 .OfType<PlacematModel>()
                 .ToList();
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var wiresToCopy = graphElementModels
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 .OfType<WireModel>()
                 .ToList();
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var implicitVariableDeclarations = originalNodes.OfType<VariableNodeModel>()
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 .Select(t => t.VariableDeclarationModel).Except(variableDeclarationsToCopy).ToList();
 
             var topLeftNodePosition = Vector2.positiveInfinity;
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             foreach (var n in originalNodes.Where(t => t.IsMovable()))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 topLeftNodePosition = Vector2.Min(topLeftNodePosition, n.Position);
             }
@@ -193,9 +193,9 @@ namespace Unity.GraphToolkit.Editor
                 topLeftNodePosition = Vector2.zero;
             }
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var originalGroups = graphElementModels.OfType<GroupModel>().ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             var groups = new List<GroupModel>();
 
@@ -421,9 +421,9 @@ namespace Unity.GraphToolkit.Editor
         {
             var group = groups[i];
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             foreach (var childGroup in group.Items.OfType<GroupModel>())
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 groups.Insert(++i, childGroup);
                 RecursiveAddGroups(ref i, groups);
@@ -435,9 +435,9 @@ namespace Unity.GraphToolkit.Editor
             elementMapping[originalElement.Guid] = newElement;
 
             if (newElement is IGraphElementContainer container)
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 foreach (var subElement in ((IGraphElementContainer)originalElement).GetGraphElementModels().Zip(
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     container.GetGraphElementModels(), (a, b) => new { originalElement = a, newElement = b }))
                 {
                     if (subElement.originalElement is AbstractNodeModel originalSubElement && subElement.newElement is AbstractNodeModel newSubElement)
@@ -557,9 +557,9 @@ namespace Unity.GraphToolkit.Editor
             if (copyPasteData.m_ImplicitVariableDeclarations is { Count: > 0 })
             {
                 var variableDeclarationModels =
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2001 // Avoid Linq
                     copyPasteData.m_ImplicitVariableDeclarations.ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 var duplicatedModels = new List<VariableDeclarationModelBase>();
 
                 foreach (var source in variableDeclarationModels)
@@ -586,9 +586,9 @@ namespace Unity.GraphToolkit.Editor
             var copyStr = shouldAddCopyStr ? "Copy of " : string.Empty;
             Dictionary<Hash128, DeclarationModel> portalDeclarations = new Dictionary<Hash128, DeclarationModel>();
             List<WirePortalModel> portalModels = new List<WirePortalModel>();
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             List<WirePortalModel> existingPortalNodes = graphModel.NodeModels.OfType<WirePortalModel>().ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             if (copyPasteData.m_Nodes != null)
             {
@@ -701,10 +701,10 @@ namespace Unity.GraphToolkit.Editor
                     else
                     {
                         // If the exit match an entry still in the graph.
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                         var existingEntry = existingPortalNodes.FirstOrDefault(t =>
                             t.DeclarationModel.Guid == portal.DeclarationModel.Guid);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                         if (existingEntry != null)
                             portal.SetDeclarationModel(existingEntry.DeclarationModel);
                         else // we have an orphan exit. Create a unique declarationModel for it.

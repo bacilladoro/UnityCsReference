@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEngine;
 
@@ -36,6 +37,7 @@ namespace Unity.GraphToolkit.Editor
             const string k_EnableSnapToGridKey = k_SettingsUniqueKey + "GraphEditorSetting.enableSnapToGrid";
             const string k_EnableSnapToSpacingKey = k_SettingsUniqueKey + "GraphEditorSetting.enableSnapToSpacing";
 
+            [NoAutoStaticsCleanup] // dictionary values are always refreshed from EditorPrefs before each read; safe to persist
             static Dictionary<Type, bool> s_SnappingStrategiesStates = new Dictionary<Type, bool>()
             {
                 {typeof(SnapToBordersStrategy), EnableSnapToBorders},

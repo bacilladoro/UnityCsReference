@@ -6,6 +6,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Text;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Search
 {
@@ -23,6 +24,7 @@ namespace UnityEditor.Search
         List<int> m_Indexes;
         readonly int[] m_Counts;
 
+        [NoAutoStaticsCleanup]
         public static readonly SubsetStringView Empty = new SubsetStringView(string.Empty);
 
         public bool valid => m_BaseString != null;

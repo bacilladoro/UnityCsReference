@@ -2,9 +2,11 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
 using System.Collections.Generic;
 using UnityEngine.Pool;
 using UnityEngine.UIElements;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.UIElements
 {
@@ -16,6 +18,7 @@ namespace UnityEditor.UIElements
         internal const string k_Name = "Remove Unrecognized Attributes";
         internal const string k_Description = "Removes UXML attributes that are not part of the element's definition. These may be from old versions, typos, or unsupported attributes. Disable this upgrader if external tools depend on custom attributes.";
 
+        [NoAutoStaticsCleanup]
         static readonly HashSet<string> s_SpecialAttributes =
         [
             "name",
@@ -83,3 +86,4 @@ namespace UnityEditor.UIElements
         bool IsSpecialAttribute(string name) => s_SpecialAttributes.Contains(name);
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

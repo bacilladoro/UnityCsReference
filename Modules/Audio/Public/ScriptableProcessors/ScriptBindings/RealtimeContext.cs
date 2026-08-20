@@ -59,8 +59,6 @@ namespace UnityEngine.Audio
         /// <seealso cref="System.Diagnostics.Process"/>
         public readonly GeneratorInstance.Result Process(GeneratorInstance generatorInstance, ChannelBuffer buffer, GeneratorInstance.Arguments args)
         {
-            ScriptableProcessorBindings.ValidateCanProcess(generatorInstance.m_ProcessorInstance.Handle, this);
-
             fixed (float* writeBuffer = buffer.Buffer)
             {
                 fixed (RealtimeContext* pContext = &this)
@@ -74,7 +72,7 @@ namespace UnityEngine.Audio
                         GeneratorArguments = args
                     };
 
-                    generatorInstance.m_ProcessorInstance.Header->InvokeProcessor(ProcessorFunction.Process, &processArguments);
+                    ScriptableProcessorBindings.InvokeRealtimeGenerate(Access, processArguments);
 
                     return processArguments.Result;
                 }

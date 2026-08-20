@@ -172,8 +172,8 @@ namespace UnityEngine.Audio
             return m_ProcessorInstance.GetHashCode();
         }
 
-        internal RootOutputInstance(ProcessorHeader* header)
-            => m_ProcessorInstance = new ProcessorInstance(header->DualThreadHandle, header);
+        internal RootOutputInstance(DualThreadHandle handle)
+            => m_ProcessorInstance = new ProcessorInstance(handle);
 
         internal readonly ProcessorInstance m_ProcessorInstance;
     }

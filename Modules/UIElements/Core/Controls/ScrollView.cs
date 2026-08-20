@@ -2,6 +2,8 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
+using Unity.Scripting.LifecycleManagement;
 using System;
 using System.Runtime.CompilerServices;
 using Unity.Properties;
@@ -2138,57 +2140,70 @@ namespace UnityEngine.UIElements
             UpdateContentViewTransform();
         }
 
-        private static class Callbacks
+        private static partial class Callbacks
         {
             // Use with ?. syntax to avoid possible exceptions on events during DetachFromPanel
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             private static ScrollView GetScrollView(VisualElement child) => child.GetFirstAncestorOfType<ScrollView>();
 
+            [NoAutoStaticsCleanup]
             public static readonly EventCallbackDefinition<ScrollView> OnScrollWheel =
                 EventCallback.Create<WheelEvent, ScrollView>(static (e, self) => self.OnScrollWheel(e),
                     CallbackOptions.IncludeDisabled);
 
+            [NoAutoStaticsCleanup]
             public static readonly EventCallbackDefinition<ScrollView> OnNavigationMove =
                 EventCallback.Create<NavigationMoveEvent, ScrollView>(static (e, self) => self.OnNavigationMove(e));
 
+            [NoAutoStaticsCleanup]
             public static readonly EventCallbackDefinition<ScrollView> OnNavigationSubmit =
                 EventCallback.Create<NavigationSubmitEvent, ScrollView>(static (e, self) => self.OnNavigationSubmit(e));
 
+            [NoAutoStaticsCleanup]
             public static readonly EventCallbackDefinition<ScrollView> OnFocusOut =
                 EventCallback.Create<FocusOutEvent, ScrollView>(static (e, self) => self.OnFocusOut(e));
 
+            [NoAutoStaticsCleanup]
             public static readonly EventCallbackDefinition<ScrollView> OnRootCustomStyleResolved =
                 EventCallback.Create<CustomStyleResolvedEvent, ScrollView>(static (e, self) =>
                     self.OnRootCustomStyleResolved(e));
 
+            [NoAutoStaticsCleanup]
             public static readonly EventCallbackDefinition<VisualElement> OnContentGeometryChanged =
                 EventCallback.Create<GeometryChangedEvent, VisualElement>(static (e, content) =>
                     GetScrollView(content)?.OnGeometryChanged(e));
 
+            [NoAutoStaticsCleanup]
             public static readonly EventCallbackDefinition<VisualElement> OnContentAndVerticalScrollAttach =
                 EventCallback.Create<AttachToPanelEvent, VisualElement>(static (e, contentAndVerticalScroll) =>
                     GetScrollView(contentAndVerticalScroll)?.OnAttachToPanel(e));
 
+            [NoAutoStaticsCleanup]
             public static readonly EventCallbackDefinition<VisualElement> OnContentAndVerticalScrollDetach =
                 EventCallback.Create<DetachFromPanelEvent, VisualElement>(static (e, contentAndVerticalScroll) =>
                     GetScrollView(contentAndVerticalScroll)?.OnDetachFromPanel(e));
 
+            [NoAutoStaticsCleanup]
             public static readonly EventCallbackDefinition<VisualElement> OnContentAndVerticalScrollPointerMove =
                 EventCallback.Create<PointerMoveEvent, VisualElement>(static (e, contentAndVerticalScroll) =>
                     GetScrollView(contentAndVerticalScroll)?.OnPointerMove(e));
 
+            [NoAutoStaticsCleanup]
             public static readonly EventCallbackDefinition<Scroller> OnScrollerGeometryChanged =
                 EventCallback.Create<GeometryChangedEvent, Scroller>(static (e, scroller) =>
                     GetScrollView(scroller)?.OnScrollersGeometryChanged(e));
 
+            [NoAutoStaticsCleanup]
             public static readonly EventCallbackDefinition<VisualElement> OnHorizontalScrollDragElementGeometry =
                 EventCallback.Create<GeometryChangedEvent, VisualElement>(static (e, dragElement) =>
                     GetScrollView(dragElement)?.OnHorizontalScrollDragElementChanged(e));
 
+            [NoAutoStaticsCleanup]
             public static readonly EventCallbackDefinition<VisualElement> OnVerticalScrollDragElementGeometry =
                 EventCallback.Create<GeometryChangedEvent, VisualElement>(static (e, dragElement) =>
                     GetScrollView(dragElement)?.OnVerticalScrollDragElementChanged(e));
 
+            [NoAutoStaticsCleanup]
             public static readonly EventCallbackGroup<VisualElement> OnContentContainerPointer = new(
                 EventCallback.Create<PointerDownEvent, VisualElement>(static (e, contentContainer) =>
                     GetScrollView(contentContainer)?.OnPointerDown(e), CallbackOptions.TrickleDown),
@@ -2203,3 +2218,4 @@ namespace UnityEngine.UIElements
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

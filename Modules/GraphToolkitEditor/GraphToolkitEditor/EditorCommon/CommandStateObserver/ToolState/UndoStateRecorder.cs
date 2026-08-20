@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.GraphToolkit.CSO;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -17,7 +18,7 @@ namespace Unity.GraphToolkit.Editor
     /// </summary>
     [Serializable]
     [UnityRestricted]
-    internal sealed class UndoStateRecorder : ScriptableObject, ISerializationCallbackReceiver, IUndoableCommandMerger
+    internal sealed partial class UndoStateRecorder : ScriptableObject, ISerializationCallbackReceiver, IUndoableCommandMerger
     {
         [Serializable]
         class SerializedChangeset
@@ -63,7 +64,9 @@ namespace Unity.GraphToolkit.Editor
         SerializedValueDictionary<(Hash128, uint), SerializedChangeset> m_ToNextVersionChangesets = new();
         SerializedValueDictionary<(Hash128, uint), SerializedChangeset> m_FromPreviousVersionChangesets = new();
 
+        [AutoStaticsCleanupOnCodeReload]
         static List<OperationRecord> s_Operations = new();
+        [AutoStaticsCleanupOnCodeReload]
         static uint s_LastOperationId;
 
         // For use in tests, to get a clean state.
@@ -379,7 +382,9 @@ namespace Unity.GraphToolkit.Editor
             m_NeedToRestore = true;
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         static HashSet<UndoStateRecorder> s_UndoStateModified = new HashSet<UndoStateRecorder>();
+        [AutoStaticsCleanupOnCodeReload]
         static bool s_CompleteRestore;
 
         internal static void ClearNeedToRestore()
@@ -403,7 +408,7 @@ namespace Unity.GraphToolkit.Editor
         /// </summary>
         /// <param name="state">The state that holds the state components to restore.</param>
         /// <param name="isRedo">True if the context of this call is a redo operation; false if it is an undo operation.</param>
-        public void RestoreState(IState state, bool isRedo)
+        public void RestoreState(CSO.IState state, bool isRedo)
         {
             var modifiedStateComponents = new List<IUndoableStateComponent>();
 
@@ -418,9 +423,9 @@ namespace Unity.GraphToolkit.Editor
                     if (JsonUtility.FromJson(m_SerializedState[i], componentType) is IUndoableStateComponent newStateComponent)
                     {
                         var stateComponent =
-                            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                            #pragma warning disable UAC2001 // Avoid Linq
                             state.AllStateComponents.OfType<IUndoableStateComponent>().FirstOrDefault(c => c.CanBeUndoDataSource(newStateComponent));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
                         if (stateComponent != null)
                         {

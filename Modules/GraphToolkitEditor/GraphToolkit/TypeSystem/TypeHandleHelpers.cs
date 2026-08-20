@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using Unity.GraphToolkit.Editor;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.Assertions;
 
@@ -42,7 +43,9 @@ namespace Unity.GraphToolkit
     [UnityRestricted]
     internal static class TypeHandleHelpers
     {
+        [NoAutoStaticsCleanup] // type lookup registry; clearing would orphan init-only TypeHandle properties in BuiltInTypeHandles
         static Dictionary<string, TypeHandleDescriptor> s_CustomIdToTypeHandleInternal = new();
+        [NoAutoStaticsCleanup] // type lookup registry; clearing would orphan init-only TypeHandle properties in BuiltInTypeHandles
         static Dictionary<string, Type> s_CustomIdToType = new();
 
         // For tests only

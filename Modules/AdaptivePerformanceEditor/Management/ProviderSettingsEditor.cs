@@ -9,6 +9,7 @@ using UnityEditorInternal;
 using UnityEditor.StyleSheets;
 using UnityEngine;
 using UnityEngine.AdaptivePerformance;
+using Unity.Scripting.LifecycleManagement;
 using Object = System.Object;
 
 namespace UnityEditor.AdaptivePerformance.Editor
@@ -37,7 +38,8 @@ namespace UnityEditor.AdaptivePerformance.Editor
         static readonly GUIContent s_IndexerActiveLabel = EditorGUIUtility.TrTextContent(L10n.Tr("Active"), L10n.Tr("Is indexer enabled."));
         static readonly GUIContent s_IndexerThermalActionDelayLabel = EditorGUIUtility.TrTextContent(L10n.Tr("Thermal Action Delay"), L10n.Tr("Delay after any scaler is applied or unapplied because of thermal state."));
         static readonly GUIContent s_IndexerPerformanceActionDelayLabel = EditorGUIUtility.TrTextContent(L10n.Tr("Performance Action Delay"), L10n.Tr("Delay after any scaler is applied or unapplied because of performance state."));
-
+        static readonly string[] k_ModeOptions = new string[] {AdaptivePerformanceNormalModeProvider.kModeName, AdaptivePerformanceBatteryModeProvider.kModeName};
+        static readonly GUIContent s_ModeLabel = EditorGUIUtility.TrTextContent(L10n.Tr("Operation Mode"));
         static readonly GUIContent s_ScalerScale = EditorGUIUtility.TrTextContent(L10n.Tr("Scale"), L10n.Tr("Scale to control the quality impact for the scaler. No quality change when 1, improved quality when >1, and lowered quality when <1"));
         static readonly GUIContent s_ScalerVisualImpact = EditorGUIUtility.TrTextContent(L10n.Tr("Visual Impact"), L10n.Tr("Visual impact the scaler has on the application. The higher the more impact the scaler has on the visuals."));
         static readonly GUIContent s_ScalerTarget = EditorGUIUtility.TrTextContent(L10n.Tr("Target"), L10n.Tr("Target for the scaler of the application bottleneck. The target selected has the most impact on the quality control of this scaler. Can only be overriden via API."));
@@ -60,6 +62,31 @@ namespace UnityEditor.AdaptivePerformance.Editor
         static readonly GUIContent s_AdaptivePhysics = EditorGUIUtility.TrTextContent(L10n.Tr("Physics"), L10n.Tr("Adaptive Physics changes the Time.fixedDeltaTime based on the thermal and performance load."));
         static readonly GUIContent s_AdaptiveDecals = EditorGUIUtility.TrTextContent(L10n.Tr("Decals"), L10n.Tr("Adaptive Decal changes the maximum draw distance for all decals of the Universal Render Pipeline based on the thermal and performance load."));
         static readonly GUIContent s_AdaptiveLayerCulling = EditorGUIUtility.TrTextContent(L10n.Tr("Layer Culling"), L10n.Tr("Adaptive Layer Culling changes the maximum draw distance for each layer based on the thermal and performance load. It scales the value provided by camera.layerCullDistances."));
+        
+        static readonly GUIContent s_AdaptiveOnDemandRendering = EditorGUIUtility.TrTextContent(L10n.Tr("On Demand Rendering"), L10n.Tr("Adaptive On Demand Rendering skips rendering frames while the application is idle in Battery Mode by driving Rendering.OnDemandRendering.renderFrameInterval."));
+
+        // Tab strip used in place of the per-scaler Operation Mode dropdown.
+        // Visual order is defined by s_OperationModeTabOrder; the labels are derived
+        // lazily from the enum names via ObjectNames.NicifyVariableName so they stay
+        // in sync if OperationMode gains, loses, or renames members.
+        static readonly OperationMode[] s_OperationModeTabOrder = new[]
+        {
+            OperationMode.NormalMode,
+            OperationMode.BatteryMode,
+        };
+        [NoAutoStaticsCleanup]
+        static GUIContent[] s_OperationModeTabs;
+        [NoAutoStaticsCleanup]
+        static GUIStyle s_TabFirstStyle;
+        [NoAutoStaticsCleanup]
+        static GUIStyle s_TabLastStyle;
+        const int k_TabButtonHeight = 22;
+        // Width of the foldout arrow on a custom-scaler row. 
+        const int k_FoldoutArrowWidth = 15;
+        // Fixed x-offset (from the row's left edge) for the per-scaler Enabled checkbox
+        // on the header row. 
+        const int k_TickboxPosition = 227;
+
 
         static readonly string s_FramerateWarningVSync = L10n.Tr("Adaptive Framerate is only supported without VSync. Set VSync Count to \"Don't Sync\" in Quality settings.");
         static readonly string s_FramerateWarningGameMode = L10n.Tr("Adaptive Framerate is only supported when \"Auto Game Mode\" is turned off.");
@@ -139,11 +166,22 @@ namespace UnityEditor.AdaptivePerformance.Editor
         class ScalerProfileSettingInformation
         {
             public bool showScalerProfileSettings;
+            // Which mode's settings the user is currently viewing/editing for this
+            // profile. Selected via the per-profile Operation Mode tab strip drawn in
+            // DisplayScalerSettings. Editor-only session state — NOT serialized, and
+            // independent of the global IndexerOperationMode that drives runtime routing.
+            // Explicit default — without this, viewedMode would land on BatteryMode
+            // because BatteryMode = 0 in the enum declaration order.
+            public OperationMode viewedMode = OperationMode.NormalMode;
             public Dictionary<string, ScalerSettingInformation> scalerSettingsInfos = new Dictionary<string, ScalerSettingInformation>();
         }
 
-        const int k_NumberOfScalerProperties = 5;
-        const int k_TickboxPosition = 227;
+        // Number of property rows displayed inside the expanded panel of each scaler:
+        // 1. minBound, 2. maxBound, 3. maxLevel, 4. visualImpact, 5. target
+        // (The Enabled toggle lives on the header row; the operation-mode tab strip is
+        // per-profile, drawn once in DisplayScalerSettings.)
+        [NoAutoStaticsCleanup]
+        static int k_NumberOfScalerProperties = 5;
 
         Dictionary<string, ScalerProfileSettingInformation> m_ScalerProfiles = new Dictionary<string, ScalerProfileSettingInformation>();
 
@@ -178,6 +216,10 @@ namespace UnityEditor.AdaptivePerformance.Editor
         void AddNewReorderableList(List<int> list)
         {
             var newReorderableListDefaultSettings = new ReorderableList(list, typeof(int), false, false, true, true);
+            // Suppress the list's own "RL Background" box so the outer EditorStyles.frameBox
+            // (drawn in DisplayScalerSettings) is the single visual border, matching the
+            // BeginPlatformGrouping look — tabs cut into the frame's top border on selection.
+            newReorderableListDefaultSettings.showDefaultBackground = false;
             newReorderableListDefaultSettings.onAddDropdownCallback += OnNewCustomScalerCallback;
             newReorderableListDefaultSettings.onRemoveCallback += OnRemoveCustomScalerCallback;
 
@@ -295,7 +337,7 @@ namespace UnityEditor.AdaptivePerformance.Editor
             if (serializedObject.hasModifiedProperties)
             {
                 serializedObject.ApplyModifiedProperties();
-                AssetDatabase.SaveAssets();
+                AssetDatabase.SaveAssetIfDirty(serializedObject.targetObject);
             }
 
             if (m_HasNonSerializedChanges)
@@ -348,6 +390,43 @@ namespace UnityEditor.AdaptivePerformance.Editor
                 }
 
                 EditorGUILayout.PropertyField(m_IndexerPerformanceActionDelayProperty, s_IndexerPerformanceActionDelayLabel);
+                EditorGUI.BeginChangeCheck();
+                var newOperationMode = (OperationMode)EditorGUILayout.EnumPopup(s_ModeLabel, m_CurrentSettings.IndexerOperationMode);
+                if (EditorGUI.EndChangeCheck())
+                {
+                    m_CurrentSettings.IndexerOperationMode = newOperationMode;
+                    MarkNonSerializedChange();
+                }
+                if (m_CurrentSettings.IndexerOperationMode == OperationMode.NormalMode)
+                {
+                    m_CurrentSettings.ActiveModeProvider = m_CurrentSettings.NormalModeProvider;
+                }
+                else if (m_CurrentSettings.IndexerOperationMode == OperationMode.BatteryMode)
+                {
+                    m_CurrentSettings.ActiveModeProvider = m_CurrentSettings.BatteryModeProvider;
+                }
+
+                if (m_CurrentSettings.IndexerOperationMode == OperationMode.BatteryMode)
+                {
+                    EditorGUI.BeginChangeCheck();
+                    // Clamp the minimum here: IntField ignores the field's [Min] attribute, so
+                    // without this the user could type a negative value directly.
+                    int newIdleTimeThreshold = Mathf.Max(1, EditorGUILayout.IntField("Idle Time Threshold", m_CurrentSettings.BatteryModeProvider.IdleTimeThresholdInSeconds));
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        m_CurrentSettings.BatteryModeProvider.IdleTimeThresholdInSeconds = newIdleTimeThreshold;
+                        MarkNonSerializedChange();
+                    }
+
+                    EditorGUI.BeginChangeCheck();
+                    float newSavingTarget = EditorGUILayout.Slider("Save Target", m_CurrentSettings.BatteryModeProvider.SavingTarget, 0f, 0.8f);
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        m_CurrentSettings.BatteryModeProvider.SavingTarget = newSavingTarget;
+                        MarkNonSerializedChange();
+                    }
+                }
+
                 GUI.enabled = true;
                 EditorGUI.indentLevel--;
             }
@@ -463,13 +542,76 @@ namespace UnityEditor.AdaptivePerformance.Editor
                         if (m_FoldoutState[i])
                         {
                             m_SelectedProfileIndex = i;
+
+                            // Look up (lazily create) the per-profile editor state. The
+                            // same container is read by DrawScalerSetting via the
+                            // scalerProfileSettingInfo argument, so the tab selection set
+                            // here is what each scaler row in this profile picks up.
+                            var profileName = currentSetting.ScalerProfiles[i].Name;
+                            if (!m_ScalerProfiles.TryGetValue(profileName, out var profileInfo))
+                            {
+                                profileInfo = new ScalerProfileSettingInformation();
+                                m_ScalerProfiles[profileName] = profileInfo;
+                            }
+
+                            // Operation Mode tab strip + scaler list, framed together the
+                            // same way BeginPlatformGrouping renders the platform selector
+                            // tabs at the top of this inspector. The tabs sit flush against
+                            // the top edge of the frame box and span its full width; the
+                            // list draws inside the frame below them.
+                            if (s_TabFirstStyle == null)
+                            {
+                                s_TabFirstStyle = "Tab first";
+                                s_TabLastStyle = "Tab last";
+                            }
+                            if (s_OperationModeTabs == null)
+                            {
+                                s_OperationModeTabs = new GUIContent[s_OperationModeTabOrder.Length];
+                                for (int t = 0; t < s_OperationModeTabOrder.Length; t++)
+                                    s_OperationModeTabs[t] = EditorGUIUtility.TrTextContent(L10n.Tr(ObjectNames.NicifyVariableName(s_OperationModeTabOrder[t].ToString())));
+                            }
+
+                            // Matches BeginPlatformGrouping styling: a frameBox wraps the
+                            // tabs + list, the tab strip sits flush against the frame's top
+                            // edge, and the selected tab's style cuts through the frame's
+                            // top border at its position. The ReorderableList has its own
+                            // box drawing suppressed (showDefaultBackground = false in
+                            // AddNewReorderableList) so the frame is the only border.
+                            EditorGUILayout.BeginHorizontal();
+                            GUILayout.Space(30);
+                            Rect frameRect = EditorGUILayout.BeginVertical(EditorStyles.frameBox);
+
+                            int leftWidth = Mathf.RoundToInt(frameRect.width * 0.5f);
+                            Rect firstTabRect = new Rect(frameRect.x, frameRect.y, leftWidth, k_TabButtonHeight);
+                            Rect lastTabRect = new Rect(frameRect.x + leftWidth, frameRect.y, frameRect.width - leftWidth, k_TabButtonHeight);
+
+                            int currentTabIdx = Array.IndexOf(s_OperationModeTabOrder, profileInfo.viewedMode);
+                            if (currentTabIdx < 0) currentTabIdx = 0;
+
+                            if (GUI.Toggle(firstTabRect, currentTabIdx == 0, s_OperationModeTabs[0], s_TabFirstStyle) && currentTabIdx != 0)
+                            {
+                                profileInfo.viewedMode = s_OperationModeTabOrder[0];
+                                OnViewedModeChanged();
+                            }
+                            if (GUI.Toggle(lastTabRect, currentTabIdx == 1, s_OperationModeTabs[1], s_TabLastStyle) && currentTabIdx != 1)
+                            {
+                                profileInfo.viewedMode = s_OperationModeTabOrder[1];
+                                OnViewedModeChanged();
+                            }
+
+                            // Tabs are drawn at fixed Rects above; reserve matching layout
+                            // space so subsequent elements don't overdraw them (same trick
+                            // BeginPlatformGrouping uses).
+                            GUILayoutUtility.GetRect(10, k_TabButtonHeight);
+
                             var reorderableListDefaultSettings = m_scalerList[i];
                             reorderableListDefaultSettings.list = m_IndexLists[i];
 
                             Rect controlRect = EditorGUILayout.GetControlRect(true, reorderableListDefaultSettings.GetHeight());
-                            Rect indentedRect = new Rect(controlRect.x + 30f, controlRect.y, controlRect.width - 30f, controlRect.height);
+                            reorderableListDefaultSettings.DoList(controlRect);
 
-                            reorderableListDefaultSettings.DoList(indentedRect);
+                            EditorGUILayout.EndVertical();
+                            EditorGUILayout.EndHorizontal();
                         }
                         EditorGUI.indentLevel--;
                     }
@@ -514,14 +656,20 @@ namespace UnityEditor.AdaptivePerformance.Editor
             rect.x += 10;
             rect.width -= 10;
 
-            if (index >= scalerProfile.DefaultScalerSettings.Count)
+            if (index < scalerProfile.DefaultScalerSettings.Count)
+            {
+                var scalerSetting = scalerProfile.DefaultScalerSettings[index];
+                rect = DrawScalerSetting(rect, scalerSetting, m_IndexerActiveProperty.boolValue && !EditorApplication.isPlayingOrWillChangePlaymode, scalerProfileSettingInfo);
+            }
+            else
             {
                 var newIndex = index - scalerProfile.DefaultScalerSettings.Count;
                 {
-                    var objectRowRect = new Rect(rect.x, rect.y, rect.width, rect.height);
-                    objectRowRect.width = 200;
-                    if (m_FieldObjects[m_SelectedProfileIndex][newIndex] != null && m_FieldObjects[m_SelectedProfileIndex][newIndex].Enabled)
-                        objectRowRect.x += 20;
+                    // Shift right past the foldout arrow so the field and the arrow don't
+                    // overlap. Clicks on the field still go to the field; clicks on the
+                    // arrow or any other empty part of the row fall through to the
+                    // full-row Foldout in DrawScalerSetting (drawn below) and toggle it.
+                    var objectRowRect = new Rect(rect.x + k_FoldoutArrowWidth, rect.y, 200, rect.height);
                     var newObject = (AdaptivePerformanceScaler)EditorGUI.ObjectField(objectRowRect, m_FieldObjects[m_SelectedProfileIndex][newIndex], typeof(AdaptivePerformanceScaler), true);
                     if (newObject)
                     {
@@ -537,9 +685,6 @@ namespace UnityEditor.AdaptivePerformance.Editor
                             }
                         }
 
-                        // User needs to click confirm to finalize the selection and get rid of the object field.
-                        // This is a workaround for objectField could not distinguish drag and drop by event since the event is used and does not propagate to here.
-                        //var button = GUI.Button(objectRowRect, new GUIContent("Confirm"));
                         if (!isDuplicate && newObject !=  m_FieldObjects[m_SelectedProfileIndex][newIndex])
                         {
                             var copyObject = Instantiate(newObject);
@@ -548,6 +693,7 @@ namespace UnityEditor.AdaptivePerformance.Editor
                             m_FieldObjects[m_SelectedProfileIndex][newIndex].Name = newObject.name;
                             scalerProfile.AddedScalers[newIndex] = copyObject;
                             scalerProfile.AddedScalers[newIndex].DefaultSetting.name = newObject.name;
+                            scalerProfile.AddedScalers[newIndex].BatteryModeSetting.name = newObject.name;
                             AssetDatabase.AddObjectToAsset(copyObject, serializedObject.targetObject);
                             MarkNonSerializedChange();
                         }
@@ -561,18 +707,12 @@ namespace UnityEditor.AdaptivePerformance.Editor
 
                 if (scalerProfile.AddedScalers[newIndex] != null)
                 {
-                    rect = DrawScalerSetting(rect, scalerProfile.AddedScalers[newIndex].DefaultSetting, m_IndexerActiveProperty.boolValue && !EditorApplication.isPlayingOrWillChangePlaymode, scalerProfileSettingInfo, true);
+                    // Pass the scaler instance so the row can resolve DefaultSetting /
+                    // BatteryModeSetting directly from the tab selection, bypassing
+                    // ActiveSetting (which routes by the global IndexerOperationMode,
+                    // independent of which tab the inspector is currently showing).
+                    rect = DrawScalerSetting(rect, scalerProfile.AddedScalers[newIndex].ActiveSetting, m_IndexerActiveProperty.boolValue && !EditorApplication.isPlayingOrWillChangePlaymode, scalerProfileSettingInfo, true, scalerProfile.AddedScalers[newIndex]);
                 }
-            }
-            else
-            {
-                var scalerSetting = settingsObject.ScalerProfiles[m_SelectedProfileIndex].DefaultScalerSettings[index];
-                var scalerName = scalerSetting.name;
-                if (scalerName == "AdaptiveShadowCascades")
-                {
-                    return;
-                }
-                rect = DrawScalerSetting(rect, scalerSetting, m_IndexerActiveProperty.boolValue && !EditorApplication.isPlayingOrWillChangePlaymode, scalerProfileSettingInfo);
             }
             m_ScalerProfiles[settingsObject.ScalerProfiles[m_SelectedProfileIndex].Name] = scalerProfileSettingInfo;
         }
@@ -591,6 +731,37 @@ namespace UnityEditor.AdaptivePerformance.Editor
         void MarkNonSerializedChange()
         {
             m_HasNonSerializedChanges = true;
+        }
+
+        // Resolves the per-mode struct the inspector should read from and write to for
+        // the currently-viewed tab. Custom scalers expose their per-mode structs as
+        // DefaultSetting / BatteryModeSetting properties; default-scaler wrappers expose
+        // them via GetNormalModeSetting() / GetBatteryModeSetting(). Centralized here so
+        // no caller has to repeat the "which mode + which kind of scaler" branching, and
+        // so the editor never goes through ActiveSetting (which routes by the global
+        // IndexerOperationMode and would ignore the viewed tab).
+        static AdaptivePerformanceScalerSettingsBase GetActiveModeSetting(
+            OperationMode viewedMode,
+            AdaptivePerformanceScalerSettingsBase scalerSetting,
+            AdaptivePerformanceScaler scaler)
+        {
+            bool battery = viewedMode == OperationMode.BatteryMode;
+            if (scaler != null)
+                return battery ? scaler.BatteryModeSetting : scaler.DefaultSetting;
+            return battery ? scalerSetting.GetBatteryModeSetting() : scalerSetting.GetNormalModeSetting();
+        }
+
+        // Called when the per-profile Operation Mode tab selection changes. Clears
+        // IMGUI's recycled text-field editor so any in-flight typed-but-uncommitted
+        // edit on the previous tab is dropped. Without this, the FloatField / IntField
+        // at the same screen position keeps the same control ID across the tab switch
+        // and silently commits the cached string to the new tab's underlying struct on
+        // the next frame.
+        void OnViewedModeChanged()
+        {
+            GUIUtility.keyboardControl = 0;
+            EditorGUIUtility.editingTextField = false;
+            Repaint();
         }
 
         void OnRemoveCustomScalerCallback(ReorderableList list)
@@ -651,20 +822,20 @@ namespace UnityEditor.AdaptivePerformance.Editor
                 var scalerSetting = scalerProfile.DefaultScalerSettings[index];
 
                 var scalerName = scalerSetting.name;
-                if (scalerName == "AdaptiveShadowCascades") // ap-obsolete-001 due to renaming the property
-                    return height;
-
                 if (scalerProfileSettingInfo != null)
                 {
                     ScalerSettingInformation scalerSettingInfo;
                     scalerProfileSettingInfo.scalerSettingsInfos.TryGetValue(scalerName, out scalerSettingInfo);
                     bool isDisabledFramerate = DisabledAdaptiveFramerateScaler(scalerName);
-                    bool sectionOpen = scalerSettingInfo.showScalerSettings && (scalerSetting.enabled || isDisabledFramerate);
+                    // Default scaler section now opens whenever the user expanded it —
+                    // the name foldout is always clickable, regardless of enabled state,
+                    // because the per-mode Enabled toggles live INSIDE the expanded panel.
+                    bool sectionOpen = scalerSettingInfo.showScalerSettings;
 
                     if (sectionOpen)
                     {
                         height += k_NumberOfScalerProperties * (EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing);
-                        
+
                         // if we have a framerate section that is disabled by VSync being on, we add space for the warning
                         if (isDisabledFramerate)
                         {
@@ -682,14 +853,24 @@ namespace UnityEditor.AdaptivePerformance.Editor
                     var addedScaler = scalerProfile.AddedScalers[newIndex];
                     if (addedScaler == null) return height;
 
-                    var scalerSetting = addedScaler.DefaultSetting;
+                    // Use ActiveSetting so we measure the same setting object the row edits
+                    // (matches ActiveSetting routing in DrawScalerElementCallback). Read enabled
+                    // off addedScaler.Enabled — the same source the toggle in DrawScalerSetting
+                    // writes to via the scaler-instance branch — so the height callback stays in
+                    // lockstep with the toggle. Without this, toggling the row would flip one
+                    // field while the height callback read another, and the expanded properties
+                    // would overflow into the next ReorderableList element.
+                    var scalerSetting = addedScaler.ActiveSetting;
                     var scalerName = scalerSetting.name;
 
                     if (scalerProfileSettingInfo != null)
                     {
                         ScalerSettingInformation scalerSettingInfo;
                         scalerProfileSettingInfo.scalerSettingsInfos.TryGetValue(scalerName, out scalerSettingInfo);
-                        if (scalerSettingInfo.showScalerSettings && scalerSetting.enabled)
+                        // Custom scaler section now opens whenever the user expanded it —
+                        // the row-header toggle is gone, so the Enabled toggle lives inside
+                        // the panel and the panel must be reachable regardless of Enabled.
+                        if (scalerSettingInfo.showScalerSettings)
                         {
                             height += k_NumberOfScalerProperties * (EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing);
                         }
@@ -703,16 +884,14 @@ namespace UnityEditor.AdaptivePerformance.Editor
             }
         }
 
-        Rect DrawScalerSetting(Rect rect, AdaptivePerformanceScalerSettingsBase scalerSetting, bool renderNotDisabled, ScalerProfileSettingInformation scalerProfileSettingInfo, bool isCustomScaler = false)
+        // Default scalers has settings serialized via the scalerSetting
+        // Custom scalers are serialized entirely with the settings inside the scaler itself.
+        // So the additional scaler param is to handle the custom scaler case.
+        Rect DrawScalerSetting(Rect rect, AdaptivePerformanceScalerSettingsBase scalerSetting, bool renderNotDisabled, ScalerProfileSettingInformation scalerProfileSettingInfo, bool isCustomScaler = false, AdaptivePerformanceScaler scaler = null)
         {
             bool hasChanges = false;
             string scalerName = scalerSetting.name;
-            var isEnabled = renderNotDisabled && !EditorApplication.isPlayingOrWillChangePlaymode;
-
-            if (DisabledAdaptiveFramerateScaler(scalerName))
-            {
-                isEnabled = false;
-            }
+            var isEnabled = renderNotDisabled && !DisabledAdaptiveFramerateScaler(scalerName);
 
             GUI.enabled = isEnabled;
 
@@ -725,22 +904,26 @@ namespace UnityEditor.AdaptivePerformance.Editor
                 };
             }
 
-            rect.x += k_TickboxPosition;
-            var needsFoldout = scalerSetting.enabled;
-            EditorGUI.BeginChangeCheck();
-            bool newValue = EditorGUI.Toggle(rect, GUIContent.none, needsFoldout);
-            if (EditorGUI.EndChangeCheck())
-            {
-                needsFoldout = newValue;
-                if (newValue)
-                    scalerSettingInfo.showScalerSettings = newValue;
-                hasChanges = true;
-            }
-            scalerSetting.enabled = needsFoldout;
-            rect.x -= k_TickboxPosition;
+            // Resolve once — the header-row Enabled toggle and the expanded panel below
+            // both read from / write to the per-mode struct chosen by the per-profile
+            // Operation Mode tab strip in DisplayScalerSettings.
+            var activeModeSetting = GetActiveModeSetting(scalerProfileSettingInfo.viewedMode, scalerSetting, scaler);
 
-            if ((needsFoldout || !isEnabled || (isCustomScaler && needsFoldout)))
+            // Header row: Enabled toggle on the right, foldout label/arrow filling the
+            // rest of the row. Toggle is drawn FIRST so it gets first crack at the
+            // MouseDown in its rect — the foldout (drawn after with full-row rect) then
+            // sees the event already consumed in that strip and only handles clicks
+            // elsewhere on the row.
             {
+                Rect enabledRect = new Rect(rect.x + k_TickboxPosition, rect.y, 16, EditorGUIUtility.singleLineHeight);
+                EditorGUI.BeginChangeCheck();
+                bool newEnabled = EditorGUI.Toggle(enabledRect, activeModeSetting.enabled);
+                if (EditorGUI.EndChangeCheck())
+                {
+                    activeModeSetting.enabled = newEnabled;
+                    hasChanges = true;
+                }
+
                 EditorGUI.BeginChangeCheck();
                 var style = new  GUIStyle(EditorStyles.foldout);
                 style.clipping = TextClipping.Ellipsis;
@@ -750,15 +933,8 @@ namespace UnityEditor.AdaptivePerformance.Editor
                     scalerSettingInfo.showScalerSettings = newShowScalerSettings;
                 }
             }
-            else if(!isCustomScaler)
-            {
-                var clipping = EditorStyles.label.clipping;
-                EditorStyles.label.clipping = TextClipping.Ellipsis;
-                EditorGUI.LabelField(rect, ReturnScalerGUIContent(scalerName));
-                EditorStyles.label.clipping = clipping;
-            }
 
-            if ((needsFoldout || !isEnabled) && scalerSettingInfo.showScalerSettings)
+            if (scalerSettingInfo.showScalerSettings)
             {
                 rect.x += 10;
                 rect.y += EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing;
@@ -781,8 +957,8 @@ namespace UnityEditor.AdaptivePerformance.Editor
                     GUI.enabled = isEnabled;
                 }
 
-                var minBound = scalerSetting.minBound;
-                var maxBound = scalerSetting.maxBound;
+                var minBound = activeModeSetting.minBound;
+                var maxBound = activeModeSetting.maxBound;
 
                 EditorGUI.BeginChangeCheck();
                 float newMinBound = EditorGUI.FloatField(rect, s_ScalerMinBound, minBound);
@@ -791,7 +967,7 @@ namespace UnityEditor.AdaptivePerformance.Editor
                     minBound = Mathf.Clamp(newMinBound, 0, maxBound);
                     hasChanges = true;
                 }
-                scalerSetting.minBound = minBound;
+                activeModeSetting.minBound = minBound;
 
                 rect.y += EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing;
 
@@ -802,11 +978,11 @@ namespace UnityEditor.AdaptivePerformance.Editor
                     maxBound = Mathf.Clamp(newMaxBound, minBound, 10000);
                     hasChanges = true;
                 }
-                scalerSetting.maxBound = maxBound;
+                activeModeSetting.maxBound = maxBound;
 
                 rect.y += EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing;
 
-                var maxLevel = scalerSetting.maxLevel;
+                var maxLevel = activeModeSetting.maxLevel;
                 EditorGUI.BeginChangeCheck();
                 int newMaxLevel = EditorGUI.IntField(rect, s_ScalerMaxLevel, maxLevel);
                 if (EditorGUI.EndChangeCheck())
@@ -814,11 +990,11 @@ namespace UnityEditor.AdaptivePerformance.Editor
                     maxLevel = Mathf.Clamp(newMaxLevel, 1, 100);
                     hasChanges = true;
                 }
-                scalerSetting.maxLevel = maxLevel;
+                activeModeSetting.maxLevel = maxLevel;
 
                 rect.y += EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing;
 
-                ScalerVisualImpact visualImpact = (ScalerVisualImpact)scalerSetting.visualImpact;
+                ScalerVisualImpact visualImpact = (ScalerVisualImpact)activeModeSetting.visualImpact;
                 EditorGUI.BeginChangeCheck();
                 ScalerVisualImpact newVisualImpact = (ScalerVisualImpact)EditorGUI.EnumPopup(rect, s_ScalerVisualImpact, visualImpact);
                 if (EditorGUI.EndChangeCheck())
@@ -826,11 +1002,11 @@ namespace UnityEditor.AdaptivePerformance.Editor
                     visualImpact = (ScalerVisualImpact)Mathf.Clamp((int)newVisualImpact, (int)ScalerVisualImpact.Low, (int)ScalerVisualImpact.High);
                     hasChanges = true;
                 }
-                scalerSetting.visualImpact= visualImpact;
+                activeModeSetting.visualImpact = visualImpact;
 
                 rect.y += EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing;
 
-                ScalerTarget staticFlagMask = scalerSetting.target;
+                ScalerTarget staticFlagMask = activeModeSetting.target;
                 GUIContent propDisplayNames = new GUIContent("");
                 foreach (var enumValue in Enum.GetValues(typeof(ScalerTarget)))
                 {
@@ -887,6 +1063,8 @@ namespace UnityEditor.AdaptivePerformance.Editor
                     return s_AdaptiveDecals;
                 case "Adaptive Layer Culling":
                     return s_AdaptiveLayerCulling;
+                case "Adaptive On Demand Rendering":
+                    return s_AdaptiveOnDemandRendering;
 
                 default:
                     return new GUIContent(scalerName);

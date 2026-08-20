@@ -57,7 +57,7 @@ namespace UnityEngine.Audio
         }
     }
 
-    [NativeHeader("Modules/Audio/Public/ScriptableProcessors/ControlHeader.h"), RequiredByNativeCode]
+    [NativeHeader("Modules/Audio/Public/ControlHeader.h"), RequiredByNativeCode]
     unsafe struct ControlHeader
     {
         internal Unity.Audio.Handle Handle;
@@ -261,7 +261,7 @@ namespace UnityEngine.Audio
                 );
             }
 
-            return new GeneratorInstance(GetProcessorHeader<GeneratorInstance.GeneratorHeader>(createdHandle));
+            return new GeneratorInstance(createdHandle);
         }
 
         /// <summary>
@@ -305,7 +305,7 @@ namespace UnityEngine.Audio
                 );
             }
 
-            return new RootOutputInstance(GetProcessorHeader<ProcessorHeader>(createdHandle));
+            return new RootOutputInstance(createdHandle);
         }
 
         /// <summary>
@@ -316,14 +316,7 @@ namespace UnityEngine.Audio
             where TRealtime : unmanaged, GeneratorInstance.IRealtime
             where TControl : unmanaged, GeneratorInstance.IControl<TRealtime>
         {
-            m_Handle.CheckValidOrThrow();
-            processorInstance.Handle.CheckValidOrThrow();
-
-            // TODO: Consider changing to ObjectDisposedException in a future breaking-change release
-            if (!Exists(processorInstance))
-                throw new InvalidOperationException("Processor has been disposed");
-
-            return processorInstance.Header->ControlReflectionData == IGeneratorControlExtensions.GetReflectionData<TControl, TRealtime>();
+            return GetProcessorHeader<ProcessorHeader>(processorInstance.Handle).ControlReflectionData == IGeneratorControlExtensions.GetReflectionData<TControl, TRealtime>();
         }
 
         /// <summary>
@@ -334,14 +327,7 @@ namespace UnityEngine.Audio
             where TRealtime : unmanaged, RootOutputInstance.IRealtime
             where TControl : unmanaged, RootOutputInstance.IControl<TRealtime>
         {
-            m_Handle.CheckValidOrThrow();
-            processorInstance.Handle.CheckValidOrThrow();
-
-            // TODO: Consider changing to ObjectDisposedException in a future breaking-change release
-            if (!Exists(processorInstance))
-                throw new InvalidOperationException("Processor has been disposed");
-
-            return processorInstance.Header->ControlReflectionData == IRootOutputControlExtensions.GetReflectionData<TControl, TRealtime>();
+            return GetProcessorHeader<ProcessorHeader>(processorInstance.Handle).ControlReflectionData == IRootOutputControlExtensions.GetReflectionData<TControl, TRealtime>();
         }
 
         /// <summary>
@@ -367,7 +353,6 @@ namespace UnityEngine.Audio
             where T : unmanaged
         {
             m_Handle.CheckValidOrThrow();
-            processorInstance.Handle.CheckValidOrThrow();
 
             fixed (T* pT = &message)
             {
@@ -378,7 +363,7 @@ namespace UnityEngine.Audio
                     ManagedHandle = default
                 };
 
-                return ScriptableProcessorBindings.SendMessageToProcessor(processorInstance.Header, Header, &transport);
+                return ScriptableProcessorBindings.SendMessageToProcessor(processorInstance.Handle, Header, &transport);
             }
         }
 
@@ -386,7 +371,6 @@ namespace UnityEngine.Audio
             where T : class
         {
             m_Handle.CheckValidOrThrow();
-            processorInstance.Handle.CheckValidOrThrow();
 
             object prior = null;
             GCHandle target;
@@ -411,9 +395,16 @@ namespace UnityEngine.Audio
                 ManagedHandle = GCHandle.ToIntPtr(target)
             };
 
-            var ret = ScriptableProcessorBindings.SendMessageToProcessor(processorInstance.Header, Header, &transport);
+            ProcessorInstance.Response ret;
 
-            target.Target = prior;
+            try
+            {
+                ret = ScriptableProcessorBindings.SendMessageToProcessor(processorInstance.Handle, Header, &transport);
+            }
+            finally
+            {
+                target.Target = prior;
+            }
 
             return ret;
         }
@@ -432,13 +423,9 @@ namespace UnityEngine.Audio
         /// Get the declared configuration <paramref name="generatorInstance"/> runs in.
         /// </summary>
         /// <seealso cref="GeneratorInstance.IControl{TRealtime}.Configure"/>
-        public GeneratorInstance.Configuration GetConfiguration(GeneratorInstance generatorInstance)
+        public readonly GeneratorInstance.Configuration GetConfiguration(GeneratorInstance generatorInstance)
         {
-            m_Handle.CheckValidOrThrow();
-
-            generatorInstance.m_ProcessorInstance.Handle.CheckValidOrThrow();
-
-            return ((GeneratorInstance.GeneratorHeader*)generatorInstance.m_ProcessorInstance.Header)->Configuration;
+            return GetProcessorHeader<GeneratorInstance.GeneratorHeader>(generatorInstance.m_ProcessorInstance.Handle).Configuration;
         }
 
         /// <summary>
@@ -563,11 +550,7 @@ namespace UnityEngine.Audio
         internal void DestroyProcessor(ProcessorInstance processorInstance)
         {
             m_Handle.CheckValidOrThrow();
-
-            if (processorInstance.Handle.Equals(default))
-                throw new InvalidOperationException("Default / zero-initialized value of processor being destroyed");
-
-            ScriptableProcessorBindings.QueueProcessorDispose(processorInstance.Header, m_Header);
+            ScriptableProcessorBindings.QueueProcessorDispose(processorInstance.Handle, m_Header);
         }
 
         [RequiredByNativeCode(GenerateProxy = true)]
@@ -585,15 +568,16 @@ namespace UnityEngine.Audio
         }
 
         /// <summary>
-        /// Transition API until a call is made on whether "headers" should be persistently available in "handle wrappers" or not.
-        /// Alternative being resolving on demand, making sure the handle is actually alive and available, at the expense of an ICall every time.
-        /// This is currently necessary to avoid a large number of changes across the codebase, but will likely be removed in the future.
+        /// Resolves a readonly reference to <typeparamref name="THeader"/> if <paramref name="handle"/> is valid and belongs to this <see cref="ControlContext"/>.
         /// </summary>
-        unsafe readonly THeader* GetProcessorHeader<THeader>(DualThreadHandle handle)
+        /// <exception cref="InvalidOperationException">
+        /// Thrown if <paramref name="handle"/> isn't valid together with this <see cref="ControlContext"/>, or if this <see cref="ControlContext"/> is invalid.
+        /// </exception>
+        unsafe readonly ref readonly THeader GetProcessorHeader<THeader>(DualThreadHandle handle)
             where THeader : unmanaged
         {
             m_Handle.CheckValidOrThrow();
-            return (THeader*)ScriptableProcessorBindings.GetProcessorHeaderFromHandle(m_Header, handle);
+            return ref *(THeader*)ScriptableProcessorBindings.GetProcessorHeaderFromHandle(m_Header, handle);
         }
 
         [NativeMethod(Name = "audio::GetBuiltInControlHeader", IsFreeFunction = true)]

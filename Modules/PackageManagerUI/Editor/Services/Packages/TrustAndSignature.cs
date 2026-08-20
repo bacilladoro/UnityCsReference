@@ -38,6 +38,30 @@ internal static class TrustAndSignatureHelper
         return GetTrustAndSignature(assetPackageInfo.trustLevel, assetPackageInfo.signature, isBuiltIn: false);
     }
 
+    public static bool IsBlocked(TrustPolicyLevel trustPolicyLevel, TrustAndSignature trustAndSignature)
+    {
+        if (trustPolicyLevel == TrustPolicyLevel.AnyPackage)
+            return false;
+
+        switch (trustAndSignature)
+        {
+            case TrustAndSignature.UntrustedNoSignature:
+            case TrustAndSignature.UntrustedInvalidSignature:
+                return true;
+
+            case TrustAndSignature.LimitedTrust:
+                return trustPolicyLevel == TrustPolicyLevel.TrustedOnly;
+
+            case TrustAndSignature.NotApplicable:
+            case TrustAndSignature.FullTrustUnitySignature:
+            case TrustAndSignature.FullTrustValidSignature:
+            case TrustAndSignature.FullTrustNoSignature:
+            case TrustAndSignature.FullTrustBuiltInPackage:
+            default:
+                return false;
+        }
+    }
+
     private static TrustAndSignature GetTrustAndSignature(TrustLevel trustLevel, SignatureInfo signature, bool isBuiltIn)
     {
         switch (trustLevel)

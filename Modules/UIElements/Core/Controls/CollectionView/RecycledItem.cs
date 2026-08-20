@@ -2,13 +2,16 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEngine.UIElements.HierarchyV2
 {
-    internal class RecycledItem
+    internal partial class RecycledItem
     {
-        static UnityEngine.Pool.ObjectPool<RecycledItem> s_ItemPool = new (() => new RecycledItem(), null, i => i.DetachElement(), i => i.DestroyElement());
+        [AutoStaticsCleanupOnCodeReload] // discards stale pooled items across reload; Get() re-Assign()s state
+        static readonly UnityEngine.Pool.ObjectPool<RecycledItem> s_ItemPool = new (() => new RecycledItem(), null, i => i.DetachElement(), i => i.DestroyElement());
 
         public LinkedListNode<RecycledItem> node { get; set; }
         public int index;
@@ -155,3 +158,4 @@ namespace UnityEngine.UIElements.HierarchyV2
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

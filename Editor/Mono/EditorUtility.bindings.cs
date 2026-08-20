@@ -71,15 +71,15 @@ namespace UnityEditor
 
         internal static void RemapAssetReferences(UnityEngine.Object[] objects, Dictionary<string, string> assetPathMap, Dictionary<EntityId, EntityId> idMap = null)
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             RemapAssetReferences(objects, assetPathMap.Keys.ToArray(), assetPathMap.Values.ToArray(),
-#pragma warning restore UA2001
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+#pragma warning disable UAC2001 // Avoid Linq
                 idMap == null ? Array.Empty<EntityId>() : idMap.Keys.ToArray(),
-#pragma warning restore UA2001
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+#pragma warning disable UAC2001 // Avoid Linq
                 idMap == null ? Array.Empty<EntityId>() : idMap.Values.ToArray()
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             );
         }
 

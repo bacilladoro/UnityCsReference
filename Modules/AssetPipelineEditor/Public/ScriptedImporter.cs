@@ -201,9 +201,9 @@ namespace UnityEditor.AssetImporters
             var handledExts = new SortedDictionary<string, bool>();
             if (attribute.fileExtensions != null)
             {
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 var fileExtensions = attribute.fileExtensions.Distinct(StringComparer.OrdinalIgnoreCase);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 foreach (var fileExtension in fileExtensions)
                 {
                     var cleanExt = fileExtension.Trim('.');
@@ -214,9 +214,9 @@ namespace UnityEditor.AssetImporters
 
             if (attribute.overrideFileExtensions != null)
             {
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 var overrideFileExtensions = attribute.overrideFileExtensions.Distinct(StringComparer.OrdinalIgnoreCase);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 foreach (var fileExtension in overrideFileExtensions)
                 {
                     var cleanExt = fileExtension.Trim('.');

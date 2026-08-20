@@ -3,7 +3,8 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
-using Newtonsoft.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Unity.Multiplayer.PlayMode.Editor
 {
@@ -12,7 +13,9 @@ namespace Unity.Multiplayer.PlayMode.Editor
     {
         const LayoutFlags k_DefaultLayout = LayoutFlags.GameView | LayoutFlags.ConsoleWindow;
 
+        [JsonInclude]
         public LayoutFlags EditModeLayoutFlags;
+        [JsonInclude]
         public LayoutFlags PlayModeLayoutFlags;
 
         public override string ToString()
@@ -31,17 +34,23 @@ namespace Unity.Multiplayer.PlayMode.Editor
 
         public static string Serialize(CloneData data)
         {
-            return JsonConvert.SerializeObject(data, Formatting.Indented);
+            return JsonSerializer.Serialize(data, ParsingSystem.SerializerOptions);
         }
 
         public static bool TryDeserialize(string data, out CloneData cloneData)
         {
+            if (string.IsNullOrEmpty(data))
+            {
+                cloneData = NewDefault();
+                return false;
+            }
+
             try
             {
-                cloneData = JsonConvert.DeserializeObject<CloneData>(data);
+                cloneData = JsonSerializer.Deserialize<CloneData>(data, ParsingSystem.SerializerOptions);
                 return true;
             }
-            catch (JsonException e) when (e is JsonSerializationException or JsonReaderException)
+            catch (JsonException)
             {
                 cloneData = NewDefault();
                 return false;

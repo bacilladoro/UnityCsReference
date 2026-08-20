@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using JetBrains.Annotations;
 using Unity.GraphToolkit.ItemLibrary.Editor;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 
 namespace Unity.GraphToolkit.Editor
@@ -34,6 +35,7 @@ namespace Unity.GraphToolkit.Editor
             GraphModel = graphModel;
         }
 
+        [NoAutoStaticsCleanup] // empty sentinel dictionary; never holds data, reused to avoid allocations
         static readonly IReadOnlyDictionary<string, string> k_NoCategoryStyle = new Dictionary<string, string>();
 
         protected IItemDatabaseProvider m_DatabaseProvider;

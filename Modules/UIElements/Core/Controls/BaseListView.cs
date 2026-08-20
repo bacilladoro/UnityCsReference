@@ -619,7 +619,8 @@ namespace UnityEngine.UIElements
 
             if (!int.TryParse(evt.newValue, out var value) || value < 0)
             {
-                m_ArraySizeField.SetValueWithoutNotify(evt.previousValue);
+                using (m_ArraySizeField.IgnoreValidation())
+                    m_ArraySizeField.SetValueWithoutNotify(evt.previousValue);
                 return;
             }
 
@@ -658,8 +659,12 @@ namespace UnityEngine.UIElements
             if (!HasValidDataAndBindings() || m_ArraySizeField == null)
                 return;
 
+            // Refreshing the display is not a user edit, so it must not run onValidateValue. (UUM-148151)
             if (!m_ArraySizeField.showMixedValue)
-                m_ArraySizeField.SetValueWithoutNotify(viewController.GetItemsMinCount().ToString());
+            {
+                using (m_ArraySizeField.IgnoreValidation())
+                    m_ArraySizeField.SetValueWithoutNotify(viewController.GetItemsMinCount().ToString());
+            }
 
             footer?.SetEnabled(!m_IsOverMultiEditLimit);
         }
@@ -774,13 +779,13 @@ namespace UnityEngine.UIElements
             {
                 onRemove.Invoke(this);
             }
-#pragma warning disable UA2002 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2002 // Avoid Linq
             else if (selectedIndicesList.Count > 0)
-#pragma warning restore UA2002
+#pragma warning restore UAC2002
             {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 viewController.RemoveItems(selectedIndicesList.ToList());
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 ClearSelection();
             }
             else if (itemsSource?.Count > 0)

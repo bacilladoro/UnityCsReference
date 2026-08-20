@@ -87,7 +87,7 @@ namespace UnityEngine.Windows.Speech
         }
     }
 
-    static partial class PhraseRecognitionSystem
+    public static partial class PhraseRecognitionSystem
     {
         public delegate void ErrorDelegate(SpeechError errorCode);
         [AutoStaticsCleanupOnCodeReload]

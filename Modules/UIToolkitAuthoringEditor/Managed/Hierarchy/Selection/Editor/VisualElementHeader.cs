@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitAuthoringFramework not yet converted
 using System;
 using System.IO;
 using Unity.Properties;
@@ -23,6 +24,7 @@ partial class VisualElementHeader : UISelectionObjectHeader
     public const string AssetPathTypeIconUssClass = "unity-visual-element-inspector__asset-path-type-icon";
     public const string AssetPathFieldUssClass = "unity-visual-element-inspector__asset-path-field";
     public const string AssetActionsViewUssClass = "unity-visual-element-inspector__asset-actions-view";
+    public const string StackingIndicatorUssClass = "unity-visual-element-header__stacking-context-indicator";
 
     private const string k_VisualTreeAsset = "UIToolkitAuthoring/Inspector/VisualElementHeader.uxml";
     private const string k_StyleSheet = "UIToolkitAuthoring/Inspector/UIToolkitAuthoringInspector.uss";
@@ -41,6 +43,9 @@ partial class VisualElementHeader : UISelectionObjectHeader
     readonly Image m_AssetPathTypeIcon;
     readonly TextField m_AssetPathField;
     readonly VisualTreeAssetInspectorActionsView m_AssetActionsView;
+
+    readonly Button m_StackingIndicator;
+    VisualElement m_StackingContextRoot;
 
     public UxmlAttributesView AttributesView => m_AttributesView;
     public InspectorSearchField SearchField { get; }
@@ -102,6 +107,7 @@ partial class VisualElementHeader : UISelectionObjectHeader
                 m_AssetActionsView.PanelSettings = m_Element.GetPanelSettings();
             }
             NotifyPropertyChanged(ElementProperty);
+            RefreshStackingIndicator();
         }
     }
 
@@ -129,11 +135,12 @@ partial class VisualElementHeader : UISelectionObjectHeader
             StageContextMenuUtility.GetOpenOptions(m_Element, out showTemplateOptions, out canOpenInContext);
         }
 
-        bool showActionsView = showTemplateOptions || (!inStagingMode && (isRecording || editFlags == VisualElementEditFlags.None));
-        m_AssetActionsView.style.display = showActionsView ? DisplayStyle.Flex : DisplayStyle.None;
-        m_AssetPathContainer.style.display = (showTemplateOptions || (editFlags == VisualElementEditFlags.None && !inStagingMode))
-            ? DisplayStyle.Flex : DisplayStyle.None;
-        if (showActionsView)
+        // Outside the editing stage (Main Stage included) the document link and its actions are
+        // always available; inside the stage they only appear for elements of template instances.
+        bool showAssetViews = !inStagingMode || showTemplateOptions;
+        m_AssetActionsView.style.display = showAssetViews ? DisplayStyle.Flex : DisplayStyle.None;
+        m_AssetPathContainer.style.display = showAssetViews ? DisplayStyle.Flex : DisplayStyle.None;
+        if (showAssetViews)
         {
             var openInContextButton = m_AssetActionsView.OpenInContextButton;
 
@@ -187,5 +194,61 @@ partial class VisualElementHeader : UISelectionObjectHeader
 
         SearchField = new InspectorSearchField();
         Add(SearchField);
+
+        m_StackingIndicator = new Button(OnStackingIndicatorClicked);
+        m_StackingIndicator.AddToClassList(StackingIndicatorUssClass);
+        m_StackingIndicator.style.backgroundImage = EditorGUIUtility.IconContent("UnityEditor.SceneHierarchyWindow").image as Texture2D;
+        this.Q(className: UISelectionObjectHeader.ObjectIdentifierRowUssClass)?.Add(m_StackingIndicator);
+
+        RegisterCallback<AttachToPanelEvent>(OnAttachToPanel);
+        RegisterCallback<DetachFromPanelEvent>(OnDetachFromPanel);
+    }
+
+    void OnAttachToPanel(AttachToPanelEvent evt)
+    {
+        UIToolkitAuthoringSettings.EnableZIndexChanged += RefreshStackingIndicator;
+        UICommandQueue.RegisterHandlerForCategory(CommandCategory.Styling, OnStylingChange);
+    }
+
+    void OnDetachFromPanel(DetachFromPanelEvent evt)
+    {
+        UIToolkitAuthoringSettings.EnableZIndexChanged -= RefreshStackingIndicator;
+        UICommandQueue.UnregisterHandlerForCategory(CommandCategory.Styling, OnStylingChange);
+    }
+
+    void OnStylingChange(in CommandContext context) => RefreshStackingIndicator();
+
+    void RefreshStackingIndicator()
+    {
+        m_StackingContextRoot = null;
+
+        if (!UIToolkitAuthoringSettings.EnableZIndex || m_Element == null)
+        {
+            m_StackingIndicator.style.display = DisplayStyle.None;
+            return;
+        }
+
+        var boundary = m_Element.GetFirstAncestorOfType<IPanelComponentRootElement>() as VisualElement
+            ?? m_Element.panel?.visualTree;
+        var root = VisualElement.FindStackingContextRootElement(m_Element, boundary);
+
+        if (root == null || root.GetSelectionObject<VisualElementSelection>()?.GetEntityId() == null)
+        {
+            m_StackingIndicator.style.display = DisplayStyle.None;
+            return;
+        }
+
+        m_StackingContextRoot = root;
+        var rootName = !string.IsNullOrEmpty(root.name) ? root.name : TypeUtility.GetTypeDisplayName(root.GetType());
+        m_StackingIndicator.tooltip = string.Format(L10n.Tr("Inside a stacking context established by {0}. Click to select it."), rootName);
+        m_StackingIndicator.style.display = DisplayStyle.Flex;
+    }
+
+    void OnStackingIndicatorClicked()
+    {
+        var entityId = m_StackingContextRoot?.GetSelectionObject<VisualElementSelection>()?.GetEntityId();
+        if (entityId.HasValue)
+            Selection.activeEntityId = entityId.Value;
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

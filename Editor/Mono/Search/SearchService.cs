@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor.Profiling;
 using UnityEngine;
 using Attribute = System.Attribute;
@@ -205,10 +206,11 @@ namespace UnityEditor.SearchService
     }
 
     [InitializeOnLoad]
-    static class SearchService
+    static partial class SearchService
     {
         public const string keyPrefix = "searchservice";
         public const string activeSearchEnginesPrefKey = keyPrefix + ".activeengines.";
+        [AutoStaticsCleanupOnCodeReload]
         public static List<ISearchApi> searchApis = new List<ISearchApi>();
 
         public enum SyncSearchEvent
@@ -218,6 +220,7 @@ namespace UnityEditor.SearchService
             EndSession
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<SyncSearchEvent, string, string> syncSearchChanged;
 
         public static void NotifySyncSearchChanged(SyncSearchEvent evt, string syncViewId, string searchQuery)
@@ -247,9 +250,9 @@ namespace UnityEditor.SearchService
 
         List<TEngine> engines { get; } = new List<TEngine>();
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
         IEnumerable<ISearchEngineBase> ISearchApi.engines => engines.Cast<ISearchEngineBase>();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
         public string activeSearchEngineName { get; private set; }
 
@@ -419,9 +422,9 @@ namespace UnityEditor.SearchService
         void RegisterAllEngines()
         {
             var types = TypeCache.GetTypesWithAttribute<TAttribute>();
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var instantiatedEngines = types.Select(type => Activator.CreateInstance(type));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             foreach (var instantiatedEngine in instantiatedEngines)
             {
                 if (instantiatedEngine is TEngine typedEngine)

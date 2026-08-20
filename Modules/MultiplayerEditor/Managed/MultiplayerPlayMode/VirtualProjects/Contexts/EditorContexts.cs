@@ -3,12 +3,13 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 
 namespace Unity.Multiplayer.PlayMode.Editor
 {
     [InitializeOnLoad]
-    static class EditorContexts
+    static partial class EditorContexts
     {
         public static event Action OnInitialized
         {
@@ -33,14 +34,19 @@ namespace Unity.Multiplayer.PlayMode.Editor
             }
         }
 
+        [AutoStaticsCleanupOnCodeReload] // pending callbacks delegate; stale handlers after reload pin old ALC
         static Action s_PendingOnInitializedCallbacks;
 
+        [AutoStaticsCleanupOnCodeReload] // init gate; must reset to false so SendReadyEvent re-runs after reload
         public static bool IsInitialized { get; set; }
 
+        [AutoStaticsCleanupOnCodeReload] // context object; stale after reload
         static MainEditorContext s_MainEditorContext;
+        [AutoStaticsCleanupOnCodeReload] // context object; stale after reload
         static CloneContext s_CloneContext;
 
-        static EditorContexts()
+        [OnCodeLoaded]
+        static void Initialize()
         {
             if (MigrationUtility.ShouldDisableMultiplayerPlayMode())
                 return;

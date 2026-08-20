@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using Unity.GraphToolkit.Editor.ContextualMenuItems;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.Pool;
 
@@ -48,13 +49,14 @@ namespace Unity.GraphToolkit.Editor
     /// A model that represents a port in a node.
     /// </summary>
     [UnityRestricted]
-    internal class PortModel : GraphElementModel, IHasTitle, IPort
+    internal partial class PortModel : GraphElementModel, IHasTitle, IPort
     {
         /// <summary>
         /// The separator used in UniqueName for sub ports.
         /// </summary>
         public const char SubPortIdSeparator = '.';
 
+        [NoAutoStaticsCleanup] // reusable string builder buffer; cleared at the start of ComputePortLabel, safe to persist
         static StringBuilder s_LabelSuffixBuilder = new();
 
         string m_PortId;
@@ -938,7 +940,8 @@ namespace Unity.GraphToolkit.Editor
         /// <inheritdoc />
         public override IReadOnlyList<ContextualMenuItem> ContextualMenuItems => k_ContextualMenuItems;
 
-        static readonly List<ContextualMenuItem> k_ContextualMenuItems = new() {
+        [AutoStaticsCleanupOnCodeReload]
+        static List<ContextualMenuItem> k_ContextualMenuItems = new() {
              ContextualMenuHelpers.addNodeFromPortItem,
              ContextualMenuHelpers.createVariableFromPortItem,
              ContextualMenuHelpers.copyValueItem,

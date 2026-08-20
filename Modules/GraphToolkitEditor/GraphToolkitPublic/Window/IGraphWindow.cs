@@ -2,7 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
-using UnityEditor;
+using System;
 
 namespace Unity.GraphToolkit.Editor
 {
@@ -22,5 +22,13 @@ namespace Unity.GraphToolkit.Editor
         /// The graph being edited, or null if no graph is currently loaded.
         /// </value>
         Graph Graph { get; }
+
+        /// <summary>
+        /// Gets the state machine currently being edited in this window.
+        /// </summary>
+        /// <value>
+        /// The state machine being edited, or null if no state machine is currently loaded.
+        /// </value>
+        StateMachine StateMachine => throw new NotSupportedException();
     }
 }

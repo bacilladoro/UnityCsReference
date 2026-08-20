@@ -34,9 +34,29 @@ namespace UnityEngine.UIElements
         /// </summary>
         StyleEnum<Align> alignSelf { get => default; set => _ = value ; }
         /// <summary>
-        /// Controls whether the animation is running or paused.
+        /// Delay before each animation begins, in seconds. Negative values start the animation partway through its first iteration. Comma-separated to match the animation list.
         /// </summary>
-        StyleEnum<AnimationPlayState> animationPlayState { get => default; set => _ = value ; }
+        StyleList<float> animationDelay { get => default; set => _ = value ; }
+        /// <summary>
+        /// Whether each animation plays forward, backward, or alternates direction across iterations. Comma-separated to match the animation list.
+        /// </summary>
+        StyleList<AnimationDirection> animationDirection { get => default; set => _ = value ; }
+        /// <summary>
+        /// Duration of one iteration of each animation, in seconds. The default of 0 uses the clip's intrinsic length; a positive value remaps one iteration to that duration. Comma-separated to match the animation list.
+        /// </summary>
+        StyleList<float> animationDuration { get => default; set => _ = value ; }
+        /// <summary>
+        /// Number of times each animation repeats. Use 'infinite' to loop forever. The clip's own loop flag is ignored in favor of this value. Comma-separated to match the animation list.
+        /// </summary>
+        StyleList<AnimationIterationCount> animationIterationCount { get => default; set => _ = value ; }
+        /// <summary>
+        /// Animations to apply with the current element as root. Comma-separated to run multiple animations at once.
+        /// </summary>
+        StyleList<UIAnimationClip> animationNames { get => default; set => _ = value ; }
+        /// <summary>
+        /// Controls whether each animation is running or paused. Comma-separated to match the animation list.
+        /// </summary>
+        StyleList<AnimationPlayState> animationPlayStates { get => default; set => _ = value ; }
         /// <summary>
         /// Sets a preferred aspect ratio for the box, which will be used in the calculation of auto sizes and some other layout functions.
         /// </summary>
@@ -180,6 +200,42 @@ namespace UnityEngine.UIElements
         /// </remarks>
         StyleLength fontSize { get => default; set => _ = value ; }
         /// <summary>
+        /// Sizes of implicitly-created CSS Grid columns. Only takes effect when display is set to grid.
+        /// </summary>
+        StyleList<GridTrackSize> gridAutoColumns { get => default; set => _ = value ; }
+        /// <summary>
+        /// Controls how the auto-placement algorithm flows items into a CSS Grid container. Only takes effect when display is set to grid.
+        /// </summary>
+        StyleEnum<GridAutoFlow> gridAutoFlow { get => default; set => _ = value ; }
+        /// <summary>
+        /// Sizes of implicitly-created CSS Grid rows. Only takes effect when display is set to grid.
+        /// </summary>
+        StyleList<GridTrackSize> gridAutoRows { get => default; set => _ = value ; }
+        /// <summary>
+        /// The 1-based column line a CSS Grid item ends on, spanning from grid-column (0 = span a single track). Only takes effect when the element is a grid item.
+        /// </summary>
+        StyleGridLine gridColumnEnd { get => default; set => _ = value ; }
+        /// <summary>
+        /// The 1-based column line a CSS Grid item starts on (0 = auto-placement). Only takes effect when the element is a grid item.
+        /// </summary>
+        StyleGridLine gridColumnStart { get => default; set => _ = value ; }
+        /// <summary>
+        /// The 1-based row line a CSS Grid item ends on, spanning from grid-row (0 = span a single track). Only takes effect when the element is a grid item.
+        /// </summary>
+        StyleGridLine gridRowEnd { get => default; set => _ = value ; }
+        /// <summary>
+        /// The 1-based row line a CSS Grid item starts on (0 = auto-placement). Only takes effect when the element is a grid item.
+        /// </summary>
+        StyleGridLine gridRowStart { get => default; set => _ = value ; }
+        /// <summary>
+        /// Defines the columns of a CSS Grid container as a list of track sizes. Only takes effect when display is set to grid.
+        /// </summary>
+        StyleList<GridTrackSize> gridTemplateColumns { get => default; set => _ = value ; }
+        /// <summary>
+        /// Defines the rows of a CSS Grid container as a list of track sizes. Only takes effect when display is set to grid.
+        /// </summary>
+        StyleList<GridTrackSize> gridTemplateRows { get => default; set => _ = value ; }
+        /// <summary>
         /// Fixed height of an element for the layout.
         /// </summary>
         StyleLength height { get => default; set => _ = value ; }
@@ -187,6 +243,14 @@ namespace UnityEngine.UIElements
         /// Justification of children on the main axis of this container.
         /// </summary>
         StyleEnum<Justify> justifyContent { get => default; set => _ = value ; }
+        /// <summary>
+        /// Default justification (inline-axis alignment) of all items inside a CSS Grid container. Only takes effect when display is set to grid.
+        /// </summary>
+        StyleEnum<Align> justifyItems { get => default; set => _ = value ; }
+        /// <summary>
+        /// Justification (inline-axis alignment) of a single item inside its CSS Grid cell, overriding justify-items. Only takes effect when the element is a grid item.
+        /// </summary>
+        StyleEnum<Align> justifySelf { get => default; set => _ = value ; }
         /// <summary>
         /// Left distance from the element's box during layout.
         /// </summary>
@@ -314,10 +378,6 @@ namespace UnityEngine.UIElements
         /// </summary>
         StyleTranslate translate { get => default; set => _ = value ; }
         /// <summary>
-        /// Animation to apply with the current element as root.
-        /// </summary>
-        StyleUIAnimationClip unityAnimationClip { get => default; set => _ = value ; }
-        /// <summary>
         /// Tinting color for the element's backgroundImage.
         /// </summary>
         StyleColor unityBackgroundImageTintColor { get => default; set => _ = value ; }
@@ -434,5 +494,12 @@ namespace UnityEngine.UIElements
         /// Increases or decreases the space between words.
         /// </summary>
         StyleLength wordSpacing { get => default; set => _ = value ; }
+        /// <summary>
+        /// Controls the stacking order of overlapping elements within a stacking context. The default is auto, which does not create a stacking context; any integer value creates one for the element and its descendants.
+        /// </summary>
+        /// <remarks>
+        /// Unlike CSS, transform and opacity do not establish a stacking context in UI Toolkit; only a z-index other than auto does.
+        /// </remarks>
+        StyleInt zIndex { get => default; set => _ = value ; }
     }
 }

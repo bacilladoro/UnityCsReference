@@ -141,9 +141,9 @@ namespace UnityEditor
                 EditorGUILayout.PropertyField(m_AutoTiling, Styles.s_AutoTilingLabel);
 
             // Only show 'Composite Operation' if all targets are capable of being composited.
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             if (targets.Count(x => (x as Collider2D).compositeCapable == false) == 0)
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 EditorGUILayout.PropertyField(m_CompositeOperation);
                 if (isUsedByComposite)
@@ -189,9 +189,9 @@ namespace UnityEditor
                 EditorGUILayout.PropertyField(m_ExcludeLayers);
 
                 // Only show force send/receive if we're not dealing with triggers.
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 if (targets.Count(x => (x as Collider2D).isTrigger) == 0)
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 {
                     EditorGUILayout.Space();
                     EditorGUILayout.PropertyField(m_ForceSendLayers);
@@ -252,9 +252,9 @@ namespace UnityEditor
 
         bool ShouldShowDensity()
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             if (targets.Select(x => (x as Collider2D).attachedRigidbody).DistinctCountGreaterThan(1))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 return false;
 
             var rigidbody = (target as Collider2D).attachedRigidbody;
@@ -348,9 +348,9 @@ namespace UnityEditor
 
         protected bool CanEditCollider()
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var e = targets.FirstOrDefault((x) =>
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 var sr = (x as Component).GetComponent<SpriteRenderer>();
                 return (sr != null && sr.drawMode != SpriteDrawMode.Simple && m_AutoTiling.boolValue == true);

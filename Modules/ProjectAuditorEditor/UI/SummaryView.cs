@@ -213,7 +213,7 @@ namespace Unity.ProjectAuditor.Editor.UI
 
                 if (topTen.Refresh)
                 {
-#pragma warning disable UA2001, UA2005, UA2010 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001, UAC2005, UAC2010 // Avoid Linq
                     topTen.Issues = m_ViewManager.Report.GetAllIssues()
                         .Where(i =>
                             !m_ViewManager.HasPendingCategory(i.Category)
@@ -226,12 +226,12 @@ namespace Unity.ProjectAuditor.Editor.UI
                         .Take(10)
                         .Select(g => g.ToList())
                         .ToList();
-#pragma warning restore UA2001, UA2005, UA2010
+#pragma warning restore UAC2001, UAC2005, UAC2010
                     int oldSize = topTen.FoldoutStates.Count;
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                     foreach (var key in topTen.FoldoutStates.Keys.ToArray().Where(key => !topTen.Issues.Exists(group => group[0].DescriptorIdAsString == key)))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                         topTen.FoldoutStates.Remove(key);
 
                     topTen.Refresh = false;

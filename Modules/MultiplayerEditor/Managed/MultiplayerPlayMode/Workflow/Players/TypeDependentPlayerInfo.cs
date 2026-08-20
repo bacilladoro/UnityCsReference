@@ -3,7 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 using UnityEngine;
 
 namespace Unity.Multiplayer.PlayMode.Editor
@@ -15,7 +15,7 @@ namespace Unity.Multiplayer.PlayMode.Editor
 
         // TYPE = Clone
         // NOTE: This will be null when a player has not activated yet
-        [JsonProperty] public VirtualProjectIdentifier VirtualProjectIdentifier { get; internal set; }
+        [JsonInclude] public VirtualProjectIdentifier VirtualProjectIdentifier { get; internal set; }
 
         // TYPE = DGS
         /* none for now*/

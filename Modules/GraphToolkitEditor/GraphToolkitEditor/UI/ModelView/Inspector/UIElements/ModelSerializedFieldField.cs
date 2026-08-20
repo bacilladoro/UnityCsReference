@@ -132,6 +132,14 @@ namespace Unity.GraphToolkit.Editor
             }
         }
 
+        // Reads through the inspector surrogate, if any, so the getter reads the same object the set command writes to.
+        static object GetDataObject(object inspectedObject)
+        {
+            return inspectedObject is IHasInspectorSurrogate hasInspectorSurrogate
+                ? hasInspectorSurrogate.Surrogate
+                : inspectedObject;
+        }
+
         protected static Func<TValue> MakeFieldValueGetter(FieldInfo fieldInfo, IReadOnlyList<object> inspectedObjects)
         {
             if (fieldInfo != null && inspectedObjects != null)
@@ -144,9 +152,9 @@ namespace Unity.GraphToolkit.Editor
                     {
                         Debug.Assert(typeof(TValue) == propertyInfo.PropertyType);
                         if (inspectedObjects.Count == 1)
-                            return () => (TValue)propertyInfo.GetMethod.Invoke(inspectedObjects[0], null);
+                            return () => (TValue)propertyInfo.GetMethod.Invoke(GetDataObject(inspectedObjects[0]), null);
 
-                        return MakeMultipleGetter(obj => (TValue)propertyInfo.GetMethod.Invoke(obj, null), inspectedObjects);
+                        return MakeMultipleGetter(obj => (TValue)propertyInfo.GetMethod.Invoke(GetDataObject(obj), null), inspectedObjects);
                     }
                 }
 
@@ -156,17 +164,17 @@ namespace Unity.GraphToolkit.Editor
                 {
                     if (invertToggleAttribute != null)
                     {
-                        return () => (TValue)(object)!(bool)fieldInfo.GetValue(inspectedObjects[0]);
+                        return () => (TValue)(object)!(bool)fieldInfo.GetValue(GetDataObject(inspectedObjects[0]));
                     }
-                    return () => (TValue)fieldInfo.GetValue(inspectedObjects[0]);
+                    return () => (TValue)fieldInfo.GetValue(GetDataObject(inspectedObjects[0]));
                 }
 
                 if (invertToggleAttribute != null)
                 {
-                    MakeMultipleGetter(obj => (TValue)(object)!(bool)fieldInfo.GetValue(obj), inspectedObjects);
+                    MakeMultipleGetter(obj => (TValue)(object)!(bool)fieldInfo.GetValue(GetDataObject(obj)), inspectedObjects);
                 }
 
-                return MakeMultipleGetter(obj => (TValue)fieldInfo.GetValue(obj), inspectedObjects);
+                return MakeMultipleGetter(obj => (TValue)fieldInfo.GetValue(GetDataObject(obj)), inspectedObjects);
             }
 
             return null;

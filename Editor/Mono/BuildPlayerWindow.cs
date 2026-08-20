@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: BuildSettingsWindow not yet converted
 using System;
 using System.Text.RegularExpressions;
 using UnityEngine;
@@ -22,6 +23,7 @@ using RequiredByNativeCodeAttribute = UnityEngine.Scripting.RequiredByNativeCode
 using UnityEditor.Connect;
 using UnityEditor.Utils;
 using UnityEditor.Build.Profile;
+using Unity.Scripting.LifecycleManagement;
 using TreeViewState = UnityEditor.IMGUI.Controls.TreeViewState<int>;
 
 namespace UnityEditor
@@ -136,6 +138,7 @@ namespace UnityEditor
                 EditorGUIUtility.TrTextContent("LZ4HC"),
             };
 
+            [NoAutoStaticsCleanup] // GUIStyle wrapping EditorStyles.foldout; survives code reload
             public static GUIStyle boldFoldout;
 
             static Styles()
@@ -149,10 +152,13 @@ namespace UnityEditor
         Vector2 buildTargetSettingsScrollPosition = new Vector2(0, 0);
         const string kEditorBuildSettingsPath = "ProjectSettings/EditorBuildSettings.asset";
 
+        [NoAutoStaticsCleanup] // lazy GUIStyle/GUIContent holder; styles survive code reload
         static Styles styles;
 
+        [NoAutoStaticsCleanup] // editor install location is fixed for the session
         static bool isEditorinstalledWithHub = IsEditorInstalledWithHub();
 
+        [AutoStaticsCleanupOnCodeReload]
         internal static event Action<BuildProfile> drawingMultiplayerBuildOptions;
 
         [UsedImplicitly, RequiredByNativeCode]
@@ -298,7 +304,9 @@ namespace UnityEditor
             GUIUtility.ExitGUI();
         }
 
+        [NoAutoStaticsCleanup] // mirrors persisted EditorUserBuildSettings value; safe to keep
         static int s_CurrOverrideMaxTextureSize = -1;
+        [NoAutoStaticsCleanup] // mirrors persisted EditorUserBuildSettings value; safe to keep
         static OverrideTextureCompression s_CurrOverrideTextureCompression;
 
         static bool hasAssetImportOverrideChanges =>
@@ -545,7 +553,7 @@ namespace UnityEditor
         }
 
         // Major.Minor.Micro followed by one of abxfp followed by an identifier, optionally suffixed with " (revisionhash)"
-        static Regex s_VersionPattern = new Regex(@"(?<shortVersion>\d+\.\d+\.\d+(?<suffix>((?<alphabeta>[abx])|[fp])[^\s]*))( \((?<revision>[a-fA-F\d]+)\))?",
+        static readonly Regex s_VersionPattern = new Regex(@"(?<shortVersion>\d+\.\d+\.\d+(?<suffix>((?<alphabeta>[abx])|[fp])[^\s]*))( \((?<revision>[a-fA-F\d]+)\))?",
             RegexOptions.Compiled);
 
         internal static string GetPlaybackEngineDownloadURL(GUID platformGuid)
@@ -1105,3 +1113,4 @@ namespace UnityEditor
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

@@ -126,9 +126,9 @@ namespace UnityEditor.UIElements.Samples
 
             text = text.Trim();
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var lineCount = text.Count(x => x == '\n') + 1;
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             string lineNumbersText = "";
             for (int i = 1; i <= lineCount; ++i)
             {

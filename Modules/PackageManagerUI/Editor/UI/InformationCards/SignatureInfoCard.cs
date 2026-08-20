@@ -33,21 +33,24 @@ internal class SignatureInfoCard : PackageInformationCard
                 break;
             case TrustAndSignature.LimitedTrust:
                 signatureText = version.signatureOrgName;
-                icon = Icon.Info;
-                iconTooltip = PackageSignatureHelpBox.k_LimitedTrustMessage;
-                contentTooltip = PackageSignatureHelpBox.k_LimitedTrustMessage;
+                icon = version.meetsTrustPolicy ? Icon.Info : Icon.Warning;
+                var limitedTrustTooltip = PackageSignatureHelpBox.GetLimitedTrustMessage(version.meetsTrustPolicy);
+                iconTooltip = limitedTrustTooltip;
+                contentTooltip = limitedTrustTooltip;
                 break;
             case TrustAndSignature.UntrustedNoSignature:
                 signatureText = L10n.Tr("Missing");
                 icon = Icon.Warning;
-                iconTooltip = PackageSignatureHelpBox.k_UnsignedMessage;
-                contentTooltip = PackageSignatureHelpBox.k_UnsignedMessage;
+                var unsignedTooltip = PackageSignatureHelpBox.GetUnsignedMessage(version.meetsTrustPolicy);
+                iconTooltip = unsignedTooltip;
+                contentTooltip = unsignedTooltip;
                 break;
             case TrustAndSignature.UntrustedInvalidSignature:
                 signatureText = L10n.Tr("Invalid");
                 icon = Icon.Error;
-                iconTooltip = PackageSignatureHelpBox.k_InvalidSignatureMessage;
-                contentTooltip = PackageSignatureHelpBox.k_InvalidSignatureMessage;
+                var invalidSignatureTooltip = PackageSignatureHelpBox.GetInvalidSignatureMessage(version.meetsTrustPolicy);
+                iconTooltip = invalidSignatureTooltip;
+                contentTooltip = invalidSignatureTooltip;
                 break;
         }
 

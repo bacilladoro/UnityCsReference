@@ -69,6 +69,18 @@ namespace UnityEngine.UIElements
             gradient.Clear();
         }
 
+        // Non-allocating comparison against the managed struct; mirrors CopyFrom(Background).
+        public bool ValueEquals(in Background managed)
+        {
+            var obj = managed.GetSelectedImage();
+            var managedId = obj != null ? obj.GetEntityId() : EntityId.None;
+            if (imageEntityId != managedId)
+                return false;
+            if (managed.gradient.IsEmpty())
+                return gradient.Count == 0;
+            return gradient.Count == 1 && gradient[0].Equals((UnmanagedBackgroundGradient)managed.gradient);
+        }
+
         public void Dispose() => gradient.Clear();
 
         public bool Equals(UnmanagedBackground other)

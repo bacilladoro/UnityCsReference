@@ -15,6 +15,8 @@ namespace UnityEngine.UIElements
 {
     enum StyleDataType
     {
+        AnimationDataType,
+        GridDataType,
         InheritedDataType,
         LayoutDataType,
         RareDataType,
@@ -28,6 +30,10 @@ namespace UnityEngine.UIElements
         internal static StyleDataType GetType<T>()
             where T : unmanaged
         {
+            if (typeof(T) == typeof(AnimationData))
+                return StyleDataType.AnimationDataType;
+            if (typeof(T) == typeof(GridData))
+                return StyleDataType.GridDataType;
             if (typeof(T) == typeof(InheritedData))
                 return StyleDataType.InheritedDataType;
             if (typeof(T) == typeof(LayoutData))

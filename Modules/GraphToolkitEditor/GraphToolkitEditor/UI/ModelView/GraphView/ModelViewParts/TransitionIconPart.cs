@@ -3,6 +3,8 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using UnityEditor;
+using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace Unity.GraphToolkit.Editor
@@ -16,6 +18,8 @@ namespace Unity.GraphToolkit.Editor
         public static readonly string ussClassName = "ge-transition-icon";
 
         Image m_Icon;
+
+        string m_PreviousIconPath;
 
         /// <summary>
         /// Creates a new instance of the <see cref="TransitionIconPart"/> class.
@@ -58,6 +62,34 @@ namespace Unity.GraphToolkit.Editor
         }
 
         /// <inheritdoc />
-        public override void UpdateUIFromModel(UpdateFromModelVisitor visitor) { }
+        public override void UpdateUIFromModel(UpdateFromModelVisitor visitor)
+        {
+            if (m_Icon == null || m_Model is not SelfTransitionModel transition)
+                return;
+
+            var iconPath = transition.IconPath;
+            if (iconPath == m_PreviousIconPath)
+                return;
+
+            if (string.IsNullOrEmpty(iconPath))
+            {
+                m_Icon.image = null;
+            }
+            else
+            {
+                var iconTexture = EditorGUIUtility.LoadIcon(iconPath);
+                if (iconTexture == null)
+                {
+                    Debug.LogWarning($"Could not load transition icon at path '{iconPath}'.");
+                    m_Icon.image = null;
+                }
+                else
+                {
+                    m_Icon.image = iconTexture;
+                }
+            }
+
+            m_PreviousIconPath = iconPath;
+        }
     }
 }

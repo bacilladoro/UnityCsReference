@@ -9,6 +9,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Xml.Linq;
 using Microsoft.Win32;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Bindings;
 
 namespace UnityEditor.Scripting.Compilers
@@ -76,7 +77,9 @@ namespace UnityEditor.Scripting.Compilers
         }
 
         private static readonly Version kMinimumSupportedUWPVersion = new Version(10, 0, 19041, 0);
+        [NoAutoStaticsCleanup] // immutable SDK version descriptor, safe to persist across reload
         private static readonly PreviousUWPSDK kMinimumSupportedPreviousUWPSDK = new PreviousUWPSDK(kMinimumSupportedUWPVersion, true);
+        [NoAutoStaticsCleanup] // immutable SDK version descriptor, safe to persist across reload
         private static readonly UWPSDK kMinimumSupportedUWPSDK = new UWPSDK(kMinimumSupportedUWPVersion, new Version(16, 0), new[] { kMinimumSupportedPreviousUWPSDK });
 
         public static UWPSDK MinimumSupportedUWPSDK { get { return kMinimumSupportedUWPSDK; } }
@@ -123,9 +126,9 @@ namespace UnityEditor.Scripting.Compilers
                 }
             }
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return references.ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         public static IEnumerable<UWPExtensionSDK> GetExtensionSDKs(UWPSDK sdk)
@@ -164,9 +167,9 @@ namespace UnityEditor.Scripting.Compilers
             var allSDKs = new List<UWPSDK>();
 
             var filesUnderPlatformsUAP = Directory.GetFiles(platformsUAP, "*", SearchOption.AllDirectories);
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var allPlatformXmlFiles = filesUnderPlatformsUAP.Where(f => string.Equals("Platform.xml", Path.GetFileName(f), StringComparison.OrdinalIgnoreCase));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             foreach (var platformXmlFile in allPlatformXmlFiles)
             {
@@ -189,9 +192,9 @@ namespace UnityEditor.Scripting.Compilers
                         if (version < kMinimumSupportedUWPVersion)
                             continue;
 
-#pragma warning disable UA2001, UA2011 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001, UAC2011 // Avoid Linq
                         var minVSVersionString = platformElement.Elements("MinimumVisualStudioVersion").Select(e => e.Value).FirstOrDefault();
-#pragma warning restore UA2001, UA2011
+#pragma warning restore UAC2001, UAC2011
 
                         // Get supported previous versionss
                         var previousVersionPath = Path.Combine(Path.GetDirectoryName(platformXmlFile), "PreviousPlatforms.xml");

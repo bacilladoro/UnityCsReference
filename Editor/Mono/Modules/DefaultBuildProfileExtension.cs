@@ -96,6 +96,10 @@ namespace UnityEditor.Modules
         {
         }
 
+        public virtual void OnBuildProfileWindowFocus()
+        {
+        }
+
         public virtual bool ShouldDrawDevelopmentPlayerCheckbox() => true;
 
         public virtual bool ShouldDrawLinkTimeOptimization()

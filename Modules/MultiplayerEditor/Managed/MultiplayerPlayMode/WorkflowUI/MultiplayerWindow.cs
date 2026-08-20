@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEditor.ShortcutManagement;
@@ -150,18 +151,23 @@ namespace Unity.Multiplayer.PlayMode.Editor
         }
     }
 
-    static class MultiplayerWindowController
+    static partial class MultiplayerWindowController
     {
         const string k_Title = "Multiplayer Play Mode";
         internal const string RoleServerClient = "Client and Server";
         internal const string RoleServer = "Server";
         internal const string RoleClient = "Client";
 
+        [AutoStaticsCleanupOnCodeReload] // editor window instance; stale after reload
         static MultiplayerWindow s_MultiplayerWindow;
-        static readonly Dictionary<PlayerView, UnityPlayer> APIModelToViewMapping = new Dictionary<PlayerView, UnityPlayer>();
+        [AutoStaticsCleanupOnCodeReload] // maps editor views to player models; both stale after reload
+        static Dictionary<PlayerView, UnityPlayer> APIModelToViewMapping = new Dictionary<PlayerView, UnityPlayer>();
 
+        [AutoStaticsCleanupOnCodeReload] // UI trigger flag; must reset on reload
         public static bool ShouldUpdateUI;
+        [AutoStaticsCleanupOnCodeReload] // window init flag; must reset on reload
         public static bool ShouldStartWindow;
+        [AutoStaticsCleanupOnCodeReload] // init gate; must reset so initialization re-runs after reload
         public static bool IsVirtualProjectWorkflowInitialized;
 
         internal static void ShowConfiguration()
@@ -176,9 +182,11 @@ namespace Unity.Multiplayer.PlayMode.Editor
             }
         }
 
+        [AutoStaticsCleanupOnCodeReload] // reset so EnsureRuntimeHooksRegistered re-registers after reload
         static bool s_RuntimeHooksRegistered;
 
-        static MultiplayerWindowController()
+        [OnCodeLoaded]
+        static void InitializeOnLoad()
         {
             VirtualProjectWorkflow.OnInitialized += isMainEditor =>
             {

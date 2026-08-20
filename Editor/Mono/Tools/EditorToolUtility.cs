@@ -574,12 +574,12 @@ namespace UnityEditor.EditorTools
 
         internal static int GetNonBuiltinToolCount(Type toolOwner)
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var globalEditorTools = GetCustomEditorToolsForType(null, toolOwner).Where(t => EditorToolManager.additionalContextToolTypesCache.TrueForAll(tc => tc != t.editor));
-#pragma warning restore UA2001
-#pragma warning disable UA2005 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+#pragma warning disable UAC2005 // Avoid Linq
             return globalEditorTools.Count();
-#pragma warning restore UA2005
+#pragma warning restore UAC2005
         }
 
         internal static bool IsComponentEditor(Type type)

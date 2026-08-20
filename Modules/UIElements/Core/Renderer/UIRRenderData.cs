@@ -49,6 +49,8 @@ namespace UnityEngine.UIElements.UIR
         IsClippingRectDirty = 1 << 6,
         IsStickyBone = 1 << 7,
         IsElementInfoDirty = 1 << 8,
+        RegisteredForFilterCallbacks = 1 << 9,
+        RegisteredForBackdropFilterCallbacks = 1 << 10,
     }
 
     // This is intended for data that used infrequently, to such an extent, that it's not worth being directly in RenderChainVEData.
@@ -60,6 +62,11 @@ namespace UnityEngine.UIElements.UIR
         // Hash-deduped per-glyph TCS allocs written during PostProcessTextVertices.
         // Null until first SetTints; freed in FreeExtraData.
         public Dictionary<TextCoreSettings, BMPAlloc> textCoreSettingsAllocs;
+
+        // One pooled block per pass in flat chain order; populated in the update phase so user
+        // callbacks never run while a render target is bound. The lists persist (empty) across pooled reuse.
+        public List<MaterialPropertyBlock> filterCallbackPropertyBlocks;
+        public List<MaterialPropertyBlock> backdropFilterCallbackPropertyBlocks;
     }
 
     struct GraphicEntry
@@ -130,6 +137,9 @@ namespace UnityEngine.UIElements.UIR
         // This is set whenever a hierarchical repaint was needed when HierarchyDisplayed == false.
         public bool pendingHierarchicalRepaint;
 
+        // Tracks the z-index value at the time of last insertion, used to detect int-to-int z-index changes.
+        public int zIndex;
+
         public List<MeshModifierRegistration> m_EffectiveModifiers;
 
         public void Init()
@@ -188,6 +198,7 @@ namespace UnityEngine.UIElements.UIR
             pendingRepaint = false;
             pendingHierarchicalRepaint = false;
             m_EffectiveModifiers = null;
+            zIndex = int.MinValue;
             clippingRect = Rect.zero;
             clippingRectMinusGroup = Rect.zero;
             clippingRectIsInfinite = false;
@@ -220,6 +231,29 @@ namespace UnityEngine.UIElements.UIR
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => (flags & RenderDataFlags.IsGroupTransform) == RenderDataFlags.IsGroupTransform;
+        }
+
+        // Explicit z-index (auto is encoded as int.MinValue; 0 keeps document order, so both are excluded).
+        public bool hasZIndex
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => HasZIndex(zIndex);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool HasZIndex(int zIndex) => zIndex != int.MinValue && zIndex != 0;
+
+        // Reparented in the render tree to the stacking context root, but inherited clip/opacity still come from the visual parent.
+        public RenderData GetInheritanceParent(RenderData renderTreeParent)
+        {
+            if (hasZIndex && renderTreeParent != null)
+            {
+                var visualParent = owner.hierarchy.parent;
+                var visualParentRD = visualParent?.nestedRenderData ?? visualParent?.renderData;
+                if (visualParentRD != null && visualParentRD != renderTreeParent)
+                    return visualParentRD;
+            }
+            return renderTreeParent;
         }
 
         public bool isIgnoringDynamicColorHint
@@ -270,6 +304,19 @@ namespace UnityEngine.UIElements.UIR
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => (flags & RenderDataFlags.IsElementInfoDirty) == RenderDataFlags.IsElementInfoDirty;
+        }
+
+        // Tracked separately from chain emptiness so the sync paths register/unregister once per transition.
+        public bool isRegisteredForFilterCallbacks
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => (flags & RenderDataFlags.RegisteredForFilterCallbacks) == RenderDataFlags.RegisteredForFilterCallbacks;
+        }
+
+        public bool isRegisteredForBackdropFilterCallbacks
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => (flags & RenderDataFlags.RegisteredForBackdropFilterCallbacks) == RenderDataFlags.RegisteredForBackdropFilterCallbacks;
         }
 
         private Rect m_ClippingRect;
@@ -339,20 +386,22 @@ namespace UnityEngine.UIElements.UIR
         {
             // TODO: Optimize to avoid full matrix multiplications, instead apply scale+offset
 
+            RenderData clipParent = GetInheritanceParent(parent);
+
             Rect inheritedClipping;
             Rect inheritedClippingMinusGroup;
-            bool parentClipIsInfinite = (parent == null) || parent.clippingRectIsInfinite;
+            bool parentClipIsInfinite = (clipParent == null) || clipParent.clippingRectIsInfinite;
 
-            if (parent != null)
+            if (clipParent != null)
             {
-                inheritedClipping = parent.clippingRect;
-                if (parent.isGroupTransform)
+                inheritedClipping = clipParent.clippingRect;
+                if (clipParent.isGroupTransform)
                 {
                     inheritedClippingMinusGroup = DrawParams.k_UnlimitedRect;
                     parentClipIsInfinite = true;
                 }
                 else
-                    inheritedClippingMinusGroup = parent.clippingRectMinusGroup;
+                    inheritedClippingMinusGroup = clipParent.clippingRectMinusGroup;
             }
             else
             {

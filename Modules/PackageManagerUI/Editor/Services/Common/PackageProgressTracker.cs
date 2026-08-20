@@ -20,13 +20,10 @@ namespace UnityEditor.PackageManager.UI.Internal
     {
         public event Action<IEnumerable<(string packageNameOrProductId, PackageProgress progress)>> onPackagesProgressChanged;
 
-        private readonly Dictionary<string, PackageProgress> m_OperationProgressMap = new();
+        [SerializeField]
+        private Dictionary<string, PackageProgress> m_OperationProgressMap = new();
         private readonly HashSet<string> m_RefreshProgress = new();
 
-        [SerializeField]
-        private string[] m_SerializedOperationKeys = Array.Empty<string>();
-        [SerializeField]
-        private PackageProgress[] m_SerializedOperationValues = Array.Empty<PackageProgress>();
         [SerializeField]
         private string[] m_SerializedRefreshProgress = Array.Empty<string>();
 
@@ -169,15 +166,11 @@ namespace UnityEditor.PackageManager.UI.Internal
 
         public void OnBeforeSerialize()
         {
-            m_OperationProgressMap.Keys.ToArray(ref m_SerializedOperationKeys);
-            m_OperationProgressMap.Values.ToArray(ref m_SerializedOperationValues);
             m_RefreshProgress.ToArray(ref m_SerializedRefreshProgress);
         }
 
         public void OnAfterDeserialize()
         {
-            for (var i = 0; i < m_SerializedOperationKeys.Length; i++)
-                m_OperationProgressMap[m_SerializedOperationKeys[i]] = m_SerializedOperationValues[i];
             foreach (var packageUniqueId in m_SerializedRefreshProgress)
                 m_RefreshProgress.Add(packageUniqueId);
         }

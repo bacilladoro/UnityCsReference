@@ -4,6 +4,7 @@
 
 using System;
 using System.Linq;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditorInternal;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -12,11 +13,12 @@ namespace UnityEditor.Search
 {
     [EditorWindowTitle(title = "Edit Search Column Settings")]
     [UIFramework(UIFrameworkUsage.Mixed)]
-    class ColumnEditor : EditorWindow
+    partial class ColumnEditor : EditorWindow
     {
         const int k_Width = 180;
         const int k_Height = 170;
 
+        [AutoStaticsCleanupOnCodeReload]
         static ColumnEditor s_Window;
 
         public SearchTableViewColumn column { get; private set; }
@@ -46,9 +48,9 @@ namespace UnityEditor.Search
                 return;
             }
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var providers = new[] { "Default" }.Concat(SearchColumnProvider.providers.Select(p => p.provider)).ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             var selectedProvider = Math.Max(0, providers.IndexOf(sc.provider));
             var formatPopup = new PopupField<string>(providers, selectedProvider, ObjectNames.NicifyVariableName, ObjectNames.NicifyVariableName)
             {

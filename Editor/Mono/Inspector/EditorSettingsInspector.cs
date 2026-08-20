@@ -16,7 +16,7 @@ using Unity.Scripting.LifecycleManagement;
 namespace UnityEditor
 {
     [CustomEditor(typeof(EditorSettings))]
-    internal class EditorSettingsInspector : ProjectSettingsBaseEditor
+    internal partial class EditorSettingsInspector : ProjectSettingsBaseEditor
     {
         class Content
         {

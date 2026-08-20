@@ -104,9 +104,9 @@ namespace UnityEditor.Mono.BuildPipeline
                 return true;
             }
 
-#pragma warning disable UA2001, UA2014 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001, UAC2014 // Avoid Linq
             if (!scenes.SequenceEqual(buildData.scenes.Select(f => f.path)))
-#pragma warning restore UA2001, UA2014
+#pragma warning restore UAC2001, UAC2014
             {
                 Console.WriteLine("Rebuilding Data files because the scene list is dirty");
                 return true;
@@ -149,13 +149,13 @@ namespace UnityEditor.Mono.BuildPipeline
                 }
             }
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var enabledModules = ModuleMetadata.GetModuleNames()
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 .Where(m => ModuleMetadata.GetModuleIncludeSettingForModule(m) != ModuleIncludeSetting.ForceExclude);
-#pragma warning disable UA2014 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2014 // Avoid Linq
             if (!enabledModules.SequenceEqual(buildData.enabledModules))
-#pragma warning restore UA2014
+#pragma warning restore UAC2014
             {
                 Console.WriteLine($"Rebuilding Data files because enabled modules have changed");
                 return true;
@@ -184,9 +184,9 @@ namespace UnityEditor.Mono.BuildPipeline
                 inputFiles.Add(new BuildDataInputFile(scene, developmentBuild));
             foreach (var prefab in prefabs)
                 inputFiles.Add(new BuildDataInputFile(prefab, developmentBuild));
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             foreach (var assetInfo in report.packedAssets.SelectMany(a => a.contents))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 if (assetInfo.sourceAssetPath.ToNPath().FileExists() && !assetInfo.sourceAssetPath.StartsWith("."))
                     inputFiles.Add(new BuildDataInputFile(assetInfo.sourceAssetPath, developmentBuild));
@@ -208,11 +208,11 @@ namespace UnityEditor.Mono.BuildPipeline
                 buildOptions = report.summary.options & BuildData.BuildOptionsMask,
                 unityVersion = Application.unityVersion,
                 resourcePaths = resourcePaths,
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 enabledModules = ModuleMetadata.GetModuleNames()
                     .Where(m => ModuleMetadata.GetModuleIncludeSettingForModule(m) != ModuleIncludeSetting.ForceExclude)
                     .ToArray(),
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 assemblyNames = sortedAssemblyNames,
                 contentSourceBuildSessionGuid = report.summary.buildSessionGuid
             };

@@ -3,11 +3,12 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 
 namespace Unity.Multiplayer.PlayMode.Editor
 {
-    class AssetDatabaseCallbacks : AssetPostprocessor
+    partial class AssetDatabaseCallbacks : AssetPostprocessor
     {
         // ReSharper disable once UnusedMember.Local
         // ReSharper disable once Unity.IncorrectMethodSignature
@@ -30,6 +31,7 @@ namespace Unity.Multiplayer.PlayMode.Editor
             OnPostprocessAllAssetsCallback?.Invoke(didDomainReload, totalCount);
         }
 
+        [AutoStaticsCleanupOnCodeReload] // static event; stale handlers after reload pin old ALC
         public static event Action<bool, int> OnPostprocessAllAssetsCallback;
     }
 }

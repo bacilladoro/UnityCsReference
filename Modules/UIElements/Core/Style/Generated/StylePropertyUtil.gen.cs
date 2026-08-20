@@ -17,8 +17,9 @@ namespace UnityEngine.UIElements.StyleSheets
     internal static partial class StylePropertyUtil
     {
         public const int k_GroupOffset = 16;
-        internal const int k_SerializationLayoutHash = 1931025077;
+        internal const int k_SerializationLayoutHash = 887123582;
 
+        [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
         internal static readonly Dictionary<string, StylePropertyId> s_NameToId = new Dictionary<string, StylePropertyId>()
         {
 
@@ -39,8 +40,32 @@ namespace UnityEngine.UIElements.StyleSheets
                 StylePropertyId.All
             },
                         {
+                "animation",
+                StylePropertyId.Animation
+            },
+                        {
+                "animation-delay",
+                StylePropertyId.AnimationDelay
+            },
+                        {
+                "animation-direction",
+                StylePropertyId.AnimationDirection
+            },
+                        {
+                "animation-duration",
+                StylePropertyId.AnimationDuration
+            },
+                        {
+                "animation-iteration-count",
+                StylePropertyId.AnimationIterationCount
+            },
+                        {
+                "animation-name",
+                StylePropertyId.AnimationNames
+            },
+                        {
                 "animation-play-state",
-                StylePropertyId.AnimationPlayState
+                StylePropertyId.AnimationPlayStates
             },
                         {
                 "aspect-ratio",
@@ -195,12 +220,64 @@ namespace UnityEngine.UIElements.StyleSheets
                 StylePropertyId.Gap
             },
                         {
+                "grid-auto-columns",
+                StylePropertyId.GridAutoColumns
+            },
+                        {
+                "grid-auto-flow",
+                StylePropertyId.GridAutoFlow
+            },
+                        {
+                "grid-auto-rows",
+                StylePropertyId.GridAutoRows
+            },
+                        {
+                "grid-column",
+                StylePropertyId.GridColumn
+            },
+                        {
+                "grid-column-end",
+                StylePropertyId.GridColumnEnd
+            },
+                        {
+                "grid-column-start",
+                StylePropertyId.GridColumnStart
+            },
+                        {
+                "grid-row",
+                StylePropertyId.GridRow
+            },
+                        {
+                "grid-row-end",
+                StylePropertyId.GridRowEnd
+            },
+                        {
+                "grid-row-start",
+                StylePropertyId.GridRowStart
+            },
+                        {
+                "grid-template-columns",
+                StylePropertyId.GridTemplateColumns
+            },
+                        {
+                "grid-template-rows",
+                StylePropertyId.GridTemplateRows
+            },
+                        {
                 "height",
                 StylePropertyId.Height
             },
                         {
                 "justify-content",
                 StylePropertyId.JustifyContent
+            },
+                        {
+                "justify-items",
+                StylePropertyId.JustifyItems
+            },
+                        {
+                "justify-self",
+                StylePropertyId.JustifySelf
             },
                         {
                 "left",
@@ -441,9 +518,14 @@ namespace UnityEngine.UIElements.StyleSheets
                         {
                 "word-spacing",
                 StylePropertyId.WordSpacing
+            },
+                        {
+                "z-index",
+                StylePropertyId.ZIndex
             }
                 };
 
+        [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
         internal static readonly Dictionary<StylePropertyId, string> s_IdToName = new Dictionary<StylePropertyId, string>()
         {
 
@@ -464,7 +546,31 @@ namespace UnityEngine.UIElements.StyleSheets
                 "all"
             },
                         {
-                StylePropertyId.AnimationPlayState,
+                StylePropertyId.Animation,
+                "animation"
+            },
+                        {
+                StylePropertyId.AnimationDelay,
+                "animation-delay"
+            },
+                        {
+                StylePropertyId.AnimationDirection,
+                "animation-direction"
+            },
+                        {
+                StylePropertyId.AnimationDuration,
+                "animation-duration"
+            },
+                        {
+                StylePropertyId.AnimationIterationCount,
+                "animation-iteration-count"
+            },
+                        {
+                StylePropertyId.AnimationNames,
+                "animation-name"
+            },
+                        {
+                StylePropertyId.AnimationPlayStates,
                 "animation-play-state"
             },
                         {
@@ -620,12 +726,64 @@ namespace UnityEngine.UIElements.StyleSheets
                 "gap"
             },
                         {
+                StylePropertyId.GridAutoColumns,
+                "grid-auto-columns"
+            },
+                        {
+                StylePropertyId.GridAutoFlow,
+                "grid-auto-flow"
+            },
+                        {
+                StylePropertyId.GridAutoRows,
+                "grid-auto-rows"
+            },
+                        {
+                StylePropertyId.GridColumn,
+                "grid-column"
+            },
+                        {
+                StylePropertyId.GridColumnEnd,
+                "grid-column-end"
+            },
+                        {
+                StylePropertyId.GridColumnStart,
+                "grid-column-start"
+            },
+                        {
+                StylePropertyId.GridRow,
+                "grid-row"
+            },
+                        {
+                StylePropertyId.GridRowEnd,
+                "grid-row-end"
+            },
+                        {
+                StylePropertyId.GridRowStart,
+                "grid-row-start"
+            },
+                        {
+                StylePropertyId.GridTemplateColumns,
+                "grid-template-columns"
+            },
+                        {
+                StylePropertyId.GridTemplateRows,
+                "grid-template-rows"
+            },
+                        {
                 StylePropertyId.Height,
                 "height"
             },
                         {
                 StylePropertyId.JustifyContent,
                 "justify-content"
+            },
+                        {
+                StylePropertyId.JustifyItems,
+                "justify-items"
+            },
+                        {
+                StylePropertyId.JustifySelf,
+                "justify-self"
             },
                         {
                 StylePropertyId.Left,
@@ -866,9 +1024,14 @@ namespace UnityEngine.UIElements.StyleSheets
                         {
                 StylePropertyId.WordSpacing,
                 "word-spacing"
+            },
+                        {
+                StylePropertyId.ZIndex,
+                "z-index"
             }
                 };
 
+        [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
         internal static readonly Dictionary<string, string> s_UssNameToCSharpName = new Dictionary<string, string>()
         {
 
@@ -889,8 +1052,32 @@ namespace UnityEngine.UIElements.StyleSheets
                 "all"
             },
                         {
+                "animation",
+                "animation"
+            },
+                        {
+                "animation-delay",
+                "animationDelay"
+            },
+                        {
+                "animation-direction",
+                "animationDirection"
+            },
+                        {
+                "animation-duration",
+                "animationDuration"
+            },
+                        {
+                "animation-iteration-count",
+                "animationIterationCount"
+            },
+                        {
+                "animation-name",
+                "animationNames"
+            },
+                        {
                 "animation-play-state",
-                "animationPlayState"
+                "animationPlayStates"
             },
                         {
                 "aspect-ratio",
@@ -1045,12 +1232,64 @@ namespace UnityEngine.UIElements.StyleSheets
                 "gap"
             },
                         {
+                "grid-auto-columns",
+                "gridAutoColumns"
+            },
+                        {
+                "grid-auto-flow",
+                "gridAutoFlow"
+            },
+                        {
+                "grid-auto-rows",
+                "gridAutoRows"
+            },
+                        {
+                "grid-column",
+                "gridColumn"
+            },
+                        {
+                "grid-column-end",
+                "gridColumnEnd"
+            },
+                        {
+                "grid-column-start",
+                "gridColumnStart"
+            },
+                        {
+                "grid-row",
+                "gridRow"
+            },
+                        {
+                "grid-row-end",
+                "gridRowEnd"
+            },
+                        {
+                "grid-row-start",
+                "gridRowStart"
+            },
+                        {
+                "grid-template-columns",
+                "gridTemplateColumns"
+            },
+                        {
+                "grid-template-rows",
+                "gridTemplateRows"
+            },
+                        {
                 "height",
                 "height"
             },
                         {
                 "justify-content",
                 "justifyContent"
+            },
+                        {
+                "justify-items",
+                "justifyItems"
+            },
+                        {
+                "justify-self",
+                "justifySelf"
             },
                         {
                 "left",
@@ -1291,9 +1530,14 @@ namespace UnityEngine.UIElements.StyleSheets
                         {
                 "word-spacing",
                 "wordSpacing"
+            },
+                        {
+                "z-index",
+                "zIndex"
             }
                 };
 
+        [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
         internal static readonly Dictionary<string, string> s_CSharpNameToUssName = new Dictionary<string, string>()
         {
 
@@ -1314,7 +1558,31 @@ namespace UnityEngine.UIElements.StyleSheets
                 "all"
             },
                         {
-                "animationPlayState",
+                "animation",
+                "animation"
+            },
+                        {
+                "animationDelay",
+                "animation-delay"
+            },
+                        {
+                "animationDirection",
+                "animation-direction"
+            },
+                        {
+                "animationDuration",
+                "animation-duration"
+            },
+                        {
+                "animationIterationCount",
+                "animation-iteration-count"
+            },
+                        {
+                "animationNames",
+                "animation-name"
+            },
+                        {
+                "animationPlayStates",
                 "animation-play-state"
             },
                         {
@@ -1470,12 +1738,64 @@ namespace UnityEngine.UIElements.StyleSheets
                 "gap"
             },
                         {
+                "gridAutoColumns",
+                "grid-auto-columns"
+            },
+                        {
+                "gridAutoFlow",
+                "grid-auto-flow"
+            },
+                        {
+                "gridAutoRows",
+                "grid-auto-rows"
+            },
+                        {
+                "gridColumn",
+                "grid-column"
+            },
+                        {
+                "gridColumnEnd",
+                "grid-column-end"
+            },
+                        {
+                "gridColumnStart",
+                "grid-column-start"
+            },
+                        {
+                "gridRow",
+                "grid-row"
+            },
+                        {
+                "gridRowEnd",
+                "grid-row-end"
+            },
+                        {
+                "gridRowStart",
+                "grid-row-start"
+            },
+                        {
+                "gridTemplateColumns",
+                "grid-template-columns"
+            },
+                        {
+                "gridTemplateRows",
+                "grid-template-rows"
+            },
+                        {
                 "height",
                 "height"
             },
                         {
                 "justifyContent",
                 "justify-content"
+            },
+                        {
+                "justifyItems",
+                "justify-items"
+            },
+                        {
+                "justifySelf",
+                "justify-self"
             },
                         {
                 "left",
@@ -1716,11 +2036,17 @@ namespace UnityEngine.UIElements.StyleSheets
                         {
                 "wordSpacing",
                 "word-spacing"
+            },
+                        {
+                "zIndex",
+                "z-index"
             }
                 };
 
-        internal static readonly HashSet<StylePropertyId> s_AnimatableProperties = new HashSet<StylePropertyId>(new[] { StylePropertyId.AlignContent, StylePropertyId.AlignItems, StylePropertyId.AlignSelf, StylePropertyId.All, StylePropertyId.AspectRatio, StylePropertyId.BackdropFilter, StylePropertyId.BackgroundColor, StylePropertyId.BackgroundImage, StylePropertyId.BackgroundPosition, StylePropertyId.BackgroundPositionX, StylePropertyId.BackgroundPositionY, StylePropertyId.BackgroundRepeat, StylePropertyId.BackgroundSize, StylePropertyId.BorderBottomColor, StylePropertyId.BorderBottomLeftRadius, StylePropertyId.BorderBottomRightRadius, StylePropertyId.BorderBottomWidth, StylePropertyId.BorderColor, StylePropertyId.BorderLeftColor, StylePropertyId.BorderLeftWidth, StylePropertyId.BorderRadius, StylePropertyId.BorderRightColor, StylePropertyId.BorderRightWidth, StylePropertyId.BorderTopColor, StylePropertyId.BorderTopLeftRadius, StylePropertyId.BorderTopRightRadius, StylePropertyId.BorderTopWidth, StylePropertyId.BorderWidth, StylePropertyId.Bottom, StylePropertyId.Color, StylePropertyId.ColumnGap, StylePropertyId.Cursor, StylePropertyId.Filter, StylePropertyId.Flex, StylePropertyId.FlexBasis, StylePropertyId.FlexDirection, StylePropertyId.FlexGrow, StylePropertyId.FlexShrink, StylePropertyId.FlexWrap, StylePropertyId.FontSize, StylePropertyId.Gap, StylePropertyId.Height, StylePropertyId.JustifyContent, StylePropertyId.Left, StylePropertyId.LetterSpacing, StylePropertyId.Margin, StylePropertyId.MarginBottom, StylePropertyId.MarginLeft, StylePropertyId.MarginRight, StylePropertyId.MarginTop, StylePropertyId.MaxHeight, StylePropertyId.MaxWidth, StylePropertyId.MinHeight, StylePropertyId.MinWidth, StylePropertyId.Opacity, StylePropertyId.Overflow, StylePropertyId.Padding, StylePropertyId.PaddingBottom, StylePropertyId.PaddingLeft, StylePropertyId.PaddingRight, StylePropertyId.PaddingTop, StylePropertyId.Position, StylePropertyId.Right, StylePropertyId.Rotate, StylePropertyId.RowGap, StylePropertyId.Scale, StylePropertyId.TextOverflow, StylePropertyId.TextShadow, StylePropertyId.Top, StylePropertyId.TransformOrigin, StylePropertyId.Translate, StylePropertyId.UnityBackgroundImageTintColor, StylePropertyId.UnityBackgroundScaleMode, StylePropertyId.UnityFont, StylePropertyId.UnityFontDefinition, StylePropertyId.UnityFontStyleAndWeight, StylePropertyId.UnityMaterial, StylePropertyId.UnityOverflowClipBox, StylePropertyId.UnityParagraphSpacing, StylePropertyId.UnitySliceBottom, StylePropertyId.UnitySliceLeft, StylePropertyId.UnitySliceRight, StylePropertyId.UnitySliceScale, StylePropertyId.UnitySliceTop, StylePropertyId.UnitySliceType, StylePropertyId.UnityTextAlign, StylePropertyId.UnityTextOutline, StylePropertyId.UnityTextOutlineColor, StylePropertyId.UnityTextOutlineWidth, StylePropertyId.UnityTextOverflowPosition, StylePropertyId.Visibility, StylePropertyId.WhiteSpace, StylePropertyId.Width, StylePropertyId.WordSpacing });
+        [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
+        internal static readonly HashSet<StylePropertyId> s_AnimatableProperties = new HashSet<StylePropertyId>(new[] { StylePropertyId.AlignContent, StylePropertyId.AlignItems, StylePropertyId.AlignSelf, StylePropertyId.All, StylePropertyId.AspectRatio, StylePropertyId.BackdropFilter, StylePropertyId.BackgroundColor, StylePropertyId.BackgroundImage, StylePropertyId.BackgroundPosition, StylePropertyId.BackgroundPositionX, StylePropertyId.BackgroundPositionY, StylePropertyId.BackgroundRepeat, StylePropertyId.BackgroundSize, StylePropertyId.BorderBottomColor, StylePropertyId.BorderBottomLeftRadius, StylePropertyId.BorderBottomRightRadius, StylePropertyId.BorderBottomWidth, StylePropertyId.BorderColor, StylePropertyId.BorderLeftColor, StylePropertyId.BorderLeftWidth, StylePropertyId.BorderRadius, StylePropertyId.BorderRightColor, StylePropertyId.BorderRightWidth, StylePropertyId.BorderTopColor, StylePropertyId.BorderTopLeftRadius, StylePropertyId.BorderTopRightRadius, StylePropertyId.BorderTopWidth, StylePropertyId.BorderWidth, StylePropertyId.Bottom, StylePropertyId.Color, StylePropertyId.ColumnGap, StylePropertyId.Cursor, StylePropertyId.Filter, StylePropertyId.Flex, StylePropertyId.FlexBasis, StylePropertyId.FlexDirection, StylePropertyId.FlexGrow, StylePropertyId.FlexShrink, StylePropertyId.FlexWrap, StylePropertyId.FontSize, StylePropertyId.Gap, StylePropertyId.GridColumn, StylePropertyId.GridColumnEnd, StylePropertyId.GridColumnStart, StylePropertyId.GridRow, StylePropertyId.GridRowEnd, StylePropertyId.GridRowStart, StylePropertyId.Height, StylePropertyId.JustifyContent, StylePropertyId.Left, StylePropertyId.LetterSpacing, StylePropertyId.Margin, StylePropertyId.MarginBottom, StylePropertyId.MarginLeft, StylePropertyId.MarginRight, StylePropertyId.MarginTop, StylePropertyId.MaxHeight, StylePropertyId.MaxWidth, StylePropertyId.MinHeight, StylePropertyId.MinWidth, StylePropertyId.Opacity, StylePropertyId.Overflow, StylePropertyId.Padding, StylePropertyId.PaddingBottom, StylePropertyId.PaddingLeft, StylePropertyId.PaddingRight, StylePropertyId.PaddingTop, StylePropertyId.Position, StylePropertyId.Right, StylePropertyId.Rotate, StylePropertyId.RowGap, StylePropertyId.Scale, StylePropertyId.TextOverflow, StylePropertyId.TextShadow, StylePropertyId.Top, StylePropertyId.TransformOrigin, StylePropertyId.Translate, StylePropertyId.UnityBackgroundImageTintColor, StylePropertyId.UnityBackgroundScaleMode, StylePropertyId.UnityFont, StylePropertyId.UnityFontDefinition, StylePropertyId.UnityFontStyleAndWeight, StylePropertyId.UnityMaterial, StylePropertyId.UnityOverflowClipBox, StylePropertyId.UnityParagraphSpacing, StylePropertyId.UnitySliceBottom, StylePropertyId.UnitySliceLeft, StylePropertyId.UnitySliceRight, StylePropertyId.UnitySliceScale, StylePropertyId.UnitySliceTop, StylePropertyId.UnitySliceType, StylePropertyId.UnityTextAlign, StylePropertyId.UnityTextOutline, StylePropertyId.UnityTextOutlineColor, StylePropertyId.UnityTextOutlineWidth, StylePropertyId.UnityTextOverflowPosition, StylePropertyId.Visibility, StylePropertyId.WhiteSpace, StylePropertyId.Width, StylePropertyId.WordSpacing, StylePropertyId.ZIndex });
 
+        [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
         internal static readonly Dictionary<StylePropertyId, UsageHints> s_AnimatableWithUsageHintProperties = new Dictionary<StylePropertyId, UsageHints>()
         {
 
@@ -1774,6 +2100,7 @@ namespace UnityEngine.UIElements.StyleSheets
             }
                 };
 
+        [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
         internal static readonly VersionChangeType[] s_PropertyToChangeType = new VersionChangeType[]
         {
             0,
@@ -1785,7 +2112,19 @@ namespace UnityEngine.UIElements.StyleSheets
             VersionChangeType.Styles | VersionChangeType.Layout,
             /*StylePropertyId.All*/
             VersionChangeType.Styles,
-            /*StylePropertyId.AnimationPlayState*/
+            /*StylePropertyId.Animation*/
+            VersionChangeType.Styles,
+            /*StylePropertyId.AnimationDelay*/
+            VersionChangeType.Styles | VersionChangeType.AnimationProperty,
+            /*StylePropertyId.AnimationDirection*/
+            VersionChangeType.Styles | VersionChangeType.AnimationProperty,
+            /*StylePropertyId.AnimationDuration*/
+            VersionChangeType.Styles | VersionChangeType.AnimationProperty,
+            /*StylePropertyId.AnimationIterationCount*/
+            VersionChangeType.Styles | VersionChangeType.AnimationProperty,
+            /*StylePropertyId.AnimationNames*/
+            VersionChangeType.Styles | VersionChangeType.AnimationProperty,
+            /*StylePropertyId.AnimationPlayStates*/
             VersionChangeType.Styles | VersionChangeType.AnimationProperty,
             /*StylePropertyId.AspectRatio*/
             VersionChangeType.Styles | VersionChangeType.Layout,
@@ -1863,9 +2202,35 @@ namespace UnityEngine.UIElements.StyleSheets
             VersionChangeType.Styles | VersionChangeType.StyleSheet | VersionChangeType.Layout | VersionChangeType.Repaint,
             /*StylePropertyId.Gap*/
             VersionChangeType.Styles,
+            /*StylePropertyId.GridAutoColumns*/
+            VersionChangeType.Styles | VersionChangeType.Layout,
+            /*StylePropertyId.GridAutoFlow*/
+            VersionChangeType.Styles | VersionChangeType.Layout,
+            /*StylePropertyId.GridAutoRows*/
+            VersionChangeType.Styles | VersionChangeType.Layout,
+            /*StylePropertyId.GridColumn*/
+            VersionChangeType.Styles,
+            /*StylePropertyId.GridColumnEnd*/
+            VersionChangeType.Styles | VersionChangeType.Layout,
+            /*StylePropertyId.GridColumnStart*/
+            VersionChangeType.Styles | VersionChangeType.Layout,
+            /*StylePropertyId.GridRow*/
+            VersionChangeType.Styles,
+            /*StylePropertyId.GridRowEnd*/
+            VersionChangeType.Styles | VersionChangeType.Layout,
+            /*StylePropertyId.GridRowStart*/
+            VersionChangeType.Styles | VersionChangeType.Layout,
+            /*StylePropertyId.GridTemplateColumns*/
+            VersionChangeType.Styles | VersionChangeType.Layout,
+            /*StylePropertyId.GridTemplateRows*/
+            VersionChangeType.Styles | VersionChangeType.Layout,
             /*StylePropertyId.Height*/
             VersionChangeType.Styles | VersionChangeType.Layout,
             /*StylePropertyId.JustifyContent*/
+            VersionChangeType.Styles | VersionChangeType.Layout,
+            /*StylePropertyId.JustifyItems*/
+            VersionChangeType.Styles | VersionChangeType.Layout,
+            /*StylePropertyId.JustifySelf*/
             VersionChangeType.Styles | VersionChangeType.Layout,
             /*StylePropertyId.Left*/
             VersionChangeType.Styles | VersionChangeType.Layout,
@@ -1934,7 +2299,7 @@ namespace UnityEngine.UIElements.StyleSheets
             /*StylePropertyId.Translate*/
             VersionChangeType.Styles | VersionChangeType.Transform,
             /*StylePropertyId.UnityAnimationClip*/
-            VersionChangeType.Styles | VersionChangeType.AnimationProperty,
+            VersionChangeType.Styles,
             /*StylePropertyId.UnityBackgroundImageTintColor*/
             VersionChangeType.Styles | VersionChangeType.Color,
             /*StylePropertyId.UnityBackgroundScaleMode*/
@@ -1986,7 +2351,9 @@ namespace UnityEngine.UIElements.StyleSheets
             /*StylePropertyId.Width*/
             VersionChangeType.Styles | VersionChangeType.Layout,
             /*StylePropertyId.WordSpacing*/
-            VersionChangeType.Styles | VersionChangeType.StyleSheet | VersionChangeType.Layout | VersionChangeType.Repaint
+            VersionChangeType.Styles | VersionChangeType.StyleSheet | VersionChangeType.Layout | VersionChangeType.Repaint,
+            /*StylePropertyId.ZIndex*/
+            VersionChangeType.Styles | VersionChangeType.Repaint
         };
 
         public static bool TryGetEnumIntValue(StyleEnumType enumType, string value, out int intValue)
@@ -2022,6 +2389,32 @@ namespace UnityEngine.UIElements.StyleSheets
                     if (string.Equals(value, "stretch", StringComparison.OrdinalIgnoreCase))
                     {
                         intValue = (int)Align.Stretch;
+                        return true;
+                    }
+
+                    break;
+                case StyleEnumType.AnimationDirection:
+                    if (string.Equals(value, "normal", StringComparison.OrdinalIgnoreCase))
+                    {
+                        intValue = (int)AnimationDirection.Normal;
+                        return true;
+                    }
+
+                    if (string.Equals(value, "reverse", StringComparison.OrdinalIgnoreCase))
+                    {
+                        intValue = (int)AnimationDirection.Reverse;
+                        return true;
+                    }
+
+                    if (string.Equals(value, "alternate", StringComparison.OrdinalIgnoreCase))
+                    {
+                        intValue = (int)AnimationDirection.Alternate;
+                        return true;
+                    }
+
+                    if (string.Equals(value, "alternate-reverse", StringComparison.OrdinalIgnoreCase))
+                    {
+                        intValue = (int)AnimationDirection.AlternateReverse;
                         return true;
                     }
 
@@ -2116,6 +2509,12 @@ namespace UnityEngine.UIElements.StyleSheets
                     if (string.Equals(value, "none", StringComparison.OrdinalIgnoreCase))
                     {
                         intValue = (int)DisplayStyle.None;
+                        return true;
+                    }
+
+                    if (string.Equals(value, "grid", StringComparison.OrdinalIgnoreCase))
+                    {
+                        intValue = (int)DisplayStyle.Grid;
                         return true;
                     }
 
@@ -2322,6 +2721,32 @@ namespace UnityEngine.UIElements.StyleSheets
                     if (string.Equals(value, "bold-and-italic", StringComparison.OrdinalIgnoreCase))
                     {
                         intValue = (int)FontStyle.BoldAndItalic;
+                        return true;
+                    }
+
+                    break;
+                case StyleEnumType.GridAutoFlow:
+                    if (string.Equals(value, "row", StringComparison.OrdinalIgnoreCase))
+                    {
+                        intValue = (int)GridAutoFlow.Row;
+                        return true;
+                    }
+
+                    if (string.Equals(value, "column", StringComparison.OrdinalIgnoreCase))
+                    {
+                        intValue = (int)GridAutoFlow.Column;
+                        return true;
+                    }
+
+                    if (string.Equals(value, "row-dense", StringComparison.OrdinalIgnoreCase))
+                    {
+                        intValue = (int)GridAutoFlow.RowDense;
+                        return true;
+                    }
+
+                    if (string.Equals(value, "column-dense", StringComparison.OrdinalIgnoreCase))
+                    {
+                        intValue = (int)GridAutoFlow.ColumnDense;
                         return true;
                     }
 
@@ -2733,6 +3158,10 @@ namespace UnityEngine.UIElements.StyleSheets
                     return id == StylePropertyId.FlexGrow || id == StylePropertyId.FlexShrink || id == StylePropertyId.FlexBasis;
                 case StylePropertyId.Gap:
                     return id == StylePropertyId.RowGap || id == StylePropertyId.ColumnGap;
+                case StylePropertyId.GridColumn:
+                    return id == StylePropertyId.GridColumnStart || id == StylePropertyId.GridColumnEnd;
+                case StylePropertyId.GridRow:
+                    return id == StylePropertyId.GridRowStart || id == StylePropertyId.GridRowEnd;
                 case StylePropertyId.Margin:
                     return id == StylePropertyId.MarginTop || id == StylePropertyId.MarginRight || id == StylePropertyId.MarginBottom || id == StylePropertyId.MarginLeft;
                 case StylePropertyId.Padding:
@@ -2750,15 +3179,15 @@ namespace UnityEngine.UIElements.StyleSheets
         {
             switch (id)
             {
+                case StylePropertyId.AnimationNames:
+                    return new[]
+                    {
+                        typeof(IEnumerable<UIAnimationClip>)
+                    };
                 case StylePropertyId.BackgroundImage:
                     return Background.allowedAssetTypes;
                 case StylePropertyId.Cursor:
                     return Cursor.allowedAssetTypes;
-                case StylePropertyId.UnityAnimationClip:
-                    return new[]
-                    {
-                        typeof(UIAnimationClip)
-                    };
                 case StylePropertyId.UnityFont:
                     return new[]
                     {
@@ -2782,11 +3211,11 @@ namespace UnityEngine.UIElements.StyleSheets
         {
             switch (id)
             {
+                case StylePropertyId.AnimationNames:
+                    return true;
                 case StylePropertyId.BackgroundImage:
                     return true;
                 case StylePropertyId.Cursor:
-                    return true;
-                case StylePropertyId.UnityAnimationClip:
                     return true;
                 case StylePropertyId.UnityFont:
                     return true;
@@ -2803,6 +3232,8 @@ namespace UnityEngine.UIElements.StyleSheets
 
         public static unsafe int PropertyFieldOffset(StylePropertyId id)
         {
+            AnimationData animationData = default;
+            GridData gridData = default;
             InheritedData inheritedData = default;
             // Not supported for now: LayoutData layoutData = default;
             RareData rareData = default;
@@ -2811,8 +3242,18 @@ namespace UnityEngine.UIElements.StyleSheets
             VisualData visualData = default;
             switch (id)
             {
-                case StylePropertyId.AnimationPlayState:
-                    return (int)&rareData.animationPlayState - (int)&rareData;
+                case StylePropertyId.AnimationDelay:
+                    return (int)&animationData.animationDelay - (int)&animationData;
+                case StylePropertyId.AnimationDirection:
+                    return (int)&animationData.animationDirection - (int)&animationData;
+                case StylePropertyId.AnimationDuration:
+                    return (int)&animationData.animationDuration - (int)&animationData;
+                case StylePropertyId.AnimationIterationCount:
+                    return (int)&animationData.animationIterationCount - (int)&animationData;
+                case StylePropertyId.AnimationNames:
+                    return (int)&animationData.animationNames - (int)&animationData;
+                case StylePropertyId.AnimationPlayStates:
+                    return (int)&animationData.animationPlayStates - (int)&animationData;
                 case StylePropertyId.BackdropFilter:
                     return (int)&rareData.backdropFilter - (int)&rareData;
                 case StylePropertyId.BackgroundColor:
@@ -2851,6 +3292,28 @@ namespace UnityEngine.UIElements.StyleSheets
                     return (int)&rareData.filter - (int)&rareData;
                 case StylePropertyId.FontSize:
                     return (int)&inheritedData.fontSize - (int)&inheritedData;
+                case StylePropertyId.GridAutoColumns:
+                    return (int)&gridData.gridAutoColumns - (int)&gridData;
+                case StylePropertyId.GridAutoFlow:
+                    return (int)&gridData.gridAutoFlow - (int)&gridData;
+                case StylePropertyId.GridAutoRows:
+                    return (int)&gridData.gridAutoRows - (int)&gridData;
+                case StylePropertyId.GridColumnEnd:
+                    return (int)&gridData.gridColumnEnd - (int)&gridData;
+                case StylePropertyId.GridColumnStart:
+                    return (int)&gridData.gridColumnStart - (int)&gridData;
+                case StylePropertyId.GridRowEnd:
+                    return (int)&gridData.gridRowEnd - (int)&gridData;
+                case StylePropertyId.GridRowStart:
+                    return (int)&gridData.gridRowStart - (int)&gridData;
+                case StylePropertyId.GridTemplateColumns:
+                    return (int)&gridData.gridTemplateColumns - (int)&gridData;
+                case StylePropertyId.GridTemplateRows:
+                    return (int)&gridData.gridTemplateRows - (int)&gridData;
+                case StylePropertyId.JustifyItems:
+                    return (int)&gridData.justifyItems - (int)&gridData;
+                case StylePropertyId.JustifySelf:
+                    return (int)&gridData.justifySelf - (int)&gridData;
                 case StylePropertyId.LetterSpacing:
                     return (int)&inheritedData.letterSpacing - (int)&inheritedData;
                 case StylePropertyId.Opacity:
@@ -2875,8 +3338,6 @@ namespace UnityEngine.UIElements.StyleSheets
                     return (int)&transitionData.transitionTimingFunction - (int)&transitionData;
                 case StylePropertyId.Translate:
                     return (int)&transformData.translate - (int)&transformData;
-                case StylePropertyId.UnityAnimationClip:
-                    return (int)&rareData.unityAnimationClip - (int)&rareData;
                 case StylePropertyId.UnityBackgroundImageTintColor:
                     return (int)&rareData.unityBackgroundImageTintColor - (int)&rareData;
                 case StylePropertyId.UnityEditorTextRenderingMode:
@@ -2923,6 +3384,8 @@ namespace UnityEngine.UIElements.StyleSheets
                     return (int)&inheritedData.whiteSpace - (int)&inheritedData;
                 case StylePropertyId.WordSpacing:
                     return (int)&inheritedData.wordSpacing - (int)&inheritedData;
+                case StylePropertyId.ZIndex:
+                    return (int)&rareData.zIndex - (int)&rareData;
                 default:
                     return 0;
             }
@@ -2930,6 +3393,8 @@ namespace UnityEngine.UIElements.StyleSheets
 
         public static unsafe int PropertyFieldSize(StylePropertyId id)
         {
+            AnimationData animationData = default;
+            GridData gridData = default;
             InheritedData inheritedData = default;
             // Not supported for now: LayoutData layoutData = default;
             RareData rareData = default;
@@ -2938,8 +3403,18 @@ namespace UnityEngine.UIElements.StyleSheets
             VisualData visualData = default;
             switch (id)
             {
-                case StylePropertyId.AnimationPlayState:
-                    return (int)(&rareData.animationPlayState + 1) - (int)&rareData.animationPlayState;
+                case StylePropertyId.AnimationDelay:
+                    return (int)(&animationData.animationDelay + 1) - (int)&animationData.animationDelay;
+                case StylePropertyId.AnimationDirection:
+                    return (int)(&animationData.animationDirection + 1) - (int)&animationData.animationDirection;
+                case StylePropertyId.AnimationDuration:
+                    return (int)(&animationData.animationDuration + 1) - (int)&animationData.animationDuration;
+                case StylePropertyId.AnimationIterationCount:
+                    return (int)(&animationData.animationIterationCount + 1) - (int)&animationData.animationIterationCount;
+                case StylePropertyId.AnimationNames:
+                    return (int)(&animationData.animationNames + 1) - (int)&animationData.animationNames;
+                case StylePropertyId.AnimationPlayStates:
+                    return (int)(&animationData.animationPlayStates + 1) - (int)&animationData.animationPlayStates;
                 case StylePropertyId.BackdropFilter:
                     return (int)(&rareData.backdropFilter + 1) - (int)&rareData.backdropFilter;
                 case StylePropertyId.BackgroundColor:
@@ -2978,6 +3453,28 @@ namespace UnityEngine.UIElements.StyleSheets
                     return (int)(&rareData.filter + 1) - (int)&rareData.filter;
                 case StylePropertyId.FontSize:
                     return (int)(&inheritedData.fontSize + 1) - (int)&inheritedData.fontSize;
+                case StylePropertyId.GridAutoColumns:
+                    return (int)(&gridData.gridAutoColumns + 1) - (int)&gridData.gridAutoColumns;
+                case StylePropertyId.GridAutoFlow:
+                    return (int)(&gridData.gridAutoFlow + 1) - (int)&gridData.gridAutoFlow;
+                case StylePropertyId.GridAutoRows:
+                    return (int)(&gridData.gridAutoRows + 1) - (int)&gridData.gridAutoRows;
+                case StylePropertyId.GridColumnEnd:
+                    return (int)(&gridData.gridColumnEnd + 1) - (int)&gridData.gridColumnEnd;
+                case StylePropertyId.GridColumnStart:
+                    return (int)(&gridData.gridColumnStart + 1) - (int)&gridData.gridColumnStart;
+                case StylePropertyId.GridRowEnd:
+                    return (int)(&gridData.gridRowEnd + 1) - (int)&gridData.gridRowEnd;
+                case StylePropertyId.GridRowStart:
+                    return (int)(&gridData.gridRowStart + 1) - (int)&gridData.gridRowStart;
+                case StylePropertyId.GridTemplateColumns:
+                    return (int)(&gridData.gridTemplateColumns + 1) - (int)&gridData.gridTemplateColumns;
+                case StylePropertyId.GridTemplateRows:
+                    return (int)(&gridData.gridTemplateRows + 1) - (int)&gridData.gridTemplateRows;
+                case StylePropertyId.JustifyItems:
+                    return (int)(&gridData.justifyItems + 1) - (int)&gridData.justifyItems;
+                case StylePropertyId.JustifySelf:
+                    return (int)(&gridData.justifySelf + 1) - (int)&gridData.justifySelf;
                 case StylePropertyId.LetterSpacing:
                     return (int)(&inheritedData.letterSpacing + 1) - (int)&inheritedData.letterSpacing;
                 case StylePropertyId.Opacity:
@@ -3002,8 +3499,6 @@ namespace UnityEngine.UIElements.StyleSheets
                     return (int)(&transitionData.transitionTimingFunction + 1) - (int)&transitionData.transitionTimingFunction;
                 case StylePropertyId.Translate:
                     return (int)(&transformData.translate + 1) - (int)&transformData.translate;
-                case StylePropertyId.UnityAnimationClip:
-                    return (int)(&rareData.unityAnimationClip + 1) - (int)&rareData.unityAnimationClip;
                 case StylePropertyId.UnityBackgroundImageTintColor:
                     return (int)(&rareData.unityBackgroundImageTintColor + 1) - (int)&rareData.unityBackgroundImageTintColor;
                 case StylePropertyId.UnityEditorTextRenderingMode:
@@ -3050,6 +3545,8 @@ namespace UnityEngine.UIElements.StyleSheets
                     return (int)(&inheritedData.whiteSpace + 1) - (int)&inheritedData.whiteSpace;
                 case StylePropertyId.WordSpacing:
                     return (int)(&inheritedData.wordSpacing + 1) - (int)&inheritedData.wordSpacing;
+                case StylePropertyId.ZIndex:
+                    return (int)(&rareData.zIndex + 1) - (int)&rareData.zIndex;
                 default:
                     return 0;
             }

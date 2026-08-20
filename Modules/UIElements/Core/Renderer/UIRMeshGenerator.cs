@@ -697,11 +697,10 @@ namespace UnityEngine.UIElements.UIR
             if (s_TextLib != null)
                 return;
 
+            // A missing ICU data asset is not fatal: the native side falls back
+            // to minimal text segmentation (basic line breaking rules only).
             var icu = GetICUAssetForMeshGeneration(ve);
-            if (icu == null)
-                return;
-
-            s_TextLib = new TextLib(icu.bytes);
+            s_TextLib = new TextLib(icu != null ? icu.bytes : Array.Empty<byte>());
         }
 
         void DrawTextAdvanced(string text, Vector2 pos, float fontSize, Color color, FontAsset font)

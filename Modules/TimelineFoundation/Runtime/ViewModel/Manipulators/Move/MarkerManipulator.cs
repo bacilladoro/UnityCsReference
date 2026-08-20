@@ -62,18 +62,18 @@ namespace Unity.Timeline.Foundation.ViewModel.Internals
 
         public static IEnumerable<Item> GetManipulatedItems(ManipulationContext context, TimeRange rippleRange)
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return context.manipulatedTracks.SelectMany(t => t.items.OnlyMarkers().Where(i => rippleRange.Intersects(i.start)));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         public static IEnumerable<Item> GetFirstItems(IEnumerable<ManipulatedTrack> tracks)
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
-#pragma warning disable UA2011 // Pre-existing usage of FirstOrDefault.
+#pragma warning disable UAC2001 // Avoid Linq
+#pragma warning disable UAC2011 // Pre-existing usage of FirstOrDefault.
             return tracks.Select(t => t.manipulatedItems.OnlyMarkers().FirstOrDefault());
-#pragma warning restore UA2011
-#pragma warning restore UA2001
+#pragma warning restore UAC2011
+#pragma warning restore UAC2001
         }
     }
 }

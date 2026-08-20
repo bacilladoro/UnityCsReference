@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Unity.GraphToolkit.Editor.ContextualMenuItems;
 using Unity.GraphToolkit.ItemLibrary.Editor;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 
 namespace Unity.GraphToolkit.Editor
@@ -16,7 +17,7 @@ namespace Unity.GraphToolkit.Editor
     /// </summary>
     [Serializable]
     [UnityRestricted]
-    internal abstract class AbstractNodeModel : GraphElementModel, IHasTitle, IMovable, IHasElementColor, IHasContextualMenuItems
+    internal abstract partial class AbstractNodeModel : GraphElementModel, IHasTitle, IMovable, IHasElementColor, IHasContextualMenuItems
     {
         [SerializeField, HideInInspector]
         Vector2 m_Position;
@@ -41,8 +42,8 @@ namespace Unity.GraphToolkit.Editor
         [SerializeField, HideInInspector]
         ModelState m_State;
 
-        internal static string titleFieldName = nameof(m_Title);
-        internal static string positionFieldName = nameof(m_Position);
+        internal const string titleFieldName = nameof(m_Title);
+        internal const string positionFieldName = nameof(m_Position);
 
         /// <summary>
         /// Whether the node allows self-connection.
@@ -230,9 +231,9 @@ namespace Unity.GraphToolkit.Editor
         public NodePreviewModel NodePreviewModel => HasNodePreview ? m_NodePreviewModel : null;
 
         /// <inheritdoc />
-        #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+        #pragma warning disable UAC2001 // Avoid Linq
         public override IEnumerable<GraphElementModel> DependentModels => m_NodePreviewModel != null ? base.DependentModels.Append(m_NodePreviewModel) : base.DependentModels;
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AbstractNodeModel"/> class.
@@ -354,7 +355,8 @@ namespace Unity.GraphToolkit.Editor
             }
         }
 
-        static readonly List<ContextualMenuItem> k_ContextualMenuItems = new() {
+        [AutoStaticsCleanupOnCodeReload]
+        static List<ContextualMenuItem> k_ContextualMenuItems = new() {
             ContextualMenuHelpers.deleteAndReconnectItem,
             new ContextualMenuItem(ContextualMenuHelpers.editSubtitleItem, 0),
             new ContextualMenuItem(ContextualMenuHelpers.bypassNodeItem, 1),

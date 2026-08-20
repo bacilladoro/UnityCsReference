@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -20,12 +21,15 @@ namespace UnityEditor.Search
         protected static readonly string k_DeleteMenuLabel = L10n.Tr("Delete");
         protected static readonly string k_EditInInspectorMenuLabel = L10n.Tr("Edit in Inspector");
 
+        [NoAutoStaticsCleanup] // stateless comparer with no user-code refs; safe to persist across reloads
         protected static SearchQueryNodeComparer s_SearchQueryNodeComparer = new();
+        [NoAutoStaticsCleanup] // stateless comparer with no user-code refs; safe to persist across reloads
         protected static TreeViewItemComparer s_TreeViewItemComparer = new();
         protected IEnumerable<ISearchQuery> m_Queries;
         protected Dictionary<int, ISearchQuery> m_QueryIdLookup = new();
         protected TreeViewItemData<SearchQueryNodeData>? m_RootItem;
 
+        [NoAutoStaticsCleanup] // built-in editor icon loaded by fixed name; not user code, safe to persist
         public static Texture2D FolderIcon = EditorGUIUtility.FindTexture("Folder Icon");
 
         #region ISearchQueryNodeHandler API
@@ -200,9 +204,9 @@ namespace UnityEditor.Search
                 else
                 {
                     var queryProviders = q.GetProviderIds();
-#pragma warning disable UA2002 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2002 // Avoid Linq
                     if (!queryProviders.Any())
-#pragma warning restore UA2002
+#pragma warning restore UAC2002
                     {
                         yield return q;
                     }

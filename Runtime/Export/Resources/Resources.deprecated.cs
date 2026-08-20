@@ -7,7 +7,7 @@ using UnityEngineInternal;
 
 namespace UnityEngine
 {
-    partial class Resources
+    public partial class Resources
     {
         // Returns a resource at an asset path (Editor Only).
         [TypeInferenceRule(TypeInferenceRules.TypeReferencedBySecondArgument)]

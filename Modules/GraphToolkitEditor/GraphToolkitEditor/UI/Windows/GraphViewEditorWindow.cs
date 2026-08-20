@@ -10,6 +10,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using Unity.GraphToolkit.CSO;
 using Unity.GraphToolsAuthoringFramework.InternalEditorBridge;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEditor.Overlays;
 using UnityEditor.ShortcutManagement;
@@ -34,9 +35,12 @@ Would you like to save these changes?
 ";
 
         public delegate EditorWindow CreateWindowMethod(Type[] types);
-        static readonly MethodInfo k_CreateWindowMethod;
+        [NoAutoStaticsCleanup] // MethodInfo obtained via reflection on a framework method; value is stable across reload
+        static MethodInfo k_CreateWindowMethod;
+        [AutoStaticsCleanupOnCodeReload]
         static int s_EnabledWindowCount;
 
+        [AutoStaticsCleanupOnCodeReload]
         static List<GraphViewEditorWindow> s_OpenedWindows = new();
 
         List<RootView> m_Views;
@@ -223,8 +227,10 @@ Would you like to save these changes?
             }
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         static EntityId s_LastFocusedEditor = EntityId.None;
 
+        [NoAutoStaticsCleanup] // monotonically-increasing counter for unique window names
         static int s_GraphViewNameCounter;
 
         bool m_Focused;
@@ -303,13 +309,14 @@ Would you like to save these changes?
 
         static internal IReadOnlyList<GraphViewEditorWindow> OpenedWindows => s_OpenedWindows;
 
-        static GraphViewEditorWindow()
+        [OnCodeLoaded]
+        static void Initialize()
         {
             static MethodInfo GetMethodInfo(Expression<CreateWindowMethod> expression)
             {
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 return ((MethodCallExpression)expression.Body).Method;
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             }
 
             k_CreateWindowMethod = GetMethodInfo(types => EditorWindow.CreateWindow<EditorWindow>(types)).GetGenericMethodDefinition();

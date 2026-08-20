@@ -363,9 +363,9 @@ namespace UnityEngine.UIElements.Internal
                     }
                 }
 
-#pragma warning disable UA2014 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2014 // Avoid Linq
                 if (m_OldSortedColumnStates.SequenceEqual(sortedColumnStates))
-#pragma warning restore UA2014
+#pragma warning restore UAC2014
                     return;
 
                 m_SortedColumns.Clear();
@@ -703,9 +703,9 @@ namespace UnityEngine.UIElements.Internal
         /// <param name="modifiers">The modifiers of the pointer event</param>
         void UpdateSortColumnDescriptionsOnClick(Column column, EventModifiers modifiers)
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var desc = sortDescriptions.FirstOrDefault((d) => (d.column == column || (!string.IsNullOrEmpty(column.name) && d.columnName == column.name) || d.columnIndex == column.index));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             // If a sort description matching the column is found then ...
             if (desc != null)

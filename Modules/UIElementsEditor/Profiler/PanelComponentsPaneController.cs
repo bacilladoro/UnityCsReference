@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
 using System;
 using System.Collections.Generic;
 using UnityEditor;
@@ -9,6 +10,7 @@ using UnityEditor.Profiling;
 using UnityEditorInternal;
 using UnityEngine;
 using UnityEngine.UIElements;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.UIElements
 {
@@ -18,7 +20,7 @@ namespace UnityEditor.UIElements
     /// list of IPanelComponent objects (from PANEL_ENTRIES frame metadata) on the right, plus a
     /// <see cref="ToolbarToggle"/> that collapses/expands the right pane.
     /// </summary>
-    internal sealed class PanelComponentsPaneController : IDisposable
+    internal sealed partial class PanelComponentsPaneController : IDisposable
     {
         const int k_MainThreadIndex = 0;
         const string k_PanelComponentRowIconName = "uitoolkit-profiler-panel-component-icon";
@@ -105,6 +107,7 @@ namespace UnityEditor.UIElements
         // on the host's tree view. Short enough that the user doesn't perceive lag on the first
         // appearance of the pane.
         const long k_InitialRefreshSettleDelayMs = 50;
+        [AutoStaticsCleanupOnCodeReload]
         static event Action<DetailsSplitMode> s_SharedSplitModeChanged;
 
         sealed class PanelComponentListEntry
@@ -1396,3 +1399,4 @@ namespace UnityEditor.UIElements
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

@@ -6,6 +6,7 @@ using System;
 using System.IO;
 using System.Text.RegularExpressions;
 using Unity.PlayMode.Editor;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEditor.Build;
 using UnityEditor.Build.Profile;
@@ -40,6 +41,7 @@ namespace Unity.Multiplayer.PlayMode.Editor
             public bool UseExistingBuild;
         }
 
+        [NoAutoStaticsCleanup] // constant default; same value across reloads
         internal static readonly UserSettings DefaultUserSettings = new UserSettings { UseExistingBuild = false };
 
         [Serializable]

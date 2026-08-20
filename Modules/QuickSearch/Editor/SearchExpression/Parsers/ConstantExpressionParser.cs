@@ -3,11 +3,13 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Search
 {
     static partial class Parsers
     {
+        [NoAutoStaticsCleanup] // Immutable evaluator handle resolved from a fixed builtin name; safe to persist across reload.
         public static readonly SearchExpressionEvaluator ConstantEvaluator = EvaluatorManager.GetConstantEvaluatorByName("constant");
 
         [SearchExpressionParser("bool", BuiltinParserPriority.Bool)]

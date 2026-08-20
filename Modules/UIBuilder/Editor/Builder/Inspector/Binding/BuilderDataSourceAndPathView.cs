@@ -166,7 +166,6 @@ namespace Unity.UI.Builder
                     {
                         break;
                     }
-                    m_DataSourceField.label = "Data Source";
 
                     if (m_DataSourceField.value == null)
                     {
@@ -181,8 +180,6 @@ namespace Unity.UI.Builder
                     {
                         break;
                     }
-
-                    m_DataSourceTypeField.label = "Data Source";
 
                     if (string.IsNullOrEmpty(m_DataSourceTypeField.value))
                     {
@@ -344,6 +341,15 @@ namespace Unity.UI.Builder
                 bindingPath = path,
                 label = label ?? StyleSheetUtility.ConvertDashToHuman(attribute)
             };
+
+            // The type reference drawer ignores our label, and relabelling any later than this is lost when the view is rebuilt mid-drag.
+            propertyField.reset += () =>
+            {
+                var field = propertyField.Q<BaseField<string>>();
+                if (field != null)
+                    field.label = propertyField.label;
+            };
+
             propertyField.Bind(context.rootSerializedObject);
 
             if (!readOnly)

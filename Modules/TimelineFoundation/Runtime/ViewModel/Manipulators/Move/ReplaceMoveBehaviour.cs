@@ -41,11 +41,11 @@ namespace Unity.Timeline.Foundation.ViewModel
         {
             for (var i = 0; i < targetsToRevert.Count; i++)
             {
-#pragma warning disable UA2013 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2013 // Avoid Linq
                 var command = new SetTrackContents(targetsToRevert[i],
                     m_MoveItemsState.itemsDestinations?.ElementAtOrDefault(i),
                     m_MarkersState.markerDestinations?.ElementAtOrDefault(i));
-#pragma warning restore UA2013
+#pragma warning restore UAC2013
                 viewModel.Dispatch(command);
             }
         }
@@ -71,11 +71,11 @@ namespace Unity.Timeline.Foundation.ViewModel
         {
             for (var i = 0; i < context.manipulatedTracks.Count; i++)
             {
-#pragma warning disable UA2013 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2013 // Avoid Linq
                 var command = new SetTrackContents(context.manipulatedTracks[i].track,
                     m_MoveItemsState.itemsDestinations?.ElementAtOrDefault(i),
                     m_MarkersState.markerDestinations?.ElementAtOrDefault(i));
-#pragma warning restore UA2013
+#pragma warning restore UAC2013
                 viewModel.Dispatch(command);
             }
         }

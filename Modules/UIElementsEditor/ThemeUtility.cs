@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -10,6 +11,7 @@ using UnityEngine.Bindings;
 using UnityEngine.UIElements;
 using UnityEditor.UIElements.StyleSheets;
 using UnityEngine;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.UIElements
 {
@@ -30,8 +32,9 @@ namespace UnityEditor.UIElements
     /// Utility class for theme-related operations shared between UI Builder and UI Toolkit settings.
     /// </summary>
     [VisibleToOtherModules("UnityEditor.UIBuilderModule", "UnityEditor.UIToolkitAuthoringModule")]
-    internal static class ThemeUtility
+    internal static partial class ThemeUtility
     {
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action themeFilesChanged;
 
         // Internal for tests
@@ -47,6 +50,7 @@ namespace UnityEditor.UIElements
         [VisibleToOtherModules("UnityEditor.UIBuilderModule")]
         internal const string BuiltInDefaultRuntimeThemeName = "Built-in Default Runtime Theme";
 
+        [NoAutoStaticsCleanup]
         private static ThemeStyleSheet s_BuiltInDefaultRuntimeTheme;
 
         // EditorPrefs keys for theme preferences
@@ -56,13 +60,19 @@ namespace UnityEditor.UIElements
         const string k_RuntimeThemePathKey = "UIBuilder.RuntimeThemePath";
 
         // Local project-wide theme preferences stored in EditorPrefs
+        [NoAutoStaticsCleanup]
         static CanvasTheme m_EditorCanvasTheme = CanvasTheme.ProjectSettings;
+        [NoAutoStaticsCleanup]
         static CanvasTheme m_RuntimeCanvasTheme = CanvasTheme.ProjectSettings;
+        [NoAutoStaticsCleanup]
         static LazyLoadReference<ThemeStyleSheet> m_EditorThemeReference;
+        [NoAutoStaticsCleanup]
         static LazyLoadReference<ThemeStyleSheet> m_RuntimeThemeReference;
+        [NoAutoStaticsCleanup]
         static bool s_ThemeOverridesLoaded = false;
 
         // Cached editor theme display names
+        [NoAutoStaticsCleanup]
         static readonly Dictionary<CanvasTheme, string> s_EditorThemesDisplayNames = new()
         {
             { CanvasTheme.Default, "Active Editor Theme" },
@@ -71,10 +81,13 @@ namespace UnityEditor.UIElements
         };
 
         // Cached runtime theme display names (rebuilt when theme files change)
+        [NoAutoStaticsCleanup]
         static Dictionary<ThemeStyleSheet, string> s_RuntimeThemesDisplayNames;
 
         // Cached project default runtime theme (rebuilt when theme files change)
+        [NoAutoStaticsCleanup]
         static ThemeStyleSheet s_ProjectDefaultRuntimeThemeAsset;
+        [NoAutoStaticsCleanup]
         static bool s_ProjectDefaultRuntimeThemeAssetCached;
 
         /// <summary>
@@ -92,6 +105,7 @@ namespace UnityEditor.UIElements
             }
         }
 
+        [NoAutoStaticsCleanup]
         private static SortedSet<string> s_ThemeFiles;
 
         /// Gets available theme files in the project.
@@ -463,3 +477,4 @@ namespace UnityEditor.UIElements
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

@@ -27,7 +27,6 @@ namespace UnityEditor.Build.Analysis
 
             var steps = buildReport.steps ?? Array.Empty<BuildStep>();
             var parsedSteps = new BuildReportStepData[steps.Length];
-            var parsedMessages = new List<BuildReportMessageData>(64);
 
             for (var i = 0; i < steps.Length; i++)
             {
@@ -38,20 +37,6 @@ namespace UnityEditor.Build.Analysis
                     Depth = step.depth,
                     DurationMs = (long)step.duration.TotalMilliseconds,
                 };
-
-                var messages = step.messages;
-                if (messages == null)
-                    continue;
-
-                foreach (var message in messages)
-                {
-                    parsedMessages.Add(new BuildReportMessageData
-                    {
-                        Severity = ToSeverityString(message.type),
-                        StepIndex = i,
-                        Content = message.content ?? string.Empty,
-                    });
-                }
             }
 
             var cachedReusePercent = ComputeCachedReusePercent(buildReport);
@@ -60,7 +45,6 @@ namespace UnityEditor.Build.Analysis
             return new BuildReportData
             {
                 Steps = parsedSteps,
-                Messages = parsedMessages.ToArray(),
                 Assets = assets,
                 TotalDurationMs = (long)buildReport.summary.totalTime.TotalMilliseconds,
                 TotalErrors = buildReport.summary.totalErrors,
@@ -133,21 +117,6 @@ namespace UnityEditor.Build.Analysis
                 }
 
                 return assets;
-            }
-        }
-
-        private static string ToSeverityString(LogType messageType)
-        {
-            switch (messageType)
-            {
-                case LogType.Warning:
-                    return BuildMessageSeverity.Warning;
-                case LogType.Error:
-                case LogType.Assert:
-                case LogType.Exception:
-                    return BuildMessageSeverity.Error;
-                default:
-                    return BuildMessageSeverity.Info;
             }
         }
     }

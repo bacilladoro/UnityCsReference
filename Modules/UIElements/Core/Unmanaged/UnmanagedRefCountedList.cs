@@ -267,6 +267,15 @@ internal static class UnmanagedRefCountedListExtensions
     public static List<StylePropertyName> ToManaged(this UnmanagedRefCountedList<StylePropertyId> self) =>
         self.ToList(id => new StylePropertyName(id));
 
+    public static void CopyFrom(ref this UnmanagedRefCountedList<EntityId> self, List<UIAnimationClip> other) =>
+        self.CopyFrom(other, clip => clip != null ? clip.GetEntityId() : EntityId.None);
+
+    public static void CopyTo(this UnmanagedRefCountedList<EntityId> self, ref List<UIAnimationClip> other) =>
+        self.CopyTo(ref other, id => (UIAnimationClip)Resources.EntityIdToObject(id));
+
+    public static List<UIAnimationClip> ToManaged(this UnmanagedRefCountedList<EntityId> self) =>
+        self.ToList(id => (UIAnimationClip)Resources.EntityIdToObject(id));
+
     public static List<TimeValue> ToManaged(this UnmanagedRefCountedList<TimeValue> self) =>
         self.ToList();
 

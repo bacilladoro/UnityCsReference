@@ -65,7 +65,7 @@ namespace UnityEngine.UIElements
         /// <summary>
         /// The label text for the toggle.
         /// </summary>
-        [MultilineTextField]
+        [MultilineTextField(lines = 3)]
         [CreateProperty]
         [UxmlAttribute]
         public string text

@@ -16,6 +16,7 @@ namespace UnityEngine.UIElements.StyleSheets
 {
     internal static partial class StylePropertyCache
     {
+        [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
         internal static readonly Dictionary<string, string> s_PropertySyntaxCache = new Dictionary<string, string>()
         {
 
@@ -36,8 +37,32 @@ namespace UnityEngine.UIElements.StyleSheets
                 "initial"
             },
                         {
+                "animation",
+                "<single-animation>#"
+            },
+                        {
+                "animation-delay",
+                "<time>#"
+            },
+                        {
+                "animation-direction",
+                "<single-animation-direction>#"
+            },
+                        {
+                "animation-duration",
+                "<time>#"
+            },
+                        {
+                "animation-iteration-count",
+                "<single-animation-iteration-count>#"
+            },
+                        {
+                "animation-name",
+                "[ <resource> | <url> | none ]#"
+            },
+                        {
                 "animation-play-state",
-                "running | paused"
+                "<single-animation-play-state>#"
             },
                         {
                 "aspect-ratio",
@@ -153,7 +178,7 @@ namespace UnityEngine.UIElements.StyleSheets
             },
                         {
                 "display",
-                "flex | none"
+                "flex | none | grid"
             },
                         {
                 "filter",
@@ -192,12 +217,64 @@ namespace UnityEngine.UIElements.StyleSheets
                 "<'row-gap'> <'column-gap'>?"
             },
                         {
+                "grid-auto-columns",
+                "none | <track-size>+"
+            },
+                        {
+                "grid-auto-flow",
+                "row | column | row-dense | column-dense"
+            },
+                        {
+                "grid-auto-rows",
+                "none | <track-size>+"
+            },
+                        {
+                "grid-column",
+                "<integer> [ / [ <integer> | span <integer> ] ]? | span <integer>"
+            },
+                        {
+                "grid-column-end",
+                "auto | <integer> | span <integer>"
+            },
+                        {
+                "grid-column-start",
+                "auto | <integer> | span <integer>"
+            },
+                        {
+                "grid-row",
+                "<integer> [ / [ <integer> | span <integer> ] ]? | span <integer>"
+            },
+                        {
+                "grid-row-end",
+                "auto | <integer> | span <integer>"
+            },
+                        {
+                "grid-row-start",
+                "auto | <integer> | span <integer>"
+            },
+                        {
+                "grid-template-columns",
+                "none | <track-size>+"
+            },
+                        {
+                "grid-template-rows",
+                "none | <track-size>+"
+            },
+                        {
                 "height",
                 "<length-percentage> | auto"
             },
                         {
                 "justify-content",
                 "flex-start | flex-end | center | space-between | space-around | space-evenly"
+            },
+                        {
+                "justify-items",
+                "auto | flex-start | flex-end | center | stretch"
+            },
+                        {
+                "justify-self",
+                "auto | flex-start | flex-end | center | stretch"
             },
                         {
                 "left",
@@ -333,7 +410,7 @@ namespace UnityEngine.UIElements.StyleSheets
             },
                         {
                 "-unity-animation-clip",
-                "<resource> | <url> | none"
+                "[ <resource> | <url> | none ]#"
             },
                         {
                 "-unity-background-image-tint-color",
@@ -438,9 +515,14 @@ namespace UnityEngine.UIElements.StyleSheets
                         {
                 "word-spacing",
                 "<length>"
+            },
+                        {
+                "z-index",
+                "auto | <integer>"
             }
                 };
 
+        [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
         internal static readonly Dictionary<string, string> s_NonTerminalValues = new Dictionary<string, string>()
         {
 
@@ -451,6 +533,22 @@ namespace UnityEngine.UIElements.StyleSheets
                         {
                 "length-percentage",
                 "<length> | <percentage>"
+            },
+                        {
+                "single-animation",
+                "[ none | <resource> | <url> ] || <time> || <time> || <single-animation-iteration-count> || <single-animation-direction> || <single-animation-play-state>"
+            },
+                        {
+                "single-animation-direction",
+                "normal | reverse | alternate | alternate-reverse"
+            },
+                        {
+                "single-animation-iteration-count",
+                "infinite | <number>"
+            },
+                        {
+                "single-animation-play-state",
+                "running | paused"
             },
                         {
                 "single-transition",

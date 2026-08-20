@@ -4,13 +4,14 @@
 
 using System;
 using System.Diagnostics;
-using Newtonsoft.Json;
+using System.Text.Json;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEngine.Analytics;
 
 namespace Unity.Multiplayer.PlayMode.Editor
 {
-    internal static class AnalyticsEvent
+    internal static partial class AnalyticsEvent
     {
         [InitializeOnLoadMethod]
         static void Initialize()
@@ -18,8 +19,15 @@ namespace Unity.Multiplayer.PlayMode.Editor
             s_DebugEnabled = MigrationUtility.ShouldEnableMultiplayerPlayMode() && DebugUtils.IsDebugFlagEnabled(DebugUtils.DebugFlags.MppmAnalyticsDebug);
         }
 
+        [AutoStaticsCleanupOnCodeReload] // set from runtime state; must re-evaluate after reload
         private static bool s_DebugEnabled;
+        [AutoStaticsCleanupOnCodeReload] // static event; stale handlers after reload pin old ALC
         public static event Action<IAnalytic.IData> AnalyticSent;
+
+        // Analytics data types typically expose their payload as public fields, which
+        // System.Text.Json skips by default (Newtonsoft included them).
+        [NoAutoStaticsCleanup] // immutable serializer options; safe to persist across reload
+        internal static JsonSerializerOptions DebugSerializerOptions { get; } = new JsonSerializerOptions { IncludeFields = true };
 
         internal static bool IsDebugEnabled() => s_DebugEnabled;
         internal static void InvokeAnalyticSent<E, T>(AnalyticsEvent<E, T> evt)
@@ -43,7 +51,7 @@ namespace Unity.Multiplayer.PlayMode.Editor
             EditorAnalytics.SendAnalytic(analytic);
 
             AnalyticsEvent.InvokeAnalyticSent(analytic);
-            DebugAnalytics($"Data Name: {data.GetType()} - Data: {JsonConvert.SerializeObject(data)}");
+            DebugAnalytics($"Data Name: {data.GetType()} - Data: {JsonSerializer.Serialize<object>(data, AnalyticsEvent.DebugSerializerOptions)}");
         }
 
         public bool TryGatherData(out IAnalytic.IData data, out Exception error)

@@ -1,3 +1,4 @@
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: GraphicsDeviceFeatures not yet converted
 using UnityEngine;
 using UnityEngine.Rendering;
 using System;
@@ -394,3 +395,4 @@ namespace UnityEngine.NVIDIA
         #endregion
     };
 } // namespace NVIDIA
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

@@ -2,6 +2,8 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
+using Unity.Scripting.LifecycleManagement;
 using System;
 using System.Collections.Generic;
 using UnityEngine.Bindings;
@@ -163,6 +165,7 @@ internal static class WorldSpaceInput
         /// <summary>
         /// The result of a Picking operation that intersected no element.
         /// </summary>
+        [NoAutoStaticsCleanup]
         public static readonly PickResult Empty = new PickResult { distance = Mathf.Infinity };
 
         /// <summary>
@@ -504,3 +507,4 @@ internal static class WorldSpaceInput
                GameObjectWorldSpaceToLocalPoint(element, Vector3.zero);
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

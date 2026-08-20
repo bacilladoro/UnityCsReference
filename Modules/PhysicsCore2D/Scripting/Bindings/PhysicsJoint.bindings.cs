@@ -11,7 +11,7 @@ namespace Unity.U2D.Physics
     static partial class Scripting2D
     {
         [NativeMethod(Name = "PhysicsJoint::Destroy", IsThreadSafe = true)] extern internal static bool PhysicsJoint_Destroy(PhysicsJoint joint, int ownerKey);
-        [NativeMethod(Name = "PhysicsJoint::DestroyBatch", IsThreadSafe = true)] extern internal static void PhysicsJoint_DestroyBatch(ReadOnlySpan<PhysicsJoint> joints);
+        [NativeMethod(Name = "PhysicsJoint::DestroyBatch", IsThreadSafe = true)] extern internal static void PhysicsJoint_DestroyBatch(ReadOnlySpan<PhysicsJoint> joints, int ownerKey);
         [NativeMethod(Name = "PhysicsJoint::IsValid", IsThreadSafe = true)] extern internal static bool PhysicsJoint_IsValid(PhysicsJoint joint);
         [NativeMethod(Name = "PhysicsJoint::GetWorld", IsThreadSafe = true)] extern internal static PhysicsWorld PhysicsJoint_GetWorld(PhysicsJoint joint);
         [NativeMethod(Name = "PhysicsJoint::GetJointType", IsThreadSafe = true)] extern internal static PhysicsJoint.JointType PhysicsJoint_GetJointType(PhysicsJoint joint);
@@ -49,6 +49,7 @@ namespace Unity.U2D.Physics
         [NativeMethod(Name = "PhysicsJoint::SetUserData", IsThreadSafe = true)] extern internal static void PhysicsJoint_SetUserData(PhysicsJoint joint, PhysicsUserData physicsUserData);
         [NativeMethod(Name = "PhysicsJoint::GetUserData", IsThreadSafe = true)] extern internal static PhysicsUserData PhysicsJoint_GetUserData(PhysicsJoint joint);
         [NativeMethod(Name = "PhysicsJoint::SetOwnerUserData", IsThreadSafe = true)] extern internal static void PhysicsJoint_SetOwnerUserData(PhysicsJoint joint, PhysicsUserData physicsUserData, int ownerKey);
+        [NativeMethod(Name = "PhysicsJoint::SetOwnerUserDataSpan", IsThreadSafe = true)] extern internal static void PhysicsJoint_SetOwnerUserDataSpan(ReadOnlySpan<PhysicsJoint> joints, ReadOnlySpan<PhysicsUserData> userDatas, int ownerKey);
         [NativeMethod(Name = "PhysicsJoint::GetOwnerUserData", IsThreadSafe = true)] extern internal static PhysicsUserData PhysicsJoint_GetOwnerUserData(PhysicsJoint joint);
 
         // PhysicsDistanceJoint.

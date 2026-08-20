@@ -36,15 +36,8 @@ static partial class PlayModeButtons
         };
     }
 
-    [NoAutoStaticsCleanup] // re-entrancy guard: set and restored within the same call frame
-    private static bool s_IsRefreshing;
-
     static void RefreshToolbar()
     {
-        if (s_IsRefreshing)
-            return;
-
-        s_IsRefreshing = true;
         try
         {
             MainToolbar.Refresh(k_ElementId);
@@ -52,10 +45,6 @@ static partial class PlayModeButtons
         catch (Exception e)
         {
             Debug.LogException(e);
-        }
-        finally
-        {
-            s_IsRefreshing = false;
         }
     }
 

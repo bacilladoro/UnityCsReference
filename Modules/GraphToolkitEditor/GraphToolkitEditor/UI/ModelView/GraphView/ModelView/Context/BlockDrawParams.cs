@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.UIElements;
 
 namespace Unity.GraphToolkit.Editor
@@ -18,6 +19,7 @@ namespace Unity.GraphToolkit.Editor
         public float etchOuterRadius;
         public float extremeBlockRadius;
 
+        [NoAutoStaticsCleanup] // default BlockDrawParams struct; fixed constant values safe to persist
         public static BlockDrawParams Default = new BlockDrawParams
         {
             etchHeight = 6,
@@ -30,11 +32,17 @@ namespace Unity.GraphToolkit.Editor
             extremeBlockRadius = 3
         };
 
+        [NoAutoStaticsCleanup] // CSS custom property descriptor; value is a fixed CSS property name
         static readonly CustomStyleProperty<float> k_BlockEtchHeightStyle = new CustomStyleProperty<float>("--block--etch-height");
+        [NoAutoStaticsCleanup] // CSS custom property descriptor; value is a fixed CSS property name
         static readonly CustomStyleProperty<float> k_BlockEtchWidthStyle = new CustomStyleProperty<float>("--block--etch-width");
+        [NoAutoStaticsCleanup] // CSS custom property descriptor; value is a fixed CSS property name
         static readonly CustomStyleProperty<float> k_BlockEtchMarginStyle = new CustomStyleProperty<float>("--block--etch-margin");
+        [NoAutoStaticsCleanup] // CSS custom property descriptor; value is a fixed CSS property name
         static readonly CustomStyleProperty<float> k_BlockEtchInnerRadiusStyle = new CustomStyleProperty<float>("--block--etch-inner-radius");
+        [NoAutoStaticsCleanup] // CSS custom property descriptor; value is a fixed CSS property name
         static readonly CustomStyleProperty<float> k_BlockEtchOuterRadiusStyle = new CustomStyleProperty<float>("--block--etch-outer-radius");
+        [NoAutoStaticsCleanup] // CSS custom property descriptor; value is a fixed CSS property name
         static readonly CustomStyleProperty<float> k_BlockExtremeRadiusStyle = new CustomStyleProperty<float>("--block--extreme-radius");
 
         public bool CustomStyleResolved(CustomStyleResolvedEvent e)

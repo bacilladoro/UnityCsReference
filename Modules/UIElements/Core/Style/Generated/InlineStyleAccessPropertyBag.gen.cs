@@ -46,14 +46,64 @@ namespace UnityEngine.UIElements
             public override void SetValue(ref InlineStyleAccess container, StyleEnum<Align> value) => ((IStyle)container).alignSelf = value;
         }
 
-        class AnimationPlayStateProperty : InlineStyleEnumProperty<AnimationPlayState>
+        class AnimationDelayProperty : InlineStyleListProperty<float>
         {
-            public override string Name => nameof(IStyle.animationPlayState);
+            public override string Name => nameof(IStyle.animationDelay);
+            public override string ussName => "animation-delay";
+            public override bool IsReadOnly => false;
+
+            public override StyleList<float> GetValue(ref InlineStyleAccess container) => ((IStyle)container).animationDelay;
+            public override void SetValue(ref InlineStyleAccess container, StyleList<float> value) => ((IStyle)container).animationDelay = value;
+        }
+
+        class AnimationDirectionProperty : InlineStyleListProperty<AnimationDirection>
+        {
+            public override string Name => nameof(IStyle.animationDirection);
+            public override string ussName => "animation-direction";
+            public override bool IsReadOnly => false;
+
+            public override StyleList<AnimationDirection> GetValue(ref InlineStyleAccess container) => ((IStyle)container).animationDirection;
+            public override void SetValue(ref InlineStyleAccess container, StyleList<AnimationDirection> value) => ((IStyle)container).animationDirection = value;
+        }
+
+        class AnimationDurationProperty : InlineStyleListProperty<float>
+        {
+            public override string Name => nameof(IStyle.animationDuration);
+            public override string ussName => "animation-duration";
+            public override bool IsReadOnly => false;
+
+            public override StyleList<float> GetValue(ref InlineStyleAccess container) => ((IStyle)container).animationDuration;
+            public override void SetValue(ref InlineStyleAccess container, StyleList<float> value) => ((IStyle)container).animationDuration = value;
+        }
+
+        class AnimationIterationCountProperty : InlineStyleListProperty<AnimationIterationCount>
+        {
+            public override string Name => nameof(IStyle.animationIterationCount);
+            public override string ussName => "animation-iteration-count";
+            public override bool IsReadOnly => false;
+
+            public override StyleList<AnimationIterationCount> GetValue(ref InlineStyleAccess container) => ((IStyle)container).animationIterationCount;
+            public override void SetValue(ref InlineStyleAccess container, StyleList<AnimationIterationCount> value) => ((IStyle)container).animationIterationCount = value;
+        }
+
+        class AnimationNamesProperty : InlineStyleListProperty<UIAnimationClip>
+        {
+            public override string Name => nameof(IStyle.animationNames);
+            public override string ussName => "animation-name";
+            public override bool IsReadOnly => false;
+
+            public override StyleList<UIAnimationClip> GetValue(ref InlineStyleAccess container) => ((IStyle)container).animationNames;
+            public override void SetValue(ref InlineStyleAccess container, StyleList<UIAnimationClip> value) => ((IStyle)container).animationNames = value;
+        }
+
+        class AnimationPlayStatesProperty : InlineStyleListProperty<AnimationPlayState>
+        {
+            public override string Name => nameof(IStyle.animationPlayStates);
             public override string ussName => "animation-play-state";
             public override bool IsReadOnly => false;
 
-            public override StyleEnum<AnimationPlayState> GetValue(ref InlineStyleAccess container) => ((IStyle)container).animationPlayState;
-            public override void SetValue(ref InlineStyleAccess container, StyleEnum<AnimationPlayState> value) => ((IStyle)container).animationPlayState = value;
+            public override StyleList<AnimationPlayState> GetValue(ref InlineStyleAccess container) => ((IStyle)container).animationPlayStates;
+            public override void SetValue(ref InlineStyleAccess container, StyleList<AnimationPlayState> value) => ((IStyle)container).animationPlayStates = value;
         }
 
         class AspectRatioProperty : InlineStyleRatioProperty
@@ -376,6 +426,96 @@ namespace UnityEngine.UIElements
             public override void SetValue(ref InlineStyleAccess container, StyleLength value) => ((IStyle)container).fontSize = value;
         }
 
+        class GridAutoColumnsProperty : InlineStyleListProperty<GridTrackSize>
+        {
+            public override string Name => nameof(IStyle.gridAutoColumns);
+            public override string ussName => "grid-auto-columns";
+            public override bool IsReadOnly => false;
+
+            public override StyleList<GridTrackSize> GetValue(ref InlineStyleAccess container) => ((IStyle)container).gridAutoColumns;
+            public override void SetValue(ref InlineStyleAccess container, StyleList<GridTrackSize> value) => ((IStyle)container).gridAutoColumns = value;
+        }
+
+        class GridAutoFlowProperty : InlineStyleEnumProperty<GridAutoFlow>
+        {
+            public override string Name => nameof(IStyle.gridAutoFlow);
+            public override string ussName => "grid-auto-flow";
+            public override bool IsReadOnly => false;
+
+            public override StyleEnum<GridAutoFlow> GetValue(ref InlineStyleAccess container) => ((IStyle)container).gridAutoFlow;
+            public override void SetValue(ref InlineStyleAccess container, StyleEnum<GridAutoFlow> value) => ((IStyle)container).gridAutoFlow = value;
+        }
+
+        class GridAutoRowsProperty : InlineStyleListProperty<GridTrackSize>
+        {
+            public override string Name => nameof(IStyle.gridAutoRows);
+            public override string ussName => "grid-auto-rows";
+            public override bool IsReadOnly => false;
+
+            public override StyleList<GridTrackSize> GetValue(ref InlineStyleAccess container) => ((IStyle)container).gridAutoRows;
+            public override void SetValue(ref InlineStyleAccess container, StyleList<GridTrackSize> value) => ((IStyle)container).gridAutoRows = value;
+        }
+
+        class GridColumnEndProperty : InlineStyleGridLineProperty
+        {
+            public override string Name => nameof(IStyle.gridColumnEnd);
+            public override string ussName => "grid-column-end";
+            public override bool IsReadOnly => false;
+
+            public override StyleGridLine GetValue(ref InlineStyleAccess container) => ((IStyle)container).gridColumnEnd;
+            public override void SetValue(ref InlineStyleAccess container, StyleGridLine value) => ((IStyle)container).gridColumnEnd = value;
+        }
+
+        class GridColumnStartProperty : InlineStyleGridLineProperty
+        {
+            public override string Name => nameof(IStyle.gridColumnStart);
+            public override string ussName => "grid-column-start";
+            public override bool IsReadOnly => false;
+
+            public override StyleGridLine GetValue(ref InlineStyleAccess container) => ((IStyle)container).gridColumnStart;
+            public override void SetValue(ref InlineStyleAccess container, StyleGridLine value) => ((IStyle)container).gridColumnStart = value;
+        }
+
+        class GridRowEndProperty : InlineStyleGridLineProperty
+        {
+            public override string Name => nameof(IStyle.gridRowEnd);
+            public override string ussName => "grid-row-end";
+            public override bool IsReadOnly => false;
+
+            public override StyleGridLine GetValue(ref InlineStyleAccess container) => ((IStyle)container).gridRowEnd;
+            public override void SetValue(ref InlineStyleAccess container, StyleGridLine value) => ((IStyle)container).gridRowEnd = value;
+        }
+
+        class GridRowStartProperty : InlineStyleGridLineProperty
+        {
+            public override string Name => nameof(IStyle.gridRowStart);
+            public override string ussName => "grid-row-start";
+            public override bool IsReadOnly => false;
+
+            public override StyleGridLine GetValue(ref InlineStyleAccess container) => ((IStyle)container).gridRowStart;
+            public override void SetValue(ref InlineStyleAccess container, StyleGridLine value) => ((IStyle)container).gridRowStart = value;
+        }
+
+        class GridTemplateColumnsProperty : InlineStyleListProperty<GridTrackSize>
+        {
+            public override string Name => nameof(IStyle.gridTemplateColumns);
+            public override string ussName => "grid-template-columns";
+            public override bool IsReadOnly => false;
+
+            public override StyleList<GridTrackSize> GetValue(ref InlineStyleAccess container) => ((IStyle)container).gridTemplateColumns;
+            public override void SetValue(ref InlineStyleAccess container, StyleList<GridTrackSize> value) => ((IStyle)container).gridTemplateColumns = value;
+        }
+
+        class GridTemplateRowsProperty : InlineStyleListProperty<GridTrackSize>
+        {
+            public override string Name => nameof(IStyle.gridTemplateRows);
+            public override string ussName => "grid-template-rows";
+            public override bool IsReadOnly => false;
+
+            public override StyleList<GridTrackSize> GetValue(ref InlineStyleAccess container) => ((IStyle)container).gridTemplateRows;
+            public override void SetValue(ref InlineStyleAccess container, StyleList<GridTrackSize> value) => ((IStyle)container).gridTemplateRows = value;
+        }
+
         class HeightProperty : InlineStyleLengthProperty
         {
             public override string Name => nameof(IStyle.height);
@@ -394,6 +534,26 @@ namespace UnityEngine.UIElements
 
             public override StyleEnum<Justify> GetValue(ref InlineStyleAccess container) => ((IStyle)container).justifyContent;
             public override void SetValue(ref InlineStyleAccess container, StyleEnum<Justify> value) => ((IStyle)container).justifyContent = value;
+        }
+
+        class JustifyItemsProperty : InlineStyleEnumProperty<Align>
+        {
+            public override string Name => nameof(IStyle.justifyItems);
+            public override string ussName => "justify-items";
+            public override bool IsReadOnly => false;
+
+            public override StyleEnum<Align> GetValue(ref InlineStyleAccess container) => ((IStyle)container).justifyItems;
+            public override void SetValue(ref InlineStyleAccess container, StyleEnum<Align> value) => ((IStyle)container).justifyItems = value;
+        }
+
+        class JustifySelfProperty : InlineStyleEnumProperty<Align>
+        {
+            public override string Name => nameof(IStyle.justifySelf);
+            public override string ussName => "justify-self";
+            public override bool IsReadOnly => false;
+
+            public override StyleEnum<Align> GetValue(ref InlineStyleAccess container) => ((IStyle)container).justifySelf;
+            public override void SetValue(ref InlineStyleAccess container, StyleEnum<Align> value) => ((IStyle)container).justifySelf = value;
         }
 
         class LeftProperty : InlineStyleLengthProperty
@@ -696,16 +856,6 @@ namespace UnityEngine.UIElements
             public override void SetValue(ref InlineStyleAccess container, StyleTranslate value) => ((IStyle)container).translate = value;
         }
 
-        class UnityAnimationClipProperty : InlineStyleUIAnimationClipProperty
-        {
-            public override string Name => nameof(IStyle.unityAnimationClip);
-            public override string ussName => "-unity-animation-clip";
-            public override bool IsReadOnly => false;
-
-            public override StyleUIAnimationClip GetValue(ref InlineStyleAccess container) => ((IStyle)container).unityAnimationClip;
-            public override void SetValue(ref InlineStyleAccess container, StyleUIAnimationClip value) => ((IStyle)container).unityAnimationClip = value;
-        }
-
         class UnityBackgroundImageTintColorProperty : InlineStyleColorProperty
         {
             public override string Name => nameof(IStyle.unityBackgroundImageTintColor);
@@ -946,11 +1096,21 @@ namespace UnityEngine.UIElements
             public override void SetValue(ref InlineStyleAccess container, StyleLength value) => ((IStyle)container).wordSpacing = value;
         }
 
+        class ZIndexProperty : InlineStyleIntProperty
+        {
+            public override string Name => nameof(IStyle.zIndex);
+            public override string ussName => "z-index";
+            public override bool IsReadOnly => false;
+
+            public override StyleInt GetValue(ref InlineStyleAccess container) => ((IStyle)container).zIndex;
+            public override void SetValue(ref InlineStyleAccess container, StyleInt value) => ((IStyle)container).zIndex = value;
+        }
+
         public InlineStyleAccessPropertyBag()
         {
-            m_PropertiesList = new List<IProperty<InlineStyleAccess>>(93);
-            m_PropertiesHash = new Dictionary<string, IProperty<InlineStyleAccess>>(279);
-            AddPropertyRange(new AlignContentProperty(), new AlignItemsProperty(), new AlignSelfProperty(), new AnimationPlayStateProperty(), new AspectRatioProperty(), new BackdropFilterProperty(), new BackgroundColorProperty(), new BackgroundImageProperty(), new BackgroundPositionXProperty(), new BackgroundPositionYProperty(), new BackgroundRepeatProperty(), new BackgroundSizeProperty(), new BorderBottomColorProperty(), new BorderBottomLeftRadiusProperty(), new BorderBottomRightRadiusProperty(), new BorderBottomWidthProperty(), new BorderLeftColorProperty(), new BorderLeftWidthProperty(), new BorderRightColorProperty(), new BorderRightWidthProperty(), new BorderTopColorProperty(), new BorderTopLeftRadiusProperty(), new BorderTopRightRadiusProperty(), new BorderTopWidthProperty(), new BottomProperty(), new ColorProperty(), new ColumnGapProperty(), new CursorProperty(), new DisplayProperty(), new FilterProperty(), new FlexBasisProperty(), new FlexDirectionProperty(), new FlexGrowProperty(), new FlexShrinkProperty(), new FlexWrapProperty(), new FontSizeProperty(), new HeightProperty(), new JustifyContentProperty(), new LeftProperty(), new LetterSpacingProperty(), new MarginBottomProperty(), new MarginLeftProperty(), new MarginRightProperty(), new MarginTopProperty(), new MaxHeightProperty(), new MaxWidthProperty(), new MinHeightProperty(), new MinWidthProperty(), new OpacityProperty(), new OverflowProperty(), new PaddingBottomProperty(), new PaddingLeftProperty(), new PaddingRightProperty(), new PaddingTopProperty(), new PositionProperty(), new RightProperty(), new RotateProperty(), new RowGapProperty(), new ScaleProperty(), new TextOverflowProperty(), new TextShadowProperty(), new TopProperty(), new TransformOriginProperty(), new TransitionDelayProperty(), new TransitionDurationProperty(), new TransitionPropertyProperty(), new TransitionTimingFunctionProperty(), new TranslateProperty(), new UnityAnimationClipProperty(), new UnityBackgroundImageTintColorProperty(), new UnityEditorTextRenderingModeProperty(), new UnityFontProperty(), new UnityFontDefinitionProperty(), new UnityFontStyleAndWeightProperty(), new UnityMaterialProperty(), new UnityOverflowClipBoxProperty(), new UnityParagraphSpacingProperty(), new UnitySliceBottomProperty(), new UnitySliceLeftProperty(), new UnitySliceRightProperty(), new UnitySliceScaleProperty(), new UnitySliceTopProperty(), new UnitySliceTypeProperty(), new UnityTextAlignProperty(), new UnityTextAutoSizeProperty(), new UnityTextGeneratorProperty(), new UnityTextOutlineColorProperty(), new UnityTextOutlineWidthProperty(), new UnityTextOverflowPositionProperty(), new VisibilityProperty(), new WhiteSpaceProperty(), new WidthProperty(), new WordSpacingProperty());
+            m_PropertiesList = new List<IProperty<InlineStyleAccess>>(109);
+            m_PropertiesHash = new Dictionary<string, IProperty<InlineStyleAccess>>(327);
+            AddPropertyRange(new AlignContentProperty(), new AlignItemsProperty(), new AlignSelfProperty(), new AnimationDelayProperty(), new AnimationDirectionProperty(), new AnimationDurationProperty(), new AnimationIterationCountProperty(), new AnimationNamesProperty(), new AnimationPlayStatesProperty(), new AspectRatioProperty(), new BackdropFilterProperty(), new BackgroundColorProperty(), new BackgroundImageProperty(), new BackgroundPositionXProperty(), new BackgroundPositionYProperty(), new BackgroundRepeatProperty(), new BackgroundSizeProperty(), new BorderBottomColorProperty(), new BorderBottomLeftRadiusProperty(), new BorderBottomRightRadiusProperty(), new BorderBottomWidthProperty(), new BorderLeftColorProperty(), new BorderLeftWidthProperty(), new BorderRightColorProperty(), new BorderRightWidthProperty(), new BorderTopColorProperty(), new BorderTopLeftRadiusProperty(), new BorderTopRightRadiusProperty(), new BorderTopWidthProperty(), new BottomProperty(), new ColorProperty(), new ColumnGapProperty(), new CursorProperty(), new DisplayProperty(), new FilterProperty(), new FlexBasisProperty(), new FlexDirectionProperty(), new FlexGrowProperty(), new FlexShrinkProperty(), new FlexWrapProperty(), new FontSizeProperty(), new GridAutoColumnsProperty(), new GridAutoFlowProperty(), new GridAutoRowsProperty(), new GridColumnEndProperty(), new GridColumnStartProperty(), new GridRowEndProperty(), new GridRowStartProperty(), new GridTemplateColumnsProperty(), new GridTemplateRowsProperty(), new HeightProperty(), new JustifyContentProperty(), new JustifyItemsProperty(), new JustifySelfProperty(), new LeftProperty(), new LetterSpacingProperty(), new MarginBottomProperty(), new MarginLeftProperty(), new MarginRightProperty(), new MarginTopProperty(), new MaxHeightProperty(), new MaxWidthProperty(), new MinHeightProperty(), new MinWidthProperty(), new OpacityProperty(), new OverflowProperty(), new PaddingBottomProperty(), new PaddingLeftProperty(), new PaddingRightProperty(), new PaddingTopProperty(), new PositionProperty(), new RightProperty(), new RotateProperty(), new RowGapProperty(), new ScaleProperty(), new TextOverflowProperty(), new TextShadowProperty(), new TopProperty(), new TransformOriginProperty(), new TransitionDelayProperty(), new TransitionDurationProperty(), new TransitionPropertyProperty(), new TransitionTimingFunctionProperty(), new TranslateProperty(), new UnityBackgroundImageTintColorProperty(), new UnityEditorTextRenderingModeProperty(), new UnityFontProperty(), new UnityFontDefinitionProperty(), new UnityFontStyleAndWeightProperty(), new UnityMaterialProperty(), new UnityOverflowClipBoxProperty(), new UnityParagraphSpacingProperty(), new UnitySliceBottomProperty(), new UnitySliceLeftProperty(), new UnitySliceRightProperty(), new UnitySliceScaleProperty(), new UnitySliceTopProperty(), new UnitySliceTypeProperty(), new UnityTextAlignProperty(), new UnityTextAutoSizeProperty(), new UnityTextGeneratorProperty(), new UnityTextOutlineColorProperty(), new UnityTextOutlineWidthProperty(), new UnityTextOverflowPositionProperty(), new VisibilityProperty(), new WhiteSpaceProperty(), new WidthProperty(), new WordSpacingProperty(), new ZIndexProperty());
         }
     }
 }

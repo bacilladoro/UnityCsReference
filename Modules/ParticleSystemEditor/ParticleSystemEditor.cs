@@ -126,12 +126,12 @@ namespace UnityEditor
 
         private void Init(bool forceInit)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             IEnumerable<ParticleSystem> systems = from p in targets.OfType<ParticleSystem>() where (p != null) select p;
-#pragma warning restore UA2001
-#pragma warning disable UA2002 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+#pragma warning disable UAC2002 // Avoid Linq
             if (systems == null || !systems.Any())
-#pragma warning restore UA2002
+#pragma warning restore UAC2002
             {
                 m_ParticleEffectUI = null;
                 return;
@@ -288,9 +288,9 @@ namespace UnityEditor
 
         void OnOwnersSelected(object owners)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             Selection.objects = ((List<ParticleSystem>)owners).Select(o => o.gameObject).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         public override bool UseDefaultMargins() { return false; }

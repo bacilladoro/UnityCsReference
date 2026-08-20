@@ -13,6 +13,11 @@ namespace Unity.UI.Builder
 {
     internal class BuilderStyleUtilities
     {
+        // A display:grid element only lays out as a grid while the feature flag is on; with it off it
+        // falls back to flex, so the editing tools must treat it as flex too.
+        internal static bool IsGridContainer(VisualElement ve)
+            => ve != null && ve.resolvedStyle.display == DisplayStyle.Grid && UIToolkitProjectSettings.enableGridLayout;
+
         // Private Utilities
         static void GetInlineStyleSheetAndRule(VisualTreeAsset vta, VisualElementAsset vea, out StyleSheet styleSheet, out StyleRule styleRule)
         {

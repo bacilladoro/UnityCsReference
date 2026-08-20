@@ -108,9 +108,9 @@ namespace Unity.GraphToolkit.Editor
             using (var selectionUpdater = selectionState.UpdateScope)
             using (var changeScope = graphModel.ChangeDescriptionScope)
             {
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 foreach (var constantModel in command.ConstantNodeModels ?? Array.Empty<ConstantNodeModel>())
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 {
                     var valueTypeHandle = constantModel.Value.GetTypeHandle();
                     var declarationModel = graphModel.CreateGraphVariableDeclaration(
@@ -128,9 +128,9 @@ namespace Unity.GraphToolkit.Editor
                         if (constantModel.ElementColor.HasUserColor)
                             variableModel.SetColor(constantModel.ElementColor.Color);
 
-                        #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                        #pragma warning disable UAC2001 // Avoid Linq
                         foreach (var wireModel in graphModel.GetWiresForPort(constantModel.OutputPort).ToList())
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                         {
                             graphModel.CreateWire(wireModel.ToPort, variableModel.OutputPort);
                             graphModel.DeleteWire(wireModel);
@@ -140,9 +140,9 @@ namespace Unity.GraphToolkit.Editor
                     graphModel.DeleteNode(constantModel, deleteConnections: false);
                 }
 
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 foreach (var variableModel in command.VariableNodeModels ?? Array.Empty<VariableNodeModel>())
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 {
                     if (graphModel.GetConstantType(variableModel.DataType) == null)
                         continue;
@@ -153,9 +153,9 @@ namespace Unity.GraphToolkit.Editor
                         constantModel.SetColor(variableModel.ElementColor.Color);
                     selectionUpdater.SelectElement(constantModel, true);
 
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2001 // Avoid Linq
                     var wireModels = graphModel.GetWiresForPort(variableModel.OutputPort).ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     foreach (var wireModel in wireModels)
                     {
                         graphModel.CreateWire(wireModel.ToPort, constantModel.OutputPort);

@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEditor.PackageManager;
 using UnityEngine;
@@ -17,8 +18,9 @@ using Unity.Multiplayer.Internal;
 
 namespace Unity.Multiplayer.Editor
 {
-    internal class ContentSelectionBuildPreprocessor: IPreprocessBuildWithContext
+    internal partial class ContentSelectionBuildPreprocessor: IPreprocessBuildWithContext
     {
+        [AutoStaticsCleanupOnCodeReload] // static event; stale handlers after reload pin old ALC
         public static event Action<BuildCallbackContext> OnPreprocessBuildCallback = null;
 
         public int callbackOrder { get { return 0; } }

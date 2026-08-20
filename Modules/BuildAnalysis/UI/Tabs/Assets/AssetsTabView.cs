@@ -80,7 +80,7 @@ namespace UnityEditor.Build.Analysis
             // throws if collapsed before its initial geometry is computed.
             m_InspectorSplit.RegisterCallback<GeometryChangedEvent>(OnFirstGeometry);
 
-            SetSelection(null, null);
+            Apply(null);
         }
 
         private void OnAssetSelectionChanged(BuildAnalysisAsset? asset)
@@ -138,16 +138,16 @@ namespace UnityEditor.Build.Analysis
             return m_CachedAssets[assetId];
         }
 
-        public void SetSelection(BuildEntry selection, BuildAnalysis analysis)
+        public void Apply(BuildAnalysisView view)
         {
-            var hasSelection = selection != null && analysis != null;
+            var hasSelection = view?.Entry != null && view.Analysis != null;
             m_NoSelection.style.display = hasSelection ? DisplayStyle.None : DisplayStyle.Flex;
             m_Body.style.display = hasSelection ? DisplayStyle.Flex : DisplayStyle.None;
 
-            ResetInspector();
-
             if (!hasSelection)
             {
+                ResetInspector();
+
                 m_CachedImporterTypes = Array.Empty<BuildAnalysisImporterType>();
                 m_CachedAssets = Array.Empty<BuildAnalysisAsset>();
                 m_RootAssetsCard.style.display = DisplayStyle.None;
@@ -157,6 +157,26 @@ namespace UnityEditor.Build.Analysis
                 return;
             }
 
+            // A new selection discards the inspector's contents: it was showing an asset from the old build.
+            ResetInspector();
+            BindRootAssets(view.Entry, view.Analysis);
+            BindAssets(view.Entry, view.Analysis);
+        }
+
+        private void BindRootAssets(BuildEntry selection, BuildAnalysis analysis)
+        {
+            var isContentDirectory = selection.BuildType == BuildType.ContentDirectory;
+            m_RootAssetsCard.style.display = isContentDirectory ? DisplayStyle.Flex : DisplayStyle.None;
+            m_RootAssetTable.style.display = isContentDirectory ? DisplayStyle.Flex : DisplayStyle.None;
+            if (!isContentDirectory)
+                return;
+
+            m_RootAssetsValue.text = analysis.Computed.Counts.RootAssetCount.ToString();
+            m_RootAssetTable.Bind(analysis);
+        }
+
+        private void BindAssets(BuildEntry selection, BuildAnalysis analysis)
+        {
             m_CachedImporterTypes = analysis.Tables.ImporterTypes;
             m_CachedAssets = analysis.Tables.Assets;
 
@@ -164,15 +184,6 @@ namespace UnityEditor.Build.Analysis
             var counts = analysis.Computed.Counts;
             m_ScenesValue.text = counts.SceneCount.ToString();
             m_AssetsValue.text = counts.AssetCount.ToString();
-
-            var isContentDirectory = selection.BuildType == BuildType.ContentDirectory;
-            m_RootAssetsCard.style.display = isContentDirectory ? DisplayStyle.Flex : DisplayStyle.None;
-            m_RootAssetTable.style.display = isContentDirectory ? DisplayStyle.Flex : DisplayStyle.None;
-            if (isContentDirectory)
-            {
-                m_RootAssetsValue.text = counts.RootAssetCount.ToString();
-                m_RootAssetTable.Bind(analysis);
-            }
 
             m_AssetTable.Bind(analysis);
 

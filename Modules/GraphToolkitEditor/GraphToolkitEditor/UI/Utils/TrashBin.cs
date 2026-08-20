@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Pool;
 
 namespace Unity.GraphToolkit.Editor
@@ -14,6 +15,7 @@ namespace Unity.GraphToolkit.Editor
     /// </summary>
     class TrashBin : IDisposable
     {
+        [NoAutoStaticsCleanup] // pool holds empty TrashBin instances only (cleared before pooling); no user code references
         static List<TrashBin> s_Pool;
 
         private TrashBin() { } // Private constructor to prevent instantiation outside of the pool

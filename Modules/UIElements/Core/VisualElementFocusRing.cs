@@ -2,6 +2,8 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
+using Unity.Scripting.LifecycleManagement;
 using System;
 using System.Collections.Generic;
 
@@ -10,8 +12,9 @@ namespace UnityEngine.UIElements
     /// <summary>
     /// Define focus change directions for the VisualElementFocusRing.
     /// </summary>
-    public class VisualElementFocusChangeDirection : FocusChangeDirection
+    public partial class VisualElementFocusChangeDirection : FocusChangeDirection
     {
+        [NoAutoStaticsCleanup]
         static readonly VisualElementFocusChangeDirection s_Left = new VisualElementFocusChangeDirection(FocusChangeDirection.lastValue + 1);
 
         /// <summary>
@@ -20,6 +23,7 @@ namespace UnityEngine.UIElements
         /// <seealso cref="VisualElementFocusRing"/>
         public static FocusChangeDirection left => s_Left;
 
+        [NoAutoStaticsCleanup]
         static readonly VisualElementFocusChangeDirection s_Right = new VisualElementFocusChangeDirection(FocusChangeDirection.lastValue + 2);
 
         /// <summary>
@@ -41,8 +45,9 @@ namespace UnityEngine.UIElements
     /// <summary>
     /// Define focus change to specific target for the VisualElementFocusRing.
     /// </summary>
-    internal class VisualElementFocusChangeTarget : FocusChangeDirection
+    internal partial class VisualElementFocusChangeTarget : FocusChangeDirection
     {
+        [NoAutoStaticsCleanup]
         static readonly ObjectPool<VisualElementFocusChangeTarget> Pool = new ObjectPool<VisualElementFocusChangeTarget>(() => new VisualElementFocusChangeTarget());
 
         /// <summary>
@@ -539,3 +544,4 @@ namespace UnityEngine.UIElements
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

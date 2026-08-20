@@ -2,9 +2,11 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Bindings;
 using UnityEngine.UIElements.UIR;
 
@@ -136,15 +138,17 @@ namespace UnityEngine.UIElements
     public delegate bool DynamicAtlasCustomFilter(Texture2D texture, ref DynamicAtlasFilters filtersToApply);
 
     [VisibleToOtherModules("UnityEditor.UIToolkitAuthoringModule")]
-    class DynamicAtlas : AtlasBase
+    partial class DynamicAtlas : AtlasBase
     {
-        internal class TextureInfo : LinkedPoolItem<TextureInfo>
+        internal partial class TextureInfo : LinkedPoolItem<TextureInfo>
         {
             public DynamicAtlasPage page;
             public int counter;
             public Allocator2D.Alloc2D alloc;
             public RectInt rect;
 
+
+            [NoAutoStaticsCleanup]
             public static readonly LinkedPool<TextureInfo> pool = new LinkedPool<TextureInfo>(Create, Reset, 1024);
 
             [MethodImpl(MethodImplOptionsEx.AggressiveInlining)]
@@ -539,3 +543,4 @@ namespace UnityEngine.UIElements
         #endregion // Filter Settings
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

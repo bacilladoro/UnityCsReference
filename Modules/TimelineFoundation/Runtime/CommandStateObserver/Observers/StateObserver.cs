@@ -18,9 +18,9 @@ namespace Unity.Timeline.Foundation.CSO
         List<IStateComponent> m_ModifiedStateComponents;
 
         /// <inheritdoc />
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
         public IEnumerable<IStateComponent> ObservedStateComponents => m_ObservedComponentVersions.Select(t => t.Item1);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
         /// <inheritdoc />
         public IEnumerable<IStateComponent> ModifiedStateComponents => m_ModifiedStateComponents;
@@ -39,11 +39,11 @@ namespace Unity.Timeline.Foundation.CSO
         /// <param name="modifiedStateComponents">The names of the modified state components.</param>
         protected StateObserver(IEnumerable<IStateComponent> observedStateComponents, IEnumerable<IStateComponent> modifiedStateComponents)
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             m_ObservedComponentVersions = new List<(IStateComponent, StateComponentVersion)>(
                 observedStateComponents.Distinct().Select<IStateComponent, (IStateComponent, StateComponentVersion)>(s => (s, default)));
             m_ModifiedStateComponents = new List<IStateComponent>(modifiedStateComponents.Distinct());
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         /// <inheritdoc/>

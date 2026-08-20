@@ -6,6 +6,7 @@ using System;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Threading;
+using Unity.Scripting.LifecycleManagement;
 
 namespace Unity.Multiplayer.PlayMode.Editor
 {
@@ -22,8 +23,9 @@ namespace Unity.Multiplayer.PlayMode.Editor
         public OurId OurIdFunc;
     }
 
-    static class ProcessSystem
+    static partial class ProcessSystem
     {
+        [NoAutoStaticsCleanup] // delegates point only to local static methods in this long-living module assembly; MultiplayerEditorModule isn't torn down by ordinary user-code CodeReload, so these never go stale
         public static ProcessSystemDelegates Delegates { get; } = new ProcessSystemDelegates
         {
             IsRunningFunc = IsRunning,

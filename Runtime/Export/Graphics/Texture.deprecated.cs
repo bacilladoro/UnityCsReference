@@ -7,7 +7,7 @@ using TextureDimension = UnityEngine.Rendering.TextureDimension;
 
 namespace UnityEngine
 {
-    partial class RenderTexture
+    public partial class RenderTexture
     {
         [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
         [Obsolete("Use RenderTexture.autoGenerateMips instead (UnityUpgradable) -> autoGenerateMips", false)]

@@ -4,6 +4,7 @@
 
 using System;
 using System.Linq;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.UIElements;
 
 namespace Unity.GraphToolkit.Editor
@@ -96,6 +97,7 @@ namespace Unity.GraphToolkit.Editor
             m_ConstantEditor?.UpdateDisplayedValue();
         }
 
+        [NoAutoStaticsCleanup] // fixed array of compile-time type handles used as a constant filter; no user-type references
         static TypeHandle[] s_PropsToHideLabel =
         {
             TypeHandle.Int,

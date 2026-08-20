@@ -210,9 +210,9 @@ namespace Unity.UI.Builder
 
             var isLinkedOpenVTAActiveVTA = linkedOpenVTA == activeOpenUXML.visualTreeAsset;
             var isLinkedInstancedVTAActiveVTA = linkedInstancedVTA == activeOpenUXML.visualTreeAsset;
-            #pragma warning disable UA2007 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2007 // Avoid Linq
             var isLinkedVEADirectChild = activeOpenUXML.visualTreeAsset.DepthFirstTraversalOfType<TemplateAsset>().Contains(linkedTemplateVEA);
-#pragma warning restore UA2007
+#pragma warning restore UAC2007
             var isSelector = documentElement != null && BuilderSharedStyles.IsSelectorElement(documentElement);
             var isStyleSheet = documentElement != null && BuilderSharedStyles.IsStyleSheetElement(documentElement);
 
@@ -227,9 +227,9 @@ namespace Unity.UI.Builder
             // eg. Making Tab into TemplateContainer is not allowed because TabView's content container expects only Tabs.
             var isTemplateContainerAllowed = BuilderAssetUtilities.IsSupportedChildType(documentElement?.parent, typeof(TemplateContainer));
 
-            #pragma warning disable UA2007 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2007 // Avoid Linq
             var showCreateTemplateAction = activeOpenUXML.visualTreeAsset.DepthFirstTraversal().Contains(linkedVEA) &&
-#pragma warning restore UA2007
+#pragma warning restore UAC2007
                                            isSingleElementAffected && isTemplateContainerAllowed;
 
             if (showOpenInBuilder || showReturnToParentAction || showOpenInIsolationAction || showOpenInPlaceAction || showSiblingOpenActions)

@@ -6,11 +6,13 @@ using System;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEditor.UIElements;
+using UnityEngine.Bindings;
 using UnityEngine.Pool;
 using UnityEngine.UIElements;
 
 namespace Unity.UIToolkit.Editor;
 
+[VisibleToOtherModules("UnityEditor.UIBuilderModule")]
 internal readonly record struct VisualTreeAssetEditingContext
 {
     public readonly VisualTreeAsset RootVisualTreeAsset;

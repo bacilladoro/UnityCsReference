@@ -2,6 +2,8 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
+using Unity.Scripting.LifecycleManagement;
 using System;
 using System.IO;
 using System.Collections.Generic;
@@ -236,7 +238,7 @@ namespace Unity.VectorGraphics
     internal class SVGDictionary : Dictionary<string, object> {}
     internal class SVGPostponedFills : Dictionary<IFill, string> { }
 
-    internal class SVGDocument
+    internal partial class SVGDocument
     {
         public SVGDocument(XmlReader docReader, float dpi, Scene scene, int windowWidth, int windowHeight, bool applyRootViewBox)
         {
@@ -2246,6 +2248,7 @@ namespace Unity.VectorGraphics
             subTags[node.Name] = elems;
         }
 
+        [NoAutoStaticsCleanup]
         static char[] whiteSpaceNumberChars = " \r\n\t,".ToCharArray();
         enum DimType { Width, Height, Length };
         XmlReaderIterator docReader;
@@ -2633,7 +2636,7 @@ namespace Unity.VectorGraphics
         private Dictionary<SceneNode, StyleLayer> nodeLayers = new Dictionary<SceneNode, StyleLayer>();
     }
 
-    internal class SVGAttribParser
+    internal partial class SVGAttribParser
     {
         public static List<BezierContour> ParsePath(XmlReaderIterator.Node node)
         {
@@ -3301,6 +3304,7 @@ namespace Unity.VectorGraphics
         string attribName;
         int stringPos;
 
+        [NoAutoStaticsCleanup]
         static NamedWebColorDictionary namedColors;
     }
 
@@ -3459,3 +3463,4 @@ namespace Unity.VectorGraphics
         }
     } // The boring NamedWebColorDictionary class
 } // namespace
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

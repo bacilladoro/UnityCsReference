@@ -15,6 +15,13 @@ namespace Unity.UI.Builder
 {
     internal class BuilderCommandHandler
     {
+        const CommandCategory k_ExternalChangesTrackedCategories =
+            CommandCategory.Hierarchy |
+            CommandCategory.Attributes |
+            CommandCategory.Styling |
+            CommandCategory.StylingContext |
+            CommandCategory.Variables;
+
         BuilderPaneWindow m_PaneWindow;
         BuilderToolbar m_Toolbar;
         BuilderSelection m_Selection;
@@ -22,6 +29,10 @@ namespace Unity.UI.Builder
         List<VisualElement> m_CutElements = new List<VisualElement>();
 
         List<BuilderPaneContent> m_Panes = new List<BuilderPaneContent>();
+        private bool m_PendingExternalRefresh;
+        private bool m_ExternalChangeAffectsStyleSheets;
+        private bool m_ExternalChangeAffectsVisualTree;
+        CommandCategory m_ExternalChangesCategories;
 
         public BuilderCommandHandler(
             BuilderPaneWindow paneWindow,
@@ -48,7 +59,8 @@ namespace Unity.UI.Builder
 
             // Undo/Redo
             Undo.undoRedoEvent += OnUndoRedo;
-            UICommandQueue.RegisterHandler<AddClassCommand>(OnClassAdded);
+            UICommandQueue.RegisterHandlerForCategory(k_ExternalChangesTrackedCategories, SyncExternalChanges);
+            UICommandQueue.GroupEnded += OnGroupEnded;
         }
 
         public void OnDisable()
@@ -63,7 +75,16 @@ namespace Unity.UI.Builder
 
             // Undo/Redo
             Undo.undoRedoEvent -= OnUndoRedo;
-            UICommandQueue.UnregisterHandler<AddClassCommand>(OnClassAdded);
+            UICommandQueue.UnregisterHandlerForCategory(k_ExternalChangesTrackedCategories, SyncExternalChanges);
+            UICommandQueue.GroupEnded -= OnGroupEnded;
+
+            // A refresh may already be scheduled via EditorApplication.delayCall, which survives this window's
+            // teardown. Clear the pending flag so the deferred call no-ops (its guard returns early) rather than
+            // dereferencing the now-destroyed pane window.
+            m_PendingExternalRefresh = false;
+            m_ExternalChangeAffectsStyleSheets = false;
+            m_ExternalChangeAffectsVisualTree = false;
+            m_ExternalChangesCategories = CommandCategory.None;
         }
 
         public void RegisterPane(BuilderPaneContent paneContent)
@@ -638,25 +659,179 @@ namespace Unity.UI.Builder
             ussFile?.GeneratePreview();
         }
 
-        private void OnClassAdded(in CommandContext context)
+        private void SyncExternalChanges(in CommandContext context)
         {
-            if (context.Status != CommandExecutionStatus.Success)
+            // Only track commands that were not sent by the Builder. The actual reload decision is deferred to
+            // OnGroupEnded, once the full set of modified objects for the group is known.
+            if (context.Status != CommandExecutionStatus.Success || context.Source == CommandSources.Builder)
                 return;
 
-            var command = (AddClassCommand)context.Command;
-            var vea = command.ElementAsset;
+            m_ExternalChangesCategories |= context.Command.Category;
+        }
 
-            var builder = Builder.ActiveWindow;
-            if (!builder)
+        // Only the window that owns the viewport drives the document-wide refresh. Several BuilderPaneWindows can
+        // be alive at once (a popped-out inspector preview), each with its own handler registered on the
+        // process-wide command queue: letting a secondary one run would refresh nothing (its
+        // OnEnableAfterAllSerialization is the no-op base) while re-arming the panes' one-shot unsaved-mark
+        // suppression with nothing left to consume it — silently swallowing the "*" for the user's next real edit.
+        bool IsPrimaryViewportWindow
+            => !ReferenceEquals(m_PaneWindow.document.primaryViewportWindow, null)
+            && ReferenceEquals(m_PaneWindow.document.primaryViewportWindow, m_PaneWindow);
+
+        void OnGroupEnded(in GroupEndedContext context)
+        {
+            // Nothing external was recorded during this group, so it's safe to skip any reload.
+            if (m_ExternalChangesCategories == CommandCategory.None)
                 return;
 
-            builder.documentRootElement.Query().Where(e => e.visualElementAsset == vea).ForEach(e =>
+            m_ExternalChangesCategories = CommandCategory.None;
+
+            if (!IsPrimaryViewportWindow)
+                return;
+
+            if (!ClassifyExternalChanges(context.UndoObjects, out var affectsStyleSheets, out var affectsVisualTree))
+                return;
+
+            if (affectsStyleSheets)
+                m_ExternalChangeAffectsStyleSheets = true;
+            if (affectsVisualTree)
+                m_ExternalChangeAffectsVisualTree = true;
+
+            // Coalesce multiple groups within the same frame into a single reload.
+            if (m_PendingExternalRefresh)
+                return;
+
+            m_PendingExternalRefresh = true;
+            EditorApplication.delayCall += SyncExternalChangesDeferred;
+        }
+
+        bool ClassifyExternalChanges(IReadOnlyCollection<UnityEngine.Object> objects, out bool affectsStyleSheets, out bool affectsVisualTree)
+        {
+            affectsStyleSheets = false;
+            affectsVisualTree = false;
+
+            if (objects == null || objects.Count == 0)
+                return false;
+
+            using var documentAssetsHandle = HashSetPool<UnityEngine.Object>.Get(out var documentAssets);
+            using var styleSheetAssetsHandle = HashSetPool<UnityEngine.Object>.Get(out var styleSheetAssets);
+            using var dependencyAssetsHandle = HashSetPool<UnityEngine.Object>.Get(out var dependencyAssets);
+            CollectDocumentAssets(documentAssets, styleSheetAssets, dependencyAssets);
+
+            var affectsDocument = false;
+            foreach (var obj in objects)
+            {
+                if (obj == null)
+                    continue;
+
+                if (!documentAssets.Contains(obj))
                 {
-                    e.AddToClassList(command.ClassName);
-                    builder.selection.NotifyOfHierarchyChange(null, e, BuilderHierarchyChangeType.ClassList);
-                });
+                    // A change to a nested template (or a sheet only it uses) is not a change to our document,
+                    // but the canvas instantiates it, so the view still has to be rebuilt. Request the refresh
+                    // without claiming any of our own assets became unsaved.
+                    if (dependencyAssets.Contains(obj))
+                        affectsDocument = true;
+                    continue;
+                }
 
-            builder.selection.NotifyOfStylingChange(null, null, BuilderStylingChangeType.RefreshOnly);
+                affectsDocument = true;
+                // documentAssets holds the VisualTreeAsset, its inline sheet, and its style sheets;
+                // styleSheetAssets holds only the style sheets. So an object in the document set that is not a
+                // style sheet is the VisualTreeAsset or its inline sheet.
+                if (styleSheetAssets.Contains(obj))
+                    affectsStyleSheets = true;
+                else
+                    affectsVisualTree = true;
+            }
+
+            return affectsDocument;
+        }
+
+        void CollectDocumentAssets(HashSet<UnityEngine.Object> assets, HashSet<UnityEngine.Object> styleSheetAssets,
+            HashSet<UnityEngine.Object> dependencyAssets)
+        {
+            foreach (var openUXMLFile in m_PaneWindow.document.openUXMLFiles)
+            {
+                var visualTreeAsset = openUXMLFile.visualTreeAsset;
+                if (visualTreeAsset == null)
+                    continue;
+
+                assets.Add(visualTreeAsset);
+                if (visualTreeAsset.inlineSheet != null)
+                    assets.Add(visualTreeAsset.inlineSheet);
+
+                foreach (var openUSSFile in openUXMLFile.openUSSFiles)
+                {
+                    if (openUSSFile.styleSheet != null)
+                    {
+                        assets.Add(openUSSFile.styleSheet);
+                        styleSheetAssets.Add(openUSSFile.styleSheet);
+                    }
+                }
+
+                foreach (var template in visualTreeAsset.templateDependencies)
+                    CollectTemplateDependencies(template, dependencyAssets);
+            }
+        }
+
+        // The assets a document instantiates but does not own: nested templates, recursively, plus their inline
+        // and referenced style sheets.
+        static void CollectTemplateDependencies(VisualTreeAsset template, HashSet<UnityEngine.Object> dependencyAssets)
+        {
+            if (template == null || !dependencyAssets.Add(template))
+                return;
+
+            if (template.inlineSheet != null)
+                dependencyAssets.Add(template.inlineSheet);
+
+            using var _ = ListPool<StyleSheet>.Get(out var sheets);
+            template.GetAllReferencedStyleSheets(sheets);
+            foreach (var sheet in sheets)
+                if (sheet != null)
+                    dependencyAssets.Add(sheet);
+
+            foreach (var nested in template.templateDependencies)
+                CollectTemplateDependencies(nested, dependencyAssets);
+        }
+
+        void SyncExternalChangesDeferred()
+        {
+            if (!m_PendingExternalRefresh)
+                return;
+
+            var selection = m_PaneWindow.primarySelection;
+            if (selection == null)
+            {
+                m_PendingExternalRefresh = false;
+                m_ExternalChangeAffectsStyleSheets = false;
+                m_ExternalChangeAffectsVisualTree = false;
+                return;
+            }
+
+            try
+            {
+                selection.ClearSelection(null);
+                selection.isApplyingExternalCommand = true;
+                selection.suppressStyleSheetsPaneUnsavedMark = !m_ExternalChangeAffectsStyleSheets;
+                selection.suppressHierarchyPaneUnsavedMark = m_ExternalChangeAffectsStyleSheets && !m_ExternalChangeAffectsVisualTree;
+
+                // Mark only the document that is actually open here. The BuilderDocument setter fans the flag out
+                // to every open UXML file, but only the active one is ever cleared again, so a sub-document would
+                // stay marked unsaved for the rest of the session.
+                if (m_ExternalChangeAffectsStyleSheets || m_ExternalChangeAffectsVisualTree)
+                    m_PaneWindow.document.activeOpenUXMLFile.hasUnsavedChanges = true;
+
+                m_PaneWindow.OnEnableAfterAllSerialization();
+            }
+            finally
+            {
+                // The suppress flags are intentionally left set here: they are consumed later by the deferred
+                // styling / hierarchy notifications the panes receive from the refresh above.
+                m_ExternalChangeAffectsStyleSheets = false;
+                m_ExternalChangeAffectsVisualTree = false;
+                m_PendingExternalRefresh = false;
+                selection.isApplyingExternalCommand = false;
+            }
         }
     }
 }

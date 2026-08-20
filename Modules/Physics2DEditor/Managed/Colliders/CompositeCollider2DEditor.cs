@@ -32,13 +32,13 @@ namespace UnityEditor
             m_EdgeRadius = serializedObject.FindProperty("m_EdgeRadius");
             m_OffsetDistance = serializedObject.FindProperty("m_OffsetDistance");
             m_UseDelaunayMesh = serializedObject.FindProperty("m_UseDelaunayMesh");
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             m_ShowEdgeRadius.value = targets.Count(x => (x as CompositeCollider2D).geometryType == CompositeCollider2D.GeometryType.Polygons) == 0;
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             m_ShowEdgeRadius.valueChanged.AddListener(Repaint);
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             m_ShowManualGenerationButton.value = targets.Count(x => (x as CompositeCollider2D).generationType != CompositeCollider2D.GenerationType.Manual) == 0;
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             m_ShowManualGenerationButton.valueChanged.AddListener(Repaint);
         }
 
@@ -66,9 +66,9 @@ namespace UnityEditor
             EditorGUILayout.PropertyField(m_VertexDistance);
             EditorGUILayout.PropertyField(m_OffsetDistance);
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             m_ShowManualGenerationButton.target = targets.Count(x => (x as CompositeCollider2D).generationType != CompositeCollider2D.GenerationType.Manual) == 0;
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             if (EditorGUILayout.BeginFadeGroup(m_ShowManualGenerationButton.faded))
             {
                 if (GUILayout.Button("Regenerate Collider"))
@@ -88,9 +88,9 @@ namespace UnityEditor
                 EditorGUILayout.PropertyField(m_EdgeRadius);
             EditorGUILayout.EndFadeGroup();
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             if (targets.Count(x => (x as CompositeCollider2D).geometryType == CompositeCollider2D.GeometryType.Outlines &&
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 (x as CompositeCollider2D).attachedRigidbody != null &&
                 (x as CompositeCollider2D).attachedRigidbody.bodyType == RigidbodyType2D.Dynamic) > 0)
                 EditorGUILayout.HelpBox("Outline geometry is composed of edges and will not preserve the original collider's center-of-mass or rotational inertia.  The CompositeCollider2D is attached to a Dynamic Rigidbody2D so you may need to explicitly set these if they are required.", MessageType.Info);

@@ -12,13 +12,13 @@ namespace Unity.Timeline.Foundation.ViewModel
     {
         public static IEnumerable<Item> FirstItemsOnAllTracks(this ManipulationContext context)
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return context.manipulatedTracks.Select(i =>
-#pragma warning disable UA2010 // Remove compile error for First()
+#pragma warning disable UAC2010 // Remove compile error for First()
             i.manipulatedItems.First()
-#pragma warning restore UA2010
+#pragma warning restore UAC2010
             );
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         public static bool IsEmpty(this ManipulationContext context)

@@ -367,12 +367,12 @@ namespace UnityEditor
                 if (!m_LockedObjects.ContainsKey(tr.Transform))
                     m_TemporarySelection.Add(tr.Transform);
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var addedTransforms = selection.Except(m_TemporarySelection);
-#pragma warning restore UA2001
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+            #pragma warning disable UAC2001 // Avoid Linq
             var removedTransforms = m_TemporarySelection.Except(selection);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             foreach (var tr in addedTransforms)
             {

@@ -2,6 +2,8 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
+using Unity.Scripting.LifecycleManagement;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -134,7 +136,7 @@ class ManagedObjectStore<T>
     }
 }
 
-internal class LayoutManager : IDisposable
+internal partial class LayoutManager : IDisposable
 {
     enum SharedManagerState
     {
@@ -142,9 +144,11 @@ internal class LayoutManager : IDisposable
         Initialized, // The SharedManager was accessed and created
         Shutdown // The SharedManager was disposed and must not re-created
     }
+    [AutoStaticsCleanupOnCodeReload]
     static SharedManagerState s_Initialized;
 
-    static LayoutManager s_SharedInstance;
+    [AutoStaticsCleanupOnCodeReload]
+    static LayoutManager s_SharedInstance = null;
 
     public static bool IsSharedManagerCreated => s_Initialized == SharedManagerState.Initialized;
 
@@ -157,7 +161,8 @@ internal class LayoutManager : IDisposable
         }
     }
 
-    static readonly List<LayoutManager> s_Managers = new List<LayoutManager>();
+    [AutoStaticsCleanupOnCodeReload]
+    static List<LayoutManager> s_Managers = new List<LayoutManager>();
 
     // Important: Assumptions about Order of operations for Initialize() and Shutdown()
     // 1. Initialize() is always called first on the main thread.
@@ -188,6 +193,11 @@ internal class LayoutManager : IDisposable
         s_Initialized = SharedManagerState.Shutdown;
 
         s_SharedInstance.Dispose();
+
+        // The generated code-reload cleanup null-checks before disposing; clearing the reference here
+        // keeps it from disposing the manager a second time (double-dispose reads the already-released
+        // node store). The cleanup still resets s_Initialized so the next domain re-creates on demand.
+        s_SharedInstance = null;
     }
 
     // The capacity of the LayoutManager impacts how many chunks are created per component
@@ -473,3 +483,4 @@ internal class LayoutManager : IDisposable
         m_ManagedBaselineFunctions.UpdateValue(ref index, value);
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

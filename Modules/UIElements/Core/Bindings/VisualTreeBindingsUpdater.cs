@@ -2,7 +2,9 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
 using System;
+using Unity.Scripting.LifecycleManagement;
 using System.Collections.Generic;
 using UnityEngine.Profiling;
 using System.Linq;
@@ -17,7 +19,7 @@ namespace UnityEngine.UIElements
     }
 
 
-    internal class VisualTreeBindingsUpdater : BaseVisualTreeHierarchyTrackerUpdater
+    internal partial class VisualTreeBindingsUpdater : BaseVisualTreeHierarchyTrackerUpdater
     {
         private static readonly PropertyName s_BindingRequestObjectVEPropertyName = "__unity-binding-request-object";
         private static readonly PropertyName s_AdditionalBindingObjectVEPropertyName = "__unity-additional-binding-object";
@@ -25,10 +27,12 @@ namespace UnityEngine.UIElements
         private static readonly string s_Description = "UIElements.UpdateEditorBindings";
         private static readonly ProfilerMarker s_ProfilerMarker = new ProfilerMarker(ProfilerCategory.UIToolkit, s_Description);
         private static readonly ProfilerMarker s_ProfilerBindingRequestsMarker = new ProfilerMarker(ProfilerCategory.UIToolkit, "Bindings.Requests");
-        static ProfilerMarker s_MarkerUpdate = new ProfilerMarker(ProfilerCategory.UIToolkit, "Bindings.Update");
-        static ProfilerMarker s_MarkerPoll = new ProfilerMarker(ProfilerCategory.UIToolkit, "Bindings.PollElementsWithBindings");
+        static readonly ProfilerMarker s_MarkerUpdate = new ProfilerMarker(ProfilerCategory.UIToolkit, "Bindings.Update");
+        static readonly ProfilerMarker s_MarkerPoll = new ProfilerMarker(ProfilerCategory.UIToolkit, "Bindings.PollElementsWithBindings");
         public override ProfilerMarker profilerMarker => s_ProfilerMarker;
 
+
+        [AutoStaticsCleanupOnCodeReload]
         public static bool disableBindingsThrottling { get; set; } = false;
 
         private readonly HashSet<VisualElement> m_ElementsWithBindings = new HashSet<VisualElement>();
@@ -263,9 +267,9 @@ namespace UnityEngine.UIElements
                     long startTime = CurrentTime();
                     while (m_ElementsToBind.Count > 0 && ShouldProcessBindings(startTime))
                     {
-                        #pragma warning disable UA2011 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                        #pragma warning disable UAC2011 // Avoid Linq
                         var element = m_ElementsToBind.FirstOrDefault();
-#pragma warning restore UA2011
+#pragma warning restore UAC2011
 
                         if (element != null)
                         {
@@ -382,3 +386,4 @@ namespace UnityEngine.UIElements
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

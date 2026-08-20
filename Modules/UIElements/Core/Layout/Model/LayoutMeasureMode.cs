@@ -9,5 +9,6 @@ enum LayoutMeasureMode
     Undefined = 0,
     Exactly = 1,
     AtMost = 2,
+    MinContent = 3,
     Invalid = -1
 }

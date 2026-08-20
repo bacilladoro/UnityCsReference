@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -10,6 +11,7 @@ using UnityEditor.Profiling;
 using UnityEditorInternal;
 using UnityEngine;
 using UnityEngine.UIElements;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.UIElements
 {
@@ -54,6 +56,7 @@ namespace UnityEditor.UIElements
         }
 
         // Mirrors UIRenderDevice's KickRangesReason; entry order MUST match the enum (index N = ordinal N+1).
+        [NoAutoStaticsCleanup] // immutable static data table; no user refs
         static readonly (string Name, string Explanation)[] k_BreakingReasons =
         {
             ("Material Change",         "A different material was needed for the next draw."),
@@ -825,3 +828,4 @@ namespace UnityEditor.UIElements
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

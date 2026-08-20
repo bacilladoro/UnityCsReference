@@ -75,7 +75,8 @@ namespace UnityEditor.Overlays
             // Horizontal container has vertical insert indicators
             insertIndicator.Setup(m_TargetOverlay.container.isHorizontal, insertIndicatorStyle,
                 (dockAfter && section.GetLastVisible() == m_TargetOverlay)
-                || (!dockAfter && section.GetFirstVisible() == m_TargetOverlay));
+                || (!dockAfter && section.GetFirstVisible() == m_TargetOverlay),
+                m_TargetSection != OverlayContainerSection.AfterSpacer);
 
             MatchIndicatorToDraggedOverlay();
         }

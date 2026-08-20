@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Profiling;
@@ -54,7 +55,7 @@ namespace UnityEngine.AdaptivePerformance
                 {
                     var thermalTrend = thermalMetrics.TemperatureTrend;
                     var thermalLevel = thermalMetrics.TemperatureLevel;
-                    
+
 
                     if (warning == WarningLevel.ThrottlingImminent && warningTemp == 1.0f)
                         warningTemp = thermalLevel; // remember throttling imminent level
@@ -100,7 +101,7 @@ namespace UnityEngine.AdaptivePerformance
                     else if (warning == WarningLevel.NoWarning)
                         return StateAction.Increase;
                 }
-            } 
+            }
             return StateAction.Stale;
         }
     }
@@ -268,13 +269,42 @@ namespace UnityEngine.AdaptivePerformance
         private List<AdaptivePerformanceScaler> m_UnappliedScalers;
         private List<AdaptivePerformanceScaler> m_AppliedScalers;
         private List<AdaptivePerformanceScaler> m_DisabledScalers;
-        private ThermalStateTracker m_ThermalStateTracker;
-        private PerformanceStateTracker m_PerformanceStateTracker;
-        private UtilizationStateTracker m_CpuUtilizationTracker;
-        private UtilizationStateTracker m_GpuUtilizationTracker;
-        private AdaptivePerformanceScalerEfficiencyTracker m_ScalerEfficiencyTracker;
         private IAdaptivePerformanceSettings m_Settings;
+        private PerformanceStateTracker m_PerformanceStateTracker;
+        private AdaptivePerformanceScalerEfficiencyTracker m_ScalerEfficiencyTracker;
+        private int m_IdleScale = 1;
+        private float m_IdleTime;
+
         const string m_FeatureName = "Indexer";
+
+        internal IAdaptivePerformanceModeProvider ActiveModeProvider => m_Settings != null ? m_Settings.ActiveModeProvider : null;
+        private AdaptivePerformanceNormalModeProvider NormalModeProvider => m_Settings != null ? m_Settings.NormalModeProvider : null;
+        private AdaptivePerformanceBatteryModeProvider BatteryModeProvider => m_Settings != null ? m_Settings.BatteryModeProvider : null;
+
+        /// <summary>
+        /// The current idle scale factor that battery mode derives from the player's idle time.
+        /// </summary>
+        /// <remarks>
+        /// The value is `1` when the player is active and increases the longer the player stays idle. Battery-mode scalers such as <see cref="AdaptiveOnDemandRendering"/> use it to reduce work while the application is idle. Only battery mode updates this value.
+        /// </remarks>
+        public int IdleScale => m_IdleScale;
+
+        /// <summary>
+        /// The number of seconds the player has been idle, as tracked by battery mode.
+        /// </summary>
+        public float IdleTime => m_IdleTime;
+
+        internal void ResetIdleScale()
+        {
+            m_IdleScale = 1;
+            m_IdleTime = 0f;
+        }
+
+        internal void UpdateIdleState(int idleScale, float idleTime)
+        {
+            m_IdleScale = Mathf.Max(1, idleScale);
+            m_IdleTime = Mathf.Max(0f, idleTime);
+        }
 
         /// <summary>
         /// Time left until next action.
@@ -285,13 +315,21 @@ namespace UnityEngine.AdaptivePerformance
         /// Current determined action needed from thermal state.
         /// Action <see cref="StateAction.Increase"/> will be ignored if <see cref="PerformanceAction"/> is decreasing.
         /// </summary>
-        public StateAction ThermalAction { get; private set; }
+        public StateAction ThermalAction {
+            get {
+                return ActiveModeProvider != null ? ActiveModeProvider.ThermalAction : StateAction.Stale;
+            }
+        }
 
         /// <summary>
         /// Current determined action needed from performance state.
         /// Action <see cref="StateAction.Increase"/> will be ignored if <see cref="ThermalAction"/> is decreasing.
         /// </summary>
-        public StateAction PerformanceAction { get; private set; }
+        public StateAction PerformanceAction {
+            get {
+                return ActiveModeProvider != null ? ActiveModeProvider.PerformanceAction : StateAction.Stale;
+            }
+        }
 
         // Raised when the indexer changes a registered scaler's level (increase or decrease).
         // Internal so the Visual Scripting bridge in the Adaptive Performance package can forward it
@@ -307,13 +345,19 @@ namespace UnityEngine.AdaptivePerformance
         /// Current determined action needed based on normalized CPU utilization.
         /// Derived from frame timing, bottleneck, and thermal data when no provider supplies the value directly.
         /// </summary>
-        public StateAction CpuUtilizationAction { get; private set; }
+        public StateAction CpuUtilizationAction =>
+            ActiveModeProvider != null ? ActiveModeProvider.CpuUtilizationAction : StateAction.Stale;
+
 
         /// <summary>
         /// Current determined action needed based on normalized GPU utilization.
         /// Derived from frame timing, bottleneck, and thermal data when no provider supplies the value directly.
         /// </summary>
-        public StateAction GpuUtilizationAction { get; private set; }
+        public StateAction GpuUtilizationAction { 
+            get {
+                return ActiveModeProvider != null ? ActiveModeProvider.GpuUtilizationAction : StateAction.Stale;
+            }
+        }
 
         /// <summary>
         /// Returns all currently applied scalers.
@@ -363,6 +407,7 @@ namespace UnityEngine.AdaptivePerformance
         public void UnapplyAllScalers()
         {
             TimeUntilNextAction = m_Settings.indexerSettings.thermalActionDelay;
+
             while (m_AppliedScalers.Count != 0)
             {
                 var scaler = m_AppliedScalers[0];
@@ -386,6 +431,24 @@ namespace UnityEngine.AdaptivePerformance
                 return;
 
             m_UnappliedScalers.Add(scaler);
+        }
+
+        // Re-registers a scaler that is currently disabled, placing it directly into
+        // m_DisabledScalers without routing through m_UnappliedScalers. Used by callers
+        // (e.g. AdaptivePerformanceBatteryModeProvider.ResetForcedScaler) that need to
+        // restore a previously-removed disabled scaler to indexer tracking without
+        // triggering DeactivateDisabledScalers's Deactivate()/OnDisabled() side-effect
+        // — which would fire OnDisabled() a second time after RemoveScaler() already
+        // fired it once, breaking warmup guards on scalers like AdaptiveFramerate that
+        // would then stomp Application.targetFrameRate with an uninitialized cached
+        // default (0 = unlimited framerate).
+        internal void AddDisabledScaler(AdaptivePerformanceScaler scaler)
+        {
+            if (scaler == null)
+                return;
+            if (m_UnappliedScalers.Contains(scaler) || m_AppliedScalers.Contains(scaler) || m_DisabledScalers.Contains(scaler))
+                return;
+            m_DisabledScalers.Add(scaler);
         }
 
         internal bool RemoveScaler(AdaptivePerformanceScaler scaler)
@@ -413,111 +476,82 @@ namespace UnityEngine.AdaptivePerformance
             return removed;
         }
 
-        internal AdaptivePerformanceIndexer(ref IAdaptivePerformanceSettings settings, PerformanceStateTracker tracker)
+        internal AdaptivePerformanceIndexer(ref IAdaptivePerformanceSettings settings, PerformanceStateTracker performanceStateTracker = null)
         {
             m_Settings = settings;
             TimeUntilNextAction = m_Settings.indexerSettings.thermalActionDelay;
-            m_ThermalStateTracker = new ThermalStateTracker();
-            m_PerformanceStateTracker = tracker;
-            m_CpuUtilizationTracker = new UtilizationStateTracker(
-                () => Holder.Instance?.PerformanceStatus.PerformanceMetrics.CpuUtilization ?? -1f);
-            m_GpuUtilizationTracker = new UtilizationStateTracker(
-                 () => Holder.Instance?.PerformanceStatus.PerformanceMetrics.GpuUtilization ?? -1f);
+            m_PerformanceStateTracker = performanceStateTracker;
+            m_ScalerEfficiencyTracker = new AdaptivePerformanceScalerEfficiencyTracker();
             m_UnappliedScalers = new List<AdaptivePerformanceScaler>();
             m_AppliedScalers = new List<AdaptivePerformanceScaler>();
             m_DisabledScalers = new List<AdaptivePerformanceScaler>();
-            m_ScalerEfficiencyTracker = new AdaptivePerformanceScalerEfficiencyTracker();
+
+            if (NormalModeProvider != null)
+            {
+                NormalModeProvider.Indexer = this;
+                NormalModeProvider.PerformanceStateTracker = m_PerformanceStateTracker;
+            }
+
+            if (BatteryModeProvider != null)
+                BatteryModeProvider.Indexer = this;
 
             AdaptivePerformanceAnalytics.RegisterFeature(m_FeatureName, m_Settings.indexerSettings.active);
         }
 
-        internal StateAction MostPressingAction(StateAction action1, StateAction action2, StateAction action3)
+        internal void StopScalerEfficiencyTracker()
         {
-            if (action1 == StateAction.FastDecrease ||
-                action2 == StateAction.FastDecrease ||
-                action3 == StateAction.FastDecrease)
-            {
-                return StateAction.FastDecrease;
-            }
-
-            if (action1 == StateAction.Decrease ||
-                action2 == StateAction.Decrease ||
-                action3 == StateAction.Decrease)
-            {
-                return StateAction.Decrease;
-            }
-
-            if (action1 == StateAction.Increase ||
-                action2 == StateAction.Increase ||
-                action3 == StateAction.Increase)
-            {
-                return StateAction.Increase;
-            }
-
-            return StateAction.Stale;
+            if (m_ScalerEfficiencyTracker.IsRunning)
+                m_ScalerEfficiencyTracker.Stop();
         }
 
-        internal void Update()
+        internal void Update() 
         {
-            if (Holder.Instance == null || !m_Settings.indexerSettings.active)
-                return;
-
             DeactivateDisabledScalers();
             ActivateEnabledScalers();
-
-            var thermalAction = m_ThermalStateTracker.Update();
-            var performanceAction = m_PerformanceStateTracker.Update();
-            var cpuUtilizationAction = m_CpuUtilizationTracker.Update();
-            var gpuUtilizationAction = m_GpuUtilizationTracker.Update();
-
-            ThermalAction = thermalAction;
-            PerformanceAction = performanceAction;
-            CpuUtilizationAction = cpuUtilizationAction;
-            GpuUtilizationAction = gpuUtilizationAction;
-            StateAction combinedPerformanceAction = MostPressingAction(PerformanceAction, CpuUtilizationAction, GpuUtilizationAction);
+            RunPerFrameModeScalerActions();
 
             if (Profiler.enabled)
                 CollectProfilerStats();
 
-            // Enforce minimum wait time between any scaler changes
-            TimeUntilNextAction = Mathf.Max(TimeUntilNextAction - DeltaTime(), 0);
-            if (TimeUntilNextAction != 0)
-                return;
+            ActiveModeProvider?.ApplyModeActions();
+        }
 
-            if (m_ScalerEfficiencyTracker.IsRunning)
-                m_ScalerEfficiencyTracker.Stop();
+        internal T GetScalerByType<T>() where T : AdaptivePerformanceScaler
+        {
+            for (int i = 0; i < m_AppliedScalers.Count; i++)
+            {
+                if (m_AppliedScalers[i] is T appliedScaler)
+                    return appliedScaler;
+            }
 
-            // FastDecrease: thermal is highest urgency
-            if (thermalAction == StateAction.FastDecrease)
+            for (int i = 0; i < m_UnappliedScalers.Count; i++)
             {
-                ApplyLowestCostScaler();
-                TimeUntilNextAction = m_Settings.indexerSettings.thermalActionDelay / 2;
-                return;
+                if (m_UnappliedScalers[i] is T unappliedScaler)
+                    return unappliedScaler;
             }
-            // FastDecrease: performance or Utilization signals
-            if (combinedPerformanceAction == StateAction.FastDecrease)
+
+            for (int i = 0; i < m_DisabledScalers.Count; i++)
             {
-                ApplyLowestCostScaler();
-                TimeUntilNextAction = m_Settings.indexerSettings.performanceActionDelay / 2;
-                return;
+                if (m_DisabledScalers[i] is T disabledScaler)
+                    return disabledScaler;
             }
-            // Decrease: thermal
-            if (thermalAction == StateAction.Decrease)
+
+            return null;
+        }
+
+        void RunPerFrameModeScalerActions()
+        {
+            for (int i = 0; i < m_AppliedScalers.Count; i++)
             {
-                ApplyLowestCostScaler();
-                TimeUntilNextAction = m_Settings.indexerSettings.thermalActionDelay;
-                return;
+                if (m_AppliedScalers[i].Enabled)
+                    m_AppliedScalers[i].ApplyOperationMode();
             }
-            // Decrease: performance or Utilization signals
-            if (combinedPerformanceAction == StateAction.Decrease)
+
+            for (int i = 0; i < m_UnappliedScalers.Count; i++)
             {
-                ApplyLowestCostScaler();
-                TimeUntilNextAction = m_Settings.indexerSettings.performanceActionDelay;
-                return;
+                if (m_UnappliedScalers[i].Enabled)
+                    m_UnappliedScalers[i].ApplyOperationMode();
             }
-            // No signal is requesting quality reduction - try to restore quality
-            UnapplyHighestCostScaler();
-            TimeUntilNextAction = m_Settings.indexerSettings.thermalActionDelay;
         }
         /// <summary>
         /// Returns <see cref="Time.deltaTime"/> only and is primarily encapsulated for tests.
@@ -558,6 +592,15 @@ namespace UnityEngine.AdaptivePerformance
                 {
                     APLog.Debug($"[Indexer] Deactivated {scaler.Name} scaler.");
                     scaler.Deactivate();
+                    // Drop accumulated quality state so the scaler re-enters
+                    // m_UnappliedScalers at level 0 next time it's re-enabled.
+                    // ApplyLowestCostScaler's unapplied loop has no IsMaxLevel
+                    // guard (only the applied loop does); without this reset, a
+                    // scaler disabled at max level (e.g. by switching mode to one
+                    // where it's turned off) would, on re-enable, get picked by
+                    // ApplyLowestCostScaler and IncreaseLevel — firing the
+                    // "already at max" error every performance-action delay.
+                    scaler.ResetLevel();
                     m_DisabledScalers.Add(scaler);
                     m_UnappliedScalers.RemoveAt(i);
                 }
@@ -570,6 +613,7 @@ namespace UnityEngine.AdaptivePerformance
                 {
                     APLog.Debug($"[Indexer] Deactivated {scaler.Name} scaler.");
                     scaler.Deactivate();
+                    scaler.ResetLevel();
                     m_DisabledScalers.Add(scaler);
                     m_AppliedScalers.RemoveAt(i);
                 }
@@ -591,7 +635,7 @@ namespace UnityEngine.AdaptivePerformance
             }
         }
 
-        private bool ApplyLowestCostScaler()
+        internal bool ApplyLowestCostScaler(IReadOnlyList<AdaptivePerformanceScaler> excludedScalers)
         {
             AdaptivePerformanceScaler result = null;
             var lowestCost = float.PositiveInfinity;
@@ -600,7 +644,8 @@ namespace UnityEngine.AdaptivePerformance
             {
                 if (!scaler.Enabled)
                     continue;
-
+                if (IsExcludedScaler(scaler, excludedScalers))
+                    continue;
                 if (scaler.OverrideLevel != -1)
                     continue;
 
@@ -616,6 +661,9 @@ namespace UnityEngine.AdaptivePerformance
             foreach (var scaler in m_AppliedScalers)
             {
                 if (!scaler.Enabled)
+                    continue;
+
+                if (IsExcludedScaler(scaler, excludedScalers))
                     continue;
 
                 if (scaler.OverrideLevel != -1)
@@ -655,13 +703,16 @@ namespace UnityEngine.AdaptivePerformance
             scaler.IncreaseLevel();
         }
 
-        private bool UnapplyHighestCostScaler()
+        internal bool UnapplyHighestCostScaler(IReadOnlyList<AdaptivePerformanceScaler> excludedScalers)
         {
             AdaptivePerformanceScaler result = null;
             var highestCost = float.NegativeInfinity;
 
             foreach (var scaler in m_AppliedScalers)
             {
+                if (IsExcludedScaler(scaler, excludedScalers))
+                    continue;
+
                 if (scaler.OverrideLevel != -1)
                     continue;
 
@@ -685,6 +736,20 @@ namespace UnityEngine.AdaptivePerformance
             return false;
         }
 
+        bool IsExcludedScaler(AdaptivePerformanceScaler scaler, IReadOnlyList<AdaptivePerformanceScaler> excludedScalers)
+        {
+            if (excludedScalers == null)
+                return false;
+
+            for (int i = 0; i < excludedScalers.Count; i++)
+            {
+                if (scaler == excludedScalers[i])
+                    return true;
+            }
+
+            return false;
+        }
+
         private void UnapplyScaler(AdaptivePerformanceScaler scaler)
         {
             APLog.Debug($"[Indexer] Unapplying {scaler.Name} scaler at level {scaler.CurrentLevel} and try to decrease level to {scaler.CurrentLevel-1}");
@@ -694,6 +759,51 @@ namespace UnityEngine.AdaptivePerformance
                 m_AppliedScalers.Remove(scaler);
                 m_UnappliedScalers.Add(scaler);
             }
+        }
+
+        internal void AdjustScalersBasedOnStateAction(StateAction thermalAction, StateAction performanceAction, bool allowQualityIncrease, IReadOnlyList<AdaptivePerformanceScaler> excludedScalers)
+        {
+            TimeUntilNextAction = Mathf.Max(TimeUntilNextAction - DeltaTime(), 0);
+            if (TimeUntilNextAction != 0)
+                return;
+
+            StopScalerEfficiencyTracker();
+            if (allowQualityIncrease && thermalAction == StateAction.Increase && performanceAction == StateAction.Stale)
+            {
+                UnapplyHighestCostScaler(excludedScalers);
+                TimeUntilNextAction = m_Settings.indexerSettings.thermalActionDelay;
+            }
+
+            else if (allowQualityIncrease && thermalAction == StateAction.Stale && performanceAction == StateAction.Stale)
+            {
+                UnapplyHighestCostScaler(excludedScalers);
+                TimeUntilNextAction = m_Settings.indexerSettings.thermalActionDelay;
+            }
+
+            else if (thermalAction == StateAction.Decrease)
+            {
+                ApplyLowestCostScaler(excludedScalers);
+                TimeUntilNextAction = m_Settings.indexerSettings.thermalActionDelay;
+            }
+
+            else if (performanceAction == StateAction.Decrease)
+            {
+                ApplyLowestCostScaler(excludedScalers);
+                TimeUntilNextAction = m_Settings.indexerSettings.performanceActionDelay;
+            }
+
+            else if (thermalAction == StateAction.FastDecrease)
+            {
+                ApplyLowestCostScaler(excludedScalers);
+                TimeUntilNextAction = m_Settings.indexerSettings.thermalActionDelay / 2;
+            }
+
+            else if (performanceAction == StateAction.FastDecrease)
+            {
+                ApplyLowestCostScaler(excludedScalers);
+                TimeUntilNextAction = m_Settings.indexerSettings.performanceActionDelay / 2;
+            }
+
         }
     }
 }

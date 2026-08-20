@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using Unity.Jobs.LowLevel.Unsafe;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Bindings;
 using UnityEngine.TextCore.LowLevel;
 
@@ -134,6 +135,7 @@ namespace UnityEngine.TextCore.Text
             return fallbackList.ToArray();
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         private static HashSet<EntityId> visitedFontAssets = new HashSet<EntityId>();
         private bool HasRecursion(FontAsset fontAsset)
         {

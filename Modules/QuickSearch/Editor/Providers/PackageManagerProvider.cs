@@ -6,18 +6,21 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor.PackageManager;
 using UnityEngine;
 using Unity.Collections;
 
 namespace UnityEditor.Search.Providers
 {
-    static class PackageManagerProvider
+    static partial class PackageManagerProvider
     {
-        internal static string type = "packages";
-        internal static string displayName = "Packages";
+        internal static readonly string type = "packages";
+        internal static readonly string displayName = "Packages";
 
+        [AutoStaticsCleanupOnCodeReload]
         private static PackageManager.Requests.ListRequest s_ListRequest = null;
+        [AutoStaticsCleanupOnCodeReload]
         private static PackageManager.Requests.SearchRequest s_SearchRequest = null;
 
         [SearchItemProvider]
@@ -90,9 +93,9 @@ namespace UnityEditor.Search.Providers
 
         private static string FormatLabel(PackageManager.PackageInfo pi)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var installedPackage = s_ListRequest.Result.FirstOrDefault(l => l.name == pi.name);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             var status = installedPackage != null ? (installedPackage.version == pi.version ?
                 " - <i>In Project</i>" : " - <b>Update Available</b>") : "";
             if (String.IsNullOrEmpty(pi.displayName))
@@ -103,9 +106,9 @@ namespace UnityEditor.Search.Providers
         private static bool IsPackageInstalled(PackageManager.PackageInfo pi, out string version)
         {
             version = null;
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var installedPackage = s_ListRequest.Result.FirstOrDefault(l => l.name == pi.name);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             if (installedPackage == null)
                 return false;
             version = installedPackage.version;

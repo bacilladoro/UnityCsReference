@@ -2,11 +2,13 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Unity.Properties;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEngine.Bindings;
@@ -834,7 +836,9 @@ namespace UnityEditor.UIElements
             return wrapper;
         }
 
+        [NoAutoStaticsCleanup]
         private static readonly Action<BaseListView, string> SetListViewHeaderTitle = (view, s) => view.headerTitle = s;
+        [NoAutoStaticsCleanup]
         private static readonly Action<Foldout, string> SetFoldoutText = (f, s) => f.text = s;
 
         private EventCallback<KeyDownEvent> m_DebugAltKeyDownCallback;
@@ -1215,17 +1219,17 @@ namespace UnityEditor.UIElements
                         var enumData = EnumDataUtility.GetCachedEnumData(enumType);
                         if (originalField != null && originalField is EnumFlagsField enumFlagsField)
                         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                             enumFlagsField.choices = enumData.displayNames.ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                             enumFlagsField.value = (Enum)Enum.ToObject(enumType, property.intValue);
                         }
                         return ConfigureField<EnumFlagsField, Enum>(originalField as EnumFlagsField, property,
                             () => new EnumFlagsField
                             {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                                 choices = enumData.displayNames.ToList(),
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                                 value = (Enum)Enum.ToObject(enumType, property.intValue)
                             });
                     }
@@ -1236,9 +1240,9 @@ namespace UnityEditor.UIElements
                         // in the same order.
                         var enumData = enumType != null ? (EnumData?)EnumDataUtility.GetCachedEnumData(enumType) : null;
                         var propertyDisplayNames = EditorGUI.EnumNamesCache.GetEnumDisplayNames(property);
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                         var popupEntries = (enumData?.displayNames ?? propertyDisplayNames).ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                         int propertyFieldIndex = (property.enumValueIndex < 0 || property.enumValueIndex >= propertyDisplayNames.Length
                             ? PopupField<string>.kPopupFieldDefaultIndex : (enumData != null
                                 ? Array.IndexOf(enumData.Value.displayNames, propertyDisplayNames[property.enumValueIndex])
@@ -1425,3 +1429,4 @@ namespace UnityEditor.UIElements
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

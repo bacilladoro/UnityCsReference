@@ -227,6 +227,7 @@ namespace Unity.UI.Builder
             m_DocumentRootElement.style.maxWidth = StyleKeyword.Initial;
             m_DocumentRootElement.style.minHeight = StyleKeyword.Initial;
             m_DocumentRootElement.style.maxHeight = StyleKeyword.Initial;
+            m_DocumentRootElement.style.zIndex = 0;
 
             m_Canvas.documentRootElement = m_DocumentRootElement;
             m_EditorLayer = this.Q("__unity-editor-layer");

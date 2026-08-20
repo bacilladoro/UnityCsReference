@@ -10,6 +10,7 @@ namespace UnityEngine.AdaptivePerformance
     public class AdaptiveShadowDistance : AdaptivePerformanceScaler
     {
         float m_DefaultShadowDistance;
+
         /// <summary>
         /// Ensures settings are applied during startup.
         /// </summary>
@@ -18,7 +19,7 @@ namespace UnityEngine.AdaptivePerformance
             base.Awake();
             if (m_Settings == null)
                 return;
-            ApplyDefaultSetting(m_Settings.scalerSettings.AdaptiveShadowDistance);
+            ApplyProfileSettings(m_Settings.scalerSettings.AdaptiveShadowDistance);
         }
 
         /// <summary>

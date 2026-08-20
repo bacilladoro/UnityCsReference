@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitAuthoringFramework not yet converted
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
@@ -299,6 +300,22 @@ internal class StyleSheetNodeTypeHandler : HierarchyNodeTypeHandler
     readonly Dictionary<HierarchyViewItem, (Action, Action<string, bool>)> m_RenameCallbacks = new();
     readonly HashSet<StyleSheet> m_NewlyAddedStyleSheets = new();
     readonly HashSet<HierarchyNode> m_HighlightedNodes = new();
+    StyleRule m_HoveredRule;
+
+    internal StyleRule HoveredRule
+    {
+        get => m_HoveredRule;
+        set
+        {
+            if (m_HoveredRule == value)
+                return;
+            m_HoveredRule = value;
+            if (m_HoveredRule != null)
+                HighlightUtility.RequestHighlights(m_HoveredRule, CommandSources.StyleSheets);
+            else
+                HighlightUtility.ClearHighlights();
+        }
+    }
 
     protected HashSet<StyleSheet> NewlyAddedStyleSheets => m_NewlyAddedStyleSheets;
 
@@ -479,6 +496,9 @@ internal class StyleSheetNodeTypeHandler : HierarchyNodeTypeHandler
                 var childNode = Hierarchy.GetChild(rootNode, i);
                 if (m_Mappings.TryGetValue(childNode, out var node) && node.Rule != null)
                 {
+                    if (node.Rule == m_HoveredRule)
+                        HoveredRule = null;
+
                     m_StyleRuleSelectionHandler.ReleaseInstanceId(node.Rule, node.IsReadOnly);
                 }
 
@@ -593,6 +613,9 @@ internal class StyleSheetNodeTypeHandler : HierarchyNodeTypeHandler
                     m_Mappings.TryRemove(node);
                     m_Mappings.TryAdd(node, new Node(styleSheet, remap.Remapped, isReadOnly), ruleEntityId);
 
+                    if (remap.Previous == m_HoveredRule)
+                        HoveredRule = remap.Remapped;
+
                     // Update display name
                     var displayString = m_Exporter.ToUssString(styleSheet, remap.Remapped.complexSelectors, s_ExportOptions);
                     CommandList.SetName(node, displayString);
@@ -621,6 +644,9 @@ internal class StyleSheetNodeTypeHandler : HierarchyNodeTypeHandler
         // Remove truly removed rules
         foreach (var rule in removedRules)
         {
+            if (rule == m_HoveredRule)
+                HoveredRule = null;
+
             if (existingRuleNodes.TryGetValue(rule, out var node))
             {
                 m_StyleRuleSelectionHandler.ReleaseInstanceId(rule, isReadOnly);
@@ -671,6 +697,7 @@ internal class StyleSheetNodeTypeHandler : HierarchyNodeTypeHandler
     {
         base.Dispose(disposing);
 
+        HoveredRule = null;
         UICommandQueue.UnregisterHandlerForCategory(CommandCategory.Highlight, ProcessHighlightElementsCommand);
 
         // Clear selection handlers directly since hierarchy is already emptied at this point
@@ -805,12 +832,12 @@ internal class StyleSheetNodeTypeHandler : HierarchyNodeTypeHandler
 
     void OnStartHover(PointerEnterEvent evt, StyleRule rule)
     {
-        HighlightUtility.RequestHighlights(rule, CommandSources.StyleSheets);
+        HoveredRule = rule;
     }
 
     void OnEndHover(PointerLeaveEvent evt)
     {
-        HighlightUtility.ClearHighlights();
+        HoveredRule = null;
     }
 
     void AddSelectorToken(VisualElement container, string token, bool isChained = false, bool allowDrag = true)
@@ -960,3 +987,4 @@ internal class StyleSheetNodeTypeHandler : HierarchyNodeTypeHandler
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

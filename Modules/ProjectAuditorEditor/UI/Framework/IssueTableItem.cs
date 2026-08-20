@@ -56,9 +56,9 @@ namespace Unity.ProjectAuditor.Editor.UI.Framework
         {
             if (ReportItem == issue)
                 return true;
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             return children != null && children.FirstOrDefault(child => (child as IssueTableItem).ReportItem == issue) != null;
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
     }
 }

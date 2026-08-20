@@ -2,6 +2,8 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
+using Unity.Scripting.LifecycleManagement;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
@@ -316,18 +318,20 @@ namespace UnityEngine.UIElements
             Callbacks.OnLabelPointerDownStartEditing.Unregister(labelElement);
         }
 
-        private static class Callbacks
+        private static partial class Callbacks
         {
             // Use with ?. syntax to avoid possible exceptions on events during DetachFromPanel
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             private static TextValueField<TValueType> GetTextValueField(VisualElement child) =>
                 child.GetFirstAncestorOfType<TextValueField<TValueType>>();
 
+            [NoAutoStaticsCleanup]
             public static readonly EventCallbackDefinition<Label> OnLabelPointerDownStartEditing =
                 EventCallback.Create<PointerDownEvent, Label>(
                     static (e, label) => GetTextValueField(label)?.StartEditing(e),
                     CallbackOptions.TrickleDown);
 
+            [NoAutoStaticsCleanup]
             public static readonly EventCallbackDefinition<Label> OnLabelPointerUpEndEditing =
                 EventCallback.Create<PointerUpEvent, Label>(
                     static (e, label) => GetTextValueField(label)?.EndEditing(e));
@@ -412,3 +416,4 @@ namespace UnityEngine.UIElements
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

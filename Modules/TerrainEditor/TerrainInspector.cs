@@ -2065,9 +2065,9 @@ namespace UnityEditor
             // Store texture versions of outdated detail map
             for (int i = 0; i < terrainData.detailPrototypes.Length; i++)
             {
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 byte[] detailArray = terrainData
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     .GetDetailLayer(0, 0, oldWidth, oldHeight, i)
                     .Cast<int>().Select<int, byte>(v =>
                         terrainData.detailScatterMode == DetailScatterMode.InstanceCountMode
@@ -2109,9 +2109,9 @@ namespace UnityEditor
                 resampleRatio *= resampleRatio;
 
                 // Get pixel data from resulting blit and copy to detail maps
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 int[] values = resizedTex.GetPixels()
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     .Select<Color, int>(c =>
                     {
                         int detailAmt = Mathf.CeilToInt(terrainData.maxDetailScatterPerRes * c.r);

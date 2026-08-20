@@ -294,12 +294,12 @@ namespace UnityEditor
                     // the current pipeline. Add it to the dropdown, since it
                     // would show up as a blank entry.
                     string currentTitle = ((LightType)lightType.intValue).ToString();
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                     GUIContent[] titles = Styles.LightTypeTitles.Append(EditorGUIUtility.TrTextContent(currentTitle)).ToArray();
-#pragma warning restore UA2001
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+#pragma warning disable UAC2001 // Avoid Linq
                     int[] values = Styles.LightTypeValues.Append(lightType.intValue).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     type = EditorGUI.IntPopup(lightTypeRect, Styles.Type, selectedLightType, titles, values);
                 }
 

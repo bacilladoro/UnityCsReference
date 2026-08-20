@@ -2,6 +2,8 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
+using Unity.Scripting.LifecycleManagement;
 using System;
 using System.Collections.Generic;
 using UnityEngine.UIElements.Experimental;
@@ -17,8 +19,9 @@ namespace UnityEngine.UIElements
         public Func<float, float> easingCurve;
     }
 
-    internal static class ComputedTransitionUtils
+    internal static partial class ComputedTransitionUtils
     {
+        [NoAutoStaticsCleanup]
         private static readonly ComputedTransitionProperty[] k_EmptyTransitions =
             Array.Empty<ComputedTransitionProperty>();
 
@@ -63,6 +66,7 @@ namespace UnityEngine.UIElements
             return false;
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         private static List<ComputedTransitionProperty> s_ComputedTransitionsBuffer = new List<ComputedTransitionProperty>();
         private static ComputedTransitionProperty[] GetOrComputeTransitionPropertyData(ref ComputedStyle computedStyle)
         {
@@ -246,3 +250,4 @@ namespace UnityEngine.UIElements
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

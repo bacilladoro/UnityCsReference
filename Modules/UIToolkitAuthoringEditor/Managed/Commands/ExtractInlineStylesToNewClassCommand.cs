@@ -38,6 +38,10 @@ sealed class ExtractInlineStylesToNewClassCommand : Command<ExtractInlineStylesT
 
     public override string UndoName => CommandUndoName;
 
+    // Adds a rule and a selector and puts a class on the element, so the set of matching selectors changes too.
+    public override CommandCategory Category =>
+        CommandCategory.Styling | CommandCategory.StylingContext | CommandCategory.Variables;
+
     protected override void Init()
     {
         ElementAsset = null;

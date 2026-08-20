@@ -9,11 +9,13 @@ using System.Linq;
 using UnityEditor.Scripting.Compilers;
 using UnityEditor.Utils;
 using UnityEngine.Scripting;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Scripting.ScriptCompilation
 {
     static class MonoLibraryHelpers
     {
+        [NoAutoStaticsCleanup] // cache keyed by enum with string[] values (no user refs), safe to persist across reload
         static Dictionary<ApiCompatibilityLevel, string[]> cachedApiCompatibilityLevelReferences = new Dictionary<ApiCompatibilityLevel, string[]>();
 
         [RequiredByNativeCode]
@@ -40,19 +42,19 @@ namespace UnityEditor.Scripting.ScriptCompilation
 
         static string[] FindReferencesInDirectories(this IEnumerable<string> references, string[] directories)
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return (
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 from reference in references
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 from directory in directories
-#pragma warning restore UA2001
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+#pragma warning disable UAC2001 // Avoid Linq
                 where File.Exists(Path.Combine(directory, reference))
-#pragma warning restore UA2001
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+#pragma warning disable UAC2001 // Avoid Linq
                 select Path.Combine(directory, reference)
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             ).ToArray();
         }
 
@@ -78,9 +80,9 @@ namespace UnityEditor.Scripting.ScriptCompilation
             else if (apiCompatibilityLevel == ApiCompatibilityLevel.NET_Unity_4_8)
             {
                 var monoAssemblyDirectories = GetSystemReferenceDirectories(apiCompatibilityLevel);
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 var referenceFileNames = GetSystemReferences().Concat(GetNet46SystemReferences()).Concat(GetMonoProfileNetstandardFacadeReferences()).Distinct();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 references.AddRange(referenceFileNames.FindReferencesInDirectories(monoAssemblyDirectories));
                 references.AddRange(Directory.GetFiles(Path.Combine(GetUnityReferenceProfileDirectory(), "Facades"), "*.dll"));
             }

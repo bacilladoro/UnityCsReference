@@ -58,6 +58,22 @@ namespace UnityEditor.Shaders
             return isEmptyKeyword;
         }
 
+        static bool ArrayValuesEqual<T>(T[] lhs, T[] rhs, Func<T, T, bool> elementsEqual)
+        {
+            int lhsLength = lhs != null ? lhs.Length : 0;
+            int rhsLength = rhs != null ? rhs.Length : 0;
+            if (lhsLength != rhsLength)
+                return false;
+
+            for (int i = 0; i < lhsLength; ++i)
+            {
+                if (!elementsEqual(lhs[i], rhs[i]))
+                    return false;
+            }
+
+            return true;
+        }
+
         private static bool IsValidIdentifierChar(char c)
         {
             return ('A' <= c && c <= 'Z') || ('a' <= c && c <= 'z')
@@ -103,6 +119,11 @@ namespace UnityEditor.Shaders
 
             [SerializeField] public string name;
             [SerializeField] public bool keepInBuild;
+
+            internal bool ValueEquals(KeywordOverrideInfo other)
+            {
+                return name == other.name && keepInBuild == other.keepInBuild;
+            }
 
             [UsedByNativeCode, RequiredMember]
             internal static void DeconstructKeywordOverrideInfoArrayElementRaw(KeywordOverrideInfo[] array, int index, out string name, out bool keepInBuild)
@@ -207,6 +228,14 @@ namespace UnityEditor.Shaders
                 return true;
             }
 
+            internal bool ValueEquals(KeywordDeclarationOverride other)
+            {
+                if (variantGenerationMode != other.variantGenerationMode)
+                    return false;
+
+                return ArrayValuesEqual(keywords, other.keywords, static (a, b) => a.ValueEquals(b));
+            }
+
             [SerializeField] public KeywordOverrideInfo[] keywords = Array.Empty<KeywordOverrideInfo>();
             [SerializeField] public ShaderVariantGenerationMode variantGenerationMode = ShaderVariantGenerationMode.Default;
 
@@ -227,8 +256,7 @@ namespace UnityEditor.Shaders
             }
         }
 
-        // Per-API compiler settings: toolchain (backend) selection plus its debug-symbol and
-        // optimization-level settings. Keyed by graphics API.
+        // Per-API toolchain (backend) selection plus its debug-symbol and optimization-level settings.
         [RequiredByNativeCode(GenerateProxy = false)]
         [Serializable]
         internal struct ShaderCompilerSettings
@@ -237,6 +265,14 @@ namespace UnityEditor.Shaders
             [SerializeField] public ShaderCompilerToolchain compilerToolchainOverride;
             [SerializeField] public ShaderOptimizationLevel optimizationLevel;
             [SerializeField] public bool enableDebugSymbols;
+
+            internal bool ValueEquals(ShaderCompilerSettings other)
+            {
+                return graphicsAPI == other.graphicsAPI
+                    && compilerToolchainOverride == other.compilerToolchainOverride
+                    && optimizationLevel == other.optimizationLevel
+                    && enableDebugSymbols == other.enableDebugSymbols;
+            }
 
             [UsedByNativeCode, RequiredMember]
             internal static void DeconstructCompilerSettingsArrayElementRaw(ShaderCompilerSettings[] array, int index, out int graphicsAPI, out int compiler, out int optimizationLevel, out bool enableDebugSymbols)
@@ -325,6 +361,21 @@ namespace UnityEditor.Shaders
             return numInternalDefines;
         }
 
+        internal bool ValueEquals(ShaderBuildSettings other)
+        {
+            if (numInternalDefines != other.numInternalDefines)
+                return false;
+
+            if (!ArrayValuesEqual(defines, other.defines, static (a, b) => a == b))
+                return false;
+
+            if (!ArrayValuesEqual(compilerSettings, other.compilerSettings, static (a, b) => a.ValueEquals(b)))
+                return false;
+
+            return ArrayValuesEqual(keywordDeclarationOverrides, other.keywordDeclarationOverrides,
+                static (a, b) => a.ValueEquals(b));
+        }
+
         internal void AddInternalDefine(string define)
         {
             int numDefines = 1;
@@ -356,13 +407,13 @@ namespace UnityEditor.Shaders
                 return false;
             }
 
-            string val = sections[1]; 
+            string val = sections[1];
             char c = val[val.Length - 1];
 
             // Check the valid postfix chars
             if (c == 'h' || c == 'H' || c == 'f' || c == 'F' || c == 'u' || c == 'U' || c == 'l' ||  c == 'L')
             {
-                // TODO @ SHADERS-1314: Uncomment below to accept UL suffix variations when the preprocessor 
+                // TODO @ SHADERS-1314: Uncomment below to accept UL suffix variations when the preprocessor
                 // has been fixed to support them.
                 /*
                 char c2 = val[val.Length - 2];
@@ -542,9 +593,6 @@ namespace UnityEditor.Shaders
             return true;
         }
 
-        // Merge a later duplicate row for the same API. opt/debug are real values so the later row
-        // wins; toolchain keeps last-non-Default (Default = no override), matching the resolver
-        // (ResolvePerAPICompilerToolchainSelection in ShaderImportUtils.cpp).
         static ShaderCompilerSettings MergeDuplicateCompilerSettings(ShaderCompilerSettings existing, ShaderCompilerSettings later)
         {
             if (later.compilerToolchainOverride != ShaderCompilerToolchain.Default)
@@ -554,14 +602,12 @@ namespace UnityEditor.Shaders
             return existing;
         }
 
-        // Heal bad persisted data on write (compilerSettings is internal, so callers can't fix it):
-        // drop invalid rows and merge duplicate-API rows into one (see MergeDuplicateCompilerSettings).
+        // Heals bad persisted data on write, which callers can't do themselves because compilerSettings is internal.
         internal static ShaderCompilerSettings[] SanitizeShaderCompilerSettings(ShaderCompilerSettings[] settings)
         {
             if (settings == null)
                 return Array.Empty<ShaderCompilerSettings>();
 
-            // List keeps first-appearance order; the map points each API at its row in the list.
             var kept = new List<ShaderCompilerSettings>(settings.Length);
             var indexByAPI = new Dictionary<GraphicsDeviceType, int>();
             bool changed = false;
@@ -585,8 +631,80 @@ namespace UnityEditor.Shaders
                 }
             }
 
-            // Hand back the original array when nothing changed so the caller can tell it was a no-op.
             return changed ? kept.ToArray() : settings;
+        }
+
+        static Dictionary<GraphicsDeviceType, ShaderCompilerSettings> MapRowsByGraphicsApi(IEnumerable<ShaderCompilerSettings> rows)
+        {
+            var map = new Dictionary<GraphicsDeviceType, ShaderCompilerSettings>();
+            if (rows != null)
+            {
+                foreach (var row in rows)
+                    map[row.graphicsAPI] = row;
+            }
+            return map;
+        }
+
+        static void ApplyDebugAndOptimizationToSupportingApis(
+            Dictionary<GraphicsDeviceType, ShaderCompilerSettings> rowsByApi,
+            bool enableDebugSymbols,
+            ShaderOptimizationLevel optimizationLevel,
+            IReadOnlyList<GraphicsDeviceType> enabledApis)
+        {
+            if (enabledApis == null)
+                return;
+
+            for (int i = 0, n = enabledApis.Count; i < n; ++i)
+            {
+                var api = enabledApis[i];
+                bool supDebug = SupportsDebugSymbols(api);
+                bool supOpt = SupportsOptimizationLevel(api);
+                if (!supDebug && !supOpt)
+                    continue;
+                if (!rowsByApi.TryGetValue(api, out var s))
+                {
+                    s = new ShaderCompilerSettings
+                    {
+                        graphicsAPI = api,
+                        compilerToolchainOverride = ShaderCompilerToolchain.Default,
+                        optimizationLevel = ShaderOptimizationLevel.Default,
+                        enableDebugSymbols = false,
+                    };
+                }
+                if (supDebug) s.enableDebugSymbols = enableDebugSymbols;
+                if (supOpt) s.optimizationLevel = optimizationLevel;
+                rowsByApi[api] = s;
+            }
+        }
+
+        static bool IsAllDefaultRow(ShaderCompilerSettings row)
+        {
+            return row.compilerToolchainOverride == ShaderCompilerToolchain.Default
+                && row.optimizationLevel == ShaderOptimizationLevel.Default
+                && !row.enableDebugSymbols;
+        }
+
+        static ShaderCompilerSettings[] CollectNonDefaultRows(Dictionary<GraphicsDeviceType, ShaderCompilerSettings> rowsByApi)
+        {
+            var result = new List<ShaderCompilerSettings>(rowsByApi.Count);
+            foreach (var kv in rowsByApi)
+            {
+                if (!IsAllDefaultRow(kv.Value))
+                    result.Add(kv.Value);
+            }
+            return result.ToArray();
+        }
+
+        // Sanitizes because the SerializedProperty save path bypasses SetShaderBuildSettings().
+        internal static ShaderCompilerSettings[] MergeCompilerSettings(
+            IEnumerable<ShaderCompilerSettings> existingRows,
+            bool enableDebugSymbols,
+            ShaderOptimizationLevel optimizationLevel,
+            IReadOnlyList<GraphicsDeviceType> enabledApis)
+        {
+            var rowsByApi = MapRowsByGraphicsApi(existingRows);
+            ApplyDebugAndOptimizationToSupportingApis(rowsByApi, enableDebugSymbols, optimizationLevel, enabledApis);
+            return SanitizeShaderCompilerSettings(CollectNonDefaultRows(rowsByApi));
         }
 
         [SerializeField] internal ShaderCompilerSettings[] compilerSettings = Array.Empty<ShaderCompilerSettings>();
@@ -594,5 +712,9 @@ namespace UnityEditor.Shaders
         internal static extern ShaderCompilerToolchain[] GetSupportedCompilerToolchainsForAPI(GraphicsDeviceType api);
 
         internal static extern bool SupportsCompilerToolchainOverride(GraphicsDeviceType api);
+
+        internal static extern bool SupportsOptimizationLevel(GraphicsDeviceType api);
+
+        internal static extern bool SupportsDebugSymbols(GraphicsDeviceType api);
     }
 }

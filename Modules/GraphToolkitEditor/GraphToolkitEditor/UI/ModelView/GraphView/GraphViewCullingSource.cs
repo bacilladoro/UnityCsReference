@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 
 namespace Unity.GraphToolkit.Editor
 {
@@ -13,16 +14,19 @@ namespace Unity.GraphToolkit.Editor
     [UnityRestricted]
     internal class GraphViewCullingSource : Enumeration
     {
+        [NoAutoStaticsCleanup] // initialization counter used only during static ctor; safe to persist
         static int s_NextId;
 
         /// <summary>
         /// Culling when outside the viewport.
         /// </summary>
+        [NoAutoStaticsCleanup] // enum-like singleton; safe to persist across reload
         public static readonly GraphViewCullingSource OutOfView;
 
         /// <summary>
         /// Culling at small zoom levels.
         /// </summary>
+        [NoAutoStaticsCleanup] // enum-like singleton; safe to persist across reload
         public static readonly GraphViewCullingSource Zoom;
 
         /// <summary>

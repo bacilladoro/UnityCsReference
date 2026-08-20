@@ -4,6 +4,7 @@
 
 using System;
 using Unity.GraphToolkit.Editor;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.Assertions;
 using Random = System.Random;
@@ -15,7 +16,8 @@ namespace Unity.GraphToolkit.CSO
     /// </summary>
     static class StateComponentIdProvider
     {
-        static Random s_Random = new();
+        [NoAutoStaticsCleanup] // random number generator for state component IDs; ID continuity is safe to persist
+        static readonly Random s_Random = new();
 
         public static int GetId()
         {

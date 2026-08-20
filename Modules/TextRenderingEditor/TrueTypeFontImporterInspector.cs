@@ -256,9 +256,9 @@ namespace UnityEditor
                                     string guiChars = EditorGUILayout.TextArea(m_CustomCharacters.stringValue, GUI.skin.textArea, GUILayout.MinHeight(EditorGUI.kSingleLineHeight * 2));
                                     EditorGUI.showMixedValue = false;
                                     if (change.changed)
-                                        #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                                        #pragma warning disable UAC2001 // Avoid Linq
                                         m_CustomCharacters.stringValue = new string(guiChars.Distinct().Where(c => c != '\n' && c != '\r').ToArray());
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                                 }
                             }
                         }

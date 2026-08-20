@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Assertions;
@@ -15,10 +16,11 @@ namespace Unity.Multiplayer.PlayMode.Editor;
 // in users code. Structs with parameterless constructors are supported in engine modules code, so we need to make
 // sure to not have any of those in the settings we want to serialize in OrchestratedScenarioUserSettings.
 [FilePath(k_AssetPath, FilePathAttribute.Location.ProjectFolder)]
-class OrchestratedScenarioUserSettings : ScriptableSingleton<OrchestratedScenarioUserSettings>
+partial class OrchestratedScenarioUserSettings : ScriptableSingleton<OrchestratedScenarioUserSettings>
 {
     internal const string k_AssetPath = "UserSettings/OrchestratedScenarioUserSettings.asset";
 
+    [AutoStaticsCleanupOnCodeReload] // domain-reload detection flag; persisting true could cause premature save during shutdown
     static bool s_Loaded;
 
     SerializedObject m_SerializedObject;

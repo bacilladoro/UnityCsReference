@@ -4,6 +4,7 @@
 
 using System;
 using System.IO;
+using Unity.Scripting.LifecycleManagement;
 
 namespace Unity.GraphToolkit.Editor.Implementation
 {
@@ -12,6 +13,7 @@ namespace Unity.GraphToolkit.Editor.Implementation
     {
         Type m_GraphType;
 
+        [NoAutoStaticsCleanup] // try/finally gate: always set before use and cleared in finally; safe to persist across reload
         static bool s_LoadingGraphObjectFromFileOnDisk;
 
         public override Type GraphType

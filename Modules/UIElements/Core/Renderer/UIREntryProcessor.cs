@@ -110,9 +110,11 @@ namespace UnityEngine.UIElements.UIR
 
             if (parent != null)
             {
-                m_MaskDepthPopped = parent.childrenMaskDepth;
-                m_StencilRefPopped = parent.childrenStencilRef;
-                m_ClipRectIdPopped = isGroupTransform ? ShaderInfoAllocator.infiniteClipRect : parent.clipRectID;
+                // A z-index element's render parent differs from its visual parent; its draws inherit clip and masking from the visual parent.
+                var inheritanceParent = renderData.GetInheritanceParent(parent);
+                m_MaskDepthPopped = inheritanceParent.childrenMaskDepth;
+                m_StencilRefPopped = inheritanceParent.childrenStencilRef;
+                m_ClipRectIdPopped = isGroupTransform ? ShaderInfoAllocator.infiniteClipRect : inheritanceParent.clipRectID;
             }
             else
             {

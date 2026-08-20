@@ -583,9 +583,9 @@ namespace UnityEditor
             var loadedTypes = TypeCache.GetTypesDerivedFrom(typeof(Enum));
             try
             {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 var enumType = loadedTypes.FirstOrDefault(x => x.Name == enumName || x.FullName == enumName);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 var enumNames = Enum.GetNames(enumType);
                 this.names = new GUIContent[enumNames.Length];
                 for (int i = 0; i < enumNames.Length; ++i)

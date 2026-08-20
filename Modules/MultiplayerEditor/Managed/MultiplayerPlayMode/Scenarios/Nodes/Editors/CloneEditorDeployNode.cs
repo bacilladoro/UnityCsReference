@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Multiplayer.Internal;
@@ -13,9 +14,10 @@ using UnityEngine.Multiplayer.Internal;
 namespace Unity.Multiplayer.PlayMode.Editor
 {
     [Serializable]
-    class CloneEditorDeployNode : ExecutionNode
+    partial class CloneEditorDeployNode : ExecutionNode
     {
         // Guards against saving assets more than once when several clones deploy in the same run.
+        [AutoStaticsCleanupOnCodeReload] // reset to false on reload so a stale "true" doesn't permanently block future saves
         static bool s_SavingAssets;
 
         bool m_HasConnected;

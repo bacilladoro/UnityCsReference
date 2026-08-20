@@ -288,6 +288,7 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("Unity.Modules.GI.BakedGI.EnterPlaymodeOptions.Tests.Editor")]
 [assembly: InternalsVisibleTo("Unity.Modules.GI.API.EditorBakeWithAdditiveScene.Tests.Editor")]
 [assembly: InternalsVisibleTo("Unity.Modules.GI.RealTimeGI.Tests.Runtime")]
+[assembly: InternalsVisibleTo("Unity.Modules.GI.InteractiveBaking.Tests.Editor")]
 [assembly: InternalsVisibleTo("Unity.Modules.GI.SceneView.Tests.Editor")]
 [assembly: InternalsVisibleTo("Unity.Modules.GI.VisualisationManager.LightmapVisualisation.Tests.Editor")]
 [assembly: InternalsVisibleTo("Unity.Modules.GI.VisualisationManager.FetchPreBakedLightmaps.Tests.Editor")]

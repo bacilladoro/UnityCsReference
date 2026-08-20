@@ -186,6 +186,14 @@ namespace UnityEngine.AdaptivePerformance
         /// </summary>
         /// <value>GPU utilization in the range [0.0, 1.0] or -1.0</value>
         public float GpuUtilization { get; set; }
+
+        /// <summary>
+        /// True when the platform reports a low-power condition. Populated from
+        /// <see cref="Provider.Feature.LowPowerMode"/>. False when the capability
+        /// is unsupported by the active provider.
+        /// </summary>
+        /// <value>True when the device is under a low-power condition.</value>
+        public bool LowPowerMode { get; set; }
     }
 
     /// <summary>

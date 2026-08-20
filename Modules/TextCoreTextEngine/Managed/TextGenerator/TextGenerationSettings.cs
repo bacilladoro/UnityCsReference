@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Bindings;
 
 #pragma warning disable CS0618 // Font feature tables and OTL feature tags; TextCoreShaderGUI, TextCoreShaderGUISDF, TextCoreShaderGUIBitmap, TextShaderUtilities are obsolete; handled natively by ATG
@@ -13,8 +14,10 @@ namespace UnityEngine.TextCore.Text
     [VisibleToOtherModules("UnityEngine.IMGUIModule", "UnityEngine.UIElementsModule")]
     internal class TextGenerationSettings : IEquatable<TextGenerationSettings>
     {
+        [NoAutoStaticsCleanup] // Editor-installed hook delegate; reset and reinstalled by the editor on code reload, safe to persist
         [VisibleToOtherModules("UnityEngine.IMGUIModule",  "UnityEngine.UIElementsModule")]
         internal static Func<bool> IsEditorTextRenderingModeBitmap;
+        [NoAutoStaticsCleanup] // Editor-installed hook delegate; reset and reinstalled by the editor on code reload, safe to persist
         [VisibleToOtherModules("UnityEngine.IMGUIModule", "UnityEngine.UIElementsModule")]
         internal static Func<bool> IsEditorTextRenderingModeRaster;
 
@@ -56,6 +59,7 @@ namespace UnityEngine.TextCore.Text
         public const float fontSizeMin = default;
         public const float fontSizeMax = default;
 
+        [NoAutoStaticsCleanup] // Static default feature list of value-type enum tags, allocated once; no user-code references, safe to persist
         readonly internal static List<OTL_FeatureTag> fontFeatures = new List<OTL_FeatureTag>() { OTL_FeatureTag.kern };
 
         public bool emojiFallbackSupport = true;

@@ -137,6 +137,7 @@ namespace UnityEditor.UIElements.Debugger
             readonly TextField m_ContentRect;
             readonly TextField m_PickingBoundingBox;
             readonly TextField m_Layout;
+            readonly TextField m_ZIndex;
 
             public LayoutInfo()
             {
@@ -145,6 +146,7 @@ namespace UnityEditor.UIElements.Debugger
                 Add(m_ContentRect = new TextField("Content Rect") { isReadOnly = true });
                 Add(m_PickingBoundingBox = new TextField(L10n.Tr("Picking Bounding Box")) { isReadOnly = true });
                 Add(m_Layout = new TextField("Layout") { isReadOnly = true });
+                Add(m_ZIndex = new TextField("Z-Index") { isReadOnly = true });
             }
 
             // with isReadOnly set to true.
@@ -159,7 +161,7 @@ namespace UnityEditor.UIElements.Debugger
                     m_ContentRect.text = "";
                     m_PickingBoundingBox.text = "";
                     m_Layout.text = m_WorldBound.text;
-
+                    m_ZIndex.text = "auto";
                 }
                 else
                 {
@@ -168,6 +170,7 @@ namespace UnityEditor.UIElements.Debugger
                     m_ContentRect.text = selectedElement.contentRect.ToString();
                     m_PickingBoundingBox.text = selectedElement.boundingBox.ToString();
                     m_Layout.text = selectedElement.worldBound.ToString();
+                    m_ZIndex.text = selectedElement.resolvedStyle.zIndex.keyword == StyleKeyword.Auto ? "auto" : selectedElement.resolvedStyle.zIndex.value.ToString();
                 }
             }
         }

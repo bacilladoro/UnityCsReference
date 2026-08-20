@@ -91,17 +91,10 @@ namespace Unity.ProjectAuditor.Editor.UI.Framework
 
         // stephenm TODO - This seems wildly more complex than it needs to be... UNLESS assemblies can have sub-assemblies?
         // If that's the case, we need to test for that. Otherwise we need to strip a bunch of this complexity out.
-        public string[] GetSelectedStrings(string[] names, bool summarize, bool removeWhitespace)
+        public string[] GetSelectedStrings(string[] names)
         {
             if (selection == null || selection.Count == 0)
-            {
-                if (summarize)
-                {
-                    return new[] { "None" };
-                }
-
-                return null;
-            }
+                return ["None"];
 
             // Count all items in a group
             var dict = new Dictionary<string, int>();
@@ -124,8 +117,7 @@ namespace Unity.ProjectAuditor.Editor.UI.Framework
             // Count all the items we have 'selected' in a group
             foreach (var name in selection)
             {
-                var nameWithIndex = removeWhitespace ? name.Replace(" ", "") : name;
-                var identifier = new TreeItemIdentifier(nameWithIndex);
+                var identifier = new TreeItemIdentifier(name);
 
                 if (dict.ContainsKey(identifier.name) &&
                     selectionDict.ContainsKey(identifier.name) &&
@@ -147,8 +139,8 @@ namespace Unity.ProjectAuditor.Editor.UI.Framework
 
             // If we've just added all the item names we have everything selected
             // Note we don't compare against the names array directly as this contains the 'all' versions
-            if (summarize && selectedCount == dict.Keys.Count)
-                return new[] { "All" };
+            if (selectedCount == dict.Keys.Count)
+                return ["All"];
 
             // Add all the individual items were we haven't already added the group
             var individualItems = new List<string>();
@@ -168,7 +160,6 @@ namespace Unity.ProjectAuditor.Editor.UI.Framework
 
             // Maintain alphabetical order
             individualItems.Sort(CompareUINames);
-
             return individualItems.ToArray();
         }
 

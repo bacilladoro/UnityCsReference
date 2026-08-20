@@ -2,6 +2,8 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
+using Unity.Scripting.LifecycleManagement;
 using System;
 using System.Collections.Generic;
 using Unity.Profiling;
@@ -11,10 +13,11 @@ using ClipperLib;
 
 namespace Unity.VectorGraphics
 {
-    internal static class VectorClip
+    internal static partial class VectorClip
     {
         const int k_ClipperScale = 100000;
 
+        [NoAutoStaticsCleanup]
         private static Stack<List<List<IntPoint>>> m_ClipStack = new Stack<List<List<IntPoint>>>();
 
         static readonly ProfilerMarker s_ClipGeometryMarker = new ProfilerMarker("ClipGeometry");
@@ -159,3 +162,4 @@ namespace Unity.VectorGraphics
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

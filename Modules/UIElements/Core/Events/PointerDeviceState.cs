@@ -2,6 +2,8 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
+using Unity.Scripting.LifecycleManagement;
 using System;
 using UnityEngine.Bindings;
 
@@ -9,7 +11,7 @@ namespace UnityEngine.UIElements
 {
 
     [VisibleToOtherModules("UnityEditor.GraphToolkitModule")]
-    static class PointerDeviceState
+    static partial class PointerDeviceState
     {
         [Flags]
         internal enum LocationFlag
@@ -95,17 +97,25 @@ namespace UnityEngine.UIElements
             }
         }
 
+
+        [NoAutoStaticsCleanup]
         private static RuntimePointerState[] s_RuntimePointerStates = new RuntimePointerState[PointerId.maxPointers];
 
+        [NoAutoStaticsCleanup]
         private static PointerLocation[] s_EditorPointerLocations = new PointerLocation[PointerId.maxPointers];
+        [NoAutoStaticsCleanup]
         private static PointerLocation[] s_PlayerPointerLocations = new PointerLocation[PointerId.maxPointers];
+        [NoAutoStaticsCleanup]
         private static int[] s_PressedButtons = new int[PointerId.maxPointers];
 
         // When a pointer button is pressed on top of a runtime panel, that panel is flagged as having "soft capture" of that pointer,
         // that is, unless an element has an actual pointer capture, pointer move events should stay inside this panel until
         // all pointer buttons are released again. This is used by runtime panels to mimic GUIView.cpp window capture behavior.
+        [NoAutoStaticsCleanup]
         private static readonly BaseVisualElementPanel[] s_PlayerPanelWithSoftPointerCapture = new BaseVisualElementPanel[PointerId.maxPointers];
+        [NoAutoStaticsCleanup]
         private static readonly IPanelComponent[] s_WorldSpacePanelComponentWithSoftPointerCapture = new IPanelComponent[PointerId.maxPointers];
+        [NoAutoStaticsCleanup]
         private static readonly Camera[] s_CameraWithSoftPointerCapture = new Camera[PointerId.maxPointers];
 
         // For test usage
@@ -337,3 +347,4 @@ namespace UnityEngine.UIElements
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

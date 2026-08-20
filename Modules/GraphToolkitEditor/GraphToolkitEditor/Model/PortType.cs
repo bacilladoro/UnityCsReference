@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 
 namespace Unity.GraphToolkit.Editor
 {
@@ -15,16 +16,19 @@ namespace Unity.GraphToolkit.Editor
         /// <summary>
         /// The port is used for the graph flow.
         /// </summary>
+        [NoAutoStaticsCleanup] // enum-like port type constant; value is a fixed identifier
         public static readonly PortType Default = new PortType(0, nameof(Default));
 
         /// <summary>
         /// The port is used as a placeholder for a missing port.
         /// </summary>
+        [NoAutoStaticsCleanup] // enum-like port type constant; value is a fixed identifier
         public static readonly PortType MissingPort = new PortType(1, nameof(MissingPort));
 
         /// <summary>
         /// The port is used as a connection point for transitions in state machines.
         /// </summary>
+        [NoAutoStaticsCleanup] // enum-like port type constant; value is a fixed identifier
         public static readonly PortType State = new PortType(2, nameof(State));
 
         /// <summary>

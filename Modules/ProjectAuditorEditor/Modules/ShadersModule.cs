@@ -324,11 +324,11 @@ namespace Unity.ProjectAuditor.Editor.Modules
         static Dictionary<Shader, string> GetBuiltShaderPaths()
         {
             // note this will find hidden shaders too
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             return s_ShaderVariantData.Select(variant => variant.Key)
                 .Where(shader => shader != null) // skip shader if it's been removed since the last build
                 .ToDictionary(s => s, AssetDatabase.GetAssetPath);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         static HashSet<Shader> GetAlwaysIncludedShaders()
@@ -369,9 +369,9 @@ namespace Unity.ProjectAuditor.Editor.Modules
             var buildReport = BuildReportModule.BuildReportProvider.GetBuildReport(platform);
             if (buildReport != null)
             {
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 packetAssetInfos = buildReport.packedAssets.SelectMany(packedAsset => packedAsset.contents)
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     .Where(c => c.type == typeof(UnityEngine.Shader)).ToArray();
             }
 
@@ -391,9 +391,9 @@ namespace Unity.ProjectAuditor.Editor.Modules
 
                 if (!assetPath.Equals("Resources/unity_builtin_extra"))
                 {
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2001 // Avoid Linq
                     var builtAssets = packetAssetInfos.Where(p => p.sourceAssetPath.Equals(assetPath)).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     if (builtAssets.Length > 0)
                     {
                         assetSize = builtAssets[0].packedSize.ToString();
@@ -470,10 +470,10 @@ namespace Unity.ProjectAuditor.Editor.Modules
             if (s_ShaderVariantData.ContainsKey(context.Shader))
             {
                 var variants = s_ShaderVariantData[context.Shader];
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 var numCompilerPlatforms = variants.Select(v => v.CompilerPlatform).DistinctCount();
                 variantCountPerCompilerPlatform = variants.Count(v => ShaderTypeIsFragment(v.ShaderType, v.CompilerPlatform)) / numCompilerPlatforms;
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             }
 
             var shaderName = context.Shader.name;
@@ -579,9 +579,9 @@ namespace Unity.ProjectAuditor.Editor.Modules
                             shaderVariantData.PassName,
                             CombineKeywords(shaderVariantData.Keywords),
                             CombineKeywords(shaderVariantData.PlatformKeywords),
-                            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                            #pragma warning disable UAC2001 // Avoid Linq
                             CombineKeywords(shaderVariantData.Requirements.Select(r => r.ToString()).ToArray())
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                         ]);
                 }
             }
@@ -798,9 +798,9 @@ namespace Unity.ProjectAuditor.Editor.Modules
                 if (compiledVariants.ContainsKey(shaderName))
                 {
                     // note that we are not checking pass name since there is an inconsistency regarding "unnamed" passes between build vs compiled
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2001 // Avoid Linq
                     var matchingVariants = compiledVariants[shaderName].Where(cv => ShaderVariantsMatch(cv, stage, passName, keywords)).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     isVariantCompiled = matchingVariants.Length > 0;
                 }
 
@@ -856,25 +856,25 @@ namespace Unity.ProjectAuditor.Editor.Modules
 
             if (!passMatch)
                 return false;
-            #pragma warning disable UA2001, UA2014 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001, UAC2014 // Avoid Linq
             return cv.Keywords.OrderBy(e => e).SequenceEqual(secondSet.OrderBy(e => e));
-#pragma warning restore UA2001, UA2014
+#pragma warning restore UAC2001, UAC2014
         }
 
         static string[] GetShaderKeywords(Shader shader, ShaderKeyword[] shaderKeywords)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var keywords = shaderKeywords.Select(keyword => keyword.name);
             return keywords.ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         static string[] GetShaderKeywords(ComputeShader shader, ShaderKeyword[] shaderKeywords)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var keywords = shaderKeywords.Select(keyword => keyword.name);
             return keywords.ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         static string[] SplitKeywords(string keywordsString, string separator = null)
@@ -899,9 +899,9 @@ namespace Unity.ProjectAuditor.Editor.Modules
                 if (platformKeywordSet.IsEnabled(value))
                     builtinShaderDefines.Add(value);
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             return builtinShaderDefines.Select(d => d.ToString()).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         static bool ShaderTypeIsFragment(ShaderType shaderType, ShaderCompilerPlatform shaderCompilerPlatform)

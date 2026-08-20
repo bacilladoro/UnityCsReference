@@ -137,9 +137,9 @@ namespace UnityEditor.Search
             int selectionCount;
             if (evt.argumentCount == 1)
             {
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 selectionCount = evt.GetArgument<IEnumerable<int>>(0).ToList().Count;
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 if (selectionCount == 0)
                 {
                     SetVisibleDetail(false);
@@ -220,11 +220,11 @@ namespace UnityEditor.Search
                 ShowElements(m_SelectionLabel);
 
                 // Do not render anything else if the selection is composed of items with different providers
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
-#pragma warning disable UA2005 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
+#pragma warning disable UAC2005 // Avoid Linq
                 if (selection.GroupBy(item => item.provider.id).Count() > 1)
-#pragma warning restore UA2001
-#pragma warning restore UA2005
+#pragma warning restore UAC2001
+#pragma warning restore UAC2005
                 {
                     m_SelectionLabel.text = $"Selected {selectionCount} items from different types.";
                     return;
@@ -286,10 +286,10 @@ namespace UnityEditor.Search
                 return;
 
             var fixedActions = new string[] { "select", "open" };
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var actions = firstItem.provider.actions.Where(a => a.enabled(selection));
             var remainingActions = actions.Where(a => !fixedActions.Contains(a.id)).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             if (remainingActions.Length <= 3)
             {
@@ -297,9 +297,9 @@ namespace UnityEditor.Search
             }
             else if (remainingActions.Length > 3)
             {
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 RefreshActions(selection, actions.Where(a => fixedActions.Contains(a.id)), m_ActionButtons);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 RefreshMoreMenu(selection, remainingActions);
             }
         }
@@ -312,10 +312,10 @@ namespace UnityEditor.Search
 
         private void RefreshActions(SearchSelection selection, IEnumerable<SearchAction> actions, Button[] buttonElements)
         {
-            #pragma warning disable UA2005 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2005 // Avoid Linq
             if (actions.Count() > buttonElements.Length)
                 throw new ArgumentException($"The size of {nameof(actions)} = {actions.Count()} is greater than the number of {nameof(buttonElements)} = {buttonElements.Length}");
-#pragma warning restore UA2005
+#pragma warning restore UAC2005
 
             int i = 0;
             foreach (var action in actions)
@@ -337,9 +337,9 @@ namespace UnityEditor.Search
                     button.clickable = new Clickable(() =>
                     {
                         var data = (ActionButtonData)button.userData;
-                        #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                        #pragma warning disable UAC2001 // Avoid Linq
                         m_ViewModel.ExecuteAction(data.action, data.selection.ToArray(), true);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     });
                 }
                 button.userData = new ActionButtonData() { action = action, selection = selection };
@@ -355,9 +355,9 @@ namespace UnityEditor.Search
 
         private void RefreshMoreMenu(SearchSelection selection, IEnumerable<SearchAction> actions)
         {
-#pragma warning disable UA2002 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2002 // Avoid Linq
             if (!actions.Any())
-#pragma warning restore UA2002
+#pragma warning restore UAC2002
             {
                 return;
             }
@@ -382,9 +382,9 @@ namespace UnityEditor.Search
                             ? action.content.text
                             : action.content.tooltip;
                         menu.AddItem(new GUIContent(itemName, action.content.image), false,
-                            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                            #pragma warning disable UAC2001 // Avoid Linq
                             () => m_ViewModel.ExecuteAction(action, data.selection.ToArray(), true));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     }
 
                     menu.ShowAsContext();
@@ -408,9 +408,9 @@ namespace UnityEditor.Search
             if (m_PreviewImageRefreshCallback?.isActive == true)
                 m_PreviewImageRefreshCallback.Pause();
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var editorWithPreview = m_Editors?.FirstOrDefault(x => x.HasPreviewGUI());
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             if (editorWithPreview != null)
             {
                 m_InteractivePreviewElement.style.height = 256;
@@ -431,11 +431,11 @@ namespace UnityEditor.Search
                     m_PreviewImageRefreshCallback
                         .StartingIn(500)
                         .Every(500)
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
-#pragma warning disable UA2002 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
+#pragma warning disable UAC2002 // Avoid Linq
                         .Until(() => m_PreviewImage?.style.display == DisplayStyle.None || context.selection?.Any() == false);
-#pragma warning restore UA2001
-#pragma warning restore UA2002
+#pragma warning restore UAC2001
+#pragma warning restore UAC2002
                 }
             }
         }
@@ -537,16 +537,16 @@ namespace UnityEditor.Search
 
             if (targets.Count > 0)
             {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
-#pragma warning disable UA2005 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
+#pragma warning disable UAC2005 // Avoid Linq
                 int maxGroupCount = targets.GroupBy(t => t.GetType()).Max(g => g.Count());
                 m_Editors = targets.GroupBy(t => t.GetType()).Where(g => g.Count() == maxGroupCount).Select(g =>
-#pragma warning restore UA2001
-#pragma warning restore UA2005
+#pragma warning restore UAC2001
+#pragma warning restore UAC2005
                 {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                     var editor = Editor.CreateEditor(g.ToArray());
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     Utils.SetFirstInspectedEditor(editor);
                     return editor;
                 }).ToArray();

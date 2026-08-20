@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.Pool;
 using UnityEngine.UIElements;
@@ -35,7 +36,9 @@ namespace Unity.GraphToolkit.Editor
 
         bool m_NoLineOnFirstPort;
 
+        [NoAutoStaticsCleanup] // CSS custom property descriptor; value is a fixed CSS property name
         static readonly CustomStyleProperty<Color> k_LineColorProperty = new CustomStyleProperty<Color>("--line-color");
+        [NoAutoStaticsCleanup] // CSS custom property descriptor; value is a fixed CSS property name
         static readonly CustomStyleProperty<float> k_PortLineWidthProperty = new CustomStyleProperty<float>("--line-width");
 
         /// <summary>

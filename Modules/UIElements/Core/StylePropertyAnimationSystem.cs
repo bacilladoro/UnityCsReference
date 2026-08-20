@@ -2,6 +2,8 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
+using Unity.Scripting.LifecycleManagement;
 using System;
 using System.Collections.Generic;
 using JetBrains.Annotations;
@@ -31,6 +33,7 @@ namespace UnityEngine.UIElements
         bool StartTransition(VisualElement owner, StylePropertyId prop, BackgroundSize startValue, BackgroundSize endValue, int durationMs, int delayMs, [NotNull] Func<float, float> easingCurve);
         bool StartTransition(VisualElement owner, StylePropertyId prop, List<FilterFunction> startValue, List<FilterFunction> endValue, int durationMs, int delayMs, [NotNull] Func<float, float> easingCurve);
         bool StartTransition(VisualElement owner, StylePropertyId prop, MaterialDefinition startValue, MaterialDefinition endValue, int durationMs, int delayMs, [NotNull] Func<float, float> easingCurve);
+        bool StartTransition(VisualElement owner, StylePropertyId prop, Background startValue, Background endValue, int durationMs, int delayMs, [NotNull] Func<float, float> easingCurve);
 
         void CancelAllAnimations();
         void CancelAllAnimations(VisualElement owner);
@@ -39,7 +42,7 @@ namespace UnityEngine.UIElements
         void UpdateAnimation(VisualElement owner, StylePropertyId id);
         void GetAllAnimations(VisualElement owner, List<StylePropertyId> propertyIds);
 
-        void UpdateElementClipAnimation(VisualElement owner, UIAnimationClip clip, AnimationPlayState playState, double currentTime);
+        void UpdateElementClipAnimation(VisualElement owner, double currentTime);
         void CancelElementClipAnimation(VisualElement owner);
 
         void SetClipPreviewing(VisualElement owner, bool isPreviewing);
@@ -189,8 +192,9 @@ namespace UnityEngine.UIElements
             }
         }
 
-        private struct ElementPropertyPair
+        private partial struct ElementPropertyPair
         {
+            [NoAutoStaticsCleanup]
             public static readonly IEqualityComparer<ElementPropertyPair> Comparer = new EqualityComparer();
 
             public readonly VisualElement element;
@@ -236,8 +240,9 @@ namespace UnityEngine.UIElements
         abstract class Values<T> : Values
         {
             private double m_CurrentTime = 0;
-            private class TransitionEventsFrameState
+            private partial class TransitionEventsFrameState
             {
+                [NoAutoStaticsCleanup]
                 private static readonly UnityEngine.Pool.ObjectPool<Queue<EventBase>> k_EventQueuePool = new UnityEngine.Pool.ObjectPool<Queue<EventBase>>(() => new Queue<EventBase>(4));
 
                 // Contains the transition state that changed during the frame.
@@ -304,8 +309,9 @@ namespace UnityEngine.UIElements
                 public T currentValue;
             }
 
-            public struct EmptyData
+            public partial struct EmptyData
             {
+                [NoAutoStaticsCleanup]
                 public static EmptyData Default = default;
             }
 
@@ -908,7 +914,15 @@ namespace UnityEngine.UIElements
                 {
                     ref var timing = ref running.timing[i];
                     ref var style = ref running.style[i];
-                    style.currentValue = Lerp(style.startValue, style.endValue, timing.easedProgress);
+                    var from = style.startValue;
+                    var to = style.endValue;
+                    if (running.properties[i] == StylePropertyId.ZIndex)
+                    {
+                        // z-index: auto is stored as int.MinValue; interpolate it as 0 for a numeric sweep, but leave the stored endValue untouched so completion settles back on the auto sentinel.
+                        if (from == int.MinValue) from = 0;
+                        if (to == int.MinValue) to = 0;
+                    }
+                    style.currentValue = Lerp(from, to, timing.easedProgress);
                 }
             }
 
@@ -1708,6 +1722,97 @@ namespace UnityEngine.UIElements
             }
         }
 
+        class ValuesBackground : Values<Background>
+        {
+            public override Func<Background, Background, bool> SameFunc { get; } = IsSame;
+
+            private static bool IsSame(Background a, Background b) => a == b;
+
+            protected sealed override void UpdateComputedStyle()
+            {
+                int n = running.count;
+                for (int i = 0; i < n; i++)
+                {
+                    running.elements[i].computedStyle.ApplyPropertyAnimation(running.elements[i],
+                        running.properties[i], running.style[i].currentValue);
+                }
+            }
+
+            protected sealed override void UpdateComputedStyle(int i)
+            {
+                running.elements[i].computedStyle.ApplyPropertyAnimation(running.elements[i],
+                    running.properties[i], running.style[i].currentValue);
+            }
+
+            // CSS pads the shorter stop list by repeating its final stop.
+            private static BackgroundGradientStop GetStopOrLast(BackgroundGradientStop[] stops, int index)
+            {
+                return index < stops.Length ? stops[index] : stops[stops.Length - 1];
+            }
+
+            private static BackgroundGradientStop LerpStop(BackgroundGradientStop a, BackgroundGradientStop b, float t)
+            {
+                // Mixed px/% positions can't be blended without resolving against the
+                // element size, so the position steps at the midpoint instead.
+                bool sameUnits = a.positionIsPercent == b.positionIsPercent;
+                return new BackgroundGradientStop
+                {
+                    color = Color.Lerp(a.color, b.color, t),
+                    position = sameUnits ? Mathf.Lerp(a.position, b.position, t) : (t < 0.5f ? a.position : b.position),
+                    positionIsPercent = t < 0.5f ? a.positionIsPercent : b.positionIsPercent,
+                };
+            }
+
+            private static void Lerp(Background a, Background b, ref Background result, float t)
+            {
+                var ga = a.gradient;
+                var gb = b.gradient;
+
+                // Asset endpoints (or asset<->gradient) can't be blended; step at the midpoint.
+                if (ga.IsEmpty() || gb.IsEmpty())
+                {
+                    result = t < 0.5f ? a : b;
+                    return;
+                }
+
+                int maxCount = Math.Max(ga.stops.Length, gb.stops.Length);
+                var stops = result.gradient.stops;
+                // Reuse the result's stop array only when it is owned by the result;
+                // after a discrete step it aliases an endpoint's array.
+                if (stops == null || stops.Length != maxCount ||
+                    ReferenceEquals(stops, ga.stops) || ReferenceEquals(stops, gb.stops))
+                {
+                    stops = new BackgroundGradientStop[maxCount];
+                }
+
+                for (int i = 0; i < maxCount; i++)
+                    stops[i] = LerpStop(GetStopOrLast(ga.stops, i), GetStopOrLast(gb.stops, i), t);
+
+                // Enum sub-values are discrete and step at the midpoint.
+                var discrete = t < 0.5f ? ga : gb;
+                result = Background.FromGradient(new BackgroundGradient
+                {
+                    type = discrete.type,
+                    shape = discrete.shape,
+                    size = discrete.size,
+                    angle = Mathf.Lerp(ga.angle, gb.angle, t),
+                    position = Vector2.Lerp(ga.position, gb.position, t),
+                    stops = stops,
+                });
+            }
+
+            protected sealed override void UpdateValues()
+            {
+                int n = running.count;
+                for (int i = 0; i < n; i++)
+                {
+                    ref var timing = ref running.timing[i];
+                    ref var style = ref running.style[i];
+                    Lerp(style.startValue, style.endValue, ref style.currentValue, timing.easedProgress);
+                }
+            }
+        }
+
         private ValuesFloat m_Floats;
         private ValuesInt m_Ints;
         private ValuesLength m_Lengths;
@@ -1726,6 +1831,7 @@ namespace UnityEngine.UIElements
         private ValuesBackgroundSize m_BackgroundSize;
         private ValuesListFilterFunction m_FilterFunctions;
         private ValuesMaterialDefinition m_MaterialDefinition;
+        private ValuesBackground m_Background;
 
         // All the value lists with ongoing animations. Add and remove Values objects when animations come in/out.
         private readonly List<Values> m_AllValues = new List<Values>();
@@ -1739,7 +1845,10 @@ namespace UnityEngine.UIElements
             public UIAnimationBinder binder;
             public double startTime;
             public float clipLength;
-            public bool isLooping;
+            public float durationOverride;
+            public float delay;
+            public float iterationCount;
+            public AnimationDirection direction;
             public bool isPaused;
             public float pausedElapsed;
             // Set only via SetClipPreviewing (also editor-only) - the Animation Window
@@ -1753,22 +1862,80 @@ namespace UnityEngine.UIElements
                 if (isPreviewing)
                     return;
 
-                float elapsed = (float)(now - startTime);
-
-                float time;
-                if (clipLength <= 0f)
-                    time = 0f;
-                else if (isLooping)
-                    time = elapsed % clipLength;
-                else
-                    time = Mathf.Min(elapsed, clipLength);
-
-                binder.SampleClip(clip, time);
+                float sampleTime = ComputeClipSampleTime((float)(now - startTime), clipLength,
+                    durationOverride, delay, iterationCount, direction);
+                binder.SampleClip(clip, sampleTime);
             }
         }
 
+        // durationOverride == 0 samples across the clip's intrinsic length (unlike CSS, where 0s is instant).
+        internal static float ComputeClipSampleTime(float elapsedSinceStart, float clipLength,
+            float durationOverride, float delay, float iterationCount, AnimationDirection direction)
+        {
+            if (iterationCount <= 0f)
+                return DirectedSampleTime(0, 0f, clipLength, direction);
+
+            float iterationDuration = durationOverride > 0f ? durationOverride : clipLength;
+
+            float elapsed = elapsedSinceStart - delay;
+            if (elapsed <= 0f || iterationDuration <= 0f)
+                return DirectedSampleTime(0, 0f, clipLength, direction);
+
+            float totalIterations = elapsed / iterationDuration;
+
+            int iterationIndex;
+            float phase;
+
+            bool finished = !float.IsPositiveInfinity(iterationCount) && totalIterations >= iterationCount;
+            if (finished)
+            {
+                float fraction = iterationCount - Mathf.Floor(iterationCount);
+                if (fraction == 0f)
+                {
+                    iterationIndex = Mathf.Max(0, (int)iterationCount - 1);
+                    phase = 1f;
+                }
+                else
+                {
+                    iterationIndex = (int)Mathf.Floor(iterationCount);
+                    phase = fraction;
+                }
+            }
+            else
+            {
+                iterationIndex = (int)totalIterations;
+                phase = totalIterations - iterationIndex;
+            }
+
+            return DirectedSampleTime(iterationIndex, phase, clipLength, direction);
+        }
+
+        static float DirectedSampleTime(int iterationIndex, float phase, float clipLength, AnimationDirection direction)
+        {
+            bool reversed;
+            switch (direction)
+            {
+                case AnimationDirection.Reverse:
+                    reversed = true;
+                    break;
+                case AnimationDirection.Alternate:
+                    reversed = (iterationIndex & 1) == 1;
+                    break;
+                case AnimationDirection.AlternateReverse:
+                    reversed = (iterationIndex & 1) == 0;
+                    break;
+                default:
+                    reversed = false;
+                    break;
+            }
+
+            float directedPhase = reversed ? 1f - phase : phase;
+            return directedPhase * clipLength;
+        }
+
         private readonly Panel m_Panel;
-        private Dictionary<VisualElement, ClipPlayer> m_ElementClipAnimations;
+        // Every player on an element shares its single UIAnimationBinder.
+        private Dictionary<VisualElement, List<ClipPlayer>> m_ElementClipAnimations;
 
         public StylePropertyAnimationSystem(BaseVisualElementPanel p)
         {
@@ -1883,6 +2050,11 @@ namespace UnityEngine.UIElements
             return StartTransition(owner, prop, startValue, endValue, durationMs, delayMs, easingCurve, GetOrCreate(ref m_MaterialDefinition));
         }
 
+        public bool StartTransition(VisualElement owner, StylePropertyId prop, Background startValue, Background endValue, int durationMs, int delayMs, [NotNull] Func<float, float> easingCurve)
+        {
+            return StartTransition(owner, prop, startValue, endValue, durationMs, delayMs, easingCurve, GetOrCreate(ref m_Background));
+        }
+
         public void CancelAllAnimations()
         {
             foreach (var values in m_AllValues)
@@ -1941,91 +2113,142 @@ namespace UnityEngine.UIElements
             return m_CurrentTime;
         }
 
-        public void UpdateElementClipAnimation(VisualElement owner, UIAnimationClip clip, AnimationPlayState playState, double currentTime)
+        // A clip that was never running creates no player or binder, leaving the authoring Animation Window's preview binder untouched.
+        public void UpdateElementClipAnimation(VisualElement owner, double currentTime)
         {
             // Only Panel (not BaseVisualElementPanel) exposes GetOrCreateElementBinder.
             if (m_Panel == null)
                 return;
 
-            bool hasValidClip = clip != null && clip.animationClip != null;
+            var clips = owner.computedStyle.animationNames;
+            var playStates = owner.computedStyle.animationPlayStates;
+            var durations = owner.computedStyle.animationDuration;
+            var delays = owner.computedStyle.animationDelay;
+            var iterationCounts = owner.computedStyle.animationIterationCount;
+            var directions = owner.computedStyle.animationDirection;
 
-            if (hasValidClip && playState == AnimationPlayState.Running)
+            int slotCount = clips.Length;
+
+            List<ClipPlayer> existing = null;
+            m_ElementClipAnimations?.TryGetValue(owner, out existing);
+            var reused = existing != null && existing.Count > 0 ? new bool[existing.Count] : null;
+
+            List<ClipPlayer> result = null;
+            UIAnimationBinder binder = null;
+
+            for (int i = 0; i < slotCount; i++)
             {
-                m_ElementClipAnimations ??= new Dictionary<VisualElement, ClipPlayer>();
-                var innerClip = clip.animationClip;
+                var clip = (UIAnimationClip)Resources.EntityIdToObject(clips[i]);
+                if (clip == null || clip.animationClip == null)
+                    continue;
 
-                if (m_ElementClipAnimations.TryGetValue(owner, out var existing))
+                var playState = playStates.Length > 0 ? playStates[i % playStates.Length] : AnimationPlayState.Running;
+                float durationOverride = durations.Length > 0 ? durations[i % durations.Length] : 0f;
+                float delay = delays.Length > 0 ? delays[i % delays.Length] : 0f;
+                float iterationCount = iterationCounts.Length > 0 ? iterationCounts[i % iterationCounts.Length].value : 1f;
+                var direction = directions.Length > 0 ? directions[i % directions.Length] : AnimationDirection.Normal;
+
+                int existingIndex = -1;
+                if (existing != null)
                 {
-                    if (existing.isPaused)
+                    for (int j = 0; j < existing.Count; j++)
                     {
-                        existing.isPaused = false;
-                        existing.startTime = currentTime - existing.pausedElapsed;
-                        m_ElementClipAnimations[owner] = existing;
+                        if (!reused[j] && existing[j].clip == clip)
+                        {
+                            existingIndex = j;
+                            break;
+                        }
                     }
-                    else if (existing.clip != clip)
+                }
+                bool existed = existingIndex >= 0;
+
+                if (playState != AnimationPlayState.Running && !existed)
+                    continue;
+
+                binder ??= m_Panel.GetOrCreateElementBinder(owner);
+                ClipPlayer player = existed ? existing[existingIndex] : default;
+                if (existed)
+                    reused[existingIndex] = true;
+                player.binder = binder;
+
+                if (playState == AnimationPlayState.Running)
+                {
+                    if (existed && !player.isPaused)
                     {
-                        // Drop stale entries from the previous clip so binder.IsBound
-                        // (the inspector affordance signal) only reflects the new clip's
-                        // active curves. The next Sample call re-populates m_BoundValues.
-                        if (existing.binder != null)
-                            existing.binder.ClearBindings();
-                        existing.clip = clip;
-                        existing.startTime = currentTime;
-                        existing.clipLength = innerClip.length;
-                        existing.isLooping = innerClip.isLooping;
-                        m_ElementClipAnimations[owner] = existing;
-                        if (existing.binder != null)
-                            existing.binder.IncrementBoundElementsStyleVersion();
+                        // Already running this clip: leave the clock alone.
+                    }
+                    else if (existed && player.isPaused)
+                    {
+                        player.isPaused = false;
+                        player.startTime = currentTime - player.pausedElapsed;
+                    }
+                    else
+                    {
+                        player.clip = clip;
+                        player.startTime = currentTime;
+                        player.clipLength = clip.animationClip.length;
+                        player.isPaused = false;
+                        binder.IncrementBoundElementsStyleVersion();
                     }
                 }
                 else
                 {
-                    var binder = m_Panel.GetOrCreateElementBinder(owner);
-                    m_ElementClipAnimations[owner] = new ClipPlayer
+                    if (!player.isPaused)
                     {
-                        clip = clip,
-                        binder = binder,
-                        startTime = currentTime,
-                        clipLength = innerClip.length,
-                        isLooping = innerClip.isLooping
-                    };
+                        player.isPaused = true;
+                        player.pausedElapsed = (float)(currentTime - player.startTime);
+                    }
                 }
+
+                player.durationOverride = durationOverride;
+                player.delay = delay;
+                player.iterationCount = iterationCount;
+                player.direction = direction;
+
+                (result ??= new List<ClipPlayer>()).Add(player);
             }
-            else if (hasValidClip && playState == AnimationPlayState.Paused)
+
+            if (result == null)
             {
-                if (m_ElementClipAnimations != null
-                    && m_ElementClipAnimations.TryGetValue(owner, out var existing)
-                    && !existing.isPaused)
-                {
-                    existing.isPaused = true;
-                    existing.pausedElapsed = (float)(currentTime - existing.startTime);
-                    m_ElementClipAnimations[owner] = existing;
-                }
-            }
-            else
-            {
-                if (m_ElementClipAnimations != null
-                    && m_ElementClipAnimations.TryGetValue(owner, out var existingToClear))
+                if (existing != null)
                 {
                     m_ElementClipAnimations.Remove(owner);
                     // Must run before DestroyElementBinder (clears the element registry).
-                    if (existingToClear.binder != null)
-                        existingToClear.binder.IncrementBoundElementsStyleVersion();
+                    if (existing.Count > 0 && existing[0].binder != null)
+                        existing[0].binder.IncrementBoundElementsStyleVersion();
                     m_Panel.DestroyElementBinder(owner);
                 }
+                return;
             }
+
+            // A gone clip leaves stale curves on the shared binder; clear them once so survivors repopulate on their next Sample.
+            if (existing != null)
+            {
+                for (int j = 0; j < existing.Count; j++)
+                {
+                    if (!reused[j])
+                    {
+                        binder.ClearBindings();
+                        binder.IncrementBoundElementsStyleVersion();
+                        break;
+                    }
+                }
+            }
+
+            m_ElementClipAnimations ??= new Dictionary<VisualElement, List<ClipPlayer>>();
+            m_ElementClipAnimations[owner] = result;
         }
 
         public void CancelElementClipAnimation(VisualElement owner)
         {
             if (m_ElementClipAnimations == null
-                || !m_ElementClipAnimations.TryGetValue(owner, out var existing))
+                || !m_ElementClipAnimations.TryGetValue(owner, out var players))
                 return;
 
             m_ElementClipAnimations.Remove(owner);
             // Must run before DestroyElementBinder (clears the element registry).
-            if (existing.binder != null)
-                existing.binder.IncrementBoundElementsStyleVersion();
+            if (players.Count > 0 && players[0].binder != null)
+                players[0].binder.IncrementBoundElementsStyleVersion();
             m_Panel?.DestroyElementBinder(owner);
         }
 
@@ -2035,13 +2258,18 @@ namespace UnityEngine.UIElements
             binder = null;
             if (owner == null || m_ElementClipAnimations == null)
                 return false;
-            if (!m_ElementClipAnimations.TryGetValue(owner, out var existing))
+            if (!m_ElementClipAnimations.TryGetValue(owner, out var players))
                 return false;
-            if (existing.clip == null || existing.binder == null)
-                return false;
-            clip = existing.clip;
-            binder = existing.binder;
-            return true;
+            for (int i = 0; i < players.Count; i++)
+            {
+                if (players[i].clip != null && players[i].binder != null)
+                {
+                    clip = players[i].clip;
+                    binder = players[i].binder;
+                    return true;
+                }
+            }
+            return false;
         }
 
         public void SetClipPreviewing(VisualElement owner, bool isPreviewing)
@@ -2049,11 +2277,17 @@ namespace UnityEngine.UIElements
             if (owner == null || m_ElementClipAnimations == null)
                 return;
 
-            if (m_ElementClipAnimations.TryGetValue(owner, out var existing)
-                && existing.isPreviewing != isPreviewing)
+            if (!m_ElementClipAnimations.TryGetValue(owner, out var players))
+                return;
+
+            for (int i = 0; i < players.Count; i++)
             {
-                existing.isPreviewing = isPreviewing;
-                m_ElementClipAnimations[owner] = existing;
+                var player = players[i];
+                if (player.isPreviewing != isPreviewing)
+                {
+                    player.isPreviewing = isPreviewing;
+                    players[i] = player;
+                }
             }
         }
 
@@ -2069,7 +2303,12 @@ namespace UnityEngine.UIElements
             if (m_ElementClipAnimations != null && m_ElementClipAnimations.Count > 0)
             {
                 foreach (var kvp in m_ElementClipAnimations)
-                    kvp.Value.Sample(m_CurrentTime);
+                {
+                    var players = kvp.Value;
+                    // Sample in list order so a later clip animating the same property wins.
+                    for (int i = 0; i < players.Count; i++)
+                        players[i].Sample(m_CurrentTime);
+                }
             }
         }
     }
@@ -2177,6 +2416,11 @@ namespace UnityEngine.UIElements
             return false;
         }
 
+        public bool StartTransition(VisualElement owner, StylePropertyId prop, Background startValue, Background endValue, int durationMs, int delayMs, [NotNull] Func<float, float> easingCurve)
+        {
+            return false;
+        }
+
         public void CancelAllAnimations()
         {
         }
@@ -2202,7 +2446,7 @@ namespace UnityEngine.UIElements
         {
         }
 
-        public void UpdateElementClipAnimation(VisualElement owner, UIAnimationClip clip, AnimationPlayState playState, double currentTime)
+        public void UpdateElementClipAnimation(VisualElement owner, double currentTime)
         {
         }
 
@@ -2226,3 +2470,4 @@ namespace UnityEngine.UIElements
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

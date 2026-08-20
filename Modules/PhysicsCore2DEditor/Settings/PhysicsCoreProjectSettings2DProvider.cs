@@ -37,6 +37,22 @@ namespace Unity.U2D.Physics.Editor
             public const string physicsCoreSettings2D = "PhysicsCore2D/UXML/PhysicsCoreSettings2D.uxml";
         }
 
+        // Create a new Physics Core Settings 2D asset via a save dialog, then assign it into the given field.
+        static void CreateAndAssignSettingsAsset(SerializedObject serializedObject, ObjectField field)
+        {
+            var path = EditorUtility.SaveFilePanelInProject("Create Physics Core Settings 2D", "PhysicsCoreSettings2D", "asset",
+                "Choose where to save the new Physics Core Settings 2D asset.");
+            if (string.IsNullOrEmpty(path))
+                return;
+
+            var asset = ScriptableObject.CreateInstance<PhysicsCoreSettings2D>();
+            AssetDatabase.CreateAsset(asset, path);
+            AssetDatabase.SaveAssets();
+
+            field.value = asset;
+            serializedObject.ApplyModifiedProperties();
+        }
+
         static SerializedObject LoadPhysicsCoreSettingsAsset()
         {
             var found = AssetDatabase.LoadAllAssetsAtPath(AssetPath.PhysicsCoreSettingsAsset);
@@ -75,12 +91,15 @@ namespace Unity.U2D.Physics.Editor
 
                     // Add core settings property.
                     {
+                        var row = new VisualElement { style = { flexDirection = FlexDirection.Row } };
+
                         var coreProjectSettingsField = new ObjectField
                         {
                             label = "Physics Core Settings",
                             tooltip = "The active Physics Core Settings 2D.",
                             objectType = typeof(PhysicsCoreSettings2D),
-                            bindingPath = "m_PhysicsCoreSettings"
+                            bindingPath = "m_PhysicsCoreSettings",
+                            style = { flexGrow = 1 }
                         };
 
                         // Increase the margin.
@@ -89,18 +108,36 @@ namespace Unity.U2D.Physics.Editor
 
                         // Show as inspector class.
                         coreProjectSettingsField.AddToClassList(InspectorElement.ussClassName);
-                        content.Add(coreProjectSettingsField);
+                        row.Add(coreProjectSettingsField);
+
+                        // Shown only while the slot is empty; creates a new asset via a save dialog and assigns it.
+                        var makeAssetButton = new Button(() => CreateAndAssignSettingsAsset(serializedObject, coreProjectSettingsField))
+                        {
+                            text = "Make Asset",
+                            tooltip = "Create a new Physics Core Settings 2D asset and assign it here.",
+                            style = { marginRight = 10 }
+                        };
+                        row.Add(makeAssetButton);
+
+                        content.Add(row);
+
+                        void UpdateMakeAssetVisibility() =>
+                            makeAssetButton.style.display = coreProjectSettingsField.value == null ? DisplayStyle.Flex : DisplayStyle.None;
 
                         // Ensure we read the change immediately.
                         coreProjectSettingsField.RegisterValueChangedCallback(_ =>
                         {
+                            UpdateMakeAssetVisibility();
                             PhysicsEditorOnly.ReadProjectSettings();
                             PhysicsCoreSettings2DProvider.RefreshActiveSettingContent();
                         });
-                    }
 
-                    // Bind the project settings object.
-                    root.Bind(serializedObject);
+                        // Bind the project settings object, then set the initial visibility from the bound value.
+                        // Binding assigns the field's value directly rather than raising a ChangeEvent, so the
+                        // visibility must be calculated after binding rather than before it.
+                        root.Bind(serializedObject);
+                        UpdateMakeAssetVisibility();
+                    }
                 }
             };
 

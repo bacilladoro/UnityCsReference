@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
 using System;
 using System.Collections.Generic;
 using UnityEngine.Bindings;
@@ -81,8 +82,15 @@ namespace UnityEngine.UIElements
             // IncrementVersion is a no-op while elementPanel is null, so the dirty-element
             // bookkeeping for unity-animation-clip would be missed when the element first
             // attaches to a panel. Mark it dirty explicitly so the new clip starts playing.
-            if (computedStyle.unityAnimationClip != EntityId.None)
-                sys.MarkElementClipDirty(this);
+            var clips = computedStyle.animationNames;
+            for (int i = 0; i < clips.Length; i++)
+            {
+                if (clips[i] != EntityId.None)
+                {
+                    sys.MarkElementClipDirty(this);
+                    break;
+                }
+            }
         }
 
         [VisibleToOtherModules("UnityEditor.UIToolkitAuthoringModule")]
@@ -470,3 +478,4 @@ namespace UnityEngine.UIElements
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

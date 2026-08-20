@@ -4,6 +4,7 @@
 
 using System;
 using Unity.GraphToolkit.InternalBridge;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.UIElements;
 using TextElement = UnityEngine.UIElements.TextElement;
@@ -41,8 +42,11 @@ namespace Unity.GraphToolkit.Editor
         public static readonly string titleLabelName = GraphElementHelper.titleName;
 
 
+        [NoAutoStaticsCleanup] // CSS custom property descriptor; value is a fixed CSS property name
         protected static readonly CustomStyleProperty<float> k_LodMinTextSize = new CustomStyleProperty<float>("--lod-min-text-size");
+        [NoAutoStaticsCleanup] // CSS custom property descriptor; value is a fixed CSS property name
         protected static readonly CustomStyleProperty<float> k_WantedTextSize = new CustomStyleProperty<float>("--wanted-text-size");
+        [NoAutoStaticsCleanup] // CSS custom property descriptor; value is a fixed CSS property name
         static readonly CustomStyleProperty<float> k_TitleMinWidthPaddingProperty = new CustomStyleProperty<float>("--title-min-width-padding");
 
         /// <summary>

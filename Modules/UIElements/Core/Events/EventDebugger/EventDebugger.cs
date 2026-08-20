@@ -377,9 +377,9 @@ namespace UnityEngine.UIElements.Experimental
         {
             BaseVisualElementPanel p = panel as BaseVisualElementPanel;
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var sortedEvents = eventBases.OrderBy(e => e.timestamp).ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             var sortedEventsCount = sortedEvents.Count;
 
             if (p == null)

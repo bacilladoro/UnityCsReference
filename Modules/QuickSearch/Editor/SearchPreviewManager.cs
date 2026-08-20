@@ -6,6 +6,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditorInternal;
 using UnityEngine;
 
@@ -62,6 +63,7 @@ namespace UnityEditor.Search
 
         public bool valid => texture != null && texture;
 
+        [NoAutoStaticsCleanup]
         public static SearchPreview invalid = new(new SearchPreviewKey(0, FetchPreviewOptions.None, Vector2.zero), null);
 
         public SearchPreview(in SearchPreviewKey key, Texture2D texture)
@@ -185,9 +187,9 @@ namespace UnityEditor.Search
         public void ReleaseOldPreviews(TimeSpan elapsedTime)
         {
             var now = DateTime.UtcNow;
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var oldPreviews = m_PreviewCollections.Where(pair =>
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 var lifeTime = now - pair.Value.creationTime;
                 return lifeTime > elapsedTime;

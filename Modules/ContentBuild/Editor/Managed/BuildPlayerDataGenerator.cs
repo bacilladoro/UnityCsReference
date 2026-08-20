@@ -40,9 +40,9 @@ namespace UnityEditor.Build.Player
                 MonoLibraryHelpers.GetSystemReferenceDirectories(
                     PlayerSettings.GetApiCompatibilityLevel(namedBuildTarget));
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var searchPaths = unityAssembliesInternal.Select(x => Path.GetDirectoryName(x.Path))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 .Distinct().ToList();
             searchPaths.AddRange(systemReferenceDirectories);
             return searchPaths;

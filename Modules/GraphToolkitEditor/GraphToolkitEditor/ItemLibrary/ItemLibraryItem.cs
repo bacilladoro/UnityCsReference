@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.GraphToolkit.Editor;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 
 namespace Unity.GraphToolkit.ItemLibrary.Editor
@@ -134,12 +135,13 @@ namespace Unity.GraphToolkit.ItemLibrary.Editor
             set => m_Priority = value;
         }
 
+        [NoAutoStaticsCleanup] // search key extractors; lambdas reference stable instance methods with no captured user state
         static (Func<ItemLibraryItem, IEnumerable<string>> getSearchData, float ratio)[] s_SearchKeysRatios =
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             (si => Enumerable.Repeat(si.Name, 1), 1f),
             (si => Enumerable.Repeat(si.SearchableFullName, 1), 0.5f),
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             (si => si.Synonyms ?? Array.Empty<string>(), 0.5f),
         };
 
@@ -148,9 +150,9 @@ namespace Unity.GraphToolkit.ItemLibrary.Editor
         /// </summary>
         public virtual IEnumerable<ItemLibraryItemTermsCategory> GetSearchData()
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             return s_SearchKeysRatios
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 .Select(tu => new ItemLibraryItemTermsCategory
                 { Terms = tu.getSearchData(this), Multiplier = tu.ratio }
                 );

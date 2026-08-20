@@ -62,7 +62,7 @@ namespace Unity.GraphToolkit.Editor
         /// </remarks>
         public static T CreateGraph<T>(string assetPath) where T : Graph, new()
         {
-            CheckFilePathAndGraphType<T>(assetPath);
+            CheckFilePathAndType(assetPath, typeof(T));
 
             var graphObject = ScriptableObject.CreateInstance<GraphObjectImp>();
             try
@@ -93,7 +93,7 @@ namespace Unity.GraphToolkit.Editor
             return loadGraph;
         }
 
-        static void CheckFilePathAndGraphType<T>(string assetPath) where T : Graph
+        internal static void CheckFilePathAndType(string assetPath, Type graphType)
         {
             GraphObjectFactory.CheckFilePath(assetPath);
 
@@ -112,10 +112,10 @@ namespace Unity.GraphToolkit.Editor
                     $"The assetPath {assetPath} has an unknown extension. You need to register the extension with a GraphAttribute");
             }
 
-            if (!typeof(T).IsAssignableFrom(typeByExtension))
+            if (!graphType.IsAssignableFrom(typeByExtension))
             {
                 throw new ArgumentException(
-                    $"The assetPath {assetPath} extension does not match type {typeof(T).FullName}. Make sure the extension is registered to the graph type {typeByExtension.FullName}");
+                    $"The assetPath {assetPath} extension does not match type {graphType.FullName}. Make sure the extension is registered to the graph type {typeByExtension.FullName}");
             }
         }
 
@@ -134,7 +134,7 @@ namespace Unity.GraphToolkit.Editor
         /// </remarks>
         public static T LoadGraph<T>(string assetPath) where T : Graph
         {
-            CheckFilePathAndGraphType<T>(assetPath);
+            CheckFilePathAndType(assetPath, typeof(T));
 
             var graphObject = GraphObject.LoadGraphObjectAtPath<GraphObjectImp>(assetPath);
 
@@ -169,7 +169,7 @@ namespace Unity.GraphToolkit.Editor
         /// </remarks>
         public static T LoadGraphForImporter<T>(string assetPath) where T : Graph
         {
-            CheckFilePathAndGraphType<T>(assetPath);
+            CheckFilePathAndType(assetPath, typeof(T));
             var graphObject = GraphObject.LoadGraphObjectCopyAtPathAndForget(assetPath, typeof(GraphObjectImp)) as GraphObjectImp;
 
             return (graphObject?.GraphModel as GraphModelImp)?.Graph as T;

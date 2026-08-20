@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 
 namespace Unity.GraphToolkit.Editor
@@ -24,79 +25,96 @@ namespace Unity.GraphToolkit.Editor
         const string k_CapabilityPrefix = "";
         const string k_OldCapabilityPrefix = "GraphToolsFoundation";
 
+        [NoAutoStaticsCleanup] // capability lookup tables; populated once by static ctor, stable across reloads
         static readonly Dictionary<int, Capabilities> s_Capabilities = new Dictionary<int, Capabilities>();
+        [NoAutoStaticsCleanup] // capability lookup tables; populated once by static ctor, stable across reloads
         static readonly Dictionary<int, Capabilities> s_CapabilitiesByName = new Dictionary<int, Capabilities>();
 
+        [NoAutoStaticsCleanup] // ID counter initialized once by static ctor; value is stable across reloads
         static int s_NextId;
 
         /// <summary>
         /// Can be selected.
         /// </summary>
+        [NoAutoStaticsCleanup] // enum-like capability constant; value is a fixed identifier
         public static readonly Capabilities Selectable;
 
         /// <summary>.
         /// Can be deleted
         /// </summary>
+        [NoAutoStaticsCleanup] // enum-like capability constant; value is a fixed identifier
         public static readonly Capabilities Deletable;
 
         /// <summary>
         /// Can be dropped.
         /// </summary>
+        [NoAutoStaticsCleanup] // enum-like capability constant; value is a fixed identifier
         public static readonly Capabilities Droppable;
 
         /// <summary>
         /// Can be copied.
         /// </summary>
+        [NoAutoStaticsCleanup] // enum-like capability constant; value is a fixed identifier
         public static readonly Capabilities Copiable;
 
         /// <summary>
         /// Can be renamed.
         /// </summary>
+        [NoAutoStaticsCleanup] // enum-like capability constant; value is a fixed identifier
         public static readonly Capabilities Renamable;
 
         /// <summary>
         /// Can be moved.
         /// </summary>
+        [NoAutoStaticsCleanup] // enum-like capability constant; value is a fixed identifier
         public static readonly Capabilities Movable;
 
         /// <summary>
         /// Can be resized.
         /// </summary>
+        [NoAutoStaticsCleanup] // enum-like capability constant; value is a fixed identifier
         public static readonly Capabilities Resizable;
 
         /// <summary>
         /// Can be collapsed.
         /// </summary>
+        [NoAutoStaticsCleanup] // enum-like capability constant; value is a fixed identifier
         public static readonly Capabilities Collapsible;
 
         /// <summary>
         /// Can change color.
         /// </summary>
+        [NoAutoStaticsCleanup] // enum-like capability constant; value is a fixed identifier
         public static readonly Capabilities Colorable;
 
         /// <summary>
         /// Should be sent to front when selected.
         /// </summary>
+        [NoAutoStaticsCleanup] // enum-like capability constant; value is a fixed identifier
         public static readonly Capabilities Ascendable;
 
         /// <summary>
         /// Can only be added to a container
         /// </summary>
+        [NoAutoStaticsCleanup] // enum-like capability constant; value is a fixed identifier
         public static readonly Capabilities NeedsContainer;
 
         /// <summary>
         /// Can be disabled.
         /// </summary>
+        [NoAutoStaticsCleanup] // enum-like capability constant; value is a fixed identifier
         public static readonly Capabilities Disableable;
 
         /// <summary>
         /// Can be edited.
         /// </summary>
+        [NoAutoStaticsCleanup] // enum-like capability constant; value is a fixed identifier
         public static readonly Capabilities Editable;
 
         /// <summary>
         /// Can be animated.
         /// </summary>
+        [NoAutoStaticsCleanup] // enum-like capability constant; value is a fixed identifier
         public static readonly Capabilities Animatable;
 
         static Capabilities()

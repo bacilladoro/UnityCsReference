@@ -13,9 +13,9 @@ namespace Unity.U2D.Physics
     {
         [NativeMethod(Name = "PhysicsBody::GetDefaultDefinition", IsThreadSafe = true)] extern internal static PhysicsBodyDefinition PhysicsBody_GetDefaultDefinition(bool useSettings);
         [NativeMethod(Name = "PhysicsBody::Create", IsThreadSafe = true)] extern internal static PhysicsBody PhysicsBody_Create(PhysicsWorld world, PhysicsBodyDefinition definition);
-        [NativeMethod(Name = "PhysicsBody::CreateBatch", IsThreadSafe = true)] extern internal static PhysicsBuffer PhysicsBody_CreateBatch(PhysicsWorld world, ReadOnlySpan<PhysicsBodyDefinition> definitions, int bodyCount, Allocator allocator);
+        [NativeMethod(Name = "PhysicsBody::CreateBatch", IsThreadSafe = true)] extern internal static PhysicsBuffer PhysicsBody_CreateBatch(PhysicsWorld world, ReadOnlySpan<PhysicsBodyDefinition> definitions, int bodyCount, UnityEngine.Object ownerObject, int ownerKey, Allocator allocator);
         [NativeMethod(Name = "PhysicsBody::Destroy", IsThreadSafe = true)] extern internal static bool PhysicsBody_Destroy(PhysicsBody body, int ownerKey);
-        [NativeMethod(Name = "PhysicsBody::DestroyBatch", IsThreadSafe = true)] extern internal static void PhysicsBody_DestroyBatch(ReadOnlySpan<PhysicsBody> bodies);
+        [NativeMethod(Name = "PhysicsBody::DestroyBatch", IsThreadSafe = true)] extern internal static void PhysicsBody_DestroyBatch(ReadOnlySpan<PhysicsBody> bodies, int ownerKey);
         [NativeMethod(Name = "PhysicsBody::IsValid", IsThreadSafe = true)] extern internal static bool PhysicsBody_IsValid(PhysicsBody body);
         [NativeMethod(Name = "PhysicsBody::SetBatchVelocity", IsThreadSafe = true)] extern internal static void PhysicsBody_SetBatchVelocity(ReadOnlySpan<PhysicsBody.BatchVelocity> batch);
         [NativeMethod(Name = "PhysicsBody::GetBatchVelocity", IsThreadSafe = true)] extern internal static PhysicsBuffer PhysicsBody_GetBatchVelocity(ReadOnlySpan<PhysicsBody> bodies, Allocator allocator);
@@ -57,6 +57,8 @@ namespace Unity.U2D.Physics
         [NativeMethod(Name = "PhysicsBody::GetWorldCenterOfMass", IsThreadSafe = true)] extern internal static Vector2 PhysicsBody_GetWorldCenterOfMass(PhysicsBody body);
         [NativeMethod(Name = "PhysicsBody::SetMassConfiguration", IsThreadSafe = true)] extern internal static void PhysicsBody_SetMassConfiguration(PhysicsBody body, PhysicsBody.MassConfiguration massData);
         [NativeMethod(Name = "PhysicsBody::GetMassConfiguration", IsThreadSafe = true)] extern internal static PhysicsBody.MassConfiguration PhysicsBody_GetMassConfiguration(PhysicsBody body);
+        [NativeMethod(Name = "PhysicsBody::SetMassOverride", IsThreadSafe = true)] extern internal static void PhysicsBody_SetMassOverride(PhysicsBody body, PhysicsBody.MassOverride massOverride);
+        [NativeMethod(Name = "PhysicsBody::GetMassOverride", IsThreadSafe = true)] extern internal static PhysicsBody.MassOverride PhysicsBody_GetMassOverride(PhysicsBody body);
         [NativeMethod(Name = "PhysicsBody::ApplyMassFromShapes", IsThreadSafe = true)] extern internal static void PhysicsBody_ApplyMassFromShapes(PhysicsBody body);
         [NativeMethod(Name = "PhysicsBody::SetLinearDamping", IsThreadSafe = true)] extern internal static void PhysicsBody_SetLinearDamping(PhysicsBody body, float linearDamping);
         [NativeMethod(Name = "PhysicsBody::GetLinearDamping", IsThreadSafe = true)] extern internal static float PhysicsBody_GetLinearDamping(PhysicsBody body);
@@ -115,6 +117,7 @@ namespace Unity.U2D.Physics
         [NativeMethod(Name = "PhysicsBody::SetUserData", IsThreadSafe = true)] extern internal static void PhysicsBody_SetUserData(PhysicsBody body, PhysicsUserData physicsUserData);
         [NativeMethod(Name = "PhysicsBody::GetUserData", IsThreadSafe = true)] extern internal static PhysicsUserData PhysicsBody_GetUserData(PhysicsBody body);
         [NativeMethod(Name = "PhysicsBody::SetOwnerUserData", IsThreadSafe = true)] extern internal static void PhysicsBody_SetOwnerUserData(PhysicsBody body, PhysicsUserData physicsUserData, int ownerKey);
+        [NativeMethod(Name = "PhysicsBody::SetOwnerUserDataSpan", IsThreadSafe = true)] extern internal static void PhysicsBody_SetOwnerUserDataSpan(ReadOnlySpan<PhysicsBody> bodies, ReadOnlySpan<PhysicsUserData> userDatas, int ownerKey);
         [NativeMethod(Name = "PhysicsBody::GetOwnerUserData", IsThreadSafe = true)] extern internal static PhysicsUserData PhysicsBody_GetOwnerUserData(PhysicsBody body);
         [NativeMethod(Name = "PhysicsBody::SetTransformObject", IsThreadSafe = true)] extern internal static void PhysicsBody_SetTransformObject(PhysicsBody body, Transform transform);
         [NativeMethod(Name = "PhysicsBody::GetTransformObject", IsThreadSafe = true)] extern internal static Transform PhysicsBody_GetTransformObject(PhysicsBody body);

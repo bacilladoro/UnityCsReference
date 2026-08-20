@@ -324,9 +324,9 @@ namespace UnityEditor.Experimental.GraphView
             int proposedIndex = -1;
             int maxIndex = 1;
             // We just want to know which elements are accepted. The actual index is not relevant to us at this point.
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             m_DraggedElements = selection
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 .OfType<GraphElement>()
                 .Where(e => e != this && AcceptsElementInternal(e, ref proposedIndex, maxIndex))
                 .ToList();

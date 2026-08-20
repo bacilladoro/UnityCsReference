@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -13,7 +14,7 @@ namespace Unity.GraphToolkit.Editor
     /// UI for a <see cref="SubgraphNodeModel"/>.
     /// </summary>
     [UnityRestricted]
-    internal class SubgraphNodeView : CollapsibleInOutNodeView
+    internal class SubgraphNodeView : CollapsibleInOutNodeView, ISubgraphNodeView
     {
         /// <summary>
         /// The USS class name added to a <see cref="SubgraphNodeView"/>.
@@ -30,6 +31,7 @@ namespace Unity.GraphToolkit.Editor
         /// </summary>
         public static readonly string hideTabUssClassName = subgraphNodeUssClassName.WithUssElement("hide-tab-bottom");
 
+        [NoAutoStaticsCleanup] // CSS custom property descriptor; value is a fixed CSS property name
         static readonly CustomStyleProperty<Color> k_BorderColorProperty = new CustomStyleProperty<Color>("--border-color");
 
         Color m_TabBorderColor;

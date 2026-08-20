@@ -326,11 +326,34 @@ namespace UnityEditor.UIElements
                 {
                     SetSerializedValue(uxmlSerializedData, defaultValueClone, UxmlSerializedData.UxmlAttributeFlags.DefaultValue);
                 }
+                else if (isUxmlObject)
+                {
+                    // The importer builds nested UxmlObject data without default values. (UUM-148774)
+                    var value = GetSerializedValue(uxmlSerializedData);
+                    if (value is IList list)
+                    {
+                        for (var i = 0; i < list.Count; ++i)
+                            SyncNestedDefaultValues(list[i] as UxmlSerializedData);
+                    }
+                    else
+                    {
+                        SyncNestedDefaultValues(value as UxmlSerializedData);
+                    }
+                }
             }
             catch (Exception ex)
             {
                 Debug.LogException(new Exception($"Failed to sync {serializedField.Name} default value", ex));
             }
+        }
+
+        static void SyncNestedDefaultValues(UxmlSerializedData nestedData)
+        {
+            if (nestedData == null)
+                return;
+
+            var desc = UxmlSerializedDataRegistry.GetDescription(nestedData.GetType().DeclaringType.FullName);
+            desc?.SyncDefaultValues(nestedData, false);
         }
 
         public bool TryGetValueFromObject(object objInstance, out object value)

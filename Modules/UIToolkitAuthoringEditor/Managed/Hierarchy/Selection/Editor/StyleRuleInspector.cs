@@ -28,6 +28,7 @@ internal sealed partial class StyleRuleInspector : UIInspector
 
     internal const string VariablesFoldoutName = "style-inspector__style-section__variables";
     internal const string AnimationFoldoutName = "style-inspector__style-section__animation";
+    internal const string GridFoldoutName = "style-inspector__style-section__grid";
 
     private readonly StyleInspectorElement m_StyleInspector;
     private StyleInspectorDefaultContent m_StyleInspectorDefaultContent;
@@ -118,11 +119,17 @@ internal sealed partial class StyleRuleInspector : UIInspector
         SetSelectorElementInlineStyles();
     }
 
+    void RefreshRulePreviewAndVariables()
+    {
+        SetSelectorElementInlineStyles();
+        m_VariablesSection?.Refresh(m_StyleRule);
+    }
+
     void OnVariableChange(in CommandContext context)
     {
         if (m_IsUpdating)
             return;
-        SetSelectorElementInlineStyles();
+        RefreshRulePreviewAndVariables();
     }
 
     void OnUndoRedoPerformed()
@@ -136,9 +143,7 @@ internal sealed partial class StyleRuleInspector : UIInspector
         m_IsUpdating = true;
         try
         {
-            m_StyleRule.styleSheet.RequestRebuild(StyleSheet.RebuildOptions.Synchronous);
-            SetSelectorElementInlineStyles();
-            m_VariablesSection.Refresh(m_StyleRule);
+            RefreshRulePreviewAndVariables();
         }
         finally
         {
@@ -166,6 +171,7 @@ internal sealed partial class StyleRuleInspector : UIInspector
                 m_StyleInspector.contentContainer.Add(m_StyleInspectorDefaultContent = StyleInspectorDefaultContent.Get());
                 InitializeVariablesSection();
                 InitializeAnimationSectionVisibility();
+                InitializeZIndexFieldVisibility();
 
                 m_StyleInspector.Target = new StyleInspectorTarget(m_Element, m_StyleRule?.styleSheet, m_StyleRule);
 
@@ -183,7 +189,9 @@ internal sealed partial class StyleRuleInspector : UIInspector
                 {
                     m_StyleInspectorDefaultContent.contentWasGenerated -= OnDefaultContentGenerated;
                     m_StyleInspectorDefaultContent.contentWasGenerated -= OnContentGeneratedForAnimation;
+                    m_StyleInspectorDefaultContent.contentWasGenerated -= OnContentGeneratedForZIndex;
                 }
+                UIToolkitAuthoringSettings.EnableZIndexChanged -= OnEnableZIndexChangedForStyleRule;
                 m_StyleInspectorDefaultContent?.RemoveFromHierarchy();
                 StyleInspectorDefaultContent.Release(m_StyleInspectorDefaultContent);
                 m_StyleInspectorDefaultContent = null;
@@ -231,6 +239,7 @@ internal sealed partial class StyleRuleInspector : UIInspector
         if (m_StyleInspectorDefaultContent.Q(AnimationFoldoutName) != null)
         {
             UpdateAnimationSectionVisibility(m_StyleInspectorDefaultContent);
+            HookGridSectionVisibility(m_StyleInspectorDefaultContent);
             // Style rules have no specific element to name; dialog uses its default subject.
             AnimationClipNewButtonController.ConnectButton(m_StyleInspectorDefaultContent, getDialogSubject: null);
             return;
@@ -243,6 +252,7 @@ internal sealed partial class StyleRuleInspector : UIInspector
     {
         content.contentWasGenerated -= OnContentGeneratedForAnimation;
         UpdateAnimationSectionVisibility(content);
+        HookGridSectionVisibility(content);
         AnimationClipNewButtonController.ConnectButton(content, getDialogSubject: null);
     }
 
@@ -253,6 +263,60 @@ internal sealed partial class StyleRuleInspector : UIInspector
             // Use StyleKeyword.Null (not DisplayStyle.Flex) to avoid setting an inline style when enabling.
             // It breaks the behavior of inspector search otherwise.
             animationSection.style.display = UIToolkitProjectSettings.s_EnablePanelRendererAnimationAtBoot ? StyleKeyword.Null : DisplayStyle.None;
+    }
+
+    // Unlike the animation setting, the CSS Grid flag applies live, so the section tracks
+    // onEnableGridLayoutChanged for as long as it is attached rather than reading a boot snapshot.
+    internal static void HookGridSectionVisibility(VisualElement content)
+    {
+        var gridSection = content.Q(GridFoldoutName);
+        if (gridSection == null)
+            return;
+
+        void Apply(bool enabled) => gridSection.style.display = enabled ? StyleKeyword.Null : DisplayStyle.None;
+        Apply(UIToolkitProjectSettings.enableGridLayout);
+        gridSection.RegisterCallback<AttachToPanelEvent>(_ =>
+        {
+            UIToolkitProjectSettings.onEnableGridLayoutChanged -= Apply;
+            UIToolkitProjectSettings.onEnableGridLayoutChanged += Apply;
+            Apply(UIToolkitProjectSettings.enableGridLayout);
+        });
+        gridSection.RegisterCallback<DetachFromPanelEvent>(_ => UIToolkitProjectSettings.onEnableGridLayoutChanged -= Apply);
+    }
+
+    void InitializeZIndexFieldVisibility()
+    {
+        if (m_StyleInspectorDefaultContent.Q<ZIndexStyleIntField>() != null)
+        {
+            UpdateZIndexFieldVisibility(m_StyleInspectorDefaultContent);
+            UIToolkitAuthoringSettings.EnableZIndexChanged += OnEnableZIndexChangedForStyleRule;
+            return;
+        }
+
+        m_StyleInspectorDefaultContent.contentWasGenerated += OnContentGeneratedForZIndex;
+    }
+
+    void OnContentGeneratedForZIndex(StyleInspectorDefaultContent content)
+    {
+        content.contentWasGenerated -= OnContentGeneratedForZIndex;
+        UpdateZIndexFieldVisibility(content);
+        UIToolkitAuthoringSettings.EnableZIndexChanged += OnEnableZIndexChangedForStyleRule;
+    }
+
+    void OnEnableZIndexChangedForStyleRule()
+    {
+        if (m_StyleInspectorDefaultContent != null)
+            UpdateZIndexFieldVisibility(m_StyleInspectorDefaultContent);
+    }
+
+    static void UpdateZIndexFieldVisibility(VisualElement content)
+    {
+        var zIndexField = content.Q<ZIndexStyleIntField>();
+        if (zIndexField == null)
+            return;
+        var row = zIndexField.GetFirstAncestorOfType<OverrideRow>();
+        if (row != null)
+            row.style.display = UIToolkitAuthoringSettings.EnableZIndex ? StyleKeyword.Null : DisplayStyle.None;
     }
 
     void SetSelectorElementInlineStyles()

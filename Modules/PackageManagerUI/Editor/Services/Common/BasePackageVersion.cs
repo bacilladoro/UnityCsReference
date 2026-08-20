@@ -89,6 +89,7 @@ namespace UnityEditor.PackageManager.UI.Internal
         public virtual SemVersion? supportedVersion => null;
         public virtual string deprecationMessage => null;
         public virtual TrustAndSignature trustAndSignature => TrustAndSignature.NotApplicable;
+        public virtual bool meetsTrustPolicy => true;
         public virtual string signatureOrgName => string.Empty;
 
         public virtual bool isFromUnity => availableRegistry == RegistryType.UnityRegistry && !HasTag(PackageTag.InstalledFromPath);

@@ -74,32 +74,32 @@ namespace UnityEditor
         internal static SettingsProvider[] FetchSettingsProviders()
         {
             var settingsProviders =
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 FetchSettingProviderFromAttribute()
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     .Concat(FetchSettingProvidersFromAttribute())
                     .Concat(FetchPreferenceItems())
                     .Where(provider => provider != null);
 
             settingsProviders = FilterAndWarnAgainstDuplicates(settingsProviders, SettingsScope.Project);
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return FilterAndWarnAgainstDuplicates(settingsProviders, SettingsScope.User).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         internal static SettingsProvider[] FetchSettingsProviders(SettingsScope scope)
         {
             var settingsProviders =
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 FetchSettingProviderFromAttribute()
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     .Concat(FetchSettingProvidersFromAttribute())
                     .Concat(FetchPreferenceItems())
                     .Where(provider => provider != null && provider.scope == scope);
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return FilterAndWarnAgainstDuplicates(settingsProviders, scope).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         public static bool Exists(string settingsPath)
@@ -126,9 +126,9 @@ namespace UnityEditor
 #pragma warning disable CS0618
             var methods = AttributeHelper.GetMethodsWithAttribute<PreferenceItem>(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly);
 #pragma warning restore CS0618
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return methods.methodsWithAttributes.Select(method =>
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 var callback = Delegate.CreateDelegate(typeof(Action), method.info) as Action;
                 if (callback != null)
@@ -153,9 +153,9 @@ namespace UnityEditor
         private static IEnumerable<SettingsProvider> FetchSettingProviderFromAttribute()
         {
             var methods = AttributeHelper.GetMethodsWithAttribute<SettingsProviderAttribute>();
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return methods.methodsWithAttributes.Select(method =>
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 try
                 {
@@ -173,9 +173,9 @@ namespace UnityEditor
         private static IEnumerable<SettingsProvider> FetchSettingProvidersFromAttribute()
         {
             var methods = AttributeHelper.GetMethodsWithAttribute<SettingsProviderGroupAttribute>();
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return methods.methodsWithAttributes.SelectMany(method =>
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 try
                 {

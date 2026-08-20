@@ -2,12 +2,13 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: Burst not yet converted
 using System;
 using System.Collections.Generic;
 using System.IO;
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code.
+#pragma warning disable UAC2001 // The Banned API Analyzer produces compile errors for any new Linq code.
 using System.Linq;
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 using System.Reflection;
 using Unity.Burst.LowLevel;
 using Unity.Profiling;
@@ -165,9 +166,9 @@ namespace Unity.Burst.Editor
             //     from Debug to Release or vice-versa.
             // This is because these are the two cases in which CompilerClient will be
             // destroyed and recreated.
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code.
+#pragma warning disable UAC2001 // The Banned API Analyzer produces compile errors for any new Linq code.
             var assemblyNamesAndDefines = (IEnumerable<(string, string[])>)Array.Empty<(string, string[])>();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             if (BurstCompilerService.DequeuePendingBurstLoad())
             {
@@ -181,13 +182,13 @@ namespace Unity.Burst.Editor
                 }
                 else
                 {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code.
+#pragma warning disable UAC2001 // The Banned API Analyzer produces compile errors for any new Linq code.
                     // Gather list of assemblies to compile (only actually used at Editor startup)
                     assemblyNamesAndDefines = UnityEditor.Compilation.CompilationPipeline
                         .GetAssemblies(UnityEditor.Compilation.AssembliesType.Editor)
                         .Where(x => File.Exists(x.outputPath)) // If C# compilation fails, it won't exist on disk
                         .Select(x => (x.name, x.defines));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 }
             }
 
@@ -525,14 +526,14 @@ namespace Unity.Burst.Editor
 
             if (IsDebugging)
             {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code.
+#pragma warning disable UAC2001 // The Banned API Analyzer produces compile errors for any new Linq code.
                 UnityEngine.Debug.Log($"{DateTime.UtcNow} Burst - AssemblyFolders : \n{string.Join("\n", assemblyFolders)}");
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             }
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code.
+#pragma warning disable UAC2001 // The Banned API Analyzer produces compile errors for any new Linq code.
             return assemblyFolders.ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         private static void OnCompilationFinished(object value)
@@ -660,3 +661,4 @@ namespace Unity.Burst.Editor
         public bool IsDotNet { get; set; }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

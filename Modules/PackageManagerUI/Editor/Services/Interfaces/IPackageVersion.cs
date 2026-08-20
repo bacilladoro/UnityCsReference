@@ -101,6 +101,8 @@ namespace UnityEditor.PackageManager.UI.Internal
 
         TrustAndSignature trustAndSignature { get; }
 
+        bool meetsTrustPolicy { get; }
+
         string signatureOrgName { get; }
 
         bool isFromUnity { get; }

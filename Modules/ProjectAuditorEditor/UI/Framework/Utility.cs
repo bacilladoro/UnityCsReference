@@ -199,7 +199,7 @@ namespace Unity.ProjectAuditor.Editor.UI.Framework
 
         public static string GetTreeViewSelectedSummary(TreeViewSelection selection, string[] names)
         {
-            var selectedStrings = selection.GetSelectedStrings(names, true, false);
+            var selectedStrings = selection.GetSelectedStrings(names);
             var numStrings = selectedStrings.Length;
 
             if (numStrings == 0)

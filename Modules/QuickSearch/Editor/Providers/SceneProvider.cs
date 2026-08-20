@@ -7,16 +7,18 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.Collections;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor.ShortcutManagement;
 using UnityEngine;
 
 namespace UnityEditor.Search.Providers
 {
-    class SceneProvider : SearchProvider
+    partial class SceneProvider : SearchProvider
     {
         private bool m_HierarchyChanged = true;
         private SceneQueryEngine m_SceneQueryEngine;
 
+        [AutoStaticsCleanupOnCodeReload]
         internal static event Action<SceneProvider> s_QueueProviderRefresh;
         bool m_Init;
 
@@ -131,9 +133,9 @@ namespace UnityEditor.Search.Providers
             startDrag = (item, context) =>
             {
                 if (context.selection.Count > 1)
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2001 // Avoid Linq
                     Utils.StartDrag(context.selection.Select(i => ObjectFromItem(i)).ToArray(), item.GetLabel(context, true));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 else
                     Utils.StartDrag(new[] { ObjectFromItem(item) }, item.GetLabel(context, true));
             };
@@ -265,9 +267,9 @@ namespace UnityEditor.Search.Providers
                 {
                     execute = (items) =>
                     {
-                        #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                        #pragma warning disable UAC2001 // Avoid Linq
                         FrameObjects(items.Select(i => i.provider.toObject(i, typeof(GameObject))).Where(i => i).ToArray());
-                        #pragma warning restore UA2001
+                        #pragma warning restore UAC2001
                     }
                 },
 
@@ -291,26 +293,26 @@ namespace UnityEditor.Search.Providers
                 new SearchAction(providerId, "show", null, "Show selected object(s)")
                 {
                     enabled = (items) => IsHidden(items),
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2001 // Avoid Linq
                     execute = (items) => SceneVisibilityManager.instance.Show(items.Select(i => i.ToObject<GameObject>()).Where(i => i).ToArray(), true)
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 },
 
                 new SearchAction(providerId, "hide", null, "Hide selected object(s)")
                 {
                     enabled = (items) => !IsHidden(items),
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2001 // Avoid Linq
                     execute = (items) => SceneVisibilityManager.instance.Hide(items.Select(i => i.ToObject<GameObject>()).Where(i => i).ToArray(), true)
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 },
             };
         }
 
         private static bool IsHidden(IReadOnlyCollection<SearchItem> items)
         {
-            #pragma warning disable UA2010 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2010 // Avoid Linq
             var go = items.First().ToObject<GameObject>();
-#pragma warning restore UA2010
+#pragma warning restore UAC2010
             if (!go)
                 return false;
             return SceneVisibilityManager.instance.IsHidden(go);
@@ -329,17 +331,17 @@ namespace UnityEditor.Search.Providers
 
                 using (SearchMonitor.GetView())
                 {
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2001 // Avoid Linq
                     yield return queryEngine.Search(context, provider, null)
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                         .Select(go => AddResult(context, provider, go));
                 }
             }
             else if (context.filterType != null && string.IsNullOrEmpty(context.searchQuery))
             {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 yield return UnityEngine.Object.FindObjectsByType(context.filterType)
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     .Select(obj =>
                     {
                         if (obj is Component c)
@@ -451,9 +453,9 @@ namespace UnityEditor.Search.Providers
             IEnumerable<UnityEngine.Object> sceneObjects;
             if (context != null && context.searchView != null && context.searchView.results.Count > 0 && !context.searchInProgress)
             {
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 sceneObjects = context.searchView.results.Select(r => r.ToObject()).Where(o => o);
-                #pragma warning restore UA2001
+                #pragma warning restore UAC2001
             }
             else
             {

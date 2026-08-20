@@ -5,13 +5,14 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor.ShortcutManagement;
 using UnityEngine;
 using Unity.Collections;
 
 namespace UnityEditor.Search.Providers
 {
-    static class MenuProvider
+    static partial class MenuProvider
     {
         struct MenuData
         {
@@ -23,12 +24,16 @@ namespace UnityEditor.Search.Providers
         private const string displayName = "Menus";
         private const string disabledMenuExecutionWarning = "The menu you are trying to execute is disabled. It will not be executed.";
 
+        [AutoStaticsCleanupOnCodeReload]
         private static string[] shortcutIds;
         private static readonly QueryValidationOptions k_QueryEngineOptions = new QueryValidationOptions { validateFilters = true, skipNestedQueries = true };
+        [AutoStaticsCleanupOnCodeReload]
         private static QueryEngine<MenuData> queryEngine = null;
+        [AutoStaticsCleanupOnCodeReload]
         private static List<MenuData> menus;
 
-        private static Delayer debounce;
+        [AutoStaticsCleanupOnCodeReload]
+        private static Delayer debounce = null;
 
         [SearchItemProvider]
         internal static SearchProvider CreateProvider()
@@ -55,9 +60,9 @@ namespace UnityEditor.Search.Providers
                 filterId = "m:",
                 showDetailsOptions = ShowDetailsOptions.ListView | ShowDetailsOptions.Actions,
 
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 onEnable = () => shortcutIds = ShortcutManager.instance.GetAvailableShortcutIds().ToArray(),
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 onDisable = () => shortcutIds = Array.Empty<string>(),
 
                 fetchItems = FetchItems,
@@ -118,9 +123,9 @@ namespace UnityEditor.Search.Providers
                 localMenus.Add(new MenuData
                 {
                     path = menuItem,
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2001 // Avoid Linq
                     words = SplitMenuPath(menuItem).Select(w => Utils.FastToLower(w)).ToArray()
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 });
             }
 
@@ -129,14 +134,14 @@ namespace UnityEditor.Search.Providers
 
         private static IEnumerable<SearchItem> FetchItems(SearchContext context, List<SearchItem> items, SearchProvider provider)
         {
-            #pragma warning disable UA2005 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2005 // Avoid Linq
             var query = (string.IsNullOrEmpty(context.searchQuery) && context.providers.Count() == 1) ? null : queryEngine.ParseQuery(context.searchQuery);
-#pragma warning restore UA2005
+#pragma warning restore UAC2005
             if (query != null && !query.valid)
             {
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 context.AddSearchQueryErrors(query.errors.Select(e => new SearchQueryError(e, context, provider)));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 yield break;
             }
 
@@ -171,9 +176,9 @@ namespace UnityEditor.Search.Providers
                     return menuName;
             }
             var shortcutBinding = ShortcutManager.instance.GetShortcutBinding(shortcutId);
-#pragma warning disable UA2002 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2002 // Avoid Linq
             if (!shortcutBinding.keyCombinationSequence.Any())
-#pragma warning restore UA2002
+#pragma warning restore UAC2002
                 return menuName;
 
             return $"{menuName} ({shortcutBinding})";

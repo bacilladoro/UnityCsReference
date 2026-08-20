@@ -1,3 +1,4 @@
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: GraphicsDeviceFeatures not yet converted
 using UnityEngine;
 using UnityEngine.Rendering;
 using System;
@@ -549,9 +550,9 @@ namespace UnityEngine.NVIDIA
         /// <summary>A snapshot enumeration of all the active dlss features information currently active in the runtime.</summary>
         /// <remarks>The method <see cref="GraphicsDevice.UpdateDebugView" /> will performs update on this snapshot.</remarks>
         [Obsolete("This property causes garbage collection and is inefficient. Use dlssFeatureInfosSpan and dlssFeatureInfoCount instead.", false)]
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
         public IEnumerable<DLSSDebugFeatureInfos> dlssFeatureInfos { get { return m_DlssDebugFeatures.Take((int)m_DlssFeatureValidCount); } }
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
         /// <summary>Gets a read-only view into the valid DLSS feature info entries.</summary>
         /// <remarks>Accessing this and iterating it with a for loop is allocation-free.</remarks>
@@ -561,3 +562,4 @@ namespace UnityEngine.NVIDIA
 
     #endregion
 } // namespace NVIDIA
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

@@ -9,6 +9,7 @@ using System.Linq;
 using UnityEditor.Compilation;
 using UnityEditor.Modules;
 using Unity.Collections;
+using Unity.Scripting.LifecycleManagement;
 using DiscoveredTargetInfo = UnityEditor.BuildTargetDiscovery.DiscoveredTargetInfo;
 
 namespace UnityEditor.Scripting.ScriptCompilation
@@ -84,6 +85,7 @@ namespace UnityEditor.Scripting.ScriptCompilation
         public VersionDefine[] versionDefines;
         public bool noEngineReferences;
 
+        [NoAutoStaticsCleanup] // fixed string→string rename map populated once, safe to persist across reload
         static Dictionary<string, string> renamedReferences = new Dictionary<string, string>(StringComparer.Ordinal);
 
         static CustomScriptAssemblyData()
@@ -170,9 +172,9 @@ namespace UnityEditor.Scripting.ScriptCompilation
                 }
 
                 if (additionalReferences.Count > 0)
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                     data.references = data.references.Concat(additionalReferences).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             }
         }
 
@@ -268,6 +270,7 @@ namespace UnityEditor.Scripting.ScriptCompilation
         // fail compilation if mutable. Please remove a package from this list once it has been fixed.
         static readonly string[] k_AutoStaticsCleanupExcludedPackages = new string[]
         {
+
             "2d.sprite",
             "2d.tilemap",
             "adaptiveperformance",
@@ -325,6 +328,7 @@ namespace UnityEditor.Scripting.ScriptCompilation
             "xr.core-utils",
         };
 
+        [NoAutoStaticsCleanup] // immutable package ruleset file path computed once, safe to persist across reload
         internal static string ImmutablePackageRulesetPath { get; private set; }
 
         public string FilePath { get; set; }
@@ -444,8 +448,11 @@ namespace UnityEditor.Scripting.ScriptCompilation
             }
         }
 
+        [NoAutoStaticsCleanup] // platform list derived from fixed native build-target data, value-type elements, safe to persist
         public static List<CustomScriptAssemblyPlatform> Platforms { get; private set; }
+        [NoAutoStaticsCleanup] // constant list of deprecated platforms, value-type elements, safe to persist
         public static CustomScriptAssemblyPlatform[] DeprecatedPlatforms { get; private set; }
+        [NoAutoStaticsCleanup] // constant list of renamed platform names, safe to persist
         public static string[] RenamedPlatforms { get; private set; }
 
         static CustomScriptAssembly()
@@ -481,9 +488,9 @@ namespace UnityEditor.Scripting.ScriptCompilation
                 if(extensionModule != null)
                 {
                     var extraScriptAssemblyPlatforms = extensionModule.GetExtraScriptAssemblyPlatforms(buildTargetList[i].buildTargetPlatformVal);
-#pragma warning disable UA2002 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2002 // Avoid Linq
                     if (extraScriptAssemblyPlatforms != null && extraScriptAssemblyPlatforms.Any())
-#pragma warning restore UA2002
+#pragma warning restore UAC2002
                     {
                         foreach(var extraPlatform in extraScriptAssemblyPlatforms)
                         {

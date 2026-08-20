@@ -29,13 +29,11 @@ namespace UnityEditor.Build.Analysis
                     : default;
 
             var stepTable = ConvertSteps(reportData.Steps);
-            var analysisMessages = ConvertMessages(reportData.Messages, stepTable.Length);
             ConvertAssets(assetData, out var assetTable, out var importerTypeTable);
             var rootAssetTable = ConvertRootAssets(rootStats, assetTable);
             var computed = BuildComputed(
                 assetTable,
                 rootAssetTable,
-                analysisMessages,
                 reportData.CachedReusePercent);
 
             var output = new BuildAnalysis
@@ -67,7 +65,6 @@ namespace UnityEditor.Build.Analysis
                     ImporterTypes = importerTypeTable,
                     RootAssets = rootAssetTable,
                 },
-                Messages = analysisMessages,
                 Computed = computed,
                 AssetSource = BuildAssetSource(sourceBuildAssets, declaredContentSource),
             };
@@ -103,28 +100,6 @@ namespace UnityEditor.Build.Analysis
                     Name = source.Name ?? string.Empty,
                     Depth = source.Depth,
                     DurationMs = source.DurationMs,
-                };
-            }
-
-            return result;
-        }
-
-        private static BuildAnalysisMessage[] ConvertMessages(BuildReportMessageData[] messages, int maxStepCount)
-        {
-            var result = new BuildAnalysisMessage[messages.Length];
-
-            for (var i = 0; i < messages.Length; i++)
-            {
-                var source = messages[i];
-                var stepIndex = source.StepIndex;
-                if (stepIndex < 0 || stepIndex >= maxStepCount)
-                    stepIndex = -1;
-
-                result[i] = new BuildAnalysisMessage
-                {
-                    Severity = source.Severity ?? string.Empty,
-                    StepId = stepIndex,
-                    Text = source.Content ?? string.Empty,
                 };
             }
 
@@ -230,7 +205,6 @@ namespace UnityEditor.Build.Analysis
         private static BuildAnalysisComputed BuildComputed(
             BuildAnalysisAsset[] assets,
             BuildAnalysisRootAsset[] rootAssets,
-            BuildAnalysisMessage[] messages,
             float cacheReusePercent)
         {
             var counts = new BuildAnalysisCounts
@@ -246,17 +220,6 @@ namespace UnityEditor.Build.Analysis
                 {
                     counts.SceneCount++;
                 }
-            }
-
-            foreach (var t in messages)
-            {
-                var severity = t.Severity;
-                if (string.Equals(severity, BuildMessageSeverity.Error, StringComparison.Ordinal))
-                    counts.ErrorMessageCount++;
-                else if (string.Equals(severity, BuildMessageSeverity.Warning, StringComparison.Ordinal))
-                    counts.WarningMessageCount++;
-                else
-                    counts.InfoMessageCount++;
             }
 
             return new BuildAnalysisComputed

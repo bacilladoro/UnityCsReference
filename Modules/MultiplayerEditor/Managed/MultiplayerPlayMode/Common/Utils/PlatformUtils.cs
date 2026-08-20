@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEngine;
 
@@ -14,7 +15,7 @@ namespace Unity.Multiplayer.PlayMode.Editor
     }
     static class PlatformUtils
     {
-
+        [NoAutoStaticsCleanup] // OS platform is constant for the session; same value across reloads
         public static PlatformInfo m_PlatformInfo = GetPlatformNameForCurrentOperatingSystem();
 
         private static PlatformInfo GetPlatformNameForCurrentOperatingSystem()

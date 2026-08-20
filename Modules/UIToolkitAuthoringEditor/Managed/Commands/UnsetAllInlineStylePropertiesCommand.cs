@@ -27,7 +27,7 @@ internal sealed class UnsetAllInlineStylePropertiesCommand : Command<UnsetAllInl
     public VisualElement Element { get; private set; }
 
     public override string UndoName => CommandUndoName;
-    public override CommandCategory Category => CommandCategory.Styling;
+    public override CommandCategory Category => CommandCategory.Styling | CommandCategory.Variables;
 
     protected override void Init()
     {

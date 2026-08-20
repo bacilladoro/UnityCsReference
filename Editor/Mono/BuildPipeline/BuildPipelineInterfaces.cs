@@ -412,7 +412,7 @@ namespace UnityEditor.Build
     public interface IPostBuildPlayerScriptDLLs : IOrderedCallback
     {
         ///<summary>Implement this interface to receive a callback just after the player scripts have been compiled.</summary>
-        ///<remarks>You can implement this if you need to read or patch managed Assemblies for players being built. You can get assembly locations from the <see cref="BuildReport.files">files</see> property of the <c>report</c> parameter. Note that implementing this callback will cause builds to run slower, as assemblies need to be copied to an intermediate location, and is not recommended for best performance.</remarks>
+        ///<remarks>You can implement this if you need to read or patch managed Assemblies for players being built. To retrieve assembly locations, call <see cref="Build.Reporting.BuildReport.GetFiles">GetFiles</see> on the <see cref="Build.Reporting.BuildReport">BuildReport</see> provided as the <c>report</c> parameter, and read the <see cref="Build.Reporting.BuildFile-path">path</see> property from each returned <see cref="Build.Reporting.BuildFile">BuildFile</see>. Note that implementing this callback causes builds to run slower, as assemblies need to be copied to an intermediate location, and is not recommended for best performance.</remarks>
         ///<param name="report">A report containing information about the build, such as its target platform and output path.</param>
         ///<example>
         ///  <code><![CDATA[
@@ -1331,9 +1331,9 @@ namespace UnityEditor.Build
         {
             var snippet = new ShaderSnippetData(shaderType, passType, passName, passIdentifier);
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var dataList = data.ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             if (processors.shaderProcessors != null)
             {
                 foreach (IPreprocessShaders abtc in processors.shaderProcessors)
@@ -1347,9 +1347,9 @@ namespace UnityEditor.Build
         [RequiredByNativeCode]
         internal static ShaderCompilerData[] OnPreprocessComputeShaders(ComputeShader shader, string kernelName, ShaderCompilerData[] data)
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var dataList = data.ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             if (processors.computeShaderProcessors != null)
             {
                 foreach (IPreprocessComputeShaders abtc in processors.computeShaderProcessors)

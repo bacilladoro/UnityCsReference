@@ -98,9 +98,59 @@ namespace Unity.UIToolkit.Editor
 
         internal static void AddOrReplaceObjectReferenceKey(AnimationClip clip, EditorCurveBinding binding, float time, Object value)
         {
+            MigrateLegacyBackgroundImageCurve(clip, binding);
             var existing = AnimationUtility.GetObjectReferenceCurve(clip, binding) ?? Array.Empty<ObjectReferenceKeyframe>();
             var merged = ReplaceObjectReferenceKey(existing, time, value);
             AnimationUtility.SetObjectReferenceCurve(clip, binding, merged);
+        }
+
+        const string k_CompositeImageChannel = "BackgroundImage.image";
+
+        // Legacy clips bound the background-image PPtr slot under the bare property name; the
+        // composite gradient layout renamed it to ".image". Both resolve to channel 0 at playback
+        // (UIAnimationBinder.cpp's empty-channel fallback), so folding the legacy curve into the
+        // new binding on write keeps a re-recorded clip from carrying two rows that drive the
+        // same property.
+        internal static void MigrateLegacyBackgroundImageCurve(AnimationClip clip, EditorCurveBinding binding)
+        {
+            if (!binding.propertyName.EndsWith(k_CompositeImageChannel, StringComparison.Ordinal))
+                return;
+
+            var legacy = binding;
+            legacy.propertyName = binding.propertyName.Substring(0, binding.propertyName.Length - ".image".Length);
+            var legacyKeys = AnimationUtility.GetObjectReferenceCurve(clip, legacy);
+            if (legacyKeys == null || legacyKeys.Length == 0)
+                return;
+
+            var keys = AnimationUtility.GetObjectReferenceCurve(clip, binding);
+            if (keys == null || keys.Length == 0)
+            {
+                keys = legacyKeys;
+            }
+            else
+            {
+                // Keys already recorded under the new name win on time collisions.
+                var merged = new List<ObjectReferenceKeyframe>(keys);
+                foreach (var legacyKey in legacyKeys)
+                {
+                    bool collides = false;
+                    for (int i = 0; i < keys.Length; i++)
+                    {
+                        if (Mathf.Approximately(keys[i].time, legacyKey.time))
+                        {
+                            collides = true;
+                            break;
+                        }
+                    }
+                    if (!collides)
+                        merged.Add(legacyKey);
+                }
+                merged.Sort((a, b) => a.time.CompareTo(b.time));
+                keys = merged.ToArray();
+            }
+
+            AnimationUtility.SetObjectReferenceCurve(clip, binding, keys);
+            AnimationUtility.SetObjectReferenceCurve(clip, legacy, null);
         }
 
         internal static void AddOrReplaceFloatKey(AnimationCurve curve, float time, float value)

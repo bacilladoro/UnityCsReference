@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading;
 using System.Threading.Tasks;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.Assertions;
 
@@ -32,6 +33,7 @@ namespace Unity.Multiplayer.PlayMode.Editor
         internal static readonly int k_StagesCount = k_Stages.Length;
 
         // All stages except Cleanup and Validate, which have special handling in the execution flow.
+        [NoAutoStaticsCleanup] // constant ordered list of execution stages; never changes between reloads
         internal static readonly ReadOnlyCollection<ExecutionStage> k_ExecutionStages = Array.AsReadOnly(
         [
             ExecutionStage.Prepare,
@@ -40,6 +42,7 @@ namespace Unity.Multiplayer.PlayMode.Editor
             ExecutionStage.Run,
         ]);
 
+        [NoAutoStaticsCleanup] // constant ordered list of launching stages; never changes between reloads
         internal static readonly ReadOnlyCollection<ExecutionStage> k_LaunchingStages = Array.AsReadOnly(
         [
             ExecutionStage.Validate,

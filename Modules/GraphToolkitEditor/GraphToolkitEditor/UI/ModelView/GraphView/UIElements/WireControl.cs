@@ -4,6 +4,7 @@
 
 using System;
 using Unity.GraphToolkit.InternalBridge;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -15,8 +16,11 @@ namespace Unity.GraphToolkit.Editor
     [UnityRestricted]
     internal class WireControl : VisualElement
     {
+        [NoAutoStaticsCleanup] // CSS custom property descriptor; value is a fixed CSS property name
         static readonly CustomStyleProperty<float> k_WireWidthProperty = new("--wire-width");
+        [NoAutoStaticsCleanup] // CSS custom property descriptor; value is a fixed CSS property name
         static readonly CustomStyleProperty<Color> k_WireColorProperty = new("--wire-color");
+        [NoAutoStaticsCleanup] // single reusable Gradient buffer for wire color interpolation; mutated each draw call, no user-type references
         static readonly Gradient k_Gradient = new Gradient();
 
         /// <summary>

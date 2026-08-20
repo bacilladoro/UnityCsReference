@@ -50,11 +50,11 @@ namespace UnityEditor.Search
         [SearchExpressionEvaluator(SearchExpressionType.AnyValue | SearchExpressionType.Variadic)]
         public static IEnumerable<SearchItem> Empty(SearchExpressionContext c)
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
-#pragma warning disable UA2002 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
+#pragma warning disable UAC2002 // Avoid Linq
             return c.args.Select(e => SearchExpression.CreateItem(!e.Execute(c).Any()));
-#pragma warning restore UA2001
-#pragma warning restore UA2002
+#pragma warning restore UAC2001
+#pragma warning restore UAC2002
         }
 
         [Description("Return true if each elements evaluates has being true."), Category("Filters")]
@@ -99,9 +99,9 @@ namespace UnityEditor.Search
                 var templateExpr = c.expression.parameters[i];
                 var currentStreamName = $"apply@stream#{i}";
                 var currentStream = SearchExpression.CreateStreamExpression(resultStreamExpr, currentStreamName);
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 var args = new[] { currentStream }.Concat(templateExpr.parameters).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 var innerText = templateExpr.innerText;
                 var evaluator = templateExpr.evaluator;
 

@@ -541,9 +541,9 @@ namespace UnityEditor
             // Set the streams on all systems using this material
             if (GUILayout.Button(Styles.streamApplyToAllSystemsText, EditorStyles.miniButton, GUILayout.ExpandWidth(false)))
             {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 Undo.RecordObjects(m_RenderersUsingThisMaterial.Where(r => r != null).ToArray(), Styles.undoApplyCustomVertexStreams);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
                 foreach (ParticleSystemRenderer renderer in m_RenderersUsingThisMaterial)
                 {
@@ -586,29 +586,29 @@ namespace UnityEditor
 
         private static bool CompareVertexStreams(IReadOnlyList<ParticleSystemVertexStream> a, IReadOnlyList<ParticleSystemVertexStream> b)
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var differenceA = a.Except(b);
-#pragma warning restore UA2001
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+#pragma warning disable UAC2001 // Avoid Linq
             var differenceB = b.Except(a);
-#pragma warning restore UA2001
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+#pragma warning disable UAC2001 // Avoid Linq
             var difference = differenceA.Union(differenceB).Distinct();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
-#pragma warning disable UA2002 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2002 // Avoid Linq
             if (!difference.Any())
-#pragma warning restore UA2002
+#pragma warning restore UAC2002
                 return true;
 
             // If normals are the only difference, ignore them, because the default particle streams include normals, to make it easy for users to switch between lit and unlit
-#pragma warning disable UA2005 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2005 // Avoid Linq
             if (difference.Count() == 1)
-#pragma warning restore UA2005
+#pragma warning restore UAC2005
             {
-#pragma warning disable UA2010 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2010 // Avoid Linq
                 if (difference.First() == ParticleSystemVertexStream.Normal)
-#pragma warning restore UA2010
+#pragma warning restore UAC2010
                     return true;
             }
 

@@ -2,6 +2,8 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
+using Unity.Scripting.LifecycleManagement;
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
@@ -15,16 +17,19 @@ namespace UnityEngine.UIElements;
 /// This example shows how to use the `VisualElementAssetReferenceTable` to resolve references to VisualElements after calling CloneTree.
 /// <code source="../../../../Modules/UIElements/Tests/UIElementsExamples/Assets/Examples/VisualElementAssetReferenceTable_CloneTreeExample.cs"/>
 /// </example>
-public sealed class VisualElementAssetReferenceTable : IDisposable
+public sealed partial class VisualElementAssetReferenceTable : IDisposable
 {
+    [NoAutoStaticsCleanup]
     internal static readonly Pool.ObjectPool<ElementNode> s_ElementNodePool = new(
         createFunc: () => new ElementNode(),
         actionOnDestroy: node => node.Dispose());
 
+    [NoAutoStaticsCleanup]
     internal static readonly Pool.ObjectPool<DocumentNode> s_DocumentNodePool = new(
         createFunc: () => new DocumentNode(),
         actionOnDestroy: node => node.Dispose());
 
+    [NoAutoStaticsCleanup]
     internal static readonly Pool.ObjectPool<VisualElementAssetReferenceTable> s_TablePool = new(
         createFunc: () => new VisualElementAssetReferenceTable(),
         actionOnDestroy: node => node.Dispose());
@@ -325,3 +330,4 @@ public sealed class VisualElementAssetReferenceTable : IDisposable
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

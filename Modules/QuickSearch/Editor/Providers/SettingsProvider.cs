@@ -6,10 +6,11 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Search.Providers
 {
-    static class Settings
+    static partial class Settings
     {
         internal const string type = "settings";
         private const string displayName = "Settings";
@@ -22,51 +23,63 @@ namespace UnityEditor.Search.Providers
             public string[] searchables;
         }
 
-        static class SettingsProviderCache
+        static partial class SettingsProviderCache
         {
-            public static readonly SettingsProviderInfo[] value;
-            public static readonly QueryEngine<SettingsProviderInfo> queryEngine;
-
-            static SettingsProviderCache()
+            internal partial class LazyInitStatics
             {
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
-                value = FetchSettingsProviders()
-#pragma warning restore UA2001
-                    .Select(provider => new SettingsProviderInfo()
+                readonly SettingsProviderInfo[] m_value;
+                readonly QueryEngine<SettingsProviderInfo> m_queryEngine;
+
+                public SettingsProviderInfo[] value { get => m_value; }
+                public QueryEngine<SettingsProviderInfo> queryEngine { get => m_queryEngine; }
+
+                public LazyInitStatics()
                 {
-                    path = provider.settingsPath,
-                    label = provider.label,
-                    scope = provider.scope,
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
-                    searchables = new[] {provider.settingsPath, provider.label}
-#pragma warning restore UA2001
-                        .Concat(provider.keywords)
-                        .Where(s => !string.IsNullOrEmpty(s))
-                        .Select(s => Utils.FastToLower(s)).ToArray()
-                })
-                    .ToArray();
+                    #pragma warning disable UAC2001 // Avoid Linq
+                    m_value = FetchSettingsProviders()
+#pragma warning restore UAC2001
+                        .Select(provider => new SettingsProviderInfo()
+                    {
+                        path = provider.settingsPath,
+                        label = provider.label,
+                        scope = provider.scope,
+                        #pragma warning disable UAC2001 // Avoid Linq
+                        searchables = new[] {provider.settingsPath, provider.label}
+#pragma warning restore UAC2001
+                            .Concat(provider.keywords)
+                            .Where(s => !string.IsNullOrEmpty(s))
+                            .Select(s => Utils.FastToLower(s)).ToArray()
+                    })
+                        .ToArray();
 
-                var iconName = "Filter Icon";
-                var icon = Utils.LoadIcon(iconName);
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
-                var scopeValues = Enum.GetNames(typeof(SettingsScope)).Select(n => Utils.FastToLower(n));
-#pragma warning restore UA2001
-                queryEngine = new QueryEngine<SettingsProviderInfo>();
-                queryEngine.SetSearchDataCallback(info => info.searchables, s => Utils.FastToLower(s), StringComparison.Ordinal);
-                queryEngine.SetFilter("scope", info => info.scope, new[] { ":", "=", "!=", "<", ">", "<=", ">=" })
-                    .SetGlobalPropositionData(category: "Scope", priority: 0, icon: icon, color: QueryColors.typeIcon)
-                    .AddOrUpdatePropositionData(label: "Project", replacement: "scope=" + SearchUtils.GetListMarkerReplacementText("project", scopeValues, iconName, QueryColors.typeIcon), help: "Search project settings")
-                    .AddOrUpdatePropositionData(label: "User", replacement: "scope=" + SearchUtils.GetListMarkerReplacementText("user", scopeValues, iconName, QueryColors.typeIcon), help: "Search user settings");
+                    var iconName = "Filter Icon";
+                    var icon = Utils.LoadIcon(iconName);
+                    #pragma warning disable UAC2001 // Avoid Linq
+                    var scopeValues = Enum.GetNames(typeof(SettingsScope)).Select(n => Utils.FastToLower(n));
+#pragma warning restore UAC2001
+                    m_queryEngine = new QueryEngine<SettingsProviderInfo>();
+                    m_queryEngine.SetSearchDataCallback(info => info.searchables, s => Utils.FastToLower(s), StringComparison.Ordinal);
+                    m_queryEngine.SetFilter("scope", info => info.scope, new[] { ":", "=", "!=", "<", ">", "<=", ">=" })
+                        .SetGlobalPropositionData(category: "Scope", priority: 0, icon: icon, color: QueryColors.typeIcon)
+                        .AddOrUpdatePropositionData(label: "Project", replacement: "scope=" + SearchUtils.GetListMarkerReplacementText("project", scopeValues, iconName, QueryColors.typeIcon), help: "Search project settings")
+                        .AddOrUpdatePropositionData(label: "User", replacement: "scope=" + SearchUtils.GetListMarkerReplacementText("user", scopeValues, iconName, QueryColors.typeIcon), help: "Search user settings");
 
-                queryEngine.AddOperatorHandler(":", (SettingsScope ev, SettingsScope fv, StringComparison sc) => ev.ToString().IndexOf(fv.ToString(), sc) != -1);
-                queryEngine.AddOperatorHandler(":", (SettingsScope ev, string fv, StringComparison sc) => ev.ToString().IndexOf(fv, sc) != -1);
-                queryEngine.AddOperatorHandler("=", (SettingsScope ev, SettingsScope fv) => ev == fv);
-                queryEngine.AddOperatorHandler("!=", (SettingsScope ev, SettingsScope fv) => ev != fv);
-                queryEngine.AddOperatorHandler("<", (SettingsScope ev, SettingsScope fv) => ev < fv);
-                queryEngine.AddOperatorHandler(">", (SettingsScope ev, SettingsScope fv) => ev > fv);
-                queryEngine.AddOperatorHandler("<=", (SettingsScope ev, SettingsScope fv) => ev <= fv);
-                queryEngine.AddOperatorHandler(">=", (SettingsScope ev, SettingsScope fv) => ev >= fv);
+                    m_queryEngine.AddOperatorHandler(":", (SettingsScope ev, SettingsScope fv, StringComparison sc) => ev.ToString().IndexOf(fv.ToString(), sc) != -1);
+                    m_queryEngine.AddOperatorHandler(":", (SettingsScope ev, string fv, StringComparison sc) => ev.ToString().IndexOf(fv, sc) != -1);
+                    m_queryEngine.AddOperatorHandler("=", (SettingsScope ev, SettingsScope fv) => ev == fv);
+                    m_queryEngine.AddOperatorHandler("!=", (SettingsScope ev, SettingsScope fv) => ev != fv);
+                    m_queryEngine.AddOperatorHandler("<", (SettingsScope ev, SettingsScope fv) => ev < fv);
+                    m_queryEngine.AddOperatorHandler(">", (SettingsScope ev, SettingsScope fv) => ev > fv);
+                    m_queryEngine.AddOperatorHandler("<=", (SettingsScope ev, SettingsScope fv) => ev <= fv);
+                    m_queryEngine.AddOperatorHandler(">=", (SettingsScope ev, SettingsScope fv) => ev >= fv);
+                }
             }
+
+            [AutoStaticsCleanupOnCodeReload]
+            private static Lazy<LazyInitStatics> s_LazyInitStatics = new(() => new LazyInitStatics());
+
+            public static SettingsProviderInfo[] value { get => s_LazyInitStatics.Value.value; }
+            public static QueryEngine<SettingsProviderInfo> queryEngine { get => s_LazyInitStatics.Value.queryEngine; }
 
             private static SettingsProvider[] FetchSettingsProviders()
             {
@@ -96,15 +109,15 @@ namespace UnityEditor.Search.Providers
             var query = SettingsProviderCache.queryEngine.ParseQuery(context.searchQuery);
             if (!query.valid)
             {
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 context.AddSearchQueryErrors(query.errors.Select(e => new SearchQueryError(e, context, provider)));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 yield break;
             }
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             yield return query.Apply(SettingsProviderCache.value).Select(spi => provider.CreateItem(context, spi.path, spi.label, spi.path, null, null));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         static IEnumerable<SearchProposition> FetchPropositions(SearchContext context, SearchPropositionOptions options)

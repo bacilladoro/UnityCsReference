@@ -306,7 +306,16 @@ namespace UnityEditor.UIElements.Debugger
             }
             else if (val is int intValue)
             {
-                UpdateORCreateField<IntegerField, int>(val);
+                if (m_PropertyInfo.id == StylePropertyId.ZIndex)
+                {
+                    if (childCount > 0 && ElementAt(0) is not AutoIntegerField)
+                        Clear();
+                    UpdateORCreateField<AutoIntegerField, int>(val);
+                }
+                else
+                {
+                    UpdateORCreateField<IntegerField, int>(val);
+                }
             }
             else if (val is Length lengthValue)
             {
@@ -530,11 +539,32 @@ namespace UnityEditor.UIElements.Debugger
                 if (!IsFocused(field))
                     field.SetValueWithoutNotify(ratio.value);
             }
+            else if (val is List<GridTrackSize> gridTracks)
+            {
+                // CSS Grid: show the track list space-separated, e.g. "1fr 1fr 100px".
+                StringBuilder trackString = new StringBuilder();
+                for (int i = 0; i < gridTracks.Count; i++)
+                {
+                    if (i > 0)
+                        trackString.Append(" ");
+                    trackString.Append(gridTracks[i].ToString());
+                }
+                TextField field = GetOrCreateField<TextField, string>();
+                if (!IsFocused(field))
+                    field.SetValueWithoutNotify(trackString.ToString());
+            }
             else if (val is MaterialDefinition materialDef)
             {
                 var field = GetOrCreateObjectField<Material>();
                 if (!IsFocused(field))
                     field.SetValueWithoutNotify(materialDef.material);
+            }
+            else if (val is GridLine gridLine)
+            {
+                // CSS Grid line placement: auto, a 1-based line, or "span <n>".
+                TextField field = GetOrCreateField<TextField, string>();
+                if (!IsFocused(field))
+                    field.SetValueWithoutNotify(gridLine.ToString());
             }
             else
             {
@@ -542,10 +572,16 @@ namespace UnityEditor.UIElements.Debugger
                 Debug.Assert(type.IsArrayOrList(), "Expected List type");
 
                 var listValue = val as System.Collections.IList;
-                var valueString = listValue[0].ToString();
-                for (int i = 1; i < listValue.Count; i++)
+                var valueString = string.Empty;
+                if (listValue != null)
                 {
-                    valueString += $", {listValue[i]}";
+                    for (int i = 0; i < listValue.Count; i++)
+                    {
+                        if (i > 0)
+                            valueString += ", ";
+                        // A null entry is an unset slot (e.g. an empty animation-name), not a value to dereference.
+                        valueString += listValue[i]?.ToString() ?? "none";
+                    }
                 }
                 TextField field = GetOrCreateField<TextField, string>();
                 if (!IsFocused(field))
@@ -794,6 +830,26 @@ namespace UnityEditor.UIElements.Debugger
 
             StyleDebug.SetInlineStyleValue(m_SelectedElement.style, m_PropertyInfo.id, val);
             SetSpecificity(StyleDebug.InlineSpecificity);
+        }
+
+        sealed class AutoIntegerField : IntegerField
+        {
+            protected override string ValueToString(int v) =>
+                v == int.MinValue ? "auto" : v.ToString(formatString, System.Globalization.CultureInfo.InvariantCulture.NumberFormat);
+
+            protected override int StringToValue(string str) =>
+                str.Trim() == "auto" ? int.MinValue : base.StringToValue(str);
+
+            public override void ApplyInputDeviceDelta(Vector3 delta, DeltaSpeed speed, int startValue)
+            {
+                if (value == int.MinValue)
+                {
+                    SetValueWithoutNotify(0);
+                    base.ApplyInputDeviceDelta(delta, speed, 0);
+                    return;
+                }
+                base.ApplyInputDeviceDelta(delta, speed, startValue);
+            }
         }
     }
 }

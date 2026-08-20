@@ -7,13 +7,14 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditorInternal;
 using UnityEngine;
 using UnityEngine.Analytics;
 
 namespace UnityEditor.Search
 {
-    internal static class SearchAnalytics
+    internal static partial class SearchAnalytics
     {
         const string vendorKey = "unity.quicksearch";
 
@@ -317,9 +318,12 @@ namespace UnityEditor.Search
         }
 
         public static readonly string Package = "com.unity.quicksearch";
+        [AutoStaticsCleanupOnCodeReload]
         public static string PackageVersion;
-        private static readonly HashSet<int> s_OnceHashCodes = new HashSet<int>();
-        private static Delayer m_Debouncer;
+        [AutoStaticsCleanupOnCodeReload]
+        private static HashSet<int> s_OnceHashCodes = new HashSet<int>();
+        [AutoStaticsCleanupOnCodeReload]
+        private static Delayer m_Debouncer = null;
 
         public static int sessionQueryCount
         {
@@ -339,7 +343,8 @@ namespace UnityEditor.Search
             set => SessionState.SetInt($"Search.{nameof(sessionQuerySearchExecutionCount)}", value);
         }
 
-        static SearchAnalytics()
+        [OnCodeLoaded]
+        static void Initialize()
         {
             var v = InternalEditorUtility.GetUnityVersion();
             PackageVersion = $"{v.Major}.{v.Minor}";
@@ -363,6 +368,12 @@ namespace UnityEditor.Search
 
             EditorApplication.wantsToQuit += UnityQuit;
             m_Debouncer = Delayer.Debounce(SendEventFromEventCreator);
+        }
+
+        [OnCodeUnloading]
+        static void Reset()
+        {
+            EditorApplication.wantsToQuit -= UnityQuit;
         }
 
         public static void SendExceptionOnce(string name, Exception ex)
@@ -446,9 +457,9 @@ namespace UnityEditor.Search
             };
 
             var providers = searchContext.providers;
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             evt.providerDatas = providers.Select(provider => new ProviderData()
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 id = provider.id,
                 avgTime = (long)searchContext.searchElapsedTime,
@@ -480,9 +491,9 @@ namespace UnityEditor.Search
             report.showPackageIndexes = SearchSettings.showPackageIndexes;
             report.debounceMs = SearchSettings.debounceMs;
             report.savedSearchesSortOrder = SearchSettings.savedSearchesSortOrder.ToString();
-            #pragma warning disable UA2005 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2005 // Avoid Linq
             report.savedSearchesCount = SearchQueryAsset.savedQueries.Count() + SearchQuery.userQueries.Count();
-#pragma warning restore UA2005
+#pragma warning restore UAC2005
             report.sessionQueryCount = sessionQueryCount;
             report.sessionQuerySearchExecutionCount = sessionQuerySearchExecutionCount;
             report.sessionSearchOpenWindow = sessionSearchOpenWindow;
@@ -492,15 +503,15 @@ namespace UnityEditor.Search
 
             report.useQueryBuilder = SearchSettings.queryBuilder;
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var allIndexes = SearchDatabase.Enumerate(SearchDatabase.IndexLocation.assets).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             report.indexCount = allIndexes.Length;
             if (allIndexes.Length > 0)
             {
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 var maxSize = allIndexes.Max(index => index.indexSize);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 report.maxIndexSize = maxSize / 1048576f;
             }
             else

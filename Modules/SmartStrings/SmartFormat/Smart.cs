@@ -2,11 +2,13 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
 //
 // Copyright SmartFormat Project maintainers and contributors.
 // Licensed under the MIT license.
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using Unity.SmartStrings.Core.Extensions;
 using Unity.SmartStrings.Core.Settings;
 using Unity.SmartStrings.Extensions;
@@ -20,9 +22,10 @@ namespace Unity.SmartStrings;
 /// particular extensions that are needed.</para>
 /// <para><see cref="Smart"/> methods are not thread safe.</para>
 /// </summary>
-public static class Smart
+public static partial class Smart
 {
     [ThreadStatic] // creates isolated versions of the formatter in each thread
+    [AutoStaticsCleanupOnCodeReload] // mirrors ResetStatics(); clears the cleanup thread's formatter, recreated lazily
     static SmartFormatter s_Formatter;
 
     // Only clears the calling thread's formatter; used to mimic domain reload in the editor.
@@ -177,3 +180,4 @@ public static class Smart
         return smart;
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

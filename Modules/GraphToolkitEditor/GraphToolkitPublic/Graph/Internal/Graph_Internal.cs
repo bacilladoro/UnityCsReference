@@ -5,19 +5,23 @@
 using System;
 using System.Collections.Generic;
 using Unity.GraphToolkit.Editor.Implementation;
+using Unity.Scripting.LifecycleManagement;
 
 namespace Unity.GraphToolkit.Editor
 {
-    public partial class Graph
+    public partial class Graph : IGraphInternal
     {
         internal GraphModelImp m_Implementation;
 
+        [AutoStaticsCleanupOnCodeReload]
         static Node.OptionDefinitionContext s_OptionDefinitionContext = new();
 
-        internal void SetImplementation(GraphModelImp implementation)
+        void IGraphInternal.SetImplementation(GraphModelImp implementation)
         {
             m_Implementation = implementation;
         }
+
+        void IGraphInternal.CheckImplementation() => CheckImplementation();
 
         internal void CheckImplementation()
         {
@@ -34,10 +38,10 @@ namespace Unity.GraphToolkit.Editor
             s_OptionDefinitionContext.Finish();
         }
 
-        internal IEnumerable<Type> InvokeBuildAvailableVariableTypes(IReadOnlyCollection<Type> baseSupportedTypes)
+        IEnumerable<Type> IGraphInternal.InvokeBuildAvailableVariableTypes(IReadOnlyCollection<Type> baseSupportedTypes)
             => BuildAvailableVariableTypes(baseSupportedTypes);
 
-        internal IEnumerable<Type> InvokeBuildAvailableConstantTypes(IReadOnlyCollection<Type> baseSupportedTypes)
+        IEnumerable<Type> IGraphInternal.InvokeBuildAvailableConstantTypes(IReadOnlyCollection<Type> baseSupportedTypes)
             => BuildAvailableConstantTypes(baseSupportedTypes);
     }
 }

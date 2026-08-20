@@ -250,4 +250,15 @@ partial struct LayoutNode : IEquatable<LayoutNode>
     {
         LayoutProcessor.CalculateLayout(this, width, height, ReadOnlyStyle.Direction);
     }
+
+    /// <summary>
+    /// Measures the intrinsic size of this subtree for the given available size and measure modes,
+    /// without committing a full layout (no positioning). Used by higher-level track sizing
+    /// (e.g. CSS Grid) to query a node's min-content / max-content / fit-content size.
+    /// The available size must be defined for any mode other than <see cref="LayoutMeasureMode.Undefined"/>.
+    /// </summary>
+    public LayoutSize Measure(float availableWidth, LayoutMeasureMode widthMode, float availableHeight, LayoutMeasureMode heightMode)
+    {
+        return LayoutProcessor.Measure(this, availableWidth, widthMode, availableHeight, heightMode, ReadOnlyStyle.Direction);
+    }
 }

@@ -2,10 +2,12 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
 using System;
 using System.Collections.Generic;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Properties;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Bindings;
 
 namespace UnityEngine.UIElements
@@ -15,7 +17,7 @@ namespace UnityEngine.UIElements
     /// <seealso cref="ConverterGroup"/>.
     /// <seealso cref="DataBinding"/>.
     /// </summary>
-    public static class ConverterGroups
+    public static partial class ConverterGroups
     {
         internal struct Unsafe
         {
@@ -26,10 +28,15 @@ namespace UnityEngine.UIElements
             }
         }
 
+        // The groups hold user conversion delegates, so they are cleared on code reload;
+        // built-ins re-register via InitializeUIElementsManaged on the next load.
+        [AutoStaticsCleanupOnCodeReload]
         private static readonly ConverterGroup s_GlobalConverters = new ConverterGroup("__global_converters");
 
+        [NoAutoStaticsCleanup]
         internal static ConverterGroup globalConverters => s_GlobalConverters;
 
+        [AutoStaticsCleanupOnCodeReload]
         private static readonly Dictionary<string, ConverterGroup> s_BindingConverterGroups = new();
 
         /// <summary>
@@ -176,3 +183,4 @@ namespace UnityEngine.UIElements
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

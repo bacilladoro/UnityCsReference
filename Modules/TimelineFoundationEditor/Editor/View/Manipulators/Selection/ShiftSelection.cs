@@ -59,60 +59,60 @@ namespace Unity.Timeline.Foundation.View.Internals
             SequenceData sequenceData)
         {
             IEnumerable<Item> selectedItems = SequenceQuery.GetAllSelectedItems(selectionData, sequenceData);
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
-#pragma warning disable UA2012 // Pre-existing usage of LastOrDefault.
+#pragma warning disable UAC2001 // Avoid Linq
+#pragma warning disable UAC2012 // Pre-existing usage of LastOrDefault.
             Track lastTrackSelected = selectedItems.Select(i => i.parent).OrderBy(t => t.index).LastOrDefault();
-#pragma warning restore UA2012
-#pragma warning restore UA2001
+#pragma warning restore UAC2012
+#pragma warning restore UAC2001
             if (lastTrackSelected == null)
                 return null;
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             IEnumerable<Track> tracks = SequenceQuery.TracksBetween(sequenceData.sequence, lastTrackSelected,
                 toSelect.parent, exclude: SequenceQuery.TrackInCollapsedGroup).Concat(new[] { lastTrackSelected, toSelect.parent });
-#pragma warning disable UA2011 // Pre-existing usage of LastOrDefault.
+#pragma warning disable UAC2011 // Pre-existing usage of LastOrDefault.
             Item lastItemSelected = selectedItems.Intersect(tracks.SelectMany(t => t.Items))
                 .OrderBy(i => i.start)
                 .FirstOrDefault();
-#pragma warning restore UA2011
-#pragma warning restore UA2001
+#pragma warning restore UAC2011
+#pragma warning restore UAC2001
             if (lastItemSelected == Item.Invalid)
                 return null;
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return SequenceQuery.ItemsBetween(tracks, toSelect, lastItemSelected)
                 .Select(i => i.ID);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         static IEnumerable<UniqueID> GetSelectableTracks(Track toSelect, SelectionData selectionData, SequenceData sequenceData)
         {
-#pragma warning disable UA2012 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2012 // Avoid Linq
             Track lastTrackSelected = SequenceQuery.GetSelectedTracks(selectionData, sequenceData).LastOrDefault();
-#pragma warning restore UA2012
+#pragma warning restore UAC2012
             if (lastTrackSelected == null)
                 return null;
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return SequenceQuery.TracksBetween(sequenceData.sequence, lastTrackSelected, toSelect,
                 exclude: SequenceQuery.TrackInCollapsedGroup).Select(t => t.ID);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         static IEnumerable<UniqueID> GetSelectableItemsSameTrack(Item toSelect, SelectionData selectionData,
             SequenceData sequenceData)
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
-#pragma warning disable UA2012 // Pre-existing usage of LastOrDefault.
+#pragma warning disable UAC2001 // Avoid Linq
+#pragma warning disable UAC2012 // Pre-existing usage of LastOrDefault.
             Item lastItemSelected = SequenceQuery.GetItemSelectionOnTrack(selectionData, sequenceData, toSelect.parent)
                 .OrderBy(item => item.index).LastOrDefault();
-#pragma warning restore UA2012
-#pragma warning restore UA2001
+#pragma warning restore UAC2012
+#pragma warning restore UAC2001
             if (lastItemSelected == Item.Invalid)
                 return null;
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return SequenceQuery.ItemsInRange(toSelect.parent, GetRangeBetweenItems(lastItemSelected, toSelect))
                 .Select(i => i.ID);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         static TimeRange GetRangeBetweenItems(Item item1, Item item2) => new TimeRange(DiscreteTimeTimeExtensions.Min(item1.start, item2.start),

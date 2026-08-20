@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditorInternal;
 using UnityEngine;
 using UnityEngine.Profiling;
@@ -20,6 +21,7 @@ namespace UnityEditor.Search.Providers
             public readonly double warningLimit;
             public readonly double errorLimit;
 
+            [NoAutoStaticsCleanup]
             public static PerformanceLimit invalid = new(-1, -1, -1);
 
             public PerformanceLimit(int key, double warningLimit, double errorLimit)
@@ -135,6 +137,7 @@ namespace UnityEditor.Search.Providers
 
             public bool unitless => string.IsNullOrEmpty(suffix);
 
+            [NoAutoStaticsCleanup]
             public static UnitType unsupported = new("unsupported");
 
             public UnitType(string suffix, params UnitPowerType[] supportedPowers)
@@ -228,9 +231,9 @@ namespace UnityEditor.Search.Providers
 
         protected virtual SearchTable GetDefaultTableConfig(SearchContext context)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             return new SearchTable(id, new[] { new SearchColumn("Name", "label") }.Concat(FetchColumns(context, null)));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         protected virtual IEnumerable<SearchColumn> FetchColumns(SearchContext context, IEnumerable<SearchItem> items)
@@ -436,26 +439,26 @@ namespace UnityEditor.Search.Providers
 
         protected void AddUnitPower(UnitPowerType powerType, params string[] symbols)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var sortedSymbols = symbols.Length == 0 ? symbols : symbols.OrderByDescending(s => s.Length).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             var unitPower = new UnitPower(powerType, sortedSymbols);
             m_UnitPowers.TryAdd(powerType, unitPower);
         }
 
         protected UnitTypeHandle AddUnitType(string suffix, UnitTypeHandle unitTypeHandle, params UnitPowerType[] supportedPowers)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var sortedPowerTypes = supportedPowers.OrderByDescending(p =>
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 var symbols = m_UnitPowers[p].symbols;
                 if (symbols == null || symbols.Length == 0) return 0;
                 return symbols[0].Length; // Already sorter in UnitPower.
             });
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var unitType = new UnitType(suffix?.ToLowerInvariant(), unitTypeHandle, sortedPowerTypes.ToArray());
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             m_UnitTypes.TryAdd(unitType.handle, unitType);
             m_SortedUnitTypes = null;
             return unitType.handle;
@@ -501,9 +504,9 @@ namespace UnityEditor.Search.Providers
 
         protected void BuildSortedUnityTypesCache()
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             m_SortedUnitTypes = m_UnitTypes.Values.OrderByDescending(converter => converter.suffix.Length).ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         protected static double ConvertToPower(double baseValue, UnitPowerType power)
@@ -560,9 +563,9 @@ namespace UnityEditor.Search.Providers
             fetchDescription = FetchDescription;
             fetchItems = (context, _, provider) => FetchItem(context, provider);
             tableConfig = GetDefaultTableConfig;
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             actions = GetActions().ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             fetchPropositions = FetchPropositions;
         }
 
@@ -705,9 +708,9 @@ namespace UnityEditor.Search.Providers
         public static void OpenProvider()
         {
             var providerIds = new[] { PerformanceProvider.providerId, ProfilerMarkersProvider.providerId };
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var providers = SearchService.GetProviders(providerIds).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             var context = SearchService.CreateContext(providers, "", SearchFlags.OpenContextual);
             context.useExplicitProvidersAsNormalProviders = true;
             var tableConfig = providers[1].tableConfig(context);

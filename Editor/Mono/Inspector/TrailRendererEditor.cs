@@ -609,11 +609,11 @@ namespace UnityEditor
             public override bool IsAvailable()
             {
                 // Check for count != 1
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
-#pragma warning disable UA2002 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
+#pragma warning disable UAC2002 // Avoid Linq
                 if (targets.Skip(1).Any())
-#pragma warning restore UA2001
-#pragma warning restore UA2002
+#pragma warning restore UAC2001
+#pragma warning restore UAC2002
                     return false;
                 if (s_Inspectors == null || s_Inspectors.Count == 0)
                     return false;
@@ -644,9 +644,9 @@ namespace UnityEditor
 
                 Matrix4x4 orgMatrix = Handles.matrix;
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 foreach (var tr in targets.OfType<TrailRenderer>())
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 {
                     if (tr == null)
                         continue;

@@ -30,9 +30,9 @@ namespace Unity.GraphToolkit.Editor
             /// <param name="declarations">The declarations to highlight.</param>
             public void SetHighlightedDeclarations(Hash128 sourceStateHashGuid, IEnumerable<DeclarationModel> declarations)
             {
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 var newDeclarations = declarations.Select(m => m.Guid).ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 var changedDeclarations = new HashSet<Hash128>(newDeclarations);
 
                 if (m_State.m_HighlightedDeclarations.TryGetValue(sourceStateHashGuid, out var currentDeclarations))
@@ -105,13 +105,13 @@ namespace Unity.GraphToolkit.Editor
 
             if (other is DeclarationHighlighterStateComponent highlighterStateComponent)
             {
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 var newDeclarations = new HashSet<Hash128>(highlighterStateComponent.m_HighlightedDeclarations.Values.SelectMany(v => v));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 var changedDeclarations = new HashSet<Hash128>(m_HighlightedDeclarations.Values.SelectMany(v => v));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
                 changedDeclarations.SymmetricExceptWith(newDeclarations);
                 CurrentChangeset.ChangedModels.UnionWith(changedDeclarations);

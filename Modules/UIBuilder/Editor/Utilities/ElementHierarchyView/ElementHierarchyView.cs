@@ -347,9 +347,9 @@ namespace Unity.UI.Builder
                 if (elementContainer == null)
                     return;
 
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 foreach (var child in elementContainer.Children().ToList())
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 {
                     if (child is ClassPill pill && pill == draggedPill)
                     {
@@ -848,13 +848,13 @@ namespace Unity.UI.Builder
             {
                 var list = ListPool<int>.Get();
                 m_TreeView.viewController.GetExpandedItemIds(list);
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 m_RegisteredState.expandedIndices = list.Select(id => m_TreeView.viewController.GetIndexForId(id)).Where(index => index != -1).ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 m_RegisteredState.expandedIndices.Sort();
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 m_RegisteredState.selectedIndices = m_TreeView.selectedIndicesList.ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 m_RegisteredState.scrollOffset = m_TreeView.scrollView.scrollOffset;
                 ListPool<int>.Release(list);
             }
@@ -938,9 +938,9 @@ namespace Unity.UI.Builder
                 if (m_SelectElementCallback == null)
                     return;
 
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 var enumerable = itemIndices as int[] ?? itemIndices.ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 if (enumerable.Length == 0)
                 {
                     m_SelectElementCallback(null);

@@ -159,9 +159,9 @@ namespace UnityEditor.Search
 
         public IEnumerable<TResult> Select<TResult>(Func<SearchItem, TResult> selector)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             return Fetch().Where(item =>
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 context.Tick();
                 return item != null;
@@ -648,9 +648,9 @@ namespace UnityEditor.Search
 
         internal IEnumerable<IGroup> GetGroupByType(string groupType)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             return m_Groups.Where(group => group.type == groupType);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         public IEnumerable<IGroup> EnumerateGroups(bool showAll = true)
@@ -659,9 +659,9 @@ namespace UnityEditor.Search
                 yield return m_Groups[1];
             else
             {
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 foreach (var g in m_Groups.Skip(showAll ? 0 : 1).Where(g => !g.optional || g.count > 0))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     yield return g;
             }
         }
@@ -688,9 +688,9 @@ namespace UnityEditor.Search
 
         private void AddDefaultGroups()
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var defaultGroups = context.providers
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 .Where(p => p.showDetailsOptions.HasFlag(ShowDetailsOptions.DefaultGroup))
                 .Select(p => CreateGroup(p.id, p.type, p.name, m_SearchListComparer, p.priority, optional: false));
             m_Groups.AddRange(defaultGroups);
@@ -804,17 +804,17 @@ namespace UnityEditor.Search
         {
             int queryItemCount = 0;
 
-#pragma warning disable UA2002 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2002 // Avoid Linq
             if (activeProviderTypes == null || !activeProviderTypes.Any())
-#pragma warning restore UA2002
+#pragma warning restore UAC2002
                 return TotalCount;
 
             foreach (var providerType in activeProviderTypes)
             {
                 var groupsWithType = GetGroupByType(providerType);
-#pragma warning disable UA2002 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2002 // Avoid Linq
                 if (groupsWithType == null || !groupsWithType.Any())
-#pragma warning restore UA2002
+#pragma warning restore UAC2002
                     continue;
 
                 foreach (var group in groupsWithType)
@@ -1014,9 +1014,9 @@ namespace UnityEditor.Search
 
         public override bool Contains(SearchItem item)
         {
-            #pragma warning disable UA2007 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2007 // Avoid Linq
             return m_UnorderedItems.Contains(item);
-#pragma warning restore UA2007
+#pragma warning restore UAC2007
         }
 
         public override void CopyTo(SearchItem[] array, int arrayIndex)

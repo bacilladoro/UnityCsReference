@@ -2,6 +2,8 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
+using Unity.Scripting.LifecycleManagement;
 using System;
 using System.Collections.Generic;
 using Unity.Collections;
@@ -162,6 +164,7 @@ unsafe struct SelectorAccelerationCacheEntry
 
     // Monotonically increasing id stamped onto each freshly allocated entry, so AreSame can
     // distinguish entries even when the tracked allocator reuses an address after Free + Malloc.
+    [NoAutoStaticsCleanup] // monotonic counter; safe to persist
     static long s_NextBuildId;
 
     // Lay the three regions out contiguously in one tracked allocation. Order matches the
@@ -205,6 +208,7 @@ unsafe struct SelectorAccelerationCacheEntry
 
 class SelectorAccelerationCache
 {
+    [NoAutoStaticsCleanup] // Shutdown (registered on UnloadingUtility below) frees the native cache entries
     public static SelectorAccelerationCache shared = new SelectorAccelerationCache();
 
     internal static readonly MemoryLabel s_MemoryLabel =
@@ -230,8 +234,8 @@ class SelectorAccelerationCache
         m_CacheForHash.Clear();
     }
 
-    private static ProfilerMarker s_MarkerBuild = new ProfilerMarker("UIElements.BuildAccelerateSelectors");
-    private static ProfilerMarker s_MarkerClean = new ProfilerMarker("UIElements.CleanAcceleratedSelectors");
+    private static readonly ProfilerMarker s_MarkerBuild = new ProfilerMarker("UIElements.BuildAccelerateSelectors");
+    private static readonly ProfilerMarker s_MarkerClean = new ProfilerMarker("UIElements.CleanAcceleratedSelectors");
 
     readonly Dictionary<EntityId, SelectorAccelerationCacheEntry> m_Cache = new();
     readonly List<(EntityId dependency, EntityId dependent)> m_DependencyList = new(128);
@@ -410,3 +414,4 @@ class SelectorAccelerationCache
         return entry;
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

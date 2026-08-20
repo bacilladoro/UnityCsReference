@@ -109,9 +109,9 @@ namespace Unity.GraphToolkit.Editor
         /// <param name="color">The color to set</param>
         /// <param name="elementModels">Element models to affect</param>
         public ChangeElementColorCommand(Color color, IEnumerable<Model> elementModels)
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             : base(k_UndoStringSingular, k_UndoStringPlural, color, elementModels?.OfType<GraphElementModel>().ToList())
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         {
         }
 
@@ -433,9 +433,9 @@ namespace Unity.GraphToolkit.Editor
                             mainUpdater.SelectElements(command.Models, false, command.DisplayInInspector);
                             break;
                         case SelectionMode.Toggle:
-                            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                            #pragma warning disable UAC2001 // Avoid Linq
                             var toSelect = command.Models.Where(m => !mainSelectionState.IsSelected(m)).ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                             mainUpdater.SelectElements(command.Models, false, false);
                             mainUpdater.SelectElements(toSelect, true, command.DisplayInInspector);
                             break;

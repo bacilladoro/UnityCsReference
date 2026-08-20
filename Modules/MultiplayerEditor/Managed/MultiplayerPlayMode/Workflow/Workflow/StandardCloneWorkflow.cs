@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEditor.Multiplayer.Internal;
 using UnityEngine;
@@ -9,7 +10,7 @@ using UnityEngine.Multiplayer.Internal;
 
 namespace Unity.Multiplayer.PlayMode.Editor
 {
-    class StandardCloneWorkflow
+    partial class StandardCloneWorkflow
     {
         enum ScriptChangesDuringPlayOptions
         {
@@ -22,6 +23,7 @@ namespace Unity.Multiplayer.PlayMode.Editor
         const string k_OpenGameViewOnPlay = "OpenGameViewOnEnteringPlayMode";
         const string k_ClonedPlayerStateKey = "Unity.Multiplayer.Playmode.Workflow.Editor.StandardCloneWorkflow_ClonedPlayerState";
 
+        [AutoStaticsCleanupOnCodeReload] // last write time for change detection; must reset so changes during reload are detected
         static string s_LastWriteTime;
 
         private CloneState m_ClonedPlayerState;

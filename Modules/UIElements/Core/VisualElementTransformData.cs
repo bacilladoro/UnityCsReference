@@ -38,6 +38,8 @@ internal enum VisualElementTransformFlags
     PickingIgnore = 1 << 12,
     // Element has a ContainsPoint override
     UsesContainsPoint = 1 << 13,
+    // A child had a non-auto z-index at some point; picking must sort children (sticky, never cleared)
+    MayHaveZIndexedChildren = 1 << 14,
 
     Init = WorldTransformDirty | WorldTransformInverseDirty | BoundingBoxDirty | WorldBoundingBoxDirty | BoundingBoxWithoutNestedDirty | LocalBounds3DDirty | LocalBoundsWithoutNested3DDirty
 }

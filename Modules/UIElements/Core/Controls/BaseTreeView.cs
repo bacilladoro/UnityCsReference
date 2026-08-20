@@ -2,6 +2,8 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
+using Unity.Scripting.LifecycleManagement;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -44,7 +46,8 @@ namespace UnityEngine.UIElements
     {
         internal static readonly BindingId autoExpandProperty = nameof(autoExpand);
 
-        internal static CustomStyleProperty<float> s_TreeViewIndentProperty = new CustomStyleProperty<float>("--unity-tree-view-indent");
+        [NoAutoStaticsCleanup]
+        internal static readonly CustomStyleProperty<float> s_TreeViewIndentProperty = new("--unity-tree-view-indent");
 
         [VisibleToOtherModules("UnityEditor.UIBuilderModule")]
         internal static readonly int invalidId = -1;
@@ -486,9 +489,9 @@ namespace UnityEngine.UIElements
             if (ids == null)
                 return;
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var selectedIndexes = ids.Select(id => GetItemIndex(id, true)).ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             SetSelectionInternal(selectedIndexes, sendNotification);
         }
@@ -547,9 +550,9 @@ namespace UnityEngine.UIElements
 
                 if (viewController.HasChildren(sourceId))
                 {
-#pragma warning disable UA2005 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2005 // Avoid Linq
                     if (viewController.GetChildrenIds(sourceId).Count() != viewController.GetChildrenIds(targetId).Count())
-#pragma warning restore UA2005
+#pragma warning restore UAC2005
                     {
                         Debug.LogWarning("Source and target hierarchies are not the same");
                         return;
@@ -656,3 +659,4 @@ namespace UnityEngine.UIElements
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

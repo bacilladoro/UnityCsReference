@@ -4,6 +4,7 @@
 
 using System.Collections.Generic;
 using Unity.Profiling;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Bindings;
 
 
@@ -62,10 +63,12 @@ namespace UnityEngine.TextCore.Text
         const float k_FloatUnset = -32767;
         const int k_MaxCharacters = 8; // Determines the initial allocation and size of the character array / buffer.
 
+        [AutoStaticsCleanupOnCodeReload]
         static TextGenerator s_TextGenerator;
 
         static readonly ProfilerMarker s_GenerateTextMarker = new ProfilerMarker("TextGenerator.GenerateText");
 
+        [AutoStaticsCleanupOnCodeReload]
         [VisibleToOtherModules("UnityEngine.UIElementsModule")]
         internal static bool IsExecutingJob { get; set; }
 
@@ -158,6 +161,7 @@ namespace UnityEngine.TextCore.Text
         /// <summary>
         /// Event delegate to be called when the requested Unicode character is missing from the font asset.
         /// </summary>
+        [AutoStaticsCleanupOnCodeReload]
         public static event MissingCharacterEventCallback OnMissingCharacter;
 
         Vector3[] m_RectTransformCorners = new Vector3[4];

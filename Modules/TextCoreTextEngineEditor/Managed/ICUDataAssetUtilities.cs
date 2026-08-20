@@ -5,15 +5,16 @@
 using UnityEditor;
 using System.IO;
 using Unity.Collections;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEngine.TextCore.Text
 {
-    [InitializeOnLoad]
-    internal class ICUDataAssetUtilities
+    internal partial class ICUDataAssetUtilities
     {
-        private static string k_ICUDataAssetPath = "icudt73l.bytes";
+        private static readonly string k_ICUDataAssetPath = "icudt73l.bytes";
 
-        static ICUDataAssetUtilities()
+        [OnCodeLoaded]
+        static void Initialize()
         {
             TextLib.GetICUAssetEditorDelegate = GetEditorICUAsset;
         }

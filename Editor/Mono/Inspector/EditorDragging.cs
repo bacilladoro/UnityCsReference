@@ -199,9 +199,9 @@ namespace UnityEditor
                                 if (Array.TrueForAll(objects, t => t is Component))
                                 {
                                     var ids = new ReadOnlySpan<EntityId>(DragAndDrop.entityIds);
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                                     var targetComponents = objects.Cast<Component>().ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                                     var sourceComponents = new Component[ids.Length];
                                     for(int i = 0; i < ids.Length; ++i)
                                         sourceComponents[i] = (Component)InternalEditorUtility.GetObjectFromEntityId(ids[i]);
@@ -272,9 +272,9 @@ namespace UnityEditor
                 if (Array.Exists(editors[targetIndex].targets, t => t is not Component))
                     return;
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 var targetComponents = editors[targetIndex].targets.Cast<Component>().ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
                 if (draggingMode.Value == DraggingMode.Script)
                 {

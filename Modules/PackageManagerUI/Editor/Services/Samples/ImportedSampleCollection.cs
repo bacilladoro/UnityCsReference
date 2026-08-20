@@ -9,15 +9,14 @@ using UnityEngine;
 namespace UnityEditor.PackageManager.UI.Internal
 {
     [Serializable]
-    internal class ImportedSampleCollection : ISerializationCallbackReceiver
+    internal class ImportedSampleCollection
     {
         [SerializeField]
         private string m_SanitizedPackageDisplayName;
         public string sanitizedPackageDisplayName => m_SanitizedPackageDisplayName;
 
         [SerializeField]
-        private ImportedSample[] m_SerializedSamples;
-        private Dictionary<string, ImportedSample> m_Samples;
+        private Dictionary<string, ImportedSample> m_Samples = new();
         public IReadOnlyCollection<ImportedSample> samples => m_Samples.Values;
 
         public ImportedSample GetImportedSample(string sanitizedDisplayName) => m_Samples.GetValueOrDefault(sanitizedDisplayName ?? string.Empty);
@@ -40,19 +39,6 @@ namespace UnityEditor.PackageManager.UI.Internal
                     return false;
             }
             return true;
-        }
-
-        public void OnBeforeSerialize()
-        {
-            m_SerializedSamples = new ImportedSample[m_Samples.Count];
-            m_Samples.Values.CopyTo(m_SerializedSamples, 0);
-        }
-
-        public void OnAfterDeserialize()
-        {
-            m_Samples = new Dictionary<string, ImportedSample>();
-            foreach (var value in m_SerializedSamples)
-                m_Samples[value.sanitizedDisplayName] = value;
         }
     }
 }

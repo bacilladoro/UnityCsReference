@@ -72,18 +72,23 @@ namespace UnityEditor.Build.Analysis
             m_Messages = new MessagesConsole();
             detailsGrid.Add(m_Messages);
 
-            SetSelection(null, null);
+            Apply(null);
         }
 
-        public void SetSelection(BuildEntry selection, BuildAnalysis analysis)
+        public void Apply(BuildAnalysisView view)
         {
-            var hasSelection = selection != null && analysis != null;
+            var hasSelection = view?.Entry != null && view.Analysis != null;
             m_NoSelection.style.display = hasSelection ? DisplayStyle.None : DisplayStyle.Flex;
             m_ScrollView.style.display = hasSelection ? DisplayStyle.Flex : DisplayStyle.None;
 
             if (!hasSelection)
                 return;
 
+            BindSummary(view.Entry, view.Analysis, view.Messages);
+        }
+
+        private void BindSummary(BuildEntry selection, BuildAnalysis analysis, BuildLogMessages messages)
+        {
             var summary = analysis.Summary;
 
             m_Header.Bind(selection);
@@ -103,8 +108,8 @@ namespace UnityEditor.Build.Analysis
             m_ContentOptionsValue.text = FormatOptions(summary.BuildContentOptions);
             m_BuildProfileValue.text = FormatBuildProfile(summary.BuildProfilePath);
 
-            m_Steps.Bind(analysis);
-            m_Messages.Bind(analysis);
+            m_Steps.Bind(analysis, messages);
+            m_Messages.Bind(messages, RootStepName(analysis));
         }
 
         public void OnTabVisibilityChanged(bool isVisible)
@@ -113,6 +118,23 @@ namespace UnityEditor.Build.Analysis
 
         public void OnInspectorVisibilityChanged(bool isOpen)
         {
+        }
+
+        // The report's depth-0 container step ("Build Content" / "Build player"). BuildLog never records
+        // it, so messages emitted while it was the only step running arrive with no step of their own.
+        private static string RootStepName(BuildAnalysis analysis)
+        {
+            var steps = analysis.Tables?.Steps;
+            if (steps == null)
+                return null;
+
+            foreach (var step in steps)
+            {
+                if (step.Depth == 0)
+                    return step.Name;
+            }
+
+            return null;
         }
 
         private static string FormatOptions(string[] options)

@@ -317,6 +317,9 @@ namespace UnityEditor.Build.Profile
                 case "PreloadShadersBatchTimeLimit":
                     preloadShadersBatchTimeLimit = value;
                     break;
+                case "DefaultMeshBufferTarget":
+                    EditorGraphicsSettings.defaultMeshBufferTarget = (DefaultMeshBufferTarget)value;
+                    break;
             }
 
             static bool IntegerToBoolean(int value) => value != 0;
@@ -350,6 +353,7 @@ namespace UnityEditor.Build.Profile
                 "WarmupProgressivelyLimit" => warmupProgressivelyLimit,
                 "EnableCacheMissTracing" => BooleanToInteger(enableCacheMissTracing),
                 "PreloadShadersBatchTimeLimit" => preloadShadersBatchTimeLimit,
+                "DefaultMeshBufferTarget" => (int)EditorGraphicsSettings.defaultMeshBufferTarget,
                 _ => k_InvalidGraphicsSetting,
             };
 

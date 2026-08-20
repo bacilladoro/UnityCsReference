@@ -2,11 +2,13 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
 //
 // Copyright SmartFormat Project maintainers and contributors.
 // Licensed under the MIT license.
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using System.Text;
 
 namespace Unity.SmartStrings.Extensions.Time.Utilities;
@@ -14,6 +16,7 @@ namespace Unity.SmartStrings.Extensions.Time.Utilities;
 /// <summary>
 /// Utility class to format a <see cref="TimeSpan"/> as a <see langword="string"/>.
 /// </summary>
+[NoAutoStaticsCleanup] // plain-value formatting state and options; holds no references to reloadable code
 static class TimeSpanUtility
 {
     static TimeSpanFormatOptions s_RangeMin;
@@ -221,3 +224,4 @@ static class TimeSpanUtility
         return TimeSpan.FromTicks(fromTime.Ticks - extra);
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

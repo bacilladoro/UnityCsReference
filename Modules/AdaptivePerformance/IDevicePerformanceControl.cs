@@ -80,6 +80,19 @@ namespace UnityEngine.AdaptivePerformance
         /// </summary>
         /// <value>True when CPU boost is active, otherwise false. The default value is false.</value>
         bool GpuPerformanceBoost { get; set; }
+
+        /// <summary>
+        /// The current energy-efficiency mode state. Setting this to true asks the subsystem to
+        /// bias device-level configurations toward energy efficiency over peak performance (e.g.
+        /// Android's power-efficiency hint on the ADPF hint session). If
+        /// <see cref="Provider.Feature.EnergyEfficiencyMode"/> is not supported (see
+        /// <see cref="Provider.AdaptivePerformanceSubsystem.Capabilities"/>), the set is a no-op and the
+        /// stored value does not change. The getter reflects the last value that was successfully
+        /// applied to the subsystem, not the most recent request — so a failed set leaves the
+        /// getter reporting the previous state.
+        /// </summary>
+        /// <value>True when energy-efficiency mode is currently active. The default value is false.</value>
+        bool EnergyEfficiencyMode { get; set; }
     }
 
     /// <summary>

@@ -29,19 +29,9 @@ namespace Unity.GraphToolkit.Editor
         public static readonly string ghostUssClassName = ussClassName.WithUssModifier(ghostUssModifier);
 
         /// <summary>
-        /// The USS class name added to local transitions.
-        /// </summary>
-        public static readonly string localTransitionUssClassName = ussClassName.WithUssModifier("local");
-
-        /// <summary>
         /// The USS class name added to self transitions.
         /// </summary>
         public static readonly string selfTransitionUssClassName = ussClassName.WithUssModifier("self");
-
-        /// <summary>
-        /// The USS class name added to transitions triggered when entering a state machine.
-        /// </summary>
-        public static readonly string onEnterSelectorUssClassName = ussClassName.WithUssModifier("on-enter");
 
         /// <summary>
         /// The USS class name added to transitions between two states.
@@ -157,7 +147,7 @@ namespace Unity.GraphToolkit.Editor
             }
             else
             {
-                var ui = port.NodeModel.GetView<State>(RootView);
+                var ui = port.NodeModel.GetView<StateView>(RootView);
                 if (ui == null)
                     return Vector2.zero;
 
@@ -182,7 +172,7 @@ namespace Unity.GraphToolkit.Editor
             }
             else
             {
-                var ui = port.NodeModel.GetView<State>(RootView);
+                var ui = port.NodeModel.GetView<StateView>(RootView);
                 if (ui == null)
                     return Vector2.zero;
 
@@ -193,7 +183,7 @@ namespace Unity.GraphToolkit.Editor
         }
 
         /// <inheritdoc />
-        internal override VisualElement SizeElement => TransitionModel.IsSingleStateTransition ? TransitionArrow : TransitionControl;
+        internal override VisualElement SizeElement => TransitionModel.IsSelfTransition ? TransitionArrow : TransitionControl;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Transition"/> class.
@@ -209,7 +199,7 @@ namespace Unity.GraphToolkit.Editor
         {
             base.BuildPartList();
 
-            if (TransitionModel.IsSingleStateTransition)
+            if (TransitionModel.IsSelfTransition)
             {
                 PartList.AppendPart(TransitionArrowPart.Create(transitionArrowPartName, WireModel, this, ussClassName));
             }
@@ -225,13 +215,11 @@ namespace Unity.GraphToolkit.Editor
             base.PostBuildUI();
             AddToClassList(ussClassName);
             EnableInClassList(ghostUssClassName, Model is IGhostWireModel);
-            EnableInClassList(selfTransitionUssClassName, TransitionModel.TransitionSupportKind == TransitionSupportKind.Self);
-            EnableInClassList(localTransitionUssClassName, TransitionModel.TransitionSupportKind == TransitionSupportKind.Local);
-            EnableInClassList(onEnterSelectorUssClassName, TransitionModel.TransitionSupportKind == TransitionSupportKind.OnEnter);
-            EnableInClassList(stateToStateSelectorUssClassName, TransitionModel.TransitionSupportKind == TransitionSupportKind.StateToState);
+            EnableInClassList(selfTransitionUssClassName, TransitionModel is SelfTransitionModel);
+            EnableInClassList(stateToStateSelectorUssClassName, TransitionModel is StateToStateTransitionModel);
             this.AddPackageStylesheet("Wire.uss");
 
-            if (TransitionModel.IsSingleStateTransition)
+            if (TransitionModel.IsSelfTransition)
             {
                 m_TransitionAnchorManipulator = new TransitionSupportAnchorManipulator();
                 this.AddManipulator(m_TransitionHoverDetector);
@@ -247,7 +235,7 @@ namespace Unity.GraphToolkit.Editor
 
         void ShowHideConnectors(bool forceUpdate = false)
         {
-            if (!TransitionModel.IsSingleStateTransition)
+            if (!TransitionModel.IsSelfTransition)
             {
                 var showConnectors = IsSelected() || Hovered;
                 if (showConnectors && (forceUpdate || !m_ShowConnectors))

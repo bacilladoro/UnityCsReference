@@ -9,6 +9,7 @@ using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 using Unity.GraphToolkit.CSO;
 using Unity.GraphToolsAuthoringFramework.InternalEditorBridge;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
@@ -99,10 +100,14 @@ namespace Unity.GraphToolkit.Editor
     class CustomPropertyDrawerAdapter
     {
         // internal for tests
+        [NoAutoStaticsCleanup] // long-lived type-to-wrapper-type registry; cleared entries would lose wrapper type definitions
         internal static Dictionary<Type, Type> wrapperTypes = new(); // Value type to wrapper type (eg: MyType to UnityEditor.GraphToolsFoundation.WrapperTypes.Wrapper_MyType_{s_UniqueId++}).
+        [NoAutoStaticsCleanup] // weak-key table; entries expire when owner model is GC'd, no ALC pin risk
         internal static ConditionalWeakTable<object, List<(string, FieldWrapper)>> objectWrappers = new(); // Associates a list of wrappers to a model (eg: all wrappers associated with a node). As long as the key is alive, the value stays alive.
 
+        [NoAutoStaticsCleanup] // monotonically-increasing ID counter; resetting would cause type name collisions in the dynamic module
         static int s_UniqueId;
+        [NoAutoStaticsCleanup] // singleton dynamic module builder; recreating it after reload would orphan already-registered types
         static ModuleBuilder s_ModuleBuilder;
 
         List<FieldWrapper> m_Wrappers;

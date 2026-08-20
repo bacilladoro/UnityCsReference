@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
 using System;
 using System.Text.RegularExpressions;
 using UnityEngine;
@@ -9,12 +10,14 @@ using UnityEngine.Bindings;
 using UnityEngine.Pool;
 using UnityEngine.UIElements;
 using UnityEngine.UIElements.StyleSheets;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.UIElements
 {
     [VisibleToOtherModules("UnityEditor.UIBuilderModule", "UnityEditor.UIToolkitAuthoringModule")]
     internal static class StyleSheetExtensions
     {
+        [NoAutoStaticsCleanup]
         static StyleSheetExporter s_Exporter = new();
         static Regex styleSelectorRegex { get; } = new(@"^[a-zA-Z0-9\-_:#\*>. ]+$");
 
@@ -129,3 +132,4 @@ namespace UnityEditor.UIElements
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

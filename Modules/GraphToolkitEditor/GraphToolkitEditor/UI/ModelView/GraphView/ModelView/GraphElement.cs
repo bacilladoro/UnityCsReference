@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using Unity.GraphToolkit.InternalBridge;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Pool;
@@ -55,7 +56,9 @@ namespace Unity.GraphToolkit.Editor
         /// </summary>
         public static readonly string ussVerySmallUssClassName = ussClassName.WithUssModifier(GraphElementHelper.verySmallUssModifier);
 
+        [NoAutoStaticsCleanup] // CSS custom property descriptor; value is a fixed CSS property name
         static readonly CustomStyleProperty<int> k_LayerProperty = new CustomStyleProperty<int>("--layer");
+        [NoAutoStaticsCleanup] // CSS custom property descriptor; value is a fixed CSS property name
         static readonly CustomStyleProperty<Color> k_MinimapColorProperty = new CustomStyleProperty<Color>("--minimap-color");
 
         static Color DefaultMinimapColor

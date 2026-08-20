@@ -2,10 +2,12 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: BuildSettingsWindow not yet converted
 using System;
 using UnityEngine;
 using UnityEditor;
 using UnityEditor.Build;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Build.Profile
 {
@@ -17,7 +19,7 @@ namespace UnityEditor.Build.Profile
     /// Calls to `EditorUserBuildSettings.SwitchActiveBuildTarget(buildTargetGroup, target)` will trigger this event.
     /// The event is called after the build target is changed, and an instance of this class is created when the event occurs.
     /// </remarks>
-    internal class ActiveBuildTargetListener : IActiveBuildTargetChanged
+    internal partial class ActiveBuildTargetListener : IActiveBuildTargetChanged
     {
         /// <summary>
         /// The order in which the callback will be called. Lower numbers are called first.
@@ -35,6 +37,8 @@ namespace UnityEditor.Build.Profile
         /// <summary>
         /// Event that is called when the active build platform changes.
         /// </summary>
+        [AutoStaticsCleanupOnCodeReload]
         static public event Action<BuildTarget, BuildTarget> activeBuildTargetChanged;
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

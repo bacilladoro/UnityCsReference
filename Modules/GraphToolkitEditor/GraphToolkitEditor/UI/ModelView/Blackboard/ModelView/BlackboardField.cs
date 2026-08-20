@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -79,9 +80,13 @@ namespace Unity.GraphToolkit.Editor
         /// </summary>
         public static readonly string externalUssClassName = ussClassName.WithUssModifier("external");
 
+        [NoAutoStaticsCleanup] // CSS custom property descriptor; value is a fixed CSS property name
         static readonly CustomStyleProperty<Color> k_BorderColorProperty = new("--custom-border-color");
+        [NoAutoStaticsCleanup] // CSS custom property descriptor; value is a fixed CSS property name
         static readonly CustomStyleProperty<Color> k_DefaultIconColorProperty = new("--graph-color-icon-default");
+        [NoAutoStaticsCleanup] // CSS custom property descriptor; value is a fixed CSS property name
         static readonly CustomStyleProperty<Color> k_IconColorProperty = new("--unity-image-tint-color");
+        [NoAutoStaticsCleanup] // CSS custom property descriptor; value is a fixed CSS property name
         static readonly CustomStyleProperty<Color> k_ScopeImageColorProperty = new("--scope-image-color");
 
         /// <summary>

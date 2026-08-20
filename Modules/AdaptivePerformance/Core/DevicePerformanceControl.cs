@@ -103,5 +103,10 @@ namespace UnityEngine.AdaptivePerformance
         public bool CpuPerformanceBoost { get; set; }
 
         public bool GpuPerformanceBoost { get; set; }
+
+        // Stub — the real routing lives in AdaptivePerformanceManager, which also implements
+        // IDevicePerformanceControl and intercepts sets to schedule a per-frame flush to the
+        // subsystem. This impl is only used for the level plumbing (SetPerformanceLevel).
+        public bool EnergyEfficiencyMode { get; set; }
     }
 }

@@ -2,6 +2,8 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
+using Unity.Scripting.LifecycleManagement;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -142,8 +144,9 @@ namespace UnityEngine.UIElements
         }
     }
 
-    internal static class VisualElementListPool
+    internal static partial class VisualElementListPool
     {
+        [AutoStaticsCleanupOnCodeReload]
         static ObjectPool<List<VisualElement>> pool = new ObjectPool<List<VisualElement>>(() => new List<VisualElement>(), 20);
 
         public static List<VisualElement> Copy(List<VisualElement> elements)
@@ -174,8 +177,9 @@ namespace UnityEngine.UIElements
     }
 
     [VisibleToOtherModules("UnityEditor.UIBuilderModule")]
-    internal class ObjectListPool<T>
+    internal partial class ObjectListPool<T>
     {
+        [AutoStaticsCleanupOnCodeReload]
         static ObjectPool<List<T>> pool = new ObjectPool<List<T>>(() => new List<T>(), 20);
 
         public static List<T> Get()
@@ -238,6 +242,7 @@ namespace UnityEngine.UIElements
             set => m_Flags = value ? m_Flags | VisualElementFlags.PointerCapture : m_Flags & ~VisualElementFlags.PointerCapture;
         }
 
+        [NoAutoStaticsCleanup]
         internal static uint s_NextId;
 
         internal static readonly PropertyName userDataPropertyKey = new PropertyName("--unity-user-data");
@@ -1938,6 +1943,7 @@ namespace UnityEngine.UIElements
         }
 
         // For unit tests
+        [AutoStaticsCleanupOnCodeReload]
         internal static int s_FinalizerCount = 0;
 
 #pragma warning disable UA5000 // The Avoid Finalizer Analyzer produces compile errors for any new finalizers. This pre-existing finalizer declaration has been suppressed, but should be rewritten if possible.
@@ -1951,6 +1957,7 @@ namespace UnityEngine.UIElements
                     {
                         LayoutManager.SharedManager.EnqueueNodeForRecycling(ref m_LayoutNode);
                     }
+                    ReleaseNativeResources(fromFinalizer: true);
                 }
                 s_FinalizerCount++;
             }
@@ -2025,7 +2032,16 @@ namespace UnityEngine.UIElements
                 m_CallbackRegistry.Dispose();
                 m_CallbackRegistry = null;
             }
+
+            ReleaseNativeResources(fromFinalizer: false);
         }
+
+        /// <summary>
+        /// Releases native (unmanaged) resources owned by this element.
+        /// When <paramref name="fromFinalizer"/> is true, implementations must not free the
+        /// resource directly; they must hand it off to a main-thread free queue instead.
+        /// </summary>
+        private protected virtual void ReleaseNativeResources(bool fromFinalizer) { }
 
         internal void SetTooltip(TooltipEvent e)
         {
@@ -2280,6 +2296,13 @@ namespace UnityEngine.UIElements
         [VisibleToOtherModules("UnityEditor.UIBuilderModule", "UnityEditor.UIToolkitAuthoringModule")]
         internal void IncrementVersion(VersionChangeType changeType)
         {
+            if ((changeType & VersionChangeType.Repaint) != 0 && computedStyle.zIndex != int.MinValue)
+            {
+                var physicalParent = hierarchy.parent;
+                if (physicalParent != null)
+                    physicalParent.transformFlags |= VisualElementTransformFlags.MayHaveZIndexedChildren;
+            }
+
             elementPanel?.OnVersionChanged(this, changeType);
         }
 
@@ -2732,7 +2755,11 @@ namespace UnityEngine.UIElements
             /// <summary>
             /// At Most. The element should give its preferred width/height but no more than the value passed.
             /// </summary>
-            AtMost = LayoutMeasureMode.AtMost
+            AtMost = LayoutMeasureMode.AtMost,
+            /// <summary>
+            /// Min Content. The element should give the smallest width/height it can occupy without its content overflowing (for text, the width of the longest unbreakable run).
+            /// </summary>
+            MinContent = LayoutMeasureMode.MinContent
         }
 
         internal bool requireMeasureFunction
@@ -3497,3 +3524,4 @@ namespace UnityEngine.UIElements
 
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

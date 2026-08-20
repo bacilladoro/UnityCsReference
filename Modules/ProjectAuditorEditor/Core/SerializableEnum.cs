@@ -158,17 +158,17 @@ namespace Unity.ProjectAuditor.Editor.Core
         public static List<T> ToValuesList<T>(this SerializableEnum<T>[] array)
             where T : struct, Enum
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             return new List<T>(array.Select(v => v.Value));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         public static SerializableEnum<T>[] ToSerializableArray<T>(this IEnumerable<T> enumerable)
             where T : struct, Enum
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             return enumerable.Select(v => new SerializableEnum<T>(v)).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
     }
 }

@@ -55,16 +55,16 @@ namespace Unity.GraphToolkit.Editor
 
         public (Label label, VisualElement field) Build(ICommandTarget commandTargetView, string label, string tooltip, IReadOnlyList<object> obj, string propertyName)
         {
-            if (obj[0] is SubgraphNodeModel { IsReferencingLocalSubgraph: false } subgraphNodeModel)
+            if (obj[0] is ISubgraphNodeInternal { IsReferencingLocalSubgraph: false } subgraphNode && obj[0] is GraphElementModel model)
             {
                 m_CommandTarget = commandTargetView;
-                m_GraphModel = subgraphNodeModel.GraphModel;
+                m_GraphModel = model.GraphModel;
                 m_Container = new VisualElement();
                 m_Container.AddPackageStylesheet("SubgraphAssetPropertyField.uss");
                 m_Container.AddToClassList(containerUSSClassName);
 
                 m_ObjectField = new ObjectField("Asset");
-                m_ObjectField.value = subgraphNodeModel.GetSubgraphModel()?.GraphObject;
+                m_ObjectField.value = subgraphNode.GetSubgraphModel()?.GraphObject;
                 foreach (var child in m_ObjectField.Children())
                 {
                     if (child is Label fieldLabel)

@@ -45,6 +45,15 @@ namespace Unity.U2D.Physics
         public readonly bool isValid => PhysicsTransform_IsValid(this);
 
         /// <summary>
+        /// Check if every value of the transform is finite, so neither NaN nor infinity.
+        /// </summary>
+        /// <remarks>
+        /// The check is performed entirely on the managed values, so it is cheap enough for per-frame use and never produces a validation report.
+        /// See <see cref="PhysicsMath.IsFinite"/>.
+        /// </remarks>
+        public readonly bool isFinite => PhysicsMath.IsFinite(position) && PhysicsMath.IsFinite(rotation.direction);
+
+        /// <summary>
         /// The translation for the transformation.
         /// </summary>
         /// <remarks>

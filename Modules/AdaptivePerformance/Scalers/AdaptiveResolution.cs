@@ -24,7 +24,7 @@ namespace UnityEngine.AdaptivePerformance
             base.Awake();
             if (m_Settings == null)
                 return;
-            ApplyDefaultSetting(m_Settings.scalerSettings.AdaptiveResolution);
+            ApplyProfileSettings(m_Settings.scalerSettings.AdaptiveResolution);
         }
 
         /// <summary>
@@ -46,12 +46,6 @@ namespace UnityEngine.AdaptivePerformance
                 MaxLevel = 1;
             MaxBound = Mathf.Clamp(MaxBound, 0.25f, 1.0f);
             MinBound = Mathf.Clamp(MinBound, 0.25f, MaxBound);
-        }
-
-        // TODO: expose dynamicResolution capability through SystemInfo
-        private bool IsDynamicResolutionSupported()
-        {
-            return false;
         }
 
         private void Start()
@@ -100,6 +94,11 @@ namespace UnityEngine.AdaptivePerformance
                 // TODO: warn if unsupported render pipeline is used
                 //Debug.Log("You might not use a supported Render Pipeline. Currently only Universal Render Pipeline and Built-in are supported by Adaptive Resolution.");
             }
+        }
+
+        internal static bool IsDynamicResolutionSupported()
+        {
+            return false;
         }
     }
 }

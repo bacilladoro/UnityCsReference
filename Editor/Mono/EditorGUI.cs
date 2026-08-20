@@ -3561,9 +3561,9 @@ namespace UnityEditor
                             // ReorderableLists multi-selection features
                             else if (list != null && list.selectedIndices.Count > 0)
                             {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                                 foreach (var selected in list.selectedIndices.Reverse<int>())
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                                 {
                                     if (selected >= parentArrayProperty.arraySize) continue;
 

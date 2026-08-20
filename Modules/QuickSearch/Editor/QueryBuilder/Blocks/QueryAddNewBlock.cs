@@ -4,6 +4,7 @@
 
 using System.Collections.Generic;
 using System.Linq;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor.StyleSheets;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -18,6 +19,7 @@ namespace UnityEditor.Search
         static readonly GUIContent s_CreateContent = EditorGUIUtility.IconContent("Toolbar Plus More", "|Add new query block (Tab)");
         private Image m_Icon;
 
+        [NoAutoStaticsCleanup] // Lazy style-value cache keyed by a fixed style-sheet name; holds no user refs, safe to persist across reloads.
         public static SVC<Color> searchBackgroundColor = new SVC<Color>("--unity-colors-button-background-hover", Color.red);
 
         public override string ToString() => null;
@@ -89,16 +91,16 @@ namespace UnityEditor.Search
             if (source.context.empty)
             {
                 var areaPropositions = QueryAreaBlock.FetchPropositions(context);
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 var allOtherPropositions = new[] { SearchProposition.CreateSeparator() }.Concat(SearchProposition.Fetch(context, options).OrderBy(p => p));
                 return areaPropositions.Concat(allOtherPropositions);
-                #pragma warning restore UA2001
+                #pragma warning restore UAC2001
             }
             else
             {
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 return SearchProposition.Fetch(context, options).OrderBy(p => p);
-                #pragma warning restore UA2001
+                #pragma warning restore UAC2001
             }
         }
     }

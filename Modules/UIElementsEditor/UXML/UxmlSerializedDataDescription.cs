@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -9,6 +10,7 @@ using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEngine.Bindings;
 using UnityEngine.UIElements;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.UIElements
 {
@@ -28,6 +30,7 @@ namespace UnityEditor.UIElements
         private bool m_IsDefaultValueInitialized;
 
         Type[] m_UxmlSupportedChildTypes;
+        [NoAutoStaticsCleanup]
         static readonly Type[] s_DefaultSupportedChildren = new []{ typeof(VisualElement) };
 
         public Type serializedDataType => m_SerializedDataType;
@@ -330,3 +333,4 @@ namespace UnityEditor.UIElements
         public override string ToString() => uxmlFullName;
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

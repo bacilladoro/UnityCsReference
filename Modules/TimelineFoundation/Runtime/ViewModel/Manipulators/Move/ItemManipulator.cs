@@ -76,18 +76,18 @@ namespace Unity.Timeline.Foundation.ViewModel.Internals
 
         public static IEnumerable<Item> GetManipulatedItems(in ManipulationContext context, TimeRange rippleRange)
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return context.manipulatedTracks.SelectMany(t => t.items.OnlyClips().Where(i => rippleRange.Overlaps(i.GetVisibleRange())));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         public static IEnumerable<Item> GetFirstItems(IEnumerable<ManipulatedTrack> tracks)
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
-#pragma warning disable UA2011 // pre-existing usage of FirstOrDefault 
+#pragma warning disable UAC2001 // Avoid Linq
+#pragma warning disable UAC2011 // pre-existing usage of FirstOrDefault 
             return tracks.Select(t => t.manipulatedItems.OnlyClips().FirstOrDefault());
-#pragma warning restore UA2011
-#pragma warning restore UA2001
+#pragma warning restore UAC2011
+#pragma warning restore UAC2001
         }
 
         public static void MixInsert(IViewModel viewModel, IReadOnlyList<Track> destinationTracks, MoveItemsState state, IManipulationHandler handler)
@@ -129,9 +129,9 @@ namespace Unity.Timeline.Foundation.ViewModel.Internals
 
             foreach (ManipulatedTrack manipulatedTrack in context.manipulatedTracks)
             {
-#pragma warning disable UA2011 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2011 // Avoid Linq
                 Item firstItem = manipulatedTrack.manipulatedItems.FilterOutMarkers().FirstOrDefault();
-#pragma warning restore UA2011
+#pragma warning restore UAC2011
                 if (firstItem.IsValid())
                 {
                     var command = new RippleMove(manipulatedTrack.track, manipulatedTrack.originalCutList, firstItem.start, parameters.totalDelta);

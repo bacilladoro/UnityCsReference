@@ -123,9 +123,9 @@ namespace UnityEditor.TreeViewExamples
 
             // We are moving items so we adjust the insertion index to accomodate that any items above the insertion index is removed before inserting
             if (insertionIndex > 0)
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 insertionIndex -= parentItem.children.GetRange(0, insertionIndex).Count(draggedItems.Contains);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             // Remove draggedItems from their parents
             foreach (var draggedItem in draggedItems)

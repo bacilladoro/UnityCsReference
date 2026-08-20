@@ -15,6 +15,7 @@ namespace UnityEngine.UIElements
 {
     internal partial class UIAnimationBinder
     {
+        [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
         private static readonly int[] m_ChannelCount = new int[]
         {
             0, // Unknown
@@ -22,11 +23,17 @@ namespace UnityEngine.UIElements
             1, // AlignItems
             1, // AlignSelf
             0, // All
-            0, // AnimationPlayState
+            0, // Animation
+            0, // AnimationDelay
+            0, // AnimationDirection
+            0, // AnimationDuration
+            0, // AnimationIterationCount
+            0, // AnimationNames
+            0, // AnimationPlayStates
             1, // AspectRatio
             72, // BackdropFilter
             4, // BackgroundColor
-            1, // BackgroundImage
+            32, // BackgroundImage
             0, // BackgroundPosition
             3, // BackgroundPositionX
             3, // BackgroundPositionY
@@ -61,8 +68,21 @@ namespace UnityEngine.UIElements
             1, // FlexWrap
             2, // FontSize
             0, // Gap
+            0, // GridAutoColumns
+            0, // GridAutoFlow
+            0, // GridAutoRows
+            0, // GridColumn
+            1, // GridColumnEnd
+            1, // GridColumnStart
+            0, // GridRow
+            1, // GridRowEnd
+            1, // GridRowStart
+            0, // GridTemplateColumns
+            0, // GridTemplateRows
             2, // Height
             1, // JustifyContent
+            0, // JustifyItems
+            0, // JustifySelf
             2, // Left
             2, // LetterSpacing
             0, // Margin
@@ -122,8 +142,10 @@ namespace UnityEngine.UIElements
             1, // Visibility
             1, // WhiteSpace
             2, // Width
-            2 // WordSpacing
+            2, // WordSpacing
+            1 // ZIndex
         };
+        [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
         private static readonly PropertyType[] m_PropertyTypeMapping = new PropertyType[]
         {
             PropertyType.Int,
@@ -131,7 +153,13 @@ namespace UnityEngine.UIElements
             PropertyType.Enum,
             PropertyType.Enum,
             PropertyType.Shorthand,
-            PropertyType.Enum,
+            PropertyType.Shorthand,
+            PropertyType.List,
+            PropertyType.List,
+            PropertyType.List,
+            PropertyType.List,
+            PropertyType.List,
+            PropertyType.List,
             PropertyType.Ratio,
             PropertyType.Filter,
             PropertyType.Color,
@@ -170,7 +198,20 @@ namespace UnityEngine.UIElements
             PropertyType.Enum,
             PropertyType.Length,
             PropertyType.Shorthand,
+            PropertyType.List,
+            PropertyType.Enum,
+            PropertyType.List,
+            PropertyType.Shorthand,
+            PropertyType.GridLine,
+            PropertyType.GridLine,
+            PropertyType.Shorthand,
+            PropertyType.GridLine,
+            PropertyType.GridLine,
+            PropertyType.List,
+            PropertyType.List,
             PropertyType.Length,
+            PropertyType.Enum,
+            PropertyType.Enum,
             PropertyType.Enum,
             PropertyType.Length,
             PropertyType.Length,
@@ -205,7 +246,7 @@ namespace UnityEngine.UIElements
             PropertyType.List,
             PropertyType.List,
             PropertyType.Translate,
-            PropertyType.UIAnimationClip,
+            PropertyType.Shorthand,
             PropertyType.Color,
             PropertyType.Shorthand,
             PropertyType.Enum,
@@ -231,7 +272,8 @@ namespace UnityEngine.UIElements
             PropertyType.Enum,
             PropertyType.Enum,
             PropertyType.Length,
-            PropertyType.Length
+            PropertyType.Length,
+            PropertyType.Int
         };
         internal enum PropertyType
         {
@@ -260,6 +302,7 @@ namespace UnityEngine.UIElements
             UIAnimationClip,
             MaterialDefinition,
             Ratio,
+            GridLine,
             EntityId
         }
 
@@ -271,6 +314,7 @@ namespace UnityEngine.UIElements
             PPtr
         }
 
+        [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
         private static readonly string[][] m_ChannelSuffixes = new string[][]
         {
             new string[]
@@ -319,7 +363,38 @@ namespace UnityEngine.UIElements
             }, // Color
             new string[]
             {
-                ""
+                ".image",
+                ".gradient.type",
+                ".gradient.angle",
+                ".gradient.shape",
+                ".gradient.size",
+                ".gradient.center.x",
+                ".gradient.center.y",
+                ".gradient.stopCount",
+                ".gradient.stop0.color.r",
+                ".gradient.stop0.color.g",
+                ".gradient.stop0.color.b",
+                ".gradient.stop0.color.a",
+                ".gradient.stop0.position",
+                ".gradient.stop0.positionIsPercent",
+                ".gradient.stop1.color.r",
+                ".gradient.stop1.color.g",
+                ".gradient.stop1.color.b",
+                ".gradient.stop1.color.a",
+                ".gradient.stop1.position",
+                ".gradient.stop1.positionIsPercent",
+                ".gradient.stop2.color.r",
+                ".gradient.stop2.color.g",
+                ".gradient.stop2.color.b",
+                ".gradient.stop2.color.a",
+                ".gradient.stop2.position",
+                ".gradient.stop2.positionIsPercent",
+                ".gradient.stop3.color.r",
+                ".gradient.stop3.color.g",
+                ".gradient.stop3.color.b",
+                ".gradient.stop3.color.a",
+                ".gradient.stop3.position",
+                ".gradient.stop3.positionIsPercent"
             }, // Background
             new string[]
             {
@@ -457,8 +532,13 @@ namespace UnityEngine.UIElements
             {
                 ""
             }, // Ratio
+            new string[]
+            {
+                ""
+            }, // GridLine
             System.Array.Empty<string>() // EntityId
         };
+        [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
         private static readonly AnimationChannelKind[][] m_ChannelKinds = new AnimationChannelKind[][]
         {
             new AnimationChannelKind[]
@@ -507,7 +587,38 @@ namespace UnityEngine.UIElements
             }, // Color
             new AnimationChannelKind[]
             {
-                AnimationChannelKind.PPtr
+                AnimationChannelKind.PPtr,
+                AnimationChannelKind.Int,
+                AnimationChannelKind.Float,
+                AnimationChannelKind.Int,
+                AnimationChannelKind.Int,
+                AnimationChannelKind.Float,
+                AnimationChannelKind.Float,
+                AnimationChannelKind.Int,
+                AnimationChannelKind.Float,
+                AnimationChannelKind.Float,
+                AnimationChannelKind.Float,
+                AnimationChannelKind.Float,
+                AnimationChannelKind.Float,
+                AnimationChannelKind.Int,
+                AnimationChannelKind.Float,
+                AnimationChannelKind.Float,
+                AnimationChannelKind.Float,
+                AnimationChannelKind.Float,
+                AnimationChannelKind.Float,
+                AnimationChannelKind.Int,
+                AnimationChannelKind.Float,
+                AnimationChannelKind.Float,
+                AnimationChannelKind.Float,
+                AnimationChannelKind.Float,
+                AnimationChannelKind.Float,
+                AnimationChannelKind.Int,
+                AnimationChannelKind.Float,
+                AnimationChannelKind.Float,
+                AnimationChannelKind.Float,
+                AnimationChannelKind.Float,
+                AnimationChannelKind.Float,
+                AnimationChannelKind.Int
             }, // Background
             new AnimationChannelKind[]
             {
@@ -645,6 +756,10 @@ namespace UnityEngine.UIElements
             {
                 AnimationChannelKind.Float
             }, // Ratio
+            new AnimationChannelKind[]
+            {
+                AnimationChannelKind.Int
+            }, // GridLine
             System.Array.Empty<AnimationChannelKind>() // EntityId
         };
     }

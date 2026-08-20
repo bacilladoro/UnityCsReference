@@ -48,11 +48,11 @@ namespace Unity.Timeline.Foundation.ViewModel
         protected override void RevertInsert(IReadOnlyList<Track> targetsToRevert)
         {
             for (var i = 0; i < targetsToRevert.Count; i++)
-#pragma warning disable UA2013 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2013 // Avoid Linq
                 viewModel.Dispatch(new SetTrackContents(targetsToRevert[i],
                     m_MoveItemsState.itemsDestinations?.ElementAtOrDefault(i),
                     m_MarkersState.markerDestinations?.ElementAtOrDefault(i)));
-#pragma warning restore UA2013
+#pragma warning restore UAC2013
         }
 
         MoveManipulationResult DoRippleMove(InsertionParameters parameters)
@@ -113,9 +113,9 @@ namespace Unity.Timeline.Foundation.ViewModel
 
             IEnumerable<Item> firstItems = m_MoveItemsState.shouldMoveItems ? ItemManipulator.GetFirstItems(context.manipulatedTracks) : Array.Empty<Item>();
             IEnumerable<Item> firstMarkers = m_MarkersState.shouldMoveMarkers ? MarkerManipulator.GetFirstItems(context.manipulatedTracks) : Array.Empty<Item>();
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             foreach (Item item in firstItems.Concat(firstMarkers))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 if (item.IsValid())
                     offset = DiscreteTimeTimeExtensions.Min(offset, item.start - CalculateLeftBound(item));

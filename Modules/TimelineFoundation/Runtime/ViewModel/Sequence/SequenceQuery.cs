@@ -16,23 +16,23 @@ namespace Unity.Timeline.Foundation.ViewModel
     {
         public static IEnumerable<Item> GetItemSelectionOnTrack(SelectionData selectionData, SequenceData sequenceData, Track track)
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return GetAllSelectedItems(selectionData, sequenceData).Where(i => i != Item.Invalid && track.Equals(i.parent));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         public static IEnumerable<Track> GetSelectedTracks(SelectionData selectionData, SequenceData sequenceData)
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return selectionData.selection.tracks.Select(sequenceData.GetTrackFromId);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         public static IEnumerable<Item> ItemsInRange(this IEnumerable<Item> items, TimeRange range)
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return items.Where(i => range.Intersects(i.GetVisibleRange()));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         public static IEnumerable<Item> ItemsInRange(this Track track, TimeRange range, ItemTypeFlags flag = ItemTypeFlags.All)
@@ -58,11 +58,11 @@ namespace Unity.Timeline.Foundation.ViewModel
 
         public static IEnumerable<Item> GetAllSelectedItems(SelectionData selectionData, SequenceData sequenceData)
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return selectionData.selection.clips
                 .Concat(selectionData.selection.markers)
                 .Select(sequenceData.GetItemFromId);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         public static IEnumerable<Track> TracksBetween(Sequence sequence, Track track1, Track track2, Func<Track, bool> exclude = null)
@@ -75,11 +75,11 @@ namespace Unity.Timeline.Foundation.ViewModel
             int start = Math.Min(track1.index, track2.index);
             int end = Math.Max(track1.index, track2.index);
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             IEnumerable<Track> tracks = sequence.GetFlattenedChildren().Where(t => t.index > start && t.index < end);
             if (exclude != null)
                 return tracks.Where(t => !exclude.Invoke(t));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             return tracks;
         }
 

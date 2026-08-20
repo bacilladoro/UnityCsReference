@@ -89,9 +89,9 @@ namespace UnityEditor
 
         private IEnumerable<Vector3> SelectedProbePositions()
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return m_Selection.Select(t => m_SourcePositions[t]);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         public void DuplicateSelectedProbes()
@@ -117,9 +117,9 @@ namespace UnityEditor
             var serializer = new XmlSerializer(typeof(Vector3[]));
             var writer = new StringWriter();
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             serializer.Serialize(writer, localPositions.Select(m_Group.transform.TransformPoint).ToArray());
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             writer.Close();
             GUIUtility.systemCopyBuffer = writer.ToString();
         }
@@ -186,9 +186,9 @@ namespace UnityEditor
 
             Undo.RegisterCompleteObjectUndo(new Object[] { m_Group, m_SerializedSelectedProbes }, "Delete Probes");
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var reverseSortedIndicies = m_Selection.OrderByDescending(x => x);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             foreach (var index in reverseSortedIndicies)
             {
                 m_SourcePositions.RemoveAt(index);

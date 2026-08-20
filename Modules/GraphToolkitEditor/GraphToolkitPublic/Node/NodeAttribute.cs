@@ -15,7 +15,7 @@ namespace Unity.GraphToolkit.Editor;
 /// Apply this attribute to a class derived from <see cref="Node"/> to define metadata like <see cref="IconPath"/>.
 /// </remarks>
 [AttributeUsage(AttributeTargets.Class)]
-public sealed class NodeAttribute : Attribute
+public class NodeAttribute : Attribute
 {
     /// <summary>
     /// The file path to the node's icon.

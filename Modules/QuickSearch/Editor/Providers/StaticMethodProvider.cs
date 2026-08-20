@@ -8,12 +8,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.Assemblies;
 
 namespace UnityEditor.Search.Providers
 {
-    static class StaticMethodProvider
+    static partial class StaticMethodProvider
     {
         private const string type = "static_methods";
         private const string displayName = "Static API";
@@ -24,6 +25,7 @@ namespace UnityEditor.Search.Providers
             "^System\\..*", "^nunit\\..*", "^Microsoft\\..*", "^Mono\\..*", "^SyntaxTree\\..*"
         };
 
+        [AutoStaticsCleanupOnCodeReload]
         private static MethodInfo[] methods;
 
         [SearchItemProvider]

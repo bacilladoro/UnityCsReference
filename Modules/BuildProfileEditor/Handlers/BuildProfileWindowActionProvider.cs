@@ -2,15 +2,18 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: BuildSettingsWindow not yet converted
 using System;
 using System.Collections.Generic;
 using UnityEditor.Build.Profile;
 using UnityEngine.Bindings;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Build.Profile.Handlers
 {
-    internal class BuildProfileWindowActionProvider
+    internal partial class BuildProfileWindowActionProvider
     {
+        [AutoStaticsCleanupOnCodeReload]
         static List<BuildProfileWindowAction> s_WindowActions = null;
 
         public BuildProfileWindowActionProvider()
@@ -83,3 +86,4 @@ namespace UnityEditor.Build.Profile.Handlers
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

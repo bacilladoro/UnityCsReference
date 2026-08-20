@@ -6,11 +6,12 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Assertions;
 
 namespace Unity.Multiplayer.PlayMode.Editor
 {
-    static class NodeScheduler
+    static partial class NodeScheduler
     {
         private class TurnGroup
         {
@@ -90,8 +91,10 @@ namespace Unity.Multiplayer.PlayMode.Editor
             }
         }
 
-        private static readonly LinkedList<TurnGroup> s_Queue = new();
-        private static readonly Dictionary<Turn, TurnGroup> s_TurnToGroup = new();
+        [AutoStaticsCleanupOnCodeReload] // live scheduling queue; stale entries after reload corrupt scheduling state
+        private static LinkedList<TurnGroup> s_Queue = new();
+        [AutoStaticsCleanupOnCodeReload] // turn-to-group mapping; stale after reload
+        private static Dictionary<Turn, TurnGroup> s_TurnToGroup = new();
 
         public static Turn AssignTurn(bool runInIsolation)
         {

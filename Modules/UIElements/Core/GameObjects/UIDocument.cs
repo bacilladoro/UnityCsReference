@@ -2,6 +2,8 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
+using Unity.Scripting.LifecycleManagement;
 using System;
 using System.Collections.Generic;
 using UnityEngine.Assertions;
@@ -101,7 +103,7 @@ namespace UnityEngine.UIElements
     [HelpURL("UIE-get-started-with-runtime-ui")]
     [AddComponentMenu(@"UI Toolkit/Legacy/UI Document (UI Toolkit)"), ExecuteAlways, DisallowMultipleComponent] // Hide in Add Component menu
     [DefaultExecutionOrder(-100)] // UIDocument's OnEnable should run before user's OnEnable
-    public sealed class UIDocument : MonoBehaviour, IPanelComponent
+    public sealed partial class UIDocument : MonoBehaviour, IPanelComponent
     {
         internal static readonly UniqueStyleString rootStyleClassNameUnique = new("unity-ui-document__root");
 
@@ -112,16 +114,22 @@ namespace UnityEngine.UIElements
         private const int k_DefaultSortingOrder = 0;
 
         // We count instances of UIDocument to be able to insert UIDocuments that have the same sort order in a
+        [NoAutoStaticsCleanup]
         // deterministic way (i.e. instances created before will be placed before in the visual tree).
         private static int s_CurrentUIDocumentCounter = 0;
         internal readonly int m_UIDocumentCreationIndex;
 
         int IPanelComponent.creationIndex => m_UIDocumentCreationIndex;
 
+        [AutoStaticsCleanupOnCodeReload]
         internal static Func<bool> IsEditorPlaying;
+        [AutoStaticsCleanupOnCodeReload]
         internal static Func<bool> IsEditorPlayingOrWillChangePlaymode;
+        [AutoStaticsCleanupOnCodeReload]
         internal static Func<bool> IsEditingPrefab;
 
+
+        [AutoStaticsCleanupOnCodeReload]
         internal static int EnabledDocumentCount = 0;
 
         [SerializeField]
@@ -216,6 +224,25 @@ namespace UnityEngine.UIElements
         }
 
         IPanelComponent IPanelComponent.parentUI => m_ParentUI;
+
+        /// <summary>
+        /// Finds the UIDocument whose UI hierarchy contains the given element.
+        /// </summary>
+        /// <remarks>
+        /// If the element is inside a nested UIDocument, the closest one is returned.
+        /// </remarks>
+        /// <param name="ve">The element to search from.</param>
+        /// <returns>The UIDocument containing the element, or null if the element is not part of a UIDocument.</returns>
+        public static UIDocument FindUIDocument(VisualElement ve)
+        {
+            for (var current = ve; current != null; current = current.hierarchy.parent)
+            {
+                if (current is IPanelComponentRootElement { panelComponent: UIDocument document })
+                    return document;
+            }
+
+            return null;
+        }
 
         [SerializeField]
         private UIDocument m_ParentUI;
@@ -422,6 +449,7 @@ namespace UnityEngine.UIElements
             AddRootVisualElementToTree();
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         internal static Func<IPanelComponent, ILiveReloadAssetTracker<VisualTreeAsset>> CreateLiveReloadVisualTreeAssetTracker;
         private ILiveReloadAssetTracker<VisualTreeAsset> m_LiveReloadVisualTreeAssetTracker;
 
@@ -522,10 +550,15 @@ namespace UnityEngine.UIElements
 
             if (isWorldSpace)
             {
-                if (PanelComponentUtils.IsTransformControlledByGameObject(this))
-                    SetTransform();
-                else
-                    ClearTransform();
+                // UUM-119563: while hidden, PivotOffset()'s 3D bounds collapse to zero; recomputing would cache a
+                // stale zero transform that snaps the panel in one frame after it reappears. Skip until visible.
+                if (m_RootVisualElement.areAncestorsAndSelfDisplayed)
+                {
+                    if (PanelComponentUtils.IsTransformControlledByGameObject(this))
+                        SetTransform();
+                    else
+                        ClearTransform();
+                }
 
                 UpdateRenderer();
                 if (panelSettings.colliderUpdateMode != ColliderUpdateMode.Keep
@@ -1150,6 +1183,7 @@ namespace UnityEngine.UIElements
         private VisualTreeAsset m_OldUxml = null;
         private float m_OldSortingOrder = k_DefaultSortingOrder;
 
+        [NoAutoStaticsCleanup]
         // For unit tests
         internal static int s_OnValidateCalled = 0;
 
@@ -1224,3 +1258,4 @@ namespace UnityEngine.UIElements
 
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

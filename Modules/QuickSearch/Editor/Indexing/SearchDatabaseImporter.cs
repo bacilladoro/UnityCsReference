@@ -4,6 +4,7 @@
 
 using System.Collections.Generic;
 using System.IO;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEditor.AssetImporters;
 
@@ -100,6 +101,7 @@ namespace UnityEditor.Search
         public const string defaultTemplate = "_Default";
         public const string testProjectDefaultTemplate = "TestProject";
 
+        [NoAutoStaticsCleanup]
         public static readonly Dictionary<string, string> all = new Dictionary<string, string>()
         {
             { "Assets", assets },

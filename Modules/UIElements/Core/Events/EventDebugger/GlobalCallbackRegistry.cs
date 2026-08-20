@@ -2,7 +2,9 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
 
+using Unity.Scripting.LifecycleManagement;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -10,8 +12,9 @@ using System.Linq;
 
 namespace UnityEngine.UIElements.Experimental
 {
-    internal static class GlobalCallbackRegistry
+    internal static partial class GlobalCallbackRegistry
     {
+        [NoAutoStaticsCleanup]
         private static bool m_IsEventDebuggerConnected = false;
         public static bool IsEventDebuggerConnected
         {
@@ -34,15 +37,16 @@ namespace UnityEngine.UIElements.Experimental
             public bool removable;
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         // Global registry
-        internal static readonly Dictionary<CallbackEventHandler, Dictionary<Type, List<ListenerRecord>>> s_Listeners =
+        internal static Dictionary<CallbackEventHandler, Dictionary<Type, List<ListenerRecord>>> s_Listeners =
             new Dictionary<CallbackEventHandler, Dictionary<Type, List<ListenerRecord>>>();
 
         public static void CleanListeners(IPanel panel)
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var listeners = s_Listeners.ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             foreach (var eventRegistrationListener in listeners)
             {
                 var key = eventRegistrationListener.Key as VisualElement; // VE that sends events
@@ -125,6 +129,8 @@ namespace UnityEngine.UIElements.Experimental
             }
         }
 
+
+        [NoAutoStaticsCleanup]
         private static readonly List<Type> k_TypesToRemove = new();
         public static void UnregisterAllRemovableListeners(CallbackEventHandler ceh)
         {
@@ -160,3 +166,4 @@ namespace UnityEngine.UIElements.Experimental
     }
 }
 
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

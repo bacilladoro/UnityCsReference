@@ -36,15 +36,15 @@ namespace Unity.GraphToolkit.Editor
         /// Creates a new GraphToolbarElement attribute.
         /// </summary>
         /// <param name="id">The unique identifier for this toolbar element.</param>
-        /// <param name="graphType">The graph type this element should appear for. Must inherit from Graph.</param>
+        /// <param name="graphType">The graph type this element should appear for. Must inherit from <see cref="Graph"/> or <see cref="StateMachine"/>.</param>
         /// <param name="order">The display order (default 1000). Lower values appear first.</param>
         /// <exception cref="ArgumentException">Thrown if graphType does not inherit from Graph.</exception>
         public GraphToolbarElementAttribute(string id, Type graphType, int order = 1000)
         {
-            if (!typeof(Graph).IsAssignableFrom(graphType))
+            if (!typeof(Graph).IsAssignableFrom(graphType) && !typeof(StateMachine).IsAssignableFrom(graphType))
             {
                 throw new ArgumentException(
-                    $"GraphType must be assignable to {nameof(Graph)}",
+                    $"GraphType must be assignable to {nameof(Graph)} or {nameof(StateMachine)}",
                     nameof(graphType));
             }
 

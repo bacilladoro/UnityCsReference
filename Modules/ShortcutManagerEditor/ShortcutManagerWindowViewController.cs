@@ -215,9 +215,9 @@ namespace UnityEditor.ShortcutManagement
             m_CategoryToEntriesList.Add(k_MainMenu, menuItems);
 
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             m_Categories = categories.ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             m_Categories.Sort();
             m_Categories.Insert(k_AllUnityCommandsIndex, k_AllUnityCommands);
@@ -239,9 +239,9 @@ namespace UnityEditor.ShortcutManagement
 
         public List<string> GetAvailableProfiles()
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             return m_ShortcutProfileManager.GetProfiles()
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 .Select(p => p.id)
                 .Concat(new[] { "Default" })
                 .ToList();

@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitAuthoringFramework not yet converted
 using System;
 using UnityEngine.Bindings;
 
@@ -82,7 +83,7 @@ static class UICommandQueue
     /// The undo name passed to the outermost <see cref="BeginGroup"/> is provided.
     /// Listeners can use this signal to begin batching expensive operations across the group's commands.
     /// </summary>
-    public static event Action<string> GroupBegan
+    public static event CommandSystem.GroupBeganHandler GroupBegan
     {
         add => s_CommandSystem.GroupBegan += value;
         remove => s_CommandSystem.GroupBegan -= value;
@@ -90,10 +91,12 @@ static class UICommandQueue
 
     /// <summary>
     /// Raised after the outermost command group closes and dirty marking has been applied.
-    /// Nested groups do not raise this event. The outermost group's undo name is provided.
+    /// Nested groups do not raise this event. A <see cref="GroupEndedContext"/> is provided carrying the
+    /// outermost group's undo name and the set of objects recorded for undo across all of the group's
+    /// commands, so listeners can react to exactly which objects were modified.
     /// Listeners can use this signal to flush any batched work started in <see cref="GroupBegan"/>.
     /// </summary>
-    public static event Action<string> GroupEnded
+    public static event CommandSystem.GroupEndedHandler GroupEnded
     {
         add => s_CommandSystem.GroupEnded += value;
         remove => s_CommandSystem.GroupEnded -= value;
@@ -113,3 +116,4 @@ static class UICommandQueue
     internal static void ClearPool<TCommand>() where TCommand : Command<TCommand>, new()
         => Command<TCommand>.ClearPooledCommands();
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

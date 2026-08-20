@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -41,10 +42,15 @@ namespace Unity.GraphToolkit.Editor
         float m_Border = 1.0f;
         BlockDrawParams m_DrawParams = BlockDrawParams.Default;
 
+        [NoAutoStaticsCleanup] // CSS custom property descriptor; value is a fixed CSS property name
         internal static readonly CustomStyleProperty<Color> BlocksBackgroundColorStyle = new CustomStyleProperty<Color>("--block--background-color");
+        [NoAutoStaticsCleanup] // CSS custom property descriptor; value is a fixed CSS property name
         internal static readonly CustomStyleProperty<Color> DisabledBackgroundColorStyle = new CustomStyleProperty<Color>("--disabled-background-color");
+        [NoAutoStaticsCleanup] // CSS custom property descriptor; value is a fixed CSS property name
         internal static readonly CustomStyleProperty<float> BlockBorderStyle = new CustomStyleProperty<float>("--block--border");
+        [NoAutoStaticsCleanup] // CSS custom property descriptor; value is a fixed CSS property name
         internal static readonly CustomStyleProperty<Color> NodeOutputBackgroundColorStyle = new CustomStyleProperty<Color>("--block-output--background-color");
+        [NoAutoStaticsCleanup] // CSS custom property descriptor; value is a fixed CSS property name
         internal static readonly CustomStyleProperty<Color> BlocksOptionsBackgroundColorStyle = new CustomStyleProperty<Color>("--block-option--background-color");
 
         /// <summary>

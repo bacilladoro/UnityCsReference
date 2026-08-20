@@ -222,9 +222,9 @@ namespace Unity.GraphToolkit.Editor
             m_GraphModel = graphModel;
 
             var inspectedModelCache = InspectedModels;
-            #pragma warning disable UA2001, UA2014 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001, UAC2014 // Avoid Linq
             if (!inspectedModelCache.SequenceEqual(models.Where(m => m != null)))
-#pragma warning restore UA2001, UA2014
+#pragma warning restore UAC2001, UAC2014
             {
                 hasChanges = true;
                 ScrollOffset = Vector2.zero;
@@ -235,9 +235,9 @@ namespace Unity.GraphToolkit.Editor
                 return false;
 
             m_InspectedModels.Clear();
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             m_InspectedModels.AddRange(models.Where(m => m != null));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             m_InspectedModelGuids ??= new List<Hash128>();
             m_InspectedModelGuids.Clear();

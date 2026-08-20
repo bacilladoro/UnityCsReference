@@ -60,6 +60,10 @@ namespace UnityEngine.TextCore
         [VisibleToOtherModules("UnityEngine.UIElementsModule", "UnityEngine.IMGUIModule")]
         internal int pixelsPerPointFixed64;
 
+        // Measure the intrinsic min-content inline size (see native TextGenerationSettings.minContentMeasure).
+        [VisibleToOtherModules("UnityEngine.UIElementsModule")]
+        internal bool minContentMeasure;
+
         [VisibleToOtherModules("UnityEngine.UIElementsModule", "UnityEngine.IMGUIModule")]
         internal unsafe void SetTextBuffer(Unity.Collections.NativeArray<char> buffer, int length)
         {
@@ -108,6 +112,7 @@ namespace UnityEngine.TextCore
             richTextEnabled = tgs.richTextEnabled;
             hoveredTag = tgs.hoveredTag;
             pixelsPerPointFixed64 = tgs.pixelsPerPointFixed64;
+            minContentMeasure = tgs.minContentMeasure;
         }
 
         public override string ToString()
@@ -135,7 +140,8 @@ namespace UnityEngine.TextCore
                 $"{nameof(wordSpacing)}: {wordSpacing}\n" +
                 $"{nameof(preProcessFlags)}: {preProcessFlags}\n" +
                 $"{nameof(disableAdvancedFontFeatures)}: {disableAdvancedFontFeatures}\n" +
-                $"{nameof(richTextEnabled)}: {richTextEnabled}\n";
+                $"{nameof(richTextEnabled)}: {richTextEnabled}\n" +
+                $"{nameof(minContentMeasure)}: {minContentMeasure}\n";
         }
 
         // TODO : It's not ideal to have GetHashCode both in C# and C++. We would ideally keep only C++, but because of the string marshalling involved this is too costly for IMGUI.
@@ -169,6 +175,7 @@ namespace UnityEngine.TextCore
                 hash = hash * 23 + disableAdvancedFontFeatures.GetHashCode();
                 hash = hash * 23 + color.GetHashCode();
                 hash = hash * 23 + richTextEnabled.GetHashCode();
+                hash = hash * 23 + minContentMeasure.GetHashCode();
                 return hash;
             }
         }

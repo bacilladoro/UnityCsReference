@@ -215,9 +215,9 @@ namespace UnityEditor
             {
                 var importer = t as AssetImporter;
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 var materials = AssetDatabase.LoadAllAssetsAtPath(importer.assetPath).Where(x => x.GetType() == typeof(Material)).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
                 foreach (var material in materials)
                 {
@@ -392,9 +392,9 @@ namespace UnityEditor
                 rootSet.Add(PrefabUtility.GetOutermostPrefabInstanceRoot(gameObject));
             }
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             InstanceOverridesInfo[] instanceOverridesInfos = rootSet.Select(PrefabUtility.GetPrefabInstanceOverridesInfo_Internal).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             PrefabUtility.RemovePrefabInstanceUnusedOverrides(instanceOverridesInfos, action);
         }
 
@@ -1185,9 +1185,9 @@ namespace UnityEditor
                 {
                     string dependentComponents = string.Join(
                         ", ",
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                         GetAddedComponentDependencies(component, OverrideOperation.Apply).Select(ObjectNames.GetInspectorTitle));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     if (!string.IsNullOrEmpty(dependentComponents))
                     {
                         string error = String.Format(
@@ -1270,9 +1270,9 @@ namespace UnityEditor
             {
                 string dependentComponents = string.Join(
                     ", ",
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                     GetAddedComponentDependencies(component, OverrideOperation.Revert).Select(ObjectNames.GetInspectorTitle));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 if (!string.IsNullOrEmpty(dependentComponents))
                 {
                     string error = String.Format(
@@ -1366,9 +1366,9 @@ namespace UnityEditor
             {
                 string dependentComponents = string.Join(
                     ", ",
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                     GetRemovedComponentDependencies(assetComponent, instanceGameObject, OverrideOperation.Apply).Select(ObjectNames.GetInspectorTitle));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 if (!string.IsNullOrEmpty(dependentComponents))
                 {
                     string error = String.Format(
@@ -1472,9 +1472,9 @@ namespace UnityEditor
             }
             if (index != -1)
             {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 var filteredRemovedComponents = (from c in removedComponents where c != removedComponents[index] select c).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 PrefabUtility.SetRemovedComponents(instanceObject, filteredRemovedComponents);
             }
         }
@@ -1486,9 +1486,9 @@ namespace UnityEditor
             // Check dependencies
             string dependentComponents = string.Join(
                 ", ",
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 GetRemovedComponentDependencies(assetComponent, instanceGameObject, OverrideOperation.Revert).Select(ObjectNames.GetInspectorTitle));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             if (!string.IsNullOrEmpty(dependentComponents))
             {
                 string error = String.Format(
@@ -1550,9 +1550,9 @@ namespace UnityEditor
         private static void RemoveRemovedGameObjectOverridesWhichAreNull(Object prefabInstanceObject)
         {
             var removedGameObjects = PrefabUtility.GetRemovedGameObjects(prefabInstanceObject);
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var filteredRemovedGameObjects = (from go in removedGameObjects where go != null select go).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             PrefabUtility.SetRemovedGameObjects(prefabInstanceObject, filteredRemovedGameObjects);
         }
 
@@ -1764,9 +1764,9 @@ namespace UnityEditor
 
             if (index != -1)
             {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 var filteredRemovedGameObjects = (from go in removedGameObjects where go != removedGameObjects[index] select go).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 PrefabUtility.SetRemovedGameObjects(instanceObject, filteredRemovedGameObjects);
             }
         }
@@ -3393,9 +3393,9 @@ namespace UnityEditor
         {
             GameObject instanceGameObject = component.gameObject;
             List<Component> addedComponentsOnGO =
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 GetAddedComponents(instanceGameObject)
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     .Select(e => e.instanceComponent)
                     .Where(e => e.gameObject == instanceGameObject)
                     .ToList();
@@ -3413,9 +3413,9 @@ namespace UnityEditor
         {
             GameObject assetGameObject = assetComponent.gameObject;
             List<Component> removedComponentsOnAssetGO =
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 GetRemovedComponents(instanceGameObject)
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     .Select(e => e.assetComponent)
                     .Where(e => e.gameObject == assetGameObject)
                     .ToList();

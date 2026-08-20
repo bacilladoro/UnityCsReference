@@ -2,11 +2,12 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 
 namespace Unity.Multiplayer.PlayMode.Editor
 {
-    static class MppmLog
+    static partial class MppmLog
     {
         [InitializeOnLoadMethod]
         static void Initialize()
@@ -16,6 +17,7 @@ namespace Unity.Multiplayer.PlayMode.Editor
 
         const string k_ToolsPrefix = "[MultiplayerPlaymode]";
 
+        [AutoStaticsCleanupOnCodeReload] // set from runtime state; must re-evaluate after reload
         private static bool s_Enabled;
 
         public static bool AreLogsEnabled() => s_Enabled;

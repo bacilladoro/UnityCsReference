@@ -3,19 +3,20 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
 namespace Unity.Multiplayer.PlayMode.Editor
 {
     class MessageId
     {
-        [JsonProperty]
-        readonly Guid m_Id;
+        // JSON property name kept as "m_Id" for compatibility with data serialized by Newtonsoft.Json.
+        [JsonPropertyName("m_Id")]
+        public Guid Id { get; }
 
         [JsonConstructor]
         MessageId(Guid id)
         {
-            m_Id = id;
+            Id = id;
         }
 
         public static bool operator ==(MessageId lhs, MessageId rhs)
@@ -50,18 +51,18 @@ namespace Unity.Multiplayer.PlayMode.Editor
 
         public override string ToString()
         {
-            return $"{m_Id:N}";
+            return $"{Id:N}";
         }
 
         public override bool Equals(object obj)
         {
             return obj is MessageId identifier
-                   && Equals(m_Id, identifier.m_Id);
+                   && Equals(Id, identifier.Id);
         }
 
         public override int GetHashCode()
         {
-            return m_Id.GetHashCode();
+            return Id.GetHashCode();
         }
     }
 }

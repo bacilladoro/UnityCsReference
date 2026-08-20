@@ -10,6 +10,7 @@ using NiceIO;
 using UnityEditor.Scripting.Compilers;
 using UnityEngine;
 using Unity.Collections;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Scripting.ScriptCompilation
 {
@@ -18,9 +19,9 @@ namespace UnityEditor.Scripting.ScriptCompilation
         public static bool IsAnyPotentiallyUpdatable(CompilerMessage[] messages, NodeFinishedMessage nodeResult,
             ObjectsFromDisk dataFromBuildProgram)
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var matches = messages
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                                     .Select(m => MicrosoftCSharpCompilerOutputParser.sCompilerOutput.Match(m.message))
                                     .Where(m => m.Success && IsPotentiallyUpdatableDiagnostic(m))
                                     .ToArray();
@@ -31,18 +32,18 @@ namespace UnityEditor.Scripting.ScriptCompilation
             var localizedCompilerMessages = Helpers.LocalizeCompilerMessages(dataFromBuildProgram);
             var compilerMessageParser = GetCompilerMessageParser();
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var typeNames = matches.Select(m => MissingTypeNameFor(m, compilerMessageParser));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             var assemblyData = Helpers.FindOutputDataAssemblyInfoFor(nodeResult, dataFromBuildProgram);
             var lines = new NPath(assemblyData.MovedFromExtractorFile).ReadAllLines();
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
-#pragma warning disable UA2006 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
+#pragma warning disable UAC2006 // Avoid Linq
             return typeNames.Any(t => lines.Contains(t));
-#pragma warning restore UA2001
-#pragma warning restore UA2006
+#pragma warning restore UAC2001
+#pragma warning restore UAC2006
 
             CompilerMessageParser GetCompilerMessageParser()
             {
@@ -66,7 +67,8 @@ namespace UnityEditor.Scripting.ScriptCompilation
             return !matchedMessage.Success ? null : matchedMessage.Groups["type_name"].Value;
         }
 
-        private static CompilerMessageParser EnglishMessageParser = new(
+        [NoAutoStaticsCleanup] // immutable parser config (whitelisted Regex + enum arrays, no user refs), safe to persist across reload
+        private static readonly CompilerMessageParser EnglishMessageParser = new(
             //error CS0117: 'type_name' does not contain a definition for 'member_name'
             new Regex("[^'`“]*['`“](?<type_name>[^'`”]+)['`”][^'`“]+['`“](?<member_name>[^'`”]+)['`”]", RegexOptions.ExplicitCapture | RegexOptions.Compiled),
 
@@ -80,7 +82,8 @@ namespace UnityEditor.Scripting.ScriptCompilation
         );
 
         // Parses compilers messages for languages that reports CS0234 in the format: text `name space name` text `type name` (for instance, simplified chinese)
-        private static CompilerMessageParser AlternativeLanguageMessageParser = EnglishMessageParser with
+        [NoAutoStaticsCleanup] // immutable parser config (whitelisted Regex + enum arrays, no user refs), safe to persist across reload
+        private static readonly CompilerMessageParser AlternativeLanguageMessageParser = EnglishMessageParser with
         {
             MissingType = new Regex("([^'`“]*['`“](?<namespace>[^'`”]+)['`”][^'`“]+['`“](?<type_name>[^'`”]+)['`”])", RegexOptions.ExplicitCapture | RegexOptions.Compiled),
             TargetLanguages = new[] { SystemLanguage.ChineseTraditional, SystemLanguage.ChineseSimplified, SystemLanguage.Korean }

@@ -31,16 +31,16 @@ namespace Unity.Timeline.Foundation.ViewModel
 
         public IEnumerable<Track> GetSelectedTracks(SequenceData sequenceData)
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return selection.tracks.Select(sequenceData.GetTrackFromId);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         public IEnumerable<Item> GetSelectedItems(SequenceData sequenceData)
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return selection.clips.Concat(selection.markers).Select(sequenceData.GetItemFromId);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
     }
 }

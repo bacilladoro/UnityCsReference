@@ -10,6 +10,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Text.RegularExpressions;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditorInternal;
 
 namespace UnityEditor.Search.Providers
@@ -53,14 +54,17 @@ namespace UnityEditor.Search.Providers
         {}
     }
 
-    static class FindProvider
+    static partial class FindProvider
     {
         public const string providerId = "find";
 
+        [AutoStaticsCleanupOnCodeReload]
         private static Dictionary<FindOptions, List<string>> s_Roots = new Dictionary<FindOptions, List<string>>();
-        private static readonly ConcurrentDictionary<string, ConcurrentDictionary<SearchDocument, byte>> s_RootFilePaths = new ConcurrentDictionary<string, ConcurrentDictionary<SearchDocument, byte>>();
+        [AutoStaticsCleanupOnCodeReload]
+        private static ConcurrentDictionary<string, ConcurrentDictionary<SearchDocument, byte>> s_RootFilePaths = new ConcurrentDictionary<string, ConcurrentDictionary<SearchDocument, byte>>();
         private static readonly QueryValidationOptions k_QueryEngineOptions = new QueryValidationOptions { validateFilters = false, skipNestedQueries = true };
-        private static readonly QueryEngine<SearchDocument> s_QueryEngine = new QueryEngine<SearchDocument>(k_QueryEngineOptions);
+        [AutoStaticsCleanupOnCodeReload]
+        private static QueryEngine<SearchDocument> s_QueryEngine = new QueryEngine<SearchDocument>(k_QueryEngineOptions);
 
         static IEnumerable<SearchItem> FetchItems(SearchContext context, SearchProvider provider)
         {
@@ -119,9 +123,9 @@ namespace UnityEditor.Search.Providers
                         results = SearchWord(args.exclude, word, options, subset);
 
                     if (args.orSet != null)
-                        #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                        #pragma warning disable UAC2001 // Avoid Linq
                         results = results.Concat(args.orSet);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
                     return FindFilesQuery.EvalResult.Combined(results);
                 }
@@ -129,9 +133,9 @@ namespace UnityEditor.Search.Providers
 
             if (!query.valid)
             {
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 context.AddSearchQueryErrors(query.errors.Select(e => new SearchQueryError(e, context, provider)));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 yield break;
             }
 
@@ -139,9 +143,9 @@ namespace UnityEditor.Search.Providers
             {
                 options |= FindOptions.Packages;
             }
-            #pragma warning disable UA2002 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2002 // Avoid Linq
             if (roots == null || !roots.Any())
-#pragma warning restore UA2002
+#pragma warning restore UAC2002
                 roots = GetRoots(options);
 
             var results = new ConcurrentBag<SearchDocument>();
@@ -354,9 +358,9 @@ namespace UnityEditor.Search.Providers
                 {
                     if (updated != null)
                     {
-                        #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                        #pragma warning disable UAC2001 // Avoid Linq
                         foreach (var u in updated.Concat(moved))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                         {
                             if (!string.IsNullOrEmpty(u) && u.StartsWith(kvp.Key, StringComparison.Ordinal))
                                 kvp.Value.TryAdd(new SearchDocument(u), 0);
@@ -385,9 +389,9 @@ namespace UnityEditor.Search.Providers
             if (s_Roots.TryGetValue(options, out var roots))
                 return roots;
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var projectRoots = new List<string>(Utils.GetAssetRootFolders().Where(r => FilterRoot(r, options)));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             return (s_Roots[options] = projectRoots);
         }
 

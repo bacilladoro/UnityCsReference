@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -34,7 +35,7 @@ namespace Unity.GraphToolkit.Editor.ContextualMenuItems
                 // If we haven't added menu items for this type yet, or it's a SubgraphNodeModel combine its contextual menu items with the current list.
                 // Subgraph nodes are a special case as they could have different menu items based on if they are local or asset subgraphs.
                 // It is currently the only model type that can have different contextual menu items based on its data, but this logic can be extended to other model types when needed.
-                if (elementModel is IHasContextualMenuItems hasContextualMenuItems && (!uniqueSelectedTypes.Contains(type) || elementModel is SubgraphNodeModel))
+                if (elementModel is IHasContextualMenuItems hasContextualMenuItems && (!uniqueSelectedTypes.Contains(type) || elementModel is ISubgraphNodeInternal))
                 {
                     uniqueSelectedTypes.Add(type);
                     IntersectMenuItems(menuItems, hasContextualMenuItems.ContextualMenuItems);
@@ -94,91 +95,147 @@ namespace Unity.GraphToolkit.Editor.ContextualMenuItems
         // Predefined menu items:
 
         // ViewSelection menu items:
+        [NoAutoStaticsCleanup] // fixed menu item descriptor; category and label are compile-time constants
         internal static ContextualMenuItem cutItem = new(ContextualMenuCategory.CutCopyPaste, "Cut");
+        [NoAutoStaticsCleanup] // fixed menu item descriptor; category and label are compile-time constants
         internal static ContextualMenuItem copyItem = new(ContextualMenuCategory.CutCopyPaste, "Copy");
+        [NoAutoStaticsCleanup] // fixed menu item descriptor; category and label are compile-time constants
         internal static ContextualMenuItem pasteItem = new(ContextualMenuCategory.CutCopyPaste, "Paste");
+        [NoAutoStaticsCleanup] // fixed menu item descriptor; category and label are compile-time constants
         internal static ContextualMenuItem renameItem = new(ContextualMenuCategory.RenameDuplicateDelete, "Rename");
+        [NoAutoStaticsCleanup] // fixed menu item descriptor; category and label are compile-time constants
         internal static ContextualMenuItem duplicateItem = new(ContextualMenuCategory.RenameDuplicateDelete, "Duplicate");
+        [NoAutoStaticsCleanup] // fixed menu item descriptor; category and label are compile-time constants
         internal static ContextualMenuItem deleteItem = new(ContextualMenuCategory.RenameDuplicateDelete, "Delete");
+        [NoAutoStaticsCleanup] // fixed menu item descriptor; category and label are compile-time constants
         internal static ContextualMenuItem selectUnusedItem = new(ContextualMenuCategory.Organization, "Select Unused");
+        [NoAutoStaticsCleanup] // fixed menu item descriptor; category and label are compile-time constants
         internal static ContextualMenuItem pasteAsNewMenuItem = new(ContextualMenuCategory.CutCopyPaste, "Paste as New");
 
         // Common graph element menu items:
+        [NoAutoStaticsCleanup] // fixed menu item descriptor; category and label are compile-time constants
         internal static ContextualMenuItem createPlacematItem = new(ContextualMenuCategory.OrganizationalElements, "Create Placemat");
+        [NoAutoStaticsCleanup] // fixed menu item descriptor; category and label are compile-time constants
         internal static ContextualMenuItem createLocalSubgraphFromSelectionItem = new(ContextualMenuCategory.Conversions, "Create Local Subgraph from Selection");
+        [NoAutoStaticsCleanup] // fixed menu item descriptor; category and label are compile-time constants
         internal static ContextualMenuItem frameSelectionItem = new(ContextualMenuCategory.Modifications, "Frame Selection");
+        [NoAutoStaticsCleanup] // fixed menu item descriptor; category and label are compile-time constants
         internal static ContextualMenuItem colorItem = new(ContextualMenuCategory.Modifications, "Color");
+        [NoAutoStaticsCleanup] // fixed menu item descriptor; category and label are compile-time constants
         internal static ContextualMenuItem alignAndDistributeElementsItem = new(ContextualMenuCategory.Organization, "Align and Distribute Elements");
 
         // GraphView menu items:
+        [NoAutoStaticsCleanup] // fixed menu item descriptor; category and label are compile-time constants
         internal static ContextualMenuItem addNodeItem = new(ContextualMenuCategory.FunctionalElements, "Add Node");
+        [NoAutoStaticsCleanup] // fixed menu item descriptor; category and label are compile-time constants
         internal static ContextualMenuItem createStickyNoteItem = new(ContextualMenuCategory.OrganizationalElements, "Create Sticky Note");
+        [NoAutoStaticsCleanup] // fixed menu item descriptor; category and label are compile-time constants
         internal static ContextualMenuItem createEmptyLocalSubgraphItem = new(ContextualMenuCategory.OrganizationalElements, "Create Empty Local Subgraph");
+        [NoAutoStaticsCleanup] // fixed menu item descriptor; category and label are compile-time constants
         internal static ContextualMenuItem selectAllItem = new(ContextualMenuCategory.Organization, "Select All");
 
         // Node menu items:
+        [NoAutoStaticsCleanup] // fixed menu item descriptor; category and label are compile-time constants
         internal static ContextualMenuItem editSubtitleItem = new(ContextualMenuCategory.Modifications, "Edit Subtitle");
+        [NoAutoStaticsCleanup] // fixed menu item descriptor; category and label are compile-time constants
         internal static ContextualMenuItem bypassNodeItem = new(ContextualMenuCategory.Modifications, "Bypass Node");
+        [NoAutoStaticsCleanup] // fixed menu item descriptor; category and label are compile-time constants
         internal static ContextualMenuItem disconnectAllWiresItem = new(ContextualMenuCategory.Modifications, "Disconnect All Wires");
+        [NoAutoStaticsCleanup] // fixed menu item descriptor; category and label are compile-time constants
         internal static ContextualMenuItem toggleCollapseItem = new(ContextualMenuCategory.Modifications, "Toggle Collapse");
+        [NoAutoStaticsCleanup] // fixed menu item descriptor; category and label are compile-time constants
         internal static ContextualMenuItem deleteAndReconnectItem = new(ContextualMenuCategory.RenameDuplicateDelete, "Delete and reconnect");
 
         // State menu items:
+        [NoAutoStaticsCleanup] // fixed menu item descriptor; category and label are compile-time constants
         internal static ContextualMenuItem createTransitionMenuItem = new(ContextualMenuCategory.FunctionalElements, "Create Transition");
-        internal static ContextualMenuItem createLocalTransitionMenuItem = new(ContextualMenuCategory.FunctionalElements, "Create Local Transition");
-        internal static ContextualMenuItem createOnEnterTransitionMenuItem = new(ContextualMenuCategory.FunctionalElements, "Create OnEnter Transition");
+        [NoAutoStaticsCleanup] // fixed menu item descriptor; category and label are compile-time constants
         internal static ContextualMenuItem createSelfTransitionMenuItem = new(ContextualMenuCategory.FunctionalElements, "Create Self Transition");
 
         // Subgraph menu items:
+        [NoAutoStaticsCleanup] // fixed menu item descriptor; category and label are compile-time constants
         internal static ContextualMenuItem extractContentsToPlacematItem = new(ContextualMenuCategory.Conversions, "Extract Contents to Placemat");
+        [NoAutoStaticsCleanup] // fixed menu item descriptor; category and label are compile-time constants
         internal static ContextualMenuItem openLocalSubgraphItem = new(ContextualMenuCategory.AssetManagement, "Open Local Subgraph");
+        [NoAutoStaticsCleanup] // fixed menu item descriptor; category and label are compile-time constants
         internal static ContextualMenuItem openAssetSubgraphItem = new(ContextualMenuCategory.AssetManagement, "Open Asset Subgraph");
+        [NoAutoStaticsCleanup] // fixed menu item descriptor; category and label are compile-time constants
         internal static ContextualMenuItem unpackToLocalSubgraphItem = new(ContextualMenuCategory.AssetManagement, "Unpack to Local Subgraph");
+        [NoAutoStaticsCleanup] // fixed menu item descriptor; category and label are compile-time constants
         internal static ContextualMenuItem findAssetInProjectItem = new(ContextualMenuCategory.AssetManagement, "Find Asset in Project");
+        [NoAutoStaticsCleanup] // fixed menu item descriptor; category and label are compile-time constants
         internal static ContextualMenuItem convertToAssetSubgraphItem = new(ContextualMenuCategory.AssetManagement, "Convert to Asset Subgraph");
 
         // Variable and constant menu items:
+        [NoAutoStaticsCleanup] // fixed menu item descriptor; category and label are compile-time constants
         internal static ContextualMenuItem itemizeItem = new(ContextualMenuCategory.Modifications, "Itemize");
+        [NoAutoStaticsCleanup] // fixed menu item descriptor; category and label are compile-time constants
         internal static ContextualMenuItem convertToConstantItem = new(ContextualMenuCategory.Conversions, "Convert to Constant");
+        [NoAutoStaticsCleanup] // fixed menu item descriptor; category and label are compile-time constants
         internal static ContextualMenuItem convertToVariableItem = new(ContextualMenuCategory.Conversions, "Convert to Variable");
 
         // Blackboard menu items:
+        [NoAutoStaticsCleanup] // fixed menu item descriptor; category and label are compile-time constants
         internal static ContextualMenuItem createVariableItem = new(ContextualMenuCategory.FunctionalElements, "Create Variable");
+        [NoAutoStaticsCleanup] // fixed menu item descriptor; category and label are compile-time constants
         internal static ContextualMenuItem createGroupItem = new(ContextualMenuCategory.FunctionalElements, "Create Group");
 
         // Ports menu items:
+        [NoAutoStaticsCleanup] // fixed menu item descriptor; category and label are compile-time constants
         internal static ContextualMenuItem addNodeFromPortItem = new(ContextualMenuCategory.FunctionalElements, "Add Node from port");
+        [NoAutoStaticsCleanup] // fixed menu item descriptor; category and label are compile-time constants
         internal static ContextualMenuItem createVariableFromPortItem = new(ContextualMenuCategory.FunctionalElements, "Create Variable from port");
+        [NoAutoStaticsCleanup] // fixed menu item descriptor; category and label are compile-time constants
         internal static ContextualMenuItem copyValueItem = new(ContextualMenuCategory.CutCopyPaste, "Copy Value");
+        [NoAutoStaticsCleanup] // fixed menu item descriptor; category and label are compile-time constants
         internal static ContextualMenuItem pasteValueItem = new(ContextualMenuCategory.CutCopyPaste, "Paste Value");
+        [NoAutoStaticsCleanup] // fixed menu item descriptor; category and label are compile-time constants
         internal static ContextualMenuItem expandPortItem = new(ContextualMenuCategory.Modifications, "Expand Port");
+        [NoAutoStaticsCleanup] // fixed menu item descriptor; category and label are compile-time constants
         internal static ContextualMenuItem collapsePortItem = new(ContextualMenuCategory.Modifications, "Collapse Port");
 
         // Wire menu items:
+        [NoAutoStaticsCleanup] // fixed menu item descriptor; category and label are compile-time constants
         internal static ContextualMenuItem insertNodeItem = new(ContextualMenuCategory.FunctionalElements, "Insert Node");
+        [NoAutoStaticsCleanup] // fixed menu item descriptor; category and label are compile-time constants
         internal static ContextualMenuItem insertJunctionPointItem = new(ContextualMenuCategory.FunctionalElements, "Insert Junction Point");
+        [NoAutoStaticsCleanup] // fixed menu item descriptor; category and label are compile-time constants
         internal static ContextualMenuItem convertToPortalsItem = new(ContextualMenuCategory.Conversions, "Convert to Portals");
+        [NoAutoStaticsCleanup] // fixed menu item descriptor; category and label are compile-time constants
         internal static ContextualMenuItem reorderWireItem = new(ContextualMenuCategory.Modifications, "Reorder Wire");
 
         // Context and block menu items:
+        [NoAutoStaticsCleanup] // fixed menu item descriptor; category and label are compile-time constants
         internal static ContextualMenuItem addBlockItem = new(ContextualMenuCategory.FunctionalElements, "Add Block");
+        [NoAutoStaticsCleanup] // fixed menu item descriptor; category and label are compile-time constants
         internal static ContextualMenuItem insertBlockAboveItem = new(ContextualMenuCategory.FunctionalElements, "Insert Block Above");
+        [NoAutoStaticsCleanup] // fixed menu item descriptor; category and label are compile-time constants
         internal static ContextualMenuItem insertBlockBelowItem = new(ContextualMenuCategory.FunctionalElements, "Insert Block Below");
+        [NoAutoStaticsCleanup] // fixed menu item descriptor; category and label are compile-time constants
         internal static ContextualMenuItem convertToBlockSubgraphItem = new(ContextualMenuCategory.Conversions, "Convert to Block Subgraph");
 
         // Sticky Note menu items:
+        [NoAutoStaticsCleanup] // fixed menu item descriptor; category and label are compile-time constants
         internal static ContextualMenuItem fitToTextItem = new(ContextualMenuCategory.Modifications, "Fit to Text");
+        [NoAutoStaticsCleanup] // fixed menu item descriptor; category and label are compile-time constants
         internal static ContextualMenuItem fontSizeAndThemeItem = new(ContextualMenuCategory.Modifications, "Font Size");
 
         // Placemat menu items:
+        [NoAutoStaticsCleanup] // fixed menu item descriptor; category and label are compile-time constants
         internal static ContextualMenuItem deleteAndSelectContentsItem = new(ContextualMenuCategory.RenameDuplicateDelete, "Delete and Select Contents");
+        [NoAutoStaticsCleanup] // fixed menu item descriptor; category and label are compile-time constants
         internal static ContextualMenuItem smartResizeItem = new(ContextualMenuCategory.Modifications, "Smart Resize");
+        [NoAutoStaticsCleanup] // fixed menu item descriptor; category and label are compile-time constants
         internal static ContextualMenuItem reorderPlacematItem = new(ContextualMenuCategory.Modifications, "Reorder Placemat");
+        [NoAutoStaticsCleanup] // fixed menu item descriptor; category and label are compile-time constants
         internal static ContextualMenuItem selectAllPlacematContentsItem = new(ContextualMenuCategory.Organization, "Select All Placemat Contents");
 
         // Portals menu items:
+        [NoAutoStaticsCleanup] // fixed menu item descriptor; category and label are compile-time constants
         internal static ContextualMenuItem createOppositePortalItem = new(ContextualMenuCategory.Conversions, "Create Opposite Portal");
+        [NoAutoStaticsCleanup] // fixed menu item descriptor; category and label are compile-time constants
         internal static ContextualMenuItem revertToWireItem = new(ContextualMenuCategory.Conversions, "Revert to Wire");
+        [NoAutoStaticsCleanup] // fixed menu item descriptor; category and label are compile-time constants
         internal static ContextualMenuItem revertAllToWiresItem = new(ContextualMenuCategory.Conversions, "Revert All to Wire");
     }
 }

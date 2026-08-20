@@ -8,6 +8,7 @@ using System.Linq;
 using System.Reflection;
 using Unity.GraphToolkit.CSO;
 using Unity.GraphToolkit.InternalBridge;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
@@ -45,7 +46,7 @@ namespace Unity.GraphToolkit.Editor
     /// </summary>
     /// <typeparam name="TValue">The type of the value to display.</typeparam>
     [UnityRestricted]
-    internal class ModelPropertyField<TValue> : CustomizableModelPropertyField
+    internal partial class ModelPropertyField<TValue> : CustomizableModelPropertyField
     {
         ICustomPropertyFieldBuilder<TValue> m_CustomFieldBuilder;
         CustomPropertyDrawerAdapter m_CustomPropertyDrawerAdapter;
@@ -276,7 +277,8 @@ namespace Unity.GraphToolkit.Editor
             }
         }
 
-        protected static readonly Func<TValue> k_GetMixed = () => default;
+        [NoAutoStaticsCleanup]
+        protected static Func<TValue> k_GetMixed = () => default;
 
         static Func<TValue> MakePropertyValueGetter(IReadOnlyList<Model> models, string propertyName)
         {
@@ -288,9 +290,9 @@ namespace Unity.GraphToolkit.Editor
                 Debug.Assert(typeof(TValue) == getterInfo.ReturnType);
 
                 var firstValue = getterInfo.Invoke(models[0], null);
-                #pragma warning disable UA2001, UA2008 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001, UAC2008 // Avoid Linq
                 bool allSame = models.Skip(1).All(t => Equals(firstValue, getterInfo.Invoke(t, null)));
-#pragma warning restore UA2001, UA2008
+#pragma warning restore UAC2001, UAC2008
 
                 if (allSame)
                 {

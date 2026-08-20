@@ -35,9 +35,9 @@ namespace UnityEditor.Search
 
             var defaultValueArg = c.args[1];
             var defaultValueItems = defaultValueArg.Execute(c);
-            #pragma warning disable UA2011 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2011 // Avoid Linq
             var firstItem = defaultValueItems.FirstOrDefault();
-#pragma warning restore UA2011
+#pragma warning restore UAC2011
             if (firstItem == null)
                 yield break;
             item.value = firstItem.value;

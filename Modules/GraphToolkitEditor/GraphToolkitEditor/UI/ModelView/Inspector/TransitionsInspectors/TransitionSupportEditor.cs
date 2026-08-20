@@ -8,6 +8,7 @@ using System.Linq;
 using Unity.GraphToolkit.CSO;
 using Unity.GraphToolkit.InternalBridge;
 using Unity.GraphToolsAuthoringFramework.InternalEditorBridge;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEditor.Experimental;
 using UnityEditor.Toolbars;
@@ -55,12 +56,13 @@ namespace Unity.GraphToolkit.Editor
         Toggle m_CollapseButton;
         VisualElement m_Icon;
         bool m_IsSelected;
-        EditableLabel m_TitleLabel;
+        Label m_TitleLabel;
         VisualElement m_Container;
         List<TransitionPropertiesEditor> m_TransitionPropertiesEditors = new();
         Button m_AddButton;
         EditorToolbarButton m_OptionButton;
         string m_LastIconUssClassName;
+        string m_LastIconPath;
 
         VisualElement m_DragBlock;
 
@@ -128,12 +130,8 @@ namespace Unity.GraphToolkit.Editor
             m_Icon.AddToClassList(k_IconUssName);
             m_Header.Add(m_Icon);
 
-
-            m_TitleLabel = new EditableLabel { name = k_TitleLabelName };
-            m_TitleLabel.ClickToEditDisabled = true;
-            m_TitleLabel.EditActionName = "Rename";
+            m_TitleLabel = new Label { name = k_TitleLabelName };
             m_TitleLabel.AddToClassList(ussClassName.WithUssElement(k_TitleLabelName));
-            m_TitleLabel.RegisterCallback<ChangeEvent<string>>(OnTitleChanged);
             m_Header.Add(m_TitleLabel);
 
             m_AddButton = new Button() { name = k_AddButtonName };
@@ -154,18 +152,12 @@ namespace Unity.GraphToolkit.Editor
             var contextMenuManipulator = new ContextualMenuManipulator(OnPopupMenuContextualPopulate);
 
             contextMenuManipulator.activators.Add(new ManipulatorActivationFilter { button = MouseButton.LeftMouse, clickCount = 1 });
-            m_OptionButton = new EditorToolbarButton(EditorGUIUtility.IconContent("_Menu").image as Texture2D, null);
+            m_OptionButton = new EditorToolbarButton(EditorGUIUtility.LoadIcon("_Menu"), null);
             m_OptionButton.clickable = null; // if the clickable is left on the button then the context menu manipulator may fail to trigger
             m_OptionButton.AddManipulator(contextMenuManipulator);
 
 
             m_OptionButton.AddToClassList(ussClassName.WithUssElement(k_OptionButtonName));
-        }
-
-        void OnTitleChanged(ChangeEvent<string> e)
-        {
-            if (TransitionSupportModel is IRenamable renamable)
-                RootView.Dispatch(new RenameElementsCommand(new[] { renamable }, e.newValue));
         }
 
         void OnPopupMenuContextualPopulate(ContextualMenuPopulateEvent evt)
@@ -180,12 +172,6 @@ namespace Unity.GraphToolkit.Editor
             var menu = evt.menu;
 
             MakeMenu(menu, true);
-        }
-
-        /// <inheritdoc />
-        public void BeginEditing()
-        {
-            m_TitleLabel.BeginEditing();
         }
 
         /// <summary>
@@ -211,11 +197,6 @@ namespace Unity.GraphToolkit.Editor
             }
 
             menu.AppendSeparator();
-
-            if (!m_TitleLabel.IsInEditMode)
-            {
-                menu.AppendAction(CommandMenuItemNames.Rename, _ => m_TitleLabel.BeginEditing());
-            }
 
             menu.AppendAction(CommandMenuItemNames.FrameSelected, _ =>
             {
@@ -288,17 +269,13 @@ namespace Unity.GraphToolkit.Editor
         {
             if (!string.IsNullOrEmpty(TransitionSupportModel.Title))
             {
-                m_TitleLabel.SetValueWithoutNotify(TransitionSupportModel.Title);
-            }
-            else if (TransitionSupportModel.TransitionSupportKind is TransitionSupportKind.Local or TransitionSupportKind.OnEnter)
-            {
-                m_TitleLabel.SetValueWithoutNotify((TransitionSupportModel.TransitionSupportKind == TransitionSupportKind.Local ? "LOCAL \u2192 " : "ON ENTER \u2192 ") + TransitionSupportModel.ToPort.NodeModel.Title);
+                m_TitleLabel.text = TransitionSupportModel.Title;
             }
             else
             {
                 TransitionSupportModel.GraphModel.TryGetModelFromGuid(TransitionSupportModel.FromNodeGuid, out var fromState);
                 TransitionSupportModel.GraphModel.TryGetModelFromGuid(TransitionSupportModel.ToNodeGuid, out var toState);
-                m_TitleLabel.SetValueWithoutNotify($"{(fromState as IHasTitle)?.Title ?? "?"} \u2192 {(toState as IHasTitle)?.Title ?? "?"}");
+                m_TitleLabel.text = $"{(fromState as IHasTitle)?.Title ?? "?"} \u2192 {(toState as IHasTitle)?.Title ?? "?"}";
             }
         }
 
@@ -306,31 +283,56 @@ namespace Unity.GraphToolkit.Editor
         public override void UpdateUIFromModel(UpdateFromModelVisitor visitor)
         {
             UpdateTitleFromModel();
-            string iconUssClassName = k_IconUssName.WithUssModifier(TransitionSupportModel.TransitionSupportKind switch
-            {
-                TransitionSupportKind.Local => "local",
-                TransitionSupportKind.Self => "self",
-                TransitionSupportKind.OnEnter => "on-enter",
-                TransitionSupportKind.StateToState => "to-state",
-                _ => string.Empty
-            });
 
-            if (TransitionSupportModel.TransitionSupportKind == TransitionSupportKind.StateToState)
+            var iconPath = TransitionSupportModel.IconPath;
+            if (!string.IsNullOrEmpty(iconPath))
             {
-                if (m_StateTransitionsInspector != null)
+                // Use the icon from the model's IconPath instead of the type-based USS icon.
+                if (m_LastIconUssClassName != null)
                 {
-                    if (m_StateTransitionsInspector.Models.Contains(TransitionSupportModel.FromPort.NodeModel))
-                        iconUssClassName = k_IconUssName.WithUssModifier("from-state");
+                    m_Icon.RemoveFromClassList(m_LastIconUssClassName);
+                    m_LastIconUssClassName = null;
+                }
+
+                if (iconPath != m_LastIconPath)
+                {
+                    var iconTexture = EditorGUIUtility.LoadIcon(iconPath);
+                    if (iconTexture == null)
+                        Debug.LogWarning($"Could not load transition icon at path '{iconPath}'.");
+                    m_Icon.style.backgroundImage = iconTexture;
+                    m_LastIconPath = iconPath;
                 }
             }
-
-            if (m_LastIconUssClassName != iconUssClassName)
+            else
             {
-                if (m_LastIconUssClassName != null)
-                    m_Icon.RemoveFromClassList(m_LastIconUssClassName);
+                // Clear any icon previously set from an IconPath before falling back to the USS icon.
+                if (m_LastIconPath != null)
+                {
+                    m_Icon.style.backgroundImage = StyleKeyword.Null;
+                    m_LastIconPath = null;
+                }
 
-                m_Icon.AddToClassList(iconUssClassName);
-                m_LastIconUssClassName = iconUssClassName;
+                string iconUssClassName = k_IconUssName.WithUssModifier(TransitionSupportModel switch
+                {
+                    SelfTransitionModel => "self",
+                    StateToStateTransitionModel => "to-state",
+                    _ => string.Empty
+                });
+
+                if (TransitionSupportModel is StateToStateTransitionModel && m_StateTransitionsInspector != null
+                    && m_StateTransitionsInspector.Models.Contains(TransitionSupportModel.FromPort.NodeModel))
+                {
+                    iconUssClassName = k_IconUssName.WithUssModifier("from-state");
+                }
+
+                if (m_LastIconUssClassName != iconUssClassName)
+                {
+                    if (m_LastIconUssClassName != null)
+                        m_Icon.RemoveFromClassList(m_LastIconUssClassName);
+
+                    m_Icon.AddToClassList(iconUssClassName);
+                    m_LastIconUssClassName = iconUssClassName;
+                }
             }
 
             ReorderEditors();
@@ -445,9 +447,9 @@ namespace Unity.GraphToolkit.Editor
                 var index = m_TransitionPropertiesEditors.IndexOf(transitions[0]);
                 RootView.Dispatch(new MoveTransitionCommand(
                     TransitionSupportModel,
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2001 // Avoid Linq
                     transitions.Select(c => c.TransitionModel).ToList(),
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     shiftUp ? --index : ++index));
             }
         }
@@ -458,9 +460,9 @@ namespace Unity.GraphToolkit.Editor
             {
                 RootView.Dispatch(new MoveTransitionCommand(
                     TransitionSupportModel,
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2001 // Avoid Linq
                     transitions.Select(c => c.TransitionModel).ToList(),
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     toTop ? 0 : TransitionSupportModel.Transitions.Count - 1));
             }
         }
@@ -519,10 +521,10 @@ namespace Unity.GraphToolkit.Editor
             {
                 var selected = GetSelectedTransitions();
                 if (selected.Count == 1)
+                {
                     selected[0].BeginEditing();
-                else
-                    m_TitleLabel.BeginEditing();
-                evt.StopPropagation();
+                    evt.StopPropagation();
+                }
             }
 
             if (evt.isPropagationStopped)
@@ -565,6 +567,7 @@ namespace Unity.GraphToolkit.Editor
         Vector3 m_StartDrag;
         float m_DraggedHeight;
         List<TransitionPropertiesEditor> m_SelectedTransitionEditors;
+        [NoAutoStaticsCleanup] // empty scratch list; cleared before each use, never holds persistent element references
         static readonly List<VisualElement> k_PickedElements = new List<VisualElement>();
         bool m_IsHoveringOver;
         Vector3 m_DraggedTransitionOffset;

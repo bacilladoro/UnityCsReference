@@ -18,6 +18,8 @@ internal interface IInProjectPackagesMonitor : IService
 [Serializable]
 internal class InProjectPackagesMonitor : BaseService<IInProjectPackagesMonitor>, IInProjectPackagesMonitor
 {
+    private const string k_WindowType = "PassiveTrust";
+
     [SerializeField]
     private bool m_CheckStartupPackageErrors;
 
@@ -154,8 +156,16 @@ internal class InProjectPackagesMonitor : BaseService<IInProjectPackagesMonitor>
                 readMoreClickedAnalyticsId = "invalid-signature-in-project-read-more",
                 headerColor = HeaderColor.Red
             };
-            if (m_CustomDisplayDialog.Show(dialogArgs) == DialogResult.DefaultAction)
+            var analyticsData = new TrustAnalyticsData
+            {
+                windowType = k_WindowType,
+                invalidSignaturePackageIds = new[] { invalidSignaturePackage.versions.installed.uniqueId }
+            };
+            var dialogResult = m_CustomDisplayDialog.Show(dialogArgs);
+            if (dialogResult == DialogResult.DefaultAction)
                 PackageManagerWindow.OpenAndSelectPackage(invalidSignaturePackage.uniqueId, InProjectErrorsAndWarningsPage.k_Id);
+            analyticsData.action = dialogResult.ToString();
+            PackageManagerTrustWindowAnalytics.SendEvent(analyticsData);
         }
         else if (unsignedPackage != null)
         {
@@ -167,8 +177,16 @@ internal class InProjectPackagesMonitor : BaseService<IInProjectPackagesMonitor>
                 readMoreUrl = $"https://docs.unity3d.com/{m_Application.shortUnityVersion}/Documentation/Manual/upm-signature.html",
                 readMoreClickedAnalyticsId = "unsigned-package-in-project-read-more"
             };
-            if (m_CustomDisplayDialog.Show(dialogArgs) == DialogResult.DefaultAction)
+            var analyticsData = new TrustAnalyticsData
+            {
+                windowType = k_WindowType,
+                missingSignaturePackageIds = new[] { unsignedPackage.versions.installed.uniqueId }
+            };
+            var dialogResult = m_CustomDisplayDialog.Show(dialogArgs);
+            if (dialogResult == DialogResult.DefaultAction)
                 PackageManagerWindow.OpenAndSelectPackage(unsignedPackage.uniqueId, InProjectErrorsAndWarningsPage.k_Id);
+            analyticsData.action = dialogResult.ToString();
+            PackageManagerTrustWindowAnalytics.SendEvent(analyticsData);
         }
     }
 

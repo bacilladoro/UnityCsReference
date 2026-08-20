@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using Unity.GraphToolkit.Editor;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -16,6 +17,7 @@ namespace Unity.GraphToolkit
     [UnityRestricted]
     internal static class TypeHelpers
     {
+        [NoAutoStaticsCleanup] // fixed lookup table of built-in type names; content is compile-time constant
         static readonly Dictionary<Type, string> k_TypeToFriendlyName = new Dictionary<Type, string>
         {
             { typeof(string),  "String" },

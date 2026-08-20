@@ -2,9 +2,11 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
 using System;
 using System.Buffers;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Pool;
 using Unity.Profiling;
 using UnityEngine.Assertions;
@@ -33,10 +35,12 @@ namespace UnityEngine.UIElements.StyleSheets
         // Cached comparison delegate. This is the only allocation-free way to sort a
         // List<StyleSelectorMatch> on Unity's Mono runtime: Sort() via Comparer<T>.Default
         // and Sort(inline lambda) both allocate per call.
+        [NoAutoStaticsCleanup] // cached delegate; safe to persist
         public static readonly Comparison<StyleSelectorMatch> Comparison = (a, b) => Compare(in a, in b);
 
         // Same comparison, but ref-based — for SpanSort, which avoids the per-comparison
         // struct copy that List<T>.Sort(Comparison<T>) does on this ~24B readonly struct.
+        [NoAutoStaticsCleanup] // cached delegate; safe to persist
         public static readonly RefComparison<StyleSelectorMatch> RefComparison = (ref StyleSelectorMatch a, ref StyleSelectorMatch b) => Compare(in a, in b);
 
         [Il2CppSetOption(Option.NullChecks, false)]
@@ -68,8 +72,13 @@ namespace UnityEngine.UIElements.StyleSheets
             res = a.styleSheetIndexInStack - b.styleSheetIndexInStack;
             if (res != 0) return res;
 
-            // If they are the same, use the index in the imported style sheets of the owner style sheets (later wins)
-            res = a.importedStyleSheetIndex - b.importedStyleSheetIndex;
+            // If they are the same, break the tie by source within the owner style sheet: the owner's own rules
+            // (index -1) always rank above any sheet it imports, and among imports the later one wins. Map -1 to
+            // int.MaxValue so it sorts highest; both operands are then in [0, int.MaxValue], so the subtraction
+            // can't overflow.
+            int aImportIndex = a.importedStyleSheetIndex < 0 ? int.MaxValue : a.importedStyleSheetIndex;
+            int bImportIndex = b.importedStyleSheetIndex < 0 ? int.MaxValue : b.importedStyleSheetIndex;
+            res = aImportIndex - bImportIndex;
             if (res != 0) return res;
 
             // All else being equal, use the order in the style sheet itself
@@ -81,11 +90,12 @@ namespace UnityEngine.UIElements.StyleSheets
     // Uses the pre-built acceleration cache to efficiently match selectors against elements.
     // For legacy selector matching (UQuery with Predicate support), see LegacySelectorHelper.
     [VisibleToOtherModules("UnityEditor.UIToolkitAuthoringModule")]
-    class StyleSelectorHelper<TProfilerType> where TProfilerType : struct, IStyleProfiler
+    partial class StyleSelectorHelper<TProfilerType> where TProfilerType : struct, IStyleProfiler
     {
         // This internal flag can be enabled to validate that the Bloom filter never rejects cases where
         // the exhaustive search returns a valid match. This is disabled by default, and is enabled from
-        // styling unit tests.
+        // styling unit tests. Not readonly: the styling unit tests assign it.
+        [NoAutoStaticsCleanup] // test-only diagnostic toggle; harmless to persist across reload
         internal static bool s_VerifyBloomIntegrity = false;
 
         // Reverse lookup: Get StyleComplexSelector from descriptor
@@ -384,3 +394,4 @@ namespace UnityEngine.UIElements.StyleSheets
     [VisibleToOtherModules("UnityEditor.UIToolkitAuthoringModule")]
     class StyleSelectorHelper : StyleSelectorHelper<NoOpStyleProfiler> { }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

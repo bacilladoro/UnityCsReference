@@ -2,14 +2,18 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
-using System.Net;
+using System.Threading;
+using System.Threading.Tasks;
 using Unity.Scripting.LifecycleManagement;
+using UnityEngine.Bindings;
 using UnityEngine.Scripting;
 
 namespace UnityEditor.Scripting.ScriptCompilation.MsBuild
 {
+    [VisibleToOtherModules("UnityEditor.ProjectAuditorModule")]
     static class MsBuildCompilationInterface
     {
+        [NoAutoStaticsCleanup] // editor MSBuild compilation service singleton, safe to persist across reload
         static MsBuildCompilation msBuildCompilation;
 
         static MsBuildCompilationInterface()
@@ -38,6 +42,10 @@ namespace UnityEditor.Scripting.ScriptCompilation.MsBuild
         {
             Instance.RequestMsBuildScriptCompilation(restore, reason);
         }
+
+        [VisibleToOtherModules("UnityEditor.ProjectAuditorModule")]
+        internal static Task<MsBuildCompilation.CompilationMessages> RequestAnalysisCompilationAsync(string analysisConfiguration, CancellationToken cancellationToken = default)
+            => Instance.RequestAnalysisCompilationAsync(analysisConfiguration, cancellationToken);
 
         [RequiredByNativeCode]
         public static void InitializeMsBuild(bool createInitCsrpojs, MSBuildCompilationOptions compilationOptions)

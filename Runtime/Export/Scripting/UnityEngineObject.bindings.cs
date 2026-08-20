@@ -293,7 +293,7 @@ namespace UnityEngine
             throw new NotImplementedException();
         }
 
-        [Obsolete("GetInstanceID is deprecated. Use GetEntityId instead. This will be removed in a future version.", true)]
+        [Obsolete("Use GetEntityId instead.", true)]
         [System.Security.SecuritySafeCritical]
         public unsafe int GetInstanceID() => (int)(GetEntityId().GetRawData() & 0x00000000FFFFFFFF);
 
@@ -375,31 +375,61 @@ namespace UnityEngine
         }
 
         [RequiredByNativeCode]
-        void SetCachedPtr(System.IntPtr ptr)
+        static void GetCachedPtrFromNative(System.Object obj, out System.IntPtr ptr)
         {
-            m_CachedPtr = ptr;
+            var self = UnsafeUtility.As<System.Object, UnityEngine.Object>(ref obj);
+            // TODO: change parameter to UnityEngine.Object once additional proxy work is done to allow passing GC handles directly
+            ptr = self.m_CachedPtr;
         }
 
         [RequiredByNativeCode]
-        internal void GetEntityIdFast(out EntityId v) { v = m_EntityId; }
+        static void SetCachedPtrFromNative(System.Object obj, System.IntPtr ptr)
+        {
+            var self = UnsafeUtility.As<System.Object, UnityEngine.Object>(ref obj);
+            // TODO: change parameter to UnityEngine.Object once additional proxy work is done to allow passing GC handles directly
+            self.m_CachedPtr = ptr;
+        }
 
         [RequiredByNativeCode]
-        internal void SetEntityId(EntityId v) { m_EntityId = v; }
+        static void GetEntityIdFromNative(System.Object obj, out EntityId v)
+        {
+            var self = UnsafeUtility.As<System.Object, UnityEngine.Object>(ref obj);
+            v = self.m_EntityId;
+        }
 
         [RequiredByNativeCode]
-        internal void SetUnityRuntimeErrorString(string errorString) { m_UnityRuntimeErrorString = errorString; }
+        static void SetEntityIdFromNative(System.Object obj, EntityId v)
+        {
+            var self = UnsafeUtility.As<System.Object, UnityEngine.Object>(ref obj);
+            self.m_EntityId = v;
+        }
+
+        [RequiredByNativeCode]
+        static void SetUnityRuntimeErrorStringFromNative(System.Object obj, string errorString)
+        {
+            var self = UnsafeUtility.As<System.Object, UnityEngine.Object>(ref obj);
+            self.m_UnityRuntimeErrorString = errorString;
+        }
 
         // UUM-143556: lets the native game-release writer read back the marker the reference
         // deserializer stamps on a type-mismatched reference, so it can drop it (write fileID 0).
-        [RequiredByNativeCode]
         internal string GetUnityRuntimeErrorString() { return m_UnityRuntimeErrorString; }
 
         [RequiredByNativeCode]
-        internal void BindNativeObject(System.IntPtr cachedPtr, EntityId v)
+        static string GetUnityRuntimeErrorStringFromNative(System.Object obj)
         {
-            m_CachedPtr = cachedPtr;
-            m_EntityId = v;
-            m_UnityRuntimeErrorString = null;
+            var self = UnsafeUtility.As<System.Object, UnityEngine.Object>(ref obj);
+            return self.GetUnityRuntimeErrorString();
+        }
+
+        [RequiredByNativeCode]
+        static void BindNativeObject(System.Object obj, System.IntPtr cachedPtr, EntityId v)
+        {
+            // TODO: change parameter to UnityEngine.Object once additional proxy work is done to allow passing GC handles directly
+            var unityObj = UnsafeUtility.As<System.Object, UnityEngine.Object>(ref obj);
+            unityObj.m_CachedPtr = cachedPtr;
+            unityObj.m_EntityId = v;
+            unityObj.m_UnityRuntimeErrorString = null;
         }
 
         // The name of the object.

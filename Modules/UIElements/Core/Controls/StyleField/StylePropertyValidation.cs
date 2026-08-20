@@ -2,10 +2,12 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Unity.Properties;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Bindings;
 using UnityEngine.Internal;
 using UnityEngine.UIElements.StyleSheets;
@@ -37,6 +39,7 @@ namespace UnityEngine.UIElements
     {
         static readonly BindingId propertyBindingProperty = nameof(property);
 
+        [NoAutoStaticsCleanup]
         static readonly List<string> k_SyntaxTerms = new()
         {"length", "length-percentage", "color", "url", "resource", "angle", "number", "time",
             "single-transition-property", "easing-function" };
@@ -102,3 +105,4 @@ namespace UnityEngine.UIElements
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

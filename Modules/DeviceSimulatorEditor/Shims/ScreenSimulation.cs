@@ -119,9 +119,9 @@ namespace UnityEditor.DeviceSimulation
             {
                 // The real iPhone X responds to this absolute corner case by crashing, we will not do that.
                 m_AutoRotation = false;
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 RequestOrientation(m_SupportedOrientations.Keys.ToArray()[0]);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             }
 
             m_RequestInsetUpdate = true;

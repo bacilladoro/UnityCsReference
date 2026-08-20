@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -15,14 +16,17 @@ namespace Unity.GraphToolkit.Editor
     /// Manipulator to select elements by drawing a rectangle around them.
     /// </summary>
     [UnityRestricted]
-    internal class RectangleSelector : MouseManipulator
+    internal partial class RectangleSelector : MouseManipulator
     {
-        static readonly List<GraphElement> k_OnMouseUpAllUIs = new();
+        [AutoStaticsCleanupOnCodeReload]
+        static List<GraphElement> k_OnMouseUpAllUIs = new();
 
         readonly RectangleSelect m_Rectangle;
         bool m_Active;
 
+        [AutoStaticsCleanupOnCodeReload]
         static List<ChildView> s_OverriddenSelectionElements = new();
+        [AutoStaticsCleanupOnCodeReload]
         static List<ChildView> s_OverriddenSelectionElementsBackup = new();
 
         GraphViewPanHelper m_PanHelper = new GraphViewPanHelper();
@@ -175,25 +179,25 @@ namespace Unity.GraphToolkit.Editor
         {
             graphView.GetGraphElementsInRegion(selectionRegion, k_OnMouseUpAllUIs, GraphView.PartitioningMode.PlacematTitle);
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var allSelectedModels = k_OnMouseUpAllUIs
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 .OfType<ModelView>()
                 .Select(elem => elem.Model)
                 .OfType<GraphElementModel>()
                 .Where(model => model.IsSelectable())
                 .ToList();
             bool onlyWiresSelected = allSelectedModels.TrueForAll(m => m is WireModel);
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var selectedNodes = allSelectedModels
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 .OfType<PortNodeModel>()
                 .ToHashSet();
             k_OnMouseUpAllUIs.Clear();
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             foreach (var node in selectedNodes.ToList()) // need to copy the list as it will be changed while iterating.
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 RecurseAddGraphContainerChildren(node, selectedNodes);
 
             bool PortIsSelected(PortModel p) => p != null && selectedNodes.Contains(p.NodeModel);
@@ -201,9 +205,9 @@ namespace Unity.GraphToolkit.Editor
             // don't select wires unless they link selected models or if only wires are selected
             var modelsToSelect = onlyWiresSelected ?
                 allSelectedModels :
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 allSelectedModels
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     .Where(m => m is not WireModel wire
                         || PortIsSelected(wire.FromPort) && PortIsSelected(wire.ToPort))
                     .ToList();
@@ -214,9 +218,9 @@ namespace Unity.GraphToolkit.Editor
         {
             if (node is IGraphElementContainer container)
             {
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 foreach (var child in container.GetGraphElementModels().OfType<PortNodeModel>())
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 {
                     nodeModels.Add(child);
                     RecurseAddGraphContainerChildren(child, nodeModels);
@@ -289,7 +293,9 @@ namespace Unity.GraphToolkit.Editor
 
         class RectangleSelect : VisualElement
         {
+            [NoAutoStaticsCleanup] // CSS custom property descriptor; value is a fixed CSS property name
             static readonly CustomStyleProperty<Color> k_FillColorProperty = new CustomStyleProperty<Color>("--fill-color");
+            [NoAutoStaticsCleanup] // CSS custom property descriptor; value is a fixed CSS property name
             static readonly CustomStyleProperty<Color> k_BorderColorProperty = new CustomStyleProperty<Color>("--border-color");
 
             Vector2 m_End;

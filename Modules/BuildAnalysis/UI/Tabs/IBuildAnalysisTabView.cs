@@ -10,7 +10,7 @@ namespace UnityEditor.Build.Analysis
     {
         VisualElement Root { get; }
         void Initialize();
-        void SetSelection(BuildEntry selection, BuildAnalysis analysis);
+        void Apply(BuildAnalysisView view);
         void OnTabVisibilityChanged(bool isVisible);
         void OnInspectorVisibilityChanged(bool isOpen);
     }

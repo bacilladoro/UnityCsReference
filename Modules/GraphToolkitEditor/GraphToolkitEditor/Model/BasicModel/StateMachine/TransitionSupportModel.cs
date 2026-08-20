@@ -5,6 +5,8 @@
 using System;
 using System.Collections.Generic;
 using Unity.GraphToolkit.Editor.ContextualMenuItems;
+using Unity.GraphToolkit.Editor.Implementation;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Serialization;
@@ -45,39 +47,11 @@ namespace Unity.GraphToolkit.Editor
     }
 
     /// <summary>
-    /// The kind of <see cref="TransitionSupportModel"/>.
-    /// </summary>
-    [Serializable]
-    [UnityRestricted]
-    internal enum TransitionSupportKind
-    {
-        /// <summary>
-        /// A transition that can come from any state at the current level of the state machine.
-        /// </summary>
-        Local,
-
-        /// <summary>
-        /// A transition to the same state.
-        /// </summary>
-        Self,
-
-        /// <summary>
-        /// A transition that is triggered when entering the state machine.
-        /// </summary>
-        OnEnter,
-
-        /// <summary>
-        /// A transition between two states.
-        /// </summary>
-        StateToState
-    }
-
-    /// <summary>
     /// A wire that holds transitions.
     /// </summary>
     [Serializable]
     [UnityRestricted]
-    internal class TransitionSupportModel : WireModel, IRenamable, IHasTitle, IGraphElementContainer, IHasElementColor
+    internal abstract partial class TransitionSupportModel : WireModel, IHasTitle, IGraphElementContainer, IHasElementColor, ITransition
     {
         [SerializeField]
         [HideInInspector]
@@ -103,16 +77,12 @@ namespace Unity.GraphToolkit.Editor
         [FormerlySerializedAs("m_StoreTransitions")]
         List<TransitionModel> m_Transitions = new();
 
-        /* We use a TransitionSupportKind enum instead of subclassing TransitionSupportModel to make it easier for
-         clients to derive from it, only having a single class to derive from. */
-        [SerializeField]
-        TransitionSupportKind m_TransitionSupportKind;
-
-        [SerializeField]
-        string m_Title;
-
         [SerializeField]
         protected ElementColor m_ElementColor;
+
+        Color m_DefaultColor;
+
+        string m_Tooltip;
 
         /// <inheritdoc />
         public ElementColor ElementColor => m_ElementColor = new ElementColor(this);
@@ -121,15 +91,66 @@ namespace Unity.GraphToolkit.Editor
         public void SetColor(Color color) => m_ElementColor.Color = color;
 
         /// <inheritdoc />
-        public Color DefaultColor => default;
+        public virtual Color DefaultColor
+        {
+            get => m_DefaultColor;
+            set
+            {
+                if (m_DefaultColor == value)
+                    return;
+                m_DefaultColor = value;
+                GraphModel?.CurrentGraphChangeDescription.AddChangedModel(this, ChangeHint.Style);
+            }
+        }
 
         /// <inheritdoc />
         public bool UseColorAlpha => true;
+
+        public virtual string IconPath => null;
+
+        /// <summary>
+        /// The text displayed when hovering over the transition.
+        /// </summary>
+        public virtual string Tooltip
+        {
+            get => m_Tooltip;
+            set
+            {
+                if (m_Tooltip == value)
+                    return;
+                m_Tooltip = value;
+                GraphModel?.CurrentGraphChangeDescription.AddChangedModel(this, ChangeHint.Style);
+            }
+        }
 
         /// <summary>
         /// The transitions in this transition support.
         /// </summary>
         public virtual IReadOnlyList<TransitionModel> Transitions => m_Transitions;
+
+        /// <inheritdoc cref="ITransition.FromState" />
+        public IState FromState => GetPublicState(FromPort?.NodeModel);
+
+        /// <inheritdoc cref="ITransition.ToState" />
+        public IState ToState => GetPublicState(ToPort?.NodeModel);
+
+        // A user-authored state is exposed through its State object, every other kind of state is exposed through its model.
+        static IState GetPublicState(PortNodeModel nodeModel)
+        {
+            if (nodeModel is UserStateModelImp stateImp)
+                return stateImp.Node;
+
+            return nodeModel as IState;
+        }
+
+        /// <inheritdoc cref="ITransition.GetRules" />
+        public IEnumerable<ITransitionRule> GetRules() => Transitions;
+
+        /// <summary>
+        /// Returns the public <see cref="ITransition"/> to hand back through the read API. When this support
+        /// backs a user-authored transition, the user object is returned instead of the internal model.
+        /// </summary>
+        internal virtual ITransition AsPublicTransition() => this;
 
         /// <inheritdoc />
         public override string WireBubbleText
@@ -203,18 +224,19 @@ namespace Unity.GraphToolkit.Editor
         }
 
         /// <summary>
-        /// The kind of transition.
-        /// </summary>
-        public TransitionSupportKind TransitionSupportKind
-        {
-            get => m_TransitionSupportKind;
-            set => m_TransitionSupportKind = value;
-        }
-
-        /// <summary>
         /// Whether the transition is a transition to the same state.
         /// </summary>
-        public virtual bool IsSingleStateTransition => (TransitionSupportKind != TransitionSupportKind.StateToState) || (FromPort == ToPort);
+        public virtual bool IsSelfTransition => true;
+
+        /// <summary>
+        /// The type used to identify this transition support when matching or recreating it.
+        /// </summary>
+        /// <remarks>
+        /// Defaults to the runtime type. Implementations that back a user-defined transition with a single shared
+        /// model type override this to return the user-facing type, so that distinct user transition types are not
+        /// collapsed together.
+        /// </remarks>
+        public virtual Type TransitionSupportType => GetType();
 
         /// <inheritdoc />
         public override IEnumerable<GraphElementModel> DependentModels => GetGraphElementModels();
@@ -231,8 +253,6 @@ namespace Unity.GraphToolkit.Editor
 
             m_Capabilities.Remove(Editor.Capabilities.Ascendable);
             m_Capabilities.Add(Editor.Capabilities.Colorable);
-
-            m_TransitionSupportKind = TransitionSupportKind.StateToState;
         }
 
         /// <summary>
@@ -262,7 +282,7 @@ namespace Unity.GraphToolkit.Editor
         {
             base.SetPorts(toPortModel, fromPortModel);
 
-            if (IsSingleStateTransition && toPortModel is StatePortModel statePortModel)
+            if (IsSelfTransition && toPortModel is StatePortModel statePortModel)
             {
                 var anchorPos = statePortModel.ComputeOffsetForNewSingleStateTransition();
                 SetToAnchor(AnchorSide.Top, anchorPos);
@@ -404,12 +424,6 @@ namespace Unity.GraphToolkit.Editor
         }
 
         /// <inheritdoc />
-        public void Rename(string newName)
-        {
-            Title = newName;
-        }
-
-        /// <inheritdoc />
         public override void OnAfterDeserialize()
         {
             base.OnAfterDeserialize();
@@ -442,14 +456,10 @@ namespace Unity.GraphToolkit.Editor
         /// <summary>
         /// The title of the transition support.
         /// </summary>
-        public string Title
+        public virtual string Title
         {
-            get => m_Title;
-            set
-            {
-                m_Title = value;
-                GraphModel?.CurrentGraphChangeDescription.AddChangedModel(this, ChangeHint.Data);
-            }
+            get => string.Empty;
+            set {}
         }
 
         /// <inheritdoc />
@@ -465,7 +475,8 @@ namespace Unity.GraphToolkit.Editor
             }
         }
 
-        static readonly List<ContextualMenuItem> k_ContextualMenuItems = new() {
+        [AutoStaticsCleanupOnCodeReload]
+        static List<ContextualMenuItem> k_ContextualMenuItems = new() {
             ContextualMenuHelpers.copyItem,
             ContextualMenuHelpers.pasteAsNewMenuItem,
         };

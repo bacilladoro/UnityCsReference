@@ -33,7 +33,7 @@ namespace Unity.UIToolkit.Editor
                 case StylePropertyId.BackgroundColor:
                     return StylePropertyRecordingChannel.Color4;
                 case StylePropertyId.BackgroundImage:
-                    return StylePropertyRecordingChannel.Object1;
+                    return StylePropertyRecordingChannel.Gradient;
                 case StylePropertyId.BackgroundPositionX:
                     return StylePropertyRecordingChannel.BackgroundPosition3;
                 case StylePropertyId.BackgroundPositionY:
@@ -88,6 +88,14 @@ namespace Unity.UIToolkit.Editor
                     return StylePropertyRecordingChannel.EnumInt;
                 case StylePropertyId.FontSize:
                     return StylePropertyRecordingChannel.Length1;
+                case StylePropertyId.GridColumnEnd:
+                    return StylePropertyRecordingChannel.EnumInt;
+                case StylePropertyId.GridColumnStart:
+                    return StylePropertyRecordingChannel.EnumInt;
+                case StylePropertyId.GridRowEnd:
+                    return StylePropertyRecordingChannel.EnumInt;
+                case StylePropertyId.GridRowStart:
+                    return StylePropertyRecordingChannel.EnumInt;
                 case StylePropertyId.Height:
                     return StylePropertyRecordingChannel.Length1;
                 case StylePropertyId.JustifyContent:
@@ -186,6 +194,8 @@ namespace Unity.UIToolkit.Editor
                     return StylePropertyRecordingChannel.Length1;
                 case StylePropertyId.WordSpacing:
                     return StylePropertyRecordingChannel.Length1;
+                case StylePropertyId.ZIndex:
+                    return StylePropertyRecordingChannel.Int1;
                 default:
                     return StylePropertyRecordingChannel.Unsupported;
             }

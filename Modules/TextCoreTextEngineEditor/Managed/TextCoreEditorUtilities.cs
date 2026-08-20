@@ -12,19 +12,21 @@ namespace UnityEditor.TextCore.Text
 {
     internal static class TM_EditorStyles
     {
-        public static GUIStyle panelTitle;
-        public static GUIStyle sectionHeader;
-        public static GUIStyle textAreaBoxWindow;
+        public static readonly GUIStyle panelTitle;
+        public static readonly GUIStyle sectionHeader;
+        public static readonly GUIStyle textAreaBoxWindow;
 
-        public static GUIStyle label;
-        public static GUIStyle leftLabel;
-        public static GUIStyle centeredLabel;
-        public static GUIStyle rightLabel;
+        public static readonly GUIStyle label;
+        public static readonly GUIStyle leftLabel;
+        public static readonly GUIStyle centeredLabel;
+        public static readonly GUIStyle rightLabel;
 
-        public static Texture2D sectionHeaderStyleTexture;
+        public static readonly Texture2D sectionHeaderStyleTexture;
 
         static TM_EditorStyles()
         {
+            sectionHeader = new GUIStyle(EditorStyles.textArea) { fixedHeight = 22, richText = true, overflow = new RectOffset(9, 0, 0, 0), padding = new RectOffset(0, 0, 4, 0) };
+            sectionHeaderStyleTexture = new Texture2D(1, 1);
             // Section Header
             CreateSectionHeaderStyle();
 
@@ -39,9 +41,6 @@ namespace UnityEditor.TextCore.Text
 
         internal static void CreateSectionHeaderStyle()
         {
-            sectionHeader = new GUIStyle(EditorStyles.textArea) { fixedHeight = 22, richText = true, overflow = new RectOffset(9, 0, 0, 0), padding = new RectOffset(0, 0, 4, 0) };
-            sectionHeaderStyleTexture = new Texture2D(1, 1);
-
             if (EditorGUIUtility.isProSkin)
                 sectionHeaderStyleTexture.SetPixel(1, 1, new Color(0.4f, 0.4f, 0.4f, 0.5f));
             else

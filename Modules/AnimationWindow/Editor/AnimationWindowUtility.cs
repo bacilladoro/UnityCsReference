@@ -716,15 +716,16 @@ namespace UnityEditorInternal
                 return -1;
             }
 
-            if (name[name.Length - 2] != '.')
+            // Handlers run before the built-in single-char fast path so that a handler can
+            // claim ".r"/".x"-style channels that belong to a larger composite group.
+            foreach (var h in s_PropertyHandlers)
             {
-                foreach (var h in s_PropertyHandlers)
-                {
-                    int idx = h.GetChannelIndex(name);
-                    if (idx != -1) return idx;
-                }
-                return -1;
+                int idx = h.GetChannelIndex(name);
+                if (idx != -1) return idx;
             }
+
+            if (name[name.Length - 2] != '.')
+                return -1;
 
             switch (name[name.Length - 1])
             {
@@ -745,11 +746,6 @@ namespace UnityEditorInternal
                 case 'w':
                     return 3;
                 default:
-                    foreach (var h in s_PropertyHandlers)
-                    {
-                        int idx = h.GetChannelIndex(name);
-                        if (idx != -1) return idx;
-                    }
                     return -1;
             }
         }
@@ -760,16 +756,18 @@ namespace UnityEditorInternal
             if (propertyName == null || propertyName.Length < 3)
                 return propertyName;
 
-            if (propertyName[propertyName.Length - 2] == '.'
-                && GetComponentIndex(propertyName) != -1)
-            {
-                return propertyName.Substring(0, propertyName.Length - 2);
-            }
-
+            // Handlers run before the built-in fast path so that a handler can group
+            // ".r"/".x"-style channels under a larger composite group.
             foreach (var h in s_PropertyHandlers)
             {
                 string group = h.GetPropertyGroupName(propertyName);
                 if (group != null) return group;
+            }
+
+            if (propertyName[propertyName.Length - 2] == '.'
+                && GetComponentIndex(propertyName) != -1)
+            {
+                return propertyName.Substring(0, propertyName.Length - 2);
             }
 
             return propertyName;

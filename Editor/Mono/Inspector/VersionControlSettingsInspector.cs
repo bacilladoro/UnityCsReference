@@ -209,9 +209,9 @@ namespace UnityEditor
             var arr = GetVCConfigFieldRecentValues(fieldName);
             var newVal = new[] {value};
             // put newly used value in front
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             arr = newVal.Concat(arr.Except(newVal)).Take(kVCFieldRecentCount).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             m_VCConfigFieldsRecentValues[fieldName] = arr;
 
             for (var i = 0; i < arr.Length; ++i)
@@ -227,12 +227,12 @@ namespace UnityEditor
 
             var popupArray = new List<EditorSettingsInspector.PopupElement>(vcDefaultPopupList);
             var descriptors = VersionControlManager.versionControlDescriptors;
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             popupArray.AddRange(descriptors.OrderBy(d => d.displayName).Select(d => new EditorSettingsInspector.PopupElement(d.name, d.displayName)));
-#pragma warning restore UA2001
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+#pragma warning disable UAC2001 // Avoid Linq
             availvc = availvc.Where(p => !Array.Exists(descriptors, d => string.Equals(d.name, p.name, StringComparison.Ordinal)));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             foreach (var plugin in availvc)
             {
                 popupArray.Add(new EditorSettingsInspector.PopupElement(plugin.name));

@@ -34,12 +34,12 @@ namespace Unity.GraphToolkit.Editor
         }
 
         /// <inheritdoc />
-        public override void AddToState(IState state)
+        public override void AddToState(CSO.IState state)
         {
         }
 
         /// <inheritdoc />
-        public override void RemoveFromState(IState state)
+        public override void RemoveFromState(CSO.IState state)
         {
         }
     }

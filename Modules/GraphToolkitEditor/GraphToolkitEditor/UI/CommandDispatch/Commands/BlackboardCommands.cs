@@ -284,9 +284,9 @@ namespace Unity.GraphToolkit.Editor
         {
             bool duplicated = false;
             var sectionName = Group.GetSection().Title;
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             foreach (var item in original.ToList()) // duplicated originals list as it might be modified when removing a variable
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 if (item is GroupModel group)
                 {
@@ -364,9 +364,9 @@ namespace Unity.GraphToolkit.Editor
 
                 command.Group.MoveItemsAfter(newItems, command.InsertAfter);
 
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 graphModelState.GraphModel.DeleteGroups(duplicatedGroups.Where(g => g.Items.Count == 0 && g.IsDeletable()));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 graphModelState.GraphModel.UpdateSubGraphs();
 
                 graphUpdater.MarkUpdated(changeScope.ChangeDescription);

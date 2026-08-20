@@ -52,7 +52,7 @@ namespace Unity.GraphToolkit.Editor
         public IReadOnlyList<MultipleGraphProcessingErrorsModel> Errors => m_Errors;
 
         /// <inheritdoc/>
-        public override void OnRemovedFromState(IState state)
+        public override void OnRemovedFromState(CSO.IState state)
         {
             base.OnRemovedFromState(state);
             m_Errors.Clear();

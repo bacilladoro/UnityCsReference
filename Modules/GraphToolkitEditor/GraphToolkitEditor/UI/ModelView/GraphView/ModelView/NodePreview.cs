@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -14,7 +15,9 @@ namespace Unity.GraphToolkit.Editor
     [UnityRestricted]
     internal class NodePreview : Marker
     {
+        [NoAutoStaticsCleanup] // CSS custom property descriptor; value is a fixed CSS property name
         static readonly CustomStyleProperty<Color> k_BackgroundColorProperty = new CustomStyleProperty<Color>("--background-color");
+        [NoAutoStaticsCleanup] // CSS custom property descriptor; value is a fixed CSS property name
         static readonly CustomStyleProperty<Color> k_BorderColorProperty = new CustomStyleProperty<Color>("--border-color");
 
         const string k_HidePreviewTooltip = "Hide Node preview";

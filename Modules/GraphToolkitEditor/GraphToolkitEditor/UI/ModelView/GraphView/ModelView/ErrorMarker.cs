@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -26,11 +27,17 @@ namespace Unity.GraphToolkit.Editor
 
         const string k_DefaultStylePath = "ErrorMarker.uss";
 
+        [NoAutoStaticsCleanup] // CSS custom property descriptor; value is a fixed CSS property name
         static readonly CustomStyleProperty<float> s_TextSizeProperty = new("--error-text-size");
+        [NoAutoStaticsCleanup] // CSS custom property descriptor; value is a fixed CSS property name
         static readonly CustomStyleProperty<float> s_TextMaxWidthProperty = new("--error-text-max-width");
+        [NoAutoStaticsCleanup] // CSS custom property descriptor; value is a fixed CSS property name
         static readonly CustomStyleProperty<float> k_IconWidthProperty = new("--error-icon-width");
+        [NoAutoStaticsCleanup] // CSS custom property descriptor; value is a fixed CSS property name
         static readonly CustomStyleProperty<float> k_IconHeightProperty = new("--error-icon-height");
+        [NoAutoStaticsCleanup] // CSS custom property descriptor; value is a fixed CSS property name
         static readonly CustomStyleProperty<Color> k_BackgroundColorProperty = new("--background-color");
+        [NoAutoStaticsCleanup] // CSS custom property descriptor; value is a fixed CSS property name
         static readonly CustomStyleProperty<Color> k_BorderColorProperty = new("--border-color");
 
         public MarkerModel MarkerModel => Model as MarkerModel;
@@ -332,7 +339,7 @@ namespace Unity.GraphToolkit.Editor
                 case WireModel wireModel:
                     if (wireModel.GetView(RootView) is GraphElement wireUI)
                     {
-                        if (wireModel is TransitionSupportModel transModel && transModel.IsSingleStateTransition)
+                        if (wireModel is TransitionSupportModel transModel && transModel.IsSelfTransition)
                         {
                             m_Offset = new Vector2(0, -1);
                             AttachTo(wireUI.SizeElement, SpriteAlignment.TopCenter);

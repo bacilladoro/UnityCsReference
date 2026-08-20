@@ -17,6 +17,7 @@ namespace UnityEngine.UIElements.StyleSheets
 {
     internal static partial class InitialStyle
     {
+        [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
         private static ComputedStyle s_InitialStyle;
 
         public static ref ComputedStyle Get()
@@ -35,7 +36,12 @@ namespace UnityEngine.UIElements.StyleSheets
             s_InitialStyle.layoutData.Write().alignContent = Align.FlexStart;
             s_InitialStyle.layoutData.Write().alignItems = Align.Stretch;
             s_InitialStyle.layoutData.Write().alignSelf = Align.Auto;
-            s_InitialStyle.rareData.Write().animationPlayState = AnimationPlayState.Running;
+            s_InitialStyle.animationData.Write().animationDelay.CopyFrom(new List<float> { 0 });
+            s_InitialStyle.animationData.Write().animationDirection.CopyFrom(new List<AnimationDirection> { AnimationDirection.Normal });
+            s_InitialStyle.animationData.Write().animationDuration.CopyFrom(new List<float> { 0 });
+            s_InitialStyle.animationData.Write().animationIterationCount.CopyFrom(new List<AnimationIterationCount> { 1 });
+            s_InitialStyle.animationData.Write().animationNames.CopyFrom(new List<EntityId> { default });
+            s_InitialStyle.animationData.Write().animationPlayStates.CopyFrom(new List<AnimationPlayState> { AnimationPlayState.Running });
             s_InitialStyle.layoutData.Write().aspectRatio = StyleKeyword.Auto.ToStyleRatio();
             s_InitialStyle.rareData.Write().backdropFilter.CopyFrom(new ReadOnlySpan<UnmanagedFilterFunction>());
             s_InitialStyle.visualData.Write().backgroundColor = Color.clear;
@@ -68,8 +74,19 @@ namespace UnityEngine.UIElements.StyleSheets
             s_InitialStyle.layoutData.Write().flexShrink = 1f;
             s_InitialStyle.layoutData.Write().flexWrap = Wrap.NoWrap;
             s_InitialStyle.inheritedData.Write().fontSize = 14f;
+            s_InitialStyle.gridData.Write().gridAutoColumns.CopyFrom(new ReadOnlySpan<GridTrackSize>());
+            s_InitialStyle.gridData.Write().gridAutoFlow = GridAutoFlow.Row;
+            s_InitialStyle.gridData.Write().gridAutoRows.CopyFrom(new ReadOnlySpan<GridTrackSize>());
+            s_InitialStyle.gridData.Write().gridColumnEnd = GridLine.Auto;
+            s_InitialStyle.gridData.Write().gridColumnStart = GridLine.Auto;
+            s_InitialStyle.gridData.Write().gridRowEnd = GridLine.Auto;
+            s_InitialStyle.gridData.Write().gridRowStart = GridLine.Auto;
+            s_InitialStyle.gridData.Write().gridTemplateColumns.CopyFrom(new ReadOnlySpan<GridTrackSize>());
+            s_InitialStyle.gridData.Write().gridTemplateRows.CopyFrom(new ReadOnlySpan<GridTrackSize>());
             s_InitialStyle.layoutData.Write().height = StyleKeyword.Auto.ToLength();
             s_InitialStyle.layoutData.Write().justifyContent = Justify.FlexStart;
+            s_InitialStyle.gridData.Write().justifyItems = Align.Stretch;
+            s_InitialStyle.gridData.Write().justifySelf = Align.Auto;
             s_InitialStyle.layoutData.Write().left = StyleKeyword.Auto.ToLength();
             s_InitialStyle.inheritedData.Write().letterSpacing = 0f;
             s_InitialStyle.layoutData.Write().marginBottom = 0f;
@@ -100,7 +117,6 @@ namespace UnityEngine.UIElements.StyleSheets
             s_InitialStyle.transitionData.Write().transitionProperty.CopyFrom(new List<StylePropertyId> { StylePropertyId.All });
             s_InitialStyle.transitionData.Write().transitionTimingFunction.CopyFrom(new List<EasingFunction> { EasingMode.Ease });
             s_InitialStyle.transformData.Write().translate = StyleKeyword.None.ToTranslate();
-            s_InitialStyle.rareData.Write().unityAnimationClip = default;
             s_InitialStyle.rareData.Write().unityBackgroundImageTintColor = Color.white;
             s_InitialStyle.inheritedData.Write().unityEditorTextRenderingMode = EditorTextRenderingMode.SDF;
             s_InitialStyle.inheritedData.Write().unityFont = default;
@@ -125,6 +141,7 @@ namespace UnityEngine.UIElements.StyleSheets
             s_InitialStyle.inheritedData.Write().whiteSpace = WhiteSpace.Normal;
             s_InitialStyle.layoutData.Write().width = StyleKeyword.Auto.ToLength();
             s_InitialStyle.inheritedData.Write().wordSpacing = 0f;
+            s_InitialStyle.rareData.Write().zIndex = int.MinValue;
         }
 
         static void Release()
@@ -135,7 +152,12 @@ namespace UnityEngine.UIElements.StyleSheets
         public static Align alignContent => s_InitialStyle.layoutData.Read().alignContent;
         public static Align alignItems => s_InitialStyle.layoutData.Read().alignItems;
         public static Align alignSelf => s_InitialStyle.layoutData.Read().alignSelf;
-        public static AnimationPlayState animationPlayState => s_InitialStyle.rareData.Read().animationPlayState;
+        public static ReadOnlySpan<float> animationDelay => s_InitialStyle.animationData.Read().animationDelay;
+        public static ReadOnlySpan<AnimationDirection> animationDirection => s_InitialStyle.animationData.Read().animationDirection;
+        public static ReadOnlySpan<float> animationDuration => s_InitialStyle.animationData.Read().animationDuration;
+        public static ReadOnlySpan<AnimationIterationCount> animationIterationCount => s_InitialStyle.animationData.Read().animationIterationCount;
+        public static ReadOnlySpan<EntityId> animationNames => s_InitialStyle.animationData.Read().animationNames;
+        public static ReadOnlySpan<AnimationPlayState> animationPlayStates => s_InitialStyle.animationData.Read().animationPlayStates;
         public static Ratio aspectRatio => s_InitialStyle.layoutData.Read().aspectRatio;
         public static ReadOnlySpan<UnmanagedFilterFunction> backdropFilter => s_InitialStyle.rareData.Read().backdropFilter;
         public static Color backgroundColor => s_InitialStyle.visualData.Read().backgroundColor;
@@ -168,8 +190,19 @@ namespace UnityEngine.UIElements.StyleSheets
         public static float flexShrink => s_InitialStyle.layoutData.Read().flexShrink;
         public static Wrap flexWrap => s_InitialStyle.layoutData.Read().flexWrap;
         public static Length fontSize => s_InitialStyle.inheritedData.Read().fontSize;
+        public static ReadOnlySpan<GridTrackSize> gridAutoColumns => s_InitialStyle.gridData.Read().gridAutoColumns;
+        public static GridAutoFlow gridAutoFlow => s_InitialStyle.gridData.Read().gridAutoFlow;
+        public static ReadOnlySpan<GridTrackSize> gridAutoRows => s_InitialStyle.gridData.Read().gridAutoRows;
+        public static GridLine gridColumnEnd => s_InitialStyle.gridData.Read().gridColumnEnd;
+        public static GridLine gridColumnStart => s_InitialStyle.gridData.Read().gridColumnStart;
+        public static GridLine gridRowEnd => s_InitialStyle.gridData.Read().gridRowEnd;
+        public static GridLine gridRowStart => s_InitialStyle.gridData.Read().gridRowStart;
+        public static ReadOnlySpan<GridTrackSize> gridTemplateColumns => s_InitialStyle.gridData.Read().gridTemplateColumns;
+        public static ReadOnlySpan<GridTrackSize> gridTemplateRows => s_InitialStyle.gridData.Read().gridTemplateRows;
         public static Length height => s_InitialStyle.layoutData.Read().height;
         public static Justify justifyContent => s_InitialStyle.layoutData.Read().justifyContent;
+        public static Align justifyItems => s_InitialStyle.gridData.Read().justifyItems;
+        public static Align justifySelf => s_InitialStyle.gridData.Read().justifySelf;
         public static Length left => s_InitialStyle.layoutData.Read().left;
         public static Length letterSpacing => s_InitialStyle.inheritedData.Read().letterSpacing;
         public static Length marginBottom => s_InitialStyle.layoutData.Read().marginBottom;
@@ -200,7 +233,6 @@ namespace UnityEngine.UIElements.StyleSheets
         public static ReadOnlySpan<StylePropertyId> transitionProperty => s_InitialStyle.transitionData.Read().transitionProperty;
         public static ReadOnlySpan<EasingFunction> transitionTimingFunction => s_InitialStyle.transitionData.Read().transitionTimingFunction;
         public static Translate translate => s_InitialStyle.transformData.Read().translate;
-        public static EntityId unityAnimationClip => s_InitialStyle.rareData.Read().unityAnimationClip;
         public static Color unityBackgroundImageTintColor => s_InitialStyle.rareData.Read().unityBackgroundImageTintColor;
         public static EditorTextRenderingMode unityEditorTextRenderingMode => s_InitialStyle.inheritedData.Read().unityEditorTextRenderingMode;
         public static EntityId unityFont => s_InitialStyle.inheritedData.Read().unityFont;
@@ -225,5 +257,6 @@ namespace UnityEngine.UIElements.StyleSheets
         public static WhiteSpace whiteSpace => s_InitialStyle.inheritedData.Read().whiteSpace;
         public static Length width => s_InitialStyle.layoutData.Read().width;
         public static Length wordSpacing => s_InitialStyle.inheritedData.Read().wordSpacing;
+        public static int zIndex => s_InitialStyle.rareData.Read().zIndex;
     }
 }

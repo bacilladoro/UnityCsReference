@@ -6,7 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using Newtonsoft.Json;
+using System.Text.Json;
 using Unity.PlayMode.Editor;
 using UnityEditor;
 using UnityEngine;
@@ -66,7 +66,7 @@ namespace Unity.Multiplayer.PlayMode.Editor
 
                 m_PlayerTagsData.version = currentVersion;
                 m_PlayerTagsData.PlayerTags = tags;
-                var json = JsonConvert.SerializeObject(m_PlayerTagsData, Formatting.Indented);
+                var json = JsonSerializer.Serialize(m_PlayerTagsData, ParsingSystem.SerializerOptions);
                 // MTTB-566
                 if (!File.Exists(m_Path) || AssetDatabase.MakeEditable(m_Path))
                 {
@@ -209,7 +209,7 @@ namespace Unity.Multiplayer.PlayMode.Editor
                 return;
             }
             m_PlayerTagsData.PlayerTags = playerTags;
-            var json = JsonConvert.SerializeObject(m_PlayerTagsData, Formatting.Indented);
+            var json = JsonSerializer.Serialize(m_PlayerTagsData, ParsingSystem.SerializerOptions);
             File.WriteAllBytes(m_Path, Encoding.UTF8.GetBytes(json));
         }
 
@@ -217,7 +217,7 @@ namespace Unity.Multiplayer.PlayMode.Editor
         {
             try
             {
-                return JsonConvert.DeserializeObject<PlayerTagsData>(Encoding.UTF8.GetString(File.ReadAllBytes(path)));
+                return JsonSerializer.Deserialize<PlayerTagsData>(Encoding.UTF8.GetString(File.ReadAllBytes(path)), ParsingSystem.SerializerOptions);
             }
             catch (Exception e)
             {

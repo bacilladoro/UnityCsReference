@@ -24,14 +24,14 @@ namespace Unity.ProjectAuditor.Editor.Core
 
         public IssueCategory[] Categories
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             get { return SupportedLayouts.Select(l => l.Category).ToArray(); }
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
-        #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+        #pragma warning disable UAC2001 // Avoid Linq
         public IReadOnlyCollection<DescriptorId> SupportedDescriptorIds => m_Ids != null ? m_Ids.ToArray() : Array.Empty<DescriptorId>();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
         public abstract IReadOnlyCollection<IssueLayout> SupportedLayouts
         {
@@ -45,18 +45,18 @@ namespace Unity.ProjectAuditor.Editor.Core
 
         public static string[] GetAssetPathsByFilter(string filter, AnalysisContext context)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var assetsEnumerable = AssetDatabase.FindAssets(filter).Select(AssetDatabase.GUIDToAssetPath);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             if (context.Params.AssetPathFilter != null)
             {
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 assetsEnumerable = assetsEnumerable.Where(path => context.Params.AssetPathFilter(path));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             }
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             return assetsEnumerable.ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         static string[] FilterAssetPathsArray(AnalysisContext context, string[] assets)

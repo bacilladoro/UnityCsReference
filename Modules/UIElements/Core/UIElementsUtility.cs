@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
 using System;
 using System.Collections.Generic;
 using Unity.Profiling;
@@ -13,12 +14,15 @@ using UnityEngine.UIElements.Layout;
 namespace UnityEngine.UIElements
 {
 
-    internal static class UIElementsIMGUIUtility
+    internal static partial class UIElementsIMGUIUtility
     {
 
 
+        [AutoStaticsCleanupOnCodeReload]
         internal static Action<IMGUIContainer> s_BeginContainerCallback;
+        [AutoStaticsCleanupOnCodeReload]
         internal static Action<IMGUIContainer> s_EndContainerCallback;
+        [AutoStaticsCleanupOnCodeReload]
         internal static Action<IMGUIContainer> s_FocusOutContainerCallback;
 
 
@@ -110,15 +114,18 @@ namespace UnityEngine.UIElements
         LayoutManager,
         SelectorAccelerationCache,
         StyleClassList,
+        NativeTextBufferReclaimer,
         Count
     }
 
     static partial class UnloadingUtility
     {
-        static Action[] s_Subscribers = new Action[(int)UnloadingSubscriber.Count];
+        [NoAutoStaticsCleanup]
+        static readonly Action[] s_Subscribers = new Action[(int)UnloadingSubscriber.Count];
 
-        static ProfilerMarker s_CodeUnloadingMarker = new ProfilerMarker(ProfilerCategory.UIToolkit, "UIElements.OnCodeUnloading");
+        static readonly ProfilerMarker s_CodeUnloadingMarker = new ProfilerMarker(ProfilerCategory.UIToolkit, "UIElements.OnCodeUnloading");
 
+        [AutoStaticsCleanupOnCodeReload] // set during unload; the new domain must start not-unloaded
         internal static bool isUnloaded { get; private set; }
 
         [OnCodeLoaded]
@@ -167,7 +174,7 @@ namespace UnityEngine.UIElements
     }
 
     [VisibleToOtherModules("UnityEditor.UIBuilderModule", "UnityEditor.UIToolkitAuthoringModule", "UnityEditor.GraphToolkitModule")]
-    internal static class UIElementsUtility
+    internal static partial class UIElementsUtility
     {
 
 
@@ -184,12 +191,14 @@ namespace UnityEngine.UIElements
         }
 
 
+        [AutoStaticsCleanupOnCodeReload]
         private static Dictionary<EntityId, Panel> s_UIElementsCache = new Dictionary<EntityId, Panel>();
 
         // When not in editor, this will be all white, so no impact on the overall color, except for the multiplication done on the color.
+        [AutoStaticsCleanupOnCodeReload]
         internal static Color editorPlayModeTintColor = Color.white;
         // The usual height used for a control, such as a one-line text field. See --unity-metrics-single_line-height and EditorGUIUtility.singleLineHeight.
-        internal static float singleLineHeight = 18;
+        internal static readonly float singleLineHeight = 18;
 
         public const string hiddenClassName = "unity-hidden";
         internal static readonly UniqueStyleString hiddenClassNameUnique = new(hiddenClassName);
@@ -202,6 +211,7 @@ namespace UnityEngine.UIElements
             ExtraVertexChannels.Normal |
             ExtraVertexChannels.Tangent;
 
+        [NoAutoStaticsCleanup]
         internal static bool s_EnableOSXContextualMenuEventsOnNonOSXPlatforms;
         [VisibleToOtherModules("UnityEditor.GraphToolkitModule")]
         public static bool isOSXContextualMenuPlatform
@@ -223,6 +233,7 @@ namespace UnityEngine.UIElements
             s_EnableOSXContextualMenuEventsOnNonOSXPlatforms = false;
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         static internal List<Panel> s_PanelsIterationList = new List<Panel>();
 
         public static void RegisterCachedPanel(EntityId entityId, Panel panel)
@@ -250,6 +261,8 @@ namespace UnityEngine.UIElements
             {
                 LayoutManager.SharedManager.Collect();
             }
+
+            NativeTextBufferReclaimer.Collect();
 
             // Since updating schedulers jumps into user code, the panels list might change while we're iterating,
             // we make a copy first.
@@ -312,6 +325,7 @@ namespace UnityEngine.UIElements
             return referencePixelsPerUnit / pixelsPerUnit;
         }
 
+        [NoAutoStaticsCleanup]
         internal static char[] s_Modifiers = new char[5] { '&', '%', '^', '#', '_' };
 
         internal static string ParseMenuName(string menuName)
@@ -343,10 +357,15 @@ namespace UnityEngine.UIElements
         }
 
 
+        [NoAutoStaticsCleanup]
         internal static readonly HashSet<StyleSheet> s_StyleSheetsRequiringRebuilding = new();
+        [NoAutoStaticsCleanup]
         internal static readonly HashSet<string> s_ReimportedStyleSheetsPath = new();
+        [NoAutoStaticsCleanup]
         internal static readonly List<StyleSheet> s_StyleSheetsRebuildList = new();
+        [NoAutoStaticsCleanup]
         internal static readonly List<string> s_ReimportedStyleSheetsPathList = new();
+        [NoAutoStaticsCleanup]
         internal static bool s_StopRecordingStyleSheetUnloads = false;
 
         [VisibleToOtherModules("UnityEditor.UIToolkitAuthoringModule")]
@@ -425,3 +444,4 @@ namespace UnityEngine.UIElements
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

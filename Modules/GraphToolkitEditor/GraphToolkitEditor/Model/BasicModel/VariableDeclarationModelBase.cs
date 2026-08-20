@@ -8,6 +8,7 @@ using System.Linq;
 using Unity.Collections;
 using Unity.GraphToolkit.Editor.ContextualMenuItems;
 using Unity.GraphToolkit.Editor.Implementation;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 
 namespace Unity.GraphToolkit.Editor
@@ -89,7 +90,7 @@ namespace Unity.GraphToolkit.Editor
     /// </summary>
     [Serializable]
     [UnityRestricted]
-    internal abstract class VariableDeclarationModelBase : DeclarationModel, IGroupItemModel, IVariable
+    internal abstract partial class VariableDeclarationModelBase : DeclarationModel, IGroupItemModel, IVariable
     {
         [SerializeField, InspectorUseProperty(nameof(UniqueId)), DisableInInspector, VariableAdvanced]
 #pragma warning disable CS0169
@@ -134,9 +135,9 @@ namespace Unity.GraphToolkit.Editor
         public virtual string Subtitle => string.Empty;
 
         /// <inheritdoc />
-        #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+        #pragma warning disable UAC2001 // Avoid Linq
         public virtual IEnumerable<GraphElementModel> ContainedModels => Enumerable.Repeat(this, 1);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
         /// <summary>
         /// The type of the variable.
@@ -396,7 +397,8 @@ namespace Unity.GraphToolkit.Editor
         /// <inheritdoc />
         public override IReadOnlyList<ContextualMenuItem> ContextualMenuItems => k_ContextualMenuItems;
 
-        static readonly List<ContextualMenuItem> k_ContextualMenuItems = new() {
+        [AutoStaticsCleanupOnCodeReload]
+        static List<ContextualMenuItem> k_ContextualMenuItems = new() {
             ContextualMenuHelpers.createVariableItem,
             ContextualMenuHelpers.createGroupItem,
             ContextualMenuHelpers.cutItem,

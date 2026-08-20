@@ -105,9 +105,9 @@ namespace Unity.GraphToolkit.ItemLibrary.Editor
         /// </remarks>
         public List<ItemLibraryItem> Search(string query)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             return SearchAsEnumerable(query).ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         /// <summary>
@@ -179,14 +179,14 @@ namespace Unity.GraphToolkit.ItemLibrary.Editor
         List<ItemLibraryItem> FilterAndCacheItems(ItemLibraryFilter filter, IReadOnlyList<ItemLibraryItem> items)
         {
             if (filter == null)
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 return items.ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             m_FilterCache = m_FilterCache ?? new (ItemLibraryFilter filter, List<ItemLibraryItem> filteredItems)[k_MaxNumFilterCache];
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var cachedItems = m_FilterCache.FirstOrDefault(tu => tu.filter == filter).filteredItems;
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             if (cachedItems == null)
             {

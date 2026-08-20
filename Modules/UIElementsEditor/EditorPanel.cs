@@ -2,16 +2,19 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
 using System;
 using UnityEngine;
 using UnityEngine.Bindings;
 using UnityEngine.UIElements;
+using Unity.Scripting.LifecycleManagement;
 namespace UnityEditor.UIElements
 {
     [VisibleToOtherModules("UnityEditor.UIBuilderModule", "UnityEditor.UIToolkitAuthoringModule")]
     internal sealed class EditorPanel : Panel
     {
         readonly EditorCursorManager m_CursorManager = new EditorCursorManager();
+        [NoAutoStaticsCleanup]
         static EditorContextualMenuManager s_ContextualMenuManager = new EditorContextualMenuManager();
 
         public static Panel FindOrCreate(ScriptableObject ownerObject)
@@ -103,3 +106,4 @@ namespace UnityEditor.UIElements
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

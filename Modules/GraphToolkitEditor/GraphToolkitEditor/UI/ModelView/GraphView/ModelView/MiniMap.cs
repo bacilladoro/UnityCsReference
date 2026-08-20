@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using Unity.GraphToolkit.InternalBridge;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -23,9 +24,13 @@ namespace Unity.GraphToolkit.Editor
         /// </summary>
         public static readonly string ussClassName = "ge-minimap";
 
+        [NoAutoStaticsCleanup] // CSS custom property descriptor; value is a fixed CSS property name
         static readonly CustomStyleProperty<Color> k_ViewportColorProperty = new CustomStyleProperty<Color>("--viewport-color");
+        [NoAutoStaticsCleanup] // CSS custom property descriptor; value is a fixed CSS property name
         static readonly CustomStyleProperty<Color> k_SelectedElementColorProperty = new CustomStyleProperty<Color>("--selected-element-color");
+        [NoAutoStaticsCleanup] // CSS custom property descriptor; value is a fixed CSS property name
         static readonly CustomStyleProperty<Color> k_HighlightedElementColorProperty = new CustomStyleProperty<Color>("--highlighted-element-color");
+        [NoAutoStaticsCleanup] // CSS custom property descriptor; value is a fixed CSS property name
         static readonly CustomStyleProperty<Color> k_PlacematBorderColorProperty = new CustomStyleProperty<Color>("--placemat-border-color");
 
         static Color DefaultViewportColor
@@ -297,6 +302,7 @@ namespace Unity.GraphToolkit.Editor
             painter.Stroke();
         }
 
+        [NoAutoStaticsCleanup] // empty scratch list; cleared after each use, never holds persistent element references
         static readonly List<ChildView> k_DrawElementsAllUIs = new();
         void DrawElements(Painter2D painter)
         {
@@ -350,6 +356,7 @@ namespace Unity.GraphToolkit.Editor
             painter.ClosePath();
         }
 
+        [NoAutoStaticsCleanup] // empty scratch list; cleared after each use, never holds persistent element references
         static readonly List<ChildView> k_OnMouseDownAllUIs = new();
         void OnMouseDown(MouseDownEvent e)
         {

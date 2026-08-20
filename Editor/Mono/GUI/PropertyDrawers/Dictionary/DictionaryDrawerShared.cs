@@ -310,6 +310,7 @@ internal partial class DictionaryDrawer
 
     internal static bool ShowSerializedOrder => SessionState.GetBool(k_SerializedOrderSessionKey, false);
 
+    [AutoStaticsCleanupOnCodeReload] // stale view handlers after reload would pin the old ALC; views resubscribe on attach
     internal static event Action SerializedOrderChanged;
 
     internal static void SetShowSerializedOrder(bool value)

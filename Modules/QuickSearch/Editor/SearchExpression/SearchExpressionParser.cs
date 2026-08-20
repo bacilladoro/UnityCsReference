@@ -8,6 +8,7 @@ using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using Unity.Collections;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Search
 {
@@ -130,11 +131,13 @@ namespace UnityEditor.Search
         }
     }
 
-    static class ParserManager
+    static partial class ParserManager
     {
+        [AutoStaticsCleanupOnCodeReload]
         public static List<SearchExpressionParser> parsers;
 
-        static ParserManager()
+        [OnCodeLoaded]
+        static void Initialize()
         {
             RefreshParsers();
         }

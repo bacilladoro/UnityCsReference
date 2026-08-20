@@ -2,15 +2,18 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor.PackageManager;
 
 namespace Unity.Multiplayer.Internal
 {
-    internal static class DedicatedServerMigrationUtility
+    internal static partial class DedicatedServerMigrationUtility
     {
         const string k_ServerPackageName = "com.unity.dedicated-server";
 
+        [AutoStaticsCleanupOnCodeReload] // init gate; must re-query package state after reload
         static bool s_Initialized;
+        [AutoStaticsCleanupOnCodeReload]
         static bool s_IsDedicatedServerPackageInstalled;
 
         static void EnsureInitialized()

@@ -4,6 +4,7 @@
 
 using System.Collections.Generic;
 using System.Linq;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -13,6 +14,7 @@ namespace UnityEditor.Search
     {
         internal static class Styles
         {
+            [NoAutoStaticsCleanup]
             private static readonly RectOffset paddingNone = new RectOffset(0, 0, 0, 0);
 
             public static readonly GUIStyle itemLabel = new GUIStyle(EditorStyles.label)
@@ -71,9 +73,9 @@ namespace UnityEditor.Search
                 yield return CreateColumn("Default/Options", "options");
                 yield return CreateColumn("Default/Data", "data");
 
-                #pragma warning disable UA2011 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2011 // Avoid Linq
                 var firstItem = items.FirstOrDefault();
-#pragma warning restore UA2011
+#pragma warning restore UAC2011
                 if (firstItem != null && firstItem.GetFieldCount() > 0)
                 {
                     foreach (var f in firstItem.GetFields())

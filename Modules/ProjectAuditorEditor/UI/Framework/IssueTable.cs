@@ -120,9 +120,9 @@ namespace Unity.ProjectAuditor.Editor.UI.Framework
         public void AddIssues(IReadOnlyCollection<ReportItem> issues)
         {
             // update groups
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var groupNames = issues.Select(i => i.GetPropertyGroup(m_Layout.Properties[groupPropertyIndex])).Distinct().ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             foreach (var name in groupNames)
             {
                 // if necessary, create a group
@@ -193,10 +193,10 @@ namespace Unity.ProjectAuditor.Editor.UI.Framework
             m_SelectionChangedReportItems = true;
 
             // find all issues matching the filters and make an array out of them
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var allIssues = m_TreeViewItemIssues.Values.ToArray();
             var filteredItems = allIssues.Where(item => m_View.Match(item.ReportItem)).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             m_NumMatchingIssues = filteredItems.Length;
             if (m_NumMatchingIssues == 0)
@@ -213,9 +213,9 @@ namespace Unity.ProjectAuditor.Editor.UI.Framework
 
             if (!hasSearch && !m_FlatView)
             {
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 var groupedItemQuery = allIssues.GroupBy(i => i.ReportItem.GetPropertyGroup(m_Layout.Properties[groupPropertyIndex]));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
                 groupNameItemLookup.Clear();
                 groupNameItemLookupIgnored.Clear();
@@ -668,9 +668,9 @@ namespace Unity.ProjectAuditor.Editor.UI.Framework
             // auto-expand groups containing selected items
             foreach (var id in state.selectedIDs)
             {
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 var item = m_TreeViewItemIssues.FirstOrDefault(issue => issue.Value.id == id && issue.Value.parent != null);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 if (item.Value != null && !state.expandedIDs.Contains(item.Value.parent.id))
                 {
                     state.expandedIDs.Add(item.Value.parent.id);
@@ -868,18 +868,18 @@ namespace Unity.ProjectAuditor.Editor.UI.Framework
             var sortedSelectedIDs = new List<int>(SortItemIDsInRowOrder(state.selectedIDs));
 
             var text = new StringBuilder();
-#pragma warning disable UA2006 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2006 // Avoid Linq
             bool indentItems = !flatView && sortedSelectedIDs.Exists(id => m_TreeViewItemGroupsLookup.Values.Any(g => g.id == id));
-#pragma warning restore UA2006
+#pragma warning restore UAC2006
             foreach (var id in sortedSelectedIDs)
             {
                 if (text.Length > 0)
                     text.Append("\n");
 
                 if (!m_TreeViewItemIssues.TryGetValue(id, out var currentItem))
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                     currentItem = m_TreeViewItemGroupsLookup.Values.First(g => g.id == id); // Group name
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 else if (indentItems)
                     text.Append("\t");  // If showing in groups, indent the items
 

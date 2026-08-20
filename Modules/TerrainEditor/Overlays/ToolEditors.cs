@@ -36,9 +36,9 @@ namespace UnityEditor.TerrainTools
             }
 
             var upm = UnityEditor.PackageManager.PackageInfo.GetAllRegisteredPackages();
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var terrainPackageInfo = upm.Where(pi => pi.name == "com.unity.terrain-tools").ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             Debug.Assert(terrainPackageInfo.Length <= 1, "Only one version of terrain-tools package allowed to be installed");
 

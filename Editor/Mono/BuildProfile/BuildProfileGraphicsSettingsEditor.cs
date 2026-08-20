@@ -23,6 +23,7 @@ namespace UnityEditor.Build.Profile
         const string k_ShaderBuildSettingsTypeName = "ShaderBuildSettings";
 
         ShaderBuildSettingsUI m_ShaderBuildSettingsUI = new();
+        EnumField m_DefaultMeshBufferTargetField;
 
         void OnDisable()
         {
@@ -36,6 +37,11 @@ namespace UnityEditor.Build.Profile
                 profileName = parentProfile.name;
 
             m_ShaderBuildSettingsUI.HandleUnsavedChangesDialog(profileName);
+        }
+
+        void OnDestroy()
+        {
+            EditorApplication.playModeStateChanged -= UpdateDefaultMeshBufferTargetFieldState;
         }
 
         public override VisualElement CreateInspectorGUI()
@@ -56,6 +62,8 @@ namespace UnityEditor.Build.Profile
             GraphicsStateCollectionSettingsUI.BindGraphicsStateCollection(root, serializedObject);
             BindShaderPreload(root);
 
+            BindDefaultMeshBufferTargetEnumField(root);
+
             m_ShaderBuildSettingsUI.Initialize(root, serializedObject, true);
 
             // Align fields as in the inspector
@@ -67,6 +75,27 @@ namespace UnityEditor.Build.Profile
                     e.EnableInClassList(BaseField<bool>.alignedFieldUssClassName, true));
 
             return root;
+        }
+
+        void BindDefaultMeshBufferTargetEnumField(VisualElement content)
+        {
+            m_DefaultMeshBufferTargetField = content.MandatoryQ<EnumField>("BuildProfileDefaultMeshBufferTarget");
+
+            // The setting is not stored in the build profile; it binds to the shared GraphicsSettings asset.
+            var graphicsSettingsSO = new SerializedObject(GraphicsSettings.GetGraphicsSettings());
+            var enumFieldProperty = graphicsSettingsSO.FindProperty(m_DefaultMeshBufferTargetField.bindingPath);
+            UIElementsEditorUtility.BindSerializedProperty<DefaultMeshBufferTarget>(m_DefaultMeshBufferTargetField, enumFieldProperty);
+
+            UpdateDefaultMeshBufferTargetFieldState();
+            EditorApplication.playModeStateChanged -= UpdateDefaultMeshBufferTargetFieldState;
+            EditorApplication.playModeStateChanged += UpdateDefaultMeshBufferTargetFieldState;
+        }
+
+        void UpdateDefaultMeshBufferTargetFieldState(PlayModeStateChange state) => UpdateDefaultMeshBufferTargetFieldState();
+
+        void UpdateDefaultMeshBufferTargetFieldState()
+        {
+            m_DefaultMeshBufferTargetField.SetEnabled(!EditorApplication.isPlayingOrWillChangePlaymode);
         }
 
         void BindEnumFieldWithFadeGroup(VisualElement content, string id, Action buttonCallback)
@@ -116,7 +145,7 @@ namespace UnityEditor.Build.Profile
             shaderPreloadToggle.SetValueWithoutNotify(delayedShaderTimeLimitProperty.intValue >= 0);
             delayedShaderTimeLimit.SetValueWithoutNotify(Mathf.Max(0, delayedShaderTimeLimitProperty.intValue));
             delayedShaderTimeLimitGroup.style.display = delayedShaderTimeLimitProperty.intValue >= 0 ? DisplayStyle.Flex : DisplayStyle.None;
-            
+
             var shaderTracking = root.MandatoryQ<HelpBox>("ShaderTrackingInfoBox");
             shaderTracking.schedule.Execute(() =>
                 shaderTracking.text =
@@ -175,36 +204,6 @@ namespace UnityEditor.Build.Profile
                 typeToCheck = typeToCheck.BaseType;
             }
             return false;
-        }
-
-        public bool IsDataEqualToGlobalGraphicsSettings()
-        {
-            var globalGraphicsSettings = GraphicsSettings.GetGraphicsSettings();
-            var globalGraphicsSettingsSO = new SerializedObject(globalGraphicsSettings);
-            var profileSerializedProperty = serializedObject.FindProperty(k_LastDefaultPropertyPath);
-
-            while (profileSerializedProperty.Next(false))
-            {
-                var globalSerializedProperty = globalGraphicsSettingsSO.FindProperty(profileSerializedProperty.name);
-                if (profileSerializedProperty.isArray)
-                {
-                    if (profileSerializedProperty.arraySize != globalSerializedProperty.arraySize)
-                        return false;
-
-                    for (int i = 0; i < profileSerializedProperty.arraySize; i++)
-                    {
-                        var profileArrayElement = profileSerializedProperty.GetArrayElementAtIndex(i);
-                        var globalArrayElement = globalSerializedProperty.GetArrayElementAtIndex(i);
-                        if (profileArrayElement.boxedValue != globalArrayElement.boxedValue)
-                            return false;
-                    }
-                }
-                else if (profileSerializedProperty.type != k_ShaderBuildSettingsTypeName && // TODO @ SHADERS-1095: Do proper equality check on the shader build settings data too
-                    !profileSerializedProperty.boxedValue.Equals(globalSerializedProperty.boxedValue))
-                    return false;
-            }
-
-            return true;
         }
 
         public void ResetToGlobalGraphicsSettingsValues()

@@ -6,32 +6,37 @@ using System;
 using System.Reflection;
 using System.Collections.Generic;
 using Unity.GraphToolkit.Editor.Implementation;
+using Unity.Scripting.LifecycleManagement;
 
 namespace Unity.GraphToolkit.Editor;
 
-static class ModelViewExtensions
+static partial class ModelViewExtensions
 {
-    static readonly Dictionary<Type, NodeAttribute> k_NodeAttributeCache = new();
+    [AutoStaticsCleanupOnCodeReload]
+    static Dictionary<Type, NodeAttribute> k_NodeAttributeCache = new();
 
     public static void ApplyCustomStylesheet(this ModelView element, AbstractNodeModel model)
     {
         if (element == null)
             throw new ArgumentNullException(nameof(element));
 
-        if (model is IUserNodeModelImp userNode)
+        var nodeType = model switch
         {
-            if (userNode.Node == null)
-                return;
+            IUserNodeModelImp userNode => userNode.Node?.GetType(),
+            UserStateModelImp userState => userState.Node?.GetType(),
+            _ => null
+        };
 
-            var nodeType = userNode.Node.GetType();
-            if (!k_NodeAttributeCache.TryGetValue(nodeType, out var attribute))
-            {
-                attribute = nodeType.GetCustomAttribute<NodeAttribute>();
-                k_NodeAttributeCache[nodeType] = attribute;
-            }
+        if (nodeType == null)
+            return;
 
-            if (attribute != null && !string.IsNullOrEmpty(attribute.Stylesheet))
-                    GraphElementHelper.AddStyleSheetPath(element, attribute.Stylesheet);
+        if (!k_NodeAttributeCache.TryGetValue(nodeType, out var attribute))
+        {
+            attribute = nodeType.GetCustomAttribute<NodeAttribute>();
+            k_NodeAttributeCache[nodeType] = attribute;
         }
+
+        if (attribute != null && !string.IsNullOrEmpty(attribute.Stylesheet))
+            GraphElementHelper.AddStyleSheetPath(element, attribute.Stylesheet);
     }
 }

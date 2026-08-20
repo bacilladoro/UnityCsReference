@@ -238,9 +238,9 @@ namespace UnityEditor
                 var externalObjectMap = importer.GetExternalObjectMap();
                 var materialsList = importer.sourceMaterials;
 
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 int mappedMaterialCount = externalObjectMap.Count(x => x.Key.type == typeof(Material) && x.Value != null && Array.Exists(materialsList, y => y.name == x.Key.name));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 if (mappedMaterialCount != materialsList.Length)
                 {
                     m_CanExtractEmbeddedMaterials = true;
@@ -433,29 +433,29 @@ namespace UnityEditor
             foreach (ModelImporter modelImporter in m_ExternalObjects.serializedObject.targetObjects)
             {
                 //Find the names of embedded materials - the source materials that are not re-mapped in the externalObjectsCache
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 IEnumerable<string> namesOfEmbeddedMaterials = modelImporter.sourceMaterials
-#pragma warning restore UA2001
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
-#pragma warning disable UA2006 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+                    #pragma warning disable UAC2001 // Avoid Linq
+#pragma warning disable UAC2006 // Avoid Linq
                     .Where(x => !m_ExternalObjectsCache.Any(y => y.Key.Item1 == x.name && y.Value.property != null && y.Value.property.objectReferenceValue != null))
-#pragma warning restore UA2001
-#pragma warning restore UA2006
+#pragma warning restore UAC2001
+#pragma warning restore UAC2006
                     .Select(x => x.name);
 
                 //Find the names of embedded materials in the AssetDatabase
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 IEnumerable<string> namesOfMaterialsInAssetDatabase = AssetDatabase.LoadAllAssetsAtPath(modelImporter.assetPath)
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     .Where(x => x.GetType() == typeof(Material))
                     .Select(x => x.name);
 
                 //Are there any embedded materials that *arent* in the AssetDatabase?
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
-#pragma warning disable UA2002 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
+#pragma warning disable UAC2002 // Avoid Linq
                 if (namesOfEmbeddedMaterials.Except(namesOfMaterialsInAssetDatabase).Any())
-#pragma warning restore UA2001
-#pragma warning restore UA2002
+#pragma warning restore UAC2001
+#pragma warning restore UAC2002
                     return false;
             }
 
@@ -465,9 +465,9 @@ namespace UnityEditor
         public void ReimportEmbeddedMaterials()
         {
             //Select any material properties which are marked as "missing"
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             int[] missingMaterialIndexes = m_ExternalObjectsCache.Values.Select((extObj, index) => new { extObj, index })
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 .Where(x => x.extObj.property != null && x.extObj.property.objectReferenceValue == null && x.extObj.property.objectReferenceEntityIdValue != EntityId.None)
                 .Select(x => x.index)
                 .ToArray();

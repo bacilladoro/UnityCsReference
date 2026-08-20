@@ -3,14 +3,14 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
-using Newtonsoft.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Unity.Multiplayer.PlayMode.Editor
 {
     [Serializable]
     class PlayerIdentifier
     {
-        [JsonProperty(Required = Required.Always)]
         public Guid Guid { get; internal set; }
 
         // ensure that there is always a guid since guid is a struct
@@ -53,16 +53,18 @@ namespace Unity.Multiplayer.PlayMode.Editor
 
         public string ToJson()
         {
-            return JsonConvert.SerializeObject(this);
+            return JsonSerializer.Serialize(this);
         }
 
         static PlayerIdentifier TryDeserializeObject(string input)
         {
             try
             {
-                return JsonConvert.DeserializeObject<PlayerIdentifier>(input);
+                // Newtonsoft marked Guid as Required.Always; reject payloads without one to keep that behavior.
+                var identifier = JsonSerializer.Deserialize<PlayerIdentifier>(input);
+                return identifier == null || identifier.Guid == Guid.Empty ? null : identifier;
             }
-            catch (JsonException e) when (e is JsonSerializationException or JsonReaderException)
+            catch (JsonException)
             {
                 return null;
             }

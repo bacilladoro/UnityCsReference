@@ -98,9 +98,9 @@ namespace UnityEditor.DeviceSimulation
                 var graphicsSystemInfoArray = systemInfoElement.Element("graphicsDependentData");
                 if (graphicsSystemInfoArray != null)
                 {
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2001 // Avoid Linq
                     var graphicsSystemInfo = graphicsSystemInfoArray.Elements("item").ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     var graphicsTypes = new HashSet<GraphicsDeviceType>();
                     for (int i = 0; i < graphicsSystemInfo.Length; i++)
                     {
@@ -127,9 +127,9 @@ namespace UnityEditor.DeviceSimulation
                 errorList.Add("Mandatory field [screens] is missing. [screens] array must contain at least one screen");
             else
             {
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 var screenElements = screensElement.Elements("item").ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 if (screenElements.Length == 0)
                 {
                     errorList.Add("[screens] array must contain at least one screen");

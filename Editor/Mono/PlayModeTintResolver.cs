@@ -2,17 +2,20 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
 using System;
 using UnityEngine;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
     [InitializeOnLoad]
-    static class PlayModeTintResolver
+    static partial class PlayModeTintResolver
     {
         const string k_PlayModeTintPrefKey = "Playmode tint";
         static readonly PrefColor s_PlayModeTintPref = new PrefColor(k_PlayModeTintPrefKey, .8f, .8f, .8f, 1);
 
+        [NoAutoStaticsCleanup]
         static Color s_ActiveTint = Color.white;
 
         public static Color activePlayModeTint
@@ -28,6 +31,7 @@ namespace UnityEditor
             }
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<Color> activePlayModeTintChanged;
 
         static PlayModeTintResolver()
@@ -66,3 +70,4 @@ namespace UnityEditor
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

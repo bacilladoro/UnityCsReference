@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: BuildSettingsWindow not yet converted
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -12,6 +13,7 @@ using UnityEditor.Shaders;
 using UnityEditorInternal;
 using UnityEngine;
 using UnityEngine.Bindings;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Scripting;
 using UnityEngine.Rendering;
 using UnityEngine.Events;
@@ -25,13 +27,13 @@ namespace UnityEditor.Build.Profile
     /// Handles management of required platform build profiles and implements
     /// native bindings for mapping migrated settings to backing profile.
     /// </summary>
-    [InitializeOnLoad]
     [VisibleToOtherModules("UnityEditor.BuildProfileModule")]
-    internal sealed class BuildProfileContext : ScriptableObject
+    internal sealed partial class BuildProfileContext : ScriptableObject
     {
         const string k_BuildProfileProviderAssetPath = "Library/BuildProfileContext.asset";
         const string k_BuildProfilePath = "Library/BuildProfiles";
         const string k_SharedProfilePath = $"{k_BuildProfilePath}/SharedProfile.asset";
+        [AutoStaticsCleanupOnCodeReload]
         static BuildProfileContext s_Instance;
 
         /// <summary>
@@ -143,6 +145,7 @@ namespace UnityEditor.Build.Profile
         }
 
         [VisibleToOtherModules]
+        [AutoStaticsCleanupOnCodeReload]
         internal static PlatformPackageServiceInfoProvider packageServiceInfoProvider = new();
 
         static string GetProfileGUID(BuildProfile profile)
@@ -197,6 +200,7 @@ namespace UnityEditor.Build.Profile
         /// activeProfileChanged += (BuildProfile prev, BuildProfile cur) => {}
         /// </code>
         /// </remarks>
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<BuildProfile, BuildProfile> activeProfileChanged;
 
         /// <summary>
@@ -236,7 +240,8 @@ namespace UnityEditor.Build.Profile
             private set;
         }
 
-        static BuildProfileContext()
+        [OnCodeLoaded]
+        static void Initialize()
         {
             // Asset operations such as asset loading should be avoided in InitializeOnLoad methods.
             // We delay the creation of the classic platform profiles until the next editor update.
@@ -927,6 +932,34 @@ namespace UnityEditor.Build.Profile
             compilerSettings = shaderBuildSettings.compilerSettings;
         }
 
+        // Lets native code check whether its shader build settings snapshot is stale without marshalling the data.
+        // The key is only valid when graphicsSettingsEntityId is not EntityId.None.
+        // Blittable and marshalled by pointer, so the field order and types have to stay in sync with the
+        // native ShaderBuildSettingsCacheKey in Runtime/Camera/GraphicsSettings.h.
+        [RequiredByNativeCode]
+        internal struct ShaderBuildSettingsCacheKey
+        {
+            public EntityId graphicsSettingsEntityId;
+            public int dirtyCount;
+        }
+
+        [RequiredByNativeCode, UsedImplicitly]
+        static void GetActiveShaderBuildSettingsCacheKey(out ShaderBuildSettingsCacheKey cacheKey)
+        {
+            if (!ActiveProfileHasGraphicsSettings())
+            {
+                cacheKey = default;
+                return;
+            }
+
+            var graphicsSettings = activeProfile.graphicsSettings;
+            cacheKey = new ShaderBuildSettingsCacheKey
+            {
+                graphicsSettingsEntityId = graphicsSettings.GetEntityId(),
+                dirtyCount = EditorUtility.GetDirtyCount(graphicsSettings)
+            };
+        }
+
         [RequiredByNativeCode]
         static string GetActiveBuildProfilePath()
         {
@@ -1046,3 +1079,4 @@ namespace UnityEditor.Build.Profile
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

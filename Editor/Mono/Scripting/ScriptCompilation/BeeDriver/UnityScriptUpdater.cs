@@ -60,16 +60,16 @@ namespace UnityEditor.Scripting.ScriptCompilation
             {
                 //we want to see if this is the only error on this location.  we will make an enumerable that matches all compilermessages that match this location
                 //We do Skip(1).Any() as a bit of an unconventional way to express what we care about: is there more than 1 or not.
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
-#pragma warning disable UA2002 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
+#pragma warning disable UAC2002 // Avoid Linq
                 return !compilerMessages.Where(m => MatchesFileLineAndColumn(compilerMessage, m)).Skip(1).Any();
-#pragma warning restore UA2001
-#pragma warning restore UA2002
+#pragma warning restore UAC2001
+#pragma warning restore UAC2002
             }
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var upgradableMessages = compilerMessages.Where(c => c.message.Contains("(UnityUpgradable")).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             //Some (UnityUpgradable) errors can be paired with a genuine user error on the same line/column. When this happens it is a known problem
             //that we are unable to upgrade the UnityUpgradable error. So we'll only return Certainly if there is not an other compilermessage pointing to the
@@ -233,9 +233,9 @@ namespace UnityEditor.Scripting.ScriptCompilation
         {
             var scriptCompilationDataOut = dataFromBuildProgram.Get<ScriptCompilationData_Out>();
             var outputfileForwardSlash = new NPath(nodeResult.Node.OutputFile).ToString();
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var assemblyDataOut = scriptCompilationDataOut.Assemblies.FirstOrDefault(a => a.Path == outputfileForwardSlash);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             return assemblyDataOut ?? throw new ArgumentException($"Unable to find entry for {outputfileForwardSlash} in dataFromBuildProgram");
         }
 

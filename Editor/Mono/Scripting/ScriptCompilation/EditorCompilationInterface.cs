@@ -12,12 +12,14 @@ using UnityEditor.Scripting.ScriptCompilation.MsBuild;
 using UnityEngine;
 using CompilerMessageType = UnityEditor.Scripting.Compilers.CompilerMessageType;
 using UnityEngine.Bindings;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Scripting.ScriptCompilation
 {
     [VisibleToOtherModules("UnityEditor.BurstModule")]
-    static class EditorCompilationInterface
+    static partial class EditorCompilationInterface
     {
+        [AutoStaticsCleanupOnCodeReload] // this object has events
         static EditorCompilation editorCompilation;
 
         public static EditorCompilation Instance
@@ -311,10 +313,12 @@ namespace UnityEditor.Scripting.ScriptCompilation
             return options;
         }
 
-        static EditorScriptCompilationOptions GetManagedCodeVariantOptions(NamedBuildTarget buildTarget)
+        internal static EditorScriptCompilationOptions GetManagedCodeVariantOptions(NamedBuildTarget buildTarget)
+            => GetManagedCodeVariantOptions(PlayerSettings.GetManagedCodeVariant(buildTarget));
+
+        internal static EditorScriptCompilationOptions GetManagedCodeVariantOptions(ManagedCodeVariant variant)
         {
             var options = EditorScriptCompilationOptions.BuildingEmpty;
-            var variant = PlayerSettings.GetManagedCodeVariant(buildTarget);
             if (variant <= ManagedCodeVariant.Instrumented)
             {
                 options |= EditorScriptCompilationOptions.BuildingWithInstrumentation;

@@ -2,11 +2,13 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEngine.UIElements
 {
-    internal class ClickDetector
+    internal partial class ClickDetector
     {
         private class ButtonClickStatus
         {
@@ -27,6 +29,7 @@ namespace UnityEngine.UIElements
         private List<ButtonClickStatus> m_ClickStatus;
 
         // In milliseconds
+        [NoAutoStaticsCleanup]
         internal static int s_DoubleClickTime { get; set; } = -1;
 
         public ClickDetector()
@@ -189,3 +192,4 @@ namespace UnityEngine.UIElements
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

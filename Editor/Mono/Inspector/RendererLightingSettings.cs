@@ -181,12 +181,12 @@ namespace UnityEditor
             m_ReceiveGI = m_SerializedObject.FindProperty("m_ReceiveGI");
             m_GlobalIlluminationMeshLod = m_SerializedObject.FindProperty("m_GlobalIlluminationMeshLod");
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             m_Renderers = m_SerializedObject.targetObjects.OfType<Renderer>().ToArray();
-#pragma warning restore UA2001
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+#pragma warning disable UAC2001 // Avoid Linq
             m_Terrains = m_SerializedObject.targetObjects.OfType<Terrain>().ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             m_StaticEditorFlags = m_GameObjectsSerializedObject.FindProperty("m_StaticEditorFlags");
 

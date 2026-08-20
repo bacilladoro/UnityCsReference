@@ -286,12 +286,12 @@ namespace UnityEditor
             }
             set
             {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 m_Backend.SetOrAddRequirement(m_VariantName, index, value.values.Keys.ToArray(),
-#pragma warning restore UA2001
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+#pragma warning disable UAC2001 // Avoid Linq
                     value.values.Values.ToArray());
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             }
         }
 
@@ -302,12 +302,12 @@ namespace UnityEditor
 
         public void Add(iOSDeviceRequirement requirement)
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             m_Backend.SetOrAddRequirement(m_VariantName, -1, requirement.values.Keys.ToArray(),
-#pragma warning restore UA2001
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+#pragma warning disable UAC2001 // Avoid Linq
                 requirement.values.Values.ToArray());
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         // Per-settings-type dispatch over the bindings above; keeps the group body free of any
@@ -867,16 +867,6 @@ namespace UnityEditor
             }
 
             internal extern static bool appleEnableProMotion
-            {
-                [StaticAccessor("GetPlayerSettings().GetEditorOnly()", StaticAccessorType.Dot)]
-                get;
-                [StaticAccessor("GetPlayerSettings().GetEditorOnlyForUpdate()", StaticAccessorType.Dot)]
-                set;
-            }
-
-
-            [NativeProperty("iOSAutomaticallyDetectAndAddCapabilities")]
-            internal extern static bool automaticallyDetectAndAddCapabilities
             {
                 [StaticAccessor("GetPlayerSettings().GetEditorOnly()", StaticAccessorType.Dot)]
                 get;

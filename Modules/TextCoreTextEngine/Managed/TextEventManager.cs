@@ -2,33 +2,47 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+using Unity.Scripting.LifecycleManagement;
+
 namespace UnityEngine.TextCore.Text
 {
-    public static class TextEventManager
+    public static partial class TextEventManager
     {
         // Event & Delegate used to notify TextMesh Pro objects that Material properties have been changed.
+        [AutoStaticsCleanupOnCodeReload]
         public static readonly FastAction<bool, Material> MATERIAL_PROPERTY_EVENT = new FastAction<bool, Material>();
 
+        [AutoStaticsCleanupOnCodeReload]
         public static readonly FastAction<bool, Object> FONT_PROPERTY_EVENT = new FastAction<bool, Object>();
 
+        [AutoStaticsCleanupOnCodeReload]
         public static readonly FastAction<bool, Object> SPRITE_ASSET_PROPERTY_EVENT = new FastAction<bool, Object>();
 
+        [AutoStaticsCleanupOnCodeReload]
         public static readonly FastAction<bool, Object> TEXTMESHPRO_PROPERTY_EVENT = new FastAction<bool, Object>();
 
+        [AutoStaticsCleanupOnCodeReload]
         public static readonly FastAction<GameObject, Material, Material> DRAG_AND_DROP_MATERIAL_EVENT = new FastAction<GameObject, Material, Material>();
 
+        [AutoStaticsCleanupOnCodeReload]
         public static readonly FastAction<bool> TEXT_STYLE_PROPERTY_EVENT = new FastAction<bool>();
 
+        [AutoStaticsCleanupOnCodeReload]
         public static readonly FastAction<Object> COLOR_GRADIENT_PROPERTY_EVENT = new FastAction<Object>();
 
+        [AutoStaticsCleanupOnCodeReload]
         public static readonly FastAction TMP_SETTINGS_PROPERTY_EVENT = new FastAction();
 
+        [AutoStaticsCleanupOnCodeReload]
         public static readonly FastAction RESOURCE_LOAD_EVENT = new FastAction();
 
+        [AutoStaticsCleanupOnCodeReload]
         public static readonly FastAction<bool, Object> TEXTMESHPRO_UGUI_PROPERTY_EVENT = new FastAction<bool, Object>();
 
+        [AutoStaticsCleanupOnCodeReload]
         public static readonly FastAction OnPreRenderObject_Event = new FastAction();
 
+        [AutoStaticsCleanupOnCodeReload]
         public static readonly FastAction<Object> TEXT_CHANGED_EVENT = new FastAction<Object>();
 
         //public static readonly FastAction FONT_ASSET_DESTROYED_EVENT = new FastAction();

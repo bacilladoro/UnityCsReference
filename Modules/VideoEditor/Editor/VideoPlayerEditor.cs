@@ -380,18 +380,18 @@ namespace UnityEditor
                     if (invalidSelection)
                         ++invalidSelections;
                     List<string> mergedEntries =
-                        #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                        #pragma warning disable UAC2001 // Avoid Linq
                         entries == null ? newEntries : new List<string>(entries.Intersect(newEntries));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     selection = entries == null ? newSelection : selection < 0 || newSelection < 0 || entries[selection] != newEntries[newSelection] ? -1 : mergedEntries.IndexOf(entries[selection]);
                     entries = mergedEntries;
                 }
             }
             if (entries == null)
                 return Array.Empty<GUIContent>();
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             return entries.Select(x => new GUIContent(x)).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         private static bool HandleAutoSelect(UnityEngine.Object[] objects, SerializedProperty property)

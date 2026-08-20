@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using Unity.GraphToolkit.Editor.ContextualMenuItems;
 using Unity.GraphToolkit.Editor.Implementation;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Assertions;
@@ -110,6 +111,7 @@ namespace Unity.GraphToolkit.Editor
 
         public static readonly Vector2 minHitBoxSize = new Vector2(24, 24);
 
+        [NoAutoStaticsCleanup] // CSS custom property descriptor; value is a fixed CSS property name
         static readonly CustomStyleProperty<Color> k_PortColorProperty = new CustomStyleProperty<Color>("--port-color");
 
         protected string m_CurrentDropHighlightClass = dropHighlightAcceptedClass;
@@ -409,6 +411,7 @@ namespace Unity.GraphToolkit.Editor
             }
         }
 
+        [NoAutoStaticsCleanup] // monotonically-growing cache of port-type CSS class name strings; no user-type references
         static List<(int id, string className)> s_PortTypeClassNameCache = new List<(int, string)>(4)
         {
             (PortType.Default.Id, GenerateClassNameForPortType(PortType.Default)),
@@ -635,7 +638,7 @@ namespace Unity.GraphToolkit.Editor
 
         void InvokeUserGraphContextualMenu(ContextualMenuPopulateEvent evt)
         {
-            var graph = (GraphView?.GraphModel as GraphModelImp)?.Graph;
+            var graph = (GraphView?.GraphModel as GraphModelImp)?.Graph as Graph;
             if (graph == null)
                 return;
 

@@ -19,7 +19,12 @@ namespace UnityEngine.UIElements
             internal static readonly BindingId alignContentProperty = "style." + nameof(IStyle.alignContent);
             internal static readonly BindingId alignItemsProperty = "style." + nameof(IStyle.alignItems);
             internal static readonly BindingId alignSelfProperty = "style." + nameof(IStyle.alignSelf);
-            internal static readonly BindingId animationPlayStateProperty = "style." + nameof(IStyle.animationPlayState);
+            internal static readonly BindingId animationDelayProperty = "style." + nameof(IStyle.animationDelay);
+            internal static readonly BindingId animationDirectionProperty = "style." + nameof(IStyle.animationDirection);
+            internal static readonly BindingId animationDurationProperty = "style." + nameof(IStyle.animationDuration);
+            internal static readonly BindingId animationIterationCountProperty = "style." + nameof(IStyle.animationIterationCount);
+            internal static readonly BindingId animationNamesProperty = "style." + nameof(IStyle.animationNames);
+            internal static readonly BindingId animationPlayStatesProperty = "style." + nameof(IStyle.animationPlayStates);
             internal static readonly BindingId aspectRatioProperty = "style." + nameof(IStyle.aspectRatio);
             internal static readonly BindingId backdropFilterProperty = "style." + nameof(IStyle.backdropFilter);
             internal static readonly BindingId backgroundColorProperty = "style." + nameof(IStyle.backgroundColor);
@@ -52,8 +57,19 @@ namespace UnityEngine.UIElements
             internal static readonly BindingId flexShrinkProperty = "style." + nameof(IStyle.flexShrink);
             internal static readonly BindingId flexWrapProperty = "style." + nameof(IStyle.flexWrap);
             internal static readonly BindingId fontSizeProperty = "style." + nameof(IStyle.fontSize);
+            internal static readonly BindingId gridAutoColumnsProperty = "style." + nameof(IStyle.gridAutoColumns);
+            internal static readonly BindingId gridAutoFlowProperty = "style." + nameof(IStyle.gridAutoFlow);
+            internal static readonly BindingId gridAutoRowsProperty = "style." + nameof(IStyle.gridAutoRows);
+            internal static readonly BindingId gridColumnEndProperty = "style." + nameof(IStyle.gridColumnEnd);
+            internal static readonly BindingId gridColumnStartProperty = "style." + nameof(IStyle.gridColumnStart);
+            internal static readonly BindingId gridRowEndProperty = "style." + nameof(IStyle.gridRowEnd);
+            internal static readonly BindingId gridRowStartProperty = "style." + nameof(IStyle.gridRowStart);
+            internal static readonly BindingId gridTemplateColumnsProperty = "style." + nameof(IStyle.gridTemplateColumns);
+            internal static readonly BindingId gridTemplateRowsProperty = "style." + nameof(IStyle.gridTemplateRows);
             internal static readonly BindingId heightProperty = "style." + nameof(IStyle.height);
             internal static readonly BindingId justifyContentProperty = "style." + nameof(IStyle.justifyContent);
+            internal static readonly BindingId justifyItemsProperty = "style." + nameof(IStyle.justifyItems);
+            internal static readonly BindingId justifySelfProperty = "style." + nameof(IStyle.justifySelf);
             internal static readonly BindingId leftProperty = "style." + nameof(IStyle.left);
             internal static readonly BindingId letterSpacingProperty = "style." + nameof(IStyle.letterSpacing);
             internal static readonly BindingId marginBottomProperty = "style." + nameof(IStyle.marginBottom);
@@ -88,7 +104,6 @@ namespace UnityEngine.UIElements
             [UnityEngine.Bindings.VisibleToOtherModules("UnityEditor.UIBuilderModule", "UnityEditor.UIToolkitAuthoringModule")]
             internal static readonly BindingId transitionTimingFunctionProperty = "style." + nameof(IStyle.transitionTimingFunction);
             internal static readonly BindingId translateProperty = "style." + nameof(IStyle.translate);
-            internal static readonly BindingId unityAnimationClipProperty = "style." + nameof(IStyle.unityAnimationClip);
             internal static readonly BindingId unityBackgroundImageTintColorProperty = "style." + nameof(IStyle.unityBackgroundImageTintColor);
             internal static readonly BindingId unityEditorTextRenderingModeProperty = "style." + nameof(IStyle.unityEditorTextRenderingMode);
             internal static readonly BindingId unityFontProperty = "style." + nameof(IStyle.unityFont);
@@ -113,6 +128,7 @@ namespace UnityEngine.UIElements
             internal static readonly BindingId whiteSpaceProperty = "style." + nameof(IStyle.whiteSpace);
             internal static readonly BindingId widthProperty = "style." + nameof(IStyle.width);
             internal static readonly BindingId wordSpacingProperty = "style." + nameof(IStyle.wordSpacing);
+            internal static readonly BindingId zIndexProperty = "style." + nameof(IStyle.zIndex);
         }
     }
 }

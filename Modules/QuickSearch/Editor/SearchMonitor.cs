@@ -12,6 +12,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Unity.Collections;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor.SceneManagement;
 using UnityEditorInternal;
 using UnityEngine;
@@ -22,6 +23,7 @@ namespace UnityEditor.Search
     public readonly struct AssetIndexChangeSet
     {
         static readonly string[] s_EmptyStrings = Array.Empty<string>();
+        [NoAutoStaticsCleanup]
         internal static readonly AssetIndexChangeSet s_Empty = new AssetIndexChangeSet(null, null);
 
         public readonly string[] updated;
@@ -34,26 +36,26 @@ namespace UnityEditor.Search
         }
 
         public AssetIndexChangeSet(IEnumerable<string> updated, IEnumerable<string> removed, IEnumerable<string> moved, Func<string, bool> predicate)
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             : this(updated?.Concat(moved).Distinct(), removed, predicate)
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         {
         }
 
         public AssetIndexChangeSet(IEnumerable<string> updated, IEnumerable<string> removed, Func<string, bool> predicate)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             this.updated = updated?.Except(removed).Where(predicate).ToArray() ?? s_EmptyStrings;
-#pragma warning restore UA2001
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+            #pragma warning disable UAC2001 // Avoid Linq
             this.removed = removed?.Distinct().Where(predicate).ToArray() ?? s_EmptyStrings;
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         public bool empty => updated == null || removed == null || (updated.Length == 0 && removed.Length == 0);
-        #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+        #pragma warning disable UAC2001 // Avoid Linq
         public IEnumerable<string> all => updated?.Concat(removed ?? Array.Empty<string>()).Distinct() ?? Array.Empty<string>();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
     }
 
     class AssetChangedListener : AssetPostprocessor
@@ -63,14 +65,15 @@ namespace UnityEditor.Search
             if (!Utils.IsMainProcess())
                 return;
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             SearchMonitor.RaiseContentRefreshed(imported, deleted?.Concat(movedFrom).Distinct().ToArray(), movedTo);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
     }
 
-    public struct SearchMonitorView : IDisposable
+    public partial struct SearchMonitorView : IDisposable
     {
+        [AutoStaticsCleanupOnCodeReload]
         static ConcurrentDictionary<int, SearchMonitorView> s_PropertyDatabaseViews = new ConcurrentDictionary<int, SearchMonitorView>();
         internal IPropertyDatabaseView propertyDatabaseView { get; }
         internal IPropertyDatabaseView propertyAliasesView { get; }
@@ -195,37 +198,52 @@ namespace UnityEditor.Search
         }
     }
 
-    [InitializeOnLoad]
-    public static class SearchMonitor
+    public static partial class SearchMonitor
     {
+        [AutoStaticsCleanupOnCodeReload]
         static volatile bool s_Initialize = false;
+        [AutoStaticsCleanupOnCodeReload]
         static bool s_ContentRefreshedEnabled;
 
+        [AutoStaticsCleanupOnCodeReload]
         static readonly HashSet<string> s_UpdatedItems = new HashSet<string>();
+        [AutoStaticsCleanupOnCodeReload]
         static readonly HashSet<string> s_RemovedItems = new HashSet<string>();
+        [AutoStaticsCleanupOnCodeReload]
         static readonly HashSet<string> s_MovedItems = new HashSet<string>();
 
+        [AutoStaticsCleanupOnCodeReload]
         static Action s_ContentRefreshOff;
-        static Delayer s_DelayedInvalidate;
+        [AutoStaticsCleanupOnCodeReload]
+        static Delayer s_DelayedInvalidate = null;
+        [AutoStaticsCleanupOnCodeReload]
         static readonly HashSet<ulong> s_DocumentsToInvalidate = new HashSet<ulong>();
 
         public static bool pending => s_UpdatedItems.Count > 0 || s_RemovedItems.Count > 0 || s_MovedItems.Count > 0;
 
         internal static bool enabled => InternalEditorUtility.isHumanControllingUs || File.Exists("Assets/Editor/test_search_monitor.txt");
 
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action sceneChanged;
+        [AutoStaticsCleanupOnCodeReload]
         public static event ObjectChangeEvents.ObjectChangeEventsHandler objectChanged;
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action documentsInvalidated;
 
         internal const string k_TransactionDatabasePath = "Library/Search/transactions.db";
-        static TransactionManager s_TransactionManager;
+        [AutoStaticsCleanupOnCodeReload]
+        static TransactionManager s_TransactionManager = null;
         // Internal for testing only
         internal static TransactionManager transactionManager => s_TransactionManager;
 
-        private static PropertyDatabase propertyDatabase;
-        private static PropertyDatabase propertyAliases;
+        [AutoStaticsCleanupOnCodeReload]
+        private static PropertyDatabase propertyDatabase = null;
+        [AutoStaticsCleanupOnCodeReload]
+        private static PropertyDatabase propertyAliases = null;
 
+        [NoAutoStaticsCleanup]
         static readonly object s_ContentRefreshedLock = new object();
+        [AutoStaticsCleanupOnCodeReload]
         static event Action<string[], string[], string[]> s_ContentRefreshed;
         public static event Action<string[], string[], string[]> contentRefreshed
         {
@@ -260,7 +278,8 @@ namespace UnityEditor.Search
             }
         }
 
-        static SearchMonitor()
+        [OnCodeLoaded]
+        static void InitializeStatics()
         {
             if (!Utils.IsMainProcess() || !enabled)
                 return;
@@ -285,7 +304,6 @@ namespace UnityEditor.Search
             propertyAliases = new PropertyDatabase("Library/Search/propertyAliases.db", true);
 
             EditorApplication.quitting += OnQuitting;
-            AssemblyReloadEvents.beforeAssemblyReload += OnBeforeAssemblyReload;
             EditorSceneManager.activeSceneChangedInEditMode += (_, __) => InvalidateCurrentScene();
             EditorSceneManager.sceneOpened += (scene, mode) => InvalidateCurrentScene();
             EditorSceneManager.sceneClosed += scene => InvalidateCurrentScene();
@@ -427,6 +445,7 @@ namespace UnityEditor.Search
             propertyAliases?.Dispose();
         }
 
+        [OnCodeUnloading]
         static void OnBeforeAssemblyReload()
         {
             s_TransactionManager?.Shutdown();
@@ -441,9 +460,9 @@ namespace UnityEditor.Search
                 return;
 
             Log("Content refreshed", (ulong)(s_UpdatedItems.Count + s_RemovedItems.Count + s_MovedItems.Count));
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             s_ContentRefreshed?.Invoke(s_UpdatedItems.ToArray(), s_RemovedItems.ToArray(), s_MovedItems.ToArray());
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             s_UpdatedItems.Clear();
             s_RemovedItems.Clear();
             s_MovedItems.Clear();
@@ -454,20 +473,20 @@ namespace UnityEditor.Search
             if (s_TransactionManager != null && s_TransactionManager.Initialized)
             {
                 var timestamp = DateTime.UtcNow.ToBinary();
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 var transactions = updated.Select(path => new Transaction(AssetDatabase.AssetPathToGUID(path), AssetModification.Updated, timestamp))
                     .Concat(removed.Select(path => new Transaction(AssetDatabase.AssetPathToGUID(path), AssetModification.Removed, timestamp)))
                     .Concat(moved.Select(path => new Transaction(AssetDatabase.AssetPathToGUID(path), AssetModification.Moved, timestamp))).ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 s_TransactionManager.Write(transactions);
             }
         }
 
         static void InvalidatePropertyDatabase(string[] updated, string[] removed, string[] moved)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             foreach (var assetPath in updated.Concat(removed).Concat(moved))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 InvalidateDocument(AssetDatabase.AssetPathToGUID(assetPath));
         }
 

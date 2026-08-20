@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine.UIElements;
@@ -17,7 +18,9 @@ namespace Unity.GraphToolkit.Editor
     [UnityRestricted]
     internal class RootGroupConditionViewContext : IViewContext
     {
+        [NoAutoStaticsCleanup] // singleton context instance; identity compared by ReferenceEquals, safe to persist
         static RootGroupConditionViewContext s_Default = new RootGroupConditionViewContext();
+        [NoAutoStaticsCleanup] // singleton context instance; identity compared by ReferenceEquals, safe to persist
         public static RootGroupConditionViewContext Default = s_Default;
         public bool Equals(IViewContext other)
         {

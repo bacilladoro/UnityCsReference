@@ -12,12 +12,15 @@ using UnityEngine.Scripting;
 
 namespace UnityEngine.Analytics
 {
+    ///<exclude />
     [NativeHeader("Modules/PerformanceReporting/PerformanceReportingManager.h")]
     [StaticAccessor("GetPerformanceReportingManager()", StaticAccessorType.Dot)]
     public static class PerformanceReporting
     {
+        ///<exclude />
         public extern static bool enabled { get; set; }
 
+        ///<exclude />
         public extern static long graphicsInitializationFinishTime
         {
             [NativeMethod("GetGfxDoneTime")] get;

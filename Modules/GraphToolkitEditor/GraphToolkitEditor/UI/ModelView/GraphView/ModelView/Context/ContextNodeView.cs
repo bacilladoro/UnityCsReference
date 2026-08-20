@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Unity.Collections;
 using Unity.GraphToolkit.ItemLibrary.Editor;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -41,6 +42,7 @@ namespace Unity.GraphToolkit.Editor
         static readonly string k_ContextBorderTitleName = "context-border-title";
 
 
+        [NoAutoStaticsCleanup] // CSS custom property descriptor; value is a fixed CSS property name
         internal static readonly CustomStyleProperty<Color> BlocksBorderColorStyle =
             new CustomStyleProperty<Color>("--blocks--border-color");
 
@@ -247,9 +249,9 @@ namespace Unity.GraphToolkit.Editor
         {
             int index = GetBlockIndex(posInContext);
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             GraphView.Dispatch(new InsertBlocksInContextCommand(ContextNodeModel, index, blocks?.ToList(), true, copy));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             StopBlockDragging();
         }

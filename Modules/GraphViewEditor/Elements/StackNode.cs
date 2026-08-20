@@ -74,9 +74,9 @@ namespace UnityEditor.Experimental.GraphView
                 if (graphView != null)
                 {
                     // Restore selections on children.
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2001 // Avoid Linq
                     foreach (var child in Children().OfType<GraphElement>())
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     {
                         graphView.RestorePersitentSelectionForElement(child);
                     }
@@ -299,9 +299,9 @@ namespace UnityEditor.Experimental.GraphView
         public override void CollectElements(HashSet<GraphElement> collectedElementSet, Func<GraphElement, bool> conditionFunc)
         {
             base.CollectElements(collectedElementSet, conditionFunc);
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             GraphView.CollectElements(Children().OfType<GraphElement>(), collectedElementSet, conditionFunc);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
     }
 }

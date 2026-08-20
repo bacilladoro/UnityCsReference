@@ -4,23 +4,27 @@
 
 using System;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEngine;
 
 namespace Unity.GraphToolkit.Editor;
 
-class BaseDataTypeStyleMapper
+partial class BaseDataTypeStyleMapper
 {
     public static readonly string k_BuiltInTypeOverrideWarning = "Attempting to override built-in data type style for type {0}. This is not supported and will be ignored.";
 
+    [AutoStaticsCleanupOnCodeReload]
     static readonly Dictionary<Type, (Texture2D icon, Color color)> k_TypeStylesForAllGraphTypes = new();
+    [AutoStaticsCleanupOnCodeReload]
     static readonly Dictionary<Type, Dictionary<Type, (Texture2D icon, Color color)>> k_TypeStylesPerGraphType = new();
 
     /// <summary>
-    /// Static constructor that instantiates all non-abstract derived types to ensure their style registrations are initialized.
+    /// Instantiates all non-abstract derived types to ensure their style registrations are initialized.
     /// This relies on the fact that their constructors call Register() for the types.
     /// </summary>
-    static BaseDataTypeStyleMapper()
+    [OnCodeLoaded]
+    static void Initialize()
     {
         foreach (var type in TypeCache.GetTypesDerivedFrom<BaseDataTypeStyleMapper>())
         {

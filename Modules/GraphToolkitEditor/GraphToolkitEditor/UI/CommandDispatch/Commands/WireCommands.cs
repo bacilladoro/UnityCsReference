@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using JetBrains.Annotations;
 using Unity.GraphToolkit.CSO;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEngine.Pool;
@@ -451,7 +452,8 @@ namespace Unity.GraphToolkit.Editor
 
         class WiresOrderComparer : IComparer<WireModel>
         {
-            public static WiresOrderComparer Default = new WiresOrderComparer();
+            [NoAutoStaticsCleanup] // singleton comparer instance; safe to persist across reload
+            public static readonly WiresOrderComparer Default = new WiresOrderComparer();
 
             public int Compare(WireModel a, WireModel b)
             {

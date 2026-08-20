@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using Unity.GraphToolkit.Editor.ContextualMenuItems;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEngine;
 
@@ -20,7 +21,7 @@ namespace Unity.GraphToolkit.Editor
     /// </remarks>
     [Serializable]
     [UnityRestricted]
-    internal class PlacematModel : GraphElementModel, IHasTitle, IMovable, IResizable, IRenamable, IHasElementColor
+    internal partial class PlacematModel : GraphElementModel, IHasTitle, IMovable, IResizable, IRenamable, IHasElementColor
     {
         const string k_DefaultPlacematName = "Placemat";
         const int k_MinTitleFontSize = 16;
@@ -254,7 +255,8 @@ namespace Unity.GraphToolkit.Editor
             }
         }
 
-        static readonly List<ContextualMenuItem> k_ContextualMenuItems = new() {
+        [AutoStaticsCleanupOnCodeReload]
+        static List<ContextualMenuItem> k_ContextualMenuItems = new() {
             ContextualMenuHelpers.deleteAndSelectContentsItem,
             new ContextualMenuItem(ContextualMenuHelpers.smartResizeItem, 0),
             new ContextualMenuItem(ContextualMenuHelpers.reorderPlacematItem, 1),

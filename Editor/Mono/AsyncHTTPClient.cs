@@ -116,9 +116,9 @@ namespace UnityEditor
                         continue;
                     string[] line = curr.Split(new string[] { ": " }, StringSplitOptions.None);
                     if (line.Length > 1)
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                         ret.Add(line[0], string.Concat(line.Skip(1).ToArray()));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     else
                         ret.Add(curr, "");
                 }
@@ -183,9 +183,9 @@ namespace UnityEditor
         {
             set
             {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 postData = string.Join("&", value.Select(kv => EscapeLong(kv.Key) + "=" + EscapeLong(kv.Value)));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             }
         }
 
@@ -242,9 +242,9 @@ namespace UnityEditor
             if (m_Method == "")
                 m_Method = "GET";
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             string[] headerFlattened = header.Select(kv => string.Format("{0}: {1}", kv.Key, kv.Value)).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             m_Handle = SubmitClientRequest(tag, m_ToUrl, headerFlattened, m_Method, m_FromData, Done, Progress);
         }

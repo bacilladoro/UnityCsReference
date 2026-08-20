@@ -515,6 +515,18 @@ namespace UnityEditor
             EntityIdsToGUIDs((IntPtr)entityIds.GetUnsafeReadOnlyPtr(), (IntPtr)guidsOut.GetUnsafePtr(), entityIds.Length);
         }
 
+        public unsafe static void EntityIdsToGUIDs(ReadOnlySpan<EntityId> entityIds, Span<GUID> guidsOut)
+        {
+            if (entityIds.Length != guidsOut.Length)
+                throw new ArgumentException("entityIds and guidsOut size mismatch!");
+
+            fixed (EntityId* entityIdsPtr = entityIds)
+            fixed (GUID* guidsPtr = guidsOut)
+            {
+                EntityIdsToGUIDs((IntPtr)entityIdsPtr, (IntPtr)guidsPtr, entityIds.Length);
+            }
+        }
+
         [FreeFunction("AssetDatabase::ReserveMonoScriptEntityId")]
         [PreventExecutionInState(AssetDatabasePreventExecution.kCodeReload, PreventExecutionSeverity.PreventExecution_ManagedException, kPreventExecutionDuringCodeReloadHowToFixMsg)]
         extern internal static EntityId ReserveMonoScriptEntityId(GUID guid);
@@ -1168,9 +1180,9 @@ namespace UnityEditor
             }
 
             var availableImporters = GetAvailableImporters(path);
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             if (availableImporters.Contains(typeof(T)))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 SetImporterOverrideInternal(path, typeof(T));
             }
@@ -1333,9 +1345,9 @@ namespace UnityEditor
                 assetPostprocessor.assetsReportedChanged = null;
             }
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             return assetsReportedChanged.ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         public enum RefreshImportMode

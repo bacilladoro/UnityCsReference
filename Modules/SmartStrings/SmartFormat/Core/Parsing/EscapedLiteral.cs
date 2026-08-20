@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
 //
 // Copyright SmartFormat Project maintainers and contributors.
 // Licensed under the MIT license.
@@ -9,12 +10,14 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using Unity.Scripting.LifecycleManagement;
 
 namespace Unity.SmartStrings.Core.Parsing;
 
 /// <summary>
 /// Handles escaped literals, like \\ or \n
 /// </summary>
+[NoAutoStaticsCleanup] // immutable escape-character lookup tables
 static class EscapedLiteral
 {
     static readonly Dictionary<char, char> GeneralLookupTable = new() {
@@ -163,3 +166,4 @@ static class EscapedLiteral
         return default;
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

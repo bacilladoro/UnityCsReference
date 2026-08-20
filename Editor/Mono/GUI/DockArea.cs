@@ -141,9 +141,9 @@ namespace UnityEditor
 
         private void RemoveNullWindows()
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             m_Panes = m_Panes.Where(w => w).ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             // Restore dock area actual view if there is no valid pane left.
             if (m_Panes.Count == 0 && actualView)
                 m_Panes.Add(actualView);
@@ -676,9 +676,9 @@ namespace UnityEditor
         {
             int mainWindowPaneCount = 0;
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             ContainerWindow w = ContainerWindow.windows.FirstOrDefault(e => e.showMode == ShowMode.MainWindow);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             if (w != null)
             {
                 foreach (View view in w.rootView.allChildren)

@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 
 namespace Unity.Multiplayer.PlayMode.Editor
 {
@@ -42,6 +43,7 @@ namespace Unity.Multiplayer.PlayMode.Editor
         }
 
         // Mapping of LayoutFlags to their corresponding Qualified View Class names.
+        [NoAutoStaticsCleanup] // constant mapping of layout flags to class names; never changes between reloads
         private static readonly Dictionary<LayoutFlags, string> k_SupportedFlagsClassName =
             new Dictionary<LayoutFlags, string>()
             {
@@ -55,6 +57,7 @@ namespace Unity.Multiplayer.PlayMode.Editor
                 { LayoutFlags.ProfilerWindow, "UnityEditor.ProfilerWindow"},
             };
 
+        [NoAutoStaticsCleanup] // constant set of auxiliary view class names; never changes between reloads
         private static readonly HashSet<string> k_SupportedAuxiliaryViews =
             new HashSet<string>(new[]
             {

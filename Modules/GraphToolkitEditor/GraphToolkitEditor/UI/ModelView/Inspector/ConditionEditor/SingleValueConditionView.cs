@@ -6,6 +6,7 @@ using System;
 using System.Reflection;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace Unity.GraphToolkit.Editor
 {
@@ -34,11 +35,18 @@ namespace Unity.GraphToolkit.Editor
         /// Creates a new instance of the <see cref="SingleValueConditionView"/> class.
         /// </summary>
         /// <param name="fieldInfo">The <paramref name="fieldInfo"/> of the single field.</param>
-        /// <param name="displayName">An optional custom display name for the field.</param>
+        /// <param name="displayName">An optional custom display name for the field. Pass an empty string to create the field without a label.</param>
         /// <param name="tooltip">An optional tooltip for the field.</param>
         public SingleValueConditionView(FieldInfo fieldInfo, string displayName = null, string tooltip = null)
         {
             m_FieldInfo = fieldInfo;
+
+            if (fieldInfo == null)
+            {
+                m_DisplayName = displayName;
+                m_Tooltip = tooltip;
+                return;
+            }
 
             var isSerializable = (fieldInfo.Attributes & FieldAttributes.Public) == FieldAttributes.Public ||
                 (fieldInfo.Attributes & FieldAttributes.Private) == FieldAttributes.Private &&
@@ -50,7 +58,7 @@ namespace Unity.GraphToolkit.Editor
                 Debug.LogError("Field in SingleValueConditionView must be serializable.");
             }
 
-            m_DisplayName = string.IsNullOrEmpty(displayName) ? ObjectNames.NicifyVariableName(fieldInfo.Name) : displayName;
+            m_DisplayName = displayName ?? ObjectNames.NicifyVariableName(fieldInfo.Name);
             m_Tooltip = string.IsNullOrEmpty(tooltip) ? fieldInfo.GetCustomAttribute<TooltipAttribute>()?.tooltip : tooltip;
         }
 
@@ -59,6 +67,14 @@ namespace Unity.GraphToolkit.Editor
         {
             AddToClassList(ussClassName);
             base.BuildUI();
+
+            if (m_FieldInfo == null)
+            {
+                var label = new Label(m_DisplayName) { tooltip = m_Tooltip };
+                label.AddToClassList(valueUssClassName);
+                m_Container.Add(label);
+                return;
+            }
 
             var modelArray = new[] { Model };
 

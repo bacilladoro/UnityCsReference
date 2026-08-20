@@ -2,6 +2,8 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
+using Unity.Scripting.LifecycleManagement;
 using System;
 using System.Collections.Generic;
 using UnityEngine.Pool;
@@ -280,16 +282,19 @@ namespace UnityEngine.UIElements
         /// <summary>
         /// Focus came from an unspecified direction, for example after a mouse down.
         /// </summary>
+        [NoAutoStaticsCleanup]
         public static FocusChangeDirection unspecified { get; } = new FocusChangeDirection(-1);
 
         /// <summary>
         /// The null direction. This is usually used when the focus stays on the same element.
         /// </summary>
+        [NoAutoStaticsCleanup]
         public static FocusChangeDirection none { get; } = new FocusChangeDirection(0);
 
         /// <summary>
         /// Last value for the direction defined by this class.
         /// </summary>
+        [NoAutoStaticsCleanup]
         protected static FocusChangeDirection lastValue { get; } = none;
 
         readonly int m_Value;
@@ -825,3 +830,4 @@ namespace UnityEngine.UIElements
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

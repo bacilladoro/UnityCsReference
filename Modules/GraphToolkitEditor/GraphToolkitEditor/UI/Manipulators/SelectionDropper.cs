@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -18,6 +19,7 @@ namespace Unity.GraphToolkit.Editor
     internal class SelectionDropper : Manipulator
     {
         internal const string k_DragAndDropKey = "SelectionDropperElements";
+        [NoAutoStaticsCleanup] // empty sentinel list; never holds element references
         static IReadOnlyList<GraphElementModel> s_EmptyElementList = new List<GraphElementModel>();
         const float k_StartDragThreshold = 4.0f;
 

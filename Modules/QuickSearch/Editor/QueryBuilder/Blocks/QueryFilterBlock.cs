@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -33,6 +34,7 @@ namespace UnityEditor.Search
 
     class QueryFilterBlock : QueryBlock, IQueryExpressionBlock, IQueryMarkerBlock
     {
+        [NoAutoStaticsCleanup]
         public static readonly List<string> ops = new() { ":", "=", "!=", "<", "<=", ">=", ">" };
 
         private VisualElement m_InPlaceEditorElement;
@@ -534,9 +536,9 @@ namespace UnityEditor.Search
 
         private static Type ParseMarkerType<T>(in QueryMarker marker, int typeArgIndex = 1)
         {
-#pragma warning disable UA2001, UA2011 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001, UAC2011 // Avoid Linq
             var typeString = marker.EvaluateArgs().Skip(typeArgIndex).FirstOrDefault()?.ToString();
-#pragma warning restore UA2001, UA2011
+#pragma warning restore UAC2001, UAC2011
             if (string.IsNullOrEmpty(typeString))
                 return null;
             return SearchUtils.FindType<T>(typeString);

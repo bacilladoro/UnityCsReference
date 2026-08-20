@@ -257,9 +257,9 @@ namespace Unity.ProjectAuditor.Editor.UI.Framework
             // All items appear under "All" in these tables. Sort their children.
             var topChild = rootItem.children[0];
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var myTypes = topChild.children.Cast<SelectionWindowTreeViewItem>();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             var orderedQuery = InitialOrder(myTypes, sortedColumns);
             for (var i = 1; i < sortedColumns.Length; i++)
             {
@@ -625,20 +625,20 @@ namespace Unity.ProjectAuditor.Editor.UI.Framework
             bool ascending)
         {
             if (ascending)
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 return source.OrderBy(selector);
             return source.OrderByDescending(selector);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         public static IOrderedEnumerable<T> ThenBy<T, TKey>(this IOrderedEnumerable<T> source, Func<T, TKey> selector,
             bool ascending)
         {
             if (ascending)
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 return source.ThenBy(selector);
             return source.ThenByDescending(selector);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
     }
 }

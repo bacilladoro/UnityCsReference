@@ -7,6 +7,7 @@ using UnityEngine;
 using UnityEngine.TextCore;
 using UnityEngine.TextCore.LowLevel;
 using UnityEngine.TextCore.Text;
+using Unity.Scripting.LifecycleManagement;
 
 #pragma warning disable CS0618 // TextShaderUtilities is obsolete; internal usage
 
@@ -20,9 +21,11 @@ namespace UnityEditor.TextCore.Text
         public int atlasIndex;
     }
 
-    internal static class TextCorePropertyDrawerUtilities
+    internal static partial class TextCorePropertyDrawerUtilities
     {
+        [AutoStaticsCleanupOnCodeReload]
         internal static bool s_RefreshGlyphProxyLookup;
+        [AutoStaticsCleanupOnCodeReload]
         static Dictionary<SerializedObject, Dictionary<uint, GlyphProxy>> s_GlyphProxyLookups = new Dictionary<SerializedObject, Dictionary<uint, GlyphProxy>>();
 
         internal static void ClearGlyphProxyLookups()

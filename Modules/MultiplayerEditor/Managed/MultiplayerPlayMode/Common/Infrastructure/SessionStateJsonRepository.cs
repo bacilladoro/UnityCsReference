@@ -4,9 +4,8 @@
 
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Text;
-using Newtonsoft.Json;
+using System.Text.Json;
+using Unity.Scripting.LifecycleManagement;
 
 namespace Unity.Multiplayer.PlayMode.Editor
 {
@@ -14,7 +13,6 @@ namespace Unity.Multiplayer.PlayMode.Editor
     {
         readonly StateRepositoryDelegates m_StateRepository;
         readonly string m_Key;
-        readonly JsonSerializer m_JsonSerializer;
         Dictionary<TKey, TState> m_States;
 
         // Because this class serializes, it can destroy object references. So extra care must be done when using
@@ -23,7 +21,6 @@ namespace Unity.Multiplayer.PlayMode.Editor
         {
             m_StateRepository = stateRepository;
             m_Key = key;
-            m_JsonSerializer = JsonSerializer.CreateDefault();
         }
 
         bool CanDeserialize()
@@ -111,11 +108,8 @@ namespace Unity.Multiplayer.PlayMode.Editor
 
             try
             {
-                using var stringReader = new StringReader(serializedData);
-                using var reader = new JsonTextReader(stringReader);
-
                 // We have to use lists because complex Dictionary keys are not serialized properly.
-                var list = m_JsonSerializer.Deserialize<IList<KeyValuePair<TKey, TState>>>(reader);
+                var list = JsonSerializer.Deserialize<List<KeyValuePair<TKey, TState>>>(serializedData);
                 if (list == null)
                 {
                     states = new Dictionary<TKey, TState>();
@@ -139,12 +133,8 @@ namespace Unity.Multiplayer.PlayMode.Editor
 
         string Serialize(Dictionary<TKey, TState> states)
         {
-            var builder = new StringBuilder();
-            using var stringWriter = new StringWriter(builder);
-            using var writer = new JsonTextWriter(stringWriter);
             var list = new List<KeyValuePair<TKey, TState>>(states);  // This is because we can serialize lists (not dictionaries)
-            m_JsonSerializer.Serialize(writer, list);
-            return builder.ToString();
+            return JsonSerializer.Serialize(list);
         }
 
         public static void DeleteAll(SessionStateJsonRepository<TKey, TState> sessionStateJsonRepository)
@@ -157,9 +147,10 @@ namespace Unity.Multiplayer.PlayMode.Editor
     // This has to be a separate class since SessionStateJsonRepository is a Generic static class and we want to
     // make sure the key is not duplicated regardless of each generated class from the generic.
     // https://stackoverflow.com/questions/3037203/are-static-members-of-a-generic-class-tied-to-the-specific-instance
-    static class DuplicateKeyChecker
+    static partial class DuplicateKeyChecker
     {
-        static readonly HashSet<string> RuntimeCheckOfNonDuplicateKeys = new HashSet<string>();
+        [AutoStaticsCleanupOnCodeReload] // keys re-registered on reload; old keys would cause false-positive duplicate exceptions
+        static HashSet<string> RuntimeCheckOfNonDuplicateKeys = new HashSet<string>();
 
         public static void Clear()
         {

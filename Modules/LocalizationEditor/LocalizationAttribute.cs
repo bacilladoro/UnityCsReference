@@ -11,8 +11,15 @@ using UnityEngine.Scripting;
 namespace UnityEditor
 {
     /// <summary>
-    /// An attribute to the assembly for Localization.
+    /// Marks an assembly as carrying its own editor translations.
     /// </summary>
+    /// <remarks>
+    /// Put the assembly's `.po` files in a `Localization` folder inside the same assembly definition.
+    /// Unity registers them under the group named by this attribute, and looks them up under the same
+    /// name when the assembly calls `L10n`.
+    /// </remarks>
+    /// <seealso cref="L10n"/>
+    /// <seealso cref="LocalizationGroup"/>
     [RequiredByNativeCode]
     [AttributeUsage(AttributeTargets.Assembly)]
     public sealed class LocalizationAttribute : Attribute
@@ -22,8 +29,14 @@ namespace UnityEditor
         internal string locGroupName { get { return m_LocGroupName; } }
 
         /// <summary>
-        /// Default constructor.
+        /// Marks the assembly as carrying its own editor translations.
         /// </summary>
+        /// <remarks>
+        /// Give a group name to decouple the group from the assembly name, so that renaming the
+        /// assembly does not move its translations, or so that several assemblies share one group.
+        /// </remarks>
+        /// <param name="locGroupName">Group to register and look the assembly's translations up under.
+        /// Leave it out to use the assembly's own name.</param>
         public LocalizationAttribute(string locGroupName = null)
         {
             m_LocGroupName = locGroupName;

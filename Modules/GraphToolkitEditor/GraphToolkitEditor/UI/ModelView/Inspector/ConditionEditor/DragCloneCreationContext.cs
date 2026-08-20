@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 
 namespace Unity.GraphToolkit.Editor
 {
@@ -12,6 +13,7 @@ namespace Unity.GraphToolkit.Editor
     [UnityRestricted]
     internal class DragCloneCreationContext : IViewContext
     {
+        [NoAutoStaticsCleanup] // singleton context instance; identity compared by ReferenceEquals, safe to persist
         public static readonly DragCloneCreationContext Default = new DragCloneCreationContext();
 
         public bool Equals(IViewContext other)

@@ -12,7 +12,7 @@ namespace UnityEngine.UIElements
     /// <remarks>
     /// <para>
     /// Assign a <c>UIAnimationClip</c> to a visual element through the USS property
-    /// <c>-unity-animation-clip</c> or the <see cref="IStyle.unityAnimationClip"/> API.
+    /// <c>animation-name</c> or the <see cref="IStyle.unityAnimationClip"/> API.
     /// The element becomes the animation root and all animation paths resolve relative to it.
     /// </para>
     /// </remarks>

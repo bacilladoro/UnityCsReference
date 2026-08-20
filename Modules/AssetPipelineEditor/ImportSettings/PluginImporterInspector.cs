@@ -148,9 +148,9 @@ namespace UnityEditor
 
         internal PluginImporter[] importers
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             get { return targets.Cast<PluginImporter>().ToArray(); }
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         private static bool IgnorePlatform(BuildTarget platform)
@@ -328,16 +328,16 @@ namespace UnityEditor
             // making sure we apply any serialized changes to the targets so accessing pluginImporter.DefineConstraints will have the updated values
             serializedObject.ApplyModifiedProperties();
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var minSizeOfDefines = importers.Min(x => x.DefineConstraints.Length);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             string[] baseImporterDefineConstraints = importer.DefineConstraints;
 
             foreach (var pluginImporter in importers)
             {
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 var importerDefineConstraints = pluginImporter.DefineConstraints.Take(minSizeOfDefines).ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
                 for (var i = 0; i < importerDefineConstraints.Count; i++)
                 {
@@ -423,9 +423,9 @@ namespace UnityEditor
         protected override void Apply()
         {
             serializedObject.ApplyModifiedProperties();
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var constraints = m_DefineConstraintState.Where(x => x.displayValue > Compatibility.Mixed).Select(x => x.name).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             foreach (var imp in importers)
             {
                 imp.DefineConstraints = constraints;

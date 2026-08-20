@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UnityConnectHub not yet converted
 
 using UnityEditorInternal;
 using Button = UnityEngine.UIElements.Button;
@@ -582,3 +583,4 @@ namespace UnityEditor.Connect
         public delegate void ExceptionCallback(Exception exception);
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

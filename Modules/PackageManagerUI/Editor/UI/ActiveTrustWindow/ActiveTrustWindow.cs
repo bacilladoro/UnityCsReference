@@ -16,6 +16,7 @@ namespace UnityEditor.PackageManager.UI.Internal
     {
         private const int k_WindowWidthWithTechnicalName = 680;
         private const int k_WindowWidthNoTechnicalName = 580;
+        private const string k_WindowType = "ActiveTrust";
 
         [UsedByNativeCode]
         internal static bool ShouldProceedAfterTrustCheck(string packagePath, IntPtr nativeAssetPackageInfo, int productId, string packageName, string packageVersion, int uploadId, bool isReimport)
@@ -112,6 +113,18 @@ namespace UnityEditor.PackageManager.UI.Internal
             public int windowWidth;
             public IList<SectionData> sections;
             public bool blockedBySecuritySettings;
+            public TrustAnalyticsData analyticsData;
+        }
+
+        private static string[] ConvertRowDataToPackageIds(List<RowData> rows)
+        {
+            if (rows == null || rows.Count == 0)
+                return Array.Empty<string>();
+
+            var ids = new string[rows.Count];
+            for (var i = 0; i < rows.Count; i++)
+                ids[i] = $"{rows[i].technicalName}@{rows[i].version}";
+            return ids;
         }
 
         public static ActiveTrustReturnValue Show(ViewData data)
@@ -160,7 +173,7 @@ namespace UnityEditor.PackageManager.UI.Internal
             var blockedBySecuritySettings = false;
             if (invalidSignatureRows.Count > 0)
             {
-                var invalidBlocked = IsBlocked(trustPolicyLevel, TrustAndSignature.UntrustedInvalidSignature);
+                var invalidBlocked = TrustAndSignatureHelper.IsBlocked(trustPolicyLevel, TrustAndSignature.UntrustedInvalidSignature);
                 var headerText = invalidBlocked
                     ? SelectByCount(invalidSignatureRows.Count,
                         L10n.Tr("This package has an invalid signature which can indicate unsafe or malicious content."),
@@ -188,7 +201,7 @@ namespace UnityEditor.PackageManager.UI.Internal
 
             if (missingSignatureRows.Count > 0)
             {
-                var missingBlocked = IsBlocked(trustPolicyLevel, TrustAndSignature.UntrustedNoSignature);
+                var missingBlocked = TrustAndSignatureHelper.IsBlocked(trustPolicyLevel, TrustAndSignature.UntrustedNoSignature);
                 var headerText = SelectByCount(missingSignatureRows.Count,
                     L10n.Tr("This package is missing a signature."),
                     L10n.Tr("{0} packages are missing a signature."));
@@ -215,7 +228,7 @@ namespace UnityEditor.PackageManager.UI.Internal
 
             if (limitedTrustRows.Count > 0)
             {
-                var limitedBlocked = IsBlocked(trustPolicyLevel, TrustAndSignature.LimitedTrust);
+                var limitedBlocked = TrustAndSignatureHelper.IsBlocked(trustPolicyLevel, TrustAndSignature.LimitedTrust);
                 var headerText = SelectByCount(limitedTrustRows.Count,
                     L10n.Tr("This package is signed but not from official Unity sources."),
                     L10n.Tr("{0} packages are signed but not from official Unity sources."));
@@ -257,32 +270,16 @@ namespace UnityEditor.PackageManager.UI.Internal
                 docUrl = docUrl,
                 windowWidth = k_WindowWidthWithTechnicalName,
                 sections = sections,
-                blockedBySecuritySettings = blockedBySecuritySettings
+                blockedBySecuritySettings = blockedBySecuritySettings,
+                analyticsData = new TrustAnalyticsData
+                {
+                    operationType = operationType.ToString(),
+                    windowType = k_WindowType,
+                    invalidSignaturePackageIds = ConvertRowDataToPackageIds(invalidSignatureRows),
+                    missingSignaturePackageIds = ConvertRowDataToPackageIds(missingSignatureRows),
+                    limitedTrustPackageIds = ConvertRowDataToPackageIds(limitedTrustRows)
+                }
             };
-        }
-
-        internal static bool IsBlocked(TrustPolicyLevel trustPolicyLevel, TrustAndSignature trustAndSignature)
-        {
-            if (trustPolicyLevel == TrustPolicyLevel.AnyPackage)
-                return false;
-
-            switch (trustAndSignature)
-            {
-                case TrustAndSignature.UntrustedNoSignature:
-                case TrustAndSignature.UntrustedInvalidSignature:
-                    return true;
-
-                case TrustAndSignature.LimitedTrust:
-                    return trustPolicyLevel == TrustPolicyLevel.TrustedOnly;
-
-                case TrustAndSignature.NotApplicable:
-                case TrustAndSignature.FullTrustUnitySignature:
-                case TrustAndSignature.FullTrustValidSignature:
-                case TrustAndSignature.FullTrustNoSignature:
-                case TrustAndSignature.FullTrustBuiltInPackage:
-                default:
-                    return false;
-            }
         }
 
         private static string SelectByCount(int count, string singular, string plural)
@@ -343,6 +340,9 @@ namespace UnityEditor.PackageManager.UI.Internal
                 hasTechnicalName = false
             };
 
+            var analyticsIds = origin != null && origin.IsValid()
+                ? new[] { origin.productId.ToString() }
+                : new[] { ObjectNames.NicifyVariableName(IOUtils.GetFileNameWithoutExtension(packagePath)) };
             var actionLabel = isReimport ? L10n.Tr("Reimport") : L10n.Tr("Import");
             return new ViewData
             {
@@ -353,7 +353,15 @@ namespace UnityEditor.PackageManager.UI.Internal
                 docUrl = docUrl,
                 windowWidth = k_WindowWidthNoTechnicalName,
                 sections = [section],
-                blockedBySecuritySettings = false
+                blockedBySecuritySettings = false,
+                analyticsData = new TrustAnalyticsData
+                {
+                    operationType = isReimport ? "Reimport" : "Import",
+                    windowType = k_WindowType,
+                    invalidSignaturePackageIds = trustAndSignature == TrustAndSignature.UntrustedInvalidSignature ? analyticsIds : Array.Empty<string>(),
+                    missingSignaturePackageIds = trustAndSignature == TrustAndSignature.UntrustedNoSignature ? analyticsIds : Array.Empty<string>(),
+                    limitedTrustPackageIds = trustAndSignature == TrustAndSignature.LimitedTrust ? analyticsIds : Array.Empty<string>()
+                }
             };
         }
 
@@ -364,6 +372,7 @@ namespace UnityEditor.PackageManager.UI.Internal
             internal string docUrl { get; }
 
             private readonly int m_WindowWidth;
+            private readonly TrustAnalyticsData m_AnalyticsData;
 
             internal ActiveTrustContent(IResourceLoader resourceLoader, IApplicationProxy application, ViewData data)
             {
@@ -386,6 +395,7 @@ namespace UnityEditor.PackageManager.UI.Internal
                 var actionLabel = data.actionLabel;
                 docUrl = data.docUrl;
                 m_WindowWidth = data.windowWidth;
+                m_AnalyticsData = data.analyticsData;
 
                 readMoreButton.clicked += () => application.OpenURL(docUrl);
 
@@ -395,6 +405,8 @@ namespace UnityEditor.PackageManager.UI.Internal
                     proceedAnywayButton.clicked += () =>
                     {
                         returnValue = ActiveTrustReturnValue.ProceedAnyway;
+                        m_AnalyticsData.action = returnValue.ToString();
+                        PackageManagerTrustWindowAnalytics.SendEvent(m_AnalyticsData);
                         container.Close();
                     };
                     buttonsContainer.Add(proceedAnywayButton);
@@ -408,6 +420,8 @@ namespace UnityEditor.PackageManager.UI.Internal
                 dismissButton.clicked += () =>
                 {
                     returnValue = ActiveTrustReturnValue.Cancel;
+                    m_AnalyticsData.action = returnValue.ToString();
+                    PackageManagerTrustWindowAnalytics.SendEvent(m_AnalyticsData);
                     container.Close();
                 };
                 buttonsContainer.Add(dismissButton);

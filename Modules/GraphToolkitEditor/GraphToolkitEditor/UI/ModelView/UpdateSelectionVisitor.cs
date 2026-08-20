@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 
 namespace Unity.GraphToolkit.Editor
 {
@@ -16,6 +17,7 @@ namespace Unity.GraphToolkit.Editor
         /// <summary>
         /// A static instance to be used when the change hints are not known.
         /// </summary>
+        [NoAutoStaticsCleanup] // cached stateless visitor singleton; safe to persist across code reload
         public static readonly UpdateSelectionVisitor Visitor = new();
 
         /// <summary>

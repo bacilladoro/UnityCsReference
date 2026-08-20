@@ -3,13 +3,14 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEditor.ShortcutManagement;
 using UnityEngine;
 
 namespace Unity.GraphToolsAuthoringFramework.InternalEditorBridge
 {
-    static class EditorBridge
+    static partial class EditorBridge
     {
         static int LogTypeOptionsToMode(LogType logType, LogOption logOptions)
         {
@@ -87,12 +88,18 @@ namespace Unity.GraphToolsAuthoringFramework.InternalEditorBridge
             EditorApplication.fileMenuSaved += callback;
         }
 
+        public static void UnregisterFileSavedCallback(EditorApplication.CallbackFunction callback)
+        {
+            EditorApplication.fileMenuSaved -= callback;
+        }
+
         public static bool HasCustomPropertyDrawer(Type type)
         {
             var drawerType = ScriptAttributeUtility.GetDrawerTypeForType(type, null);
             return typeof(PropertyDrawer).IsAssignableFrom(drawerType);
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         static char[] s_InvalidChars;
 
         public static char[] GetInvalidFilenameChars()

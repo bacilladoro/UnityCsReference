@@ -7,13 +7,15 @@ using System.Linq;
 using UnityEditor.Search.Providers;
 using UnityEditor.SearchService;
 using UnityEngine;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Search
 {
-    static class DefaultAdvancedObjectSelector
+    static partial class DefaultAdvancedObjectSelector
     {
         internal const string defaultAdvancedObjectSelectorId = "default_advanced_selector";
-        static SearchWindow s_Window;
+        [AutoStaticsCleanupOnCodeReload]
+        static SearchWindow s_Window = null;
 
         [AdvancedObjectSelectorValidator(defaultAdvancedObjectSelectorId)]
         static bool CanOpenSelector(ObjectSelectorSearchContext context)
@@ -61,9 +63,9 @@ namespace UnityEditor.Search
             if (Utils.IsRunningTests())
                 searchFlags |= SearchFlags.Dockable;
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var requiredTypes = selectContext.requiredTypes.ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             var searchQuery = SearchUtils.BuildUnionTypeQuery(requiredTypes) ?? "";
             var selectHandler = parameters.selectorClosedHandler;
             var trackingHandler = parameters.trackingHandler;

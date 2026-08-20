@@ -2,9 +2,11 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.Bindings;
 using UnityEngine.UIElements;
@@ -163,8 +165,10 @@ namespace UnityEditor.UIElements
             }
         }
 
-        // One-shot per session; guards the color-key spam Laila flagged when dragging in
-        // the gradient picker. Shared between this field and BackgroundGradientField.
+        // Guards the color-key spam Laila flagged when dragging in the gradient picker.
+        // Shared between this field and BackgroundGradientField. Reset on reload so the
+        // warning can re-arm instead of being permanently suppressed.
+        [AutoStaticsCleanupOnCodeReload]
         static bool s_WarnedTooManyGradientKeys;
 
         [VisibleToOtherModules("UnityEditor.UIBuilderModule")]
@@ -293,3 +297,4 @@ namespace UnityEditor.UIElements
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

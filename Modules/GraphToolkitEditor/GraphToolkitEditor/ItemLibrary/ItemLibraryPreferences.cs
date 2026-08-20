@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.GraphToolkit.Editor;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEngine;
 
@@ -15,7 +16,7 @@ namespace Unity.GraphToolkit.ItemLibrary.Editor
     /// Helper class to handle library preferences per library tool.
     /// </summary>
     /// <remarks>Internal class for automated tests purposes.</remarks>
-    class ItemLibraryPreferences
+    partial class ItemLibraryPreferences
     {
         /// <summary>
         /// The data serialized in the EditorPrefs as json for each ItemLibrary tool.
@@ -63,9 +64,9 @@ namespace Unity.GraphToolkit.ItemLibrary.Editor
 
             public void SetFavorite(string context, string itemPath, bool setFavorite = true)
             {
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 var favorites = GetFavorites(context).ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 if (setFavorite)
                     favorites.Add(itemPath);
                 else
@@ -75,9 +76,9 @@ namespace Unity.GraphToolkit.ItemLibrary.Editor
 
             public void SetCollapsed(string context, string itemPath, bool setCollapsed = true)
             {
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 var collapsedItems = GetCollapsedItems(context).ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 if (setCollapsed)
                     collapsedItems.Add(itemPath);
                 else
@@ -145,6 +146,7 @@ namespace Unity.GraphToolkit.ItemLibrary.Editor
                 return -1;
             }
 
+            [NoAutoStaticsCleanup] // empty sentinel list; never holds data, reused to avoid allocations
             static readonly List<string> k_EmptyStringList = new List<string>();
         }
 
@@ -163,6 +165,7 @@ namespace Unity.GraphToolkit.ItemLibrary.Editor
         /// </summary>
         public string Context { get; }
 
+        [AutoStaticsCleanupOnCodeReload]
         static Dictionary<string, DataPerTool> s_CachedPrefs = new Dictionary<string, DataPerTool>();
 
         /// <summary>

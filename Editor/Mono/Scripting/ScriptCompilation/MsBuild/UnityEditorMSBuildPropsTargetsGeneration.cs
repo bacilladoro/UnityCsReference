@@ -12,14 +12,18 @@ using UnityEditor.Compilation;
 using UnityEditor.MSBuild;
 using UnityEditorInternal;
 using UnityEngine;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Scripting.ScriptCompilation.MsBuild;
 
 class UnityEditorMSBuildPropsTargetsGeneration
 {
     // Session-scoped cache for PrecompiledAssemblyProvider results to avoid repeated queries
+    [NoAutoStaticsCleanup] // session-scoped cache of plugin/module paths (string data only), safe to persist across reload
     private static PrecompiledAssemblyProviderCache s_assemblyProviderCache;
+    [NoAutoStaticsCleanup] // value-type cache key paired with s_assemblyProviderCache, safe to persist across reload
     private static BuildTarget s_cachedBuildTarget;
+    [NoAutoStaticsCleanup] // lock object, safe to persist across reload
     private static readonly object s_cacheLock = new object();
 
     private class PrecompiledAssemblyProviderCache
@@ -102,6 +106,7 @@ class UnityEditorMSBuildPropsTargetsGeneration
         PropsGenerator.Instance.UpdateRoslynAnalyzersProps(globalAnalyzers);
     }
 
+    [NoAutoStaticsCleanup] // built-in analyzer paths resolved from the fixed editor install location, safe to persist across reload
     private static string[] s_builtinAnalyzerPaths;
 
     // Editor-shipped built-in analyzers/generators live under the editor install, outside the project, so
@@ -220,6 +225,7 @@ class UnityEditorMSBuildPropsTargetsGeneration
         throw new NotSupportedException($"Unsupported OS platform {RuntimeInformation.OSDescription}");
     }
 
+    [NoAutoStaticsCleanup] // cached Unity SDK version string (fixed per install), safe to persist across reload
     private static string s_cachedUnitySdkVersion;
 
     // Reads the version from Unity.Sdk.<version>.nupkg so global.json tracks CI's bumped value
@@ -252,6 +258,7 @@ class UnityEditorMSBuildPropsTargetsGeneration
         throw new FileNotFoundException($"No {prefix}*{suffix} package found in {sdkNugetsPath}");
     }
 
+    [NoAutoStaticsCleanup] // cached .NET SDK version string (fixed per install), safe to persist across reload
     private static string s_cachedDotnetRuntimeVersion;
 
     // The .NET SDK version written to the generated global.json (sdk.version) must match the .NET SDK

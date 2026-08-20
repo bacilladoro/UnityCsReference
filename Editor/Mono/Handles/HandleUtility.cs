@@ -2136,9 +2136,9 @@ namespace UnityEditor
                 }
             }
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             childRendererIDs = tempChildRendererIDs.ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         internal static void FilterEntityIds(GameObject[] gameObjects, out EntityId[] parentEntityIds, out EntityId[] childEntityIds, out HashSet<EntityId> childEntityIdsHashSet)
@@ -2194,12 +2194,12 @@ namespace UnityEditor
                 }
             }
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             parentEntityIds = tempParentEntityIds.ToArray();
-#pragma warning restore UA2001
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+#pragma warning disable UAC2001 // Avoid Linq
             childEntityIds = childEntityIdsHashSet.ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         static bool HasMatchingEntityId(EntityId[] ids, EntityId id, int cutoff)

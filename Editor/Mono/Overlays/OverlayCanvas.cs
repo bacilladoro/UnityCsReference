@@ -1247,17 +1247,17 @@ namespace UnityEditor.Overlays
 
         internal bool TryGetOverlay(string id, out Overlay overlay)
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             overlay = m_Overlays.FirstOrDefault(x => x.id == id);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             return overlay != null;
         }
 
         internal bool TryGetOverlay<T>(string id, out T overlay) where T : Overlay
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             overlay = m_Overlays.FirstOrDefault(x => x is T && x.id == id) as T;
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             return overlay != null;
         }
 
@@ -1288,9 +1288,9 @@ namespace UnityEditor.Overlays
         // used by tests
         internal SaveData FindSaveData(Overlay overlay)
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var data = m_SaveData.FirstOrDefault(x => x.id == overlay.id);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             if (data == null)
             {
@@ -1419,9 +1419,9 @@ namespace UnityEditor.Overlays
                 overlay.ApplySaveData(data);
 #pragma warning restore 618
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var container = m_Containers.FirstOrDefault(x => data.containerId == x.name);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             // Overlays were implemented with the idea that they are always associated with an OverlayContainer. While
             // this doesn't really need to be true (floating Overlays don't need a Container), the code isn't capable

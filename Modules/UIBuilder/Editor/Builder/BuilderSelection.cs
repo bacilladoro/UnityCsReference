@@ -4,15 +4,60 @@
 
 using System;
 using System.Collections.Generic;
-using System.Reflection;
 using Unity.Scripting.LifecycleManagement;
+using Unity.UIToolkit.Editor;
 using UnityEditor;
-using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEngine.UIElements.StyleSheets;
 
 namespace Unity.UI.Builder
 {
+    class BuilderSyncCommand : Command<BuilderSyncCommand>
+    {
+        public static BuilderSyncCommand GetPooled(BuilderHierarchyChangeType hierarchyChangeType, BuilderStylingChangeType? stylingChangeType = null)
+        {
+            var cmd = GetPooled();
+            cmd.Source = CommandSources.Builder;
+            cmd.HierarchyChangeType = hierarchyChangeType;
+            cmd.StylingChangeType = stylingChangeType;
+            return cmd;
+        }
+
+        public static void Execute(BuilderHierarchyChangeType hierarchyChangeType, BuilderStylingChangeType? stylingChangeType)
+        {
+            using var command = GetPooled(hierarchyChangeType, stylingChangeType);
+            UICommandQueue.Execute(command);
+        }
+
+        public override CommandCategory Category
+        {
+            get
+            {
+                var category = CommandCategory.None;
+                if (HierarchyChangeType != 0)
+                    category |= CommandCategory.Hierarchy;
+
+                if (HierarchyChangeType.HasFlag(BuilderHierarchyChangeType.InlineStyle))
+                    category |= CommandCategory.Styling;
+
+                if (StylingChangeType.HasValue)
+                    category |= CommandCategory.Styling;
+
+                return category;
+            }
+        }
+
+        public BuilderHierarchyChangeType HierarchyChangeType { get; private set; }
+        public BuilderStylingChangeType? StylingChangeType { get; private set; }
+
+        protected override void Init()
+        {
+            base.Init();
+            HierarchyChangeType = 0;
+            StylingChangeType = null;
+        }
+    }
+
     internal enum BuilderSelectionType
     {
         Nothing,
@@ -127,6 +172,18 @@ namespace Unity.UI.Builder
         }
 
         public BuilderDocument document => m_PaneWindow.document;
+
+        internal bool isApplyingExternalCommand { get; set; }
+
+        // One-shot signal used when applying an external change that did not modify any style sheet (for
+        // example an inline-style edit, which lives in the VisualTreeAsset's inline sheet). This flag tells it to
+        // leave its unsaved-changes marker untouched.
+        internal bool suppressStyleSheetsPaneUnsavedMark { get; set; }
+
+        // Symmetric one-shot: an external change that touched ONLY style sheet(s), not the VisualTreeAsset or
+        // its inline sheet. The upcoming full refresh rebuilds the hierarchy, which would otherwise mark the
+        // UXML document label unsaved; this flag tells the Hierarchy pane to leave its marker untouched.
+        internal bool suppressHierarchyPaneUnsavedMark { get; set; }
 
         public bool isEmpty { get { return m_Selection.Count == 0; } }
 
@@ -283,6 +340,9 @@ namespace Unity.UI.Builder
                 EditorUtility.SetDirty(m_PaneWindow.document.visualTreeAsset);
                 UIElementsUtility.MarkVisualTreeAssetAsChanged(m_PaneWindow.document.visualTreeAsset);
             }
+
+            if (!isApplyingExternalCommand)
+                BuilderSyncCommand.Execute(changeType, null);
         }
 
         internal void ForceVisualAssetUpdateWithoutSave(
@@ -335,6 +395,8 @@ namespace Unity.UI.Builder
             });
 
             QueueUpPostPanelUpdaterChangeAction(NotifyOfStylingChangePostStylingUpdate);
+            if (!isApplyingExternalCommand)
+                BuilderSyncCommand.Execute(default, changeType);
         }
 
         public void NotifyPreSaveDocument()

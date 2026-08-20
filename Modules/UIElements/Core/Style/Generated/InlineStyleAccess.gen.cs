@@ -70,17 +70,96 @@ namespace UnityEngine.UIElements
             }
         }
 
-        StyleEnum<AnimationPlayState> IStyle.animationPlayState
+        StyleList<float> IStyle.animationDelay
         {
             get
             {
-                var tmp = GetStyleInt(StylePropertyId.AnimationPlayState);
-                return new StyleEnum<AnimationPlayState>((AnimationPlayState)tmp.value, tmp.keyword);
+                return GetStyleList<float>(StylePropertyId.AnimationDelay);
             }
 
             set
             {
-                if (SetStyleValue(StylePropertyId.AnimationPlayState, value))
+                if (SetStyleValue(StylePropertyId.AnimationDelay, value))
+                {
+                    ve.IncrementVersion(VersionChangeType.Styles | VersionChangeType.AnimationProperty);
+                }
+            }
+        }
+
+        StyleList<AnimationDirection> IStyle.animationDirection
+        {
+            get
+            {
+                return GetStyleList<AnimationDirection>(StylePropertyId.AnimationDirection);
+            }
+
+            set
+            {
+                if (SetStyleValue(StylePropertyId.AnimationDirection, value))
+                {
+                    ve.IncrementVersion(VersionChangeType.Styles | VersionChangeType.AnimationProperty);
+                }
+            }
+        }
+
+        StyleList<float> IStyle.animationDuration
+        {
+            get
+            {
+                return GetStyleList<float>(StylePropertyId.AnimationDuration);
+            }
+
+            set
+            {
+                if (SetStyleValue(StylePropertyId.AnimationDuration, value))
+                {
+                    ve.IncrementVersion(VersionChangeType.Styles | VersionChangeType.AnimationProperty);
+                }
+            }
+        }
+
+        StyleList<AnimationIterationCount> IStyle.animationIterationCount
+        {
+            get
+            {
+                return GetStyleList<AnimationIterationCount>(StylePropertyId.AnimationIterationCount);
+            }
+
+            set
+            {
+                if (SetStyleValue(StylePropertyId.AnimationIterationCount, value))
+                {
+                    ve.IncrementVersion(VersionChangeType.Styles | VersionChangeType.AnimationProperty);
+                }
+            }
+        }
+
+        StyleList<UIAnimationClip> IStyle.animationNames
+        {
+            get
+            {
+                return GetStyleList<UIAnimationClip>(StylePropertyId.AnimationNames);
+            }
+
+            set
+            {
+                if (SetStyleValue(StylePropertyId.AnimationNames, value))
+                {
+                    ve.IncrementVersion(VersionChangeType.Styles | VersionChangeType.AnimationProperty);
+                }
+            }
+        }
+
+        StyleList<AnimationPlayState> IStyle.animationPlayStates
+        {
+            get
+            {
+                return GetStyleList<AnimationPlayState>(StylePropertyId.AnimationPlayStates);
+            }
+
+            set
+            {
+                if (SetStyleValue(StylePropertyId.AnimationPlayStates, value))
                 {
                     ve.IncrementVersion(VersionChangeType.Styles | VersionChangeType.AnimationProperty);
                 }
@@ -583,6 +662,160 @@ namespace UnityEngine.UIElements
             }
         }
 
+        StyleList<GridTrackSize> IStyle.gridAutoColumns
+        {
+            get
+            {
+                return GetStyleList<GridTrackSize>(StylePropertyId.GridAutoColumns);
+            }
+
+            set
+            {
+                if (SetStyleValue(StylePropertyId.GridAutoColumns, value))
+                {
+                    ve.IncrementVersion(VersionChangeType.Styles | VersionChangeType.Layout);
+                    ve.layoutNode.MarkDirty();
+                }
+            }
+        }
+
+        StyleEnum<GridAutoFlow> IStyle.gridAutoFlow
+        {
+            get
+            {
+                var tmp = GetStyleInt(StylePropertyId.GridAutoFlow);
+                return new StyleEnum<GridAutoFlow>((GridAutoFlow)tmp.value, tmp.keyword);
+            }
+
+            set
+            {
+                if (SetStyleValue(StylePropertyId.GridAutoFlow, value))
+                {
+                    ve.IncrementVersion(VersionChangeType.Styles | VersionChangeType.Layout);
+                    ve.layoutNode.MarkDirty();
+                }
+            }
+        }
+
+        StyleList<GridTrackSize> IStyle.gridAutoRows
+        {
+            get
+            {
+                return GetStyleList<GridTrackSize>(StylePropertyId.GridAutoRows);
+            }
+
+            set
+            {
+                if (SetStyleValue(StylePropertyId.GridAutoRows, value))
+                {
+                    ve.IncrementVersion(VersionChangeType.Styles | VersionChangeType.Layout);
+                    ve.layoutNode.MarkDirty();
+                }
+            }
+        }
+
+        StyleGridLine IStyle.gridColumnEnd
+        {
+            get
+            {
+                return GetStyleGridLine(StylePropertyId.GridColumnEnd);
+            }
+
+            set
+            {
+                if (SetStyleValue(StylePropertyId.GridColumnEnd, value))
+                {
+                    ve.IncrementVersion(VersionChangeType.Styles | VersionChangeType.Layout);
+                    ve.layoutNode.MarkDirty();
+                }
+            }
+        }
+
+        StyleGridLine IStyle.gridColumnStart
+        {
+            get
+            {
+                return GetStyleGridLine(StylePropertyId.GridColumnStart);
+            }
+
+            set
+            {
+                if (SetStyleValue(StylePropertyId.GridColumnStart, value))
+                {
+                    ve.IncrementVersion(VersionChangeType.Styles | VersionChangeType.Layout);
+                    ve.layoutNode.MarkDirty();
+                }
+            }
+        }
+
+        StyleGridLine IStyle.gridRowEnd
+        {
+            get
+            {
+                return GetStyleGridLine(StylePropertyId.GridRowEnd);
+            }
+
+            set
+            {
+                if (SetStyleValue(StylePropertyId.GridRowEnd, value))
+                {
+                    ve.IncrementVersion(VersionChangeType.Styles | VersionChangeType.Layout);
+                    ve.layoutNode.MarkDirty();
+                }
+            }
+        }
+
+        StyleGridLine IStyle.gridRowStart
+        {
+            get
+            {
+                return GetStyleGridLine(StylePropertyId.GridRowStart);
+            }
+
+            set
+            {
+                if (SetStyleValue(StylePropertyId.GridRowStart, value))
+                {
+                    ve.IncrementVersion(VersionChangeType.Styles | VersionChangeType.Layout);
+                    ve.layoutNode.MarkDirty();
+                }
+            }
+        }
+
+        StyleList<GridTrackSize> IStyle.gridTemplateColumns
+        {
+            get
+            {
+                return GetStyleList<GridTrackSize>(StylePropertyId.GridTemplateColumns);
+            }
+
+            set
+            {
+                if (SetStyleValue(StylePropertyId.GridTemplateColumns, value))
+                {
+                    ve.IncrementVersion(VersionChangeType.Styles | VersionChangeType.Layout);
+                    ve.layoutNode.MarkDirty();
+                }
+            }
+        }
+
+        StyleList<GridTrackSize> IStyle.gridTemplateRows
+        {
+            get
+            {
+                return GetStyleList<GridTrackSize>(StylePropertyId.GridTemplateRows);
+            }
+
+            set
+            {
+                if (SetStyleValue(StylePropertyId.GridTemplateRows, value))
+                {
+                    ve.IncrementVersion(VersionChangeType.Styles | VersionChangeType.Layout);
+                    ve.layoutNode.MarkDirty();
+                }
+            }
+        }
+
         StyleLength IStyle.height
         {
             get
@@ -611,6 +844,42 @@ namespace UnityEngine.UIElements
             set
             {
                 if (SetStyleValue(StylePropertyId.JustifyContent, value))
+                {
+                    ve.IncrementVersion(VersionChangeType.Styles | VersionChangeType.Layout);
+                    ve.layoutNode.MarkDirty();
+                }
+            }
+        }
+
+        StyleEnum<Align> IStyle.justifyItems
+        {
+            get
+            {
+                var tmp = GetStyleInt(StylePropertyId.JustifyItems);
+                return new StyleEnum<Align>((Align)tmp.value, tmp.keyword);
+            }
+
+            set
+            {
+                if (SetStyleValue(StylePropertyId.JustifyItems, value))
+                {
+                    ve.IncrementVersion(VersionChangeType.Styles | VersionChangeType.Layout);
+                    ve.layoutNode.MarkDirty();
+                }
+            }
+        }
+
+        StyleEnum<Align> IStyle.justifySelf
+        {
+            get
+            {
+                var tmp = GetStyleInt(StylePropertyId.JustifySelf);
+                return new StyleEnum<Align>((Align)tmp.value, tmp.keyword);
+            }
+
+            set
+            {
+                if (SetStyleValue(StylePropertyId.JustifySelf, value))
                 {
                     ve.IncrementVersion(VersionChangeType.Styles | VersionChangeType.Layout);
                     ve.layoutNode.MarkDirty();
@@ -1040,22 +1309,6 @@ namespace UnityEngine.UIElements
             }
         }
 
-        StyleUIAnimationClip IStyle.unityAnimationClip
-        {
-            get
-            {
-                return GetStyleUIAnimationClip(StylePropertyId.UnityAnimationClip);
-            }
-
-            set
-            {
-                if (SetStyleValue(StylePropertyId.UnityAnimationClip, value))
-                {
-                    ve.IncrementVersion(VersionChangeType.Styles | VersionChangeType.AnimationProperty);
-                }
-            }
-        }
-
         StyleColor IStyle.unityBackgroundImageTintColor
         {
             get
@@ -1432,6 +1685,22 @@ namespace UnityEngine.UIElements
                 if (SetStyleValue(StylePropertyId.WordSpacing, value))
                 {
                     ve.IncrementVersion(VersionChangeType.Styles | VersionChangeType.StyleSheet | VersionChangeType.Layout | VersionChangeType.Repaint);
+                }
+            }
+        }
+
+        StyleInt IStyle.zIndex
+        {
+            get
+            {
+                return GetStyleInt(StylePropertyId.ZIndex);
+            }
+
+            set
+            {
+                if (SetStyleValue(StylePropertyId.ZIndex, value))
+                {
+                    ve.IncrementVersion(VersionChangeType.Styles | VersionChangeType.Repaint);
                 }
             }
         }

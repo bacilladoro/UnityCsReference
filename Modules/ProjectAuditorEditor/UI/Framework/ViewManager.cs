@@ -42,9 +42,9 @@ namespace Unity.ProjectAuditor.Editor.UI.Framework
         public Action OnViewExportCompleted { get; set; }
 
         public ViewManager()
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             : this(ViewDescriptor.GetAll().Select(d => d.Category))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         {
         }
 
@@ -79,9 +79,9 @@ namespace Unity.ProjectAuditor.Editor.UI.Framework
             var views = new List<AnalysisView>();
             foreach (var category in m_Categories)
             {
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 var desc = ViewDescriptor.GetAll().FirstOrDefault(d => d.Category == category);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 if (desc == null)
                 {
                     Debug.LogWarning($"[{ProjectAuditor.DisplayName}] Descriptor for " + ProjectAuditor.GetCategoryName(category) + " was not registered.");
@@ -135,9 +135,9 @@ namespace Unity.ProjectAuditor.Editor.UI.Framework
 
         public AnalysisView GetView(IssueCategory category)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             return m_Views.FirstOrDefault(v => v.Desc.Category == category);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         public void ChangeView(IssueCategory category)

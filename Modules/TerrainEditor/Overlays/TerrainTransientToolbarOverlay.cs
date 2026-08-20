@@ -94,9 +94,9 @@ namespace UnityEditor.TerrainTools
         private bool IsOverlaysPackageVersionInstalled()
         {
             var upm = UnityEditor.PackageManager.PackageInfo.GetAllRegisteredPackages();
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var terrainPackageInfo = upm.Where(pi => pi.name == "com.unity.terrain-tools").ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             Debug.Assert(terrainPackageInfo.Length <= 1, "Only one version of terrain-tools package allowed to be installed");
 
@@ -270,9 +270,9 @@ namespace UnityEditor.TerrainTools
             foreach (var tool in list)
             {
                 // if the tool occurs more than once in the tools name list
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 if (m_ToolNames.Count(t => t == tool.GetName()) > 1)
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 {
                     var klass = m_ToolToTypeDict[tool];
                     //if this tool is a builtin tool
@@ -517,9 +517,9 @@ namespace UnityEditor.TerrainTools
             foreach (TerrainCategory category in Enum.GetValues(typeof(TerrainCategory)))
             {
                 m_CategoryToTools[category] =
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2001 // Avoid Linq
                     m_CategoryToTools[category].OrderBy(o => o.IconIndex).ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             }
 
             // cull the repeats if exists (keep the appropriate overrides)

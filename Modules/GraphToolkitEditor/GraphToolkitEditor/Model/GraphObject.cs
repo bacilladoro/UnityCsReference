@@ -20,7 +20,7 @@ namespace Unity.GraphToolkit.Editor
     [UnityRestricted]
     internal abstract class GraphObject : ScriptableObject, ISerializationCallbackReceiver, IObjectClonedCallbackReceiver
     {
-        static byte[] s_ComputeFileHashBuffer = new byte[1024];
+        static readonly byte[] s_ComputeFileHashBuffer = new byte[1024];
 
         [SerializeReference, HideInInspector]
         GraphModel m_GraphModel;

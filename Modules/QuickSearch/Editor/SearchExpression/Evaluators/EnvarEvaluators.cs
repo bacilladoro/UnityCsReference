@@ -11,6 +11,7 @@ using System.Reflection;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEditor.Utils;
 using UnityEngine;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Search
 {
@@ -96,9 +97,9 @@ namespace UnityEditor.Search
             var selection = TaskEvaluatorManager.EvaluateMainThread(() =>
             {
                 var entityIds = UnityEditor.Selection.entityIds;
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 return entityIds.Select(id =>
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 {
                     string assetPath = AssetDatabase.GetAssetPath(id);
                     return new SelectionResult(id, assetPath);
@@ -124,7 +125,9 @@ namespace UnityEditor.Search
             yield return SearchExpression.CreateItem(dataPath ?? string.Empty, c.ResolveAlias("DataPath"));
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         static Dictionary<string, MethodInfo> s_EnvFunctions = null;
+        [NoAutoStaticsCleanup] // Plain lock object with no user references; safe to persist across reload.
         static object s_EnvFunctionsLock = new object();
         [Description("Returns the value of one or more environment variables."), Category("Env")]
         [SearchExpressionEvaluator(SearchExpressionEvaluationHints.ImplicitArgsLiterals)]
@@ -136,25 +139,25 @@ namespace UnityEditor.Search
                 if (s_EnvFunctions == null)
                 {
                     var searchExpressionEvaluators = TypeCache.GetMethodsWithAttribute<SearchExpressionEvaluatorAttribute>();
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2001 // Avoid Linq
                     s_EnvFunctions = searchExpressionEvaluators.Where(mi =>
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     {
                         // Discard self
                         if (mi.Name == "Env")
                             return false;
                         var categories = mi.GetCustomAttributes<CategoryAttribute>();
-                        #pragma warning disable UA2006 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                        #pragma warning disable UAC2006 // Avoid Linq
                         return categories.Any(category => category.Category == "Env");
-#pragma warning restore UA2006
+#pragma warning restore UAC2006
                     }).ToDictionary(mi => Utils.FastToLower(mi.Name));
                 }
 
                 string[] envNames = null;
                 if (c.args.Length == 0)
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2001 // Avoid Linq
                     envNames = s_EnvFunctions.Keys.ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 else
                     envNames = Array.ConvertAll(c.args, exp => Utils.FastToLower(exp.innerText.ToString()));
 

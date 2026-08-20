@@ -264,6 +264,11 @@ namespace UnityEditor.Build.Profile
             ShowSettingsFoldouts();
         }
 
+        internal void OnBuildProfileWindowFocus()
+        {
+            m_PlatformExtension?.OnBuildProfileWindowFocus();
+        }
+
         internal void DuplicateSelectedClassicProfile()
         {
             parent.DuplicateSelectedClassicProfile();

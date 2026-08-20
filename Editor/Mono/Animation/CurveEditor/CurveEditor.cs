@@ -295,9 +295,9 @@ namespace UnityEditor
             // Init
             if (m_DrawOrder.Count == 0)
             {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 m_DrawOrder = m_AnimationCurves.Select(cw => cw.id).ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 return;
             }
 
@@ -349,9 +349,9 @@ namespace UnityEditor
                 //      Cylinder
                 //          InnerCyl
                 // Since we cannot generate unique curve ids for identical paths like Cylinder and InnerCyl.
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 m_DrawOrder = m_AnimationCurves.Select(cw => cw.id).ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             }
         }
 
@@ -1004,9 +1004,9 @@ namespace UnityEditor
 
         public void UpdateCurves(List<ChangedCurve> changedCurves, string undoText)
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             UpdateCurves(new List<int>(changedCurves.Select(curve => curve.curveId)), undoText);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         public void StartLiveEdit()
@@ -2772,18 +2772,18 @@ namespace UnityEditor
 
         Vector2 GetPointEditionFieldPosition()
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var minTime = selectedCurves.Min(x => GetKeyframeFromSelection(x).time);
-#pragma warning restore UA2001
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+#pragma warning disable UAC2001 // Avoid Linq
             var maxTime = selectedCurves.Max(x => GetKeyframeFromSelection(x).time);
-#pragma warning restore UA2001
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+#pragma warning disable UAC2001 // Avoid Linq
             var minValue = selectedCurves.Min(x => GetKeyframeFromSelection(x).value);
-#pragma warning restore UA2001
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+#pragma warning disable UAC2001 // Avoid Linq
             var maxValue = selectedCurves.Max(x => GetKeyframeFromSelection(x).value);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             return new Vector2(minTime + maxTime, minValue + maxValue) * 0.5f;
         }
 

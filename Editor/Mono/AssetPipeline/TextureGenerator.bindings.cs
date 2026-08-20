@@ -259,6 +259,24 @@ namespace UnityEditor.AssetImporters
             return GenerateTextureImpl(settings, colorBuffer.GetUnsafeReadOnlyPtr(), colorBuffer.Length * UnsafeUtility.SizeOf<Color>(), 16);
         }
 
+        // Span rather than ReadOnlySpan because the native side may overwrite the buffer with in-place processing.
+        public static TextureGenerationOutput GenerateTexture(TextureGenerationSettings settings, Span<Color32> colorBuffer)
+        {
+            fixed (Color32* colorBufferPtr = colorBuffer)
+            {
+                return GenerateTextureImpl(settings, colorBufferPtr, colorBuffer.Length * UnsafeUtility.SizeOf<Color32>(), 4);
+            }
+        }
+
+        // Span rather than ReadOnlySpan because the native side may overwrite the buffer with in-place processing.
+        public static TextureGenerationOutput GenerateTexture(TextureGenerationSettings settings, Span<Color> colorBuffer)
+        {
+            fixed (Color* colorBufferPtr = colorBuffer)
+            {
+                return GenerateTextureImpl(settings, colorBufferPtr, colorBuffer.Length * UnsafeUtility.SizeOf<Color>(), 16);
+            }
+        }
+
         [NativeMethod("GenerateTextureScripting", ThrowsException = true)]
         extern static unsafe TextureGenerationOutput GenerateTextureImpl(TextureGenerationSettings settings, void* colorBuffer, int colorBufferLength, int bytesPerPixel);
     }

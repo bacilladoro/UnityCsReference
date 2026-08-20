@@ -24,9 +24,9 @@ namespace UnityEditor.Utils
             var uniqueChars = new HashSet<char>(Path.GetInvalidFileNameChars());
             uniqueChars.Add(Path.DirectorySeparatorChar);
             uniqueChars.Add(Path.AltDirectorySeparatorChar);
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             invalidFilenameChars = uniqueChars.ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         public static string Combine(params string[] components)
@@ -122,9 +122,9 @@ namespace UnityEditor.Utils
         public static string GetPathRelativeToProjectDirectory(string filePath)
         {
             return string.Join("/",
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 filePath.ConvertSeparatorsToUnity().TrimTrailingSlashes().Split('/').SkipWhile(s => s != "assets" && s != "Assets"));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         public static string SkipPathPrefix(string path, string prefix)

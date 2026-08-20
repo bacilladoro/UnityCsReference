@@ -2,6 +2,8 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
+using Unity.Scripting.LifecycleManagement;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
@@ -12,15 +14,20 @@ using UnityEngine.UIElements.StyleSheets;
 namespace UnityEngine.UIElements
 {
     [VisibleToOtherModules("UnityEditor.UIBuilderModule")]
-    internal static class StyleCache
+    internal static partial class StyleCache
     {
         // hash of a set of rules to a specified style data
         // the same set of rules will give the same specified styles, caching the hash of the matching rules before
         // resolving styles allows to skip the resolve part when an existing style data already exists
+        // ClearStyleCache (registered on UnloadingUtility below) owns cleanup: it releases the
+        // ComputedStyle native refcounts before clearing, which a generated Clear() would leak.
+        [NoAutoStaticsCleanup] // cleaned by ClearStyleCache on unloading
         private static Dictionary<Int64, ComputedStyle> s_ComputedStyleCache = new Dictionary<Int64, ComputedStyle>();
+        [NoAutoStaticsCleanup] // cleaned by ClearStyleCache on unloading
         private static Dictionary<int, StyleVariableContext> s_StyleVariableContextCache = new Dictionary<int, StyleVariableContext>();
 
         // Cached values for TransitionData converted into a ComputedTransitionProperty array for easier access
+        [NoAutoStaticsCleanup] // cleaned by ClearStyleCache on unloading
         private static Dictionary<int, ComputedTransitionProperty[]> s_ComputedTransitionsCache = new Dictionary<int, ComputedTransitionProperty[]>();
 
         static StyleCache()
@@ -631,3 +638,4 @@ namespace UnityEngine.UIElements
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

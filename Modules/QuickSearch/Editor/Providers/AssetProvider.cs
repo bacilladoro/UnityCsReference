@@ -9,13 +9,14 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using Unity.Collections;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor.ShortcutManagement;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
 namespace UnityEditor.Search.Providers
 {
-    static class AssetProvider
+    static partial class AssetProvider
     {
         enum IdentifierType { kNullIdentifier = 0, kImportedAsset = 1, kSceneObject = 2, kSourceAsset = 3, kBuiltInAsset = 4 };
 
@@ -149,6 +150,7 @@ namespace UnityEditor.Search.Providers
         internal const string filterId = "p:";
         internal const string type = "asset";
         private const string displayName = "Project";
+        [AutoStaticsCleanupOnCodeReload]
         private static QueryEngine<string> m_QueryEngine;
         private static QueryEngine<string> queryEngine
         {
@@ -191,6 +193,7 @@ namespace UnityEditor.Search.Providers
             };
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         static Action s_OffSearchReady;
         static void OnSearchIndexReady(ISearchEvent evt)
         {
@@ -434,14 +437,14 @@ namespace UnityEditor.Search.Providers
             if (ft >= 0)
                 token = token.Substring(0, ft);
             var dbs = SearchDatabase.EnumerateAll();
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             return dbs.Where(db => !db.settings.options.disabled).SelectMany(db => db.index.GetKeywords()
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 .Where(kw => kw.StartsWith(token, StringComparison.OrdinalIgnoreCase)))
                 .Select(kw => new SearchProposition(category: null, label: kw));
         }
 
-        static string[] s_DefaultFilters = new[] { "t", "a", "l", "prefab", "b", "is", "tag", "dir", "size", "ext", "age", "name", "ref", "tagstring" };
+        static readonly string[] s_DefaultFilters = new[] { "t", "a", "l", "prefab", "b", "is", "tag", "dir", "size", "ext", "age", "name", "ref", "tagstring" };
         private static IEnumerable<string> PopulateDefaultFilters()
         {
             return s_DefaultFilters;
@@ -463,9 +466,9 @@ namespace UnityEditor.Search.Providers
             foreach (var f in QueryListBlockAttribute.GetPropositions(typeof(QueryBundleFilterBlock)))
                 yield return f;
 
-            #pragma warning disable UA2006 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2006 // Avoid Linq
             if (SearchDatabase.EnumerateAll().Any(db => db.index?.settings?.options.extended ?? false))
-#pragma warning restore UA2006
+#pragma warning restore UAC2006
             {
                 foreach (var f in QueryListBlockAttribute.GetPropositions(typeof(QueryIsFilterBlock)))
                     yield return f;
@@ -491,6 +494,7 @@ namespace UnityEditor.Search.Providers
             yield return new SearchProposition(category: null, "Reference", "ref=<$object:none,UnityEngine.Object$>", "Find all assets referencing a specific asset.", icon: sceneIcon, color: QueryColors.filter);
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         internal static List<SearchProposition> s_KeywordPropositions;
 
         internal static IEnumerable<SearchProposition> FetchIndexPropositions()
@@ -530,15 +534,15 @@ namespace UnityEditor.Search.Providers
         {
             if (context.selection.Count > 1)
             {
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 var selectedObjects = context.selection.Select(i => GetObject(i));
-#pragma warning restore UA2001
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+                #pragma warning disable UAC2001 // Avoid Linq
                 var paths = context.selection.Select(i => GetAssetPath(i)).ToArray();
-#pragma warning restore UA2001
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+                #pragma warning disable UAC2001 // Avoid Linq
                 Utils.StartDrag(selectedObjects.ToArray(), paths, item.GetLabel(context, true));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             }
             else
                 Utils.StartDrag(new[] { GetObject(item) }, new[] { GetAssetPath(item) }, item.GetLabel(context, true));
@@ -871,9 +875,9 @@ namespace UnityEditor.Search.Providers
         // We have our own OpenPropertyEditorsOnSelection so we don't have to worry about global selection
         private static void OpenPropertyEditorsOnSelection(IEnumerable<SearchItem> items)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var objs = items.Select(i => i.ToObject()).Where(o => o).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             if (objs.Length == 0)
                 return;
             if (objs.Length == 1)
@@ -931,9 +935,9 @@ namespace UnityEditor.Search.Providers
                     enabled = items => items.Count >= 1,
                     execute = items =>
                     {
-                        #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                        #pragma warning disable UAC2001 // Avoid Linq
                         var paths = items.Select(GetAssetPath).Where(path => !string.IsNullOrEmpty(path)).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                         if (paths.Length == 1)
                         {
                             EditorGUIUtility.systemCopyBuffer = paths[0];
@@ -952,9 +956,9 @@ namespace UnityEditor.Search.Providers
                     enabled = items => items.Count >= 1,
                     execute = items =>
                     {
-                        #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                        #pragma warning disable UAC2001 // Avoid Linq
                         var guids = items.Select(item => AssetDatabase.AssetPathToGUID(GetAssetPath(item))).Where(path => !string.IsNullOrEmpty(path)).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                         if (guids.Length == 1)
                         {
                             EditorGUIUtility.systemCopyBuffer = guids[0];
@@ -1031,9 +1035,9 @@ namespace UnityEditor.Search.Providers
         {
             if (items.Count != 1)
                 return false;
-            #pragma warning disable UA2009 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2009 // Avoid Linq
             var singleItem = items.Last();
-#pragma warning restore UA2009
+#pragma warning restore UAC2009
             var info = GetInfo(singleItem);
             if (info.gid.identifierType != (int)IdentifierType.kImportedAsset)
                 return false;

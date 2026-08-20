@@ -34,9 +34,34 @@ namespace UnityEngine.UIElements
         Align alignSelf => default;
 
         /// <summary>
-        /// Controls whether the animation is running or paused.
+        /// Delay before each animation begins, in seconds. Negative values start the animation partway through its first iteration. Comma-separated to match the animation list.
         /// </summary>
-        AnimationPlayState animationPlayState => default;
+        IEnumerable<float> animationDelay => default;
+
+        /// <summary>
+        /// Whether each animation plays forward, backward, or alternates direction across iterations. Comma-separated to match the animation list.
+        /// </summary>
+        IEnumerable<AnimationDirection> animationDirection => default;
+
+        /// <summary>
+        /// Duration of one iteration of each animation, in seconds. The default of 0 uses the clip's intrinsic length; a positive value remaps one iteration to that duration. Comma-separated to match the animation list.
+        /// </summary>
+        IEnumerable<float> animationDuration => default;
+
+        /// <summary>
+        /// Number of times each animation repeats. Use 'infinite' to loop forever. The clip's own loop flag is ignored in favor of this value. Comma-separated to match the animation list.
+        /// </summary>
+        IEnumerable<AnimationIterationCount> animationIterationCount => default;
+
+        /// <summary>
+        /// Animations to apply with the current element as root. Comma-separated to run multiple animations at once.
+        /// </summary>
+        IEnumerable<UIAnimationClip> animationNames => default;
+
+        /// <summary>
+        /// Controls whether each animation is running or paused. Comma-separated to match the animation list.
+        /// </summary>
+        IEnumerable<AnimationPlayState> animationPlayStates => default;
 
         /// <summary>
         /// Sets a preferred aspect ratio for the box, which will be used in the calculation of auto sizes and some other layout functions.
@@ -208,6 +233,31 @@ namespace UnityEngine.UIElements
         float fontSize => default;
 
         /// <summary>
+        /// Controls how the auto-placement algorithm flows items into a CSS Grid container. Only takes effect when display is set to grid.
+        /// </summary>
+        GridAutoFlow gridAutoFlow => default;
+
+        /// <summary>
+        /// The 1-based column line a CSS Grid item ends on, spanning from grid-column (0 = span a single track). Only takes effect when the element is a grid item.
+        /// </summary>
+        GridLine gridColumnEnd => default;
+
+        /// <summary>
+        /// The 1-based column line a CSS Grid item starts on (0 = auto-placement). Only takes effect when the element is a grid item.
+        /// </summary>
+        GridLine gridColumnStart => default;
+
+        /// <summary>
+        /// The 1-based row line a CSS Grid item ends on, spanning from grid-row (0 = span a single track). Only takes effect when the element is a grid item.
+        /// </summary>
+        GridLine gridRowEnd => default;
+
+        /// <summary>
+        /// The 1-based row line a CSS Grid item starts on (0 = auto-placement). Only takes effect when the element is a grid item.
+        /// </summary>
+        GridLine gridRowStart => default;
+
+        /// <summary>
         /// Fixed height of an element for the layout.
         /// </summary>
         float height => default;
@@ -216,6 +266,16 @@ namespace UnityEngine.UIElements
         /// Justification of children on the main axis of this container.
         /// </summary>
         Justify justifyContent => default;
+
+        /// <summary>
+        /// Default justification (inline-axis alignment) of all items inside a CSS Grid container. Only takes effect when display is set to grid.
+        /// </summary>
+        Align justifyItems => default;
+
+        /// <summary>
+        /// Justification (inline-axis alignment) of a single item inside its CSS Grid cell, overriding justify-items. Only takes effect when the element is a grid item.
+        /// </summary>
+        Align justifySelf => default;
 
         /// <summary>
         /// Left distance from the element's box during layout.
@@ -369,11 +429,6 @@ namespace UnityEngine.UIElements
         Vector3 translate => default;
 
         /// <summary>
-        /// Animation to apply with the current element as root.
-        /// </summary>
-        UIAnimationClip unityAnimationClip => default;
-
-        /// <summary>
         /// Tinting color for the element's backgroundImage.
         /// </summary>
         Color unityBackgroundImageTintColor => default;
@@ -503,5 +558,13 @@ namespace UnityEngine.UIElements
         /// Increases or decreases the space between words.
         /// </summary>
         float wordSpacing => default;
+
+        /// <summary>
+        /// Controls the stacking order of overlapping elements within a stacking context. The default is auto, which does not create a stacking context; any integer value creates one for the element and its descendants.
+        /// </summary>
+        /// <remarks>
+        /// Unlike CSS, transform and opacity do not establish a stacking context in UI Toolkit; only a z-index other than auto does.
+        /// </remarks>
+        StyleInt zIndex => default;
     }
 }

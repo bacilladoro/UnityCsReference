@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEngine;
 
@@ -15,9 +16,11 @@ namespace Unity.GraphToolkit.Editor.ContextualMenuItems
     /// or <see cref="BlackboardMenuAttribute"/> and invokes them at
     /// menu-build time with the appropriate context.
     /// </summary>
-    static class MenuCommandRegistry
+    static partial class MenuCommandRegistry
     {
+        [AutoStaticsCleanupOnCodeReload] // lazily rebuilt cache; cleared by Invalidate(), repopulated by EnsureBuilt()
         static Action<GraphMenuContext>[] s_GraphHandlers;
+        [AutoStaticsCleanupOnCodeReload] // lazily rebuilt cache; cleared by Invalidate(), repopulated by EnsureBuilt()
         static Action<GraphMenuContext>[] s_BlackboardHandlers;
 
         internal static void InvokeGraphHandlers(GraphMenuContext context)

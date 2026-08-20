@@ -4,18 +4,21 @@
 
 using System;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEngine.Analytics;
 
 namespace Unity.GraphToolkit.Editor
 {
-    internal static class GraphToolkitAnalytics
+    internal static partial class GraphToolkitAnalytics
     {
         // flag disabled during unit tests.
+        [NoAutoStaticsCleanup] // analytics flag defaults to true; value is safe to persist across reloads
         internal static bool EnableAnalytics { get; set; } = true;
 
         // Tracks extensions that have already sent an event this session to avoid duplicates.
-        static readonly HashSet<string> s_SentExtensions = new HashSet<string>();
+        [AutoStaticsCleanupOnCodeReload]
+        static HashSet<string> s_SentExtensions = new HashSet<string>();
 
         const string k_EventName = "graphtoolCreated";
         const string k_VendorKey = "unity.graphtoolkit";

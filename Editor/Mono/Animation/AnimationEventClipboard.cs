@@ -102,9 +102,9 @@ namespace UnityEditor
             if (data?.events == null || data.events.Length == 0)
                 return null;
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var minTime = data.events.Min(e => e.time);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             var origEventsCount = events.Length;
             // Append new events to the end first,
@@ -116,9 +116,9 @@ namespace UnityEditor
                 newEvent.time = t;
                 newEvents.Add(newEvent);
             }
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             events = events.Concat(newEvents).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             // Re-sort events by time
             var order = new int[events.Length];

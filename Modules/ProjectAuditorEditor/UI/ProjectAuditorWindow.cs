@@ -35,12 +35,21 @@ namespace Unity.ProjectAuditor.Editor.UI
             Valid
         }
 
-        #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
-        static readonly string[] AreaNames = Enum.GetNames(typeof(Areas)).Where(a => a != "None" && a != "All").ToArray();
-#pragma warning restore UA2001
-        static string[] NicifiedAreaNames { get { if (s_NicifiedAreaNames == null) s_NicifiedAreaNames = Array.ConvertAll(AreaNames, ObjectNames.NicifyVariableName); return s_NicifiedAreaNames; } }
-        [AutoStaticsCleanupOnCodeReload]
+        static readonly string[] s_AreaNames = Array.ConvertAll(AreasExtensions.AlphabeticalAreas, (a) => a.ToString());
+
+        static string[] NicifiedAreaNames
+        {
+            get
+            {
+                if (s_NicifiedAreaNames == null)
+                    s_NicifiedAreaNames = Array.ConvertAll(AreasExtensions.AlphabeticalAreas, (a) => a.ToFrontendString());
+                return s_NicifiedAreaNames;
+            }
+        }
+
+        [NoAutoStaticsCleanup]
         static string[] s_NicifiedAreaNames;
+
         [AutoStaticsCleanupOnCodeReload]
         static ProjectAuditorWindow s_Instance;
 
@@ -134,9 +143,9 @@ namespace Unity.ProjectAuditor.Editor.UI
 
         static void OnRulesPackageRegistered(PackageRegistrationEventArgs args)
         {
-#pragma warning disable UA2001
+#pragma warning disable UAC2001
             foreach (var p in args.added.Concat(args.changedTo))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 if (p.name == ProjectAuditorRulesPackage.Name)
                 {
@@ -382,9 +391,9 @@ namespace Unity.ProjectAuditor.Editor.UI
             if (m_Report != null && !m_Report.IsValid())
             {
                 IssueCategory[] categories = (IssueCategory[])Enum.GetValues(typeof(IssueCategory));
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 var requestedModules = categories.SelectMany(m_ProjectAuditor.GetModules).Distinct().ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 m_Report.PostSerializeLayoutUpdate(requestedModules);
             }
 
@@ -515,7 +524,7 @@ namespace Unity.ProjectAuditor.Editor.UI
                 AuditCategories(ProjectAreaFlags.None, [category]);
                 var page = FindPageForCategory(category);
                 if (page != null)
-                    OnSelectedNonAnalyzedPage(page, false);
+                    OnSelectedNonAnalyzedPage(page);
                 GUIUtility.ExitGUI();
             };
 
@@ -599,10 +608,10 @@ namespace Unity.ProjectAuditor.Editor.UI
         {
             m_ViewManager.PendingModuleNames.Remove(moduleName);
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var remainingModules = m_ProjectAuditor.GetModules().Where(m => m_ViewManager.PendingModuleNames.Contains(m.Name));
             var remainingCategories = remainingModules.SelectMany(m => m.Categories).ToHashSet();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             m_ViewManager.PendingCategories = remainingCategories;
 
             MarkSummaryViewsDirty();
@@ -615,7 +624,7 @@ namespace Unity.ProjectAuditor.Editor.UI
                 var selectedPage = FindPage(m_SelectedNonAnalyzedPageId);
                 if (selectedPage != null)
                 {
-                    OnSelectedNonAnalyzedPage(selectedPage, false);
+                    OnSelectedNonAnalyzedPage(selectedPage);
                     Repaint();
                 }
             }
@@ -632,8 +641,7 @@ namespace Unity.ProjectAuditor.Editor.UI
 
             ShowPage(page);
 
-            if (GetPageProjectArea(page.id) != ProjectAreaFlags.None)
-                OnSelectedNonAnalyzedPage(page, false);
+            EvaluateAnalyzePrompt(page);
 
             m_ViewSelectionTreeView?.SelectPage(page);
         }
@@ -662,37 +670,27 @@ namespace Unity.ProjectAuditor.Editor.UI
             return null;
         }
 
-        // Shows the analyze prompt for a page if none of its categories have been analyzed yet.
-        void OnSelectedNonAnalyzedPage(Page selectedPage, bool changeView)
+        // Shows the analyze prompt for a page when the category being viewed has no results yet.
+        void OnSelectedNonAnalyzedPage(Page selectedPage)
         {
-            bool hasAnyAnalyzedCategory = false;
-            bool hasAnyPendingCategory = false;
-            foreach (var cat in selectedPage.AllCategories)
-            {
-                if (m_ViewManager.HasPendingCategory(cat))
-                    hasAnyPendingCategory = true;
-                else if (m_ViewManager.Report?.HasCategory(cat) ?? false)
-                    hasAnyAnalyzedCategory = true;
-            }
+            
+            var activeCategory = m_ViewManager.GetActiveView().Desc.Category;
+            bool activePending = m_ViewManager.HasPendingCategory(activeCategory);
 
-            if (!hasAnyAnalyzedCategory)
-            {
-                // Change view anyway, even if overridden, to get into a proper view state, not the previous view
-                if (changeView) // If reanalyzing the same view, don't change the sub-view we are viewing
-                    m_ViewManager.ChangeView(GetPrimaryCategory(selectedPage));
+            bool activeHasData = (m_ViewManager.Report?.HasCategory(activeCategory) ?? false)
+                || (activeCategory.IsPopulatedByPlayerBuild() && !activePending);
 
-                // Override view to show info and analyze button
-                m_IsNonAnalyzedViewSelected = true;
-                m_IsPendingAnalysisViewSelected = hasAnyPendingCategory;
-                m_SelectedNonAnalyzedPageId = selectedPage.id;
-            }
-            else if (m_IsNonAnalyzedViewSelected && m_SelectedNonAnalyzedPageId == selectedPage.id)
+            if (activeHasData)
             {
-                // This page now has data (e.g. its module finished mid-analysis), so stop overriding
-                // with the analyze / "analysis running" prompt and show the populated view instead of
-                // waiting for the whole analysis to finish. (UUM-144826)
                 m_IsNonAnalyzedViewSelected = false;
                 m_IsPendingAnalysisViewSelected = false;
+                
+            }
+            else
+            {
+                m_IsNonAnalyzedViewSelected = true;
+                m_IsPendingAnalysisViewSelected = activePending;
+                m_SelectedNonAnalyzedPageId = selectedPage.id;
             }
         }
 
@@ -708,9 +706,18 @@ namespace Unity.ProjectAuditor.Editor.UI
 
             ShowPage(page);
 
-            // Per-area pages (the analyze units) offer an analyze prompt when not yet analyzed.
-            if (GetPageProjectArea(page.id) != ProjectAreaFlags.None)
-                OnSelectedNonAnalyzedPage(page, false);
+            EvaluateAnalyzePrompt(page);
+        }
+
+        // Only "tab" pages map to a project area, so a leaf page (e.g. Shaders > Materials) drives
+        // its prompt from the tab that contains it - that area is what the Analyze button re-runs.
+        void EvaluateAnalyzePrompt(Page page)
+        {
+            var promptPage = GetPageProjectArea(page.id) != ProjectAreaFlags.None
+                ? page
+                : FindPageForCategory(page.category);
+            if (promptPage != null)
+                OnSelectedNonAnalyzedPage(promptPage);
         }
 
         // Activates a page's view, applying that page's issue filter. The view instance is shared
@@ -853,7 +860,7 @@ namespace Unity.ProjectAuditor.Editor.UI
                         {
                             var area = GetPageProjectArea(selectedPage.id);
                             AuditCategories(area, selectedPage.AllCategories);
-                            OnSelectedNonAnalyzedPage(selectedPage, false);
+                            OnSelectedNonAnalyzedPage(selectedPage);
                         }
                     }
 
@@ -1415,7 +1422,7 @@ namespace Unity.ProjectAuditor.Editor.UI
                 m_ProjectAuditor = new ProjectAuditor();
 
             // a module might report more categories than requested so we need to make sure we clean up the views accordingly
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var modules = categories.SelectMany(m_ProjectAuditor.GetModules).ToArray();
             var actualCategories = modules.SelectMany(m => m.Categories).Distinct().ToArray();
 
@@ -1423,7 +1430,7 @@ namespace Unity.ProjectAuditor.Editor.UI
                 .Select(c => m_ViewManager.GetView(c))
                 .Where(v => v != null)
                 .ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             foreach (var view in views)
             {
@@ -1484,7 +1491,7 @@ namespace Unity.ProjectAuditor.Editor.UI
         {
             var shadersPage = FindPage(PageId.Shaders);
             AuditCategories(GetPageProjectArea(PageId.Shaders), shadersPage.AllCategories);
-            OnSelectedNonAnalyzedPage(shadersPage, false);
+            OnSelectedNonAnalyzedPage(shadersPage);
             GUIUtility.ExitGUI();
         }
 
@@ -1530,6 +1537,8 @@ namespace Unity.ProjectAuditor.Editor.UI
 
         internal string GetSelectedAreasSummary()
         {
+            if (m_SelectedAreas == AreasExtensions.All)
+                return "All";
             return m_SelectedAreas.ToString();
         }
 
@@ -1634,9 +1643,9 @@ namespace Unity.ProjectAuditor.Editor.UI
                                         var selectedAsmNames = selection.selection;
 
                                         payload["numSelected"] = selectedAsmNames.Count.ToString();
-                                        #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                                        #pragma warning disable UAC2001 // Avoid Linq
                                         payload["numUnityAssemblies"] = selectedAsmNames.Count(assemblyName => assemblyName.Contains("Unity")).ToString();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
                                         AnalyticsReporter.SendEventWithKeyValues(AnalyticsReporter.UIButton.AssemblySelectApply, selectEvent, payload);
                                     });
@@ -2063,12 +2072,15 @@ namespace Unity.ProjectAuditor.Editor.UI
 
         internal void SetAreaSelection(TreeViewSelection selection)
         {
-            var selectedStrings = selection.GetSelectedStrings(AreaNames, true, true);
-
             m_SelectedAreas = Areas.None;
-            foreach (var areaString in selectedStrings)
+            if (selection.selection != null)
             {
-                m_SelectedAreas |= (Areas)Enum.Parse(typeof(Areas), areaString);
+                foreach (var areaName in selection.selection)
+                {
+                    // Selection entries are nicified area names, e.g. "Build Size"
+                    if (Enum.TryParse(areaName.Replace(" ", ""), out Areas area))
+                        m_SelectedAreas |= area;
+                }
             }
 
             m_AreaSelection = selection;
@@ -2091,7 +2103,7 @@ namespace Unity.ProjectAuditor.Editor.UI
                     if (m_AreaSelectionSummary == "All")
                     {
                         m_AreaSelection.SetAll(NicifiedAreaNames);
-                        m_SelectedAreas = Areas.All;
+                        m_SelectedAreas = AreasExtensions.All;
                     }
                     else if (m_AreaSelectionSummary != "None")
                     {
@@ -2104,7 +2116,7 @@ namespace Unity.ProjectAuditor.Editor.UI
                 else
                 {
                     m_AreaSelection.SetAll(NicifiedAreaNames);
-                    m_SelectedAreas = Areas.All;
+                    m_SelectedAreas = AreasExtensions.All;
                 }
             }
         }
@@ -2114,21 +2126,21 @@ namespace Unity.ProjectAuditor.Editor.UI
             if (m_Report == null || m_ViewManager.HasPendingCategory(IssueCategory.Assembly))
                 return;
 
-#pragma warning disable UA2001, UA2010 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001, UAC2010 // Avoid Linq
             var assemblyNames = m_Report.FindByCategory(IssueCategory.Assembly).Select(i => new System.Tuple<string, bool>(i.Description, i.GetCustomPropertyBool(AssemblyProperty.ReadOnly)));
             var allAssemblies = assemblyNames.GroupBy(i => i.Item1).Select(g => g.First()).OrderBy(i => i.Item1).ToArray();
-#pragma warning restore UA2001, UA2010
+#pragma warning restore UAC2001, UAC2010
 
             var codeOwnerFlags = m_Report.SessionInfo.CodeOwnerFlags;
             bool allowPackages = (m_Report.SessionInfo.CodeAnalysisFlags & CodeAnalysisFlags.Packages) != 0;
             bool allowUnityCode = (codeOwnerFlags & CodeOwnerFlags.Unity) != 0;
             bool allowUserCode = (codeOwnerFlags & CodeOwnerFlags.User) != 0;
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             // update list of assembly names
             if (m_Report.IsForCurrentProject())
                 allAssemblies = allAssemblies.Where(a => !AssemblyInfoProvider.FilterAssembly(a.Item1, allowPackages, allowUnityCode, allowUserCode)).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             m_AssemblyNames = Array.ConvertAll(allAssemblies, a => a.Item1);
             m_AssemblyReadOnlyFlags = Array.ConvertAll(allAssemblies, a => a.Item2);
@@ -2151,10 +2163,10 @@ namespace Unity.ProjectAuditor.Editor.UI
                 }
                 else if (m_AssemblySelectionSummary != "None")
                 {
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2001 // Avoid Linq
                     var assemblies = Formatting.SplitStrings(m_AssemblySelectionSummary)
                         .Where(assemblyName => Array.IndexOf(m_AssemblyNames, assemblyName) != -1);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     m_AssemblySelection.selection.AddRange(assemblies);
                 }
             }

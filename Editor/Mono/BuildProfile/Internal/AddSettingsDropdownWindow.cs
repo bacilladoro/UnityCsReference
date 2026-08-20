@@ -2,11 +2,13 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: BuildSettingsWindow not yet converted
 
 using System;
 using UnityEditor.IMGUI.Controls;
 using UnityEngine;
 using UnityEngine.Bindings;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Build.Profile.Internal
 {
@@ -23,7 +25,8 @@ namespace UnityEditor.Build.Profile.Internal
         const int k_WindowMinSize = 325;
         const int k_WindowMaxSize = 325;
 
-        static AdvancedDropdownState s_State = new AdvancedDropdownState();
+        [NoAutoStaticsCleanup] // persisted dropdown selection state; editor UI primitives, safe across code reload
+        static readonly AdvancedDropdownState s_State = new AdvancedDropdownState();
 
         Action<int> m_OnSelection;
 
@@ -70,3 +73,4 @@ namespace UnityEditor.Build.Profile.Internal
     }
 }
 
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

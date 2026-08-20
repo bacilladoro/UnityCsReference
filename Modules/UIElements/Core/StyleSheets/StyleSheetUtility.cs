@@ -2,6 +2,8 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
+using Unity.Scripting.LifecycleManagement;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -16,13 +18,15 @@ using UnityEngine.UIElements.StyleSheets;
 namespace UnityEngine.UIElements
 {
     [VisibleToOtherModules("UnityEditor.UIBuilderModule", "UnityEditor.UIToolkitAuthoringModule")]
-    internal static class StyleSheetUtility
+    internal static partial class StyleSheetUtility
     {
+        [NoAutoStaticsCleanup]
         private static readonly Dictionary<string, string> SpecialEnumToStringCases = new Dictionary<string, string>
         {
             {"no-wrap", "nowrap"},
         };
 
+        [NoAutoStaticsCleanup]
         private static readonly Dictionary<string, string> SpecialStringToEnumCases = new Dictionary<string, string>
         {
             {"nowrap", "NoWrap"},
@@ -227,6 +231,7 @@ namespace UnityEngine.UIElements
                 Dimension.Unit.Gradian => "grad",
                 Dimension.Unit.Radian => "rad",
                 Dimension.Unit.Turn => "turn",
+                Dimension.Unit.Fraction => "fr",
                 Dimension.Unit.Unitless => string.Empty,
                 _ => throw new ArgumentOutOfRangeException(nameof(unit), unit, null)
             };
@@ -371,3 +376,4 @@ namespace UnityEngine.UIElements
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

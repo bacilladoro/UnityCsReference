@@ -577,13 +577,13 @@ namespace Unity.UI.Builder
         {
             var templateContainer = GetVisualElementRootTemplate(visualElement);
             var templateAsset = templateContainer?.GetVisualElementAsset() as TemplateAsset;
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var pathToTemplateAsset = templateAsset.GetPathToTemplateAsset(visualElement).ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             return templateAsset?.attributeOverrides.Count(x => x.m_AttributeName == attributeName && x.NamesPathMatchesElementNamesPath(pathToTemplateAsset)) > 0;
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         public static List<CreationContext.AttributeOverrideRange> GetAccumulatedAttributeOverrides(VisualElement visualElement)

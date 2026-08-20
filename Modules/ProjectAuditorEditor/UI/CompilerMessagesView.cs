@@ -15,7 +15,6 @@ namespace Unity.ProjectAuditor.Editor.UI
         const string k_Info = @"This view shows compiler error, warning and info messages.
 
 To view Roslyn Analyzer diagnostics, make sure Roslyn Analyzer DLLs use the <b>RoslynAnalyzer</b> label.";
-        const string k_RoslynDisabled = "The UseRoslynAnalyzers option is disabled. To enable Roslyn diagnostics reporting, make sure the corresponding option is enabled in Preferences > Analysis > " + ProjectAuditor.DisplayName + ".";
 
         bool m_ShowInfo;
         bool m_ShowWarn;
@@ -30,9 +29,9 @@ To view Roslyn Analyzer diagnostics, make sure Roslyn Analyzer DLLs use the <b>R
 
         public override void DrawDetails(ReportItem[] selectedIssues)
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var selectedDescriptors = selectedIssues.Select(i => i.GetCustomProperty(0)).Distinct().ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             string selectedText = k_NoSelectionText;
             if (selectedDescriptors.Length > 1)
@@ -54,13 +53,6 @@ To view Roslyn Analyzer diagnostics, make sure Roslyn Analyzer DLLs use the <b>R
         protected override void DrawInfo()
         {
             EditorGUILayout.LabelField(k_Info, SharedStyles.TextArea);
-
-            if (!m_ViewManager.Report.SessionInfo.UseRoslynAnalyzers)
-            {
-                EditorGUILayout.BeginHorizontal();
-                EditorGUILayout.HelpBox(k_RoslynDisabled, MessageType.Info);
-                EditorGUILayout.EndHorizontal();
-            }
         }
 
         public override void DrawViewOptions()

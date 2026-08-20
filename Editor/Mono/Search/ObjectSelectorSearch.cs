@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -74,10 +75,10 @@ namespace UnityEditor.SearchService
 
     public interface IObjectSelectorEngine : ISelectorEngine {}
 
-    [InitializeOnLoad]
-    public static class ObjectSelectorSearch
+    public static partial class ObjectSelectorSearch
     {
-        static SearchApiBaseImp<ObjectSelectorEngineAttribute, IObjectSelectorEngine> s_EngineImp;
+        [AutoStaticsCleanupOnCodeReload]
+        static SearchApiBaseImp<ObjectSelectorEngineAttribute, IObjectSelectorEngine> s_EngineImp = null;
         static SearchApiBaseImp<ObjectSelectorEngineAttribute, IObjectSelectorEngine> engineImp
         {
             get
@@ -90,7 +91,8 @@ namespace UnityEditor.SearchService
 
         public const SearchEngineScope EngineScope = SearchEngineScope.ObjectSelector;
 
-        static ObjectSelectorSearch()
+        [OnCodeLoaded]
+        static void DelayInitialize()
         {
             EditorApplication.tick += StaticInit;
         }

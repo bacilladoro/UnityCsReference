@@ -4,20 +4,23 @@
 
 using System;
 using System.Collections.Generic;
-using Newtonsoft.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Unity.Multiplayer.PlayMode.Editor
 {
     [Serializable]
     class SystemData
     {
-        [JsonProperty]
+        [JsonInclude]
         public bool IsMppmActive { get; internal set; }
-        [JsonProperty]
+        [JsonInclude]
         public bool IsMutePlayers { get; internal set; }
 
-        [JsonProperty(Required = Required.Always)]
-        public readonly Dictionary<int, PlayerStateJson> Data = new Dictionary<int, PlayerStateJson>();
+        [JsonInclude]
+        [JsonRequired]
+        [NonSerialized] // Unity serialization skips dictionaries; this type is only ever serialized as JSON.
+        public Dictionary<int, PlayerStateJson> Data = new Dictionary<int, PlayerStateJson>();
 
         internal static string Serialize(ParsingSystemDelegates parsing, SystemData systemData)
         {
@@ -26,11 +29,17 @@ namespace Unity.Multiplayer.PlayMode.Editor
 
         internal static bool TryDeserialize(ParsingSystemDelegates parsing, string data, out SystemData systemData)
         {
+            if (string.IsNullOrEmpty(data))
+            {
+                systemData = null;
+                return false;
+            }
+
             try
             {
                 systemData = (SystemData)parsing.DeserializeObjectFunc(data, typeof(SystemData));
             }
-            catch (JsonException e) when (e is JsonSerializationException or JsonReaderException)
+            catch (JsonException)
             {
                 systemData = null;
             }

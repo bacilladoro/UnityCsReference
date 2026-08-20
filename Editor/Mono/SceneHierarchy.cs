@@ -589,9 +589,9 @@ namespace UnityEditor
 
         public virtual void OnQuit()
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             m_ExpandedScenes = GetExpandedSceneNames().ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             // Game objects will have new instanceIDs in the next Unity session, so clear all state before serializing to layout to prevent saving redundant data
             m_TreeViewState = new TreeViewState<EntityId>();
@@ -764,9 +764,9 @@ namespace UnityEditor
                 EntityId id = m_TreeView.state.renameOverlay.userData;
                 bool endRenaming = m_TreeView.data.rowCount != rowCountBeforeReloading;
                 if (!endRenaming)
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                     endRenaming = m_TreeView.data.GetRows().FirstOrDefault(item => item.id == id) == null;
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 if (endRenaming)
                     m_TreeView.EndNameEditing(false);
                 else
@@ -820,9 +820,9 @@ namespace UnityEditor
         bool IsTreeViewSelectionInSyncWithBackend()
         {
             if (m_TreeView != null)
-#pragma warning disable UA2014 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2014 // Avoid Linq
                 return m_TreeView.state.selectedIDs.SequenceEqual(Selection.entityIds);
-#pragma warning restore UA2014
+#pragma warning restore UAC2014
             return false;
         }
 
@@ -1855,9 +1855,9 @@ namespace UnityEditor
             var expandedSceneNames = GetExpandedSceneNames();
             var selectedSceneHandles = GetSelectedScenes();
             var modifiedScenes = GetModifiedScenes(selectedSceneHandles);
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var modifiedScenesWithSavePath = modifiedScenes.Where(scene => !string.IsNullOrEmpty(scene.path)).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             if (!UserAllowedDiscardingChanges(modifiedScenesWithSavePath))
                 return;
@@ -1873,18 +1873,18 @@ namespace UnityEditor
             // When reloading a single scene it will be given a new scene handle which will collapse it in the Hierarchy.
             // Here we ensure same scene are expanded
             if (SceneManager.sceneCount == 1)
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 SetScenesExpanded(expandedSceneNames.ToList());
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             EditorApplication.RequestRepaintAllViews();
         }
 
         internal static Scene[] GetModifiedScenes(List<SceneHandle> handles)
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return handles.Select(EditorSceneManager.GetSceneByHandle).Where(scene => scene.isDirty).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         void CloseSelectedScenes(bool removeScenes)
@@ -1951,9 +1951,9 @@ namespace UnityEditor
 
         void InvertSelection()
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var instanceIDs = treeView.GetRowIDs().Except(treeView.GetSelection()).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             treeView.SetSelection(instanceIDs, true);
             TreeViewSelectionChanged(instanceIDs);
         }
@@ -1998,24 +1998,24 @@ namespace UnityEditor
                     foreach (var rootGameObject in scene.GetRootGameObjects())
                     {
                         entityIds.Add(rootGameObject.GetEntityId());
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                         entityIds.AddRange(rootGameObject.transform.GetComponentsInChildren<Transform>(true).Select(t => t.gameObject.GetEntityId()));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     }
                 }
                 else
                 {
                     var go = InternalEditorUtility.GetObjectFromEntityId(id) as GameObject;
                     if (go != null)
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                         entityIds.AddRange(go.transform.GetComponentsInChildren<Transform>(true).Select(t => t.gameObject.GetEntityId()));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 }
             }
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var newSelection = entityIds.Distinct().ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             treeView.SetSelection(newSelection, true);
 
             TreeViewSelectionChanged(newSelection);
@@ -2055,9 +2055,9 @@ namespace UnityEditor
                 }
             }
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var newSelection = instanceIDs.Distinct().ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             treeView.SetSelection(newSelection, true);
             TreeViewSelectionChanged(newSelection);
         }

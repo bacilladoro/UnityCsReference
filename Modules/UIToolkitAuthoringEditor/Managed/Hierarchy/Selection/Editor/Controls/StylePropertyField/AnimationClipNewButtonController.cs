@@ -109,4 +109,21 @@ internal static class AnimationClipNewButtonController
             path,
             loaded => field.value = new StyleUIAnimationClip(loaded));
     }
+
+    // Overloads for the multi-property animation row, whose clip field is a raw UIAnimationClipField (the
+    // single-clip inspector above uses the StyleUIAnimationClipField wrapper). Assigning the field value routes
+    // the created clip through the row's change handler, so each host writes it back through its own path.
+    [VisibleToOtherModules("UnityEditor.UIBuilderModule")]
+    internal static UIAnimationClip CreateAndAssignNewUIAnimationClip(BaseField<UIAnimationClip> field, string path)
+    {
+        return UIAnimationClipFactory.CreateAssetAndAssignToField(path, loaded => field.value = loaded);
+    }
+
+    // Wires a row's "New..." button to the save-dialog + create flow and mirrors the clip field's enabled state.
+    internal static void ConnectRowButton(Button button, BaseField<UIAnimationClip> field)
+    {
+        button.clickable = new Clickable(() =>
+            CreateNewUIAnimationClipFromDialog(null, loaded => field.value = loaded));
+        MirrorEnabledStateOntoButton(button, field);
+    }
 }

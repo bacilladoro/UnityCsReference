@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitAuthoringFramework not yet converted
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -178,12 +179,10 @@ namespace Unity.UIToolkit.Editor
                 case StyleBackground sb:
                     if (sb.keyword != StyleKeyword.Undefined)
                         return false;
-                    Background.To(sb.value, out EntityId sbEntityId);
-                    cs.ApplyPropertyAnimation(element, id, sbEntityId);
+                    cs.ApplyPropertyAnimation(element, id, sb.value);
                     return true;
                 case Background bg:
-                    Background.To(bg, out EntityId bgEntityId);
-                    cs.ApplyPropertyAnimation(element, id, bgEntityId);
+                    cs.ApplyPropertyAnimation(element, id, bg);
                     return true;
                 case StyleFont sfont:
                     if (sfont.keyword != StyleKeyword.Undefined)
@@ -324,7 +323,7 @@ namespace Unity.UIToolkit.Editor
                 return false;
 
             // Apply to computedStyle so the post-record sample re-registers with the new value.
-            if (!TryApplyStyleValueForPerElement(element, stylePropertyId, in previousValue, in currentValue, out var resolvedPrevious, out bool typed))
+            if (!TryApplyStyleValueForPerElement(element, stylePropertyId, hasPreviousValue, in previousValue, in currentValue, out var resolvedPrevious, out bool typed))
                 return false;
 
             if (binder != null)
@@ -342,14 +341,19 @@ namespace Unity.UIToolkit.Editor
         static bool TryApplyStyleValueForPerElement<T>(
             VisualElement element,
             StylePropertyId stylePropertyId,
+            bool hasPreviousValue,
             in T previousValue,
             in T currentValue,
             out T resolvedPrevious,
             out bool typed)
         {
+            // Resolve the previous value before applying the current one: diff-based
+            // channels (Gradient, Filter) read it back from the element, which would
+            // otherwise return the value just written and diff to an empty mod list.
+            bool prevResolved = TryResolvePreviousForRecording(element, stylePropertyId, hasPreviousValue, in previousValue, in currentValue, out resolvedPrevious);
             typed = TryApplyStyleValueToElementForRecordingTyped(element, stylePropertyId, in currentValue);
             if (typed)
-                return TryResolvePreviousForRecording(element, stylePropertyId, false, in previousValue, in currentValue, out resolvedPrevious);
+                return prevResolved;
 
             // Boxed write fallback for shapes the typed channel dispatcher doesn't cover.
             object curObj = currentValue;
@@ -419,11 +423,15 @@ namespace Unity.UIToolkit.Editor
             if (!TryGetBindingPropertyName(stylePropertyId, out var propName))
                 return false;
 
-            // No element to read a previous value from; previous == current is fine since the
-            // recorded keyframe uses the current value (the previous only seeds the Undo record).
+            // No element to read a previous value from. Unconditional channels emit with
+            // previous == current (the keyframe only uses the current value; the previous only
+            // seeds the Undo record), but diff-based channels (Gradient, Filter) would emit
+            // nothing that way, so they diff against default to emit every non-default channel.
             var channel = GetRecordingChannelKind(stylePropertyId);
             bool typed = channel != StylePropertyRecordingChannel.Unsupported;
-            if (!TryBuildPerElementModifications(uiClip, string.Empty, stylePropertyId, propName, in currentValue, in currentValue, typed, out var modifications)
+            bool diffBased = channel == StylePropertyRecordingChannel.Gradient || channel == StylePropertyRecordingChannel.Filter;
+            T previousValue = diffBased ? default : currentValue;
+            if (!TryBuildPerElementModifications(uiClip, string.Empty, stylePropertyId, propName, in previousValue, in currentValue, typed, out var modifications)
                 || modifications == null || modifications.Length == 0)
                 return false;
 
@@ -640,10 +648,10 @@ namespace Unity.UIToolkit.Editor
                 case StyleBackground sbCur when previousValue is StyleBackground sbPrev:
                     if (sbCur.keyword != StyleKeyword.Undefined || sbPrev.keyword != StyleKeyword.Undefined)
                         return false;
-                    AddObjectModification(list, target, elementPath, propName, null, sbPrev.value.GetSelectedImage(), sbCur.value.GetSelectedImage());
+                    AddGradientMods(list, target, elementPath, propName, sbPrev.value, sbCur.value);
                     return true;
                 case Background bgCur when previousValue is Background bgPrev:
-                    AddObjectModification(list, target, elementPath, propName, null, bgPrev.GetSelectedImage(), bgCur.GetSelectedImage());
+                    AddGradientMods(list, target, elementPath, propName, bgPrev, bgCur);
                     return true;
                 case StyleTextShadow stsCur when previousValue is StyleTextShadow stsPrev:
                     if (stsCur.keyword != StyleKeyword.Undefined || stsPrev.keyword != StyleKeyword.Undefined)
@@ -686,6 +694,7 @@ namespace Unity.UIToolkit.Editor
         }
 
         // Reuse the generator-emitted color row to keep AddColorMods allocation-free.
+        [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
         private static readonly IReadOnlyList<string> k_ColorSuffixes =
             UIAnimationBinder.GetChannelSuffixes(StylePropertyId.Color);
 
@@ -795,6 +804,68 @@ namespace Unity.UIToolkit.Editor
                 FilterFunctionDefinition curDef = curSlot.customDefinition;
                 if (!ReferenceEquals(prevDef, curDef))
                     AddObjectModification(list, target, elementPath, propName, slotPrefix + ".customDefinition", prevDef, curDef);
+            }
+        }
+
+        // Diff-based like AddFilterMods: only changed sub-channels are emitted. Suffixes
+        // mirror AnimationBindingHelper's PropertyKind.Background layout: .image (PPtr),
+        // seven .gradient.* header channels, then kBackgroundGradientStopCount stops of
+        // .color.r/.g/.b/.a + .position + .positionIsPercent. Stops missing on one side
+        // diff against default(BackgroundGradientStop), so added/removed stops produce
+        // the expected full-set / reset-to-zero modifications.
+        internal static void AddGradientMods(List<UndoPropertyModification> list, UnityEngine.Object target, string elementPath, string propName, Background prev, Background cur)
+        {
+            var prevImage = prev.GetSelectedImage();
+            var curImage = cur.GetSelectedImage();
+            if (!ReferenceEquals(prevImage, curImage))
+                AddObjectModification(list, target, elementPath, propName, ".image", prevImage, curImage);
+
+            var pg = prev.gradient;
+            var cg = cur.gradient;
+            if (pg.IsEmpty() && cg.IsEmpty())
+                return;
+
+            if (pg.type != cg.type)
+                AddModification(list, target, elementPath, propName, ".gradient.type", Convert.ToInt32(pg.type), Convert.ToInt32(cg.type));
+            if (pg.angle != cg.angle)
+                AddModification(list, target, elementPath, propName, ".gradient.angle", pg.angle, cg.angle);
+            if (pg.shape != cg.shape)
+                AddModification(list, target, elementPath, propName, ".gradient.shape", Convert.ToInt32(pg.shape), Convert.ToInt32(cg.shape));
+            if (pg.size != cg.size)
+                AddModification(list, target, elementPath, propName, ".gradient.size", Convert.ToInt32(pg.size), Convert.ToInt32(cg.size));
+            if (pg.position.x != cg.position.x)
+                AddModification(list, target, elementPath, propName, ".gradient.center.x", pg.position.x, cg.position.x);
+            if (pg.position.y != cg.position.y)
+                AddModification(list, target, elementPath, propName, ".gradient.center.y", pg.position.y, cg.position.y);
+
+            int prevStopCount = Math.Min(pg.stops?.Length ?? 0, UIAnimationBinder.kBackgroundGradientStopCount);
+            int curStopCount = Math.Min(cg.stops?.Length ?? 0, UIAnimationBinder.kBackgroundGradientStopCount);
+            if (prevStopCount != curStopCount)
+                AddModification(list, target, elementPath, propName, ".gradient.stopCount", prevStopCount, curStopCount);
+
+            for (int i = 0; i < UIAnimationBinder.kBackgroundGradientStopCount; ++i)
+            {
+                bool prevHasStop = i < prevStopCount;
+                bool curHasStop = i < curStopCount;
+                if (!prevHasStop && !curHasStop)
+                    continue;
+
+                BackgroundGradientStop prevStop = prevHasStop ? pg.stops[i] : default;
+                BackgroundGradientStop curStop = curHasStop ? cg.stops[i] : default;
+                string stopPrefix = ".gradient.stop" + i.ToString(CultureInfo.InvariantCulture);
+
+                if (prevStop.color.r != curStop.color.r)
+                    AddModification(list, target, elementPath, propName, stopPrefix + ".color.r", prevStop.color.r, curStop.color.r);
+                if (prevStop.color.g != curStop.color.g)
+                    AddModification(list, target, elementPath, propName, stopPrefix + ".color.g", prevStop.color.g, curStop.color.g);
+                if (prevStop.color.b != curStop.color.b)
+                    AddModification(list, target, elementPath, propName, stopPrefix + ".color.b", prevStop.color.b, curStop.color.b);
+                if (prevStop.color.a != curStop.color.a)
+                    AddModification(list, target, elementPath, propName, stopPrefix + ".color.a", prevStop.color.a, curStop.color.a);
+                if (prevStop.position != curStop.position)
+                    AddModification(list, target, elementPath, propName, stopPrefix + ".position", prevStop.position, curStop.position);
+                if (prevStop.positionIsPercent != curStop.positionIsPercent)
+                    AddModification(list, target, elementPath, propName, stopPrefix + ".positionIsPercent", prevStop.positionIsPercent ? 1 : 0, curStop.positionIsPercent ? 1 : 0);
             }
         }
 
@@ -978,9 +1049,9 @@ namespace Unity.UIToolkit.Editor
             if (currentValue is TextShadow)
                 return cs.ReadPropertyAnimationTextShadow(stylePropertyId);
             if (currentValue is StyleBackground)
-                return new StyleBackground(Background.From(cs.ReadPropertyAnimationEntityId(stylePropertyId)));
+                return new StyleBackground(cs.ReadPropertyAnimationBackground(stylePropertyId));
             if (currentValue is Background)
-                return Background.From(cs.ReadPropertyAnimationEntityId(stylePropertyId));
+                return cs.ReadPropertyAnimationBackground(stylePropertyId);
             if (currentValue is StyleFont)
                 return new StyleFont((Font)Resources.EntityIdToObject(cs.ReadPropertyAnimationEntityId(stylePropertyId)));
             if (currentValue is Font)
@@ -1149,11 +1220,11 @@ namespace Unity.UIToolkit.Editor
             {
                 if (sbCur.keyword != StyleKeyword.Undefined || sbPrev.keyword != StyleKeyword.Undefined)
                     return null;
-                AddObjectModification(list, panelRenderer, elementPath, propName, null, sbPrev.value.GetSelectedImage(), sbCur.value.GetSelectedImage());
+                AddGradientMods(list, panelRenderer, elementPath, propName, sbPrev.value, sbCur.value);
             }
             else if (currentValue is Background bgCur && previousValue is Background bgPrev)
             {
-                AddObjectModification(list, panelRenderer, elementPath, propName, null, bgPrev.GetSelectedImage(), bgCur.GetSelectedImage());
+                AddGradientMods(list, panelRenderer, elementPath, propName, bgPrev, bgCur);
             }
             else
             {
@@ -1298,3 +1369,4 @@ namespace Unity.UIToolkit.Editor
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

@@ -33,29 +33,29 @@ namespace UnityEditor.PackageManager.UI.Internal
     internal struct FetchStatus
     {
         public bool inProgress;
-        public UIError error;
+
+        [SerializeField]
+        private UIError m_Error;
+
+        public UIError error
+        {
+            get => m_Error == null || (m_Error.errorCode == default && string.IsNullOrEmpty(m_Error.message)) ? null : m_Error;
+            set => m_Error = value;
+        }
     }
 
     [Serializable]
-    internal class FetchStatusTracker : BaseService<IFetchStatusTracker>, IFetchStatusTracker, ISerializationCallbackReceiver
+    internal class FetchStatusTracker : BaseService<IFetchStatusTracker>, IFetchStatusTracker
     {
         public event Action<long> onProductInfoFetchStatusChanged;
         public event Action<string> onSearchInfoFetchStatusChanged;
 
         public IEnumerable<long> trackedProductIds => m_ProductInfoFetchStatuses.Keys;
 
-        private readonly Dictionary<long, FetchStatus> m_ProductInfoFetchStatuses = new ();
-        private readonly Dictionary<string, FetchStatus> m_SearchInfoFetchStatuses = new ();
-
         [SerializeField]
-        private long[] m_SerializedProductIds = Array.Empty<long>();
+        private Dictionary<long, FetchStatus> m_ProductInfoFetchStatuses = new ();
         [SerializeField]
-        private FetchStatus[] m_SerializedProductInfoFetchStatuses = Array.Empty<FetchStatus>();
-
-        [SerializeField]
-        private string[] m_SerializedPackageNames = Array.Empty<string>();
-        [SerializeField]
-        private FetchStatus[] m_SerializedSearchInfoFetchStatuses = Array.Empty<FetchStatus>();
+        private Dictionary<string, FetchStatus> m_SearchInfoFetchStatuses = new ();
 
         public void SetProductInfoFetchInProgress(long productId)
         {
@@ -109,22 +109,5 @@ namespace UnityEditor.PackageManager.UI.Internal
 
         public void ClearProductInfoFetchStatuses() => m_ProductInfoFetchStatuses.Clear();
         public void ClearSearchInfoFetchStatuses() => m_SearchInfoFetchStatuses.Clear();
-
-        public void OnBeforeSerialize()
-        {
-            m_ProductInfoFetchStatuses.Keys.ToArray(ref m_SerializedProductIds);
-            m_ProductInfoFetchStatuses.Values.ToArray(ref m_SerializedProductInfoFetchStatuses);
-
-            m_SearchInfoFetchStatuses.Keys.ToArray(ref m_SerializedPackageNames);
-            m_SearchInfoFetchStatuses.Values.ToArray(ref m_SerializedSearchInfoFetchStatuses);
-        }
-
-        public void OnAfterDeserialize()
-        {
-            for (var i = 0; i < m_SerializedProductIds.Length; i++)
-                m_ProductInfoFetchStatuses[m_SerializedProductIds[i]] = m_SerializedProductInfoFetchStatuses[i];
-            for (var i = 0; i < m_SerializedPackageNames.Length; i++)
-                m_SearchInfoFetchStatuses[m_SerializedPackageNames[i]] = m_SerializedSearchInfoFetchStatuses[i];
-        }
     }
 }

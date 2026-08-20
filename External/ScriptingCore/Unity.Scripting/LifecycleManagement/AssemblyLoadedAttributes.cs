@@ -5,13 +5,13 @@ using System.Runtime.CompilerServices;
 namespace Unity.Scripting.LifecycleManagement
 {
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
-    internal sealed class OnAssemblyLoadedAttribute : LifecycleAttributeBase
+    public sealed class OnAssemblyLoadedAttribute : LifecycleAttributeBase
     {
         public OnAssemblyLoadedAttribute() { }
     }
 
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
-    internal sealed class OnAssemblyUnloadingAttribute : LifecycleAttributeBase
+    public sealed class OnAssemblyUnloadingAttribute : LifecycleAttributeBase
     {
         public OnAssemblyUnloadingAttribute() { }
     }

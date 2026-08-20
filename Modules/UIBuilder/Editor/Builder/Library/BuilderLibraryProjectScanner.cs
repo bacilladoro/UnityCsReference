@@ -68,9 +68,9 @@ namespace Unity.UI.Builder
 
             var shownTypes = new HashSet<Type>();
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var sortedEntries = UxmlSerializedDataRegistry.SerializedDataTypes.Values.OrderBy(o => o.FullName);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             foreach (var type in sortedEntries)
             {
                 try

@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -19,6 +20,7 @@ using UnityEngine.UIElements;
 using UnityEngine.UIElements.StyleSheets;
 using Cursor = UnityEngine.UIElements.Cursor;
 using Object = UnityEngine.Object;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.UIElements
 {
@@ -79,9 +81,11 @@ namespace UnityEditor.UIElements
     }
 
     [VisibleToOtherModules("UnityEditor.UIBuilderModule", "UnityEditor.UIToolkitAuthoringModule")]
-    internal static class UxmlAttributeConverter
+    internal static partial class UxmlAttributeConverter
     {
-        private static readonly Dictionary<Type, Type> s_RegisteredConverterTypes = new();
+        [AutoStaticsCleanupOnCodeReload]
+        private static Dictionary<Type, Type> s_RegisteredConverterTypes = new();
+        [NoAutoStaticsCleanup]
         private static readonly Dictionary<Type, IUxmlAttributeConverter> s_Converters = new();
 
         static UxmlAttributeConverter()
@@ -819,6 +823,7 @@ namespace UnityEditor.UIElements
 
     internal class ArrayAttributeConverter<T> : IUxmlAttributeConverter
     {
+        [NoAutoStaticsCleanup]
         private static ListAttributeConverter<T> s_ListAttributeConverter;
 
         public object FromString(string value, CreationContext cc)
@@ -1445,6 +1450,27 @@ namespace UnityEditor.UIElements
         }
     }
 
+    // CSS Grid: lets StyleList<GridTrackSize> (grid-template/auto columns/rows) serialize
+    // in UXML via the generic StyleList converter, which delegates to this element converter.
+    internal class GridTrackSizeAttributeConverter : UxmlAttributeConverter<GridTrackSize>
+    {
+        public override GridTrackSize FromString(string value) => GridTrackSize.Parse(value);
+        public override string ToString(GridTrackSize value) => value.ToString();
+    }
+
+    // CSS Grid. A grid-line placement (auto | <line> | span <n>) for grid-column/row-start/end.
+    internal class GridLineAttributeConverter : UxmlAttributeConverter<GridLine>
+    {
+        public override GridLine FromString(string value) => GridLine.TryParse(value, out var v) ? v : GridLine.Auto;
+        public override string ToString(GridLine value) => value.ToString();
+    }
+
+    internal class StyleGridLineAttributeConverter : UxmlAttributeConverter<StyleGridLine>
+    {
+        public override StyleGridLine FromString(string value) => new StyleGridLine(GridLine.TryParse(value, out var v) ? v : GridLine.Auto);
+        public override string ToString(StyleGridLine value) => value.ToString();
+    }
+
 
     internal class FontAttributeConverter : UxmlAttributeConverter<Font>
     {
@@ -2068,4 +2094,19 @@ namespace UnityEditor.UIElements
             return value.ToString();
         }
     }
+
+    internal class AnimationIterationCountAttributeConverter : UxmlAttributeConverter<AnimationIterationCount>
+    {
+        public override AnimationIterationCount FromString(string value)
+        {
+            if (string.Equals(value, "infinite", StringComparison.OrdinalIgnoreCase))
+                return AnimationIterationCount.Infinite();
+            if (float.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var count))
+                return new AnimationIterationCount(count);
+            return new AnimationIterationCount(1f);
+        }
+
+        public override string ToString(AnimationIterationCount value) => value.ToString();
+    }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

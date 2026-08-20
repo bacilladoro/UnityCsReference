@@ -4,6 +4,7 @@
 
 using System.Collections.Generic;
 using System.Linq;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Search
 {
@@ -29,9 +30,9 @@ namespace UnityEditor.Search
             {
                 var oldOptions = context.options;
                 context.options |= SearchFlags.Synchronous;
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 foreach (var r in expression.Execute(context).Where(item => item != null).Select(item => item.value))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     yield return r;
                 context.options = oldOptions;
             }
@@ -41,9 +42,9 @@ namespace UnityEditor.Search
         {
             using (var context = SearchService.CreateContext(""))
             {
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 return Evaluate(context, reevaluateLiterals).ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             }
         }
 
@@ -64,6 +65,7 @@ namespace UnityEditor.Search
         public object value => args.Length > 0 ? args[0].value : null;
         public QueryMarkerArgument[] args;
 
+        [NoAutoStaticsCleanup]
         public static QueryMarker none = new QueryMarker();
 
         public bool valid => text.valid;
@@ -130,9 +132,9 @@ namespace UnityEditor.Search
                         continue;
                     }
                     var results = expression.Execute(context);
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2001 // Avoid Linq
                     var resolvedValue = results.FirstOrDefault(item => item != null);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     var resolvedValueObject = resolvedValue?.value;
                     queryMarkerArguments.Add(new QueryMarkerArgument { rawText = arg, expression = expression, value = resolvedValueObject });
                 }
@@ -236,9 +238,9 @@ namespace UnityEditor.Search
                 var valueArg = queryMarker.args[0];
                 var value = valueArg.value;
                 if (valueArg.needsEvaluation)
-                    #pragma warning disable UA2011 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2011 // Avoid Linq
                     value = valueArg.Evaluate(context).FirstOrDefault();
-#pragma warning restore UA2011
+#pragma warning restore UAC2011
                 if (value == null)
                     continue;
 
@@ -261,34 +263,34 @@ namespace UnityEditor.Search
         {
             using (var context = SearchService.CreateContext(""))
             {
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 return EvaluateArgs(context, reevaluateLiterals).ToList(); // Calling ToList to force evaluation so context is not used after disposal.
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             }
         }
 
         public IEnumerable<object> EvaluateArgs(SearchContext context, bool reevaluateLiterals = false)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             return args.SelectMany(qma => qma.Evaluate(context, reevaluateLiterals));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         public IEnumerable<object> EvaluateArgsNoSpread(bool reevaluateLiterals = false)
         {
             using (var context = SearchService.CreateContext(""))
             {
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 return EvaluateArgsNoSpread(context, reevaluateLiterals).ToList(); // Calling ToList to force evaluation so context is not used after disposal.
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             }
         }
 
         public IEnumerable<object> EvaluateArgsNoSpread(SearchContext context, bool reevaluateLiterals = false)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             return args.Select(qma => qma.Evaluate(context, reevaluateLiterals));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         public override string ToString()

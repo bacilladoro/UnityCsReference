@@ -2,6 +2,8 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
+using Unity.Scripting.LifecycleManagement;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -85,6 +87,15 @@ namespace UnityEngine.UIElements
             return StyleKeyword.Null;
         }
 
+        // CSS Grid. GridLine is carried as its raw sign-encoded int in StyleValue.number.
+        public StyleGridLine GetStyleGridLine(StylePropertyId id)
+        {
+            var inline = new StyleValue();
+            if (TryGetStyleValue(id, ref inline))
+                return new StyleGridLine(GridLine.FromRawValue((int)inline.number));
+            return StyleKeyword.Null;
+        }
+
         public bool TryGetStyleValue(StylePropertyId id, ref StyleValue value)
         {
             value.id = StylePropertyId.Unknown;
@@ -124,6 +135,7 @@ namespace UnityEngine.UIElements
     [VisibleToOtherModules("UnityEditor.UIToolkitAuthoringModule")]
     internal partial class InlineStyleAccess : StyleValueCollection
     {
+        [AutoStaticsCleanupOnCodeReload]
         private static StylePropertyReader s_StylePropertyReader = new StylePropertyReader();
 
         private List<StyleValueManaged> m_ValuesManaged;
@@ -679,9 +691,9 @@ namespace UnityEngine.UIElements
                     if (sv.value == null && inlineValue.value == null)
                         return false;
 
-#pragma warning disable UA2014 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2014 // Avoid Linq
                     if (sv.value is List<T> list && inlineValue.value != null && list.SequenceEqual(inlineValue.value))
-#pragma warning restore UA2014
+#pragma warning restore UAC2014
                         return false;
                 }
             }
@@ -719,6 +731,33 @@ namespace UnityEngine.UIElements
             return true;
         }
 
+
+        private bool SetStyleValue(StylePropertyId id, StyleGridLine inlineValue)
+        {
+            var raw = inlineValue.value.rawValue;
+            var sv = new StyleValue();
+            if (TryGetStyleValue(id, ref sv))
+            {
+                if (sv.number == raw && sv.keyword == inlineValue.keyword)
+                    return false;
+            }
+            else if (inlineValue.keyword == StyleKeyword.Null)
+            {
+                return false;
+            }
+
+            sv.id = id;
+            sv.keyword = inlineValue.keyword;
+            sv.number = raw;
+
+            SetStyleValue(sv);
+
+            if (inlineValue.keyword == StyleKeyword.Null)
+                return RemoveInlineStyle(id);
+
+            ApplyStyleValue(sv);
+            return true;
+        }
 
         private bool SetStyleValue(StylePropertyId id, StyleRatio inlineValue)
         {
@@ -1331,3 +1370,4 @@ namespace UnityEngine.UIElements
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

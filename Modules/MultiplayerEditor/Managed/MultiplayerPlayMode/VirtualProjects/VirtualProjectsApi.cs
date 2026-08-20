@@ -5,6 +5,7 @@
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using Unity.Multiplayer.PlayMode.Editor;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 
 namespace Unity.Multiplayer.PlayMode.Editor
@@ -70,15 +71,18 @@ namespace Unity.Multiplayer.PlayMode.Editor
         public ParsingSystemDelegates ParsingSystemDelegates;
     }
 
-    static class VirtualProjectsApi
+    static partial class VirtualProjectsApi
     {
         internal const string k_FilterAll = "__all";
 
         internal delegate VirtualProjectIdentifier CreateVirtualProjectIdentifierFunc(string prefix);
 
+        [AutoStaticsCleanupOnCodeReload] // init data struct; stale after reload
         static InitData s_InitData;
+        [AutoStaticsCleanupOnCodeReload] // init gate; must reset so Initialize() re-runs after reload
         static bool s_Initialized;
 
+        [NoAutoStaticsCleanup] // delegates point only to local static methods in this long-living module assembly; MultiplayerEditorModule isn't torn down by ordinary user-code CodeReload, so these never go stale
         public static VirtualProjectsApiDelegates Delegates { get; } = new VirtualProjectsApiDelegates
         {
             GetProjectsFunc = GetProjects,

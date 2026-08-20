@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Unity.GraphToolkit.CSO;
 using Unity.GraphToolkit.InternalBridge;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -18,7 +19,9 @@ namespace Unity.GraphToolkit.Editor
     [UnityRestricted]
     internal class ConditionEditorContext : IViewContext
     {
+        [NoAutoStaticsCleanup] // singleton context instance; identity compared by ReferenceEquals, safe to persist
         static ConditionEditorContext s_Default = new ConditionEditorContext();
+        [NoAutoStaticsCleanup] // singleton context instance; identity compared by ReferenceEquals, safe to persist
         public static ConditionEditorContext Default = s_Default;
         public bool Equals(IViewContext other)
         {
@@ -37,6 +40,7 @@ namespace Unity.GraphToolkit.Editor
         RootGroupConditionView m_RootConditionView;
 
         const float k_DragThresholdSquare = 6 * 6;
+        [NoAutoStaticsCleanup] // empty scratch list; cleared before each use, never holds persistent element references
         static readonly List<VisualElement> k_PickedElements = new();
         GroupConditionView m_HoveredGroupCondition;
         bool m_RootSelected;
@@ -157,9 +161,9 @@ namespace Unity.GraphToolkit.Editor
 
             if (listSelectedItems.Count > 0)
             {
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 RootView.Dispatch(new DeleteConditionsCommand(listSelectedItems.Select(c => c.ConditionModel).ToList()));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             }
         }
 
@@ -169,9 +173,9 @@ namespace Unity.GraphToolkit.Editor
 
             if (listSelectedItems.Count > 0)
             {
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 RootView.Dispatch(new DuplicateConditionsCommand(listSelectedItems.Select(c => c.ConditionModel).ToList()));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             }
         }
 

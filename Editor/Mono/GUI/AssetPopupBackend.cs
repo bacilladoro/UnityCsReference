@@ -92,9 +92,9 @@ namespace UnityEditor
                     if (resource.m_Name == defaultFieldName)
                     {
                         gm.AddItem(new GUIContent(resource.m_Name), resource.m_EntityId == selectedEntityId, AssetPopupMenuCallback, new object[] { resource.m_EntityId, serializedProperty });
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                         resourceList = resourceList.Where(x => x != resource).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                         foundDefaultAsset = true;
                         break;
                     }

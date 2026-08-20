@@ -67,9 +67,9 @@ namespace UnityEditor.DeviceSimulation
             if (((IReadOnlyCollection<PackageManager.PackageInfo>)args.removed).Exists(package => package.name == "com.unity.device-simulator.devices"))
                 SetStatus(DevicePackageStatus.Unavailable);
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var package = args.added.Concat(args.changedTo).FirstOrDefault(package => package.name == "com.unity.device-simulator.devices");
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             if (package != null)
                 SetStatus(GetDevicePackageStatus(package));
         }
@@ -83,9 +83,9 @@ namespace UnityEditor.DeviceSimulation
 
             if (s_ListRequest.Status == StatusCode.Success)
             {
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 var package = s_ListRequest.Result.FirstOrDefault(package => package.name == "com.unity.device-simulator.devices");
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 SetStatus(GetDevicePackageStatus(package));
             }
             else if (s_ListRequest.Status == StatusCode.Failure)

@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Scripting.ScriptCompilation
 {
@@ -206,6 +207,7 @@ namespace UnityEditor.Scripting.ScriptCompilation
             return SemVersionParser.Parse(version, strict);
         }
 
+        [NoAutoStaticsCleanup] // stateless version-traits singleton, safe to persist across reload
         public static SemVersionTypeTraits VersionTypeTraits { get; } = new SemVersionTypeTraits();
         public IVersionTypeTraits GetVersionTypeTraits()
         {

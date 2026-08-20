@@ -11,16 +11,16 @@ namespace UnityEditor.Search
 {
     static partial class Evaluators
     {
-        static Regex QueryVariableRx = new Regex(@"([\$\@])([\#\w][\w\d\.\\/]*)");
+        static readonly Regex QueryVariableRx = new Regex(@"([\$\@])([\#\w][\w\d\.\\/]*)");
         [Description("Returns a Search Query from a string"), Category("Primitives")]
         [SearchExpressionEvaluator(SearchExpressionEvaluationHints.ExpandSupported | SearchExpressionEvaluationHints.DoNotValidateSignature)]
         public static IEnumerable<SearchItem> Query(SearchExpressionContext c)
         {
             if (c.expression.types.HasFlag(SearchExpressionType.Function))
             {
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 using (c.runtime.Push(c.args[0], c.args.Skip(1)))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     return Query(c.runtime.current);
             }
 

@@ -166,9 +166,9 @@ namespace UnityEditor
             {
                 using (var analyzerDefinition = AssemblyDefinition.ReadAssembly(analyzer, readerParameters))
                 {
-#pragma warning disable UA2001, UA2011 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001, UAC2011 // Avoid Linq
                     var netstandardVersion = analyzerDefinition.MainModule.AssemblyReferences.Where(r => r.Name == "netstandard").FirstOrDefault();
-#pragma warning restore UA2001, UA2011
+#pragma warning restore UAC2001, UAC2011
                     if (netstandardVersion != null && netstandardVersion.Version >= new Version(2, 1))
                     {
                         errors.Add(new Error
@@ -276,9 +276,9 @@ namespace UnityEditor
                 errors,
                 assemblyDefinitions);
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return errors
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 .Where(x => x.flags != ErrorFlags.None)
                 .ToArray();
         }
@@ -327,14 +327,14 @@ namespace UnityEditor
                 };
             }
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var precompiledAssemblies = EditorCompilationInterface.Instance
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 .PrecompiledAssemblyProvider.GetAllPrecompiledAssemblies()
                 .Where(x => x.Flags.HasFlag(AssemblyFlags.UserAssembly));
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var allPrecompiledAssemblies = precompiledAssemblies.ToDictionary(x => AssetPath.ReplaceSeparators(VirtualFileSystem.ToLogicalPath(x.Path)));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             for (int i = 0; i < assemblyPaths.Length; ++i)
             {

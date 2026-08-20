@@ -2,12 +2,14 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
 using System;
 using Unity.Properties;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEngine.UIElements
 {
-    class BindingUpdater
+    partial class BindingUpdater
     {
         private sealed class CastDataSourceVisitor : ConcreteTypeVisitor
         {
@@ -56,7 +58,9 @@ namespace UnityEngine.UIElements
             }
         }
 
+        [NoAutoStaticsCleanup]
         private static readonly CastDataSourceVisitor s_VisitDataSourceAsRootVisitor = new ();
+        [NoAutoStaticsCleanup]
         private static readonly UIPathVisitor s_VisitDataSourceAtPathVisitor = new ();
 
         public bool ShouldProcessBindingAtStage(Binding bindingObject, BindingUpdateStage stage, bool versionChanged, bool dirty)
@@ -443,3 +447,4 @@ namespace UnityEngine.UIElements
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

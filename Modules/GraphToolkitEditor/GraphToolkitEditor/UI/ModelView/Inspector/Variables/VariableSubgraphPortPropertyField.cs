@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using Unity.Collections;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -79,6 +80,7 @@ namespace Unity.GraphToolkit.Editor
             Output = 1
         }
 
+        [NoAutoStaticsCleanup] // fixed list of constant display setting option strings; no user-code references
         static readonly List<string> k_DisplaySettings = new() { "Node and Inspector", "Inspector Only" };
 
         const int k_InputOutputValuesCount = 2;

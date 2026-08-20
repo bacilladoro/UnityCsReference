@@ -4,13 +4,15 @@
 
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEngine;
 
 namespace Unity.Multiplayer.PlayMode.Editor
 {
-    class CurrentPlayerEditor : CurrentPlayerApi
+    partial class CurrentPlayerEditor : CurrentPlayerApi
     {
+        [AutoStaticsCleanupOnCodeReload] // lazy loaded data store; stale after reload
         static SystemDataStore m_SystemDataStore;
 
         bool m_Loaded = false;

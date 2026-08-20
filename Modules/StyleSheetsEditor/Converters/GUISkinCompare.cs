@@ -45,9 +45,9 @@ namespace UnityEditor.StyleSheets
                 diffs.Add(prefix + "background");
             }
 
-            #pragma warning disable UA2014 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2014 // Avoid Linq
             if (!self.scaledBackgrounds.SequenceEqual(otherState.scaledBackgrounds))
-#pragma warning restore UA2014
+#pragma warning restore UAC2014
             {
                 if (diffs == null)
                     return false;
@@ -349,9 +349,9 @@ namespace UnityEditor.StyleSheets
             {
                 var matchedStyle = String.IsNullOrEmpty(customStyle.name) ?
                     otherSkin.customStyles.ElementAtOrDefault(i) :
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2001 // Avoid Linq
                     otherSkin.customStyles.FirstOrDefault(style => style.name == customStyle.name);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 if (matchedStyle == null)
                 {
                     if (diffs == null)

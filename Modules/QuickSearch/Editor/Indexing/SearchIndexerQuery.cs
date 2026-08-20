@@ -4,6 +4,7 @@
 
 using System.Collections.Generic;
 using System.Linq;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Assertions;
 
 namespace UnityEditor.Search
@@ -106,7 +107,8 @@ namespace UnityEditor.Search
             public readonly bool combined;
             public readonly IEnumerable<T> results;
 
-            public static EvalResult None = new EvalResult(false, null);
+            [NoAutoStaticsCleanup]
+            public static readonly EvalResult None = new EvalResult(false, null);
 
             public EvalResult(bool combined, IEnumerable<T> results = null)
             {
@@ -184,9 +186,9 @@ namespace UnityEditor.Search
             else
             {
                 // TODO SearchIndexer Memory: is it needed to return a Distinct here? Should we use a local HashSet instead of having Distinct allocate a new set each time?
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 return root.results.Distinct();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             }
         }
 
@@ -330,9 +332,9 @@ namespace UnityEditor.Search
                     results = result.results;
                     if (!result.combined)
                     {
-                        #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                        #pragma warning disable UAC2001 // Avoid Linq
                         results = leftReturn.Intersect(rightReturn).ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     }
                 }
                 else
@@ -361,17 +363,17 @@ namespace UnityEditor.Search
             {
                 if (!combinedRight)
                 {
-                    #pragma warning disable UA2005 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2005 // Avoid Linq
                     int rightReturnOriginalCount = rightReturn.Count();
                     int leftReturnOriginalCount = leftReturn.Count();
-#pragma warning restore UA2005
+#pragma warning restore UAC2005
                     var result = eval(new EvalHandlerArgs(null, null, SearchIndexOperator.None, false, leftReturn, rightReturn, payload));
                     results = result.results;
                     if (!result.combined)
                     {
-                        #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                        #pragma warning disable UAC2001 // Avoid Linq
                         results = leftReturn.Union(rightReturn);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     }
                 }
                 else
@@ -389,9 +391,9 @@ namespace UnityEditor.Search
                     rightInstruction.orSet = leftReturn;
                 else
                 {
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2001 // Avoid Linq
                     rightInstruction.orSet = rightInstruction.orSet.Union(leftReturn);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 }
             }
         }

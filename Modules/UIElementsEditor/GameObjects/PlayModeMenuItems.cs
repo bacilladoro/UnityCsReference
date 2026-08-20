@@ -2,12 +2,14 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
 using System;
 using System.IO;
 using UnityEngine;
 using UnityEditor.SceneManagement;
 using UnityEngine.Bindings;
 using UnityEngine.UIElements;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.UIElements
 {
@@ -20,6 +22,7 @@ namespace UnityEditor.UIElements
         private const string k_AssetSearchByTypePanelSettings = "t:panelsettings";
         private const string k_AssetsFolder = "Assets";
         private static readonly string k_PanelSettingsAssetPath = k_UITKEssentialResourcesFolderPath + "/PanelSettings.asset";
+        [NoAutoStaticsCleanup]
         private static string[] k_AssetsFolderFilter = new[] { k_AssetsFolder };
 
         /// <summary>
@@ -156,3 +159,4 @@ namespace UnityEditor.UIElements
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

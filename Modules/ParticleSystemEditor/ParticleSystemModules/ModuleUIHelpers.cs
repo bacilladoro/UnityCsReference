@@ -436,9 +436,9 @@ namespace UnityEditor
             Rect rect = GUILayoutUtility.GetRect(0, (kSingleLineHeight + 2) * numObjects, layoutOptions);
             rect.height = kSingleLineHeight;
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var propsForScope = (additionalProps != null) ? objectProps.Concat(additionalProps).ToArray() : objectProps;
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             using (new PropertyGroupScope(propsForScope))
             {
                 PrefixLabel(rect, label);

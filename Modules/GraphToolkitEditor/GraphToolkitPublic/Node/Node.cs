@@ -220,7 +220,7 @@ namespace Unity.GraphToolkit.Editor
         /// <summary>
         /// The Graph that contains this node.
         /// </summary>
-        public Graph Graph => (m_Implementation?.GraphModel as GraphModelImp)?.Graph;
+        public Graph Graph => (m_Implementation?.GraphModel as GraphModelImp)?.Graph as Graph;
 
         /// <summary>
         /// The globally unique identifier for this node.

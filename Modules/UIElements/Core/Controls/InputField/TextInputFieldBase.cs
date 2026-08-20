@@ -2,6 +2,8 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
+using Unity.Scripting.LifecycleManagement;
 using System;
 using System.Runtime.CompilerServices;
 using Unity.Properties;
@@ -39,8 +41,10 @@ namespace UnityEngine.UIElements
         internal static readonly BindingId maskCharProperty = nameof(maskChar);
         internal static readonly BindingId verticalScrollerVisibilityProperty = nameof(verticalScrollerVisibility);
 
-        static CustomStyleProperty<Color> s_SelectionColorProperty = new CustomStyleProperty<Color>("--unity-selection-color");
-        static CustomStyleProperty<Color> s_CursorColorProperty = new CustomStyleProperty<Color>("--unity-cursor-color");
+        [NoAutoStaticsCleanup]
+        static readonly CustomStyleProperty<Color> s_SelectionColorProperty = new("--unity-selection-color");
+        [NoAutoStaticsCleanup]
+        static readonly CustomStyleProperty<Color> s_CursorColorProperty = new("--unity-cursor-color");
         internal const int kMaxLengthNone = -1;
         internal const char kMaskCharDefault = '*';
 
@@ -716,11 +720,13 @@ namespace UnityEngine.UIElements
             m_TextInputBase.OnInputCustomStyleResolved(e);
         }
 
-        private static class Callbacks
+        private static partial class Callbacks
         {
+            [NoAutoStaticsCleanup]
             public static readonly EventCallbackDefinition<TextInputBaseField<TValueType>> OnFieldCustomStyleResolved =
                 EventCallback.Create<CustomStyleResolvedEvent, TextInputBaseField<TValueType>>(static (e, self) =>
                     self.OnFieldCustomStyleResolved(e));
+            [NoAutoStaticsCleanup]
             public static readonly EventCallbackDefinition<TextInputBaseField<TValueType>> OnChangeEventUpdatePlaceholderClassList =
                 EventCallback.Create<ChangeEvent<TValueType>, TextInputBaseField<TValueType>>(static (e, self) =>
                     self.UpdatePlaceholderClassList(e));
@@ -1101,25 +1107,29 @@ namespace UnityEngine.UIElements
                 return false;
             }
 
-            private static class Callbacks
+            private static partial class Callbacks
             {
                 // Use with ?. syntax to avoid possible exceptions on events during DetachFromPanel
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 private static TextInputBase GetTextInputBase(VisualElement child) =>
                     child.GetFirstAncestorOfType<TextInputBase>();
 
+                [NoAutoStaticsCleanup]
                 public static readonly EventCallbackDefinition<TextInputBase> OnInputCustomStyleResolved =
                     EventCallback.Create<CustomStyleResolvedEvent, TextInputBase>(static (e, self) =>
                         self.OnInputCustomStyleResolved(e));
 
+                [NoAutoStaticsCleanup]
                 public static readonly EventCallbackDefinition<TextElement> OnTextElementGeometryChangedEvent =
                     EventCallback.Create<GeometryChangedEvent, TextElement>(static (e, textElement) =>
                         GetTextInputBase(textElement)?.TextElementOnGeometryChangedEvent(e));
 
+                [NoAutoStaticsCleanup]
                 public static readonly EventCallbackDefinition<VisualElement> OnScrollViewGeometryChangedEvent =
                         EventCallback.Create<GeometryChangedEvent, VisualElement>(static (e, scrollView) =>
                             GetTextInputBase(scrollView)?.ScrollViewOnGeometryChangedEvent(e));
 
+                [NoAutoStaticsCleanup]
                 public static readonly EventCallbackDefinition<Slider>
                     OnScrollViewSliderValueChangedMakeSureScrollViewDoesNotLeakEvents =
                         EventCallback.Create<ChangeEvent<float>, Slider>(static (e, slider) =>
@@ -1235,3 +1245,4 @@ namespace UnityEngine.UIElements
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

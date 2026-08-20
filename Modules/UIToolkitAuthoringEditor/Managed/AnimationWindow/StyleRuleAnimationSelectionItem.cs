@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitAuthoringFramework not yet converted
 using System;
 using System.Collections.Generic;
 using UnityEditor;
@@ -62,13 +63,13 @@ namespace Unity.UIToolkit.Editor
 
         protected override void AssignClipToTarget(UIAnimationClip newClip)
         {
-            SetStyleSheetPropertyCommand<StyleUIAnimationClip>.Execute(
+            SetStyleSheetPropertyCommand<StyleList<UIAnimationClip>>.Execute(
                 CommandSources.Inspector,
                 m_StyleSheet,
                 m_Rule,
-                StylePropertyId.UnityAnimationClip,
-                StylePropertyBinding.SetUIAnimationClip,
-                new StyleUIAnimationClip(newClip));
+                StylePropertyId.AnimationNames,
+                StylePropertyBinding.SetUIAnimationClipList,
+                new StyleList<UIAnimationClip>(BuildClipListWithAppended(newClip)));
         }
 
         // Stop any in-flight preview / record on the controller before dropping the clip so the
@@ -117,34 +118,36 @@ namespace Unity.UIToolkit.Editor
                    && ReferenceEquals(styleRuleSelection.StyleRule, m_Rule);
         }
 
-        // Sync the clip wrapper with the clip assigned to THIS rule. Reading the rule's own property
-        // (not canonical.resolvedStyle) is deliberate: a matched element can also match a
+        readonly List<UIAnimationClip> m_ResolvedClips = new();
+
+        // Sync the dropdown list + active clip with the clips assigned to THIS rule. Reading the rule's
+        // own property (not canonical.resolvedStyle) is deliberate: a matched element can also match a
         // higher-specificity rule whose clip would win the cascade, so resolvedStyle could surface a
         // different rule's clip and make us record onto the wrong one.
         public override void Synchronize()
         {
-            var resolved = ReadClipFromRule();
-            if (resolved == null)
-            {
-                ClearClip();
-                return;
-            }
-
-            if (resolved != m_UIClip)
-                SetUIClip(resolved);
+            m_ResolvedClips.Clear();
+            ReadClipsFromRule(m_ResolvedClips);
+            ReconcileClips(m_ResolvedClips);
         }
 
-        UIAnimationClip ReadClipFromRule()
+        void ReadClipsFromRule(List<UIAnimationClip> results)
         {
             if (m_Rule == null || m_StyleSheet == null)
-                return null;
-            var property = m_Rule.FindLastProperty(StylePropertyId.UnityAnimationClip);
-            if (property?.values == null || property.values.Length == 0)
-                return null;
-            // Skip keyword values (e.g. 'initial'/'none'); ReadAssetReference logs on a type mismatch.
-            if (property.values[0].valueType != StyleValueType.AssetReference)
-                return null;
-            return m_StyleSheet.ReadAssetReference(property.values[0]) as UIAnimationClip;
+                return;
+            var property = m_Rule.FindLastProperty(StylePropertyId.AnimationNames);
+            if (property?.values == null)
+                return;
+            for (int i = 0; i < property.values.Length; i++)
+            {
+                var handle = property.values[i];
+                // Skip comma separators and keyword values (e.g. 'initial'/'none'); ReadAssetReference
+                // logs on a type mismatch.
+                if (handle.valueType != StyleValueType.AssetReference)
+                    continue;
+                if (m_StyleSheet.ReadAssetReference(handle) is UIAnimationClip clip && clip != null)
+                    results.Add(clip);
+            }
         }
 
         // Preview / record surface ----------------------------------------------------------
@@ -260,3 +263,4 @@ namespace Unity.UIToolkit.Editor
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

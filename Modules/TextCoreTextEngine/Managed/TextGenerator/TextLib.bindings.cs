@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Text;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.Bindings;
 using UnityEngine.Scripting;
@@ -16,7 +17,7 @@ namespace UnityEngine.TextCore.Text
     [StructLayout(LayoutKind.Sequential)]
     [NativeHeader("Modules/TextCoreTextEngine/Native/TextLib.h")]
     [VisibleToOtherModules("UnityEngine.UIElementsModule", "Unity.UIElements.PlayModeTests", "UnityEngine.IMGUIModule")]
-    internal class TextLib
+    internal partial class TextLib
     {
         public const int k_unconstrainedScreenSize = -1;
         private readonly IntPtr m_Ptr;
@@ -27,6 +28,7 @@ namespace UnityEngine.TextCore.Text
         }
 
         private static extern IntPtr GetInstance(byte[] icuData);
+        internal static extern bool TryLoadICUData(byte[] icuData);
 
         public NativeTextInfo GenerateText(NativeTextGenerationSettings settings, IntPtr textGenerationInfo, ref bool wasCached)
         {
@@ -241,12 +243,14 @@ namespace UnityEngine.TextCore.Text
             public static IntPtr ConvertToNative(TextLib textLib) => textLib.m_Ptr;
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         public static Func<UnityEngine.TextAsset> GetICUAssetEditorDelegate;
     }
 
     [VisibleToOtherModules("UnityEngine.IMGUIModule", "UnityEngine.UIElementsModule")]
     internal static class TextGenerationInfo
     {
+        [NoAutoStaticsCleanup] // Monotonically-increasing repaint iteration counter; never reset, safe to persist across code reload
         public static int CurrentGenerationIteration { get; private set; }
         [NativeMethod(IsThreadSafe = true)]
         public static extern IntPtr Create(bool isPermanent);
@@ -273,6 +277,16 @@ namespace UnityEngine.TextCore.Text
 
         [NativeMethod(IsThreadSafe = true)]
         public static extern int GetLogicalIndexFromGlyphIndex(IntPtr ptr, int glyphIndex);
+
+        [NativeMethod(IsThreadSafe = true)]
+        static extern IntPtr GetParsedTextBuffer(IntPtr ptr, ref int length);
+
+        public static unsafe string GetParsedText(IntPtr ptr)
+        {
+            int length = 0;
+            var buffer = GetParsedTextBuffer(ptr, ref length);
+            return buffer != IntPtr.Zero && length > 0 ? new string((char*)buffer, 0, length) : string.Empty;
+        }
 
         // Used for testing purposes
         public static extern NativeTextInfo GetTextInfo(IntPtr ptr);

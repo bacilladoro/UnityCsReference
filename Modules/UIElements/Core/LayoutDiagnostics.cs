@@ -2,10 +2,12 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
 using System;
 using System.Collections.Generic;
 using System.Text;
 using UnityEngine.Bindings;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEngine.UIElements
 {
@@ -86,8 +88,9 @@ namespace UnityEngine.UIElements
     /// rule is always registered on first access.
     /// </remarks>
     [VisibleToOtherModules("UnityEditor.UIElementsModule", "UnityEditor.UIBuilderModule")]
-    internal static class LayoutDiagnostics
+    internal static partial class LayoutDiagnostics
     {
+        [AutoStaticsCleanupOnCodeReload] // registered rules may be user code; re-created with the built-in rule
         static readonly List<ILayoutDiagnosticRule> s_Rules = new()
         {
             new SingleFlexChildOptimizationBugRule(),
@@ -315,3 +318,4 @@ namespace UnityEngine.UIElements
     }
 
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

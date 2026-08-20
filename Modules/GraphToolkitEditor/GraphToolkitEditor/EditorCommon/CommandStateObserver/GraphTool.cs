@@ -5,6 +5,7 @@
 using System.Collections.Generic;
 using Unity.GraphToolkit.CSO;
 using Unity.GraphToolsAuthoringFramework.InternalEditorBridge;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEngine;
 
@@ -14,7 +15,7 @@ namespace Unity.GraphToolkit.Editor
     /// A base tool for graph tools.
     /// </summary>
     [UnityRestricted]
-    internal class GraphTool : CsoTool, IHierarchicalCommandTarget
+    internal partial class GraphTool : CsoTool, IHierarchicalCommandTarget
     {
         /// <summary>
         /// Creates and initializes a new <see cref="GraphTool"/>.
@@ -124,7 +125,8 @@ namespace Unity.GraphToolkit.Editor
         }
 
 
-        static GraphTool()
+        [OnCodeLoaded]
+        static void RegisterUndoCallback()
         {
             Undo.undoRedoEvent += StaticUndoRedoCallback;
         }
@@ -139,6 +141,7 @@ namespace Unity.GraphToolkit.Editor
             }
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         static Undo.UndoRedoEventCallback undoRedoEventCallback;
 
         /// <inheritdoc />

@@ -110,17 +110,6 @@ class ConfigurableBuildTarget : IBuildTarget
         }
     }
 
-    public IScriptingPlatformProperties ScriptingPlatformProperties
-    {
-        get
-        {
-            if (TryGetPropertiesOverride(out IScriptingPlatformProperties properties))
-                return properties;
-            else
-                return m_BuildTarget.ScriptingPlatformProperties;
-        }
-    }
-
     public bool TryGetProperties<T>(out T properties) where T : IPlatformProperties
     {
         if (TryGetPropertiesOverride(out properties))

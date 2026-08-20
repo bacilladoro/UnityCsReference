@@ -13,6 +13,7 @@ using UnityEditor.TextCore.LowLevel;
 using Glyph = UnityEngine.TextCore.Glyph;
 using GlyphRect = UnityEngine.TextCore.GlyphRect;
 using GlyphMetrics = UnityEngine.TextCore.GlyphMetrics;
+using Unity.Scripting.LifecycleManagement;
 
 #pragma warning disable CS0618 // Font feature tables and OTL feature tags; TextCoreShaderGUI, TextCoreShaderGUISDF, TextCoreShaderGUIBitmap, TextShaderUtilities are obsolete; handled natively by ATG
 
@@ -49,19 +50,30 @@ namespace UnityEditor.TextCore.Text
     }
 
     [CustomEditor(typeof(FontAsset))]
-    internal class FontAssetEditor : Editor
+    internal partial class FontAssetEditor : Editor
     {
         internal struct UI_PanelState
         {
+            // Editor UI fold-out state; plain bools, safe to persist across code reload (nothing to clean up).
+            [NoAutoStaticsCleanup]
             public static bool generationSettingsPanel = true;
+            [NoAutoStaticsCleanup]
             public static bool fontAtlasInfoPanel = true;
+            [NoAutoStaticsCleanup]
             public static bool fontWeightPanel = true;
+            [NoAutoStaticsCleanup]
             public static bool fallbackFontAssetPanel = true;
+            [NoAutoStaticsCleanup]
             public static bool glyphTablePanel = false;
+            [NoAutoStaticsCleanup]
             public static bool characterTablePanel = false;
+            [NoAutoStaticsCleanup]
             public static bool LigatureSubstitutionTablePanel;
+            [NoAutoStaticsCleanup]
             public static bool PairAdjustmentTablePanel = false;
+            [NoAutoStaticsCleanup]
             public static bool MarkToBaseTablePanel = false;
+            [NoAutoStaticsCleanup]
             public static bool MarkToMarkTablePanel = false;
         }
 
@@ -94,6 +106,7 @@ namespace UnityEditor.TextCore.Text
                 return s_InternalSDFMaterial;
             }
         }
+        [AutoStaticsCleanupOnCodeReload]
         static Material s_InternalSDFMaterial;
 
         /// <summary>
@@ -114,6 +127,7 @@ namespace UnityEditor.TextCore.Text
                 return s_InternalBitmapMaterial;
             }
         }
+        [AutoStaticsCleanupOnCodeReload]
         static Material s_InternalBitmapMaterial;
 
         /// <summary>
@@ -134,11 +148,12 @@ namespace UnityEditor.TextCore.Text
                 return s_Internal_Bitmap_RGBA_Material;
             }
         }
+        [AutoStaticsCleanupOnCodeReload]
         static Material s_Internal_Bitmap_RGBA_Material;
 
 
 
-        private static string[] s_UiStateLabel = new string[] { "<i>(Click to collapse)</i> ", "<i>(Click to expand)</i> " };
+        private static readonly string[] s_UiStateLabel = new string[] { "<i>(Click to collapse)</i> ", "<i>(Click to expand)</i> " };
         public static readonly GUIContent getFontFeaturesLabel = new GUIContent("Get Font Features", "Determines if OpenType font features should be retrieved from the source font file as new characters and glyphs are added to the font asset.");
         private GUIContent[] m_AtlasResolutionLabels = { new GUIContent("8"), new GUIContent("16"), new GUIContent("32"), new GUIContent("64"), new GUIContent("128"), new GUIContent("256"), new GUIContent("512"), new GUIContent("1024"), new GUIContent("2048"), new GUIContent("4096"), new GUIContent("8192") };
         private int[] m_AtlasResolutions = { 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192 };

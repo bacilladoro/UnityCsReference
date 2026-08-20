@@ -328,9 +328,9 @@ namespace UnityEditor
                 var isFolder = asset.isFolder && !Provider.isVersioningFolders;
 
                 res.editors = assetEditors;
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 res.assets.AddRange(res.Editor.targets.Select(o => Provider.GetAssetByPath(AssetDatabase.GetAssetPath(o))));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 res.assets = Provider.ConsolidateAssetList(res.assets, CheckoutMode.Both);
 
                 res.revert = Provider.RevertIsValid(res.assets, RevertMode.Normal);
@@ -568,9 +568,9 @@ namespace UnityEditor
 
         internal static IEnumerable<PropertyEditor> GetPropertyEditors()
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return m_AllPropertyEditors.AsEnumerable();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         protected void SetMode(InspectorMode mode)
@@ -1862,9 +1862,9 @@ namespace UnityEditor
 
             // This is used if more than one asset is selected
             // Ideally the tracker should be refactored to track not just editors but also the selection that caused them, so we wouldn't need this
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return Selection.objects.Where(EditorUtility.IsPersistent).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         protected virtual bool BeginDrawPreviewAndLabels() { return true; }
@@ -2784,9 +2784,9 @@ namespace UnityEditor
                         m_OpenAddComponentMenu && Event.current.type == EventType.Repaint)
                     {
                         m_OpenAddComponentMenu = false;
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                         if (AddComponentWindow.Show(rect, editor.targets.Cast<GameObject>().Where(o => o).ToArray()))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                         {
                             // Repaint the inspector window to ensure the AddComponentWindow.Show
                             // does not clear the inspector window gl buffer, which blacks out the inspector window.
@@ -2824,9 +2824,9 @@ namespace UnityEditor
         private Dictionary<EntityId, IEditorElement> ProcessEditorElementsToRebuild(Editor[] editors)
         {
             Dictionary<EntityId, IEditorElement> editorToElementMap = new Dictionary<EntityId, IEditorElement>();
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var currentElements = editorsElement.Children().OfType<IEditorElement>().ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             if ((editors.Length == 0) || (rootVisualElement.panel == null && currentElements.Count == 0))
             {
                 return null;

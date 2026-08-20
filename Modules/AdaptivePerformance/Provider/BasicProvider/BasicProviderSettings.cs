@@ -17,8 +17,9 @@ namespace UnityEngine.AdaptivePerformance.Basic
     {
         [AutoStaticsCleanupOnCodeReload]
         static BasicProviderSettings m_Instance = null;
-        void Awake()
+        protected override void Awake()
         {
+            base.Awake();
             m_Instance = this;
         }
 

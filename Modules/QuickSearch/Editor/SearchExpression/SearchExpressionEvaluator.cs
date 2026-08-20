@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
 using System.Text.RegularExpressions;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Search
 {
@@ -61,13 +62,17 @@ namespace UnityEditor.Search
         internal SearchExpressionValidator.Signature signature { get; private set; }
     }
 
-    static class EvaluatorManager
+    static partial class EvaluatorManager
     {
+        [AutoStaticsCleanupOnCodeReload]
         public static List<SearchExpressionEvaluator> evaluators { get; private set; }
+        [AutoStaticsCleanupOnCodeReload]
         public static SearchItemQueryEngine itemQueryEngine;
+        [AutoStaticsCleanupOnCodeReload]
         public static Dictionary<string, List<SearchExpressionValidator.Signature>> evaluatorSignatures = new Dictionary<string, List<SearchExpressionValidator.Signature>>();
 
-        static EvaluatorManager()
+        [OnCodeLoaded]
+        static void Initialize()
         {
             try
             {
@@ -122,9 +127,9 @@ namespace UnityEditor.Search
             name = name.ToLowerInvariant();
             if (evaluatorSignatures.TryGetValue(name.ToLowerInvariant(), out var signatures))
             {
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 return signatures.OrderByDescending(s => s.mandatoryArgumentNumber);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             }
             return null;
         }
@@ -158,9 +163,9 @@ namespace UnityEditor.Search
         public static void RefreshEvaluators()
         {
             var supportedSignature = MethodSignature.FromDelegate<SearchExpressionEvaluatorHandler>();
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             evaluators = ReflectionUtils.LoadAllMethodsWithAttribute<SearchExpressionEvaluatorAttribute, SearchExpressionEvaluator>((mi, attribute, handler) =>
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 var descAttr = mi.GetCustomAttribute<System.ComponentModel.DescriptionAttribute>();
                 var description = descAttr != null ? descAttr.Description : null;

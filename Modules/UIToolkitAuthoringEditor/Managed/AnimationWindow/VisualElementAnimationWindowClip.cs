@@ -6,6 +6,7 @@ using System;
 using UnityEditor;
 using UnityEditor.AnimationWindowBuiltin;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace Unity.UIToolkit.Editor
 {
@@ -14,12 +15,20 @@ namespace Unity.UIToolkit.Editor
     // of the generic float fallback. The "discrete = int" assumption is UI-Toolkit-specific
     // and stays scoped to this module rather than baked into AnimationWindowClip itself.
     [Serializable]
-    internal sealed class VisualElementAnimationWindowClip : AnimationWindowClip
+    internal sealed class VisualElementAnimationWindowClip : AnimationWindowClip, IAnimationWindowClip
     {
-        public VisualElementAnimationWindowClip(AnimationClip clip)
-            : base(clip)
+        [SerializeField] UIAnimationClip m_UIAnimationClip;
+
+        public VisualElementAnimationWindowClip(UIAnimationClip uiClip)
+            : base(uiClip != null ? uiClip.animationClip : null)
         {
+            m_UIAnimationClip = uiClip;
         }
+
+        public new string name =>
+            m_UIAnimationClip != null && !string.IsNullOrEmpty(m_UIAnimationClip.name)
+                ? m_UIAnimationClip.name
+                : base.name;
 
         protected override Type GetValueType(EditorCurveBinding binding)
         {

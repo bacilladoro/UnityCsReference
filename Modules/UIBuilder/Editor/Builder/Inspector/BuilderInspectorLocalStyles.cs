@@ -46,6 +46,25 @@ namespace Unity.UI.Builder
             if (animationFoldout != null)
                 animationFoldout.style.display = UIToolkitProjectSettings.s_EnablePanelRendererAnimationAtBoot ? DisplayStyle.Flex : DisplayStyle.None;
 
+            // Unlike the animation setting, the CSS Grid flag applies live, so the section tracks
+            // onEnableGridLayoutChanged for as long as it is attached rather than reading a boot snapshot.
+            var gridFoldout = m_LocalStylesSection.Q<PersistedFoldout>("inspector-style-section-foldout-grid");
+            if (gridFoldout != null)
+            {
+                void ApplyGridVisibility(bool enabled) => gridFoldout.style.display = enabled ? DisplayStyle.Flex : DisplayStyle.None;
+                ApplyGridVisibility(UIToolkitProjectSettings.enableGridLayout);
+                gridFoldout.RegisterCallback<AttachToPanelEvent>(_ =>
+                {
+                    UIToolkitProjectSettings.onEnableGridLayoutChanged -= ApplyGridVisibility;
+                    UIToolkitProjectSettings.onEnableGridLayoutChanged += ApplyGridVisibility;
+                    ApplyGridVisibility(UIToolkitProjectSettings.enableGridLayout);
+                });
+                gridFoldout.RegisterCallback<DetachFromPanelEvent>(_ => UIToolkitProjectSettings.onEnableGridLayoutChanged -= ApplyGridVisibility);
+            }
+
+            UpdateZIndexRowVisibility();
+            UIToolkitAuthoringSettings.EnableZIndexChanged += UpdateZIndexRowVisibility;
+
             var styleCategories = m_LocalStylesSection.Query<PersistedFoldout>(
                 className: "unity-builder-inspector__style-category-foldout").Build();
 
@@ -95,6 +114,10 @@ namespace Unity.UI.Builder
                             GenerateTransitionPropertiesContent();
                             m_StyleFields.BindStyleField(styleRow, transitionsListView);
                         }
+                        else if (styleField is StyleAnimationListView animationListView)
+                        {
+                            m_StyleFields.BindStyleField(styleRow, animationListView);
+                        }
                         else if (styleField is BoxModel boxModel)
                         {
                             foreach (var bindingPathName in boxModel.bindingPathArray)
@@ -120,7 +143,21 @@ namespace Unity.UI.Builder
 
         public void Dispose()
         {
+            UIToolkitAuthoringSettings.EnableZIndexChanged -= UpdateZIndexRowVisibility;
             TransitionPropertyDropdownContent.Content = default;
+        }
+
+        void UpdateZIndexRowVisibility()
+        {
+            var styleRows = m_LocalStylesSection.Query<BuilderStyleRow>().Build();
+            foreach (var row in styleRows)
+            {
+                if (row.bindingPath == "z-index")
+                {
+                    row.style.display = UIToolkitAuthoringSettings.EnableZIndex ? StyleKeyword.Null : DisplayStyle.None;
+                    break;
+                }
+            }
         }
 
         void StyleCategoryContextualMenu(ContextualMenuPopulateEvent evt)
@@ -226,6 +263,10 @@ namespace Unity.UI.Builder
                     else if (styleField is TransitionsListView transitionsListView)
                     {
                         m_StyleFields.RefreshStyleField(transitionsListView);
+                    }
+                    else if (styleField is StyleAnimationListView animationListView)
+                    {
+                        m_StyleFields.RefreshStyleField(animationListView);
                     }
                     else if (styleField is BoxModel boxModel)
                     {

@@ -36,5 +36,10 @@ namespace Unity.UIToolkit.Editor
         // 3-channel Cursor: .image (PPtr Texture2D) + .hotspot.x / .hotspot.y (Float). The
         // built-in cursor id is editor-only and not animated; the sampler preserves it.
         Cursor3,
+        // PropertyKind.Background (background-image): channel 0 `.image` (PPtr) followed by
+        // 31 gradient sub-channels (7 header channels + 4 stops * 6 channels each); see
+        // AnimationBindingHelper.SubChannelKind.GradientStop in
+        // Tools/UIElementsGenerator/UIElementsGenerator/Definitions/StylePropertyDefinitions.cs.
+        Gradient,
     }
 }

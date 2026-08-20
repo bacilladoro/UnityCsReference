@@ -35,8 +35,18 @@ namespace Unity.UIToolkit.Editor
                     return Update(in id, authoringContext.StyleDiff.alignItems, authoringContext, targetElement);
                 case StylePropertyId.AlignSelf:
                     return Update(in id, authoringContext.StyleDiff.alignSelf, authoringContext, targetElement);
-                case StylePropertyId.AnimationPlayState:
-                    return Update(in id, authoringContext.StyleDiff.animationPlayState, authoringContext, targetElement);
+                case StylePropertyId.AnimationDelay:
+                    return Update(in id, authoringContext.StyleDiff.animationDelay, authoringContext, targetElement);
+                case StylePropertyId.AnimationDirection:
+                    return Update(in id, authoringContext.StyleDiff.animationDirection, authoringContext, targetElement);
+                case StylePropertyId.AnimationDuration:
+                    return Update(in id, authoringContext.StyleDiff.animationDuration, authoringContext, targetElement);
+                case StylePropertyId.AnimationIterationCount:
+                    return Update(in id, authoringContext.StyleDiff.animationIterationCount, authoringContext, targetElement);
+                case StylePropertyId.AnimationNames:
+                    return Update(in id, authoringContext.StyleDiff.animationNames, authoringContext, targetElement);
+                case StylePropertyId.AnimationPlayStates:
+                    return Update(in id, authoringContext.StyleDiff.animationPlayStates, authoringContext, targetElement);
                 case StylePropertyId.AspectRatio:
                     return Update(in id, authoringContext.StyleDiff.aspectRatio, authoringContext, targetElement);
                 case StylePropertyId.BackdropFilter:
@@ -101,10 +111,32 @@ namespace Unity.UIToolkit.Editor
                     return Update(in id, authoringContext.StyleDiff.flexWrap, authoringContext, targetElement);
                 case StylePropertyId.FontSize:
                     return Update(in id, authoringContext.StyleDiff.fontSize, authoringContext, targetElement);
+                case StylePropertyId.GridAutoColumns:
+                    return Update(in id, authoringContext.StyleDiff.gridAutoColumns, authoringContext, targetElement);
+                case StylePropertyId.GridAutoFlow:
+                    return Update(in id, authoringContext.StyleDiff.gridAutoFlow, authoringContext, targetElement);
+                case StylePropertyId.GridAutoRows:
+                    return Update(in id, authoringContext.StyleDiff.gridAutoRows, authoringContext, targetElement);
+                case StylePropertyId.GridColumnEnd:
+                    return Update(in id, authoringContext.StyleDiff.gridColumnEnd, authoringContext, targetElement);
+                case StylePropertyId.GridColumnStart:
+                    return Update(in id, authoringContext.StyleDiff.gridColumnStart, authoringContext, targetElement);
+                case StylePropertyId.GridRowEnd:
+                    return Update(in id, authoringContext.StyleDiff.gridRowEnd, authoringContext, targetElement);
+                case StylePropertyId.GridRowStart:
+                    return Update(in id, authoringContext.StyleDiff.gridRowStart, authoringContext, targetElement);
+                case StylePropertyId.GridTemplateColumns:
+                    return Update(in id, authoringContext.StyleDiff.gridTemplateColumns, authoringContext, targetElement);
+                case StylePropertyId.GridTemplateRows:
+                    return Update(in id, authoringContext.StyleDiff.gridTemplateRows, authoringContext, targetElement);
                 case StylePropertyId.Height:
                     return Update(in id, authoringContext.StyleDiff.height, authoringContext, targetElement);
                 case StylePropertyId.JustifyContent:
                     return Update(in id, authoringContext.StyleDiff.justifyContent, authoringContext, targetElement);
+                case StylePropertyId.JustifyItems:
+                    return Update(in id, authoringContext.StyleDiff.justifyItems, authoringContext, targetElement);
+                case StylePropertyId.JustifySelf:
+                    return Update(in id, authoringContext.StyleDiff.justifySelf, authoringContext, targetElement);
                 case StylePropertyId.Left:
                     return Update(in id, authoringContext.StyleDiff.left, authoringContext, targetElement);
                 case StylePropertyId.LetterSpacing:
@@ -165,8 +197,6 @@ namespace Unity.UIToolkit.Editor
                     return Update(in id, authoringContext.StyleDiff.transitionTimingFunction, authoringContext, targetElement);
                 case StylePropertyId.Translate:
                     return Update(in id, authoringContext.StyleDiff.translate, authoringContext, targetElement);
-                case StylePropertyId.UnityAnimationClip:
-                    return Update(in id, authoringContext.StyleDiff.unityAnimationClip, authoringContext, targetElement);
                 case StylePropertyId.UnityBackgroundImageTintColor:
                     return Update(in id, authoringContext.StyleDiff.unityBackgroundImageTintColor, authoringContext, targetElement);
                 case StylePropertyId.UnityEditorTextRenderingMode:
@@ -215,6 +245,8 @@ namespace Unity.UIToolkit.Editor
                     return Update(in id, authoringContext.StyleDiff.width, authoringContext, targetElement);
                 case StylePropertyId.WordSpacing:
                     return Update(in id, authoringContext.StyleDiff.wordSpacing, authoringContext, targetElement);
+                case StylePropertyId.ZIndex:
+                    return Update(in id, authoringContext.StyleDiff.zIndex, authoringContext, targetElement);
                 default:
                     return new BindingResult(BindingStatus.Failure, GetUnsupportedPropertyId(propertyId));
             }
@@ -229,10 +261,25 @@ namespace Unity.UIToolkit.Editor
                 case StylePropertyId.AlignContent:
                 case StylePropertyId.AlignItems:
                 case StylePropertyId.AlignSelf:
+                case StylePropertyId.JustifyItems:
+                case StylePropertyId.JustifySelf:
                     RegisterEnumCallbacks<Align>(binding, id, targetElement);
                     break;
-                case StylePropertyId.AnimationPlayState:
-                    RegisterEnumCallbacks<AnimationPlayState>(binding, id, targetElement);
+                case StylePropertyId.AnimationDelay:
+                case StylePropertyId.AnimationDuration:
+                    RegisterCallbacks<StyleList<float>, List<float>>(binding, in id, targetElement, ProcessChange, ProcessChange, binding.ProcessChange, binding.ProcessChange);
+                    break;
+                case StylePropertyId.AnimationDirection:
+                    RegisterCallbacks<StyleList<AnimationDirection>, List<AnimationDirection>>(binding, in id, targetElement, ProcessChange, ProcessChange, binding.ProcessChange, binding.ProcessChange);
+                    break;
+                case StylePropertyId.AnimationIterationCount:
+                    RegisterCallbacks<StyleList<AnimationIterationCount>, List<AnimationIterationCount>>(binding, in id, targetElement, ProcessChange, ProcessChange, binding.ProcessChange, binding.ProcessChange);
+                    break;
+                case StylePropertyId.AnimationNames:
+                    RegisterCallbacks<StyleList<UIAnimationClip>, List<UIAnimationClip>>(binding, in id, targetElement, ProcessChange, ProcessChange, binding.ProcessChange, binding.ProcessChange);
+                    break;
+                case StylePropertyId.AnimationPlayStates:
+                    RegisterCallbacks<StyleList<AnimationPlayState>, List<AnimationPlayState>>(binding, in id, targetElement, ProcessChange, ProcessChange, binding.ProcessChange, binding.ProcessChange);
                     break;
                 case StylePropertyId.AspectRatio:
                     RegisterCallbacks<StyleRatio, Ratio>(binding, in id, targetElement, ProcessChange, ProcessChange, binding.ProcessChange, binding.ProcessChange);
@@ -318,6 +365,21 @@ namespace Unity.UIToolkit.Editor
                 case StylePropertyId.FlexWrap:
                     RegisterEnumCallbacks<Wrap>(binding, id, targetElement);
                     break;
+                case StylePropertyId.GridAutoColumns:
+                case StylePropertyId.GridAutoRows:
+                case StylePropertyId.GridTemplateColumns:
+                case StylePropertyId.GridTemplateRows:
+                    RegisterCallbacks<StyleList<GridTrackSize>, List<GridTrackSize>>(binding, in id, targetElement, ProcessChange, ProcessChange, binding.ProcessChange, binding.ProcessChange);
+                    break;
+                case StylePropertyId.GridAutoFlow:
+                    RegisterEnumCallbacks<GridAutoFlow>(binding, id, targetElement);
+                    break;
+                case StylePropertyId.GridColumnEnd:
+                case StylePropertyId.GridColumnStart:
+                case StylePropertyId.GridRowEnd:
+                case StylePropertyId.GridRowStart:
+                    RegisterCallbacks<StyleGridLine, GridLine>(binding, in id, targetElement, ProcessChange, ProcessChange, binding.ProcessChange, binding.ProcessChange);
+                    break;
                 case StylePropertyId.JustifyContent:
                     RegisterEnumCallbacks<Justify>(binding, id, targetElement);
                     break;
@@ -356,9 +418,6 @@ namespace Unity.UIToolkit.Editor
                 case StylePropertyId.Translate:
                     RegisterCallbacks<StyleTranslate, Translate>(binding, in id, targetElement, ProcessChange, ProcessChange, binding.ProcessChange, binding.ProcessChange);
                     break;
-                case StylePropertyId.UnityAnimationClip:
-                    RegisterCallbacks<StyleUIAnimationClip, UIAnimationClip>(binding, in id, targetElement, ProcessChange, ProcessChange, binding.ProcessChange, binding.ProcessChange);
-                    break;
                 case StylePropertyId.UnityEditorTextRenderingMode:
                     RegisterEnumCallbacks<EditorTextRenderingMode>(binding, id, targetElement);
                     break;
@@ -381,6 +440,7 @@ namespace Unity.UIToolkit.Editor
                 case StylePropertyId.UnitySliceLeft:
                 case StylePropertyId.UnitySliceRight:
                 case StylePropertyId.UnitySliceTop:
+                case StylePropertyId.ZIndex:
                     RegisterCallbacks<StyleInt, int>(binding, in id, targetElement, ProcessChange, ProcessChange, binding.ProcessChange, binding.ProcessChange);
                     break;
                 case StylePropertyId.UnitySliceType:
@@ -418,14 +478,42 @@ namespace Unity.UIToolkit.Editor
                 case StylePropertyId.AlignContent:
                 case StylePropertyId.AlignItems:
                 case StylePropertyId.AlignSelf:
+                case StylePropertyId.JustifyItems:
+                case StylePropertyId.JustifySelf:
                     targetElement.UnregisterCallback<ChangeEvent<Align>, CallbackContext>(ProcessChange);
                     targetElement.UnregisterCallback<ChangeEvent<StyleEnum<Align>>, CallbackContext>(ProcessChange);
                     targetElement.UnregisterCallback<ChangeEvent<Enum>, CallbackContext>(ProcessChange);
                     break;
-                case StylePropertyId.AnimationPlayState:
-                    targetElement.UnregisterCallback<ChangeEvent<AnimationPlayState>, CallbackContext>(ProcessChange);
-                    targetElement.UnregisterCallback<ChangeEvent<StyleEnum<AnimationPlayState>>, CallbackContext>(ProcessChange);
-                    targetElement.UnregisterCallback<ChangeEvent<Enum>, CallbackContext>(ProcessChange);
+                case StylePropertyId.AnimationDelay:
+                case StylePropertyId.AnimationDuration:
+                    targetElement.UnregisterCallback<ChangeEvent<List<float>>, CallbackContext>(ProcessChange);
+                    targetElement.UnregisterCallback<ChangeEvent<StyleList<float>>, CallbackContext>(ProcessChange);
+                    targetElement.UnregisterCallback<CompositeStylePropertyChangeEvent<List<float>>, CallbackContext>(binding.ProcessChange);
+                    targetElement.UnregisterCallback<CompositeStylePropertyChangeEvent<StyleList<float>>, CallbackContext>(binding.ProcessChange);
+                    break;
+                case StylePropertyId.AnimationDirection:
+                    targetElement.UnregisterCallback<ChangeEvent<List<AnimationDirection>>, CallbackContext>(ProcessChange);
+                    targetElement.UnregisterCallback<ChangeEvent<StyleList<AnimationDirection>>, CallbackContext>(ProcessChange);
+                    targetElement.UnregisterCallback<CompositeStylePropertyChangeEvent<List<AnimationDirection>>, CallbackContext>(binding.ProcessChange);
+                    targetElement.UnregisterCallback<CompositeStylePropertyChangeEvent<StyleList<AnimationDirection>>, CallbackContext>(binding.ProcessChange);
+                    break;
+                case StylePropertyId.AnimationIterationCount:
+                    targetElement.UnregisterCallback<ChangeEvent<List<AnimationIterationCount>>, CallbackContext>(ProcessChange);
+                    targetElement.UnregisterCallback<ChangeEvent<StyleList<AnimationIterationCount>>, CallbackContext>(ProcessChange);
+                    targetElement.UnregisterCallback<CompositeStylePropertyChangeEvent<List<AnimationIterationCount>>, CallbackContext>(binding.ProcessChange);
+                    targetElement.UnregisterCallback<CompositeStylePropertyChangeEvent<StyleList<AnimationIterationCount>>, CallbackContext>(binding.ProcessChange);
+                    break;
+                case StylePropertyId.AnimationNames:
+                    targetElement.UnregisterCallback<ChangeEvent<List<UIAnimationClip>>, CallbackContext>(ProcessChange);
+                    targetElement.UnregisterCallback<ChangeEvent<StyleList<UIAnimationClip>>, CallbackContext>(ProcessChange);
+                    targetElement.UnregisterCallback<CompositeStylePropertyChangeEvent<List<UIAnimationClip>>, CallbackContext>(binding.ProcessChange);
+                    targetElement.UnregisterCallback<CompositeStylePropertyChangeEvent<StyleList<UIAnimationClip>>, CallbackContext>(binding.ProcessChange);
+                    break;
+                case StylePropertyId.AnimationPlayStates:
+                    targetElement.UnregisterCallback<ChangeEvent<List<AnimationPlayState>>, CallbackContext>(ProcessChange);
+                    targetElement.UnregisterCallback<ChangeEvent<StyleList<AnimationPlayState>>, CallbackContext>(ProcessChange);
+                    targetElement.UnregisterCallback<CompositeStylePropertyChangeEvent<List<AnimationPlayState>>, CallbackContext>(binding.ProcessChange);
+                    targetElement.UnregisterCallback<CompositeStylePropertyChangeEvent<StyleList<AnimationPlayState>>, CallbackContext>(binding.ProcessChange);
                     break;
                 case StylePropertyId.AspectRatio:
                     targetElement.UnregisterCallback<ChangeEvent<Ratio>, CallbackContext>(ProcessChange);
@@ -547,6 +635,29 @@ namespace Unity.UIToolkit.Editor
                     targetElement.UnregisterCallback<ChangeEvent<StyleEnum<Wrap>>, CallbackContext>(ProcessChange);
                     targetElement.UnregisterCallback<ChangeEvent<Enum>, CallbackContext>(ProcessChange);
                     break;
+                case StylePropertyId.GridAutoColumns:
+                case StylePropertyId.GridAutoRows:
+                case StylePropertyId.GridTemplateColumns:
+                case StylePropertyId.GridTemplateRows:
+                    targetElement.UnregisterCallback<ChangeEvent<List<GridTrackSize>>, CallbackContext>(ProcessChange);
+                    targetElement.UnregisterCallback<ChangeEvent<StyleList<GridTrackSize>>, CallbackContext>(ProcessChange);
+                    targetElement.UnregisterCallback<CompositeStylePropertyChangeEvent<List<GridTrackSize>>, CallbackContext>(binding.ProcessChange);
+                    targetElement.UnregisterCallback<CompositeStylePropertyChangeEvent<StyleList<GridTrackSize>>, CallbackContext>(binding.ProcessChange);
+                    break;
+                case StylePropertyId.GridAutoFlow:
+                    targetElement.UnregisterCallback<ChangeEvent<GridAutoFlow>, CallbackContext>(ProcessChange);
+                    targetElement.UnregisterCallback<ChangeEvent<StyleEnum<GridAutoFlow>>, CallbackContext>(ProcessChange);
+                    targetElement.UnregisterCallback<ChangeEvent<Enum>, CallbackContext>(ProcessChange);
+                    break;
+                case StylePropertyId.GridColumnEnd:
+                case StylePropertyId.GridColumnStart:
+                case StylePropertyId.GridRowEnd:
+                case StylePropertyId.GridRowStart:
+                    targetElement.UnregisterCallback<ChangeEvent<GridLine>, CallbackContext>(ProcessChange);
+                    targetElement.UnregisterCallback<ChangeEvent<StyleGridLine>, CallbackContext>(ProcessChange);
+                    targetElement.UnregisterCallback<CompositeStylePropertyChangeEvent<GridLine>, CallbackContext>(binding.ProcessChange);
+                    targetElement.UnregisterCallback<CompositeStylePropertyChangeEvent<StyleGridLine>, CallbackContext>(binding.ProcessChange);
+                    break;
                 case StylePropertyId.JustifyContent:
                     targetElement.UnregisterCallback<ChangeEvent<Justify>, CallbackContext>(ProcessChange);
                     targetElement.UnregisterCallback<ChangeEvent<StyleEnum<Justify>>, CallbackContext>(ProcessChange);
@@ -617,12 +728,6 @@ namespace Unity.UIToolkit.Editor
                     targetElement.UnregisterCallback<CompositeStylePropertyChangeEvent<Translate>, CallbackContext>(binding.ProcessChange);
                     targetElement.UnregisterCallback<CompositeStylePropertyChangeEvent<StyleTranslate>, CallbackContext>(binding.ProcessChange);
                     break;
-                case StylePropertyId.UnityAnimationClip:
-                    targetElement.UnregisterCallback<ChangeEvent<UIAnimationClip>, CallbackContext>(ProcessChange);
-                    targetElement.UnregisterCallback<ChangeEvent<StyleUIAnimationClip>, CallbackContext>(ProcessChange);
-                    targetElement.UnregisterCallback<CompositeStylePropertyChangeEvent<UIAnimationClip>, CallbackContext>(binding.ProcessChange);
-                    targetElement.UnregisterCallback<CompositeStylePropertyChangeEvent<StyleUIAnimationClip>, CallbackContext>(binding.ProcessChange);
-                    break;
                 case StylePropertyId.UnityEditorTextRenderingMode:
                     targetElement.UnregisterCallback<ChangeEvent<EditorTextRenderingMode>, CallbackContext>(ProcessChange);
                     targetElement.UnregisterCallback<ChangeEvent<StyleEnum<EditorTextRenderingMode>>, CallbackContext>(ProcessChange);
@@ -660,6 +765,7 @@ namespace Unity.UIToolkit.Editor
                 case StylePropertyId.UnitySliceLeft:
                 case StylePropertyId.UnitySliceRight:
                 case StylePropertyId.UnitySliceTop:
+                case StylePropertyId.ZIndex:
                     targetElement.UnregisterCallback<ChangeEvent<int>, CallbackContext>(ProcessChange);
                     targetElement.UnregisterCallback<ChangeEvent<StyleInt>, CallbackContext>(ProcessChange);
                     targetElement.UnregisterCallback<CompositeStylePropertyChangeEvent<int>, CallbackContext>(binding.ProcessChange);
@@ -706,6 +812,56 @@ namespace Unity.UIToolkit.Editor
             }
 
             targetElement.UnregisterCallback<PropertyChangedEvent, CallbackContext>(binding.ProcessChange);
+        }
+
+        internal static void SetFloatList(StyleProperty property, StyleSheet sheet, List<float> value)
+        {
+            property.SetFloatList(sheet, value);
+        }
+
+        internal static void SetFloatList(StyleProperty property, StyleSheet sheet, StyleList<float> styleValue)
+        {
+            SetStyleValue<StyleList<float>, List<float>>(property, sheet, styleValue, SetFloatList);
+        }
+
+        internal static void SetAnimationDirectionList(StyleProperty property, StyleSheet sheet, List<AnimationDirection> value)
+        {
+            property.SetAnimationDirectionList(sheet, value);
+        }
+
+        internal static void SetAnimationDirectionList(StyleProperty property, StyleSheet sheet, StyleList<AnimationDirection> styleValue)
+        {
+            SetStyleValue<StyleList<AnimationDirection>, List<AnimationDirection>>(property, sheet, styleValue, SetAnimationDirectionList);
+        }
+
+        internal static void SetAnimationIterationCountList(StyleProperty property, StyleSheet sheet, List<AnimationIterationCount> value)
+        {
+            property.SetAnimationIterationCountList(sheet, value);
+        }
+
+        internal static void SetAnimationIterationCountList(StyleProperty property, StyleSheet sheet, StyleList<AnimationIterationCount> styleValue)
+        {
+            SetStyleValue<StyleList<AnimationIterationCount>, List<AnimationIterationCount>>(property, sheet, styleValue, SetAnimationIterationCountList);
+        }
+
+        internal static void SetUIAnimationClipList(StyleProperty property, StyleSheet sheet, List<UIAnimationClip> value)
+        {
+            property.SetUIAnimationClipList(sheet, value);
+        }
+
+        internal static void SetUIAnimationClipList(StyleProperty property, StyleSheet sheet, StyleList<UIAnimationClip> styleValue)
+        {
+            SetStyleValue<StyleList<UIAnimationClip>, List<UIAnimationClip>>(property, sheet, styleValue, SetUIAnimationClipList);
+        }
+
+        internal static void SetAnimationPlayStateList(StyleProperty property, StyleSheet sheet, List<AnimationPlayState> value)
+        {
+            property.SetAnimationPlayStateList(sheet, value);
+        }
+
+        internal static void SetAnimationPlayStateList(StyleProperty property, StyleSheet sheet, StyleList<AnimationPlayState> styleValue)
+        {
+            SetStyleValue<StyleList<AnimationPlayState>, List<AnimationPlayState>>(property, sheet, styleValue, SetAnimationPlayStateList);
         }
 
         internal static void SetRatio(StyleProperty property, StyleSheet sheet, Ratio value)
@@ -808,6 +964,26 @@ namespace Unity.UIToolkit.Editor
             SetStyleValue<StyleCursor, UnityEngine.UIElements.Cursor>(property, sheet, styleValue, SetCursor);
         }
 
+        internal static void SetGridTrackSizeList(StyleProperty property, StyleSheet sheet, List<GridTrackSize> value)
+        {
+            property.SetGridTrackSizeList(sheet, value);
+        }
+
+        internal static void SetGridTrackSizeList(StyleProperty property, StyleSheet sheet, StyleList<GridTrackSize> styleValue)
+        {
+            SetStyleValue<StyleList<GridTrackSize>, List<GridTrackSize>>(property, sheet, styleValue, SetGridTrackSizeList);
+        }
+
+        internal static void SetGridLine(StyleProperty property, StyleSheet sheet, GridLine value)
+        {
+            property.SetGridLine(sheet, value);
+        }
+
+        internal static void SetGridLine(StyleProperty property, StyleSheet sheet, StyleGridLine styleValue)
+        {
+            SetStyleValue<StyleGridLine, GridLine>(property, sheet, styleValue, SetGridLine);
+        }
+
         internal static void SetRotate(StyleProperty property, StyleSheet sheet, Rotate value)
         {
             property.SetRotate(sheet, value);
@@ -888,16 +1064,6 @@ namespace Unity.UIToolkit.Editor
             SetStyleValue<StyleTranslate, Translate>(property, sheet, styleValue, SetTranslate);
         }
 
-        internal static void SetUIAnimationClip(StyleProperty property, StyleSheet sheet, UIAnimationClip value)
-        {
-            property.SetAssetReference(sheet, value);
-        }
-
-        internal static void SetUIAnimationClip(StyleProperty property, StyleSheet sheet, StyleUIAnimationClip styleValue)
-        {
-            SetStyleValue<StyleUIAnimationClip, UIAnimationClip>(property, sheet, styleValue, SetUIAnimationClip);
-        }
-
         internal static void SetFont(StyleProperty property, StyleSheet sheet, Font value)
         {
             property.SetAssetReference(sheet, value);
@@ -963,6 +1129,106 @@ namespace Unity.UIToolkit.Editor
             where T : struct, Enum, IConvertible
         {
             SetStyleValue<StyleEnum<T>, T>(property, sheet, styleValue, SetEnum<T>);
+        }
+
+        private static void ProcessChange(ChangeEvent<List<float>> evt, CallbackContext ctx)
+        {
+            ProcessChange(evt, ctx, SetFloatList);
+        }
+
+        private static void ProcessChange(ChangeEvent<StyleList<float>> evt, CallbackContext ctx)
+        {
+            ProcessChange(evt, ctx, SetFloatList);
+        }
+
+        private void ProcessChange(CompositeStylePropertyChangeEvent<List<float>> evt, CallbackContext ctx)
+        {
+            ProcessChange(evt, ctx, SetFloatList);
+        }
+
+        private void ProcessChange(CompositeStylePropertyChangeEvent<StyleList<float>> evt, CallbackContext ctx)
+        {
+            ProcessChange(evt, ctx, SetFloatList);
+        }
+
+        private static void ProcessChange(ChangeEvent<List<AnimationDirection>> evt, CallbackContext ctx)
+        {
+            ProcessChange(evt, ctx, SetAnimationDirectionList);
+        }
+
+        private static void ProcessChange(ChangeEvent<StyleList<AnimationDirection>> evt, CallbackContext ctx)
+        {
+            ProcessChange(evt, ctx, SetAnimationDirectionList);
+        }
+
+        private void ProcessChange(CompositeStylePropertyChangeEvent<List<AnimationDirection>> evt, CallbackContext ctx)
+        {
+            ProcessChange(evt, ctx, SetAnimationDirectionList);
+        }
+
+        private void ProcessChange(CompositeStylePropertyChangeEvent<StyleList<AnimationDirection>> evt, CallbackContext ctx)
+        {
+            ProcessChange(evt, ctx, SetAnimationDirectionList);
+        }
+
+        private static void ProcessChange(ChangeEvent<List<AnimationIterationCount>> evt, CallbackContext ctx)
+        {
+            ProcessChange(evt, ctx, SetAnimationIterationCountList);
+        }
+
+        private static void ProcessChange(ChangeEvent<StyleList<AnimationIterationCount>> evt, CallbackContext ctx)
+        {
+            ProcessChange(evt, ctx, SetAnimationIterationCountList);
+        }
+
+        private void ProcessChange(CompositeStylePropertyChangeEvent<List<AnimationIterationCount>> evt, CallbackContext ctx)
+        {
+            ProcessChange(evt, ctx, SetAnimationIterationCountList);
+        }
+
+        private void ProcessChange(CompositeStylePropertyChangeEvent<StyleList<AnimationIterationCount>> evt, CallbackContext ctx)
+        {
+            ProcessChange(evt, ctx, SetAnimationIterationCountList);
+        }
+
+        private static void ProcessChange(ChangeEvent<List<UIAnimationClip>> evt, CallbackContext ctx)
+        {
+            ProcessChange(evt, ctx, SetUIAnimationClipList);
+        }
+
+        private static void ProcessChange(ChangeEvent<StyleList<UIAnimationClip>> evt, CallbackContext ctx)
+        {
+            ProcessChange(evt, ctx, SetUIAnimationClipList);
+        }
+
+        private void ProcessChange(CompositeStylePropertyChangeEvent<List<UIAnimationClip>> evt, CallbackContext ctx)
+        {
+            ProcessChange(evt, ctx, SetUIAnimationClipList);
+        }
+
+        private void ProcessChange(CompositeStylePropertyChangeEvent<StyleList<UIAnimationClip>> evt, CallbackContext ctx)
+        {
+            ProcessChange(evt, ctx, SetUIAnimationClipList);
+        }
+
+        private static void ProcessChange(ChangeEvent<List<AnimationPlayState>> evt, CallbackContext ctx)
+        {
+            ProcessChange(evt, ctx, SetAnimationPlayStateList);
+        }
+
+        private static void ProcessChange(ChangeEvent<StyleList<AnimationPlayState>> evt, CallbackContext ctx)
+        {
+            ProcessChange(evt, ctx, SetAnimationPlayStateList);
+        }
+
+        private void ProcessChange(CompositeStylePropertyChangeEvent<List<AnimationPlayState>> evt, CallbackContext ctx)
+        {
+            ProcessChange(evt, ctx, SetAnimationPlayStateList);
+        }
+
+        private void ProcessChange(CompositeStylePropertyChangeEvent<StyleList<AnimationPlayState>> evt, CallbackContext ctx)
+        {
+            ProcessChange(evt, ctx, SetAnimationPlayStateList);
         }
 
         private static void ProcessChange(ChangeEvent<Ratio> evt, CallbackContext ctx)
@@ -1165,6 +1431,46 @@ namespace Unity.UIToolkit.Editor
             ProcessChange(evt, ctx, SetCursor);
         }
 
+        private static void ProcessChange(ChangeEvent<List<GridTrackSize>> evt, CallbackContext ctx)
+        {
+            ProcessChange(evt, ctx, SetGridTrackSizeList);
+        }
+
+        private static void ProcessChange(ChangeEvent<StyleList<GridTrackSize>> evt, CallbackContext ctx)
+        {
+            ProcessChange(evt, ctx, SetGridTrackSizeList);
+        }
+
+        private void ProcessChange(CompositeStylePropertyChangeEvent<List<GridTrackSize>> evt, CallbackContext ctx)
+        {
+            ProcessChange(evt, ctx, SetGridTrackSizeList);
+        }
+
+        private void ProcessChange(CompositeStylePropertyChangeEvent<StyleList<GridTrackSize>> evt, CallbackContext ctx)
+        {
+            ProcessChange(evt, ctx, SetGridTrackSizeList);
+        }
+
+        private static void ProcessChange(ChangeEvent<GridLine> evt, CallbackContext ctx)
+        {
+            ProcessChange(evt, ctx, SetGridLine);
+        }
+
+        private static void ProcessChange(ChangeEvent<StyleGridLine> evt, CallbackContext ctx)
+        {
+            ProcessChange(evt, ctx, SetGridLine);
+        }
+
+        private void ProcessChange(CompositeStylePropertyChangeEvent<GridLine> evt, CallbackContext ctx)
+        {
+            ProcessChange(evt, ctx, SetGridLine);
+        }
+
+        private void ProcessChange(CompositeStylePropertyChangeEvent<StyleGridLine> evt, CallbackContext ctx)
+        {
+            ProcessChange(evt, ctx, SetGridLine);
+        }
+
         private static void ProcessChange(ChangeEvent<Rotate> evt, CallbackContext ctx)
         {
             ProcessChange(evt, ctx, SetRotate);
@@ -1325,26 +1631,6 @@ namespace Unity.UIToolkit.Editor
             ProcessChange(evt, ctx, SetTranslate);
         }
 
-        private static void ProcessChange(ChangeEvent<UIAnimationClip> evt, CallbackContext ctx)
-        {
-            ProcessChange(evt, ctx, SetUIAnimationClip);
-        }
-
-        private static void ProcessChange(ChangeEvent<StyleUIAnimationClip> evt, CallbackContext ctx)
-        {
-            ProcessChange(evt, ctx, SetUIAnimationClip);
-        }
-
-        private void ProcessChange(CompositeStylePropertyChangeEvent<UIAnimationClip> evt, CallbackContext ctx)
-        {
-            ProcessChange(evt, ctx, SetUIAnimationClip);
-        }
-
-        private void ProcessChange(CompositeStylePropertyChangeEvent<StyleUIAnimationClip> evt, CallbackContext ctx)
-        {
-            ProcessChange(evt, ctx, SetUIAnimationClip);
-        }
-
         private static void ProcessChange(ChangeEvent<Font> evt, CallbackContext ctx)
         {
             ProcessChange(evt, ctx, SetFont);
@@ -1469,15 +1755,19 @@ namespace Unity.UIToolkit.Editor
             switch (stylePropertyId)
             {
                 case StylePropertyId.All:
+                case StylePropertyId.Animation:
                 case StylePropertyId.BackgroundPosition:
                 case StylePropertyId.BorderColor:
                 case StylePropertyId.BorderRadius:
                 case StylePropertyId.BorderWidth:
                 case StylePropertyId.Flex:
                 case StylePropertyId.Gap:
+                case StylePropertyId.GridColumn:
+                case StylePropertyId.GridRow:
                 case StylePropertyId.Margin:
                 case StylePropertyId.Padding:
                 case StylePropertyId.Transition:
+                case StylePropertyId.UnityAnimationClip:
                 case StylePropertyId.UnityBackgroundScaleMode:
                 case StylePropertyId.UnityTextOutline:
                     throw new ArgumentOutOfRangeException();
@@ -1494,7 +1784,7 @@ namespace Unity.UIToolkit.Editor
             PropertyContainer.Accept(visitor, ref element, evt.property);
         }
 
-        private partial class GenericValueAtPath : PathVisitor, IProcessGenericChange<Align>, IProcessGenericChange<StyleEnum<Align>>, IProcessGenericChange<AnimationPlayState>, IProcessGenericChange<StyleEnum<AnimationPlayState>>, IProcessGenericChange<Ratio>, IProcessGenericChange<StyleRatio>, IProcessGenericChange<List<FilterFunction>>, IProcessGenericChange<StyleList<FilterFunction>>, IProcessGenericChange<Color>, IProcessGenericChange<StyleColor>, IProcessGenericChange<Background>, IProcessGenericChange<StyleBackground>, IProcessGenericChange<BackgroundPosition>, IProcessGenericChange<StyleBackgroundPosition>, IProcessGenericChange<BackgroundRepeat>, IProcessGenericChange<StyleBackgroundRepeat>, IProcessGenericChange<BackgroundSize>, IProcessGenericChange<StyleBackgroundSize>, IProcessGenericChange<Length>, IProcessGenericChange<StyleLength>, IProcessGenericChange<float>, IProcessGenericChange<StyleFloat>, IProcessGenericChange<UnityEngine.UIElements.Cursor>, IProcessGenericChange<StyleCursor>, IProcessGenericChange<DisplayStyle>, IProcessGenericChange<StyleEnum<DisplayStyle>>, IProcessGenericChange<FlexDirection>, IProcessGenericChange<StyleEnum<FlexDirection>>, IProcessGenericChange<Wrap>, IProcessGenericChange<StyleEnum<Wrap>>, IProcessGenericChange<Justify>, IProcessGenericChange<StyleEnum<Justify>>, IProcessGenericChange<OverflowInternal>, IProcessGenericChange<StyleEnum<Overflow>>, IProcessGenericChange<Position>, IProcessGenericChange<StyleEnum<Position>>, IProcessGenericChange<Rotate>, IProcessGenericChange<StyleRotate>, IProcessGenericChange<Scale>, IProcessGenericChange<StyleScale>, IProcessGenericChange<TextOverflow>, IProcessGenericChange<StyleEnum<TextOverflow>>, IProcessGenericChange<TextShadow>, IProcessGenericChange<StyleTextShadow>, IProcessGenericChange<TransformOrigin>, IProcessGenericChange<StyleTransformOrigin>, IProcessGenericChange<List<TimeValue>>, IProcessGenericChange<StyleList<TimeValue>>, IProcessGenericChange<List<StylePropertyName>>, IProcessGenericChange<StyleList<StylePropertyName>>, IProcessGenericChange<List<EasingFunction>>, IProcessGenericChange<StyleList<EasingFunction>>, IProcessGenericChange<Translate>, IProcessGenericChange<StyleTranslate>, IProcessGenericChange<UIAnimationClip>, IProcessGenericChange<StyleUIAnimationClip>, IProcessGenericChange<EditorTextRenderingMode>, IProcessGenericChange<StyleEnum<EditorTextRenderingMode>>, IProcessGenericChange<Font>, IProcessGenericChange<StyleFont>, IProcessGenericChange<FontDefinition>, IProcessGenericChange<StyleFontDefinition>, IProcessGenericChange<FontStyle>, IProcessGenericChange<StyleEnum<FontStyle>>, IProcessGenericChange<MaterialDefinition>, IProcessGenericChange<StyleMaterialDefinition>, IProcessGenericChange<OverflowClipBox>, IProcessGenericChange<StyleEnum<OverflowClipBox>>, IProcessGenericChange<int>, IProcessGenericChange<StyleInt>, IProcessGenericChange<SliceType>, IProcessGenericChange<StyleEnum<SliceType>>, IProcessGenericChange<TextAnchor>, IProcessGenericChange<StyleEnum<TextAnchor>>, IProcessGenericChange<TextAutoSize>, IProcessGenericChange<StyleTextAutoSize>, IProcessGenericChange<TextGeneratorType>, IProcessGenericChange<StyleEnum<TextGeneratorType>>, IProcessGenericChange<TextOverflowPosition>, IProcessGenericChange<StyleEnum<TextOverflowPosition>>, IProcessGenericChange<Visibility>, IProcessGenericChange<StyleEnum<Visibility>>, IProcessGenericChange<WhiteSpace>, IProcessGenericChange<StyleEnum<WhiteSpace>>
+        private partial class GenericValueAtPath : PathVisitor, IProcessGenericChange<Align>, IProcessGenericChange<StyleEnum<Align>>, IProcessGenericChange<List<float>>, IProcessGenericChange<StyleList<float>>, IProcessGenericChange<List<AnimationDirection>>, IProcessGenericChange<StyleList<AnimationDirection>>, IProcessGenericChange<List<AnimationIterationCount>>, IProcessGenericChange<StyleList<AnimationIterationCount>>, IProcessGenericChange<List<UIAnimationClip>>, IProcessGenericChange<StyleList<UIAnimationClip>>, IProcessGenericChange<List<AnimationPlayState>>, IProcessGenericChange<StyleList<AnimationPlayState>>, IProcessGenericChange<Ratio>, IProcessGenericChange<StyleRatio>, IProcessGenericChange<List<FilterFunction>>, IProcessGenericChange<StyleList<FilterFunction>>, IProcessGenericChange<Color>, IProcessGenericChange<StyleColor>, IProcessGenericChange<Background>, IProcessGenericChange<StyleBackground>, IProcessGenericChange<BackgroundPosition>, IProcessGenericChange<StyleBackgroundPosition>, IProcessGenericChange<BackgroundRepeat>, IProcessGenericChange<StyleBackgroundRepeat>, IProcessGenericChange<BackgroundSize>, IProcessGenericChange<StyleBackgroundSize>, IProcessGenericChange<Length>, IProcessGenericChange<StyleLength>, IProcessGenericChange<float>, IProcessGenericChange<StyleFloat>, IProcessGenericChange<UnityEngine.UIElements.Cursor>, IProcessGenericChange<StyleCursor>, IProcessGenericChange<DisplayStyle>, IProcessGenericChange<StyleEnum<DisplayStyle>>, IProcessGenericChange<FlexDirection>, IProcessGenericChange<StyleEnum<FlexDirection>>, IProcessGenericChange<Wrap>, IProcessGenericChange<StyleEnum<Wrap>>, IProcessGenericChange<List<GridTrackSize>>, IProcessGenericChange<StyleList<GridTrackSize>>, IProcessGenericChange<GridAutoFlow>, IProcessGenericChange<StyleEnum<GridAutoFlow>>, IProcessGenericChange<GridLine>, IProcessGenericChange<StyleGridLine>, IProcessGenericChange<Justify>, IProcessGenericChange<StyleEnum<Justify>>, IProcessGenericChange<OverflowInternal>, IProcessGenericChange<StyleEnum<Overflow>>, IProcessGenericChange<Position>, IProcessGenericChange<StyleEnum<Position>>, IProcessGenericChange<Rotate>, IProcessGenericChange<StyleRotate>, IProcessGenericChange<Scale>, IProcessGenericChange<StyleScale>, IProcessGenericChange<TextOverflow>, IProcessGenericChange<StyleEnum<TextOverflow>>, IProcessGenericChange<TextShadow>, IProcessGenericChange<StyleTextShadow>, IProcessGenericChange<TransformOrigin>, IProcessGenericChange<StyleTransformOrigin>, IProcessGenericChange<List<TimeValue>>, IProcessGenericChange<StyleList<TimeValue>>, IProcessGenericChange<List<StylePropertyName>>, IProcessGenericChange<StyleList<StylePropertyName>>, IProcessGenericChange<List<EasingFunction>>, IProcessGenericChange<StyleList<EasingFunction>>, IProcessGenericChange<Translate>, IProcessGenericChange<StyleTranslate>, IProcessGenericChange<EditorTextRenderingMode>, IProcessGenericChange<StyleEnum<EditorTextRenderingMode>>, IProcessGenericChange<Font>, IProcessGenericChange<StyleFont>, IProcessGenericChange<FontDefinition>, IProcessGenericChange<StyleFontDefinition>, IProcessGenericChange<FontStyle>, IProcessGenericChange<StyleEnum<FontStyle>>, IProcessGenericChange<MaterialDefinition>, IProcessGenericChange<StyleMaterialDefinition>, IProcessGenericChange<OverflowClipBox>, IProcessGenericChange<StyleEnum<OverflowClipBox>>, IProcessGenericChange<int>, IProcessGenericChange<StyleInt>, IProcessGenericChange<SliceType>, IProcessGenericChange<StyleEnum<SliceType>>, IProcessGenericChange<TextAnchor>, IProcessGenericChange<StyleEnum<TextAnchor>>, IProcessGenericChange<TextAutoSize>, IProcessGenericChange<StyleTextAutoSize>, IProcessGenericChange<TextGeneratorType>, IProcessGenericChange<StyleEnum<TextGeneratorType>>, IProcessGenericChange<TextOverflowPosition>, IProcessGenericChange<StyleEnum<TextOverflowPosition>>, IProcessGenericChange<Visibility>, IProcessGenericChange<StyleEnum<Visibility>>, IProcessGenericChange<WhiteSpace>, IProcessGenericChange<StyleEnum<WhiteSpace>>
         {
             void IProcessGenericChange<Align>.ProcessGenericChange(ref Align value)
             {
@@ -1512,19 +1802,83 @@ namespace Unity.UIToolkit.Editor
                 }
             }
 
-            void IProcessGenericChange<AnimationPlayState>.ProcessGenericChange(ref AnimationPlayState value)
+            void IProcessGenericChange<List<float>>.ProcessGenericChange(ref List<float> value)
             {
                 if (ShouldProcessChange())
                 {
-                    ProcessChange(value, authoringContext, binding, SetEnum);
+                    ProcessChange(value, authoringContext, binding, SetFloatList);
                 }
             }
 
-            void IProcessGenericChange<StyleEnum<AnimationPlayState>>.ProcessGenericChange(ref StyleEnum<AnimationPlayState> value)
+            void IProcessGenericChange<StyleList<float>>.ProcessGenericChange(ref StyleList<float> value)
             {
                 if (ShouldProcessChange())
                 {
-                    ProcessChange(value, authoringContext, binding, SetEnum);
+                    ProcessChange(value, authoringContext, binding, SetFloatList);
+                }
+            }
+
+            void IProcessGenericChange<List<AnimationDirection>>.ProcessGenericChange(ref List<AnimationDirection> value)
+            {
+                if (ShouldProcessChange())
+                {
+                    ProcessChange(value, authoringContext, binding, SetAnimationDirectionList);
+                }
+            }
+
+            void IProcessGenericChange<StyleList<AnimationDirection>>.ProcessGenericChange(ref StyleList<AnimationDirection> value)
+            {
+                if (ShouldProcessChange())
+                {
+                    ProcessChange(value, authoringContext, binding, SetAnimationDirectionList);
+                }
+            }
+
+            void IProcessGenericChange<List<AnimationIterationCount>>.ProcessGenericChange(ref List<AnimationIterationCount> value)
+            {
+                if (ShouldProcessChange())
+                {
+                    ProcessChange(value, authoringContext, binding, SetAnimationIterationCountList);
+                }
+            }
+
+            void IProcessGenericChange<StyleList<AnimationIterationCount>>.ProcessGenericChange(ref StyleList<AnimationIterationCount> value)
+            {
+                if (ShouldProcessChange())
+                {
+                    ProcessChange(value, authoringContext, binding, SetAnimationIterationCountList);
+                }
+            }
+
+            void IProcessGenericChange<List<UIAnimationClip>>.ProcessGenericChange(ref List<UIAnimationClip> value)
+            {
+                if (ShouldProcessChange())
+                {
+                    ProcessChange(value, authoringContext, binding, SetUIAnimationClipList);
+                }
+            }
+
+            void IProcessGenericChange<StyleList<UIAnimationClip>>.ProcessGenericChange(ref StyleList<UIAnimationClip> value)
+            {
+                if (ShouldProcessChange())
+                {
+                    ProcessChange(value, authoringContext, binding, SetUIAnimationClipList);
+                }
+            }
+
+            void IProcessGenericChange<List<AnimationPlayState>>.ProcessGenericChange(ref List<AnimationPlayState> value)
+            {
+                if (ShouldProcessChange())
+                {
+                    ProcessChange(value, authoringContext, binding, SetAnimationPlayStateList);
+                }
+            }
+
+            void IProcessGenericChange<StyleList<AnimationPlayState>>.ProcessGenericChange(ref StyleList<AnimationPlayState> value)
+            {
+                if (ShouldProcessChange())
+                {
+                    ProcessChange(value, authoringContext, binding, SetAnimationPlayStateList);
                 }
             }
 
@@ -1736,6 +2090,54 @@ namespace Unity.UIToolkit.Editor
                 }
             }
 
+            void IProcessGenericChange<List<GridTrackSize>>.ProcessGenericChange(ref List<GridTrackSize> value)
+            {
+                if (ShouldProcessChange())
+                {
+                    ProcessChange(value, authoringContext, binding, SetGridTrackSizeList);
+                }
+            }
+
+            void IProcessGenericChange<StyleList<GridTrackSize>>.ProcessGenericChange(ref StyleList<GridTrackSize> value)
+            {
+                if (ShouldProcessChange())
+                {
+                    ProcessChange(value, authoringContext, binding, SetGridTrackSizeList);
+                }
+            }
+
+            void IProcessGenericChange<GridAutoFlow>.ProcessGenericChange(ref GridAutoFlow value)
+            {
+                if (ShouldProcessChange())
+                {
+                    ProcessChange(value, authoringContext, binding, SetEnum);
+                }
+            }
+
+            void IProcessGenericChange<StyleEnum<GridAutoFlow>>.ProcessGenericChange(ref StyleEnum<GridAutoFlow> value)
+            {
+                if (ShouldProcessChange())
+                {
+                    ProcessChange(value, authoringContext, binding, SetEnum);
+                }
+            }
+
+            void IProcessGenericChange<GridLine>.ProcessGenericChange(ref GridLine value)
+            {
+                if (ShouldProcessChange())
+                {
+                    ProcessChange(value, authoringContext, binding, SetGridLine);
+                }
+            }
+
+            void IProcessGenericChange<StyleGridLine>.ProcessGenericChange(ref StyleGridLine value)
+            {
+                if (ShouldProcessChange())
+                {
+                    ProcessChange(value, authoringContext, binding, SetGridLine);
+                }
+            }
+
             void IProcessGenericChange<Justify>.ProcessGenericChange(ref Justify value)
             {
                 if (ShouldProcessChange())
@@ -1925,22 +2327,6 @@ namespace Unity.UIToolkit.Editor
                 if (ShouldProcessChange())
                 {
                     ProcessChange(value, authoringContext, binding, SetTranslate);
-                }
-            }
-
-            void IProcessGenericChange<UIAnimationClip>.ProcessGenericChange(ref UIAnimationClip value)
-            {
-                if (ShouldProcessChange())
-                {
-                    ProcessChange(value, authoringContext, binding, SetUIAnimationClip);
-                }
-            }
-
-            void IProcessGenericChange<StyleUIAnimationClip>.ProcessGenericChange(ref StyleUIAnimationClip value)
-            {
-                if (ShouldProcessChange())
-                {
-                    ProcessChange(value, authoringContext, binding, SetUIAnimationClip);
                 }
             }
 

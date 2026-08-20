@@ -18,7 +18,7 @@ namespace UnityEditor.Scripting.ScriptCompilation
         // Characters that we consider valid whitespaces.
         public static readonly char[] k_ValidWhitespaces = { ' ', '\t' };
 
-        static Regex s_SplitAndKeep = null;
+        static readonly Regex s_SplitAndKeep = new Regex("(\\|\\|)", RegexOptions.Compiled);
 
         public enum DefineConstraintStatus
         {
@@ -58,9 +58,6 @@ namespace UnityEditor.Scripting.ScriptCompilation
                 return DefineConstraintStatus.Invalid;
             }
 
-            if (s_SplitAndKeep == null)
-                s_SplitAndKeep = new Regex("(\\|\\|)", RegexOptions.Compiled);
-
             // Split by "||" (OR) and keep it in the resulting array
             var splitDefineConstraints = s_SplitAndKeep.Split(defineConstraints);
 
@@ -79,12 +76,12 @@ namespace UnityEditor.Scripting.ScriptCompilation
                 }
             }
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var notExpectedDefines = new HashSet<string>(splitDefineConstraints.Where(x => x.StartsWith(Not, StringComparison.Ordinal) && x != Or).Select(x => x.Substring(1)));
-#pragma warning restore UA2001
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+#pragma warning disable UAC2001 // Avoid Linq
             var expectedDefines = new HashSet<string>(splitDefineConstraints.Where(x => !x.StartsWith(Not, StringComparison.Ordinal) && x != Or));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             if (!symbolDefinitionContext.HasAny())
             {

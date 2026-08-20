@@ -56,9 +56,9 @@ namespace UnityEditor.UIElements.Debugger
         Dictionary<long, int> m_EventCountLog;
         bool m_IsFocused;
 
-        #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+        #pragma warning disable UAC2001 // Avoid Linq
         public int GetSelectedCount() => m_Choices.Count(c => c.TypeId > 0 && m_State[c.TypeId]);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
         public new static readonly string ussClassName = "event-debugger-filter";
         public static readonly string ussContainerClassName = ussClassName + "__container";
@@ -134,10 +134,10 @@ namespace UnityEditor.UIElements.Debugger
 
                 try
                 {
-#pragma warning disable RS0030 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable RS0030 // Avoid Linq
+#pragma warning disable UAC2001 // Avoid Linq
                     foreach (var type in assembly.GetTypes().Where(t => typeof(EventBase).IsAssignableFrom(t) && !t.ContainsGenericParameters))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 #pragma warning restore RS0030
                     {
                         // Only select Pointer events on startup
@@ -145,9 +145,9 @@ namespace UnityEditor.UIElements.Debugger
                     }
 
                     // Special case for ChangeEvent<>.
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2001 // Avoid Linq
                     var implementingTypes = GetAllTypesImplementingOpenGenericType(typeof(INotifyValueChanged<>), assembly).ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     foreach (var valueChangedType in implementingTypes)
                     {
                         var baseType = valueChangedType.BaseType;
@@ -181,9 +181,9 @@ namespace UnityEditor.UIElements.Debugger
 
             // Add groups, with negative ids.
             var keyIndex = -1;
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             foreach (var key in m_GroupedEvents.Keys.OrderBy(k => k))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 m_Choices.Add(new EventTypeChoice() { Name = key, Group = key, TypeId = keyIndex });
                 m_State.Add(keyIndex--, key.Contains("IPointerEvent"));
@@ -191,9 +191,9 @@ namespace UnityEditor.UIElements.Debugger
 
             m_Choices.Sort();
             m_Choices.Insert(0, new EventTypeChoice() { Name = "IAll", Group = "IAll", TypeId = 0 });
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             m_FilteredChoices = m_Choices.ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             m_MenuContainer = new VisualElement();
             m_MenuContainer.AddToClassList(ussClassName);
@@ -275,21 +275,21 @@ namespace UnityEditor.UIElements.Debugger
 
         static IEnumerable<Type> GetAllTypesImplementingOpenGenericType(Type openGenericType, Assembly assembly)
         {
-#pragma warning disable RS0030 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable RS0030 // Avoid Linq
             return from x in assembly.GetTypes()
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 from z in x.GetInterfaces()
-#pragma warning restore UA2001
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+                #pragma warning disable UAC2001 // Avoid Linq
                 let y = x.BaseType
-#pragma warning restore UA2001
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+                    #pragma warning disable UAC2001 // Avoid Linq
                     where (y != null && y.IsGenericType && openGenericType.IsAssignableFrom(y.GetGenericTypeDefinition())) ||
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     (z.IsGenericType && openGenericType.IsAssignableFrom(z.GetGenericTypeDefinition()))
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2001 // Avoid Linq
                     select x;
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 #pragma warning restore RS0030
         }
 
@@ -314,9 +314,9 @@ namespace UnityEditor.UIElements.Debugger
             {
                 var previousType = nextType;
                 nextType = previousType.BaseType;
-#pragma warning disable UA2001, UA2011 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001, UAC2011 // Avoid Linq
                 interfaceType = previousType.GetInterfaces().Where(InterfacePredicate).Except(nextType.GetInterfaces().Where(InterfacePredicate)).FirstOrDefault();
-#pragma warning restore UA2001, UA2011
+#pragma warning restore UAC2001, UAC2011
             }
             while (interfaceType == null && nextType != typeof(EventBase));
 
@@ -364,17 +364,17 @@ namespace UnityEditor.UIElements.Debugger
             }
 
             // All toggling
-            #pragma warning disable UA2001, UA2008 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001, UAC2008 // Avoid Linq
             if (m_State.Where(s => s.Key > 0).All(s => s.Value))
-#pragma warning restore UA2001, UA2008
+#pragma warning restore UAC2001, UAC2008
             {
                 m_State[0] = true;
             }
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
-#pragma warning disable UA2006 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
+#pragma warning disable UAC2006 // Avoid Linq
             else if (m_State.Where(s => s.Key > 0).Any(s => !s.Value))
-#pragma warning restore UA2001
-#pragma warning restore UA2006
+#pragma warning restore UAC2001
+#pragma warning restore UAC2006
             {
                 m_State[0] = false;
             }
@@ -385,16 +385,16 @@ namespace UnityEditor.UIElements.Debugger
                 var events = m_GroupedEvents[choice.Group];
                 if (events.TrueForAll(id => m_State[id]))
                 {
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2001 // Avoid Linq
                     var group = m_Choices.First(c => c.TypeId < 0 && c.Group == choice.Group);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     m_State[group.TypeId] = true;
                 }
                 else if (events.Count > 0) // At least one element must be false, as we already checked TrueForAll and it was false
                 {
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2001 // Avoid Linq
                     var group = m_Choices.First(c => c.TypeId < 0 && c.Group == choice.Group);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     m_State[group.TypeId] = false;
                 }
             }
@@ -440,9 +440,9 @@ namespace UnityEditor.UIElements.Debugger
         {
             if (!m_IsFocused)
             {
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 m_FilteredChoices = m_Choices.ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 m_ListView.itemsSource = m_FilteredChoices;
                 m_ListView.RefreshItems();
                 RefreshLayout();
@@ -570,9 +570,9 @@ namespace UnityEditor.UIElements.Debugger
         {
             var tooltipStr = new StringBuilder();
             var lineCount = 0;
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             foreach (var selectedChoice in m_Choices.Where(c => c.TypeId > 0 && m_State[c.TypeId]))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 if (lineCount++ >= k_MaxTooltipLines)
                 {

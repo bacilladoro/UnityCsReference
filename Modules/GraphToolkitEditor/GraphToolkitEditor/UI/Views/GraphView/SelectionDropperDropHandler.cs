@@ -88,9 +88,9 @@ namespace Unity.GraphToolkit.Editor
                 m_DraggedElements.Sort(GroupItemOrderComparer.Default);
 
                 var contentViewContainer = GraphView.ContentViewContainer;
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 var variablesWithInfo = m_DraggedElements.Select(
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     (e1, i) =>
                         (
                             e1,

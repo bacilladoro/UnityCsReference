@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -14,7 +15,7 @@ namespace Unity.GraphToolkit.Editor
     /// Extension methods on <see cref="GraphView"/> to help dispatching commands.
     /// </summary>
     [UnityRestricted]
-    internal static class GraphViewCommandsExtensions
+    internal static partial class GraphViewCommandsExtensions
     {
         /// <summary>
         /// Dispatches a <see cref="ReframeGraphViewCommand"/> to show all graph elements.
@@ -47,6 +48,7 @@ namespace Unity.GraphToolkit.Editor
                 DispatchFrameAllCommand(self);
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         static readonly List<GraphElement> k_DispatchFramePrevNextCommandAllUIs = new();
 
         static void DispatchFrameAndSelectElementCommand(GraphView graphView, IComparer<GraphElement> elementSortComparer, Func<GraphElementModel, bool> elementFilter = null)
@@ -114,9 +116,9 @@ namespace Unity.GraphToolkit.Editor
                 rectToFit = graphElement.parent.ChangeCoordinatesTo(self.ContentViewContainer, graphElement.layout);
             }
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             rectToFit = graphElements.Aggregate(rectToFit, (current, currentGraphElement) =>
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 VisualElement currentElement = currentGraphElement.SizeElement;
 
@@ -151,9 +153,9 @@ namespace Unity.GraphToolkit.Editor
             self.CalculateFrameTransformToFitElements(graphElements, out var frameTranslation, out var frameScaling);
 
             self.Dispatch(new ReframeGraphViewCommand(frameTranslation, frameScaling,
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 select ? graphElements.Select(e => e.GraphElementModel).ToList() : null));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         /// <summary>

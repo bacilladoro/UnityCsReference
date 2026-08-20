@@ -3,11 +3,13 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Search
 {
     static class QueryEngineUtils
     {
+        [NoAutoStaticsCleanup]
         static readonly HashSet<char> k_WhiteSpaceChars = new HashSet<char>(" \f\n\r\t\v");
 
         public static bool IsNestedQueryToken(in StringView token)

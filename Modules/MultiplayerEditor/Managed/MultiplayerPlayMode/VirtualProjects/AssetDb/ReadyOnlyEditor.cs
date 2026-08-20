@@ -4,12 +4,14 @@
 
 using System;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 
 namespace Unity.Multiplayer.PlayMode.Editor
 {
     class ReadyOnlyEditor : AssetModificationProcessor
     {
+        [NoAutoStaticsCleanup] // caches stable session-level IsClone state determined from command-line args
         static bool? s_IsReadOnly;
         static bool IsReadOnly
         {

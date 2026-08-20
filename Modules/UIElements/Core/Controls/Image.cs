@@ -2,6 +2,8 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
+using Unity.Scripting.LifecycleManagement;
 using Unity.Properties;
 using UnityEngine.Bindings;
 using UnityEngine.UIElements.StyleSheets;
@@ -259,6 +261,7 @@ namespace UnityEngine.UIElements
             measuredWidth = hasRect ? Mathf.Abs(rect.width) : sourceSize.x;
             measuredHeight = hasRect ? Mathf.Abs(rect.height) : sourceSize.y;
 
+            // A replaced element cannot reflow below its content, so min-content == max-content; only AtMost clamps.
             if (widthMode == MeasureMode.AtMost)
             {
                 measuredWidth = Mathf.Min(measuredWidth, desiredWidth);
@@ -301,11 +304,16 @@ namespace UnityEngine.UIElements
             mgc.meshGenerator.DrawRectangle(rectParams);
         }
 
-        internal static CustomStyleProperty<Texture2D> s_ImageProperty = new CustomStyleProperty<Texture2D>("--unity-image");
-        internal static CustomStyleProperty<Sprite> s_SpriteProperty = new CustomStyleProperty<Sprite>("--unity-image");
-        internal static CustomStyleProperty<VectorImage> s_VectorImageProperty = new CustomStyleProperty<VectorImage>("--unity-image");
-        static CustomStyleProperty<string> s_ScaleModeProperty = new CustomStyleProperty<string>("--unity-image-size");
-        static CustomStyleProperty<Color> s_TintColorProperty = new CustomStyleProperty<Color>("--unity-image-tint-color");
+        [NoAutoStaticsCleanup]
+        internal static readonly CustomStyleProperty<Texture2D> s_ImageProperty = new("--unity-image");
+        [NoAutoStaticsCleanup]
+        internal static readonly CustomStyleProperty<Sprite> s_SpriteProperty = new("--unity-image");
+        [NoAutoStaticsCleanup]
+        internal static readonly CustomStyleProperty<VectorImage> s_VectorImageProperty = new("--unity-image");
+        [NoAutoStaticsCleanup]
+        static readonly CustomStyleProperty<string> s_ScaleModeProperty = new("--unity-image-size");
+        [NoAutoStaticsCleanup]
+        static readonly CustomStyleProperty<Color> s_TintColorProperty = new("--unity-image-tint-color");
 
         private void OnCustomStyleResolved(CustomStyleResolvedEvent e)
         {
@@ -475,3 +483,4 @@ namespace UnityEngine.UIElements
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

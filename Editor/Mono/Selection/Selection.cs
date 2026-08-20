@@ -109,36 +109,36 @@ namespace UnityEditor
         {
             if (typeof(Component).IsAssignableFrom(type) || type.IsInterface)
             {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 return GetTransforms(mode).Select(t =>
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 {
                     t.TryGetComponent(type, out var component);
                     return component;
                 }).Where(c => !ReferenceEquals(c, null));
             }
             else if (typeof(GameObject).IsAssignableFrom(type))
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 return GetTransforms(mode).Select(t => t.gameObject);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             else
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 return GetObjectsMode(mode).Where(o => o != null && type.IsAssignableFrom(o.GetType()));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         public static T[] GetFiltered<T>(SelectionMode mode) // no generic constraint because we also want to allow interfaces
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return GetFilteredInternal(typeof(T), mode).Cast<T>().ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         public static Object[] GetFiltered(System.Type type, SelectionMode mode)
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return GetFilteredInternal(type, mode).Cast<Object>().ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         public static void RegisterCustomHandler(string key, System.Action<string, EntityId[]> handler, System.Func<string, EditorWindow, bool> validator = null) => SelectionHistory.instance.RegisterCustomHandler(key, handler, validator);

@@ -12,6 +12,7 @@ using Unity.GraphToolkit.Editor.Implementation;
 using Unity.GraphToolkit.InternalBridge;
 using Unity.GraphToolsAuthoringFramework.InternalEditorBridge;
 using Unity.Profiling;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEditor.ShortcutManagement;
 using UnityEngine;
@@ -49,7 +50,7 @@ namespace Unity.GraphToolkit.Editor
     /// The <see cref="RootView"/> in which graphs are drawn.
     /// </summary>
     [UnityRestricted]
-    internal class GraphView : RootView, IDragSource, IHasItemLibrary, IHasContextualMenuItems
+    internal partial class GraphView : RootView, IDragSource, IHasItemLibrary, IHasContextualMenuItems
     {
         public const int frameBorder = 30;
 
@@ -80,6 +81,7 @@ namespace Unity.GraphToolkit.Editor
         [UnityRestricted]
         internal class Layer : VisualElement {}
 
+        [AutoStaticsCleanupOnCodeReload]
         static readonly List<ChildView> k_UpdateAllUIs = new();
 
         /// <summary>
@@ -573,7 +575,7 @@ namespace Unity.GraphToolkit.Editor
             }
         }
 
-        static ProfilerMarker s_UpdateViewTransformMarker = new ProfilerMarker("UpdateAllElementsLevelOfDetail");
+        static readonly ProfilerMarker s_UpdateViewTransformMarker = new ProfilerMarker("UpdateAllElementsLevelOfDetail");
         /// <summary>
         /// Updates the graph view pan and zoom.
         /// </summary>
@@ -660,18 +662,18 @@ namespace Unity.GraphToolkit.Editor
                 var needZoomCullingUpdate = CullingState == GraphViewCullingState.Enabled && cullingUpdater != null && IsZoomCullingTransition(newZoomMode, oldZoomMode);
                 var newCullingState = IsZoomCullingSize(newZoomMode) ? GraphViewCullingState.Enabled : GraphViewCullingState.Disabled;
                 GraphModel.GetGraphElementModels().GetAllViewsRecursively(this, _ => true, k_UpdateAllUIs);
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 foreach (var graphElement in k_UpdateAllUIs.OfType<GraphElement>())
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 {
                     graphElement.SetLevelOfDetail(zoomLevel, newZoomMode, oldZoomMode);
                     if (HasCullingOnZoom && needZoomCullingUpdate)
                         cullingUpdater.MarkGraphElementCullingChanged(graphElement, GraphViewCullingSource.Zoom, newCullingState);
                 }
 
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 foreach (var marker in m_MarkersParent.Children().OfType<Marker>())
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 {
                     marker.SetLevelOfDetail(zoomLevel, newZoomMode, oldZoomMode);
 
@@ -700,6 +702,7 @@ namespace Unity.GraphToolkit.Editor
         /// <summary>
         /// Base speed for panning, made internal to disable panning in tests.
         /// </summary>
+        [NoAutoStaticsCleanup] // internal pan speed constant; tests set this directly; float value is safe to persist
         internal static float BasePanSpeed { get; set; } = 0.4f;
         internal const int k_PanIntervalMs = 10; // interval between each pan in milliseconds
         internal static float MinPanSpeed => GraphViewSettings.k_PanMinSpeedFactor * BasePanSpeed;
@@ -708,6 +711,7 @@ namespace Unity.GraphToolkit.Editor
         /// <summary>
         /// Whether the graph must frame all graph elements when it is first loaded. Internal to allow to disable in tests.
         /// </summary>
+        [NoAutoStaticsCleanup] // internal flag controlling first-load framing; tests reset it explicitly; safe to persist
         internal static bool ShouldFrameAllOnFirstLoad = true;
 
         static float ApplyEasing(float x, GraphViewSettings.EasingFunction function)
@@ -805,9 +809,9 @@ namespace Unity.GraphToolkit.Editor
         {
             m_ContainerLayers.Add(index, layer);
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             int indexOfLayer = m_ContainerLayers.OrderBy(t => t.Key).Select(t => t.Value).ToList().IndexOf(layer);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             ContentViewContainer.Insert(indexOfLayer, layer);
         }
@@ -966,7 +970,8 @@ namespace Unity.GraphToolkit.Editor
         /// </summary>
         void InvokeUserGraphContextualMenu(ContextualMenuPopulateEvent evt)
         {
-            var graph = (GraphViewModel?.GraphModelState?.GraphModel as GraphModelImp)?.Graph;
+            // TODO: Add support for state machine menu options (https://jira.unity3d.com/browse/GTF-2539)
+            var graph = (GraphViewModel?.GraphModelState?.GraphModel as GraphModelImp)?.Graph as Graph;
             if (graph == null)
                 return;
 
@@ -1138,9 +1143,7 @@ namespace Unity.GraphToolkit.Editor
 
             // State nodes menu items:
             menuActionMap.Add(ContextualMenuHelpers.createTransitionMenuItem.Name, () => AppendStartTransitionCreationMenuItem(evt, selection));
-            menuActionMap.Add(ContextualMenuHelpers.createLocalTransitionMenuItem.Name, () => AppendCreateTransitionMenuItem(evt, selection, TransitionSupportKind.Local));
-            menuActionMap.Add(ContextualMenuHelpers.createOnEnterTransitionMenuItem.Name, () => AppendCreateTransitionMenuItem(evt, selection, TransitionSupportKind.OnEnter));
-            menuActionMap.Add(ContextualMenuHelpers.createSelfTransitionMenuItem.Name, () => AppendCreateTransitionMenuItem(evt, selection, TransitionSupportKind.Self));
+            menuActionMap.Add(ContextualMenuHelpers.createSelfTransitionMenuItem.Name, () => AppendCreateSelfTransitionSubmenu(evt, selection));
 
             // Subgraph nodes menu items:
             menuActionMap.Add(ContextualMenuHelpers.extractContentsToPlacematItem.Name, () => AppendExtractContentsToPlacematMenuItem(evt, selection));
@@ -1574,9 +1577,9 @@ namespace Unity.GraphToolkit.Editor
 
             foreach (var elementModel in selection)
             {
-                #pragma warning disable UA2002 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2002 // Avoid Linq
                 if (elementModel is not AbstractNodeModel node || !node.GetConnectedWires().Any())
-#pragma warning restore UA2002
+#pragma warning restore UAC2002
                     continue;
 
                 connectedNodes.Add(node);
@@ -1591,42 +1594,61 @@ namespace Unity.GraphToolkit.Editor
         void AppendStartTransitionCreationMenuItem(ContextualMenuPopulateEvent evt, List<GraphElementModel> selection)
         {
             // Only for a single selected state in a state machine graph.
-            if (!GraphModel.IsStateMachineGraph || selection.Count != 1 || selection[0] is not StateModel stateModel)
+            if (!GraphModel.IsStateMachineGraph || selection.Count != 1 || selection[0] is not StateModel stateModel || stateModel is IPlaceholder)
                 return;
 
             evt.menu.AppendAction(L10n.Tr("Create Transition"), menuAction =>
             {
-                var stateView = stateModel.GetView<State>(this);
+                var stateView = stateModel.GetView<StateView>(this);
                 var mousePosition = menuAction?.eventInfo?.mousePosition ?? Event.current.mousePosition;
                 stateView?.TransitionConnector.CreateFromMenu(mousePosition);
             });
         }
 
-        void AppendCreateTransitionMenuItem(ContextualMenuPopulateEvent evt, List<GraphElementModel> selection, TransitionSupportKind transitionSupportKind)
+        void AppendCreateSelfTransitionSubmenu(ContextualMenuPopulateEvent evt, List<GraphElementModel> selection)
         {
             if (!GraphModel.IsStateMachineGraph)
                 return;
 
-            var itemName = transitionSupportKind switch
+            foreach (var transitionSupportType in GraphModel.GetSelfTransitionModelTypes())
             {
-                TransitionSupportKind.OnEnter => "Create OnEnter Transition",
-                TransitionSupportKind.Self => "Create Self Transition",
-                _ => "Create Local Transition"
-            };
-
-            evt.menu.AppendAction(L10n.Tr(itemName), _ =>
-            {
-                foreach (var elementModel in selection)
+                var type = transitionSupportType;
+                var categoryPath = GetTransitionSupportCategoryPath(type)?.Trim('/');
+                var subMenuPath = string.IsNullOrEmpty(categoryPath) ? string.Empty : categoryPath + "/";
+                evt.menu.AppendAction(subMenuPath + L10n.Tr("Create ") + GetTransitionSupportDisplayName(type), _ =>
                 {
-                    if (elementModel is not StateModel stateModel)
-                        continue;
+                    foreach (var elementModel in selection)
+                    {
+                        if (elementModel is not StateModel stateModel || stateModel is IPlaceholder)
+                            continue;
 
-                    Dispatch(new CreateSingleStateTransitionSupportCommand(GraphModel, stateModel, transitionSupportKind));
-                }
-            });
+                        Dispatch(new CreateSelfTransitionSupportCommand(GraphModel, stateModel, type));
+                    }
+                });
+            }
         }
 
-        void AppendCreateLocalSubgraphFromSelectionMenuItem(ContextualMenuPopulateEvent evt)
+        static string GetTransitionSupportDisplayName(Type transitionSupportType)
+        {
+            if (transitionSupportType == typeof(SelfTransitionModel))
+                return "Self Transition";
+
+            var transitionAttribute = Attribute.GetCustomAttribute(transitionSupportType, typeof(TransitionAttribute)) as TransitionAttribute;
+            return string.IsNullOrEmpty(transitionAttribute?.Title) ? transitionSupportType.Name.Nicify() : transitionAttribute.Title;
+        }
+
+        static string GetTransitionSupportCategoryPath(Type transitionSupportType)
+        {
+            var transitionAttribute = Attribute.GetCustomAttribute(transitionSupportType, typeof(TransitionAttribute)) as TransitionAttribute;
+            return transitionAttribute?.CategoryPath;
+        }
+
+        protected virtual void AppendCreateLocalSubgraphFromSelectionMenuItem(ContextualMenuPopulateEvent evt)
+        {
+            AppendCreateLocalSubgraphFromSelectionMenuItem(evt, null);
+        }
+
+        protected void AppendCreateLocalSubgraphFromSelectionMenuItem(ContextualMenuPopulateEvent evt, Func<GraphTemplate, bool> allow)
         {
             var data = SubgraphFromSelectionAction.CollectData(this, null, null);
 
@@ -1653,6 +1675,9 @@ namespace Unity.GraphToolkit.Editor
                 // If there are subgraph templates, append a menu item for each template.
                 foreach (var graphTemplate in GraphModel.SubgraphTemplates)
                 {
+                    if (allow != null && !allow(graphTemplate))
+                        continue;
+
                     evt.menu.AppendMenuItemFromShortcutWithName<ShortcutCreateLocalSubgraphFromSelectionEvent>(GraphTool, L10n.Tr(string.Format(menuItemName, GraphModel.SubgraphTemplates.Count < 2 ? "" : graphTemplate.GraphTypeName + " ")), menuAction =>
                     {
                         Vector2 mousePosition = menuAction?.eventInfo?.mousePosition ?? Event.current.mousePosition;
@@ -1669,40 +1694,43 @@ namespace Unity.GraphToolkit.Editor
             if (!GraphModel.AllowSubgraphCreation)
                 return;
 
-            var subgraphNodes = new List<SubgraphNodeModel>();
+            var subgraphNodes = new List<ISubgraphNodeInternal>();
             foreach (var elementModel in selection)
             {
-                if (elementModel is not SubgraphNodeModel subgraphNodeModel)
+                if (elementModel is not ISubgraphNodeInternal subgraphNode)
                     continue;
 
-                if (!subgraphNodeModel.CanBeExpanded)
+                if (!subgraphNode.CanBeExpanded)
                     return;
 
-                subgraphNodes.Add(subgraphNodeModel);
+                subgraphNodes.Add(subgraphNode);
             }
 
-            foreach (var subgraphNodeModel in subgraphNodes)
+            foreach (var subgraphNode in subgraphNodes)
             {
+                if (subgraphNode is not AbstractNodeModel nodeModel)
+                    continue;
+
                 evt.menu.AppendMenuItemFromShortcut<ShortcutExtractContentsToPlacematEvent>(GraphTool, menuAction =>
                 {
-                    Dispatch(new ExpandSubgraphCommand(GraphModel, subgraphNodeModel, ContentViewContainer.WorldToLocal(menuAction?.eventInfo?.mousePosition ?? Event.current.mousePosition)));
-                }, subgraphNodeModel.GetSubgraphModel() is null ? DropdownMenuAction.Status.Disabled : DropdownMenuAction.Status.Normal);
+                    Dispatch(new ExpandSubgraphCommand(GraphModel, nodeModel, ContentViewContainer.WorldToLocal(menuAction?.eventInfo?.mousePosition ?? Event.current.mousePosition)));
+                }, subgraphNode.GetSubgraphModel() is null ? DropdownMenuAction.Status.Disabled : DropdownMenuAction.Status.Normal);
             }
         }
 
         void AppendOpenSubgraphMenuItem(ContextualMenuPopulateEvent evt, List<GraphElementModel> selection)
         {
-            if (!GraphModel.AllowSubgraphCreation || selection.Count != 1 || selection[0] is not SubgraphNodeModel subgraphNodeModel)
+            if (!GraphModel.AllowSubgraphCreation || selection.Count != 1 || selection[0] is not ISubgraphNodeInternal subgraphNode)
                 return;
 
-            var subgraphNode = subgraphNodeModel.GetView<SubgraphNodeView>(this);
-            if (subgraphNode == null)
+            var view = selection[0].GetView(this);
+            if (view is not ISubgraphNodeView subgraphNodeView)
                 return;
 
-            var menuItemName = "Open " + (subgraphNodeModel.IsReferencingLocalSubgraph ? "Local" : "Asset") + " Subgraph";
+            var menuItemName = "Open " + (subgraphNode.IsReferencingLocalSubgraph ? "Local" : "Asset") + " Subgraph";
             evt.menu.AppendAction(L10n.Tr(menuItemName), _ =>
             {
-                subgraphNode.OpenSubgraph();
+                subgraphNodeView.OpenSubgraph();
             });
         }
 
@@ -1716,7 +1744,7 @@ namespace Unity.GraphToolkit.Editor
             AppendConvertSubgraphMenuItem(evt, false, (subgraphNodeModel, template) => (template?.GraphModelType?? GraphModel.GetType()).IsInstanceOfType(subgraphNodeModel.GetSubgraphModel()));
         }
 
-        protected void AppendConvertSubgraphMenuItem(ContextualMenuPopulateEvent evt, bool isConvertToAsset, Func<SubgraphNodeModel, GraphTemplate, bool> isSameGraphType)
+        protected void AppendConvertSubgraphMenuItem(ContextualMenuPopulateEvent evt, bool isConvertToAsset, Func<ISubgraphNodeInternal, GraphTemplate, bool> isSameGraphType)
         {
             if (!GraphModel.AllowSubgraphCreation)
                 return;
@@ -1743,7 +1771,7 @@ namespace Unity.GraphToolkit.Editor
             else
             {
                 var subgraphNodeCount = 0;
-                var subgraphNodesAndTemplates = new List<(GraphTemplate graphTemplate, List<SubgraphNodeModel> subgraphNodes)>();
+                var subgraphNodesAndTemplates = new List<(GraphTemplate graphTemplate, List<ISubgraphNodeInternal> subgraphNodes)>();
                 foreach (var graphTemplate in GraphModel.SubgraphTemplates)
                 {
                     var data = SubgraphFromSelectionAction.CollectData(this, graphTemplate, isSameGraphType);
@@ -1776,10 +1804,10 @@ namespace Unity.GraphToolkit.Editor
 
         void AppendFindAssetInProjectMenuItem(ContextualMenuPopulateEvent evt, List<GraphElementModel> selection)
         {
-            if (!GraphModel.AllowSubgraphCreation || selection.Count != 1 || selection[0] is not SubgraphNodeModel subgraphNodeModel)
+            if (!GraphModel.AllowSubgraphCreation || selection.Count != 1 || selection[0] is not ISubgraphNodeInternal subgraphNode)
                 return;
 
-            var associateFileObject = subgraphNodeModel.GetSubgraphModel()?.GraphObject;
+            var associateFileObject = subgraphNode.GetSubgraphModel()?.GraphObject;
             if (associateFileObject == null || string.IsNullOrEmpty(associateFileObject.FilePath))
                 return;
 
@@ -1861,9 +1889,9 @@ namespace Unity.GraphToolkit.Editor
             if (selection.Count != 1 || selection[0] is not WireModel wireModel || selection[0] is TransitionSupportModel || wireModel.FromPort is not { HasReorderableWires: true })
                 return;
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var siblingWires = wireModel.FromPort.GetConnectedWires().ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             var siblingWiresCount = siblingWires.Count;
 
             var index = siblingWires.IndexOf(wireModel);
@@ -2500,6 +2528,7 @@ namespace Unity.GraphToolkit.Editor
             graphElement.RemoveFromRootView();
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         static readonly List<ChildView> k_CalculateRectToFitAllAllUIs = new();
 
         public Rect CalculateRectToFitAll()
@@ -2907,16 +2936,16 @@ namespace Unity.GraphToolkit.Editor
                     for (int i = 0; i < contextNodeModel.BlockCount; ++i)
                     {
                         var block = contextNodeModel.GetBlock(i);
-                        #pragma warning disable UA2002 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                        #pragma warning disable UAC2002 // Avoid Linq
                         if (block.GetConnectedWires().Any())
-#pragma warning restore UA2002
+#pragma warning restore UAC2002
                             nodes.Add(block);
                     }
                 }
 
-                #pragma warning disable UA2002 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2002 // Avoid Linq
                 if (!nodeModel.GetConnectedWires().Any())
-#pragma warning restore UA2002
+#pragma warning restore UAC2002
                     continue;
 
                 nodes.Add(nodeModel);
@@ -2994,12 +3023,12 @@ namespace Unity.GraphToolkit.Editor
                 if (e.target == this)
                 {
                     // Forward event to the last selected element.
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2001 // Avoid Linq
                     var renamableSelection = GetSelection().Where(x => x.IsRenamable());
-#pragma warning restore UA2001
-                    #pragma warning disable UA2012 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+                    #pragma warning disable UAC2012 // Avoid Linq
                     var lastSelectedItem = renamableSelection.LastOrDefault();
-#pragma warning restore UA2012
+#pragma warning restore UAC2012
                     var lastSelectedItemUI = lastSelectedItem?.GetView<GraphElement>(this);
 
                     lastSelectedItemUI?.OnRenameKeyDown(e);
@@ -3039,9 +3068,9 @@ namespace Unity.GraphToolkit.Editor
             {
                 m_SelectionDraggerWasActive = true;
 
-#pragma warning disable UA2001, UA2011 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001, UAC2011 // Avoid Linq
                 var elemModel = GetSelection().OfType<AbstractNodeModel>().FirstOrDefault();
-#pragma warning restore UA2001, UA2011
+#pragma warning restore UAC2001, UAC2011
                 var elem = elemModel?.GetView<GraphElement>(this);
                 if (elem == null)
                     return;
@@ -3235,9 +3264,9 @@ namespace Unity.GraphToolkit.Editor
                 shouldUpdatePlacematContainer = newPlacemats.Count > 0;
 
                 //Update new and deleted node containers
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 foreach (var modelGuid in modelChangeSet.NewModels.Concat(modelChangeSet.DeletedModels))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 {
                     if (GraphModel.TryGetModelFromGuid(modelGuid, out var model) &&
                         model.Container is GraphElementModel container)
@@ -3387,9 +3416,9 @@ namespace Unity.GraphToolkit.Editor
                 }
             }
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             foreach (var changedModelGuid in selectionChangeSet.ChangedModels.Except(selectionAlreadyUpdatedModels))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 changedModelGuid.AppendAllViews(this, null, k_UpdateAllUIs);
                 k_UpdateAllUIs.AddRange(changedModelGuid.GetModelDependencies());
@@ -3402,18 +3431,18 @@ namespace Unity.GraphToolkit.Editor
 
             k_UpdateAllUIs.Clear();
 
-#pragma warning disable UA2001, UA2012 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001, UAC2012 // Avoid Linq
             var lastSelectedNode = GetSelection().OfType<AbstractNodeModel>().LastOrDefault();
-#pragma warning restore UA2001, UA2012
+#pragma warning restore UAC2001, UAC2012
             if (lastSelectedNode != null && lastSelectedNode.IsAscendable())
             {
                 var nodeUI = lastSelectedNode.GetView<GraphElement>(this);
                 nodeUI?.BringToFront();
             }
 
-#pragma warning disable UA2001, UA2012 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001, UAC2012 // Avoid Linq
             var lastSelectedWire = GetSelection().OfType<WireModel>().LastOrDefault();
-#pragma warning restore UA2001, UA2012
+#pragma warning restore UAC2001, UAC2012
             if (lastSelectedWire != null && lastSelectedWire.IsAscendable())
             {
                 var wireUI = lastSelectedWire.GetView<GraphElement>(this);
@@ -3507,9 +3536,9 @@ namespace Unity.GraphToolkit.Editor
 
                 // ToList is needed to bake the dependencies.
                 // PF FIXME return this list and process the update along the others.
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 foreach (var ui in guid.GetModelDependencies().ToList())
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 {
                     ui.UpdateView(UpdateFromModelVisitor.genericUpdateFromModelVisitor);
                 }
@@ -3518,9 +3547,9 @@ namespace Unity.GraphToolkit.Editor
 
         protected virtual void AddElementsFromChangeSet(GraphModelStateComponent.Changeset modelChangeSet, List<GraphElement> newPlacemats)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var newModels = modelChangeSet.NewModels.Select(GraphModel.GetModel).Where(m => m != null).ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             foreach (var model in newModels)
             {
@@ -3535,16 +3564,16 @@ namespace Unity.GraphToolkit.Editor
                     AddElement(ui);
             }
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             foreach (var model in newModels.OfType<WireModel>())
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 CreateWireUI(model);
             }
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             foreach (var model in newModels.OfType<PlacematModel>())
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 var placemat = ModelViewFactory.CreateUI<GraphElement>(this, model);
                 if (placemat != null)
@@ -3559,9 +3588,9 @@ namespace Unity.GraphToolkit.Editor
                 }
             }
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             foreach (var model in newModels.OfType<NodePreviewModel>())
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 var preview = ModelViewFactory.CreateUI<NodePreview>(this, model);
                 if (preview != null)
@@ -3615,9 +3644,9 @@ namespace Unity.GraphToolkit.Editor
                 k_UpdateAllUIs.Clear();
 
                 // ToList is needed to bake the dependencies.
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 foreach (var ui in guid.GetModelDependencies().ToList())
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 {
                     if( changedModels.TryGetValue(ui.Model.Guid, out var doneChangeList) && doneChangeList.IsSupersetOf(changeHints))
                         continue;
@@ -3650,17 +3679,17 @@ namespace Unity.GraphToolkit.Editor
                         return;
 
                     // Remove current markers on the graph.
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2001 // Avoid Linq
                     var markersToRemove = m_MarkersParent.Children().OfType<Marker>().Where(b => b.Model is MultipleGraphProcessingErrorsModel).ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     foreach (var marker in markersToRemove)
                     {
                         RemoveElement(marker);
 
                         // ToList is needed to bake the dependencies.
-                        #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                        #pragma warning disable UAC2001 // Avoid Linq
                         foreach (var ui in marker.GraphElementModel.GetModelDependencies().ToList())
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                         {
                             ui.UpdateView(UpdateFromModelVisitor.genericUpdateFromModelVisitor);
                         }
@@ -3782,6 +3811,9 @@ namespace Unity.GraphToolkit.Editor
                     case ContextNodePlaceholder contextNodePlaceholder:
                         placeholder = ModelViewFactory.CreateUI<GraphElement>(this, contextNodePlaceholder);
                         break;
+                    case StatePlaceholder statePlaceholder:
+                        placeholder = ModelViewFactory.CreateUI<GraphElement>(this, statePlaceholder);
+                        break;
                 }
 
                 if (placeholder != null)
@@ -3902,27 +3934,27 @@ namespace Unity.GraphToolkit.Editor
             if (GraphModel == null)
                 return true;
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var invalidNodeCount = GraphModel.NodeModels.Count(n => n == null);
-#pragma warning restore UA2001
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+            #pragma warning disable UAC2001 // Avoid Linq
             var invalidWireCount = GraphModel.WireModels.Count(n => n == null);
-#pragma warning restore UA2001
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+            #pragma warning disable UAC2001 // Avoid Linq
             var invalidStickyCount = GraphModel.StickyNoteModels.Count(n => n == null);
-#pragma warning restore UA2001
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+            #pragma warning disable UAC2001 // Avoid Linq
             var invalidVariableCount = GraphModel.VariableDeclarations.Count(v => v == null);
-#pragma warning restore UA2001
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+            #pragma warning disable UAC2001 // Avoid Linq
             var invalidPlacematCount = GraphModel.PlacematModels.Count(p => p == null);
-#pragma warning restore UA2001
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+            #pragma warning disable UAC2001 // Avoid Linq
             var invalidPortalCount = GraphModel.PortalDeclarations.Count(p => p == null);
-#pragma warning restore UA2001
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+            #pragma warning disable UAC2001 // Avoid Linq
             var invalidSectionCount = GraphModel.SectionModels.Count(s => s == null);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             var countMessage = new StringBuilder();
             countMessage.Append(invalidNodeCount == 0 ? string.Empty : $"{invalidNodeCount} invalid node(s) found.\n");
@@ -4066,7 +4098,8 @@ namespace Unity.GraphToolkit.Editor
             }
         }
 
-        static readonly List<ChildView> k_OnFocusGraphElementList = new List<ChildView>();
+        [AutoStaticsCleanupOnCodeReload]
+        static List<ChildView> k_OnFocusGraphElementList = new List<ChildView>();
 
         /// <inheritdoc />
         protected override void OnFocus(FocusInEvent e)
@@ -4109,9 +4142,9 @@ namespace Unity.GraphToolkit.Editor
             GraphModel.GetGraphElementModels()
                 .GetAllViews(this, e => e is GraphElement ge && ge.Border != null, k_OnFocusGraphElementList);
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             foreach (var element in k_OnFocusGraphElementList.OfType<GraphElement>())
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 element.RefreshBorder();
             }
@@ -4825,6 +4858,7 @@ namespace Unity.GraphToolkit.Editor
             }
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         static List<GraphViewCullingSource> s_CullingSourcesCache;
         /// <summary>
         /// Gets all culling sources used in this <see cref="GraphView"/>.
@@ -4904,7 +4938,8 @@ namespace Unity.GraphToolkit.Editor
 
         public virtual IReadOnlyList<ContextualMenuItem> ContextualMenuItems => k_ContextualMenuItems;
 
-        static readonly List<ContextualMenuItem> k_ContextualMenuItems = new() {
+        [AutoStaticsCleanupOnCodeReload]
+        static List<ContextualMenuItem> k_ContextualMenuItems = new() {
             ContextualMenuHelpers.addNodeItem,
             ContextualMenuHelpers.createPlacematItem,
             ContextualMenuHelpers.createStickyNoteItem,
@@ -4929,8 +4964,8 @@ namespace Unity.GraphToolkit.Editor
             public void AppendAlignAndDistributeElementsMenuItems(ContextualMenuPopulateEvent evt, List<GraphElementModel> selection) => m_GraphView.AppendAlignAndDistributeElementsMenuItems(evt, selection);
             public void AppendCreateEmptyLocalSubgraph(ContextualMenuPopulateEvent evt) => m_GraphView.AppendCreateEmptyLocalSubgraph(evt);
             public void AppendToggleCollapseMenuItem(ContextualMenuPopulateEvent evt, List<GraphElementModel> selection) => m_GraphView.AppendToggleCollapseMenuItem(evt, selection);
-            public void AppendCreateTransitionMenuItem(ContextualMenuPopulateEvent evt, List<GraphElementModel> selection, TransitionSupportKind transitionKind) => m_GraphView.AppendCreateTransitionMenuItem(evt, selection, transitionKind);
             public void AppendStartTransitionCreationMenuItem(ContextualMenuPopulateEvent evt, List<GraphElementModel> selection) => m_GraphView.AppendStartTransitionCreationMenuItem(evt, selection);
+            public void AppendCreateSelfTransitionMenuItem(ContextualMenuPopulateEvent evt, List<GraphElementModel> selection) => m_GraphView.AppendCreateSelfTransitionSubmenu(evt, selection);
             public void AppendCreateLocalSubgraphFromSelectionMenuItem(ContextualMenuPopulateEvent evt) => m_GraphView.AppendCreateLocalSubgraphFromSelectionMenuItem(evt);
             public void AppendExtractContentsToPlacematMenuItem(ContextualMenuPopulateEvent evt, List<GraphElementModel> selection) => m_GraphView.AppendExtractContentsToPlacematMenuItem(evt, selection);
             public void AppendOpenSubgraphMenuItem(ContextualMenuPopulateEvent evt, List<GraphElementModel> selection) => m_GraphView.AppendOpenSubgraphMenuItem(evt, selection);

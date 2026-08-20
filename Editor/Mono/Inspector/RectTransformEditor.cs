@@ -187,6 +187,17 @@ namespace UnityEditor
             SceneView.duringSceneGui += DrawAnchorsOnSceneView;
         }
 
+        internal override bool IsEnabled()
+        {
+            foreach (var rectTransform in targets)
+            {
+                if (rectTransform != null && PrefabUtility.IsPartOfPrefabAsset(rectTransform))
+                    return false;
+            }
+
+            return base.IsEnabled();
+        }
+
         void OnDisable()
         {
             m_ChangingAnchors.valueChanged.RemoveListener(RepaintScene);
@@ -672,9 +683,9 @@ namespace UnityEditor
             using (new EditorGUI.DisabledScope(System.Array.Exists(targets, x => ((x as RectTransform).drivenProperties & driven) != 0)))
             {
                 float value = getter(target as RectTransform);
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 EditorGUI.showMixedValue = targets.Select(x => getter(x as RectTransform)).DistinctCountGreaterThan(1);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
                 EditorGUI.BeginChangeCheck();
 
@@ -731,9 +742,9 @@ namespace UnityEditor
             using (new EditorGUI.DisabledScope(System.Array.Exists(targets, x => ((x as RectTransform).drivenProperties & driven) != 0)))
             {
                 float value = getter(target as RectTransform);
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 EditorGUI.showMixedValue = targets.Select(x => getter(x as RectTransform)).DistinctCountGreaterThan(1);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
                 EditorGUI.BeginChangeCheck();
                 float newValue = EditorGUI.FloatField(position, label, value);

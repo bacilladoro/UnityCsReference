@@ -52,7 +52,7 @@ namespace UnityEditor.Search
         private const float m_LabelHeight = 23f;
         private readonly SearchResultViewGlobalEventHandler m_GlobalKeyboardHandler;
 
-        internal static string resultViewId = "grid";
+        internal const string resultViewId = "grid";
         public string ViewId => resultViewId;
         bool IResultView.ShowNoResultMessage => true;
         public virtual bool UpdateNeeded { get; private set; }
@@ -196,18 +196,18 @@ namespace UnityEditor.Search
 
         private void OnItemsChosen(IEnumerable<object> chosenItems)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var convertedItems = chosenItems.Select(item => (SearchItem)item).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             m_ViewModel.ExecuteAction(null, convertedItems, true);
         }
 
         private void HandleItemsSelected(IEnumerable<int> selection)
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var selArray = selection.ToArray();
             SelectionChanged?.Invoke(selArray);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         private void OnPointerDown(PointerDownEvent evt)

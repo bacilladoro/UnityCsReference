@@ -2,6 +2,8 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
+using Unity.Scripting.LifecycleManagement;
 using System;
 
 namespace UnityEngine.UIElements
@@ -11,14 +13,16 @@ namespace UnityEngine.UIElements
         PanelInputSettings settings { get; }
     }
 
-    internal static class PanelInputState
+    internal static partial class PanelInputState
     {
+        [NoAutoStaticsCleanup]
         internal static IPanelInputProvider current { get; set; }
+        [NoAutoStaticsCleanup]
         internal static Action<IPanelInputProvider> onApply;
     }
 
     [Serializable]
-    internal struct PanelInputSettings
+    internal partial struct PanelInputSettings
     {
         // Mirrors PanelInputConfiguration.PanelInputRedirection with compile-time value identity.
         // Uses a separate enum to avoid a managed type reference to PanelInputConfiguration
@@ -36,6 +40,8 @@ namespace UnityEngine.UIElements
             Always = (int)PanelInputConfiguration.PanelInputRedirection.Always,
         }
 
+
+        [NoAutoStaticsCleanup]
         private static PanelInputSettings s_Default = new()
         {
             m_ProcessWorldSpaceInput = true,
@@ -74,3 +80,4 @@ namespace UnityEngine.UIElements
         internal bool shouldRedirectInput => m_PanelInputRedirection != InputRedirection.Never;
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

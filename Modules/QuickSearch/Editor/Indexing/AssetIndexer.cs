@@ -20,7 +20,7 @@ namespace UnityEditor.Search
         static readonly ProfilerMarker k_IndexGameObjectMarker = new($"{nameof(AssetIndexer)}.{nameof(IndexGameObject)}");
         static readonly ProfilerMarker k_IndexCustomGameObjectPropertiesMarker = new($"{nameof(AssetIndexer)}.{nameof(IndexCustomGameObjectProperties)}");
 
-        static string[] s_AssetDabaseRoots;
+        static readonly string[] s_AssetDabaseRoots;
         static AssetIndexer()
         {
             s_AssetDabaseRoots = Utils.GetAssetRootFolders();
@@ -32,7 +32,8 @@ namespace UnityEditor.Search
 
         public AssetIndexer(SearchDatabase.Settings settings, ISearchIndexerStorage storage)
             : base(string.IsNullOrEmpty(settings.name) ? "assets" : settings.name, settings, storage)
-        {}
+        {
+        }
 
         internal override IEnumerable<string> GetRoots()
         {
@@ -42,13 +43,13 @@ namespace UnityEditor.Search
             if (roots.Length == 0)
                 roots = new string[] { settings.root };
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             return roots
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 .Select(r => r.Replace("\\", "/").Trim('/'))
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 .Concat(roots.SelectMany(r => s_AssetDabaseRoots.Where(adbRoot => adbRoot.StartsWith(r, StringComparison.OrdinalIgnoreCase))))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 .Distinct()
                 .Where(r => Directory.Exists(r));
         }
@@ -58,9 +59,9 @@ namespace UnityEditor.Search
             List<string> paths = new List<string>();
             foreach (var root in GetRoots())
             {
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 paths.AddRange(Directory.GetFiles(root, "*.meta", SearchOption.AllDirectories)
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     .Select(path => path.Replace("\\", "/").Substring(0, path.Length - 5))
                     .Where(path => !SkipEntry(path) && File.Exists(path)));
             }
@@ -179,9 +180,9 @@ namespace UnityEditor.Search
                     if (AssetImporter.GetAtPath(path) is ModelImporter)
                         IndexProperty(documentIndex, "t", "model", saveKeyword: true);
 
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2001 // Avoid Linq
                     foreach (var obj in AssetDatabase.LoadAllAssetRepresentationsAtPath(path).Where(o => o))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     {
                         if (AssetDatabase.IsSubAsset(obj))
                         {

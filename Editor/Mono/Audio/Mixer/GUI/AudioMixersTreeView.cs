@@ -163,9 +163,9 @@ namespace UnityEditor
 
         bool ValidDrag(TreeViewItem<EntityId> parent, List<AudioMixerItem> draggedItems)
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var draggedIDs = new HashSet<EntityId>(draggedItems.Select(n => n.id));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             var currentParent = parent;
             while (currentParent != null)
@@ -180,16 +180,16 @@ namespace UnityEditor
         private List<AudioMixerItem> GetAudioMixerItemsFromIDs(List<EntityId> draggedMixers)
         {
             var found = TreeViewUtility<EntityId>.FindItemsInList(draggedMixers, m_TreeView.data.GetRows());
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return found.OfType<AudioMixerItem>().ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         private AudioMixerController[] GetAudioMixersFromItems(List<AudioMixerItem> draggedItems)
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return (from i in draggedItems select i.mixer).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
     }
 

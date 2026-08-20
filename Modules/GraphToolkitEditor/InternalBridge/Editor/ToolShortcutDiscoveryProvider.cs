@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEditor.ShortcutManagement;
 
@@ -17,8 +18,9 @@ namespace Unity.GraphToolsAuthoringFramework.InternalEditorBridge
     /// associated to a tool, not to GTF itself. We delegate the shortcut discovery
     /// to a proxy that will be set in GTF code.
     /// </summary>
-    class ToolShortcutDiscoveryProvider : IDiscoveryShortcutProvider
+    partial class ToolShortcutDiscoveryProvider : IDiscoveryShortcutProvider
     {
+        [AutoStaticsCleanupOnCodeReload]
         static ToolShortcutDiscoveryProvider s_Instance;
         bool m_Initialized;
 
@@ -46,9 +48,9 @@ namespace Unity.GraphToolsAuthoringFramework.InternalEditorBridge
             EditorApplication.update -= Initialize;
             m_Initialized = true;
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var providers = GetShortcutProviders().ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             if (!providers.Contains(this))
             {
                 providers.Add(this);
@@ -76,9 +78,9 @@ namespace Unity.GraphToolsAuthoringFramework.InternalEditorBridge
 
         IEnumerable<IShortcutEntryDiscoveryInfo> IDiscoveryShortcutProvider.GetDefinedShortcuts()
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             return Proxy?.GetDefinedShortcuts().Select(si => new ToolShortcutEntryInfo(si)) ?? (IEnumerable<IShortcutEntryDiscoveryInfo>)Array.Empty<IShortcutEntryDiscoveryInfo>();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         static IEnumerable<IDiscoveryShortcutProvider> GetShortcutProviders()

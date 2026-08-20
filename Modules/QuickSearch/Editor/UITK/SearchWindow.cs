@@ -13,6 +13,7 @@ using UnityEditor.ShortcutManagement;
 using UnityEngine;
 using UnityEngine.Search;
 using UnityEngine.UIElements;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Search
 {
@@ -33,7 +34,7 @@ namespace UnityEditor.Search
     }
 
     [EditorWindowTitle(title="Search")]
-    class SearchWindow : EditorWindow, ISearchView, ISearchQueryView, ISearchElement, IDisposable, ISearchWindow
+    partial class SearchWindow : EditorWindow, ISearchView, ISearchQueryView, ISearchElement, IDisposable, ISearchWindow
     {
         internal const float defaultWidth = 700f;
         internal const float defaultHeight = 450f;
@@ -51,7 +52,9 @@ namespace UnityEditor.Search
         static readonly TimeSpan k_MaxUpdateTime = TimeSpan.FromMilliseconds(16);
         static readonly TimeSpan k_InfiniteTime = TimeSpan.MaxValue;
 
+        [AutoStaticsCleanupOnCodeReload]
         private static EditorWindow s_FocusedWindow;
+        [AutoStaticsCleanupOnCodeReload]
         private static SearchViewState s_GlobalViewState = null;
 
         private bool m_Disposed = false;
@@ -140,6 +143,8 @@ namespace UnityEditor.Search
             body.style.flexGrow = 1.0f;
             body.RegisterCallback<KeyDownEvent>(OnGlobalKeyDownEvent, callbackOptions: CallbackOptions.IncludeDisabled | CallbackOptions.TrickleDown);
             body.RegisterCallback<NavigationSubmitEvent>(OnGlobalNavigationSubmitEvent, callbackOptions: CallbackOptions.IncludeDisabled | CallbackOptions.TrickleDown);
+            body.RegisterCallback<ValidateCommandEvent>(OnGlobalValidateCommandEvent, callbackOptions: CallbackOptions.IncludeDisabled | CallbackOptions.TrickleDown);
+            body.RegisterCallback<ExecuteCommandEvent>(OnGlobalExecuteCommandEvent, callbackOptions: CallbackOptions.IncludeDisabled | CallbackOptions.TrickleDown);
 
             // Create main layout
             if (m_ViewState.flags.HasNone(SearchViewFlags.HideSearchBar))
@@ -241,6 +246,20 @@ namespace UnityEditor.Search
         }
 
         private void OnGlobalNavigationSubmitEvent(NavigationSubmitEvent evt)
+        {
+            var result = SearchGlobalEventHandlerManager.HandleGlobalEventHandlers(m_ViewState.globalEventManager, evt);
+            if (result.Handled)
+                evt.StopImmediatePropagation();
+        }
+
+        private void OnGlobalValidateCommandEvent(ValidateCommandEvent evt)
+        {
+            var result = SearchGlobalEventHandlerManager.HandleGlobalEventHandlers(m_ViewState.globalEventManager, evt);
+            if (result.Handled)
+                evt.StopImmediatePropagation();
+        }
+
+        private void OnGlobalExecuteCommandEvent(ExecuteCommandEvent evt)
         {
             var result = SearchGlobalEventHandlerManager.HandleGlobalEventHandlers(m_ViewState.globalEventManager, evt);
             if (result.Handled)
@@ -475,9 +494,9 @@ namespace UnityEditor.Search
             if (viewState.tableConfig == null)
                 throw new NotSupportedException("This result view cannot set columns");
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             viewState.tableConfig.columns = columns.ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             m_SearchView.resultView.Refresh(RefreshFlags.DisplayModeChanged);
         }
@@ -576,9 +595,9 @@ namespace UnityEditor.Search
             // Execute default action
             var item = selection.First();
             if (item.provider.actions.Count > actionIndex)
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 ExecuteAction(item.provider.actions[actionIndex], selection.ToArray(), true);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         public void ExecuteAction(SearchAction action, SearchItem[] items, bool endSearch = true)
@@ -636,12 +655,12 @@ namespace UnityEditor.Search
         void UpdateAvailableProviders()
         {
             var contextProviders = context.GetProviders();
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var availableProviders = context.options.HasAny(SearchFlags.AllProvidersAvailable) ? contextProviders.Concat(SearchService.Providers).Distinct() : contextProviders;
-#pragma warning restore UA2001
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+            #pragma warning disable UAC2001 // Avoid Linq
             m_AvailableProviders = SearchUtils.SortProvider(availableProviders).ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         void HandleSaveActiveSearchQuery(ISearchEvent evt)
@@ -692,9 +711,9 @@ namespace UnityEditor.Search
 
             try
             {
-                #pragma warning disable UA2011 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2011 // Avoid Linq
                 selectCallback?.Invoke(selection?.FirstOrDefault(), selection == null || selection.Count == 0);
-#pragma warning restore UA2011
+#pragma warning restore UAC2011
             }
             catch
             {
@@ -789,19 +808,19 @@ namespace UnityEditor.Search
                 SelectGroup(null);
 
             context.SetFilter(providerId, toggledEnabled);
-            #pragma warning disable UA2006 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2006 // Avoid Linq
             if (toggledEnabled && provider == null && !context.providers.Any(p => p.id == providerId))
-#pragma warning restore UA2006
+#pragma warning restore UAC2006
             {
                 // Provider that are not stored in the SearchService, might only exists in the m_AvailableProviders (local providers created directly in the context).
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 var localProvider = m_AvailableProviders.FirstOrDefault(p => p.id == providerId);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 if (localProvider != null)
                 {
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2001 // Avoid Linq
                     var newProviderList = context.GetProviders().Concat(new[] { localProvider }).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     context.SetProviders(newProviderList);
                 }
             }
@@ -1062,12 +1081,12 @@ namespace UnityEditor.Search
 
         void ISearchWindow.AddProvidersToMenu(GenericMenu menu)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var allEnabledProviders = m_AvailableProviders.Where(p => context.IsEnabled(p.id));
-#pragma warning restore UA2001
-#pragma warning disable UA2005, UA2010 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+#pragma warning disable UAC2005, UAC2010 // Avoid Linq
             var singleProviderEnabled = allEnabledProviders.Count() == 1 ? allEnabledProviders.First() : null;
-#pragma warning restore UA2005, UA2010
+#pragma warning restore UAC2005, UAC2010
             foreach (var p in m_AvailableProviders)
             {
                 var filterContent = new GUIContent($"{p.name} ({p.filterId})");
@@ -1462,9 +1481,9 @@ namespace UnityEditor.Search
                         else if (!firstOpen && !docked)
                         {
                             var newWindow = this;
-                            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                            #pragma warning disable UAC2001 // Avoid Linq
                             var existingWindow = Resources.FindObjectsOfTypeAll<SearchWindow>().FirstOrDefault(w => w != newWindow);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                             if (existingWindow)
                             {
                                 var cascadedWindowPosition = existingWindow.position.position;

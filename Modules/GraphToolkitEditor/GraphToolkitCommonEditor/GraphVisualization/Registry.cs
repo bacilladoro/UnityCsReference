@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Pool;
@@ -90,13 +91,14 @@ public static class Registry
     internal static void UnregisterAllForGraph(Hash128 graphGuid) => RegistryService.Instance.UnregisterAllForGraph(graphGuid);
 }
 
-sealed class RegistryService
+sealed partial class RegistryService
 {
     internal event Action<Hash128> contextRegistered;
     internal event Action<Hash128> contextWillUnregister;
 
     readonly Dictionary<Hash128, Context> m_ContextById = new();
     readonly Dictionary<Hash128, List<Context>> m_ContextsByGraph = new();
+    [AutoStaticsCleanupOnCodeReload]
     static RegistryService s_Instance;
 
     internal static RegistryService Instance => s_Instance ??= new RegistryService();

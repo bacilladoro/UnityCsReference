@@ -3,6 +3,8 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 
+using UnityEngine.UIElements.Unmanaged;
+
 namespace UnityEngine.UIElements.Layout;
 
 partial struct LayoutNode
@@ -269,4 +271,55 @@ partial struct LayoutNode
     {
         set => BorderLeftWidth = BorderRightWidth = BorderTopWidth = BorderBottomWidth = value;
     }
+
+    // CSS Grid. Grid style lives in the ComputedStyle "grid" group (GridData), which
+    // the native solver reads via the same handle. These accessors mirror the layout-group ones.
+    private ref GridData GridStyle => ref m_Access.GetComputedStyle(m_Handle).gridData.Write();
+
+    public GridAutoFlow GridAutoFlow
+    {
+        get => m_Access.GetComputedStyle(m_Handle).gridData.Read().gridAutoFlow;
+        set => GridStyle.gridAutoFlow = value;
+    }
+
+    public Align GridJustifyItems
+    {
+        get => m_Access.GetComputedStyle(m_Handle).gridData.Read().justifyItems;
+        set => GridStyle.justifyItems = value;
+    }
+
+    public Align GridJustifySelf
+    {
+        get => m_Access.GetComputedStyle(m_Handle).gridData.Read().justifySelf;
+        set => GridStyle.justifySelf = value;
+    }
+
+    public GridLine GridColumn
+    {
+        get => m_Access.GetComputedStyle(m_Handle).gridData.Read().gridColumnStart;
+        set => GridStyle.gridColumnStart = value;
+    }
+
+    public GridLine GridRow
+    {
+        get => m_Access.GetComputedStyle(m_Handle).gridData.Read().gridRowStart;
+        set => GridStyle.gridRowStart = value;
+    }
+
+    public GridLine GridColumnEnd
+    {
+        get => m_Access.GetComputedStyle(m_Handle).gridData.Read().gridColumnEnd;
+        set => GridStyle.gridColumnEnd = value;
+    }
+
+    public GridLine GridRowEnd
+    {
+        get => m_Access.GetComputedStyle(m_Handle).gridData.Read().gridRowEnd;
+        set => GridStyle.gridRowEnd = value;
+    }
+
+    public void SetGridTemplateColumns(System.Collections.Generic.List<GridTrackSize> tracks) => GridStyle.gridTemplateColumns.CopyFrom(tracks);
+    public void SetGridTemplateRows(System.Collections.Generic.List<GridTrackSize> tracks) => GridStyle.gridTemplateRows.CopyFrom(tracks);
+    public void SetGridAutoColumns(System.Collections.Generic.List<GridTrackSize> tracks) => GridStyle.gridAutoColumns.CopyFrom(tracks);
+    public void SetGridAutoRows(System.Collections.Generic.List<GridTrackSize> tracks) => GridStyle.gridAutoRows.CopyFrom(tracks);
 }

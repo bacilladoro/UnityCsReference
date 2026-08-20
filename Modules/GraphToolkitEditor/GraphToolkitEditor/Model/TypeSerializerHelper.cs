@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using Unity.GraphToolkit.InternalBridge;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Scripting.APIUpdating;
@@ -13,9 +14,10 @@ using Profiler = UnityEngine.Profiling.Profiler;
 
 namespace Unity.GraphToolkit.Editor
 {
-    static class TypeSerializerHelper
+    static partial class TypeSerializerHelper
     {
-        static TypeSerializerHelper()
+        [OnCodeLoaded]
+        static void Initialize()
         {
             InternalTypeHelpers.GetMovedFromType = GetMovedFromType;
         }
@@ -24,6 +26,7 @@ namespace Unity.GraphToolkit.Editor
 
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         static Dictionary<string, Type> s_MovedFromTypes;
 
         static Dictionary<string, Type> GetMovedFromTypes()

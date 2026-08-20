@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: StyleSheetsEditor not yet converted
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -97,9 +98,9 @@ namespace UnityEditor.StyleSheets
 
         static ConverterUtils()
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             k_GuiStyleTypeNames = GetGUIStyleProperties().ToDictionary(p => p.Name.ToLower(), p => p.Name.Capitalize());
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             k_StyleProperties = new HashSet<string>();
             k_StyleProperties.Add(k_TextAlignment);
@@ -302,9 +303,9 @@ namespace UnityEditor.StyleSheets
         public static StyleComplexSelector CreateSelectorFromSource(StyleComplexSelector srcSelector, string newSelectorBase)
         {
             var newSelector = new StyleComplexSelector();
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var newSelectorParts = srcSelector.selectors[0].parts.ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             if (newSelectorBase[0] == '.')
             {
                 newSelectorParts[0].type = StyleSelectorType.Class;
@@ -386,9 +387,9 @@ namespace UnityEditor.StyleSheets
         {
             state.background = src.background;
             state.textColor = src.textColor;
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             state.scaledBackgrounds = src.scaledBackgrounds.ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         public static void Assign(this GUIStyle style, GUIStyle src)
@@ -434,9 +435,9 @@ namespace UnityEditor.StyleSheets
 
         public static void Assign(this GUISkin skin, GUISkin src)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             skin.customStyles = src.customStyles.Select(style =>
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 var newStyle = new GUIStyle();
                 newStyle.Assign(style);
@@ -480,16 +481,16 @@ namespace UnityEditor.StyleSheets
 
         public static IEnumerable<PropertyInfo> GetGUIStyleProperties()
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             return typeof(GUISkin).GetProperties().Where(p => p.PropertyType == typeof(GUIStyle)).OrderBy(style => style.Name);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         public static IEnumerable<PropertyInfo> GetGUIStateProperties()
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             return typeof(GUIStyle).GetProperties().Where(p => p.PropertyType == typeof(GUIStyleState));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         public static string FindStyleName(this StyleComplexSelector selector, string selectorStr, StyleSheet sheet)
@@ -534,17 +535,17 @@ namespace UnityEditor.StyleSheets
 
         public static GUIStyle GetStyleFromSkin(this GUISkin skin, string styleName)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var propertyInfo = typeof(GUISkin).GetProperties().FirstOrDefault(pi => pi.Name.ToLower() == styleName.ToLower());
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             if (propertyInfo != null)
             {
                 return propertyInfo.GetValue(skin, null) as GUIStyle;
             }
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             return skin.customStyles.FirstOrDefault(s => s.name == styleName);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         public static string EscapeSelectorName(string name)
@@ -583,9 +584,9 @@ namespace UnityEditor.StyleSheets
 
         public static string ToUssPropertyName(params string[] values)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             return string.Join("-", values.Where(v => !string.IsNullOrEmpty(v)));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         public static T LoadResource<T>(string path) where T : Object
@@ -889,3 +890,4 @@ namespace UnityEditor.StyleSheets
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

@@ -31,9 +31,9 @@ namespace Unity.GraphToolkit.Editor
 
         static bool IsGraphReferencingGraphAsset(GraphModel graphModel, GUID graphGuid)
         {
-            #pragma warning disable UA2001, UA2006 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001, UAC2006 // Avoid Linq
             return graphModel?.NodeModels != null && graphModel.NodeModels.OfType<SubgraphNodeModel>().Any(n => n.SubgraphReference.AssetGuid == graphGuid);
-#pragma warning restore UA2001, UA2006
+#pragma warning restore UAC2001, UAC2006
         }
 
         /// <inheritdoc />
@@ -52,20 +52,20 @@ namespace Unity.GraphToolkit.Editor
                 using var changeScope = graphModel.ChangeDescriptionScope;
 
                 var changedAssets = new HashSet<string>(m_ExternalAssetsState.ImportedAssets);
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 changedAssets.UnionWith(m_ExternalAssetsState.MovedAssets.Select(t => t.currentPath));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 changedAssets.UnionWith(m_ExternalAssetsState.DeletedAssets);
 
                 // Deleted graphs have already been unloaded by WindowAssetModificationWatcher, just before they were deleted.
 
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 var changedGuids = changedAssets.ToDictionary(path => path, AssetDatabase.GUIDFromAssetPath);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 var referencedSubGraphsGuids = changedGuids
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     .Where(kvp => IsGraphReferencingGraphAsset(graphModel, kvp.Value))
                     .Select(kvp => kvp.Value);
 

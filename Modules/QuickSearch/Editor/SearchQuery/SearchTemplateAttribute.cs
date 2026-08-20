@@ -5,12 +5,14 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 
 namespace UnityEditor.Search
 {
-    class SearchTemplateAttribute : Attribute
+    partial class SearchTemplateAttribute : Attribute
     {
+        [AutoStaticsCleanupOnCodeReload]
         static List<SearchTemplateAttribute> s_QueryProviders;
 
         public string providerId { get; set; }
@@ -28,9 +30,9 @@ namespace UnityEditor.Search
 
         internal static IEnumerable<ISearchQuery> GetAllQueries()
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             return providers.SelectMany(p => p.CreateQuery());
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         IEnumerable<ISearchQuery> CreateQuery()

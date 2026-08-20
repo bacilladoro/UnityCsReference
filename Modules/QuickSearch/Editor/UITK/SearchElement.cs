@@ -193,9 +193,9 @@ namespace UnityEditor.Search
 
         internal static void HideElements<T>(params T[] elements) where T : VisualElement
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             HideElements(elements.AsEnumerable());
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         internal static void HideElements<T>(IEnumerable<T> elements) where T : VisualElement

@@ -7,6 +7,7 @@ using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
 using System.Text.RegularExpressions;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Search
 {
@@ -173,6 +174,7 @@ namespace UnityEditor.Search
         public bool boolean => type == ValueType.Bool && floatNumber == 1d;
         public bool valid => type != ValueType.Nil;
 
+        [NoAutoStaticsCleanup] // Immutable empty/nil sentinel value with no user references; safe to persist across reload.
         public static SearchValue invalid = new SearchValue();
 
         public SearchValue(bool v)
@@ -757,7 +759,7 @@ namespace UnityEditor.Search
 
     class SearchItemQueryEngine : QueryEngine<SearchItem>
     {
-        static Regex PropertyFilterRx = new Regex(@"[\@\$]([#\w\d\.\[\]]+)");
+        static readonly Regex PropertyFilterRx = new Regex(@"[\@\$]([#\w\d\.\[\]]+)");
 
         SearchExpressionContext m_Context;
 
@@ -772,9 +774,9 @@ namespace UnityEditor.Search
             var query = ParseQuery(queryStr, true);
             if (query.errors.Count != 0)
             {
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 var errorStr = string.Join("\n", query.errors.Select(err => $"Invalid where query expression at {err.index}: {err.reason}"));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 context.ThrowError(errorStr);
             }
 
@@ -797,9 +799,9 @@ namespace UnityEditor.Search
             var query = ParseQuery(queryStr, true);
             if (query.errors.Count != 0)
             {
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 var errorStr = string.Join("\n", query.errors.Select(err => $"Invalid where query expression at {err.index}: {err.reason}"));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 context.ThrowError(errorStr);
             }
 

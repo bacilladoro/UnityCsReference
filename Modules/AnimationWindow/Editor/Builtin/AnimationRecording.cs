@@ -458,9 +458,9 @@ namespace UnityEditor.AnimationWindowBuiltin
             // Process what's remaining.
             ProcessModifications(state, modifications);
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return discardedModifications.Concat(discardedRotationModifications).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         static bool ValueFromPropertyModification(PropertyModification modification, EditorCurveBinding binding, out object outObject)

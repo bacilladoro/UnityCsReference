@@ -427,8 +427,8 @@ namespace UnityEngine.UIElements
         /// <param name="value">The value to store.</param>
         public void SetBackground(StyleSheet styleSheet, Background value)
         {
-            // Gradient-only value: serialise as a gradient function call. Otherwise asset-ref.
-            if (value.GetSelectedImage() == null && !value.gradient.IsEmpty())
+            // No image: write the gradient, or `none` when that is empty too - a null asset reference warns on resolve.
+            if (value.GetSelectedImage() == null)
             {
                 SetBackgroundGradient(styleSheet, value.gradient);
                 return;
@@ -1029,6 +1029,28 @@ namespace UnityEngine.UIElements
         }
 
         /// <summary>
+        /// Sets a <see cref="GridLine"/> as the current value (CSS Grid). Written as tokens
+        /// (auto | &lt;line&gt; | span &lt;n&gt;) so it round-trips through the reader.
+        /// </summary>
+        public void SetGridLine(StyleSheet styleSheet, GridLine value)
+        {
+            if (value.isSpan)
+            {
+                SetSize(ref m_Values, 2);
+                styleSheet.WriteEnumAsString(ref m_Values[0], "span");
+                styleSheet.WriteFloat(ref m_Values[1], value.span);
+            }
+            else
+            {
+                SetSize(ref m_Values, 1);
+                if (value.isAuto)
+                    styleSheet.WriteKeyword(ref m_Values[0], StyleValueKeyword.Auto);
+                else
+                    styleSheet.WriteFloat(ref m_Values[0], value.line);
+            }
+        }
+
+        /// <summary>
         /// Tries to read a <see cref="Ratio"/> from the <see cref="StyleProperty"/>'s value.
         /// </summary>
         /// <param name="styleSheet">The data store.</param>
@@ -1621,6 +1643,123 @@ namespace UnityEngine.UIElements
             requireVariableResolve = false;
         }
 
+        
+        // Writes one sizing value (the min or max side of a track, or a plain single track).
+        static void WriteGridTrackPart(StyleSheet styleSheet, ref StyleValueHandle handle, float value, GridTrackSizeUnit unit)
+        {
+            switch (unit)
+            {
+                case GridTrackSizeUnit.Auto:
+                    styleSheet.WriteKeyword(ref handle, StyleValueKeyword.Auto);
+                    break;
+                case GridTrackSizeUnit.MinContent:
+                    styleSheet.WriteEnumAsString(ref handle, "min-content");
+                    break;
+                case GridTrackSizeUnit.MaxContent:
+                    styleSheet.WriteEnumAsString(ref handle, "max-content");
+                    break;
+                case GridTrackSizeUnit.Percent:
+                    styleSheet.WriteDimension(ref handle, new Dimension(value, Dimension.Unit.Percent));
+                    break;
+                case GridTrackSizeUnit.Fraction:
+                    styleSheet.WriteDimension(ref handle, new Dimension(value, Dimension.Unit.Fraction));
+                    break;
+                default:
+                    styleSheet.WriteDimension(ref handle, new Dimension(value, Dimension.Unit.Pixel));
+                    break;
+            }
+        }
+
+        // A repeat(auto-fill|auto-fit, …) pattern is stored in the track's own min/max fields; min != max
+        // means the pattern was a minmax(), otherwise it is a plain single track.
+        static bool IsMinmaxPattern(GridTrackSize track)
+            => track.minValue != track.maxValue || track.minUnit != track.maxUnit;
+
+        // Number of StyleValueHandles a single GridTrackSize occupies once written.
+        static int GridTrackHandleCount(GridTrackSize track)
+        {
+            switch (track.m_Kind)
+            {
+                case GridTrackKind.Minmax:
+                    return 2 + 3;                                        // Function + argCount + [min, comma, max]
+                case GridTrackKind.FitContent:
+                    return 2 + 1;                                        // Function + argCount + [len]
+                case GridTrackKind.AutoFill:
+                case GridTrackKind.AutoFit:
+                    return 2 + 2 + (IsMinmaxPattern(track) ? (2 + 3) : 1); // Function + argCount + [enum, comma, <pattern>]
+                default:
+                    return 1;                                           // plain track: single handle
+            }
+        }
+
+        static void WriteGridTrackSize(StyleSheet styleSheet, StyleValueHandle[] values, ref int index, GridTrackSize track)
+        {
+            switch (track.m_Kind)
+            {
+                case GridTrackKind.Minmax:
+                    styleSheet.WriteFunction(ref values[index++], StyleValueFunction.Minmax);
+                    styleSheet.WriteFloat(ref values[index++], 3);      // min, comma, max
+                    WriteGridTrackPart(styleSheet, ref values[index++], track.minValue, track.minUnit);
+                    styleSheet.WriteCommaSeparator(ref values[index++]);
+                    WriteGridTrackPart(styleSheet, ref values[index++], track.maxValue, track.maxUnit);
+                    break;
+                case GridTrackKind.FitContent:
+                    styleSheet.WriteFunction(ref values[index++], StyleValueFunction.FitContent);
+                    styleSheet.WriteFloat(ref values[index++], 1);
+                    WriteGridTrackPart(styleSheet, ref values[index++], track.maxValue, track.maxUnit);
+                    break;
+                case GridTrackKind.AutoFill:
+                case GridTrackKind.AutoFit:
+                {
+                    bool minmaxPattern = IsMinmaxPattern(track);
+                    styleSheet.WriteFunction(ref values[index++], StyleValueFunction.Repeat);
+                    styleSheet.WriteFloat(ref values[index++], 2 + (minmaxPattern ? (2 + 3) : 1)); // enum, comma, <pattern>
+                    styleSheet.WriteEnumAsString(ref values[index++], track.m_Kind == GridTrackKind.AutoFill ? "auto-fill" : "auto-fit");
+                    styleSheet.WriteCommaSeparator(ref values[index++]);
+                    if (minmaxPattern)
+                    {
+                        styleSheet.WriteFunction(ref values[index++], StyleValueFunction.Minmax);
+                        styleSheet.WriteFloat(ref values[index++], 3);
+                        WriteGridTrackPart(styleSheet, ref values[index++], track.minValue, track.minUnit);
+                        styleSheet.WriteCommaSeparator(ref values[index++]);
+                        WriteGridTrackPart(styleSheet, ref values[index++], track.maxValue, track.maxUnit);
+                    }
+                    else
+                    {
+                        WriteGridTrackPart(styleSheet, ref values[index++], track.maxValue, track.maxUnit);
+                    }
+                    break;
+                }
+                default:
+                    WriteGridTrackPart(styleSheet, ref values[index++], track.maxValue, track.maxUnit);
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// Sets a <see cref="List{GridTrackSize}"/> as the current value (space-separated track list).
+        /// </summary>
+        public void SetGridTrackSizeList(StyleSheet styleSheet, List<GridTrackSize> value)
+        {
+            if (value == null || value.Count == 0)
+            {
+                SetSize(ref m_Values, 1);
+                styleSheet.WriteKeyword(ref values[0], StyleValueKeyword.None);
+                requireVariableResolve = false;
+                return;
+            }
+
+            int total = 0;
+            for (var i = 0; i < value.Count; ++i)
+                total += GridTrackHandleCount(value[i]);
+
+            SetSize(ref m_Values, total);
+            int index = 0;
+            for (var i = 0; i < value.Count; ++i)
+                WriteGridTrackSize(styleSheet, values, ref index, value[i]);
+            requireVariableResolve = false;
+        }
+
         /// <summary>
         /// Tries to read a <see cref="List{TimeValue}"/> from the <see cref="StyleProperty"/>'s value.
         /// </summary>
@@ -1666,6 +1805,57 @@ namespace UnityEngine.UIElements
                     return false;
                 }
                 value.Add(timeValue);
+            }
+
+            return true;
+        }
+
+        public void SetAnimationIterationCountList(StyleSheet styleSheet, List<AnimationIterationCount> value)
+        {
+            SetSize(ref m_Values, value.Count * 2 - 1);
+            for (var i = 0; i < value.Count; ++i)
+            {
+                var handleIndex = i * 2;
+                styleSheet.WriteAnimationIterationCount(ref values[handleIndex], value[i]);
+                if (i < value.Count - 1)
+                    styleSheet.WriteCommaSeparator(ref values[handleIndex + 1]);
+            }
+            requireVariableResolve = false;
+        }
+
+        public bool TryGetAnimationIterationCountList(StyleSheet styleSheet, out List<AnimationIterationCount> value)
+        {
+            if (ContainsVariable())
+            {
+                value = null;
+                return false;
+            }
+
+            value = new List<AnimationIterationCount>();
+            return TryGetAnimationIterationCountList(styleSheet, value);
+        }
+
+        public bool TryGetAnimationIterationCountList(StyleSheet styleSheet, List<AnimationIterationCount> value)
+        {
+            if (value == null)
+                throw new ArgumentNullException(nameof(value));
+
+            value.Clear();
+
+            if (ContainsVariable())
+                return false;
+
+            for (var i = 0; i < m_Values.Length; i += 2)
+            {
+                var commaIndex = i + 1;
+
+                if (!styleSheet.TryReadAnimationIterationCount(m_Values[i], out AnimationIterationCount count) ||
+                    commaIndex < m_Values.Length && values[commaIndex].valueType != StyleValueType.CommaSeparator)
+                {
+                    value.Clear();
+                    return false;
+                }
+                value.Add(count);
             }
 
             return true;
@@ -1807,6 +1997,78 @@ namespace UnityEngine.UIElements
             }
 
             return true;
+        }
+
+        /// <summary>
+        /// Sets a <see cref="List{Single}"/> as the current value (comma-separated animation-* longhands).
+        /// </summary>
+        /// <param name="styleSheet">The data store.</param>
+        /// <param name="value">The value to store.</param>
+        public void SetFloatList(StyleSheet styleSheet, List<float> value)
+        {
+            SetSize(ref m_Values, value.Count * 2 - 1);
+            for (var i = 0; i < value.Count; ++i)
+            {
+                var handleIndex = i * 2;
+                styleSheet.WriteFloat(ref values[handleIndex], value[i]);
+                if (i < value.Count - 1)
+                    styleSheet.WriteCommaSeparator(ref values[handleIndex + 1]);
+            }
+            requireVariableResolve = false;
+        }
+
+        /// <summary>
+        /// Sets a <see cref="List{AnimationDirection}"/> as the current value.
+        /// </summary>
+        /// <param name="styleSheet">The data store.</param>
+        /// <param name="value">The value to store.</param>
+        public void SetAnimationDirectionList(StyleSheet styleSheet, List<AnimationDirection> value)
+        {
+            SetSize(ref m_Values, value.Count * 2 - 1);
+            for (var i = 0; i < value.Count; ++i)
+            {
+                var handleIndex = i * 2;
+                styleSheet.WriteEnum(ref values[handleIndex], value[i]);
+                if (i < value.Count - 1)
+                    styleSheet.WriteCommaSeparator(ref values[handleIndex + 1]);
+            }
+            requireVariableResolve = false;
+        }
+
+        /// <summary>
+        /// Sets a <see cref="List{AnimationPlayState}"/> as the current value.
+        /// </summary>
+        /// <param name="styleSheet">The data store.</param>
+        /// <param name="value">The value to store.</param>
+        public void SetAnimationPlayStateList(StyleSheet styleSheet, List<AnimationPlayState> value)
+        {
+            SetSize(ref m_Values, value.Count * 2 - 1);
+            for (var i = 0; i < value.Count; ++i)
+            {
+                var handleIndex = i * 2;
+                styleSheet.WriteEnum(ref values[handleIndex], value[i]);
+                if (i < value.Count - 1)
+                    styleSheet.WriteCommaSeparator(ref values[handleIndex + 1]);
+            }
+            requireVariableResolve = false;
+        }
+
+        /// <summary>
+        /// Sets a <see cref="List{UIAnimationClip}"/> as the current value (comma-separated animation-name).
+        /// </summary>
+        /// <param name="styleSheet">The data store.</param>
+        /// <param name="value">The value to store.</param>
+        public void SetUIAnimationClipList(StyleSheet styleSheet, List<UIAnimationClip> value)
+        {
+            SetSize(ref m_Values, value.Count * 2 - 1);
+            for (var i = 0; i < value.Count; ++i)
+            {
+                var handleIndex = i * 2;
+                styleSheet.WriteAssetReference(ref values[handleIndex], value[i]);
+                if (i < value.Count - 1)
+                    styleSheet.WriteCommaSeparator(ref values[handleIndex + 1]);
+            }
+            requireVariableResolve = false;
         }
 
         /// <summary>

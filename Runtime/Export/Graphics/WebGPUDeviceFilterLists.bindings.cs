@@ -16,6 +16,15 @@ namespace UnityEngine
         Desktop = 2
     }
 
+    // Must match UnityEditor.WebGPUBrowserEngineFlavor in Runtime/Graphics/WebGPU/WebGPUDeviceFilterData.h
+    public enum WebGPUBrowserEngineFlavor
+    {
+        DoNotCare = 0,
+        ChromiumBased = 1,
+        SafariBased = 2,
+        FirefoxBased = 3
+    }
+
     // Must match UnityEditor.WebGPUComparator in Runtime/Graphics/WebGPU/WebGPUDeviceFilterData.h
     public enum WebGPUComparator
     {
@@ -111,6 +120,9 @@ namespace UnityEngine
         public string browserName;
         public string browserVersion;
         public WebGPUComparator browserVersionComparator;
+        public WebGPUBrowserEngineFlavor browserEngineFlavor;
+        public string engineVersion;
+        public WebGPUComparator engineVersionComparator;
         public WebGPUDeviceType deviceType;
         public WebGPUDeviceFeature[] features;
         public WebGPUDeviceFilterLimit[] limits;
@@ -118,6 +130,7 @@ namespace UnityEngine
 
     internal static class WebGPUDeviceFilterUtils
     {
+        private static readonly string browserNameString = "browserName";
         private static readonly string browserVersionString = "browserVersion";
         private static readonly string versionErrorMessage = "Version information should be formatted as:" +
             "\n1. 'MajorVersion.MinorVersion.PatchVersion.MinorPatvhVersion' where MinorVersion, PatchVersion and MinorPatchVersion " +
@@ -175,6 +188,8 @@ namespace UnityEngine
         {
             // The check will throw an exception if there's an issue with the data.
             // We need to check the data here, as an invalid regex on the native side, can crash the game.
+            if (!string.IsNullOrEmpty(filterData.browserName))
+                CheckRegex(filterData.browserName, filterName, browserNameString);
             if (!string.IsNullOrEmpty(filterData.browserVersion))
                 CheckRegex(filterData.browserVersion, filterName, browserVersionString);
         }

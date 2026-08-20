@@ -909,6 +909,25 @@ namespace UnityEngine.UIElements
             return false;
         }
 
+        internal bool TryReadAnimationIterationCount(StyleValueHandle handle, out AnimationIterationCount value)
+        {
+            if (handle.valueType == StyleValueType.Enum &&
+                string.Equals(ReadEnum(handle), AnimationIterationCount.k_InfiniteKeyword, System.StringComparison.OrdinalIgnoreCase))
+            {
+                value = AnimationIterationCount.Infinite();
+                return true;
+            }
+
+            if (TryReadFloat(handle, out var count))
+            {
+                value = new AnimationIterationCount(count);
+                return true;
+            }
+
+            value = default;
+            return false;
+        }
+
         [VisibleToOtherModules("UnityEditor.UIBuilderModule", "UnityEditor.UIToolkitAuthoringModule")]
         internal void WriteKeyword(ref StyleValueHandle handle, StyleValueKeyword value)
         {
@@ -1186,6 +1205,14 @@ namespace UnityEngine.UIElements
         void OnApplyUndoRedoINTERNAL()
         {
             RequestRebuild(RebuildOptions.Synchronous);
+        }
+
+        internal void WriteAnimationIterationCount(ref StyleValueHandle handle, AnimationIterationCount value)
+        {
+            if (value.IsInfinite())
+                WriteEnumAsString(ref handle, AnimationIterationCount.k_InfiniteKeyword);
+            else
+                WriteFloat(ref handle, value.value);
         }
 
         internal void MarkAsChanged()

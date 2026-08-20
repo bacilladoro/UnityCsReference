@@ -26,30 +26,19 @@ namespace UnityEditor.PackageManager.UI.Internal
     }
 
     [Serializable]
-    internal class PageRefreshHandler : BaseService<IPageRefreshHandler>, IPageRefreshHandler, ISerializationCallbackReceiver
+    internal class PageRefreshHandler : BaseService<IPageRefreshHandler>, IPageRefreshHandler
     {
         public event Action onRefreshOperationStart = delegate { };
         public event Action onRefreshOperationFinish = delegate { };
         public event Action<UIError> onRefreshOperationError = delegate { };
 
+        [SerializeField]
         private Dictionary<RefreshOptions, long> m_RefreshTimestamps = new();
+        [SerializeField]
         private Dictionary<RefreshOptions, UIError> m_RefreshErrors = new();
 
         [NonSerialized]
         private List<IOperation> m_RefreshOperationsInProgress = new();
-
-        // array created to help serialize dictionaries
-        [SerializeField]
-        private RefreshOptions[] m_SerializedRefreshTimestampsKeys = Array.Empty<RefreshOptions>();
-
-        [SerializeField]
-        private long[] m_SerializedRefreshTimestampsValues = Array.Empty<long>();
-
-        [SerializeField]
-        private RefreshOptions[] m_SerializedRefreshErrorsKeys = Array.Empty<RefreshOptions>();
-
-        [SerializeField]
-        private UIError[] m_SerializedRefreshErrorsValues = Array.Empty<UIError>();
 
         private readonly IApplicationProxy m_Application;
         private readonly IUpmClient m_UpmClient;
@@ -80,24 +69,6 @@ namespace UnityEditor.PackageManager.UI.Internal
             m_PackageManagerPrefs = RegisterDependency(packageManagerPrefs);
             m_AssetStoreClient = RegisterDependency(assetStoreClient);
             m_SampleCache = RegisterDependency(sampleCache);
-        }
-
-        public void OnBeforeSerialize()
-        {
-            m_RefreshTimestamps.Keys.ToArray(ref m_SerializedRefreshTimestampsKeys);
-            m_RefreshTimestamps.Values.ToArray(ref m_SerializedRefreshTimestampsValues);
-
-            m_RefreshErrors.Keys.ToArray(ref m_SerializedRefreshErrorsKeys);
-            m_RefreshErrors.Values.ToArray(ref m_SerializedRefreshErrorsValues);
-        }
-
-        public void OnAfterDeserialize()
-        {
-            for (var i = 0; i < m_SerializedRefreshTimestampsKeys.Length; i++)
-                m_RefreshTimestamps[m_SerializedRefreshTimestampsKeys[i]] = m_SerializedRefreshTimestampsValues[i];
-
-            for (var i = 0; i < m_SerializedRefreshErrorsKeys.Length; i++)
-                m_RefreshErrors[m_SerializedRefreshErrorsKeys[i]] = m_SerializedRefreshErrorsValues[i];
         }
 
         private void OnActivePageChanged(IPage page)

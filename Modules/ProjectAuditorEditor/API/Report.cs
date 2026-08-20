@@ -78,11 +78,6 @@ namespace Unity.ProjectAuditor.Editor
         public string HostPlatform;
 
         /// <summary>
-        /// True if the "Use Roslyn Analyzers" checkbox was ticked in Preferences > Project Auditor.
-        /// </summary>
-        public bool UseRoslynAnalyzers;
-
-        /// <summary>
         /// The analyzed areas from the preferences.
         /// </summary>
         public SerializableEnum<ProjectAreaFlags> ProjectAreas;
@@ -159,9 +154,9 @@ namespace Unity.ProjectAuditor.Editor
         {
             get
             {
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 return m_Issues.Where(i => !i.IsIssue()).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             }
         }
 
@@ -169,9 +164,9 @@ namespace Unity.ProjectAuditor.Editor
         {
             get
             {
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 return m_Issues.Where(i => i.IsIssue() && !i.WasFixed).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             }
         }
 
@@ -230,7 +225,6 @@ namespace Unity.ProjectAuditor.Editor
                 // It's not 2016 any more, but too many systems depend on operatingSystem thinking it is, so update mac's naming here
                 HostPlatform = SystemInfo.operatingSystem.Replace("Mac OS X", "macOS"),
 
-                UseRoslynAnalyzers = UserPreferences.UseRoslynAnalyzers,
                 ProjectAreas = (ProjectAreaFlags)UserPreferences.ProjectAreasToAnalyze
             };
         }
@@ -274,9 +268,9 @@ namespace Unity.ProjectAuditor.Editor
         public int GetNumIssues(IssueCategory category)
         {
             s_Mutex.WaitOne();
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var result = m_Issues.Count(i => i.Category == category);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             s_Mutex.ReleaseMutex();
             return result;
         }
@@ -296,9 +290,9 @@ namespace Unity.ProjectAuditor.Editor
                     {
                         if (module.Name == moduleInfo.name || (moduleInfo.name == "AudioClips" && module.Name == "Audio Clips"))
                         {
-                            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                            #pragma warning disable UAC2001 // Avoid Linq
                             moduleInfo.layouts = module.SupportedLayouts.ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                         }
                     }
                 }
@@ -330,9 +324,9 @@ namespace Unity.ProjectAuditor.Editor
         public IReadOnlyCollection<ReportItem> FindByCategory(IssueCategory category)
         {
             s_Mutex.WaitOne();
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var result = m_Issues.Where(i => i.Category == category).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             s_Mutex.ReleaseMutex();
             return result;
         }
@@ -345,9 +339,9 @@ namespace Unity.ProjectAuditor.Editor
         public IReadOnlyCollection<ReportItem> FindByDescriptorId(string id)
         {
             s_Mutex.WaitOne();
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var result = m_Issues.Where(i => i.Id.IsValid() && i.Id.Equals(id)).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             s_Mutex.ReleaseMutex();
             return result;
         }
@@ -456,18 +450,18 @@ namespace Unity.ProjectAuditor.Editor
         internal void RecordModuleInfo(Module module, long moduleAnalysisTimeMs, AnalysisResult analysisResult)
         {
             var name = module.Name;
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var info = moduleMetadata.FirstOrDefault(m => m.name.Equals(name));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             if (info == null)
             {
                 info = new ModuleInfo
                 {
                     name = module.Name,
                     categories = module.Categories.ToSerializableArray(),
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2001 // Avoid Linq
                     layouts = module.SupportedLayouts.ToArray(),
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 };
                 moduleMetadata.Add(info);
             }

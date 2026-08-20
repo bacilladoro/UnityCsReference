@@ -85,7 +85,10 @@ namespace UnityEditor.AdaptivePerformance.Editor
             {
                 m_SettingsWrapper.Update();
                 m_CachedEditor.OnInspectorGUI();
-                m_SettingsWrapper.ApplyModifiedProperties();
+                if (m_SettingsWrapper.hasModifiedProperties)
+                {
+                    m_SettingsWrapper.ApplyModifiedProperties();
+                }
             }
         }
 

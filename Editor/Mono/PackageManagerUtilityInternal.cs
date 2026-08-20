@@ -22,9 +22,9 @@ namespace UnityEditor
         /// <returns>An array of package information ordered by display name.</returns>
         public static PackageManager.PackageInfo[] GetAllVisiblePackages(bool skipHiddenPackages = true)
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return PackageManager.PackageInfo.GetAllRegisteredPackages().Where(info =>
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 !IsHidden(info) && (!skipHiddenPackages || !info.hideInEditor)).
                 OrderBy(info => string.IsNullOrEmpty(info.displayName) ? info.name : info.displayName,
                     StringComparer.InvariantCultureIgnoreCase).ToArray();
@@ -60,9 +60,9 @@ namespace UnityEditor
             {
                 if (s_HiddenPackagesCount == -1)
                 {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                     s_HiddenPackagesCount = PackageManager.PackageInfo.GetAllRegisteredPackages().Count(info =>
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                         !IsHidden(info) && info.hideInEditor);
                 }
 

@@ -45,7 +45,7 @@ namespace Unity.GraphToolkit.Editor.Implementation
         [NonSerialized]
         Color m_CustomDefaultColor;
 
-        bool IUserNodeModelImp.OnEnableCalled { get => m_OnEnableCalled; set => m_OnEnableCalled = value; }
+        bool IUserModelImp.OnEnableCalled { get => m_OnEnableCalled; set => m_OnEnableCalled = value; }
 
         public override string Tooltip
         {
@@ -180,7 +180,7 @@ namespace Unity.GraphToolkit.Editor.Implementation
         [NonSerialized]
         Color m_CustomDefaultColor;
 
-        bool IUserNodeModelImp.OnEnableCalled { get => m_OnEnableCalled; set => m_OnEnableCalled = value; }
+        bool IUserModelImp.OnEnableCalled { get => m_OnEnableCalled; set => m_OnEnableCalled = value; }
 
         public override string Tooltip
         {
@@ -317,7 +317,7 @@ namespace Unity.GraphToolkit.Editor.Implementation
         [NonSerialized]
         Color m_CustomDefaultColor = Color.darkGreen;
 
-        bool IUserNodeModelImp.OnEnableCalled { get => m_OnEnableCalled; set => m_OnEnableCalled = value; }
+        bool IUserModelImp.OnEnableCalled { get => m_OnEnableCalled; set => m_OnEnableCalled = value; }
 
         public override string Tooltip
         {

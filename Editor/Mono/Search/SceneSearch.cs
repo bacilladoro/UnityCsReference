@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.SearchService
 {
@@ -43,10 +44,10 @@ namespace UnityEditor.SearchService
         public void EndSearch(ISearchContext context) => m_Engine.EndSearch(context);
     }
 
-    [InitializeOnLoad]
-    public static class SceneSearch
+    public static partial class SceneSearch
     {
-        static SearchApiBaseImp<SceneSearchEngineAttribute, ISceneSearchEngineV2> s_EngineImp;
+        [AutoStaticsCleanupOnCodeReload]
+        static SearchApiBaseImp<SceneSearchEngineAttribute, ISceneSearchEngineV2> s_EngineImp = null;
         static SearchApiBaseImp<SceneSearchEngineAttribute, ISceneSearchEngineV2> engineImp
         {
             get
@@ -59,7 +60,8 @@ namespace UnityEditor.SearchService
 
         public const SearchEngineScope EngineScope = SearchEngineScope.Scene;
 
-        static SceneSearch()
+        [OnCodeLoaded]
+        static void DelayInitialize()
         {
             EditorApplication.tick += StaticInit;
         }

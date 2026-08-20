@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -371,6 +372,7 @@ namespace UnityEditor.Search
             return editor != null && editor.target is GameObject && target is Component;
         }
 
+        [NoAutoStaticsCleanup] // reusable stateless UQuery template (built from null root) with no user-code refs; safe to persist
         private static UQueryState<IMGUIContainer> s_ImguiContainersQuery = new UQueryBuilder<IMGUIContainer>(null).SingleBaseType().Build();
         internal static void InvalidateIMGUILayouts(VisualElement element)
         {

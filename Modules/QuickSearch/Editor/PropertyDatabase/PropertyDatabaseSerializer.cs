@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Search
 {
@@ -103,48 +104,65 @@ namespace UnityEditor.Search
         }
     }
 
-    static class PropertyDatabaseSerializerManager
+    static partial class PropertyDatabaseSerializerManager
     {
-        static Dictionary<Type, PropertyDatabaseSerializer> s_Serializers = new Dictionary<Type, PropertyDatabaseSerializer>();
-        static Dictionary<PropertyDatabaseType, PropertyDatabaseDeserializer> s_Deserializers = new Dictionary<PropertyDatabaseType, PropertyDatabaseDeserializer>();
-
-        static PropertyDatabaseSerializerManager()
+        internal partial class LazyInitStatics
         {
-            RefreshSerializers();
+            Dictionary<Type, PropertyDatabaseSerializer> m_Serializers = new();
+            Dictionary<PropertyDatabaseType, PropertyDatabaseDeserializer> m_Deserializers = new();
+            public Dictionary<Type, PropertyDatabaseSerializer> serializers { get { return m_Serializers; } }
+            public Dictionary<PropertyDatabaseType, PropertyDatabaseDeserializer> deserializers { get { return m_Deserializers; } }
+
+
+            public LazyInitStatics()
+            {
+                RefreshSerializers();
+            }
+
+            public void RefreshSerializers()
+            {
+                m_Serializers.Clear();
+                m_Deserializers.Clear();
+
+                var serializers = ReflectionUtils.LoadAllMethodsWithAttribute<PropertyDatabaseSerializerAttribute, PropertyDatabaseSerializer>((info, attribute, handler) =>
+                {
+                    if (handler is PropertySerializerHandler psh)
+                        return new PropertyDatabaseSerializer(attribute.type, psh);
+                    throw new Exception($"Invalid {nameof(PropertyDatabaseSerializerAttribute)} handler.");
+                }, MethodSignature.FromDelegate<PropertySerializerHandler>());
+
+                var deserializers = ReflectionUtils.LoadAllMethodsWithAttribute<PropertyDatabaseDeserializerAttribute, PropertyDatabaseDeserializer>((info, attribute, handler) =>
+                {
+                    if (handler is PropertyDeserializerHandler psh)
+                        return new PropertyDatabaseDeserializer(attribute.type, psh);
+                    throw new Exception($"Invalid {nameof(PropertyDatabaseDeserializerAttribute)} handler.");
+                }, MethodSignature.FromDelegate<PropertyDeserializerHandler>());
+
+                foreach (var propertySerializer in serializers)
+                {
+                    if (m_Serializers.ContainsKey(propertySerializer.type))
+                        continue;
+                    m_Serializers.Add(propertySerializer.type, propertySerializer);
+                }
+
+                foreach (var propertyDeserializer in deserializers)
+                {
+                    if (m_Deserializers.ContainsKey(propertyDeserializer.type))
+                        continue;
+                    m_Deserializers.Add(propertyDeserializer.type, propertyDeserializer);
+                }
+            }
         }
+
+        [AutoStaticsCleanupOnCodeReload]
+        private static Lazy<LazyInitStatics> s_LazyInitStatics = new(() => new LazyInitStatics());
+
+        static Dictionary<Type, PropertyDatabaseSerializer> s_Serializers { get => s_LazyInitStatics.Value.serializers; }
+        static Dictionary<PropertyDatabaseType, PropertyDatabaseDeserializer> s_Deserializers { get => s_LazyInitStatics.Value.deserializers; }
 
         public static void RefreshSerializers()
         {
-            s_Serializers.Clear();
-            s_Deserializers.Clear();
-
-            var serializers = ReflectionUtils.LoadAllMethodsWithAttribute<PropertyDatabaseSerializerAttribute, PropertyDatabaseSerializer>((info, attribute, handler) =>
-            {
-                if (handler is PropertySerializerHandler psh)
-                    return new PropertyDatabaseSerializer(attribute.type, psh);
-                throw new Exception($"Invalid {nameof(PropertyDatabaseSerializerAttribute)} handler.");
-            }, MethodSignature.FromDelegate<PropertySerializerHandler>());
-
-            var deserializers = ReflectionUtils.LoadAllMethodsWithAttribute<PropertyDatabaseDeserializerAttribute, PropertyDatabaseDeserializer>((info, attribute, handler) =>
-            {
-                if (handler is PropertyDeserializerHandler psh)
-                    return new PropertyDatabaseDeserializer(attribute.type, psh);
-                throw new Exception($"Invalid {nameof(PropertyDatabaseDeserializerAttribute)} handler.");
-            }, MethodSignature.FromDelegate<PropertyDeserializerHandler>());
-
-            foreach (var propertySerializer in serializers)
-            {
-                if (s_Serializers.ContainsKey(propertySerializer.type))
-                    continue;
-                s_Serializers.Add(propertySerializer.type, propertySerializer);
-            }
-
-            foreach (var propertyDeserializer in deserializers)
-            {
-                if (s_Deserializers.ContainsKey(propertyDeserializer.type))
-                    continue;
-                s_Deserializers.Add(propertyDeserializer.type, propertyDeserializer);
-            }
+            s_LazyInitStatics.Value.RefreshSerializers();
         }
 
         public static bool SerializerExists(Type type)

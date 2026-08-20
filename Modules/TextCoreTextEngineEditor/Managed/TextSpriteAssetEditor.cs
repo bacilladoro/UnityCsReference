@@ -6,6 +6,7 @@ using UnityEngine;
 using UnityEngine.TextCore.Text;
 using UnityEditorInternal;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 
 
 namespace UnityEditor.TextCore.Text
@@ -15,14 +16,20 @@ namespace UnityEditor.TextCore.Text
     {
         struct UI_PanelState
         {
+            // Editor UI fold-out state; plain bools, safe to persist across code reload (nothing to clean up).
+            [NoAutoStaticsCleanup]
             public static bool spriteAssetFaceInfoPanel = true;
+            [NoAutoStaticsCleanup]
             public static bool spriteAtlasInfoPanel = true;
+            [NoAutoStaticsCleanup]
             public static bool fallbackSpriteAssetPanel = true;
+            [NoAutoStaticsCleanup]
             public static bool spriteCharacterTablePanel;
+            [NoAutoStaticsCleanup]
             public static bool spriteGlyphTablePanel;
         }
 
-        private static string[] s_UiStateLabel = new string[] { "<i>(Click to collapse)</i> ", "<i>(Click to expand)</i> " };
+        private static readonly string[] s_UiStateLabel = new string[] { "<i>(Click to collapse)</i> ", "<i>(Click to expand)</i> " };
 
         int m_moveToIndex;
         int m_selectedElement = -1;

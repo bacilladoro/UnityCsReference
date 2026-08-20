@@ -2,6 +2,8 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
+using Unity.Scripting.LifecycleManagement;
 using System;
 using System.Collections.Generic;
 using Unity.Collections.LowLevel.Unsafe;
@@ -30,13 +32,14 @@ namespace UnityEngine.UIElements
     //
     // Note: Using ushort instead of byte for counts eliminates struct padding while
     // providing more than enough capacity for any realistic stylesheet.
-    internal static class SelectorAccelerationCacheBuilder
+    internal static partial class SelectorAccelerationCacheBuilder
     {
         // Limits imposed by data structure sizes (ushort.MaxValue -> 65,535)
         private const int MaxTotalParts = ushort.MaxValue;
         private const int MaxTotalSelectors = ushort.MaxValue;
 
         // Cached delegate so the per-build sort doesn't allocate one.
+        [NoAutoStaticsCleanup] // static method reference; safe to persist
         private static readonly RefComparison<SelectorRangeDescriptor> s_DescriptorRefComparison = CompareDescriptors;
 
         // Public API
@@ -412,3 +415,4 @@ namespace UnityEngine.UIElements
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

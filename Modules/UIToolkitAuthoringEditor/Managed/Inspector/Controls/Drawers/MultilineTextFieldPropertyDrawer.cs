@@ -16,12 +16,20 @@ namespace Unity.UIToolkit.Editor
         {
             var attr = (MultilineTextFieldAttribute)attribute;
 
-            return new TextField
+            var field = new TextField
             {
                 label = attr.displayName ?? property.localizedDisplayName,
                 multiline = true,
                 bindingPath = property.propertyPath
             }.WithClassList(TextField.alignedFieldUssClassName);
+
+            if (attr.lines > 1)
+            {
+                field.style.minHeight = EditorGUIUtility.singleLineHeight * attr.lines;
+                field.labelElement.style.alignSelf = Align.FlexStart;
+            }
+
+            return field;
         }
     }
 }

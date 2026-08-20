@@ -67,11 +67,11 @@ namespace Unity.Timeline.Foundation.CSO
             if (m_AggregatedChangesetCache != null)
                 return m_AggregatedChangesetCache;
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var changesetList = new List<TChangeset>(m_Changesets
                 .Where(c => c.Version > sinceVersion)
                 .Select(c => c.Changeset));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             if (changesetList.Count == 0)
             {

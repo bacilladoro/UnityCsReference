@@ -4,6 +4,7 @@
 
 using System.Collections.Generic;
 using System.IO;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEngine;
 
@@ -35,6 +36,7 @@ namespace Unity.Multiplayer.PlayMode.Editor
         /// icon that exists in the editor is used in many places add it here, so
         /// if we have to change it in the future we only have one spot to change.
         /// </summary>
+        [NoAutoStaticsCleanup] // constant enum-to-name mapping; never changes between reloads
         static readonly Dictionary<ImageName, string> k_InternalIcons = new()
         {
             { ImageName.Warning, "console.warnicon" },
@@ -44,6 +46,7 @@ namespace Unity.Multiplayer.PlayMode.Editor
         };
 
 
+        [NoAutoStaticsCleanup] // Texture2D cache loaded by fixed path; assets survive reload, cache self-refreshes
         static readonly Dictionary<string, Texture2D> CachedImagesByPath = new();
 
         internal static Texture2D GetImage(ImageName imageName)

@@ -368,8 +368,14 @@ namespace Unity.UI.Builder
             {"white-space", "Word wrap over multiple lines if not enough space is available to draw the text of an element."},
             {"width", "Fixed width of an element for the layout."},
             {"word-spacing", "Increases or decreases the space between words."},
-            {"-unity-animation-clip", "Apply an animation with that element as root"},
-            {"animation-play-state", "Control the play state of the animation in the -unity-animation-clip"}
+            {"z-index", "Controls the stacking order of overlapping elements within a stacking context."},
+            {"animation-name", "Apply an animation with that element as root"},
+            {"animation", "Shorthand for the animation properties (clip, duration, delay, iteration count, direction, play state). Omitting the clip resets animation-name to none."},
+            {"animation-duration", "Duration of one iteration, in seconds. 0 uses the clip's intrinsic length; a positive value remaps one iteration to that duration."},
+            {"animation-delay", "Delay before the animation begins, in seconds. Negative values start it partway through the first iteration."},
+            {"animation-direction", "Whether the animation plays forward, backward, or alternates direction across iterations."},
+            {"animation-iteration-count", "Number of times the animation repeats. Use 'infinite' to loop forever. The clip's own loop flag is ignored."},
+            {"animation-play-state", "Control the play state of the animation in the animation-name"}
         };
 
         internal const string PixelPercentageInitialValue = "Enter a value as a pixel, percentage, or initial.";
@@ -381,6 +387,7 @@ namespace Unity.UI.Builder
             {
                 {$"display{FieldTooltipDictionarySeparator}flex", "Turns the element into a flexible container for aligning and distributing items."},
                 {$"display{FieldTooltipDictionarySeparator}none", "Hides the element in the container. This might have an impact on the layout."},
+                {$"display{FieldTooltipDictionarySeparator}grid", "Lays the element's children out on a CSS Grid of rows and columns."},
                 {$"visibility{FieldTooltipDictionarySeparator}visible", "Makes the UI element visible in its container. "},
                 {$"visibility{FieldTooltipDictionarySeparator}hidden", "Makes the UI element hidden in its container. "},
                 {$"overflow{FieldTooltipDictionarySeparator}visible", "Overflowing content is not clipped and may be visible outside the element's container."},
@@ -405,6 +412,20 @@ namespace Unity.UI.Builder
                 {$"justify-content{FieldTooltipDictionarySeparator}space-between", "Items are spaced out evenly along the main axis with equal spacing between them. The first item is aligned to the start of the container, and the last item is aligned to the end."},
                 {$"justify-content{FieldTooltipDictionarySeparator}space-around", "Items are spaced out evenly along the main axis with equal spacing between each item, and half the space before the first item and after the last item."},
                 {$"justify-content{FieldTooltipDictionarySeparator}space-evenly", "Items are spaced out evenly along the main axis with equal spacing between each item, before the first item and after the last item."},
+                {$"grid-auto-flow{FieldTooltipDictionarySeparator}row", "Auto-placed items fill each row in turn, adding new rows as needed."},
+                {$"grid-auto-flow{FieldTooltipDictionarySeparator}column", "Auto-placed items fill each column in turn, adding new columns as needed."},
+                {$"grid-auto-flow{FieldTooltipDictionarySeparator}row-dense", "Fills rows and backfills earlier gaps, which can change item order."},
+                {$"grid-auto-flow{FieldTooltipDictionarySeparator}column-dense", "Fills columns and backfills earlier gaps, which can change item order."},
+                {$"justify-items{FieldTooltipDictionarySeparator}auto", "Items use the container's default inline-axis alignment within their cell."},
+                {$"justify-items{FieldTooltipDictionarySeparator}flex-start", "Aligns items to the inline start of their grid cell."},
+                {$"justify-items{FieldTooltipDictionarySeparator}center", "Centers items on the inline axis of their grid cell."},
+                {$"justify-items{FieldTooltipDictionarySeparator}flex-end", "Aligns items to the inline end of their grid cell."},
+                {$"justify-items{FieldTooltipDictionarySeparator}stretch", "Stretches items to fill their grid cell on the inline axis."},
+                {$"justify-self{FieldTooltipDictionarySeparator}auto", "This item uses the container's justify-items alignment."},
+                {$"justify-self{FieldTooltipDictionarySeparator}flex-start", "Aligns this item to the inline start of its grid cell."},
+                {$"justify-self{FieldTooltipDictionarySeparator}center", "Centers this item on the inline axis of its grid cell."},
+                {$"justify-self{FieldTooltipDictionarySeparator}flex-end", "Aligns this item to the inline end of its grid cell."},
+                {$"justify-self{FieldTooltipDictionarySeparator}stretch", "Stretches this item to fill its grid cell on the inline axis."},
                 {$"align-self{FieldTooltipDictionarySeparator}auto", "Items within the container are aligned according to the value of the align-items property."},
                 {$"align-self{FieldTooltipDictionarySeparator}flex-start", "Items are aligned with the top of the cross-axis container."},
                 {$"align-self{FieldTooltipDictionarySeparator}center", "Items are aligned with the center of the cross-axis container."},
@@ -701,7 +722,7 @@ namespace Unity.UI.Builder
         public static readonly string DialogDiscardOption = "Discard changes and {0}";
         public static readonly string DialogAbortActionOption = "Do not {0}";
         public static readonly string DialogSaveActionOption = "Save";
-        public static readonly string DialogDontSaveActionOption = "Discard";
+        public static readonly string DialogDiscardChangesActionOption = "Discard Changes";
 
         // Save Dialog Messages
         public static readonly string SaveDialogChooseUxmlPathDialogTitle = "Choose UXML File Location";

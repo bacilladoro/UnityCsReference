@@ -63,9 +63,9 @@ namespace UnityEditor.VersionControl
                     Debug.LogWarning($"Version control object {type.FullName} named '{name}' will be ignored because it's not derived from {typeof(VersionControlObject).FullName}.");
                     continue;
                 }
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 var duplicate = descriptorList.FirstOrDefault(d => string.Equals(d.name, name, StringComparison.Ordinal));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 if (duplicate != null)
                 {
                     Debug.LogWarning($"Version control name '{name}' is not unique. Version control object {type.FullName} will be ignored. Another version control object is {duplicate.type.FullName}.");
@@ -80,9 +80,9 @@ namespace UnityEditor.VersionControl
         [RequiredByNativeCode]
         static bool HasDescriptor(string name)
         {
-#pragma warning disable UA2006 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2006 // Avoid Linq
             return versionControlDescriptors.Any(d => string.Equals(d.name, name, StringComparison.Ordinal));
-#pragma warning restore UA2006
+#pragma warning restore UAC2006
         }
 
         public static bool SetVersionControl(string name)
@@ -108,9 +108,9 @@ namespace UnityEditor.VersionControl
         {
             Deactivate();
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var descriptor = versionControlDescriptors.FirstOrDefault(d => string.Equals(d.name, name, StringComparison.Ordinal));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             if (descriptor == null)
                 return false;
 

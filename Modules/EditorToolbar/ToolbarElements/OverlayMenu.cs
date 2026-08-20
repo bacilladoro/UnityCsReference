@@ -266,7 +266,7 @@ namespace UnityEditor.Overlays
                 var overlayMenuItemContent = EditorGUIUtility.TrTextContent($"Overlays/Overlay Menu _{binding}");
                 var enableOverlaysContent = EditorGUIUtility.TrTextContent($"Overlays/Enable Overlays");
                 var displaceWindowContent = EditorGUIUtility.TrTextContent($"Overlays/Displace Window");
-                var overlaySettingsContent = EditorGUIUtility.TrTextContent($"Overlays/Overlay Preferences...");
+                var overlaySettingsContent = EditorGUIUtility.TrTextContent($"Overlays/Color Preferences...");
 
                 var displaceWindow = targetWindow.overlayCanvas.dynamicPanelBehavior == DynamicPanelBehavior.DisplaceWindow;
                 var overlaysEnabled = targetWindow.overlayCanvas.overlaysEnabled;
@@ -289,7 +289,7 @@ namespace UnityEditor.Overlays
                     }
 
                     menu.AddItem(overlaySettingsContent, false,
-                        () => SettingsService.OpenUserPreferences("Preferences/Overlays") );
+                        () => SettingsService.OpenUserPreferences("Preferences/Colors") );
                 }
                 else
                 {

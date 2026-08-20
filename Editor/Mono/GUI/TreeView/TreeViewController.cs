@@ -298,9 +298,9 @@ namespace UnityEditor.IMGUI.Controls
 
         public TIdentifier[] GetRowIDs()
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return (from item in data.GetRows() select item.id).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         public void SetSelection(TIdentifier[] selectedIDs, bool revealSelectionAndFrameLastSelected)
@@ -1008,9 +1008,9 @@ namespace UnityEditor.IMGUI.Controls
 
             foreach (TIdentifier id in state.selectedIDs)
             {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 TreeViewItem<TIdentifier> item = visibleItems.FirstOrDefault(i => i.id.Equals(id));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 if (visibleAndSelectedItem == null)
                     visibleAndSelectedItem = item;
                 else if (item != null)
@@ -1151,9 +1151,9 @@ namespace UnityEditor.IMGUI.Controls
                     expandedIDs.UnionWith(parents);
                 else
                     expandedIDs.ExceptWith(parents);
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 data.SetExpandedIDs(expandedIDs.ToArray());
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             }
         }
 
@@ -1319,9 +1319,9 @@ namespace UnityEditor.IMGUI.Controls
         {
             state.lastClickedID = itemID;
 
-#pragma warning disable UA2014 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2014 // Avoid Linq
             bool selectionChanged = !state.selectedIDs.SequenceEqual(newSelection);
-#pragma warning restore UA2014
+#pragma warning restore UAC2014
             if (selectionChanged)
             {
                 state.selectedIDs = newSelection;
@@ -1443,9 +1443,9 @@ namespace UnityEditor.IMGUI.Controls
         public List<TIdentifier> SortIDsInVisiblityOrder(IList<TIdentifier> ids)
         {
             if (ids.Count <= 1)
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 return ids.ToList(); // no sorting needed
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             var visibleRows = data.GetRows();
             List<TIdentifier> sorted = new List<TIdentifier>();
@@ -1465,9 +1465,9 @@ namespace UnityEditor.IMGUI.Controls
             // Some rows with selection are collapsed (not visible) so add those to the end
             if (ids.Count != sorted.Count)
             {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 sorted.AddRange(ids.Except(sorted));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 if (ids.Count != sorted.Count)
                     Debug.LogError("SortIDsInVisiblityOrder failed: " + ids.Count + " != " + sorted.Count);
             }

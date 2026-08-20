@@ -58,7 +58,7 @@ namespace Unity.Timeline.Foundation.ViewModel
         {
             m_CurrentSelection = new SelectionContainer(selection.tracks, selection.clips, selection.markers, selection.transitions);
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             m_NewlyDeselected =
                 new SelectionContainer
                 (
@@ -76,7 +76,7 @@ namespace Unity.Timeline.Foundation.ViewModel
                     new List<UniqueID>(m_CurrentSelection.markers.Except(m_LastSelection.markers)),
                     new List<UniqueID>(m_CurrentSelection.transitions.Except(m_LastSelection.transitions))
                 );
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             MarkAsDirty();
         }

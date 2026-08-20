@@ -73,9 +73,9 @@ namespace Unity.Timeline.Foundation.Commands.Sequence
             else if (newParent is Track parentTrack)
                 parent = parentTrack.model;
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return new ReparentTracks(new TrackReparentingData(new List<ITrack>(track.Select(t => t.model)), parent, newIndex));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         public static ReparentTracks Create(Track track, Stack newParent, uint newIndex)

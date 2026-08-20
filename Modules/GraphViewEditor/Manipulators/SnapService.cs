@@ -185,9 +185,9 @@ namespace UnityEditor.UIElements.GraphView
         List<SnapResult> GetClosestSnapElements(Rect sourceRect)
         {
             List<SnapResult> snapResults = GetClosestSnapElements(sourceRect, Orientation.Horizontal);
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             return snapResults.Union(GetClosestSnapElements(sourceRect, Orientation.Vertical)).ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         Line2 GetSnapLine(Rect r, SnapReference reference)

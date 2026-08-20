@@ -4,6 +4,7 @@
 
 using UnityEngine;
 using UnityEditor;
+using Unity.Scripting.LifecycleManagement;
 
 
 namespace UnityEditor.TextCore.Text
@@ -28,6 +29,7 @@ namespace UnityEditor.TextCore.Text
                 return s_InternalSDFMaterial;
             }
         }
+        [NoAutoStaticsCleanup] // Material loaded by Shader.Find and re-fetched lazily; safe to persist across code reload.
         static Material s_InternalSDFMaterial;
 
         /// <summary>
@@ -48,6 +50,7 @@ namespace UnityEditor.TextCore.Text
                 return s_InternalBitmapMaterial;
             }
         }
+        [NoAutoStaticsCleanup] // Material loaded by Shader.Find and re-fetched lazily; safe to persist across code reload.
         static Material s_InternalBitmapMaterial;
 
         /// <summary>
@@ -68,6 +71,7 @@ namespace UnityEditor.TextCore.Text
                 return s_InternalColorBitmapMaterial;
             }
         }
+        [NoAutoStaticsCleanup] // Material loaded by Shader.Find and re-fetched lazily; safe to persist across code reload.
         static Material s_InternalColorBitmapMaterial;
 
         /// <summary>

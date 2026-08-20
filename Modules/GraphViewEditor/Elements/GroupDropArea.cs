@@ -45,13 +45,13 @@ namespace UnityEditor.Experimental.GraphView
             Group group = parent.GetFirstAncestorOfType<Group>();
 
             List<GraphElement> elemsToAdd =
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 selection
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     .Cast<GraphElement>()
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2001 // Avoid Linq
                     .Where(e => e != group && !group.ContainsElement(e) && !(e.GetContainingScope() is Group) && e.IsGroupable())
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     .ToList(); // ToList required here as the enumeration might be done again *after* the elements are added to the group
 
             if (elemsToAdd.Count > 0)

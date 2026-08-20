@@ -3,13 +3,15 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 
 namespace Unity.Multiplayer.Common.Editor;
 
-static class ServiceSingleton<TService, TDefault>
+static partial class ServiceSingleton<TService, TDefault>
     where TService : class
     where TDefault : class, TService, new()
 {
+    [AutoStaticsCleanupOnCodeReload] // lazy singleton; old ALC instance would be stale after reload
     static TService s_Instance;
 
     internal static TService Instance

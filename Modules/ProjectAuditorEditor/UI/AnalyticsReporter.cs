@@ -311,9 +311,9 @@ namespace Unity.ProjectAuditor.Editor.UI
             }
 
             var selectionsArray =
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 selectionsDict.Values.OrderByDescending(x => x.numOccurrences).Take(5).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             return selectionsArray;
         }
@@ -342,9 +342,9 @@ namespace Unity.ProjectAuditor.Editor.UI
                 statsDict[id] = stats;
             }
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             return statsDict.Values.OrderByDescending(x => x.numOccurrences).Take(k_MaxIssuesInAnalyzeSummary).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         // -------------------------------------------------------------------------------------------------------------

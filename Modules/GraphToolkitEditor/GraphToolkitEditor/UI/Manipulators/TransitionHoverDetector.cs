@@ -40,7 +40,7 @@ namespace Unity.GraphToolkit.Editor
         {
             if ((evt.pressedButtons & 1 << (int)MouseButton.LeftMouse) == 0)
             {
-                if (target is AbstractTransition transition && !transition.TransitionModel.IsSingleStateTransition)
+                if (target is AbstractTransition transition && !transition.TransitionModel.IsSelfTransition)
                 {
                     transition.Hovered = true;
 
@@ -60,7 +60,7 @@ namespace Unity.GraphToolkit.Editor
 
         void OnMouseLeave(MouseLeaveEvent evt)
         {
-            if (target is AbstractTransition transition && !transition.TransitionModel.IsSingleStateTransition)
+            if (target is AbstractTransition transition && !transition.TransitionModel.IsSelfTransition)
             {
                 transition.Hovered = false;
             }

@@ -4,6 +4,8 @@
 
 #pragma warning disable 0649 // Disabled warnings.
 
+using Unity.Scripting.LifecycleManagement;
+
 namespace UnityEngine.TextCore.Text
 {
     [System.Serializable]
@@ -13,13 +15,12 @@ namespace UnityEngine.TextCore.Text
         {
             get
             {
-                if (k_NormalStyle == null)
-                    k_NormalStyle = new TextStyle("Normal", string.Empty, string.Empty);
-
                 return k_NormalStyle;
             }
         }
-        internal static TextStyle k_NormalStyle;
+        // this is not able to reference any user code, keep it alive
+        [NoAutoStaticsCleanup]
+        internal static readonly TextStyle k_NormalStyle = new TextStyle("Normal", string.Empty, string.Empty);
 
         // PUBLIC PROPERTIES
 

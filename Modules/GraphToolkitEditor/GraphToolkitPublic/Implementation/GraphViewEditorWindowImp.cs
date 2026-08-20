@@ -31,10 +31,11 @@ namespace Unity.GraphToolkit.Editor.Implementation
                 get
                 {
                     var map = new Dictionary<string, ToolbarElementDefinition>();
-                    if (m_Window.Graph == null)
+                    var graphType = m_Window.GraphType;
+
+                    if (graphType == null)
                         return map;
 
-                    var graphType = m_Window.Graph.GetType();
                     foreach (var type in TypeCache.GetTypesWithAttribute<GraphToolbarElementAttribute>())
                     {
                         var attrs = type.GetCustomAttributes<GraphToolbarElementAttribute>();
@@ -61,7 +62,21 @@ namespace Unity.GraphToolkit.Editor.Implementation
 
 
         public Graph Graph =>
-                (GraphTool?.ToolState?.GraphModel as Implementation.GraphModelImp)?.Graph;
+                (GraphTool?.ToolState?.GraphModel as Implementation.GraphModelImp)?.Graph as Graph;
+
+        public StateMachine StateMachine =>
+            (GraphTool?.ToolState?.GraphModel as Implementation.GraphModelImp)?.Graph as StateMachine;
+
+        public Type GraphType
+        {
+            get
+            {
+                if (Graph == null && StateMachine == null)
+                    return null;
+
+                return Graph != null ? Graph.GetType() : StateMachine.GetType();
+            }
+        }
 
         public static GraphViewEditorWindowImp GetOpenedWindow(GraphObjectImp graphObject)
         {

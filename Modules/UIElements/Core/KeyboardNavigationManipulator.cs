@@ -2,6 +2,8 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
+using Unity.Scripting.LifecycleManagement;
 using System;
 
 namespace UnityEngine.UIElements
@@ -67,7 +69,7 @@ namespace UnityEngine.UIElements
     /// <summary>
     /// Provides a default implementation for translating input device specific events to higher level navigation operations as commonly possible with a keyboard.
     /// </summary>
-    public class KeyboardNavigationManipulator : Manipulator
+    public partial class KeyboardNavigationManipulator : Manipulator
     {
         readonly Action<KeyboardNavigationOperation, EventBase> m_Action;
 
@@ -96,6 +98,7 @@ namespace UnityEngine.UIElements
             }
         }
 
+        [NoAutoStaticsCleanup]
         private static readonly EventCallbackGroupFactory<KeyboardNavigationManipulator> k_CallbackFactory = new(arg => new Callbacks(arg).OnNavigationKeyDown);
         private EventCallbackGroupFactory<KeyboardNavigationManipulator>.Group m_RegisteredCallbacks;
 
@@ -177,3 +180,4 @@ namespace UnityEngine.UIElements
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

@@ -152,8 +152,12 @@ namespace Unity.UI.Builder
             if (!m_Target.IsPartOfCurrentDocument())
                 return;
 
+            // The flex affordances (flex-direction / align-items / justify-content / align-self)
+            // don't apply to a CSS Grid container, so hide them when it lays out as a grid.
+            var isGridContainer = BuilderStyleUtilities.IsGridContainer(m_Target);
+
             // if the target is of type VisualElement or has children.
-            if (m_Target.GetType() == typeof(VisualElement) || m_Target.childCount > 0)
+            if (!isGridContainer && (m_Target.GetType() == typeof(VisualElement) || m_Target.childCount > 0))
             {
                 m_FlexDirectionButton.style.display = DisplayStyle.Flex;
                 FlexDirectionUpdateToggleIcon();

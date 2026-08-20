@@ -20,11 +20,12 @@ namespace UnityEngine.Playables
         public virtual void OnPlayableCreate(Playable playable) {}
         public virtual void OnPlayableDestroy(Playable playable) {}
 
-        [Obsolete("OnBehaviourDelay is obsolete; use a custom ScriptPlayable to implement this feature", false)]
+        [Obsolete("OnBehaviourDelay is obsolete; use a custom ScriptPlayable to implement this feature", true)]
         public virtual void OnBehaviourDelay(Playable playable, FrameData info) {}
         public virtual void OnBehaviourPlay(Playable playable, FrameData info) {}
         public virtual void OnBehaviourPause(Playable playable, FrameData info) {}
 
+        [Obsolete("PrepareData is obsolete. This method was invoked as part of the Playable delay mechanism, which has now been fully deprecated. This method is no longer invoked by Unity and will be removed in a future version. You can emulate this functionality by implementing your own delay mechanism as part of a PlayableBehaviour.", false)]
         public virtual void PrepareData(Playable playable, FrameData info) {}
         public virtual void PrepareFrame(Playable playable, FrameData info) {}
         public virtual void ProcessFrame(Playable playable, FrameData info, object playerData) {}

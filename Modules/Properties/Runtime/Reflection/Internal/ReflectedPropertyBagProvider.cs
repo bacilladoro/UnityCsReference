@@ -27,9 +27,9 @@ namespace Unity.Properties.Internal
         public ReflectedPropertyBagProvider()
         {
             m_CreatePropertyMethod = typeof(ReflectedPropertyBagProvider).GetMethod(nameof(CreateProperty), BindingFlags.Instance | BindingFlags.NonPublic);
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             m_CreatePropertyBagMethod = typeof(ReflectedPropertyBagProvider).GetMethods(BindingFlags.Instance | BindingFlags.Public).First(x => x.Name == nameof(CreatePropertyBag) && x.IsGenericMethod);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             // Generic interface property bag types (e.g. IList<T>, ISet<T>, IDictionary<K, V>)
             m_CreateIndexedCollectionPropertyBagMethod = typeof(ReflectedPropertyBagProvider).GetMethod(nameof(CreateIndexedCollectionPropertyBag), BindingFlags.Instance | BindingFlags.NonPublic);
@@ -180,9 +180,9 @@ namespace Unity.Properties.Internal
         {
             do
             {
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 var members = type.GetMembers(BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic).OrderBy(x => x.MetadataToken);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
                 foreach (var member in members)
                 {

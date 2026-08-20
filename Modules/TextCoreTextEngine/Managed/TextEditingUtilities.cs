@@ -7,6 +7,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Bindings;
 using UnityEngine.TextCore.Text;
 
@@ -145,10 +146,10 @@ namespace UnityEngine
                 var newText = value ?? string.Empty;
                 if (useAdvancedText)
                 {
-                    if (newText == m_Text)
+                    bool nativeChanged = TextEditingService.SetText(nativeTgi, newText);
+                    if (!nativeChanged && newText == m_Text)
                         return;
                     m_Text = newText;
-                    TextEditingService.SetText(nativeTgi, newText);
                 }
                 else
                 {
@@ -297,6 +298,7 @@ namespace UnityEngine
         internal record struct KeyEvent(KeyCode key, EventModifiers modifiers);
 
         //Used for tests
+        [NoAutoStaticsCleanup] // Immutable value-type keymap table (struct keys, enum ops), built once; no user-code references, safe to persist
         internal static readonly List<(KeyEvent keyEvent, TextEditOp operation)> s_GlobalKeyMappings = new()
         {
             (new KeyEvent(KeyCode.LeftArrow, EventModifiers.FunctionKey), TextEditOp.MoveLeft),
@@ -309,6 +311,7 @@ namespace UnityEngine
         };
 
         //Used for tests
+        [NoAutoStaticsCleanup] // Immutable value-type keymap table (struct keys, enum ops), built once; no user-code references, safe to persist
         internal static readonly List<(KeyEvent keyEvent, TextEditOp operation)> s_MacKeyMappings = new()
         {
             // Keyboard mappings for mac
@@ -349,6 +352,7 @@ namespace UnityEngine
             (new KeyEvent(KeyCode.Backspace, EventModifiers.Command | EventModifiers.FunctionKey), TextEditOp.DeleteLineBack)
         };
 
+        [NoAutoStaticsCleanup] // Immutable value-type keymap table (struct keys, enum ops), built once; no user-code references, safe to persist
         internal static readonly List<(KeyEvent keyEvent, TextEditOp operation)> s_WindowsLinuxKeyMappings = new()
         {
             (new KeyEvent(KeyCode.Home, EventModifiers.FunctionKey), TextEditOp.MoveGraphicalLineStart),

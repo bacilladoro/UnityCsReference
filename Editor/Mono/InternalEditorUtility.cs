@@ -430,9 +430,9 @@ namespace UnityEditorInternal
                     allSelectedInstanceIDs.AddRange(allIDs.GetRange(from, to - from + 1));
 
                     if (clickedInTheMiddle)
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                         allSelectedInstanceIDs = allSelectedInstanceIDs.Distinct().ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 }
                 else
                 {
@@ -574,9 +574,9 @@ namespace UnityEditorInternal
 
         internal static IEnumerable<string> GetAllScriptGUIDs()
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return AssetDatabase.GetAllAssetPaths()
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 .Where(asset => (IsScriptOrAssembly(asset) && !UnityEditor.PackageManager.Folders.IsPackagedAssetPath(asset)))
                 .Select(asset => AssetDatabase.AssetPathToGUID(asset));
         }

@@ -125,6 +125,14 @@ namespace Unity.U2D.Physics
         public readonly bool isValid => ChainSegmentGeometry_IsValid(this);
 
         /// <summary>
+        /// Whether the two points defining <see cref="ChainSegmentGeometry.segment"/> are far enough apart to form a valid edge.
+        /// </summary>
+        /// <remarks>
+        /// See <see cref="PhysicsWorld.minEdgeLength"/>.
+        /// </remarks>
+        public readonly bool areEdgesValid => segment.areEdgesValid;
+
+        /// <summary>
         /// The tail ghost vertex.
         /// A ghost vertex is used by the solver to define how a collision response should be handled when a contact with the vertex occurs.
         /// </summary>

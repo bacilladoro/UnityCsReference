@@ -20,7 +20,7 @@ namespace Unity.GraphToolkit.Editor.Implementation
             : base(newAssetName, GetGraphExtension(graphType))
         {
             GraphType = graphType;
-            GraphModelType = typeof(GraphModelImp);
+            GraphModelType = PublicGraphFactory.GetGraphModelImpType(graphType);
             NewAssetName = newAssetName;
         }
 

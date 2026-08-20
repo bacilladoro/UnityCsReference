@@ -8,6 +8,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 using Unity.Collections.LowLevel.Unsafe;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Bindings;
 using UnityEngine.TextCore.LowLevel;
 
@@ -22,7 +23,9 @@ namespace UnityEngine.TextCore.Text
     public partial class FontAsset
     {
         // List and HashSet used for tracking font assets whose font atlas texture and character data needs updating.
+        [AutoStaticsCleanupOnCodeReload]
         static List<FontAsset> k_FontAssets_FontFeaturesUpdateQueue = new List<FontAsset>();
+        [AutoStaticsCleanupOnCodeReload]
         static HashSet<EntityId> k_FontAssets_FontFeaturesUpdateQueueLookup = new HashSet<EntityId>();
 
         uint GetGlyphIndexWithFallback(uint unicode)
@@ -44,10 +47,14 @@ namespace UnityEngine.TextCore.Text
             return glyphIndex;
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         static List<FontAsset> k_FontAssets_KerningUpdateQueue = new List<FontAsset>();
+        [AutoStaticsCleanupOnCodeReload]
         static HashSet<EntityId> k_FontAssets_KerningUpdateQueueLookup = new HashSet<EntityId>();
 
+        [AutoStaticsCleanupOnCodeReload]
         static List<Texture2D> k_FontAssets_AtlasTexturesUpdateQueue = new List<Texture2D>();
+        [AutoStaticsCleanupOnCodeReload]
         static HashSet<EntityId> k_FontAssets_AtlasTexturesUpdateQueueLookup = new HashSet<EntityId>();
 
         internal static void RegisterFontAssetForFontFeatureUpdate(FontAsset fontAsset)

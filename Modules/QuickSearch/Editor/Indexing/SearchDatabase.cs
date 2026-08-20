@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 
 namespace UnityEditor.Search
@@ -243,7 +244,9 @@ namespace UnityEditor.Search
 
         internal AfterPlayModeUpdate afterPlayModeUpdate { get; private set; }
 
+        [NoAutoStaticsCleanup]
         internal static event Action<SearchDatabase> indexLoaded;
+        [NoAutoStaticsCleanup]
         internal static List<SearchDatabase> s_DBs;
 
         private static SearchDatabase Create(string settingsPath)
@@ -307,9 +310,9 @@ namespace UnityEditor.Search
 
         public static IEnumerable<SearchDatabase> Enumerate(IndexLocation location, params string[] types)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             return EnumerateAll().Where(db =>
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 if (types != null && types.Length > 0 && Array.IndexOf(types, db.settings.type) == -1)
                     return false;
@@ -325,9 +328,9 @@ namespace UnityEditor.Search
 
         public static SearchDatabase GetDefaultSearchDatabase()
         {
-            #pragma warning disable UA2010 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2010 // Avoid Linq
             return EnumerateAll().First();
-#pragma warning restore UA2010
+#pragma warning restore UAC2010
         }
 
         public static IEnumerable<SearchDatabase> EnumerateAll()
@@ -448,9 +451,9 @@ namespace UnityEditor.Search
 
         private static IEnumerable<string> FilterIndexes(IEnumerable<string> paths)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             return paths.Where(u => u == defaultSearchDatabaseIndexPath);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         public static Settings LoadSettings(string settingsPath)
@@ -502,9 +505,9 @@ namespace UnityEditor.Search
         {
             if (s_DBs == null)
                 return null;
-            #pragma warning disable UA2001, UA2011 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001, UAC2011 // Avoid Linq
             return s_DBs.Where(db => string.Equals(db.path, path, StringComparison.OrdinalIgnoreCase)).FirstOrDefault();
-#pragma warning restore UA2001, UA2011
+#pragma warning restore UAC2001, UAC2011
         }
 
         public static SearchDatabase ImportAsset(string settingsPath, bool forceUpdate = false)

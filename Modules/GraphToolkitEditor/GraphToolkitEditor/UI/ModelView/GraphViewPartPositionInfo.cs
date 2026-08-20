@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using Unity.GraphToolkit.InternalBridge;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -27,6 +28,7 @@ namespace Unity.GraphToolkit.Editor
         readonly Rect m_LayoutInOwnerSpace;
         readonly VisualElement m_Target;
 
+        [NoAutoStaticsCleanup] // fixed sentinel value representing an invalid position; never reassigned
         public static readonly GraphViewPartPositionInfo Invalid = new(null, null);
 
         public bool Valid => m_Target != null;

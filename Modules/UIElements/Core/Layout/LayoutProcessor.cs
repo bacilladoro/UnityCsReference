@@ -2,6 +2,8 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
+using Unity.Scripting.LifecycleManagement;
 using System;
 using System.Runtime.InteropServices;
 using Unity.Profiling;
@@ -15,10 +17,19 @@ interface ILayoutProcessor
         float parentWidth,
         float parentHeight,
         LayoutDirection parentDirection);
+
+    LayoutSize Measure(
+        LayoutNode node,
+        float availableWidth,
+        LayoutMeasureMode widthMode,
+        float availableHeight,
+        LayoutMeasureMode heightMode,
+        LayoutDirection parentDirection);
 }
 
-static class LayoutProcessor
+static partial class LayoutProcessor
 {
+    [AutoStaticsCleanupOnCodeReload]
     static ILayoutProcessor s_Processor = new LayoutProcessorNative();
 
     public static ILayoutProcessor Processor
@@ -34,6 +45,17 @@ static class LayoutProcessor
         LayoutDirection parentDirection)
     {
         s_Processor.CalculateLayout(node, parentWidth, parentHeight, parentDirection);
+    }
+
+    public static LayoutSize Measure(
+        LayoutNode node,
+        float availableWidth,
+        LayoutMeasureMode widthMode,
+        float availableHeight,
+        LayoutMeasureMode heightMode,
+        LayoutDirection parentDirection)
+    {
+        return s_Processor.Measure(node, availableWidth, widthMode, availableHeight, heightMode, parentDirection);
     }
 }
 
@@ -116,9 +138,12 @@ static class LayoutDelegates
             return baselineFunction(ref node, width, height);
     }
 
+    [NoAutoStaticsCleanup]
     static readonly InvokeMeasureFunctionDelegate s_InvokeMeasureDelegate = InvokeMeasureFunction;
+    [NoAutoStaticsCleanup]
     static readonly InvokeBaselineFunctionDelegate s_InvokeBaselineDelegate = InvokeBaselineFunction;
 
     internal static readonly IntPtr s_InvokeMeasureFunction = Marshal.GetFunctionPointerForDelegate(s_InvokeMeasureDelegate);
     internal static readonly IntPtr s_InvokeBaselineFunction = Marshal.GetFunctionPointerForDelegate(s_InvokeBaselineDelegate);
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

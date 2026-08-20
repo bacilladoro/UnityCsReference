@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Unity.Jobs.LowLevel.Unsafe;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Bindings;
 
 namespace UnityEngine.TextCore.Text
@@ -23,8 +24,10 @@ namespace UnityEngine.TextCore.Text
         }
 #pragma warning restore UA5000
 
+        [NoAutoStaticsCleanup] // Singleton cache infrastructure; entries are removed via TextHandle finalizers, the cache object itself persists safely across reload.
         [VisibleToOtherModules("UnityEngine.UIElementsModule")]
         internal static TextHandleTemporaryCache s_TemporaryCache = new TextHandleTemporaryCache();
+        [NoAutoStaticsCleanup] // Singleton cache infrastructure; entries are removed via TextHandle finalizers, the cache object itself persists safely across reload.
         [VisibleToOtherModules("UnityEngine.UIElementsModule")]
         internal static TextHandlePermanentCache s_PermanentCache = new TextHandlePermanentCache();
 
@@ -39,6 +42,7 @@ namespace UnityEngine.TextCore.Text
             InitArray(ref s_TextInfosCommon, () => new TextInfo());
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         static TextGenerationSettings[] s_Settings;
         internal static TextGenerationSettings[] settingsArray
         {
@@ -52,6 +56,7 @@ namespace UnityEngine.TextCore.Text
             }
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         static TextGenerator[] s_Generators;
         internal static TextGenerator[] generators
         {
@@ -65,6 +70,7 @@ namespace UnityEngine.TextCore.Text
             }
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         static TextInfo[] s_TextInfosCommon;
         internal static TextInfo[] textInfosCommon
         {
@@ -694,6 +700,18 @@ namespace UnityEngine.TextCore.Text
         internal virtual UnityEngine.TextAsset GetICUAsset() { return null; }
 
         [VisibleToOtherModules("UnityEngine.IMGUIModule", "UnityEngine.UIElementsModule")]
+        internal static void RegisterICUDataAsset(UnityEngine.TextAsset icuDataAsset)
+        {
+            if (icuDataAsset == null)
+                return;
+
+            if (s_TextLib == null)
+                s_TextLib = new TextLib(icuDataAsset.bytes);
+            else
+                TextLib.TryLoadICUData(icuDataAsset.bytes);
+        }
+
+        [VisibleToOtherModules("UnityEngine.IMGUIModule", "UnityEngine.UIElementsModule")]
         //This method uses the asset in the editor if available, or try to find any asset that would be included in the resource folder for builds
         internal static UnityEngine.TextAsset GetICUAssetStaticFalback()
         {
@@ -714,6 +732,7 @@ namespace UnityEngine.TextCore.Text
             return null;
         }
 
+        [NoAutoStaticsCleanup] // Lazy native ICU wrapper rebuilt from the persistent ICU asset on first access; safe to persist across reload.
         static TextLib s_TextLib;
 
         [VisibleToOtherModules("UnityEngine.IMGUIModule", "UnityEngine.UIElementsModule")]
@@ -733,11 +752,10 @@ namespace UnityEngine.TextCore.Text
             if (s_TextLib != null)
                 return;
 
+            // A missing ICU data asset is not fatal: the native side falls back
+            // to minimal text segmentation (basic line breaking rules only).
             var icuAsset = GetICUAsset();
-            if (icuAsset == null)
-                return;
-
-            s_TextLib = new TextLib(icuAsset.bytes);
+            s_TextLib = new TextLib(icuAsset != null ? icuAsset.bytes : Array.Empty<byte>());
         }
 
         [VisibleToOtherModules("UnityEngine.IMGUIModule", "UnityEngine.UIElementsModule")]

@@ -12,7 +12,7 @@ namespace UnityEngine.Audio
     [NativeHeader("Modules/Audio/Public/SampleProvider/ScriptBindings/SampleProvider.bindings.h")]
     static class SampleProviderBindings
     {
-        [NativeMethod(Name = "audio::CreateSampleProviderGeneratorHeader", IsFreeFunction = true, ThrowsException = true)]
-        internal static extern unsafe void* CreateGeneratorHeader(AudioClip audioClip, void* resourceHeader, AudioConfiguration* nestedConfiguration);
+        [NativeMethod(Name = "audio::CreateSampleProviderGenerator", IsFreeFunction = true, ThrowsException = true)]
+        internal static extern unsafe DualThreadHandle CreateGenerator(AudioClip audioClip, void* resourceHeader, AudioConfiguration* nestedConfiguration);
     }
 }

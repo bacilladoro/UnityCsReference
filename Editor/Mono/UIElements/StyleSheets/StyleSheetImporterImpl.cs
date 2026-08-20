@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -19,15 +20,18 @@ using Debug = UnityEngine.Debug;
 using Object = UnityEngine.Object;
 using ParserStyleSheet = ExCSS.Stylesheet;
 using UnityStyleSheet = UnityEngine.UIElements.StyleSheet;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.UIElements.StyleSheets
 {
     abstract class StyleValueImporter
     {
+        [NoAutoStaticsCleanup]
         private static StyleSheetImportGlossary s_Glossary;
 
         internal static StyleSheetImportGlossary glossary => s_Glossary ?? (s_Glossary = new StyleSheetImportGlossary());
 
+        [NoAutoStaticsCleanup]
         static readonly Dictionary<string, Dimension.Unit> s_UnitNameToDimensionUnit = new()
         {
             { UnitNames.Px, Dimension.Unit.Pixel },
@@ -38,8 +42,12 @@ namespace UnityEditor.UIElements.StyleSheets
             { UnitNames.Grad, Dimension.Unit.Gradian },
             { UnitNames.Rad, Dimension.Unit.Radian },
             { UnitNames.Turn, Dimension.Unit.Turn },
+            // CSS Grid fractional unit. ExCSS has no UnitNames constant for it, so
+            // match the raw token string. Grid track readers interpret Fraction; ToLength() does not.
+            { "fr", Dimension.Unit.Fraction },
         };
 
+        [NoAutoStaticsCleanup]
         static Dictionary<string, StyleValueKeyword> s_NameCache;
 
         const string k_ResourcePathFunctionName = "resource";
@@ -376,9 +384,9 @@ namespace UnityEditor.UIElements.StyleSheets
                     cleanAssets.Add(a);
 
             // The cloned stylesheet should be the first item in the list, since it is the "main" asset
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var result = cleanAssets.ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             result.Insert(0, clonedStylesheet);
 
             return result;
@@ -572,9 +580,9 @@ namespace UnityEditor.UIElements.StyleSheets
                         // If none of the allowed types are compatible with the asset type, output a warning
                         if (!allowed.Exists(t => t.IsAssignableFrom(assetType)))
                         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                             string allowedTypes = string.Join(", ", allowed.Select(t => t.Name));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                             m_Errors.AddValidationWarning(
                                 string.Format(glossary.invalidAssetType, assetType.Name, projectRelativePath, allowedTypes),
                                 m_CurrentLine);
@@ -600,9 +608,9 @@ namespace UnityEditor.UIElements.StyleSheets
         bool ValidateFunction(FunctionToken functionToken, out StyleValueFunction func)
         {
             func = StyleValueFunction.Unknown;
-#pragma warning disable UA2002 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2002 // Avoid Linq
             if (!functionToken.ArgumentTokens.Any())
-#pragma warning restore UA2002
+#pragma warning restore UAC2002
             {
                 m_Errors.AddSemanticError(StyleSheetImportErrorCode.MissingFunctionArgument, string.Format(glossary.missingFunctionArgument, functionToken.Data), functionToken.Position.Line, functionToken.Position.Column);
                 return false;
@@ -633,9 +641,9 @@ namespace UnityEditor.UIElements.StyleSheets
             bool foundVar = false;
             bool foundComma = false;
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var args = functionToken.ArgumentTokens.ToList<Token>();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             args.Trim();
 
             for (int i = 0; i < args.Count; ++i)
@@ -725,6 +733,11 @@ namespace UnityEditor.UIElements.StyleSheets
             }
         }
 
+        static bool IsScalarTimeProperty(StylePropertyId id)
+        {
+            return id == StylePropertyId.AnimationDuration || id == StylePropertyId.AnimationDelay;
+        }
+
         void VisitToken(Token token)
         {
             switch (token)
@@ -757,6 +770,8 @@ namespace UnityEditor.UIElements.StyleSheets
                         }
                         else
                         {
+                            // animation-iteration-count's `infinite` keyword also lands here, stored as an
+                            // Enum handle and read into AnimationIterationCount.Infinite().
                             m_Builder.AddValue(keywordToken.Data, StyleValueType.Enum);
                         }
                     }
@@ -778,7 +793,11 @@ namespace UnityEditor.UIElements.StyleSheets
                 case UnitToken unitToken:
                     if (s_UnitNameToDimensionUnit.TryGetValue(unitToken.Unit, out var dimensionUnit))
                     {
-                        m_Builder.AddValue(new Dimension(unitToken.Value, dimensionUnit));
+                        var dimension = new Dimension(unitToken.Value, dimensionUnit);
+                        if (dimension.IsTimeValue() && IsScalarTimeProperty(m_Builder.currentProperty.id))
+                            m_Builder.AddValue(dimensionUnit == Dimension.Unit.Millisecond ? unitToken.Value / 1000f : unitToken.Value);
+                        else
+                            m_Builder.AddValue(dimension);
                     }
                     else
                     {
@@ -801,6 +820,15 @@ namespace UnityEditor.UIElements.StyleSheets
 
                         case TokenType.Comma:
                             m_Builder.AddCommaSeparator();
+                            break;
+
+                        case TokenType.Delim:
+                            // Preserve the '/' separator (grid-column: 1 / 3, aspect-ratio: 16 / 9,
+                            // grid-area, …) as a String value; the property readers consume it.
+                            if (token.Data == "/")
+                                m_Builder.AddValue("/", StyleValueType.String);
+                            else
+                                m_Errors.AddSemanticError(StyleSheetImportErrorCode.UnsupportedTerm, string.Format(glossary.unsupportedTerm, token.Data, token.Type), token.Position.Line, token.Position.Column);
                             break;
 
                         default:
@@ -827,9 +855,9 @@ namespace UnityEditor.UIElements.StyleSheets
 
                 case k_ResourcePathFunctionName:
                     string resourcePath = null;
-#pragma warning disable UA2011 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2011 // Avoid Linq
                     if (functionToken.ArgumentTokens.FirstOrDefault() is StringToken stringToken)
-#pragma warning restore UA2011
+#pragma warning restore UAC2011
                         resourcePath = stringToken.Data;
                     else
                     {
@@ -862,9 +890,9 @@ namespace UnityEditor.UIElements.StyleSheets
                     if (ValidateFunction(functionToken, out var func))
                     {
                         m_Builder.AddValue(func);
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                         m_Builder.AddValue(functionToken.ArgumentTokens.Count(t => t.Type != TokenType.Whitespace));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                         foreach (var token in functionToken.ArgumentTokens)
                         {
                             VisitToken(token);
@@ -906,13 +934,13 @@ namespace UnityEditor.UIElements.StyleSheets
         void VisitCustomFilter(FunctionToken functionToken)
         {
             // Used typed ToList to prevent extenion method ToList from being used.
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var args = functionToken.ArgumentTokens.ToList<Token>();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             m_Builder.AddValue(args.Count(a => a.Type != TokenType.Whitespace));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             // First arg is a url
             if (args.Count > 0)
@@ -987,9 +1015,13 @@ namespace UnityEditor.UIElements.StyleSheets
     [VisibleToOtherModules("UnityEditor.UIBuilderModule", "UnityEditor.UIToolkitAuthoringModule")]
     internal class StyleSheetImporterImpl : StyleValueImporter
     {
+        [NoAutoStaticsCleanup]
         static readonly StylesheetParser s_Parser = new StylesheetParser();
+        [NoAutoStaticsCleanup]
         static readonly HashSet<string> s_StyleSheetsWithCircularImportDependencies = new HashSet<string>();
+        [NoAutoStaticsCleanup]
         static readonly HashSet<string> s_StyleSheetsUnsortedDependencies = new HashSet<string>();
+        [NoAutoStaticsCleanup]
         static readonly List<string> s_StyleSheetProjectRelativeImportPaths = new List<string>();
 
         public StyleSheetImporterImpl(AssetImportContext context) : base(context)
@@ -1132,9 +1164,9 @@ namespace UnityEditor.UIElements.StyleSheets
 
                 if (!s_StyleSheetsWithCircularImportDependencies.Contains(assetPath))
                 {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                     var importRules = styleSheet.ImportRules.ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     var importDirectivesCount = importRules.Count;
                     asset.imports = new UnityStyleSheet.ImportStruct[importDirectivesCount];
                     for (int i = 0; i < importDirectivesCount; ++i)
@@ -1498,3 +1530,4 @@ namespace UnityEditor.UIElements.StyleSheets
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

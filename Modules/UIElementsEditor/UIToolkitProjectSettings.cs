@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
 using System;
 using UnityEditor.UIElements.Experimental.Debugger;
 using UnityEditor.UIElements.Experimental.UILayoutDebugger;
@@ -9,12 +10,14 @@ using UnityEditor.UIElements.Experimental.USSStats;
 using UnityEngine;
 using UnityEngine.Bindings;
 using UnityEngine.UIElements;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.UIElements
 {
     [FilePath("ProjectSettings/UIToolkitProjectSettings.asset", FilePathAttribute.Location.ProjectFolder)]
     [VisibleToOtherModules("UnityEditor.UIBuilderModule", "UnityEditor.UIToolkitAuthoringModule")]
-    internal class UIToolkitProjectSettings : ScriptableSingleton<UIToolkitProjectSettings>
+    [NoAutoStaticsCleanup] // Editor settings singleton; onEnableGridLayoutChanged subscribers unsubscribe on panel detach.
+    internal partial class UIToolkitProjectSettings : ScriptableSingleton<UIToolkitProjectSettings>
     {
         const string k_EditorExtensionModeKey = "UIBuilder.EditorExtensionModeKey";
         const string k_HideNotificationAboutMissingUITKPackage = "UIBuilder.HideNotificationAboutMissingUITKPackage";
@@ -34,6 +37,7 @@ namespace UnityEditor.UIElements
         /// Invoked when any theme setting changes (runtime/editor theme or canvas theme).
         /// </summary>
         [VisibleToOtherModules("UnityEditor.UIBuilderModule")]
+        [AutoStaticsCleanupOnCodeReload]
         internal static Action onThemeChanged;
 
         /// The default runtime theme for the project (version controlled).
@@ -106,7 +110,31 @@ namespace UnityEditor.UIElements
         [SerializeField]
         private bool m_EnablePanelRendererAnimation = false;
 
+        [SerializeField]
+        private bool m_EnableGridLayout = false;
+
+        [VisibleToOtherModules("UnityEditor.UIToolkitAuthoringModule", "UnityEditor.UIBuilderModule", "UnityEditor.UIElementsSamplesModule")]
+        internal static Action<bool> onEnableGridLayoutChanged;
+
+        [VisibleToOtherModules("UnityEditor.UIToolkitAuthoringModule", "UnityEditor.UIBuilderModule", "UnityEditor.UIElementsSamplesModule")]
+        internal static bool enableGridLayout
+        {
+            get => instance.m_EnableGridLayout;
+            set
+            {
+                if (instance.m_EnableGridLayout == value)
+                    return;
+                instance.m_EnableGridLayout = value;
+                instance.Save();
+                // Push to the native layout solver so display:grid switches between grid and its
+                // flex fallback live, then let grid-related UI react.
+                UnityEngine.UIElements.Layout.LayoutNative.SetGridLayoutEnabled(value);
+                onEnableGridLayoutChanged?.Invoke(value);
+            }
+        }
+
         [VisibleToOtherModules("UnityEditor.UIToolkitAuthoringModule", "UnityEditor.UIBuilderModule")]
+        [NoAutoStaticsCleanup]
         internal static bool s_EnablePanelRendererAnimationAtBoot;
 
         [VisibleToOtherModules("UnityEditor.UIToolkitAuthoringModule", "UnityEditor.UIBuilderModule")]
@@ -142,6 +170,7 @@ namespace UnityEditor.UIElements
             }
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         internal static Action<bool> onEnableLowLevelDebuggerChanged;
 
         public void Save()
@@ -173,6 +202,7 @@ namespace UnityEditor.UIElements
             set => SetBool(k_EnableAbsolutePositionPlacement, value);
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<bool> consistentAttributeOrderingWhenExportingChanged;
 
         public static bool consistentAttributeOrderingWhenExporting
@@ -298,3 +328,4 @@ namespace UnityEditor.UIElements
     }
 }
 
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

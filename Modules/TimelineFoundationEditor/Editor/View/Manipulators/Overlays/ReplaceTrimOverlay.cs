@@ -44,14 +44,14 @@ namespace Unity.Timeline.Foundation.View
             Item item = lookup.GetItemFromId(behaviour.GetManipulatedItems()[0].ID);
             IEnumerable<Item> clips = lookup.GetTrackFromId(item.parent.ID).Items.OnlyClips();
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             m_FollowingItems = behaviour.location switch
             {
                 TrimBehaviour.Location.Start => clips.TakeWhile(i => i.ID != item.ID).Select(i => i.GetVisibleRange()),
                 TrimBehaviour.Location.End => clips.SkipWhile(i => i.ID != item.ID).Skip(1).Select(i => i.GetVisibleRange()),
                 _ => m_FollowingItems
             };
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
     }
 }

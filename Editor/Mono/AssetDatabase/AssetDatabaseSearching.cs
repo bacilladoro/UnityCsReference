@@ -48,15 +48,15 @@ namespace UnityEditor
         [VisibleToOtherModules("UnityEditor.UIToolkitAuthoringModule")]
         internal static string[] FindAssets(SearchFilter searchFilter)
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return FindAllAssets(searchFilter).Select(property => property.guid).Distinct().ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
         internal static GUID[] FindAssetGUIDs(SearchFilter searchFilter)
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return FindAllAssets(searchFilter).Select(property => property.assetGUID).Distinct().ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         [VisibleToOtherModules("UnityEditor.UIBuilderModule")]

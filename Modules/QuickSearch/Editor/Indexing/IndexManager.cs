@@ -10,11 +10,12 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.UIElements;
 using Unity.Collections;
+using Unity.Scripting.LifecycleManagement;
 using UIToolkitListView = UnityEngine.UIElements.ListView;
 
 namespace UnityEditor.Search
 {
-    class IndexManager : EditorWindow
+    partial class IndexManager : EditorWindow
     {
 
         public static void OpenWindow()
@@ -87,6 +88,7 @@ namespace UnityEditor.Search
 
         private static string k_ProjectPath { get { return Application.dataPath.Substring(0, Application.dataPath.Length - "/Assets".Length); } }
 
+        [AutoStaticsCleanupOnCodeReload]
         private static EntityId s_SelectedAssetOnOpen;
         private int m_PreviousSelectedIndex = -1;
         private int m_IndexToInsertPackagesOnToggle = -1;
@@ -142,9 +144,9 @@ namespace UnityEditor.Search
             rootVisualElement.Add(splitter);
 
             m_IndexSettingsTemplates = new List<SearchDatabase.Settings>();
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             foreach (var templateName in SearchDatabaseTemplates.all.Keys.Where(k => k[0] != '_'))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 m_IndexSettingsTemplates.Add(ExtractIndexFromTemplate(templateName));
             }
@@ -221,9 +223,9 @@ namespace UnityEditor.Search
         {
             int indexToSelect = -1;
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             m_AllSearchDatabases = SearchDatabase.EnumerateAll().OrderBy(sd => Path.GetFileNameWithoutExtension(sd.path)).ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             foreach (var searchDatabase in EnumerateIndexes(includePackages ? SearchDatabase.IndexLocation.all : SearchDatabase.IndexLocation.assets))
             {
@@ -242,9 +244,9 @@ namespace UnityEditor.Search
 
         private IEnumerable<SearchDatabase> EnumerateIndexes(SearchDatabase.IndexLocation location)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             return m_AllSearchDatabases.Where(sd =>
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 if (location == SearchDatabase.IndexLocation.all)
                     return true;
@@ -499,13 +501,13 @@ namespace UnityEditor.Search
 
         private void PingAsset(IEnumerable<object> obj)
         {
-#pragma warning disable UA2002 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2002 // Avoid Linq
             if (obj.Any())
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
-                #pragma warning disable UA2010 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2010 // Avoid Linq
                 string path = (string)obj.First();
-#pragma warning restore UA2010
+#pragma warning restore UAC2010
                 if (Path.HasExtension(path)) // In case of Scene and Prefab index, it can give only objects ids so in that case we can't ping
                     EditorGUIUtility.PingObject(AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(path));
             }
@@ -539,9 +541,9 @@ namespace UnityEditor.Search
                     UpdateIndexPreviewListView(dependencies, m_DependenciesListView);
 
                     m_DocumentsButton.text = $"{selectedItemAsset.index.documentCount} Objects";
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2001 // Avoid Linq
                     UpdateIndexPreviewListView(selectedItemAsset.index.GetDocuments(true).Select(d => $"{d.name} {{{d.id}}}").ToList(), m_DocumentsListView);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
                     var sortedKeywords = new List<string>(selectedItemAsset.index.GetKeywords());
                     sortedKeywords.Sort();
@@ -770,9 +772,9 @@ namespace UnityEditor.Search
 
         private void SaveNewIndexSettingsFile(string path, int currentIndex)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             if (m_IndexSettingsExists.Count(index => !index) > 1)
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 m_ListViewIndexSettings.selectedIndex = currentIndex;
                 var selectedItem = new List<IndexManagerViewModel>() { m_IndexSettings[currentIndex] };
@@ -1112,9 +1114,9 @@ namespace UnityEditor.Search
                     m_DocumentsListView.selectionChanged -= PingAsset;
                 m_IndexDetailsElement.Clear();
 
-#pragma warning disable UA2002 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2002 // Avoid Linq
                 if (obj.Any())
-#pragma warning restore UA2002
+#pragma warning restore UAC2002
                 {
                     CreateIndexDetailsElement();
                 }
@@ -1226,7 +1228,7 @@ namespace UnityEditor.Search
             internal virtual void UpdateOnDragPerform(UnityEngine.Object draggedObject) {}
         }
 
-        private class IncludeExcludePathElement : VisualElement
+        private partial class IncludeExcludePathElement : VisualElement
         {
             ListViewIndexSettings m_PathsListView;
             IndexManager m_Window;
@@ -1235,6 +1237,7 @@ namespace UnityEditor.Search
 
             FilePattern m_Pattern;
             EnumField m_EnumField;
+            [AutoStaticsCleanupOnCodeReload]
             static FilePattern m_LastFilePattern = FilePattern.File;
             TextField m_PrefixTextField;
             TextField m_PathTextField;
@@ -1453,9 +1456,9 @@ namespace UnityEditor.Search
                 if (searchDatabaseSettings.roots != null)
                 {
                     hasPackagesRoot = searchDatabaseSettings.roots.Contains("Packages");
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2001 // Avoid Linq
                     roots.AddRange(searchDatabaseSettings.roots.Where(r => r != "Packages"));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 }
                 includes = new List<string>();
                 if (searchDatabaseSettings.includes != null)
@@ -1488,15 +1491,15 @@ namespace UnityEditor.Search
 
                 searchDatabase.settings.type = Enum.GetName(typeof(SearchDatabase.IndexType), type);
                 searchDatabase.settings.baseScore = score;
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 searchDatabase.settings.roots = GetRoots().Where(e => !string.IsNullOrEmpty(e)).ToArray();
-#pragma warning restore UA2001
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+                #pragma warning disable UAC2001 // Avoid Linq
                 searchDatabase.settings.includes = includes.Where(e => !string.IsNullOrEmpty(e) && e != "." && e != "/").ToArray();
-#pragma warning restore UA2001
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+                #pragma warning disable UAC2001 // Avoid Linq
                 searchDatabase.settings.excludes = excludes.Where(e => !string.IsNullOrEmpty(e) && e != "." && e != "/").ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 SetOptions(searchDatabase.settings.options, this.options);
             }
 

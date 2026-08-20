@@ -37,9 +37,9 @@ namespace Unity.Timeline.Foundation.ViewModel.Internals
 
         public static IEnumerable<Component> GetAllComponents(this IState state)
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return state.AllStateComponents.OfType<Component>();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
     }
 }

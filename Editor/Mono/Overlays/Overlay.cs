@@ -109,6 +109,11 @@ namespace UnityEditor.Overlays
         OverlayContainer m_Container;
         internal OverlayContainer tempTargetContainer { get; set; }
 
+        // Prevents a reentrant RebuildContent call from corrupting contentRoot while a build is in progress.
+        bool m_IsRebuildingContent;
+        // Set when a rebuild is deferred; tells the in-progress call to run once more before returning.
+        bool m_RebuildContentRequestedWhileBusy;
+
         // Instantiated VisualElement contents
         VisualElement m_CurrentContent;
         VisualElement m_CollapsedContent;
@@ -701,6 +706,32 @@ namespace UnityEditor.Overlays
             if (m_Container == null)
                 return;
 
+            if (m_IsRebuildingContent)
+            {
+                // Defer: rebuilding now would race with the call already in progress.
+                m_RebuildContentRequestedWhileBusy = true;
+                return;
+            }
+
+            m_IsRebuildingContent = true;
+            try
+            {
+                bool force = forceCreateContent;
+                do
+                {
+                    m_RebuildContentRequestedWhileBusy = false;
+                    RebuildContentInner(force);
+                    force = true; // a deferred retry must always rebuild
+                } while (m_RebuildContentRequestedWhileBusy);
+            }
+            finally
+            {
+                m_IsRebuildingContent = false;
+            }
+        }
+
+        void RebuildContentInner(bool forceCreateContent)
+        {
             // We need to invoke a callback if the collapsed state changes (either from user request or invalid layout)
             bool wasCollapsed = collapsedContent.parent == contentRoot;
 

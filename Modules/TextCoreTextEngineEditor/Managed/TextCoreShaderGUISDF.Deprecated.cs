@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.TextCore.Text;
 
@@ -13,11 +14,13 @@ namespace UnityEditor.TextCore.Text
     [Obsolete("Advanced Text Generator (ATG) is moving away from the material-per-font approach. This type is no longer required.", false)]
     public class TextCoreShaderGUISDF : TextCoreShaderGUI
     {
+        [NoAutoStaticsCleanup] // Feature descriptors rebuilt by the static ctor each load; safe to persist.
         static ShaderFeature s_OutlineFeature, s_UnderlayFeature, s_BevelFeature, s_GlowFeature, s_MaskFeature;
 
+        [NoAutoStaticsCleanup] // UI panel expand/collapse state; safe to persist across code reload.
         static bool s_Face = true, s_Outline = true, s_Outline2 = true, s_Outline3 = true, s_Underlay = true, s_Lighting = true, s_Glow, s_Bevel, s_Light, s_Bump, s_Env;
 
-        static string[]
+        static readonly string[]
             s_FaceUVSpeedName = { "_FaceUVSpeed" },
             s_FaceUvSpeedNames = { "_FaceUVSpeedX", "_FaceUVSpeedY" },
             s_OutlineUvSpeedNames = { "_OutlineUVSpeedX", "_OutlineUVSpeedY" },
@@ -490,7 +493,7 @@ namespace UnityEditor.TextCore.Text
             EditorGUILayout.Space();
         }
 
-        static GUIContent[] s_BevelTypeLabels =
+        static readonly GUIContent[] s_BevelTypeLabels =
         {
             new GUIContent("Outer Bevel"),
             new GUIContent("Inner Bevel")

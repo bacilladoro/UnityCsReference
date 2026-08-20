@@ -261,7 +261,7 @@ namespace UnityEditor
             public static readonly GUIContent apiCompatibilityLevel_NET_Standard_2_0 = EditorGUIUtility.TrTextContent(".NET Standard 2.0");
             public static readonly GUIContent apiCompatibilityLevel_NET_FW_Unity = EditorGUIUtility.TrTextContent(".NET Framework");
             public static readonly GUIContent apiCompatibilityLevel_NET_Standard = EditorGUIUtility.TrTextContent(".NET Standard 2.1");
-            public static readonly GUIContent apiCompatibilityLevel_NET_10 = EditorGUIUtility.TrTextContent(".NET 10 (Internal only)");
+            public static readonly GUIContent apiCompatibilityLevel_NET_10 = EditorGUIUtility.TrTextContent(".NET Standard 2.1 - .NET Preview (Experimental)");
             public static readonly GUIContent editorAssembliesCompatibilityLevel = EditorGUIUtility.TrTextContent("Editor Assemblies Compatibility Level*");
             public static readonly GUIContent editorAssembliesCompatibilityLevel_Default = EditorGUIUtility.TrTextContent("Default (.NET Framework)");
             public static readonly GUIContent editorAssembliesCompatibilityLevel_NET_Framework = EditorGUIUtility.TrTextContent(".NET Framework");
@@ -1849,9 +1849,9 @@ namespace UnityEditor
             if (apis == null)
                 return;
             var apiToAdd = GraphicsDeviceTypeFromString(options[selected]);
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             apis = apis.Append(apiToAdd).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             m_CurrentTarget.SetGraphicsAPIs_Internal(target, apis, true);
             OnTargetObjectChangedDirectly();
         }
@@ -1866,9 +1866,9 @@ namespace UnityEditor
             //As part of OpenGL deprection from MacOS, hide the option of adding OpenGL
             if (target == BuildTarget.StandaloneOSX)
             {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 var availableDeviceList = availableDevices.ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 availableDeviceList.Remove(GraphicsDeviceType.OpenGLCore);
                 availableDevices = availableDeviceList.ToArray();
             }
@@ -1919,9 +1919,9 @@ namespace UnityEditor
                 return;
             }
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var apiList = apis.ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             var removedElement = apiList[list.index];
             if (CheckRemoveFallbackGraphicsDeviceElement(removedElement, target, list))
             {
@@ -2196,9 +2196,9 @@ namespace UnityEditor
             }
 
             GraphicsDeviceType[] devices = m_CurrentTarget.GetGraphicsAPIs_Internal(targetPlatform);
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var devicesList = (devices != null) ? devices.ToList() : new List<GraphicsDeviceType>();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             // create reorderable list for this target if needed
             if (!m_GraphicsDeviceLists.ContainsKey(targetPlatform))
             {
@@ -2455,9 +2455,9 @@ namespace UnityEditor
         private void AddColorGamutMenuSelected(object userData, string[] options, int selected)
         {
             var colorGamuts = (ColorGamut[])userData;
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var colorGamutList = m_CurrentTarget.GetColorGamuts_Internal().ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             colorGamutList.Add(colorGamuts[selected]);
             m_CurrentTarget.SetColorGamuts_Internal(colorGamutList.ToArray());
             OnTargetObjectChangedDirectly();
@@ -2473,9 +2473,9 @@ namespace UnityEditor
 
         private void RemoveColorGamutElement(ReorderableList list)
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var colorGamutList = m_CurrentTarget.GetColorGamuts_Internal().ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             // don't allow removing the last ColorGamut
             if (colorGamutList.Count < 2)
             {
@@ -2519,9 +2519,9 @@ namespace UnityEditor
             if (m_ColorGamutList == null)
             {
                 ColorGamut[] colorGamuts = m_CurrentTarget.GetColorGamuts_Internal();
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 var colorGamutsList = (colorGamuts != null) ? colorGamuts.ToList() : new List<ColorGamut>();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 var rlist = new ReorderableList(colorGamutsList, typeof(ColorGamut), true, true, true, true);
                 rlist.onCanRemoveCallback = CanRemoveColorGamutElement;
                 rlist.onRemoveCallback = RemoveColorGamutElement;
@@ -3756,6 +3756,10 @@ namespace UnityEditor
         {
             if (m_APICompatibilityLevel.TryGetMapEntry(targetGroup, out _))
                 m_APICompatibilityLevel.SetMapValue(targetGroup, (int)apiCompatibilityLevel);
+#pragma warning disable CS0618
+            else if (apiCompatibilityLevel == ApiCompatibilityLevel.NET)
+                m_APICompatibilityLevel.SetMapValue(targetGroup, (int)apiCompatibilityLevel);
+#pragma warning restore CS0618
             else
                 // See comment in EditorOnlyPlayerSettings regarding defaultApiCompatibilityLevel
                 m_DefaultAPICompatibilityLevel.intValue = (int)apiCompatibilityLevel;
@@ -3849,7 +3853,7 @@ namespace UnityEditor
                             }
                             else if (currentBackend == ScriptingImplementation.IL2CPP)
                             {
-                                if (Unsupported.IsSourceBuild())
+                                if (platform.namedBuildTarget == NamedBuildTarget.iOS || Unsupported.IsSourceBuild())
 #pragma warning disable CS0618
                                     availableCompatibilityLevels = [ApiCompatibilityLevel.NET_Unity_4_8, ApiCompatibilityLevel.NET_Standard, ApiCompatibilityLevel.NET];
 #pragma warning restore CS0618
@@ -5047,18 +5051,18 @@ namespace UnityEditor
             if (m_ColorGamutList == null)
                 return;
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             m_ColorGamutList.list = m_CurrentTarget.GetColorGamuts_Internal().ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         void SyncPlatformAPIsList(BuildTarget target)
         {
             if (!m_GraphicsDeviceLists.ContainsKey(target))
                 return;
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             m_GraphicsDeviceLists[target].list = m_CurrentTarget.GetGraphicsAPIs_Internal(target).ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
     }
 }

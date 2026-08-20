@@ -319,16 +319,16 @@ namespace UnityEditor
             var menus = GetMenusFromModeFile(GetModeIndexById(id));
 
             if (menus == null) // If there is no mode menus in the mode file
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 return CombineMenuItemsFromAttributes(id, false).Values.ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             var menuItems = CombineMenuItemsFromAttributes(id, true);
             LoadMenuFromCommandId(menus, menuItems);
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return menuItems.Values.ToArray(); //In that case there is a .mode so menus will be filtered by the iterator
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         private static MenuItemsTree<MenuItemOrderingNative> GetMenusItemsFromModeFile(string modeName)
@@ -355,9 +355,9 @@ namespace UnityEditor
 
         private static void SortMenuItems(ref Dictionary<string, GroupingMenuItemScriptCommand> menuItemsPerMode)
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             menuItemsPerMode = menuItemsPerMode
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 .OrderBy(m => m.Value.menuItem.Priority)
                 .ThenBy(m => m.Value.menuItem.SecondaryPriority)
                 .ThenBy(m => m.Value.menuItem.Name)
@@ -369,9 +369,9 @@ namespace UnityEditor
             s_MenuItemsPerMode = new Dictionary<string, MenuItemsTree<MenuItemScriptCommand>>();
             s_MenuItemsDefaultMode = new Dictionary<string, GroupingMenuItemScriptCommand>();
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var methodInfos = TypeCache.GetMethodsWithAttribute<MenuItem>()
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 .Where(m => ValidateMethodForMenuCommand(m))
                 // Order the menu items to start with Unity menus before projects menus. That way if there is a duplicate, the project one is flagged as duplicate
                 .OrderBy(m => !Utility.FastStartsWith(m.DeclaringType.Assembly.FullName, "UnityEditor", "unityeditor"))
@@ -448,9 +448,9 @@ namespace UnityEditor
                     menuItemsResult.Add(menuItem.name, menuItem);
             }
             // Always adding the default menu, which may be filtered later when using a custom mode file
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             AddMenuItemsFromMode(menuItemsResult, s_MenuItemsDefaultMode.Values.Select(x => x.menuItem));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             // If the menus depend on the .mode file, we also add the other modes menus because the mode file can reference them
             if (menusDependOnModeFile)

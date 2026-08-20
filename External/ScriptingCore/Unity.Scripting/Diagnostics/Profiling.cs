@@ -1,3 +1,4 @@
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: ScriptingRuntime not yet converted
 using System;
 using System.Runtime.CompilerServices;
 
@@ -193,3 +194,4 @@ namespace Unity.Scripting
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

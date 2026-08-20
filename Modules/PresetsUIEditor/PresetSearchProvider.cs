@@ -33,9 +33,9 @@ namespace UnityEditor.Presets
 
         public PresetContext(Object[] targets, Preset currentSelection, bool createNewAllowed, Action<Preset> onSelectionChanged, Action<Preset, bool> onSelectionClosed)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             Targets = targets.Where(t => t != null).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             Target = Targets.FirstOrDefault();
             Presets = Array.ConvertAll(Targets, t => new Preset(t));
             PresetProperty = null;
@@ -107,9 +107,9 @@ namespace UnityEditor.Presets
             var query = QE.ParseQuery(context.searchQuery);
             if (!query.valid)
             {
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 context.AddSearchQueryErrors(query.errors.Select(e => new SearchQueryError(e, context, provider)));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 yield break;
             }
 

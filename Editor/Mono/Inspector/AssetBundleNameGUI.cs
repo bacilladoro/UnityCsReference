@@ -124,9 +124,9 @@ namespace UnityEditor
             }
 
             int selectedIndex = 0;
-#pragma warning disable UA2011 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2011 // Avoid Linq
             string firstAssetBundle = assetBundleFromAssets.FirstOrDefault();
-#pragma warning restore UA2011
+#pragma warning restore UAC2011
             if (!String.IsNullOrEmpty(firstAssetBundle))
                 selectedIndex = displayedOptions.IndexOf(firstAssetBundle);
 
@@ -152,9 +152,9 @@ namespace UnityEditor
         private void FilterSelected(IEnumerable<string> assetBundleNames)
         {
             var searchFilter = new SearchFilter();
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             searchFilter.assetBundleNames = assetBundleNames.Where(name => !String.IsNullOrEmpty(name)).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             if (ProjectBrowser.s_LastInteractedProjectBrowser != null)
                 ProjectBrowser.s_LastInteractedProjectBrowser.SetSearch(searchFilter);

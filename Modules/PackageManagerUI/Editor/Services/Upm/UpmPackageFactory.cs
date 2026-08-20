@@ -13,6 +13,7 @@ namespace UnityEditor.PackageManager.UI.Internal
         {
             m_SettingsProxy.onEnablePreReleasePackagesChanged += OnShowPreReleasePackagesOrSeeAllVersionsChanged;
             m_SettingsProxy.onSeeAllVersionsChanged += OnShowPreReleasePackagesOrSeeAllVersionsChanged;
+            m_SettingsProxy.onTrustPolicyLevelChanged += OnTrustPolicyLevelChanged;
 
             m_UpmCache.onPackageInfosUpdated += OnPackageInfosUpdated;
             m_UpmCache.onExtraPackageInfoFetched += OnExtraPackageInfoFetched;
@@ -30,6 +31,7 @@ namespace UnityEditor.PackageManager.UI.Internal
         {
             m_SettingsProxy.onEnablePreReleasePackagesChanged -= OnShowPreReleasePackagesOrSeeAllVersionsChanged;
             m_SettingsProxy.onSeeAllVersionsChanged -= OnShowPreReleasePackagesOrSeeAllVersionsChanged;
+            m_SettingsProxy.onTrustPolicyLevelChanged -= OnTrustPolicyLevelChanged;
 
             m_UpmCache.onPackageInfosUpdated -= OnPackageInfosUpdated;
             m_UpmCache.onExtraPackageInfoFetched -= OnExtraPackageInfoFetched;
@@ -132,6 +134,16 @@ namespace UnityEditor.PackageManager.UI.Internal
 
         private void OnShowPreReleasePackagesOrSeeAllVersionsChanged(bool _)
         {
+            RegenerateAllUpmPackages();
+        }
+
+        private void OnTrustPolicyLevelChanged(TrustPolicyLevel _)
+        {
+            RegenerateAllUpmPackages();
+        }
+
+        private void RegenerateAllUpmPackages()
+        {
             var allPackageNames = m_UpmCache.installedPackageInfos.Join(m_UpmCache.discoverableSearchPackageInfos).Join(m_UpmCache.nonDiscoverableSearchPackageInfos).SelectToNewHashSet(p => p.name);
             GeneratePackagesAndTriggerChangeEvent(allPackageNames);
         }
@@ -140,7 +152,7 @@ namespace UnityEditor.PackageManager.UI.Internal
         {
             var tagsToExclude = m_SettingsProxy.seeAllPackageVersions ? PackageTag.None :
                 m_SettingsProxy.enablePreReleasePackages ? PackageTag.Experimental : PackageTag.Experimental | PackageTag.PreRelease;
-            var versionList = new UpmVersionList(packageData, tagsToExclude, m_IOProxy, m_ApplicationProxy, changedSource != PackagesChangedSource.AddAndRemove);
+            var versionList = new UpmVersionList(packageData, tagsToExclude, m_IOProxy, m_ApplicationProxy, changedSource != PackagesChangedSource.AddAndRemove, m_SettingsProxy.trustPolicyLevel);
             var primaryVersion = versionList.primary;
             if (primaryVersion == null)
                 return null;

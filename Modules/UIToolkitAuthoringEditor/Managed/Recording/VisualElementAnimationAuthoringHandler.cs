@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitAuthoringFramework not yet converted
 using System;
 using System.Collections.Generic;
 using Unity.UIToolkit.Editor.Utilities;
@@ -96,11 +97,12 @@ namespace Unity.UIToolkit.Editor
 
         private static HashSet<string> s_KnownSubChannelSuffixes;
 
-        // (id, suffix) pairs whose property's only handler-reaching suffix is this one. Used
+        // (id, suffix) pairs whose property's only handler-grouped suffix is this one. Used
         // to keep the full property name as the AnimationWindow group label for lone sub-channels
         // (e.g. TextShadow.blurRadius) so the row doesn't collapse to the misleading parent
-        // (e.g. plain "TextShadow"). "Handler-reaching" excludes the 2-char fast-path suffixes
-        // (.r/.g/.b/.a/.x/.y/.z/.w) that AnimationWindowUtility strips before consulting handlers.
+        // (e.g. plain "TextShadow"). "Handler-grouped" excludes the fast-path-shaped suffixes
+        // (ending in .r/.g/.b/.a/.x/.y/.z/.w) that GetPropertyGroupName defers back to the
+        // built-in fast path.
         private static HashSet<(StylePropertyId, string)> s_LoneHandlerReachingSuffixes;
 
         private static Dictionary<(StylePropertyId, string), int> ChannelIndexLookup
@@ -137,8 +139,8 @@ namespace Unity.UIToolkit.Editor
 
             int idCount = UIAnimationBinder.StylePropertyIdCount;
 
-            // First pass: per-id count of suffixes that actually reach this handler at
-            // grouping time (fast-path-intercepted ones don't, so they don't count).
+            // First pass: per-id count of suffixes this handler groups itself
+            // (fast-path-shaped ones are deferred, so they don't count).
             var handlerReachingCount = new int[idCount];
             for (int i = 0; i < idCount; i++)
             {
@@ -184,9 +186,10 @@ namespace Unity.UIToolkit.Editor
         private static bool IsSingleCharComponentSuffix(string suffix) =>
             suffix.Length == 2 && suffix[0] == '.';
 
-        // AnimationWindowUtility strips any ".<r|g|b|a|x|y|z|w>" suffix BEFORE consulting
-        // handlers, so suffixes matching that shape (including multi-char ones like
-        // ".color.r" or ".offset.x") never reach our GetPropertyGroupName.
+        // Suffixes shaped like ".<r|g|b|a|x|y|z|w>" (including multi-char ones like
+        // ".color.r" or ".offset.x") that AnimationWindowUtility's built-in fast path can
+        // group by stripping the trailing 2 chars. GetPropertyGroupName defers these back
+        // to the fast path for every property except BackgroundImage.
         private static bool IsFastPathInterceptedSuffix(string suffix)
         {
             if (suffix == null || suffix.Length < 3) return false;
@@ -242,7 +245,10 @@ namespace Unity.UIToolkit.Editor
         public int GetChannelIndex([NotNull] string propertyName)
         {
             string suffix = ExtractSubChannelSuffix(propertyName);
-            if (suffix == null)
+            // The suffix check runs before the enum parse so that the non-style properties
+            // this handler now sees first (handlers run before the built-in fast path)
+            // bail out on a hash lookup instead of an Enum.TryParse.
+            if (suffix == null || !KnownSubChannelSuffixes.Contains(suffix))
                 return -1;
 
             string baseName = ExtractBasePropertyName(propertyName, suffix);
@@ -274,8 +280,15 @@ namespace Unity.UIToolkit.Editor
             // GetChannelIndex applies).
             string baseName = ExtractBasePropertyName(propertyName, suffix);
             StylePropertyId id = StylePropertyId.Unknown;
-            if (!string.IsNullOrEmpty(baseName))
-                Enum.TryParse(baseName, out id);
+            if (!string.IsNullOrEmpty(baseName)
+                && !Enum.TryParse(baseName, out id))
+            {
+                // NicifyPropertyGroupName re-runs grouping on the *display* name, where
+                // NicifyVariableName has inserted spaces ("Background Image.gradient.angle").
+                // Drop them so the id still resolves and the group rules below apply to
+                // display names the same way they applied to the raw binding name.
+                Enum.TryParse(baseName.Replace(" ", ""), out id);
+            }
 
             // Filter groups are per-slot (filter.0, filter.1, ...); strip only the trailing
             // ".<sub>" so the ".<i>" slot prefix stays in the group name.
@@ -285,6 +298,19 @@ namespace Unity.UIToolkit.Editor
                 if (secondDot > 0)
                     return propertyName.Substring(0, propertyName.Length - (suffix.Length - secondDot));
             }
+
+            // All BackgroundImage channels (texture + gradient) group under the base
+            // property name: one expandable BackgroundImage row in the Animation Window
+            // and one "Background Image" entry in the Add Property popup, mirroring the
+            // per-slot Filter groups.
+            if (id == StylePropertyId.BackgroundImage)
+                return propertyName.Substring(0, propertyName.Length - suffix.Length);
+
+            // For every other property, defer fast-path-shaped suffixes (".color.r",
+            // ".offset.x", ...) so the built-in grouping (strip the trailing 2 chars)
+            // keeps its historical result, e.g. "TextShadow.color".
+            if (IsFastPathInterceptedSuffix(suffix))
+                return null;
 
             // Keep the full name for lone sub-channels (e.g. TextShadow.blurRadius) so the
             // AnimationWindow row reads with the suffix instead of collapsing to the parent.
@@ -304,6 +330,9 @@ namespace Unity.UIToolkit.Editor
             {
                 { ".align", typeof(BackgroundPositionKeyword) },
                 { ".type", typeof(BackgroundSizeType) },
+                { ".gradient.type", typeof(GradientType) },
+                { ".gradient.shape", typeof(BackgroundGradientShape) },
+                { ".gradient.size", typeof(BackgroundGradientSize) },
             };
             for (int i = 0; i < UIAnimationBinder.kFilterSlotCount; ++i)
                 map["." + i.ToString() + ".type"] = typeof(FilterFunctionType);
@@ -325,6 +354,10 @@ namespace Unity.UIToolkit.Editor
                 return null;
 
             string baseName = propertyName.Substring(propertyName.LastIndexOf('/') + 1);
+            // Composite PPtr channels carry a ".image" suffix (BackgroundImage.image);
+            // legacy clips bound the bare property name.
+            if (baseName.EndsWith(".image", StringComparison.Ordinal))
+                baseName = baseName.Substring(0, baseName.Length - ".image".Length);
             return k_MultiTypeObjectProperties.TryGetValue(baseName, out var types) ? types : null;
         }
 
@@ -352,8 +385,9 @@ namespace Unity.UIToolkit.Editor
             var propName = curveBinding.propertyName;
             string suffix = ExtractSubChannelSuffix(propName);
 
-            // px / % popup for any Length.unit sub-channel (Length, BackgroundPosition.offset, BackgroundSize.x/.y).
-            if (suffix != null && suffix.EndsWith(".unit"))
+            // px / % popup for any Length.unit sub-channel (Length, BackgroundPosition.offset,
+            // BackgroundSize.x/.y) and for gradient stop `.positionIsPercent` (0 = px, 1 = %).
+            if (suffix != null && (suffix.EndsWith(".unit") || suffix.EndsWith(".positionIsPercent")))
             {
                 newValue = currentValue;
                 HandleLengthUnitProperty(valueFieldRect, ref newValue);
@@ -571,3 +605,4 @@ namespace Unity.UIToolkit.Editor
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

@@ -2,6 +2,8 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
+using Unity.Scripting.LifecycleManagement;
 using System;
 using JetBrains.Annotations;
 using UnityEngine.Bindings;
@@ -10,7 +12,7 @@ using UnityEngine.Scripting;
 namespace UnityEngine.UIElements.Layout;
 
 [NativeHeader("External/Yoga/LayoutNative.h")]
-static class LayoutNative
+static partial class LayoutNative
 {
     [NativeMethod(IsThreadSafe = false)]
     internal static extern void CalculateLayout(
@@ -20,6 +22,25 @@ static class LayoutNative
         int parentDirection,
         IntPtr state,
         IntPtr exceptionGCHandle);
+
+    // CSS Grid feature flag. Pushed from UIToolkitProjectSettings at editor boot;
+    // layout tests opt in. When disabled, display:grid falls back to the flex algorithm.
+    [VisibleToOtherModules("UnityEditor.UIElementsModule")]
+    [NativeMethod(IsThreadSafe = false)]
+    internal static extern void SetGridLayoutEnabled(bool enabled);
+
+    [NativeMethod(IsThreadSafe = false)]
+    internal static extern void MeasureNode(
+        IntPtr node,
+        float availableWidth,
+        int widthMode,
+        float availableHeight,
+        int heightMode,
+        int parentDirection,
+        IntPtr state,
+        IntPtr exceptionGCHandle,
+        out float outWidth,
+        out float outHeight);
 
     internal enum LayoutLogEventType
     {
@@ -40,6 +61,7 @@ static class LayoutNative
     }
 
 
+    [AutoStaticsCleanupOnCodeReload]
     internal static event Action<LayoutLogData> onLayoutLog;
 
     [RequiredByNativeCode(Optional = true)]
@@ -58,3 +80,4 @@ static class LayoutNative
         onLayoutLog(data);
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

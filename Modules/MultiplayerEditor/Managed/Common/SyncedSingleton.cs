@@ -4,6 +4,7 @@
 
 using System;
 using System.IO;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Assertions;
@@ -15,6 +16,9 @@ namespace Unity.Multiplayer.Editor
     // and the other instances of the Editor needs to reload the data from that file when changed.
     internal class SyncedSingleton<T> : ScriptableSingleton<T> where T : ScriptableObject
     {
+        // No cleanup: statics in generic classes are per-instantiation and outside the cleanup
+        // codegen's reach; a fresh load starts at false anyway and a bool pins no old-ALC state.
+        [NoAutoStaticsCleanup]
         private static bool s_NeedsRegeneration;
 
         // If the file is updated and the editor is not in focus and entered play mode

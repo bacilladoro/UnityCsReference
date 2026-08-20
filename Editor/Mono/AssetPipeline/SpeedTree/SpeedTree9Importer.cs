@@ -970,7 +970,7 @@ namespace UnityEditor.SpeedTree.Importer
                 bool hasNormalMap = SetMaterialTexture(mat, stMaterial, 1, path, MaterialProperties.NormalMapID);
                 bool enableFeature = hasNormalMap && enableBumpMapping;
 
-                mat.SetFloat(MaterialProperties.NormalMapKwToggleID, (enableFeature) ? 1.0f : 0.0f);
+                SetShaderKeyword(mat, MaterialProperties.NormalMapKwToggleID, MaterialKeywords.EffectBumpID, enableFeature);
             }
 
             // Glossiness, metallic, AO
@@ -993,7 +993,10 @@ namespace UnityEditor.SpeedTree.Importer
                     mat.SetFloat(MaterialProperties.MetallicID, stColor.Y);
                 }
 
+                // ExtraMapKwToggle has no [Toggle] in the shader, and ValidateMaterial (which normally
+                // syncs EFFECT_EXTRA_TEX from _ExtraTex texture presence) is editor-only. Enable directly.
                 mat.SetFloat(MaterialProperties.ExtraMapKwToggleID, (foundExtra && id != EntityId.None) ? 1.0f : 0.0f);
+                SetShaderKeyword(mat, MaterialKeywords.EffectExtraTexID, foundExtra && id != EntityId.None);
             }
 
             // Extra and SSS
@@ -1003,7 +1006,7 @@ namespace UnityEditor.SpeedTree.Importer
                 bool setToggle = hasSSSTex && enableSubsurfaceScattering;
 
                 // TODO: To implement in ST9 Shader.
-                mat.SetFloat(MaterialProperties.SubsurfaceKwToggleID, (setToggle) ? 1.0f : 0.0f);
+                SetShaderKeyword(mat, MaterialProperties.SubsurfaceKwToggleID, MaterialKeywords.EffectSubsurfaceID, setToggle);
 
                 if (hasSSSTex && TryGetInstanceIDFromMaterialProperty(mat, MaterialProperties.SubsurfaceTexID, out var id) && id != EntityId.None)
                 {
@@ -1028,7 +1031,7 @@ namespace UnityEditor.SpeedTree.Importer
 
             // Hue effect
             {
-                mat.SetFloat(MaterialProperties.HueVariationKwToggleID, enableHueVariation ? 1.0f : 0.0f);
+                SetShaderKeyword(mat, MaterialProperties.HueVariationKwToggleID, MaterialKeywords.EffectHueVariationID, enableHueVariation);
                 mat.SetColor(MaterialProperties.HueVariationColorID, m_MaterialSettings.hueVariation);
             }
         }
@@ -1038,12 +1041,17 @@ namespace UnityEditor.SpeedTree.Importer
             bool isBillboard = stMaterial.Billboard;
 
             // Other properties
-            mat.SetFloat(MaterialProperties.BillboardKwToggleID, isBillboard ? 1.0f : 0.0f);
+            SetShaderKeyword(mat, MaterialProperties.BillboardKwToggleID, MaterialKeywords.EffectBillboardID, isBillboard);
             if (isBillboard)
             {
+                // Legacy Terrain-side keyword — retained for backward compat with systems that filter by _BILLBOARD.
                 mat.EnableKeyword(MaterialKeywords.BillboardID);
             }
-            mat.SetFloat(MaterialProperties.LeafFacingKwToggleID, m_HasFacingData ? 1.0f : 0.0f);
+            else
+            {
+                mat.DisableKeyword(MaterialKeywords.BillboardID);
+            }
+            SetShaderKeyword(mat, MaterialProperties.LeafFacingKwToggleID, MaterialKeywords.EffectLeafFacingID, m_HasFacingData);
 
             if (mat.HasFloat(MaterialProperties.DoubleSidedToggleID))
                 mat.SetFloat(MaterialProperties.DoubleSidedToggleID, stMaterial.TwoSided ? 1.0f : 0.0f);
@@ -1072,35 +1080,48 @@ namespace UnityEditor.SpeedTree.Importer
             if (material == null)
                 return;
 
-            //------------------------------------------------------------------------
-            // Note:
-            //   mat.SetFloat(...)      : Legacy rendering pipeline keyword toggle
-            //   mat.EnableKeyword(...) : SRP keyword toggle
-            //------------------------------------------------------------------------
             SpeedTreeWindConfig9 windCfg = m_OutputImporterData.m_WindConfig;
 
-            if (windCfg.doShared != 0)
+            SetShaderKeyword(material, MaterialProperties.WindSharedKwToggle, MaterialKeywords.WindSharedID,
+                windCfg.doShared != 0);
+
+            bool wantBranch1 = !isBillboardMat && windCfg.doBranch1 != 0;
+            bool wantBranch2 = !isBillboardMat && windCfg.doBranch2 != 0;
+            bool wantRipple  = !isBillboardMat && windCfg.doRipple  != 0;
+            bool wantShimmer = wantRipple && windCfg.doShimmer != 0;
+
+            SetShaderKeyword(material, MaterialProperties.WindBranch1KwToggle, MaterialKeywords.WindBranch1ID, wantBranch1);
+            SetShaderKeyword(material, MaterialProperties.WindBranch2KwToggle, MaterialKeywords.WindBranch2ID, wantBranch2);
+            SetShaderKeyword(material, MaterialProperties.WindRippleKwToggle,  MaterialKeywords.WindRippleID,  wantRipple);
+            SetShaderKeyword(material, MaterialProperties.WindShimmerKwToggle, MaterialKeywords.WindShimmerID, wantShimmer);
+        }
+
+        // The shader's [Toggle(KEYWORD)] attribute only syncs the keyword to the float value through the material
+        // inspector UI — programmatic SetFloat calls don't touch the keyword, so we set it explicitly here.
+        private static void SetShaderKeyword(Material material, int floatPropId, string keyword, bool enabled)
+        {
+            material.SetFloat(floatPropId, enabled ? 1.0f : 0.0f);
+            if (enabled)
             {
-                material.SetFloat(MaterialProperties.WindSharedKwToggle, 1.0f);
+                material.EnableKeyword(keyword);
             }
-            if (!isBillboardMat)
+            else
             {
-                if (windCfg.doBranch2 != 0)
-                {
-                    material.SetFloat(MaterialProperties.WindBranch2KwToggle, 1.0f);
-                }
-                if (windCfg.doBranch1 != 0)
-                {
-                    material.SetFloat(MaterialProperties.WindBranch1KwToggle, 1.0f);
-                }
-                if (windCfg.doRipple != 0)
-                {
-                    material.SetFloat(MaterialProperties.WindRippleKwToggle, 1.0f);
-                    if (windCfg.doShimmer != 0)
-                    {
-                        material.SetFloat(MaterialProperties.WindShimmerKwToggle, 1.0f);
-                    }
-                }
+                material.DisableKeyword(keyword);
+            }
+        }
+
+        // Overload for keywords that have no [Toggle(...)] float property in the shader —
+        // just enables/disables the keyword directly (used for EFFECT_EXTRA_TEX).
+        private static void SetShaderKeyword(Material material, string keyword, bool enabled)
+        {
+            if (enabled)
+            {
+                material.EnableKeyword(keyword);
+            }
+            else
+            {
+                material.DisableKeyword(keyword);
             }
         }
 

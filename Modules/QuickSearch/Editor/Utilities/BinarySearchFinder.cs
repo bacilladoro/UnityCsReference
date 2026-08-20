@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Search
 {
@@ -24,6 +25,7 @@ namespace UnityEditor.Search
         public long endOffset;
         public long halfOffset;
 
+        [NoAutoStaticsCleanup]
         public static BinarySearchRange invalid = new BinarySearchRange { startOffset = -1, endOffset = -1 };
 
         public bool Equals(BinarySearchRange other)

@@ -87,9 +87,9 @@ namespace UnityEditor.PlatformSupport
 
         internal static ProvisioningProfile FindLocalProfileByUUID(string UUID, string[] searchPaths = null)
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var localProfilePath = LoadLocalProfiles(searchPaths).FirstOrDefault(p => p.Contains(UUID));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             if (localProfilePath != null && File.Exists(localProfilePath))
             {

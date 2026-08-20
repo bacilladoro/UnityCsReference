@@ -5,6 +5,7 @@
 using System;
 using System.Linq;
 using Unity.Collections;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.UIElements;
 using Vector2 = UnityEngine.Vector2;
@@ -21,18 +22,29 @@ namespace Unity.GraphToolkit.Editor
         public static readonly Color32 DefaultHighlightColor = new Color32(68, 0, 255, 128);
         public static readonly Color32 DefaultHoverOnlyColor = new Color32(68, 192, 255, 128);
 
+        [NoAutoStaticsCleanup] // CSS custom property descriptor; value is a fixed CSS property name
         static readonly CustomStyleProperty<float> k_SelectionWidthProperty = new CustomStyleProperty<float>("--selection-width");
+        [NoAutoStaticsCleanup] // CSS custom property descriptor; value is a fixed CSS property name
         static readonly CustomStyleProperty<float> k_SmallSelectionWidthProperty = new CustomStyleProperty<float>("--small-selection-width");
+        [NoAutoStaticsCleanup] // CSS custom property descriptor; value is a fixed CSS property name
         static readonly CustomStyleProperty<float> k_HoverWidthProperty = new CustomStyleProperty<float>("--hover-width");
+        [NoAutoStaticsCleanup] // CSS custom property descriptor; value is a fixed CSS property name
         static readonly CustomStyleProperty<float> k_SmallWidthThresholdProperty = new CustomStyleProperty<float>("--small-width-threshold");
+        [NoAutoStaticsCleanup] // CSS custom property descriptor; value is a fixed CSS property name
         static readonly CustomStyleProperty<float> k_CornersThresholdProperty = new CustomStyleProperty<float>("--corners-threshold");
 
+        [NoAutoStaticsCleanup] // CSS custom property descriptor; value is a fixed CSS property name
         static readonly CustomStyleProperty<Color> k_SelectionColorProperty = new CustomStyleProperty<Color>("--selection-color");
+        [NoAutoStaticsCleanup] // CSS custom property descriptor; value is a fixed CSS property name
         static readonly CustomStyleProperty<Color> k_HoverOnlyColorProperty = new CustomStyleProperty<Color>("--hover-only-color");
+        [NoAutoStaticsCleanup] // CSS custom property descriptor; value is a fixed CSS property name
         static readonly CustomStyleProperty<Color> k_HighlightColorProperty = new CustomStyleProperty<Color>("--highlight-color");
 
+        [NoAutoStaticsCleanup] // fixed empty corner sentinel array; allocated once and reused as a no-corners default
         static readonly Vector2[] k_EmptyCorners = ArrayExtensions.CreateWithDefaultValue(Vector2.zero, 4);
+        [NoAutoStaticsCleanup] // mutable scratch array for border corner coordinates; recomputed each paint call
         static Vector2[] s_Corners = new Vector2[4];
+        [NoAutoStaticsCleanup] // mutable scratch array for border colors; recomputed each paint call
         static Color[] s_Colors = new Color[4];
 
         protected bool m_Hover;

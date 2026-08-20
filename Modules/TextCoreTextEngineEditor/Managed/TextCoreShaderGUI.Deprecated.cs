@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.TextCore.Text;
 
@@ -12,7 +13,7 @@ namespace UnityEditor.TextCore.Text
 {
     /// <summary>Base class for TextMesh Pro shader GUIs.</summary>
     [Obsolete("Advanced Text Generator (ATG) is moving away from the material-per-font approach. This type is no longer required.", false)]
-    public abstract class TextCoreShaderGUI : ShaderGUI
+    public abstract partial class TextCoreShaderGUI : ShaderGUI
     {
         /// <summary>Representation of a #pragma shader_feature.</summary>
         /// <description>It is assumed that the first feature option is for no keyword (underscores).</description>
@@ -88,17 +89,23 @@ namespace UnityEditor.TextCore.Text
             }
         }
 
-        static GUIContent s_TempLabel = new GUIContent();
+        static readonly GUIContent s_TempLabel = new GUIContent();
 
+        [NoAutoStaticsCleanup] // UI panel expand/collapse state; safe to persist across code reload.
         protected static bool s_DebugExtended;
 
+        [NoAutoStaticsCleanup] // Monotonic undo/redo counters; safe to persist across code reload.
         static int s_UndoRedoCount, s_LastSeenUndoRedoCount;
 
+        [NoAutoStaticsCleanup] // Reusable scratch float buffers (no user-type refs); safe to persist across code reload.
         static float[][] s_TempFloats =
         {
             null, new float[1], new float[2], new float[3], new float[4]
         };
 
+        // Public API (protected): kept mutable (adding readonly would be a source-breaking change).
+        // GUIContent labels hold no user references, so [NoAutoStaticsCleanup] — safe to persist across reload.
+        [NoAutoStaticsCleanup]
         protected static GUIContent[] s_XywhVectorLabels =
         {
             new GUIContent("X"),
@@ -107,6 +114,7 @@ namespace UnityEditor.TextCore.Text
             new GUIContent("H", "Height")
         };
 
+        [NoAutoStaticsCleanup]
         protected static GUIContent[] s_LbrtVectorLabels =
         {
             new GUIContent("L", "Left"),
@@ -115,6 +123,7 @@ namespace UnityEditor.TextCore.Text
             new GUIContent("T", "Top")
         };
 
+        [NoAutoStaticsCleanup]
         protected static GUIContent[] s_CullingTypeLabels =
         {
             new GUIContent("Off"),
@@ -122,8 +131,15 @@ namespace UnityEditor.TextCore.Text
             new GUIContent("Back")
         };
 
-        static TextCoreShaderGUI()
+        [AutoStaticsCleanupOnCodeReload]
+        static bool _undoRedoEventWiredUp;
+        static void EnsureUndoRedoEventWiredUp()
         {
+            if (_undoRedoEventWiredUp)
+            {
+                return;
+            }
+            _undoRedoEventWiredUp = true;
             // Keep track of how many undo/redo events happened.
             Undo.undoRedoEvent += OnUndoRedo;
         }
@@ -144,6 +160,8 @@ namespace UnityEditor.TextCore.Text
 
         void PrepareGUI()
         {
+            EnsureUndoRedoEventWiredUp();
+
             m_IsNewGUI = false;
             TextShaderUtilities.GetShaderPropertyIDs();
 
@@ -161,6 +179,7 @@ namespace UnityEditor.TextCore.Text
 
         public override void OnGUI(MaterialEditor materialEditor, MaterialProperty[] properties)
         {
+            EnsureUndoRedoEventWiredUp();
             m_Editor = materialEditor;
             m_Material = materialEditor.target as Material;
             this.m_Properties = properties;
@@ -185,7 +204,7 @@ namespace UnityEditor.TextCore.Text
         /// <summary>Override this method to create the specific shader GUI.</summary>
         protected abstract void DoGUI();
 
-        static string[] s_PanelStateLabel = new string[] { "\t- <i>Click to collapse</i> -", "\t- <i>Click to expand</i>  -" };
+        static readonly string[] s_PanelStateLabel = new string[] { "\t- <i>Click to collapse</i> -", "\t- <i>Click to expand</i>  -" };
 
         protected bool BeginPanel(string panel, bool expanded)
         {

@@ -82,9 +82,9 @@ namespace Unity.GraphToolkit.Editor
         {
             if (field is ConstantField constantField)
             {
-                #pragma warning disable UA2014 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2014 // Avoid Linq
                 if (!ports.SequenceEqual(constantField.Owners))
-#pragma warning restore UA2014
+#pragma warning restore UAC2014
                     return true;
 
                 if (ports[0].EmbeddedValue.Type != constantField.ConstantModels[0].Type)
@@ -92,9 +92,9 @@ namespace Unity.GraphToolkit.Editor
             }
             else if (field is ExpandablePortPropertyField expandablePortPropertyField)
             {
-                #pragma warning disable UA2014 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2014 // Avoid Linq
                 if (!ports.SequenceEqual(expandablePortPropertyField.ExpandablePorts))
-#pragma warning restore UA2014
+#pragma warning restore UAC2014
                     return true;
 
                 if (expandablePortPropertyField.ShouldRebuildFields())
@@ -121,16 +121,16 @@ namespace Unity.GraphToolkit.Editor
         /// <returns>A list of lists of ports to display, each list of ports contains ports for the same property in case of a multi selection.</returns>
         protected virtual IReadOnlyList<List<PortModel>> GetPortsToDisplay()
         {
-#pragma warning disable UA2001, UA2011 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001, UAC2011 // Avoid Linq
             var portNodeModel = m_Models.OfType<PortNodeModel>().FirstOrDefault();
-#pragma warning restore UA2001, UA2011
+#pragma warning restore UAC2001, UAC2011
 
             if (portNodeModel == null)
                 return Array.Empty<List<PortModel>>();
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var portList = portNodeModel.GetPorts().Where(p => p.Options != PortModelOptions.IsNodeOption && p.Direction == PortDirection.Input && p.EmbeddedValue != null && p.ParentPort == null)
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 .Select(t => new List<PortModel>(new[] { t })).ToList();
 
             for (int i = 0; i < portList.Count; ++i)
@@ -139,13 +139,13 @@ namespace Unity.GraphToolkit.Editor
                 var firstPort = ports[0];
 
                 // Only keep ports that are common to all the models.
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 foreach (var other in m_Models.OfType<PortNodeModel>().Skip(1))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 {
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2001 // Avoid Linq
                     var otherPort = other.GetPorts().FirstOrDefault(t => t.Direction == firstPort.Direction && t.UniqueName == firstPort.UniqueName && t.Orientation == firstPort.Orientation && t.DataTypeHandle == firstPort.DataTypeHandle);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     if (otherPort == null)
                     {
                         portList.RemoveAt(i);

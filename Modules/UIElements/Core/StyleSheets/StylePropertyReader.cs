@@ -2,10 +2,12 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Runtime.InteropServices;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Bindings;
 using UnityEngine.Pool;
 using UnityEngine.TextCore.Text;
@@ -62,12 +64,16 @@ namespace UnityEngine.UIElements.StyleSheets
         // Strategy to create default cursor must be provided in the context of Editor or Runtime
         internal delegate int GetCursorIdFunction(StyleSheet sheet, StyleValueHandle handle);
 
+        [AutoStaticsCleanupOnCodeReload]
         internal static GetCursorIdFunction getCursorIdFunc = null;
 
         // One-shot per session — avoids flooding the console when a stylesheet with a
         // limitation-tripping gradient is applied to many elements.
+        [NoAutoStaticsCleanup] // one-shot warning flags; safe to persist across reload
         static bool s_WarnedCircleCoerce;
+        [NoAutoStaticsCleanup] // one-shot warning flags; safe to persist across reload
         static bool s_WarnedRadialPositionUnit;
+        [NoAutoStaticsCleanup] // one-shot warning flags; safe to persist across reload
         static bool s_WarnedPixelStopPosition;
 
         private List<StylePropertyValue> m_Values = new List<StylePropertyValue>();
@@ -166,6 +172,12 @@ namespace UnityEngine.UIElements.StyleSheets
         {
             var value = m_Values[m_CurrentValueIndex + index];
             return value.sheet.ReadDimension(value.handle).ToTime();
+        }
+
+        public float ReadTimeValueAsSeconds(int index)
+        {
+            var time = ReadTimeValue(index);
+            return time.unit == TimeUnit.Millisecond ? time.value / 1000f : time.value;
         }
 
         public Translate ReadTranslate(int index)
@@ -988,6 +1000,153 @@ namespace UnityEngine.UIElements.StyleSheets
             result.CopyFrom(list.Span);
         }
 
+        static GridTrackSize GridTrackSizeFromDimension(Dimension dim)
+        {
+            switch (dim.unit)
+            {
+                case Dimension.Unit.Percent: return GridTrackSize.Percent(dim.value);
+                case Dimension.Unit.Fraction: return GridTrackSize.Fraction(dim.value);
+                default: return GridTrackSize.Pixels(dim.value);
+            }
+        }
+
+        // Reads a single (non-function) track value at the given index. Does not advance.
+        GridTrackSize ReadSingleTrack(int index)
+        {
+            var value = m_Values[m_CurrentValueIndex + index];
+            var handle = value.handle;
+            switch (handle.valueType)
+            {
+                case StyleValueType.Dimension:
+                    return GridTrackSizeFromDimension(value.sheet.ReadDimension(handle));
+                case StyleValueType.Float:
+                    return GridTrackSize.Pixels(value.sheet.ReadFloat(handle));
+                case StyleValueType.Enum:
+                {
+                    var s = value.sheet.ReadEnum(handle);
+                    if (string.Equals(s, "min-content", StringComparison.OrdinalIgnoreCase)) return GridTrackSize.MinContent();
+                    if (string.Equals(s, "max-content", StringComparison.OrdinalIgnoreCase)) return GridTrackSize.MaxContent();
+                    return GridTrackSize.Auto();
+                }
+                default:
+                    return GridTrackSize.Auto(); // Keyword 'auto' etc.
+            }
+        }
+
+        // Reads one <track-size> at index (a single track, or a minmax()/fit-content() function),
+        // advancing index past every handle it occupies, including a nested function's flattened args.
+        // The importer counts a nested function as one top-level arg token, so callers walk an
+        // argument list by top-level count and let this consume the extra handles a function expands to.
+        GridTrackSize ReadTrackEntry(ref int index)
+        {
+            if (GetValueType(index) != StyleValueType.Function)
+                return ReadSingleTrack(index++);
+
+            var func = (StyleValueFunction)GetValue(index++).handle.valueIndex;
+            int argCount = ReadInt(index++);
+            int consumed = 0;
+            GridTrackSize entry = GridTrackSize.Auto();
+            if (func == StyleValueFunction.Minmax)
+            {
+                var min = ReadSingleTrack(index++); ++consumed;
+                if (consumed < argCount && GetValueType(index) == StyleValueType.CommaSeparator) { ++index; ++consumed; }
+                var max = ReadSingleTrack(index++); ++consumed;
+                entry = GridTrackSize.Minmax(min, max);
+            }
+            else if (func == StyleValueFunction.FitContent)
+            {
+                var len = ReadSingleTrack(index++); ++consumed;
+                entry = GridTrackSize.FitContent(len.maxValue, len.maxUnit);
+            }
+            for (; consumed < argCount; ++consumed) ++index;
+            return entry;
+        }
+
+        // CSS Grid track list: grid-template-columns/rows, grid-auto-columns/rows.
+        // Space-separated (no CommaSeparator between top-level items). Handles single tracks plus
+        // the minmax(), fit-content() and repeat() track functions.
+        public void ReadListGridTrackSize(ref UnmanagedRefCountedList<GridTrackSize> result, int index)
+        {
+            using var list = new UnmanagedTempList<GridTrackSize>(4);
+            while (index < valueCount)
+            {
+                var handle = m_Values[m_CurrentValueIndex + index].handle;
+                if (handle.valueType == StyleValueType.Function)
+                {
+                    var func = (StyleValueFunction)GetValue(index).handle.valueIndex;
+                    if (func == StyleValueFunction.Repeat)
+                    {
+                        ++index;
+                        int argCount = ReadInt(index++);
+
+                        // First top-level arg is either an integer count or the auto-fill / auto-fit
+                        // keyword; the rest are the repeated <track-size> pattern (a comma is one arg).
+                        bool autoFill = false, autoFit = false;
+                        int count = 1;
+                        if (GetValueType(index) == StyleValueType.Float || GetValueType(index) == StyleValueType.Dimension)
+                        {
+                            count = ReadInt(index++);
+                            if (count < 0) count = 0;
+                        }
+                        else
+                        {
+                            var firstVal = m_Values[m_CurrentValueIndex + index];
+                            var kw = firstVal.sheet.ReadAsString(firstVal.handle);
+                            autoFill = string.Equals(kw, "auto-fill", StringComparison.OrdinalIgnoreCase);
+                            autoFit = string.Equals(kw, "auto-fit", StringComparison.OrdinalIgnoreCase);
+                            ++index;
+                        }
+
+                        if (autoFill || autoFit)
+                        {
+                            // repeat(auto-fill|auto-fit, <track>): exactly one track pattern (the count
+                            // resolves at layout time). Reading a single entry rather than iterating argCount
+                            // keeps this robust to the writer emitting a flattened arg count for a nested
+                            // pattern (StyleProperty.WriteGridTrackSize) vs the importer's top-level count.
+                            if (index < valueCount && GetValueType(index) == StyleValueType.CommaSeparator) ++index;
+                            var pattern = index < valueCount ? ReadTrackEntry(ref index) : GridTrackSize.Auto();
+                            list.Add(autoFill ? GridTrackSize.RepeatAutoFill(pattern) : GridTrackSize.RepeatAutoFit(pattern));
+                        }
+                        else
+                        {
+                            using var group = new UnmanagedTempList<GridTrackSize>(4);
+                            for (int arg = 1; arg < argCount; ++arg)
+                            {
+                                if (GetValueType(index) == StyleValueType.CommaSeparator) { ++index; continue; }
+                                group.Add(ReadTrackEntry(ref index));
+                            }
+                            var groupSpan = group.Span;
+                            for (int r = 0; r < count; ++r)
+                                for (int g = 0; g < groupSpan.Length; ++g)
+                                    list.Add(groupSpan[g]);
+                        }
+                    }
+                    else
+                    {
+                        list.Add(ReadTrackEntry(ref index));
+                    }
+                }
+                else if (handle.valueType == StyleValueType.Keyword)
+                {
+                    var kw = m_Values[m_CurrentValueIndex + index].sheet.ReadKeyword(handle);
+                    ++index;
+                    if (kw == StyleValueKeyword.Auto) list.Add(GridTrackSize.Auto());
+                    // 'none' -> no explicit tracks (empty list); other keywords ignored.
+                }
+                else if (handle.valueType == StyleValueType.CommaSeparator)
+                {
+                    ++index;
+                }
+                else
+                {
+                    list.Add(ReadSingleTrack(index));
+                    ++index;
+                }
+            }
+
+            result.CopyFrom(list.Span);
+        }
+
         public void ReadListUnmanagedFilterFunction(ref UnmanagedRefCountedList<UnmanagedFilterFunction> result, int index)
         {
             using var list = new UnmanagedTempList<UnmanagedFilterFunction>(4);
@@ -1088,6 +1247,109 @@ namespace UnityEngine.UIElements.StyleSheets
             result.CopyFrom(list.Span);
         }
 
+        public void ReadListFloat(ref UnmanagedRefCountedList<float> result, int index)
+        {
+            using var list = new UnmanagedTempList<float>(4);
+            do
+            {
+                list.Add(ReadFloat(index));
+                ++index;
+
+                if (index < valueCount)
+                {
+                    var nextValue = m_Values[m_CurrentValueIndex + index];
+                    if (nextValue.handle.valueType == StyleValueType.CommaSeparator)
+                        ++index;
+                }
+            }
+            while (index < valueCount);
+
+            result.CopyFrom(list.Span);
+        }
+
+        public void ReadListAnimationIterationCount(ref UnmanagedRefCountedList<AnimationIterationCount> result, int index)
+        {
+            using var list = new UnmanagedTempList<AnimationIterationCount>(4);
+            do
+            {
+                // A finite count is a Float handle; the `infinite` keyword is an Enum handle (see the importer).
+                list.Add(GetValueType(index) == StyleValueType.Float
+                    ? new AnimationIterationCount(ReadFloat(index))
+                    : AnimationIterationCount.Infinite());
+                ++index;
+
+                if (index < valueCount)
+                {
+                    var nextValue = m_Values[m_CurrentValueIndex + index];
+                    if (nextValue.handle.valueType == StyleValueType.CommaSeparator)
+                        ++index;
+                }
+            }
+            while (index < valueCount);
+
+            result.CopyFrom(list.Span);
+        }
+
+        public void ReadListAnimationDirection(ref UnmanagedRefCountedList<AnimationDirection> result, int index)
+        {
+            using var list = new UnmanagedTempList<AnimationDirection>(4);
+            do
+            {
+                list.Add((AnimationDirection)ReadEnum(StyleEnumType.AnimationDirection, index));
+                ++index;
+
+                if (index < valueCount)
+                {
+                    var nextValue = m_Values[m_CurrentValueIndex + index];
+                    if (nextValue.handle.valueType == StyleValueType.CommaSeparator)
+                        ++index;
+                }
+            }
+            while (index < valueCount);
+
+            result.CopyFrom(list.Span);
+        }
+
+        public void ReadListAnimationPlayState(ref UnmanagedRefCountedList<AnimationPlayState> result, int index)
+        {
+            using var list = new UnmanagedTempList<AnimationPlayState>(4);
+            do
+            {
+                list.Add((AnimationPlayState)ReadEnum(StyleEnumType.AnimationPlayState, index));
+                ++index;
+
+                if (index < valueCount)
+                {
+                    var nextValue = m_Values[m_CurrentValueIndex + index];
+                    if (nextValue.handle.valueType == StyleValueType.CommaSeparator)
+                        ++index;
+                }
+            }
+            while (index < valueCount);
+
+            result.CopyFrom(list.Span);
+        }
+
+        public void ReadListEntityId(ref UnmanagedRefCountedList<EntityId> result, int index)
+        {
+            using var list = new UnmanagedTempList<EntityId>(4);
+            do
+            {
+                list.Add(ReadUIAnimationClip(index));
+                ++index;
+
+                if (index < valueCount)
+                {
+                    var nextValue = m_Values[m_CurrentValueIndex + index];
+                    if (nextValue.handle.valueType == StyleValueType.CommaSeparator)
+                        ++index;
+                }
+            }
+            while (index < valueCount);
+
+            result.CopyFrom(list.Span);
+        }
+
         public void ReadListString(List<string> list, int index)
         {
             list.Clear();
@@ -1128,6 +1390,41 @@ namespace UnityEngine.UIElements.StyleSheets
 
             return StyleRatio.Auto();
 
+        }
+
+        // CSS Grid. Reads one grid-line placement value: auto | <integer >= 1> | span [<n>].
+        public StyleGridLine ReadGridLine(int index)
+        {
+            if (IsKeyword(index, StyleValueKeyword.Auto))
+                return new StyleGridLine(GridLine.Auto);
+
+            var type = GetValueType(index);
+            if (type == StyleValueType.Enum)
+            {
+                var v = m_Values[m_CurrentValueIndex + index];
+                var str = v.sheet.ReadAsString(v.handle);
+                if (string.Equals(str, "span", System.StringComparison.OrdinalIgnoreCase))
+                {
+                    int count = 1; // "span" with the integer omitted defaults to 1
+                    if (valueCount > index + 1 && GetValueType(index + 1) == StyleValueType.Float)
+                        count = (int)ReadFloat(index + 1);
+                    if (count >= 1)
+                        return new StyleGridLine(GridLine.Span(count));
+                    Debug.LogError($"Invalid grid span '{count}'; a span must be >= 1.");
+                    return new StyleGridLine(GridLine.Auto);
+                }
+            }
+
+            if (type == StyleValueType.Float)
+            {
+                int line = (int)ReadFloat(index);
+                if (line >= 1)
+                    return new StyleGridLine(GridLine.AtLine(line));
+                Debug.LogError($"Invalid grid line '{line}'; a line must be >= 1 (0 and negatives are invalid).");
+                return new StyleGridLine(GridLine.Auto);
+            }
+
+            return new StyleGridLine(GridLine.Auto);
         }
 
 
@@ -1210,3 +1507,4 @@ namespace UnityEngine.UIElements.StyleSheets
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

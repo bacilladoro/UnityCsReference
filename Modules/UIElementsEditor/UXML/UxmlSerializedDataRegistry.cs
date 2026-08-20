@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
 using JetBrains.Annotations;
 using System;
 using System.Collections.Generic;
@@ -11,16 +12,21 @@ using UnityEngine.Bindings;
 using UnityEngine.Scripting.APIUpdating;
 using UnityEngine.UIElements;
 using HelpBox = UnityEngine.UIElements.HelpBox;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.UIElements
 {
     [VisibleToOtherModules("UnityEditor.UIBuilderModule", "UnityEditor.UIToolkitAuthoringModule")]
-    internal static class UxmlSerializedDataRegistry
+    internal static partial class UxmlSerializedDataRegistry
     {
+        [AutoStaticsCleanupOnCodeReload]
         private static bool s_Initialized = false;
-        static readonly Dictionary<string, Type> s_MovedTypes = new();
-        static readonly Dictionary<string, UxmlSerializedDataDescription> s_DescriptionsCache = new();
+        [AutoStaticsCleanupOnCodeReload]
+        static Dictionary<string, Type> s_MovedTypes = new();
+        [AutoStaticsCleanupOnCodeReload]
+        static Dictionary<string, UxmlSerializedDataDescription> s_DescriptionsCache = new();
 
+        [AutoStaticsCleanupOnCodeReload]
         public static Dictionary<string, Type> SerializedDataTypes { get; } = new();
 
         [UsedImplicitly]
@@ -194,3 +200,4 @@ namespace UnityEditor.UIElements
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

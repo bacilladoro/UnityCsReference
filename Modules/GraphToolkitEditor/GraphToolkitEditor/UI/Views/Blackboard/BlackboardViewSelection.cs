@@ -17,9 +17,9 @@ namespace Unity.GraphToolkit.Editor
 
         /// <inheritdoc />
         public override IEnumerable<GraphElementModel> SelectableModels =>
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             m_BlackboardContentState.BlackboardModel.GraphModel.SectionModels.SelectMany(t => t.ContainedModels).Where(t => t.IsSelectable());
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
         /// <summary>
         /// Initializes a new instance of the <see cref="BlackboardViewSelection"/> class.
@@ -80,9 +80,9 @@ namespace Unity.GraphToolkit.Editor
         /// <inheritdoc />
         protected override CopyPasteData BuildCopyPasteData(HashSet<GraphElementModel> elementsToCopySet)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var copyPaste = new CopyPasteData(m_BlackboardViewState, elementsToCopySet.ToList());
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             return copyPaste;
         }
     }

@@ -250,5 +250,20 @@ namespace UnityEditor.Rendering
         extern public static bool ShouldValidateGraphicsForActiveBuildTarget();
 
         extern public static LightBaker defaultLightBaker { get; set; }
+
+        extern private static DefaultMeshBufferTarget GetDefaultMeshBufferTarget();
+        extern private static void SetDefaultMeshBufferTarget(DefaultMeshBufferTarget target);
+
+        public static DefaultMeshBufferTarget defaultMeshBufferTarget
+        {
+            get { return GetDefaultMeshBufferTarget(); }
+            set
+            {
+                if (EditorApplication.isPlayingOrWillChangePlaymode)
+                    throw new InvalidOperationException("Cannot modify EditorGraphicsSettings.defaultMeshBufferTarget while in play mode.");
+
+                SetDefaultMeshBufferTarget(value);
+            }
+        }
     }
 }

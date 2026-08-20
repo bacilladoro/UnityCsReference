@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using Unity.Profiling;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Scripting;
 using UnityEngine.Bindings;
 
@@ -258,32 +259,53 @@ namespace UnityEngine.TextCore.LowLevel
     ///
     ///The FontEngine is also used to raster the visual representation of characters known as glyphs in a given font atlas texture.</summary>
     [NativeHeader("Modules/TextCoreFontEngine/Native/FontEngine.h")]
-    public sealed class FontEngine
+    public sealed partial class FontEngine
     {
+        // Reusable marshaling scratch buffers of value types, allocated once to avoid per-call allocations.
+        // All are [NoAutoStaticsCleanup]: safe to persist across code reload, nothing to clean up.
+        [NoAutoStaticsCleanup]
         private static Glyph[] s_Glyphs = new Glyph[16];
+        [NoAutoStaticsCleanup]
         private static uint[] s_GlyphIndexes_MarshallingArray_A;
+        [NoAutoStaticsCleanup]
         private static uint[] s_GlyphIndexes_MarshallingArray_B;
 
+        [NoAutoStaticsCleanup]
         private static GlyphMarshallingStruct[] s_GlyphMarshallingStruct_IN = new GlyphMarshallingStruct[16];
+        [NoAutoStaticsCleanup]
         private static GlyphMarshallingStruct[] s_GlyphMarshallingStruct_OUT = new GlyphMarshallingStruct[16];
 
+        [NoAutoStaticsCleanup]
         private static GlyphRect[] s_FreeGlyphRects = new GlyphRect[16];
+        [NoAutoStaticsCleanup]
         private static GlyphRect[] s_UsedGlyphRects = new GlyphRect[16];
 
+        [NoAutoStaticsCleanup]
         private static GlyphAdjustmentRecord[] s_SingleAdjustmentRecords_MarshallingArray;
 
+        [NoAutoStaticsCleanup]
         private static SingleSubstitutionRecord[] s_SingleSubstitutionRecords_MarshallingArray;
+        [NoAutoStaticsCleanup]
         private static MultipleSubstitutionRecord[] s_MultipleSubstitutionRecords_MarshallingArray;
+        [NoAutoStaticsCleanup]
         private static AlternateSubstitutionRecord[] s_AlternateSubstitutionRecords_MarshallingArray;
+        [NoAutoStaticsCleanup]
         private static LigatureSubstitutionRecord[] s_LigatureSubstitutionRecords_MarshallingArray;
+        [NoAutoStaticsCleanup]
         private static ContextualSubstitutionRecord[] s_ContextualSubstitutionRecords_MarshallingArray;
+        [NoAutoStaticsCleanup]
         private static ChainingContextualSubstitutionRecord[] s_ChainingContextualSubstitutionRecords_MarshallingArray;
 
+        [NoAutoStaticsCleanup]
         private static GlyphPairAdjustmentRecord[] s_PairAdjustmentRecords_MarshallingArray;
+        [NoAutoStaticsCleanup]
         private static MarkToBaseAdjustmentRecord[] s_MarkToBaseAdjustmentRecords_MarshallingArray;
+        [NoAutoStaticsCleanup]
         private static MarkToMarkAdjustmentRecord[] s_MarkToMarkAdjustmentRecords_MarshallingArray;
+        [NoAutoStaticsCleanup]
         private static MarkToLigatureAdjustmentRecord[] s_MarkToLigatureAdjustmentRecords_MarshallingArray;
 
+        [AutoStaticsCleanupOnCodeReload]
         private static Dictionary<uint, Glyph> s_GlyphLookupDictionary = new Dictionary<uint, Glyph>();
 
         static readonly ProfilerMarker s_TryAddGlyphsToTextureMarker = new ProfilerMarker("FontEngine.TryAddGlyphsToTexture");

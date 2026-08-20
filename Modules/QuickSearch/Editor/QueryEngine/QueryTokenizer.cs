@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Search
 {
@@ -72,6 +73,7 @@ namespace UnityEditor.Search
         public readonly string escapedOpeningToken;
         public readonly string escapedClosingToken;
 
+        [NoAutoStaticsCleanup]
         public static QueryTextDelimiter invalid = new QueryTextDelimiter(null, null, QueryTextDelimiterEscapeOptions.EscapeNone);
 
         public QueryTextDelimiter(string openingToken, string closingToken)
@@ -140,6 +142,7 @@ namespace UnityEditor.Search
             QueryRegexValues.k_FilterOperatorsPattern +
             QueryRegexValues.k_FilterValuePattern, RegexOptions.Compiled);
 
+        [NoAutoStaticsCleanup]
         static readonly List<string> k_CombiningToken = new List<string>
         {
             "and",
@@ -691,9 +694,9 @@ namespace UnityEditor.Search
             if (operators == null)
                 return QueryRegexValues.k_FilterOperatorsInnerPattern;
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var sortedOperators = operators.Select(Regex.Escape).ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             sortedOperators.Sort((s, s1) => s1.Length.CompareTo(s.Length));
             return $"{string.Join("|", sortedOperators)}";
         }

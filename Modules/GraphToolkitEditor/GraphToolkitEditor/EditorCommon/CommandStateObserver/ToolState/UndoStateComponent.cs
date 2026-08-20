@@ -51,7 +51,7 @@ namespace Unity.GraphToolkit.Editor
             }
         }
 
-        IState m_State;
+        CSO.IState m_State;
         UndoStateRecorder m_UndoStateRecorder;
 
         [NonSerialized]
@@ -62,7 +62,7 @@ namespace Unity.GraphToolkit.Editor
         /// <summary>
         /// Initializes a new instance of the <see cref="UndoStateComponent"/> class.
         /// </summary>
-        public UndoStateComponent(IState state, ToolStateComponent toolStateComponent, UndoStateRecorder stateRecorder)
+        public UndoStateComponent(CSO.IState state, ToolStateComponent toolStateComponent, UndoStateRecorder stateRecorder)
         {
             m_State = state;
             m_UndoStateRecorder = stateRecorder;

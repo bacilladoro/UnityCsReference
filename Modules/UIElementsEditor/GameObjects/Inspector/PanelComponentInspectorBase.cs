@@ -2,11 +2,13 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
 using System;
 using UnityEngine;
 using UnityEngine.Pool;
 using UnityEngine.UIElements;
 using Object = UnityEngine.Object;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.UIElements.Inspector
 {
@@ -27,7 +29,9 @@ namespace UnityEditor.UIElements.Inspector
         const HideFlags k_PresetPreviewFlags = HideFlags.HideInHierarchy | HideFlags.NotEditable |
                                                 HideFlags.DontSaveInEditor | HideFlags.DontSaveInBuild;
 
+        [NoAutoStaticsCleanup]
         private static StyleSheet s_DefaultStyleSheet;
+        [NoAutoStaticsCleanup]
         private static VisualTreeAsset s_InspectorUxml;
 
         private VisualElement m_RootVisualElement;
@@ -385,3 +389,4 @@ namespace UnityEditor.UIElements.Inspector
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

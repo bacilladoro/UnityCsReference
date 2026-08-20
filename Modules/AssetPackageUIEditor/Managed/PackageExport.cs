@@ -137,16 +137,16 @@ namespace UnityEditor
                 guids = new HashSet<string>(assetDatabaseAdapter.CollectAllChildren(AssetDatabase.assetFolderGUID, temp));
             }
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var guidsArray = includeScripts ? guids.Union(UnityEditorInternal.InternalEditorUtility.GetAllScriptGUIDs()).ToArray() : guids.ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             var assets = utilityAdapter.BuildExportPackageItemsListWithPackageManagerWarning(guidsArray, includeDependencies, true);
 
             // If the user exports the root Assets folder, we need to remove it from the list
             // explicitly, as it doesn't make sense
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             assets = assets.Where(val => val.assetPath != "Assets").ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             return assets;
         }
@@ -351,9 +351,9 @@ namespace UnityEditor
             if (GUILayout.Button(EditorGUIUtility.TrTextContent("Export...")))
             {
                 string invalidChars = m_EditorUtilityAdapter.GetInvalidFilenameChars();
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 var selectedItemWithInvalidChar = m_ExportPackageItems.FirstOrDefault(item => Path.GetFileNameWithoutExtension(item.assetPath).IndexOfAny(invalidChars.ToCharArray()) != -1 && item.enabledStatus > 0);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 if (selectedItemWithInvalidChar != null && !m_EditorUtilityAdapter.DisplayDialog(L10n.Tr("Cross platform incompatibility"), L10n.Tr($"The asset “{Path.GetFileNameWithoutExtension(selectedItemWithInvalidChar.assetPath)}” contains one or more characters that are not compatible across platforms: {invalidChars}"), L10n.Tr("I understand"), L10n.Tr("Cancel")))
                 {
                     GUIUtility.ExitGUI();
@@ -459,9 +459,9 @@ namespace UnityEditor
             UnscheduleBuildAssetList();
 
             m_ProjectBrowserSelection ??= Selection.assetGUIDsDeepSelection;
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             m_ExportPackageItems = GetAssetItemsForExport(m_ProjectBrowserSelection, m_IncludeDependencies, m_IncludeScripts).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             // GUI is reconstructed in OnGUI (when needed)
             m_Tree = null;

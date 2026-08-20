@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -69,6 +70,7 @@ namespace Unity.GraphToolkit.Editor
             RegisterCallback<PromptItemLibraryEvent>(OnPromptItemLibrary);
         }
 
+        [NoAutoStaticsCleanup] // lazy cache loaded by a fixed asset name; reinitializes on first access after reload
         static Texture s_FolderIcon;
 
         /// <summary>
@@ -153,3 +155,4 @@ namespace Unity.GraphToolkit.Editor
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

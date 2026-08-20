@@ -113,9 +113,9 @@ namespace Unity.Timeline.Foundation.View
 
         public IEnumerable<TimeRange> GetShownItemOverlaysRanges()
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return m_ItemOverlays.Where(overlay => overlay.isShown && overlay.state == ItemOverlay.State.Valid).Select(overlay => overlay.range);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         static void SetItemOverlayState(ItemOverlay item, bool show, bool isValid)

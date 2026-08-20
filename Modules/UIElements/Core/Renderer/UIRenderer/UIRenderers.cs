@@ -83,7 +83,7 @@ namespace UnityEngine.UIElements.UIR
         internal Rect drawBounds;
     }
 
-    class RenderChainCommand : LinkedPoolItem<RenderChainCommand>
+    partial class RenderChainCommand : LinkedPoolItem<RenderChainCommand>
     {
         public RenderData owner;
         public RenderChainCommand prev, next;

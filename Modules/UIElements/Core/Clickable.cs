@@ -2,7 +2,9 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
 using System;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Bindings;
 
 namespace UnityEngine.UIElements
@@ -14,7 +16,7 @@ namespace UnityEngine.UIElements
     /// See <see cref="Clickable.clicked"/> for more information on what it means for an element to be clicked
     /// in the context of this manipulator.
     /// </remarks>
-    public class Clickable : PointerManipulator
+    public partial class Clickable : PointerManipulator
     {
         /// <summary>
         /// Callback triggered when the target element is clicked, including event data.
@@ -197,7 +199,10 @@ namespace UnityEngine.UIElements
             }
         }
 
+
+        [NoAutoStaticsCleanup]
         private static readonly EventCallbackGroupFactory<Clickable> k_DefaultCallbackFactory = new(arg => new Callbacks(arg, false).OnPointer);
+        [NoAutoStaticsCleanup]
         private static readonly EventCallbackGroupFactory<Clickable> k_IncludeDisabledCallbackFactory = new(arg => new Callbacks(arg, true).OnPointer);
         private EventCallbackGroupFactory<Clickable>.Group m_RegisteredCallbacks;
 
@@ -433,3 +438,4 @@ namespace UnityEngine.UIElements
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

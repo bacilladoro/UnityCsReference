@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -47,6 +48,7 @@ namespace UnityEditor.Search
             }
         }
 
+        [NoAutoStaticsCleanup] // stateless comparer with no user-code refs; safe to persist across reloads
         static ProjectEntryInfoComparer s_ProjectEntryComparer = new();
 
         string m_BaseFolder;

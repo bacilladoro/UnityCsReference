@@ -517,12 +517,12 @@ namespace UnityEditor
             if (m_ImportAnimation.boolValue && !m_ImportAnimation.hasMultipleDifferentValues)
             {
                 ImportLog importLog = AssetImporter.GetImportLog(singleImporter.assetPath);
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 ImportLog.ImportLogEntry[] importRigErrors = importLog != null ? importLog.logEntries.Where(x => x.flags == ImportLogFlags.Error && x.message.StartsWith(k_RigErrorPrefix)).ToArray() : Array.Empty<ImportLog.ImportLogEntry>();
-#pragma warning restore UA2001
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+                #pragma warning disable UAC2001 // Avoid Linq
                 ImportLog.ImportLogEntry[] importRigWarnings = importLog != null ? importLog.logEntries.Where(x => x.flags == ImportLogFlags.Warning && x.message.StartsWith(k_RigErrorPrefix)).ToArray() : Array.Empty<ImportLog.ImportLogEntry>();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
                 bool hasNoValidAnimationData = targets.Length == 1 && !m_ContainsAnimation.boolValue && singleImporter.animationType != ModelImporterAnimationType.None && !isEditorPreset;
                 if (IsDeprecatedMultiAnimationRootImport())

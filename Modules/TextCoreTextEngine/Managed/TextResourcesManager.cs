@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 
 
 namespace UnityEngine.TextCore.Text
@@ -10,7 +11,7 @@ namespace UnityEngine.TextCore.Text
     /// <summary>
     ///
     /// </summary>
-    internal class TextResourceManager
+    internal partial class TextResourceManager
     {
         // ======================================================
         // TEXT SETTINGS MANAGEMENT
@@ -60,9 +61,17 @@ namespace UnityEngine.TextCore.Text
             }
         }
 
+        // FontAsset instances survive code reload and only register here via ReadFontAssetDefinition,
+        // which does not re-run for already-initialized instances, so clearing these lookups would
+        // orphan live fonts from name/family resolution. Destroyed entries are swept by
+        // RebuildFontAssetCache on font asset imports.
+        [NoAutoStaticsCleanup]
         static readonly Dictionary<EntityId, FontAssetRef> s_FontAssetReferences = new Dictionary<EntityId, FontAssetRef>();
+        [NoAutoStaticsCleanup]
         static readonly Dictionary<int, FontAsset> s_FontAssetNameReferenceLookup = new Dictionary<int, FontAsset>();
+        [NoAutoStaticsCleanup]
         static readonly Dictionary<long, FontAsset> s_FontAssetFamilyNameAndStyleReferenceLookup = new Dictionary<long, FontAsset>();
+        [AutoStaticsCleanupOnCodeReload]
         static readonly List<EntityId> s_FontAssetRemovalList = new List<EntityId>(16);
 
         static readonly int k_RegularStyleHashCode = TextUtilities.GetHashCodeCaseInSensitive("Regular");

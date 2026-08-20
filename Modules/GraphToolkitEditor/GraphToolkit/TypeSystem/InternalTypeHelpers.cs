@@ -6,22 +6,25 @@ using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using Unity.GraphToolkit.Editor;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 
 namespace Unity.GraphToolkit
 {
-    static class InternalTypeHelpers
+    static partial class InternalTypeHelpers
     {
-        static InternalTypeHelpers()
+        [OnCodeLoaded]
+        static void Initialize()
         {
             TypeSerializerHelper.EnsureStaticConstructorIsCalled();
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         public static Func<string, Type> GetMovedFromType { private get; set; }
 
-        static Regex s_GenericTypeExtractionRegex = new(@"(?<=\[\[)(.*?)(?=\]\])");
+        static readonly Regex s_GenericTypeExtractionRegex = new(@"(?<=\[\[)(.*?)(?=\]\])");
 
-        static string s_CurrentSystemAssemblyName = ", " + typeof(int).Assembly.GetName().Name + ", ";
+        static readonly string s_CurrentSystemAssemblyName = ", " + typeof(int).Assembly.GetName().Name + ", ";
         const string k_CoreClrSystemAssemblyName = ", System.Private.CoreLib, ";
         const string k_MonoSystemAssemblyName = ", mscorlib, ";
 

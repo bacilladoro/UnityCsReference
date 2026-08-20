@@ -251,9 +251,9 @@ namespace UnityEngine.UIElements
         [System.Obsolete("Use SetEntityIds instead, and call Object.GetEntityId() if you really need to convert from a Unity object to an EntityId.")]
         public void SetUnityObjectReferences(IEnumerable<Object> references)
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             SetEntityIds(references.Select(x => x.GetEntityId()).ToList());
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         /// <summary>

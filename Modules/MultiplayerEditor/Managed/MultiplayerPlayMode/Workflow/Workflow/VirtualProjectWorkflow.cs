@@ -4,9 +4,11 @@
 
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using Unity.PlayMode.Editor;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEditor.PackageManager;
 using UnityEngine;
@@ -14,7 +16,7 @@ using UnityEngine;
 namespace Unity.Multiplayer.PlayMode.Editor
 {
     [InitializeOnLoad]
-    static class VirtualProjectWorkflow
+    static partial class VirtualProjectWorkflow
     {
         public static event Action<bool> OnInitialized
         {
@@ -39,22 +41,33 @@ namespace Unity.Multiplayer.PlayMode.Editor
             }
         }
 
+        [AutoStaticsCleanupOnCodeReload] // static event; stale handlers after reload pin old ALC
         public static event Action<bool> OnDisabled;
 
+        [AutoStaticsCleanupOnCodeReload] // init gate; must reset so initialization re-runs after reload
         public static bool IsInitialized { get; private set; }
+        [AutoStaticsCleanupOnCodeReload] // set during init; must reset so it's re-evaluated after reload
         public static bool IsMainEditor { get; private set; }
 
         public static readonly string k_MppmPackageJson = "Library/VP/MPPMVersion.json";
 
+        internal const string k_ReactivateAfterPackageChangeKey = "vp_ReactivatePlayersAfterPackageChange";
+
+        [AutoStaticsCleanupOnCodeReload] // version info read from file; must re-read after reload
         private static string s_EditorVersion;
+        [AutoStaticsCleanupOnCodeReload]
         private static string s_EditorChangeset;
+        [AutoStaticsCleanupOnCodeReload]
         private static string s_PackageVersion;
 
 
 
+        [AutoStaticsCleanupOnCodeReload] // pending callbacks delegate; stale handlers after reload pin old ALC
         static Action<bool> s_PendingOnInitializedCallbacks;
 
+        [AutoStaticsCleanupOnCodeReload] // workflow context; stale after reload
         static WorkflowMainEditorContext s_WorkflowMainEditorContext;
+        [AutoStaticsCleanupOnCodeReload] // workflow context; stale after reload
         static WorkflowCloneContext s_WorkflowCloneContext;
 
         [InitializeOnLoadMethod]
@@ -63,13 +76,80 @@ namespace Unity.Multiplayer.PlayMode.Editor
             if (MigrationUtility.ShouldDisableMultiplayerPlayMode())
                 return;
 
+            // Deactivate clones while the registration changes, and bring them back after.
+            Events.registeringPackages += _ => DeactivateClonesForPackageChange();
+
             Events.registeredPackages += args =>
             {
                 // If users decide to upgrade the package with clones open this could cause unexpected behaviour
                 // We however are unable to warn them about this as when this event occurs MultiplayerPlaymode
                 // has not been initiated yet so we cannot see any open clones until after the deletion of the folder occurs
                 ValidateVersionsChange();
+                ReactivateClonesAfterPackageChange();
             };
+        }
+
+        internal static void DeactivateClonesForPackageChange()
+        {
+            if (VirtualProjectsEditor.IsClone || MultiplayerPlaymode.Players == null)
+                return;
+
+            var reactivate = new List<string>();
+            for (var i = 0; i < MultiplayerPlaymode.Players.Length; i++)
+            {
+                var player = MultiplayerPlaymode.Players[i];
+                if (player.Type != PlayerType.Clone)
+                    continue;
+
+                if (player.PlayerState != PlayerState.Launched && player.PlayerState != PlayerState.Launching)
+                    continue;
+
+                if (!player.Deactivate(out var deactivationError))
+                {
+                    MppmLog.Warning($"Could not close {player.Name} for a package change: {deactivationError}");
+                    continue;
+                }
+
+                reactivate.Add(i.ToString());
+                MppmLog.Debug($"Closing {player.Name} for a package change; it will be reopened afterwards");
+            }
+
+            SessionState.SetString(k_ReactivateAfterPackageChangeKey, string.Join(",", reactivate));
+        }
+
+        internal static void ReactivateClonesAfterPackageChange()
+        {
+            if (VirtualProjectsEditor.IsClone || MultiplayerPlaymode.Players == null)
+                return;
+
+            var reactivate = SessionState.GetString(k_ReactivateAfterPackageChangeKey, string.Empty);
+            if (string.IsNullOrEmpty(reactivate))
+                return;
+
+            SessionState.EraseString(k_ReactivateAfterPackageChangeKey);
+
+            // If MPPM package removed, then leave the clones closed then
+            if (MigrationUtility.ShouldDisableMultiplayerPlayMode())
+            {
+                MppmLog.Debug("Not reopening virtual players: the package change disabled Multiplayer Play Mode");
+                return;
+            }
+
+            foreach (var index in reactivate.Split(','))
+            {
+                if (!int.TryParse(index, out var playerIndex) || playerIndex >= MultiplayerPlaymode.Players.Length)
+                    continue;
+
+                var player = MultiplayerPlaymode.Players[playerIndex];
+                if (player.Activate(out var activationError))
+                {
+                    MppmLog.Debug($"Reopened {player.Name} after a package change");
+                }
+                else
+                {
+                    MppmLog.Warning($"Could not reopen {player.Name} after a package change: {activationError}. Activate it again from the Play Mode Scenarios.");
+                }
+            }
         }
 
 

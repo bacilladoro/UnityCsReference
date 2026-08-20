@@ -210,12 +210,12 @@ namespace UnityEditor.Search
             return new SearchReport
             {
                 query = context?.searchText ?? string.Empty,
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 columns = columns.ToArray(),
-#pragma warning restore UA2001
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+                #pragma warning disable UAC2001 // Avoid Linq
                 items = items != null ? items.Select(e => CreateItem(e, context, columns)).ToArray() : Array.Empty<Item>()
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             };
         }
 
@@ -233,9 +233,9 @@ namespace UnityEditor.Search
 
             foreach (var column in columns)
                 fields.Add(new Field(column.selector, column.ResolveValue(e, context)));
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             ri.fields = fields.ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             return ri;
         }
 
@@ -257,9 +257,9 @@ namespace UnityEditor.Search
 
         public static string ExportAsCsv(SearchContext context, IEnumerable<SearchColumn> columns, IEnumerable<SearchItem> items)
         {
-#pragma warning disable UA2002 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2002 // Avoid Linq
             if (!columns.Any())
-#pragma warning restore UA2002
+#pragma warning restore UAC2002
                 return string.Empty;
 
             var sb = new StringBuilder();

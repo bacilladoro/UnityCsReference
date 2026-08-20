@@ -2,6 +2,8 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
+using Unity.Scripting.LifecycleManagement;
 using System;
 using System.Collections.Generic;
 using UnityEngine.TextCore.Text;
@@ -13,12 +15,16 @@ using Unity.Profiling;
 namespace UnityEngine.UIElements
 {
     [VisibleToOtherModules("UnityEditor.UIToolkitAuthoringModule")]
-    static class UIElementsRuntimeUtility
+    static partial class UIElementsRuntimeUtility
     {
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<IRuntimePanel> onCreatePanel;
+        [AutoStaticsCleanupOnCodeReload]
         public static event Action<IRuntimePanel> onWillDestroyPanel;
 
+        [NoAutoStaticsCleanup]
         public static event Action<Panel> onCreateAuthoringPanel;
+        [NoAutoStaticsCleanup]
         public static event Action<Panel> onWillDestroyAuthoringPanel;
 
         public static readonly ProfilerMarker s_PreUpdatePanelRenderersMarker = new ProfilerMarker(ProfilerCategory.UIToolkit, "UIElements.PreUpdatePanelRenderers");
@@ -121,6 +127,7 @@ namespace UnityEngine.UIElements
             }
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         private static bool s_RegisteredPlayerloopCallback = false;
 
         private static void RegisterCachedPanelInternal(EntityId entityId, IPanel panel)
@@ -158,13 +165,20 @@ namespace UnityEngine.UIElements
             }
         }
 
-        private static readonly List<BaseRuntimePanel> s_SortedScreenOverlayPanels = new();
-        private static readonly List<BaseRuntimePanel> s_CachedWorldSpacePanels = new();
-        private static readonly List<BaseRuntimePanel> s_SortedPlayerPanels = new();
+        [AutoStaticsCleanupOnCodeReload]
+        private static List<BaseRuntimePanel> s_SortedScreenOverlayPanels = new();
+        [AutoStaticsCleanupOnCodeReload]
+        private static List<BaseRuntimePanel> s_CachedWorldSpacePanels = new();
+        [AutoStaticsCleanupOnCodeReload]
+        private static List<BaseRuntimePanel> s_SortedPlayerPanels = new();
+        [AutoStaticsCleanupOnCodeReload]
         private static bool s_PanelOrderingOrDrawInCameraDirty = true;
+        [AutoStaticsCleanupOnCodeReload]
         internal static int s_ResolvedSortingIndexMax = 0;
 
+        [NoAutoStaticsCleanup]
         private static readonly HashSet<PanelRenderer> s_AllPanelRenderers = new();
+        [NoAutoStaticsCleanup]
         private static readonly HashSet<PanelRenderer> s_DirtyPanelRenderers = new();
 
         public static void RenderOffscreenPanels()
@@ -214,6 +228,7 @@ namespace UnityEngine.UIElements
             }
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         private static int currentOverlayIndex = -1;
         internal static void BeginRenderOverlays(int displayIndex)
         {
@@ -250,6 +265,32 @@ namespace UnityEngine.UIElements
         {
             RenderOverlaysBeforePriority(displayIndex, float.MaxValue);
             currentOverlayIndex = -1;
+            RenderWorldSpaceDebuggerOverlayPanels(displayIndex);
+        }
+
+        // World-space panels are drawn by the render nodes and never go through Panel.Render(),
+        // so the debugger overlay panel piggyback in Panel.Render() never runs for them. Composite
+        // their debugger overlays over the display, after all screen overlay panels.
+        private static void RenderWorldSpaceDebuggerOverlayPanels(int displayIndex)
+        {
+            foreach (var panel in GetWorldSpacePlayerPanels())
+            {
+                if (panel.targetDisplay != displayIndex)
+                    continue;
+
+                if (panel.panelDebug?.debuggerOverlayPanel is not Panel overlayPanel)
+                    continue;
+
+                // This is called after the camera(s) are done rendering, so the last camera
+                // viewport will leak here. The debugger overlay must composite over the whole
+                // target, so force a fullscreen viewport (same as BaseRuntimePanel.Render()).
+                var rt = RenderTexture.active;
+                int width = rt != null ? rt.width : BaseRuntimePanel.getScreenRenderingWidth(displayIndex);
+                int height = rt != null ? rt.height : BaseRuntimePanel.getScreenRenderingHeight(displayIndex);
+                GL.Viewport(new Rect(0, 0, width, height));
+
+                overlayPanel.Render();
+            }
         }
 
         public static void RepaintPanels(bool onlyOffscreen)
@@ -263,15 +304,20 @@ namespace UnityEngine.UIElements
             TextGenerationInfo.OnRepaintEnd();
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         internal static Object activeEventSystem { get; private set; }
         internal static bool useDefaultEventSystem => overrideUseDefaultEventSystem ?? activeEventSystem == null;
+        [AutoStaticsCleanupOnCodeReload]
         internal static bool? overrideUseDefaultEventSystem { get; set; }
+        [NoAutoStaticsCleanup]
         internal static bool autoUpdateEventSystem { get; set; } = true;
 
         // For unit tests and some XR debugging options
+        [NoAutoStaticsCleanup] // debug/test config knob; enum value, safe to persist
         internal static DefaultEventSystem.UpdateMode eventSystemUpdateMode { get; set; } =
             DefaultEventSystem.UpdateMode.IgnoreIfAppNotFocused;
 
+        [NoAutoStaticsCleanup]
         private static bool s_IsPlayMode = false;
 
         public static void RegisterEventSystem(Object eventSystem)
@@ -287,6 +333,7 @@ namespace UnityEngine.UIElements
                 activeEventSystem = null;
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         private static DefaultEventSystem s_DefaultEventSystem;
         internal static DefaultEventSystem defaultEventSystem =>
             s_DefaultEventSystem ?? (s_DefaultEventSystem = new DefaultEventSystem());
@@ -302,6 +349,8 @@ namespace UnityEngine.UIElements
                 // When profiling in Editor this may not show accurate results however
                 LayoutManager.SharedManager.Collect();
             }
+
+            NativeTextBufferReclaimer.Collect();
 
             using (s_PreUpdatePanelRenderersMarker.Auto())
             {
@@ -455,6 +504,7 @@ namespace UnityEngine.UIElements
             panelRenderer.requiresReinsertion = true;
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         private static List<PanelSettings> s_PotentiallyEmptyPanelSettings = new List<PanelSettings>();
         internal static void RemoveUnusedPanels()
         {
@@ -664,3 +714,4 @@ namespace UnityEngine.UIElements
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

@@ -204,6 +204,57 @@ namespace Unity.U2D.Physics
         public readonly bool isValid => PolygonGeometry_IsValid(this);
 
         /// <summary>
+        /// Whether every edge of this polygon is far enough apart and no three consecutive vertices are collinear, matching the rules applied when building a polygon from vertices.
+        /// </summary>
+        /// <remarks>
+        /// See <see cref="PhysicsWorld.minPolygonEdgeLength"/> and <see cref="PhysicsWorld.minPolygonCollinearDistance"/>.
+        /// </remarks>
+        public readonly bool areEdgesValid
+        {
+            get
+            {
+                // Mirrors the welding and collinear-removal rules Box2D's b2ComputeHull/b2ValidateHull apply when building a polygon from vertices.
+
+                // Fewer than three vertices cannot describe a polygon at all, which is what a failed create returns, so report that rather than taking a span of it.
+                if (m_Count < 3)
+                    return false;
+
+                var vertexSpan = AsReadOnlySpan();
+                var minEdgeLengthSqr = PhysicsWorld.minPolygonEdgeLength * PhysicsWorld.minPolygonEdgeLength;
+
+                // Reject any edge shorter than the weld threshold the hull builder would merge into one vertex.
+                for (var i = 0; i < vertexSpan.Length; i++)
+                {
+                    var next = (i + 1) % vertexSpan.Length;
+                    if ((vertexSpan[next] - vertexSpan[i]).sqrMagnitude <= minEdgeLengthSqr)
+                        return false;
+                }
+
+                var minCollinearDistance = PhysicsWorld.minPolygonCollinearDistance;
+
+                // Reject any vertex too close to the line through its neighbors, the same collinear points the hull builder would strip out.
+                for (var i = 0; i < vertexSpan.Length; i++)
+                {
+                    var next = (i + 1) % vertexSpan.Length;
+                    var afterNext = (i + 2) % vertexSpan.Length;
+
+                    var p1 = vertexSpan[i];
+                    var p2 = vertexSpan[next];
+                    var p3 = vertexSpan[afterNext];
+
+                    // The perpendicular distance of p2 from the line p1-p3, via the 2D cross product of the offset to p2 and the unit edge direction.
+                    // The magnitude is taken because the vertices can wind either way, which only flips the sign, and the winding itself is not what this reports on.
+                    var edge = (p3 - p1).normalized;
+                    var perpendicularDistance = Mathf.Abs((p2.x - p1.x) * edge.y - (p2.y - p1.y) * edge.x);
+                    if (perpendicularDistance <= minCollinearDistance)
+                        return false;
+                }
+
+                return true;
+            }
+        }
+
+        /// <summary>
         /// Insert a vertex into the geometry returning a new geometry with updated normals and centroid.
         /// </summary>
         /// <param name="geometry">The geometry to adjust.</param>
@@ -290,13 +341,13 @@ namespace Unity.U2D.Physics
         /// Get the polygon vertices as a span.
         /// </summary>
         /// <returns>The span representing the vertices in the geometry.</returns>
-        public unsafe Span<Vector2> AsSpan() => vertices.AsSpan(m_Count);
+        public Span<Vector2> AsSpan() => vertices.AsSpan(m_Count);
 
         /// <summary>
         /// Get the polygon vertices as a read-only span.
         /// </summary>
         /// <returns>The read-only span representing the vertices in the geometry.</returns>
-        public unsafe ReadOnlySpan<Vector2> AsReadOnlySpan() => AsSpan();
+        public readonly ReadOnlySpan<Vector2> AsReadOnlySpan() => vertices.AsReadOnlySpan(m_Count);
 
         /// <summary>
         /// Get a validated version of the geometry, if possible.
@@ -484,7 +535,7 @@ namespace Unity.U2D.Physics
             /// Get the convex-hull vertices as a read-only span.
             /// </summary>
             /// <returns>The read-only span representing the vertices in the geometry.</returns>
-            public ReadOnlySpan<Vector2> AsReadOnlySpan() => AsSpan();
+            public readonly ReadOnlySpan<Vector2> AsReadOnlySpan() => vertices.AsReadOnlySpan(m_Count);
 
             #region Internal
 

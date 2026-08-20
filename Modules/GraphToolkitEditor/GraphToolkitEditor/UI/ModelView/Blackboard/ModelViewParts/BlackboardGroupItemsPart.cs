@@ -55,17 +55,17 @@ namespace Unity.GraphToolkit.Editor
         /// <inheritdoc />
         public override void UpdateUIFromModel(UpdateFromModelVisitor visitor)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var existingItems = Root.Children().OfType<BlackboardElement>().ToList();
-#pragma warning restore UA2001
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+            #pragma warning disable UAC2001 // Avoid Linq
             var existingItemModels = new HashSet<Model>(existingItems.Select(t => t.Model));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var newItemsModels = GroupModel.Items
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 .Where(t => t is not VariableDeclarationModelBase v || GroupModel.GraphModel.IsVariableVisibleInBlackboard(v)).ToList();
 
             foreach (var ui in existingItems)
@@ -92,23 +92,23 @@ namespace Unity.GraphToolkit.Editor
             }
 
             //Sort the ui in the same order as in the model.
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             List<ModelView> items = Root.Children().OfType<ModelView>().ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             if (items.Count == 0)
                 return;
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             List<IGroupItemModel> itemModels = newItemsModels.ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             ModelView firstItem = items.FirstOrDefault();
             IGroupItemModel firstModel = itemModels[0];
             if (firstItem == null || !ReferenceEquals(firstItem.Model, firstModel))
             {
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 firstItem = items.First(t => ReferenceEquals(t.Model, firstModel));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 Root.Insert(0, firstItem);
                 items.Remove(firstItem);
                 items.Insert(0, firstItem);
@@ -117,9 +117,9 @@ namespace Unity.GraphToolkit.Editor
             ModelView prevItem = firstItem;
             for (int i = 1; i < itemModels.Count; ++i)
             {
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 ModelView currentItem = items.First(t => ReferenceEquals(t.Model, itemModels[i]));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 if (items[i] != currentItem)
                 {
                     currentItem.PlaceInFront(prevItem);

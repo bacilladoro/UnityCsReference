@@ -365,9 +365,9 @@ namespace UnityEditor.Presets
                     AssetDatabase.SaveAssetIfDirty(oldPreset);
 
                     // If the preset is opened in any inspectors/property windows, rebuild them since the preset has been overwritten
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2001 // Avoid Linq
                     var propertyEditors = Resources.FindObjectsOfTypeAll<PropertyEditor>().Where(pe =>
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     {
                         var editor = InspectorWindowUtils.GetFirstNonImportInspectorEditor(pe.tracker.activeEditors);
                         return editor != null && Array.Exists(editor.targets, o => o == oldPreset);
@@ -406,9 +406,9 @@ namespace UnityEditor.Presets
             if (PresetEditorHelper.InspectedObjects != null && PresetEditorHelper.InspectedObjects.Length == 1 && PresetEditorHelper.InspectedObjects[0] is Preset preset)
                 inspectedPreset = preset;
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             return AssetDatabase.FindAssets("t:Preset")
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 .Select(a => AssetDatabase.LoadAssetAtPath<Preset>(AssetDatabase.GUIDToAssetPath(a)))
                 .Where(preset => preset.GetPresetType() == presetType && preset != inspectedPreset);
         }
@@ -435,9 +435,9 @@ namespace UnityEditor.Presets
 
         void UpdateSearchResult(EntityId currentSelection)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var searchResult = m_Presets
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 .Where(p => p.name.ToLower().Contains(m_SearchField.ToLower()))
                 .Select(p => p.GetEntityId())
                 .ToArray();

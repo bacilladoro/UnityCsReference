@@ -24,11 +24,11 @@ namespace UnityEditor.ShortcutManagement
             if (keyCombinationSequence == null)
                 throw new ArgumentNullException(nameof(keyCombinationSequence));
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
-#pragma warning disable UA2002 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
+#pragma warning disable UAC2002 // Avoid Linq
             m_KeyCombinationSequence = keyCombinationSequence.Any() ? keyCombinationSequence.ToArray() : null;
-#pragma warning restore UA2001
-#pragma warning restore UA2002
+#pragma warning restore UAC2001
+#pragma warning restore UAC2002
         }
 
         public ShortcutBinding(KeyCombination keyCombination)
@@ -40,9 +40,9 @@ namespace UnityEditor.ShortcutManagement
 
         public bool Equals(ShortcutBinding other)
         {
-            #pragma warning disable UA2014 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2014 // Avoid Linq
             return keyCombinationSequence.SequenceEqual(other.keyCombinationSequence);
-#pragma warning restore UA2014
+#pragma warning restore UAC2014
         }
 
         public override bool Equals(object obj)

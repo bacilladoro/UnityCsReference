@@ -37,6 +37,10 @@ namespace UnityEngine.UIElements
         {
         }
 
+        abstract class InlineStyleGridLineProperty : InlineStyleProperty<StyleGridLine>
+        {
+        }
+
         abstract class InlineStyleBackgroundProperty : InlineStyleProperty<StyleBackground>
         {
         }

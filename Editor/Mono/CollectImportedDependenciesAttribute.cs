@@ -50,9 +50,9 @@ namespace UnityEditor.AssetImporters
                 s_ImportDependencyCallbackTypeMap = new Dictionary<Type, MethodWithAttribute[]>();
 
             Func<CollectImportedDependenciesAttribute, bool> filter = (a) => a.importerType.IsAssignableFrom(importerType);
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             s_ImportDependencyCallbackTypeMap[importerType] = AttributeHelper.GetMethodsWithAttribute<CollectImportedDependenciesAttribute>(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 .methodsWithAttributes
                 .Where(x => filter((CollectImportedDependenciesAttribute)x.attribute))
                 .ToArray();
@@ -63,9 +63,9 @@ namespace UnityEditor.AssetImporters
         [RequiredByNativeCode]
         private static MethodInfo[] GetImportedDependenciesCallbacks(Type importerType)
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return GetImportedDependenciesCallbacksAndAttributesForImporter(importerType).Select(x => x.info).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         private static string BuildHashString(SortedList<string, uint> list)

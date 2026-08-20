@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIAutomationEditor not yet converted
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -379,3 +380,4 @@ namespace UnityEditor.UIAutomation
         static Wait s_Wait;
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

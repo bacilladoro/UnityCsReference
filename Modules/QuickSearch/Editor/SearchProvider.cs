@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.Bindings;
 using UnityEngine.Serialization;
@@ -98,8 +99,9 @@ namespace UnityEditor.Search
     /// SearchProvider manages search for specific type of items and manages thumbnails, description and sub filters, etc.
     /// </summary>
     [Serializable]
-    public class SearchProvider : ISerializationCallbackReceiver
+    public partial class SearchProvider : ISerializationCallbackReceiver
     {
+        [AutoStaticsCleanupOnCodeReload]
         internal static int sessionCounter;
 
         [SerializeField] private string m_Id;

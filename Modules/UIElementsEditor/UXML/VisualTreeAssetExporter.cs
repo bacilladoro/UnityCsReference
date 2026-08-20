@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
@@ -27,9 +28,13 @@ internal partial class VisualTreeAssetExporter
 
     public const string ColorsPreferenceCategory = "UXML Syntax Highlighting";
 
+    [NoAutoStaticsCleanup] // preference color registrations; readonly, persist across reload
     static readonly UIPrefColor k_AttributeName = new(ColorsPreferenceCategory, "Attribute Name", HtmlColor("#098658"), HtmlColor("#5DA861"));
+    [NoAutoStaticsCleanup]
     static readonly UIPrefColor k_AttributeValue = new(ColorsPreferenceCategory, "Attribute Value", HtmlColor("#A15000"), HtmlColor("#E0BD73"));
+    [NoAutoStaticsCleanup]
     static readonly UIPrefColor k_Tag = new(ColorsPreferenceCategory, "Tag", HtmlColor("#0033B3"), HtmlColor("#B464EB"));
+    [NoAutoStaticsCleanup]
     static readonly UIPrefColor k_TagName = new(ColorsPreferenceCategory, "Tag Name", HtmlColor("#0033B3"), HtmlColor("#C26CFD"));
 
     public static Color AttributeNameColor { get => k_AttributeName.Color; set { k_AttributeName.Color = value; PrefSettings.Set(k_AttributeName.StorageKey, k_AttributeName); } }
@@ -50,6 +55,7 @@ internal partial class VisualTreeAssetExporter
     {
         const string k_DefaultIndent = "    ";
 
+        [NoAutoStaticsCleanup]
         public static ExportOptions Default => new()
         {
             indent = k_DefaultIndent,
@@ -238,6 +244,7 @@ internal partial class VisualTreeAssetExporter
         }
     }
 
+    [NoAutoStaticsCleanup] // singleton exporter instance; safe to persist
     public static VisualTreeAssetExporter Default { get; } = new();
 
     /// <summary>
@@ -691,3 +698,4 @@ internal partial class VisualTreeAssetExporter
 
     static Color HtmlColor(string htmlColor) => ColorUtility.TryParseHtmlString(htmlColor, out var color) ? color : Color.clear;
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

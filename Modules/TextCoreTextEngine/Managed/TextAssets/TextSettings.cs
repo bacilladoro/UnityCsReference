@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Bindings;
 using UnityEngine.Serialization;
 
@@ -98,7 +99,9 @@ namespace UnityEngine.TextCore.Text
         List<FontAsset> m_FallbackOSFontAssets;
         bool m_FallbackOSFontAssetsInitialized;
 
+        [AutoStaticsCleanupOnCodeReload]
         static List<FontAsset> s_GlobalOSFallbackFontAssets;
+        [NoAutoStaticsCleanup] // Monotonic version counter for the global OS fallback list; value type, safe to persist across reload
         static int s_GlobalOSFallbackVersion;
 
         internal static void RegisterGlobalOSFallback(FontAsset fontAsset)
@@ -127,6 +130,7 @@ namespace UnityEngine.TextCore.Text
             get => m_FallbackOSFontAssetsInitialized;
         }
 
+        [NoAutoStaticsCleanup] // Lazy cache of the default FontAsset (whitelisted, survives reload); re-fetched on first access if null.
         static FontAsset s_RuntimeDefault;
 
         private FontAsset GetDefaultFont()
@@ -200,6 +204,7 @@ namespace UnityEngine.TextCore.Text
         [SerializeField]
         protected List<SpriteAsset> m_FallbackSpriteAssets;
 
+        [NoAutoStaticsCleanup] // Lazy cache of a Resources-loaded sprite asset that survives reload; re-loaded on first access if null.
         internal static SpriteAsset s_GlobalSpriteAsset { private set; get; }
 
         [SerializeField]

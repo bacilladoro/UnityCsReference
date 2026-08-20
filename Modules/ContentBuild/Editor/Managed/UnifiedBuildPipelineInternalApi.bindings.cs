@@ -27,6 +27,11 @@ namespace UnityEditor.Build.Content
 
         public static extern string GetImportResultIDForMetaDataImport(GUID asset);
 
+        // Returns the import result as SinglePassImportResult JSON.
+        public static extern string RunSinglePassImport(GUID asset);
+
+        public static extern string GetImportResultIDForSinglePassImport(GUID asset);
+
         // Loads the FileWriteMetaData stored under a content-file metadata UDS hash (as returned by
         // BuildArtifactMetadata.TypeSpecificMetadata) and returns it as JSON, or "" if none exists.
         public static extern string FileWriteMetaDataToJson(Hash128 contentFileMetadataHash);

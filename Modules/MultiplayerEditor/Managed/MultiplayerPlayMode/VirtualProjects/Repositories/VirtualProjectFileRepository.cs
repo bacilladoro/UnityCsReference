@@ -4,8 +4,8 @@
 
 using System.Collections.Generic;
 using System.IO;
-using Newtonsoft.Json;
 using Unity.Multiplayer.PlayMode.Editor;
+using Unity.Scripting.LifecycleManagement;
 
 namespace Unity.Multiplayer.PlayMode.Editor
 {
@@ -18,6 +18,7 @@ namespace Unity.Multiplayer.PlayMode.Editor
             "Temp",
         };
 
+        [NoAutoStaticsCleanup] // constant list of path names requiring symlinks; never changes between reloads
         static readonly IReadOnlyCollection<string> PathsRequiringSymlink = new[]
         {
             "Assets",

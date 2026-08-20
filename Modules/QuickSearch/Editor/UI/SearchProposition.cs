@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.Bindings;
 
@@ -25,8 +26,9 @@ namespace UnityEditor.Search
     }
 
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
-    class SearchPropositionsProviderAttribute : Attribute
+    partial class SearchPropositionsProviderAttribute : Attribute
     {
+        [AutoStaticsCleanupOnCodeReload]
         static List<SearchPropositionProvider> s_Providers;
         public static List<SearchPropositionProvider> providers
         {
@@ -35,9 +37,9 @@ namespace UnityEditor.Search
                 if (s_Providers == null)
                 {
                     var supportedSignature = MethodSignature.FromDelegate<SearchPropositionsProviderHandler>();
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2001 // Avoid Linq
                     s_Providers = ReflectionUtils.LoadAllMethodsWithAttribute<SearchPropositionsProviderAttribute, SearchPropositionProvider>((mi, attribute, handler) =>
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     {
                         if (handler is SearchPropositionsProviderHandler _handler)
                             return new SearchPropositionProvider(_handler);
@@ -110,6 +112,7 @@ namespace UnityEditor.Search
 
         internal readonly string path;
 
+        [NoAutoStaticsCleanup] // value-type struct holding only readonly value/string fields; safe to persist across reloads
         internal static SearchProposition invalid = default;
 
         internal bool valid => label != null && replacement != null;
@@ -231,12 +234,12 @@ namespace UnityEditor.Search
 
         private static void FillProviderPropositions(SearchContext context, in SearchPropositionOptions options, HashSet<SearchProposition> propositions)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var providers = context.providers.Where(p => context.filterId == null || context.filterId == p.filterId);
-#pragma warning restore UA2001
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+            #pragma warning disable UAC2001 // Avoid Linq
             var queryEmpty = string.IsNullOrWhiteSpace(context.searchText) && providers.Count(p => !p.isExplicitProvider) > 1;
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             foreach (var p in providers)
             {
                 if (queryEmpty && !options.HasAny(SearchPropositionFlags.ForceAllProviders))
@@ -268,9 +271,9 @@ namespace UnityEditor.Search
         private static void FillBuiltInPropositions(SearchContext context, HashSet<SearchProposition> propositions)
         {
             int builtPriority = -50;
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             foreach (var rs in SearchSettings.recentSearches.Take(5))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 if (!rs.StartsWith(context.searchText, StringComparison.OrdinalIgnoreCase))
                     continue;
@@ -331,9 +334,9 @@ namespace UnityEditor.Search
             {
                 if (m_Tokens == null)
                 {
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2001 // Avoid Linq
                     m_Tokens = new[]
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     {
                         GetTokenAtCursorPosition(query, cursor, IsDelimiter),
                         GetTokenAtCursorPosition(query, cursor, IsExtendedDelimiter)
@@ -470,6 +473,7 @@ namespace UnityEditor.Search
             "Model", "PhysicsMaterial", "Prefab", "Scene", "Script", "ScriptableObject", "Shader", "Sprite", "StyleSheet", "Texture", "VideoClip"
         };
 
+        [NoAutoStaticsCleanup] // static help text dictionary keyed/valued by strings only; no user-code refs, safe to persist
         public static Dictionary<string, string> help = new Dictionary<string, string>
         {
             {"dir:", "Search parent folder name" },
@@ -487,14 +491,14 @@ namespace UnityEditor.Search
 
         static BuiltinPropositions()
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             foreach (var t in baseTypeFilters.Concat(TypeCache.GetTypesDerivedFrom<ScriptableObject>().Select(t => t.Name)))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 help[$"t:{t.ToLowerInvariant()}"] = $"Search {t} assets";
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             foreach (var t in TypeCache.GetTypesDerivedFrom<Component>().Select(t => t.Name))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 help[$"t:{t.ToLowerInvariant()}"] = $"Search {t} components";
         }
 

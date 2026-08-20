@@ -65,9 +65,9 @@ namespace UnityEditor
             // compiled in a package.
             searchPaths.Add(InternalEditorUtility.GetEditorScriptAssembliesPath());
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return searchPaths.ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         [RequiredByNativeCode]
@@ -78,16 +78,16 @@ namespace UnityEditor
             var typesDerivedFromScriptedImporter = TypeCache.GetTypesDerivedFrom<ScriptedImporter>();
 
             var fileName = Path.GetFileName(path);
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             IEnumerable<Type> userTypes = typesDerivedFromMonoBehaviour.Where(x => Path.GetFileName(x.Assembly.GetLoadedAssemblyPath()) == fileName);
             userTypes = userTypes
                 .Concat(typesDerivedFromScriptableObject.Where(x => Path.GetFileName(x.Assembly.GetLoadedAssemblyPath()) == fileName))
                 .Concat(typesDerivedFromScriptedImporter.Where(x => Path.GetFileName(x.Assembly.GetLoadedAssemblyPath()) == fileName)).ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
-#pragma warning disable UA2005 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2005 // Avoid Linq
             var userTypesCount = userTypes.Count();
-#pragma warning restore UA2005
+#pragma warning restore UAC2005
             List<string> classNames = new List<string>(userTypesCount);
             List<string> nameSpaces = new List<string>(userTypesCount);
             List<string> originalNamespaces = new List<string>(userTypesCount);

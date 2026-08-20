@@ -101,10 +101,10 @@ namespace UnityEditor
             {
                 props.Remove(bumpMap);
 
-#pragma warning disable UA2001, UA2010 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001, UAC2010 // Avoid Linq
                 var enableBump = targets.Select(t => ((Material)t).shaderKeywords.Contains("EFFECT_BUMP"));
                 bool? enable = ToggleShaderProperty(bumpMap, enableBump.First(), enableBump.DistinctCountGreaterThan(1));
-#pragma warning restore UA2001, UA2010
+#pragma warning restore UAC2001, UAC2010
                 if (enable != null)
                 {
                     foreach (Material m in targets)
@@ -127,16 +127,16 @@ namespace UnityEditor
             }
 
             //---------------------------------------------------------------
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var enableHueVariation = targets.Select(t => ((Material)t).shaderKeywords.Contains("EFFECT_HUE_VARIATION"));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             var hueVariation = props.Find(prop => prop.name == "_HueVariation");
             if (enableHueVariation != null && hueVariation != null)
             {
                 props.Remove(hueVariation);
-#pragma warning disable UA2001, UA2010 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001, UAC2010 // Avoid Linq
                 bool? enable = ToggleShaderProperty(hueVariation, enableHueVariation.First(), enableHueVariation.DistinctCountGreaterThan(1));
-#pragma warning restore UA2001, UA2010
+#pragma warning restore UAC2001, UAC2010
                 if (enable != null)
                 {
                     foreach (Material m in targets)

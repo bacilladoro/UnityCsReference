@@ -2,6 +2,8 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
+using Unity.Scripting.LifecycleManagement;
 using System;
 using System.Collections.Generic;
 using static UnityEngine.UIElements.IRuntimePanel;
@@ -49,6 +51,8 @@ namespace UnityEngine.UIElements
         internal int resolvedSortingIndex { get; }
         internal IEventHandler Pick(Vector2 point, int pointerId);
 
+
+        [NoAutoStaticsCleanup]
         internal static CodeStrippingSafeUIElementsRuntimeUtility uIElementsRuntimeUtility { get; set; }
         internal static IPointerDeviceState pointerDeviceState { get => (IPointerDeviceState)uIElementsRuntimeUtility; }
         internal bool drawsInCameras { get; }
@@ -279,8 +283,9 @@ namespace UnityEngine.UIElements
     }
 
 
-    internal class RuntimePanel : BaseRuntimePanel, IRuntimePanel
+    internal partial class RuntimePanel : BaseRuntimePanel, IRuntimePanel
     {
+        [NoAutoStaticsCleanup]
         internal static readonly EventDispatcher s_EventDispatcher = RuntimeEventDispatcher.Create();
 
         private readonly PanelSettings m_PanelSettings;
@@ -289,6 +294,8 @@ namespace UnityEngine.UIElements
         bool IRuntimePanel.drawsInCameras => base.drawsInCameras;
         bool IRuntimePanel.isFlat => base.isFlat;
 
+
+        [NoAutoStaticsCleanup]
         private static readonly List<IPanelComponent> s_EmptyPanelComponentList = new();
 
         internal List<IPanelComponent> panelComponents =>
@@ -403,6 +410,8 @@ namespace UnityEngine.UIElements
             public readonly EventCallback<FocusEvent> WrappedCallback;
         }
 
+
+        [NoAutoStaticsCleanup]
         static Dictionary<Action, EventCallbackWrapper> registeredCallback;
 
         void IRuntimePanel.RegisterRootFocusCallback(Action callback)
@@ -561,3 +570,4 @@ namespace UnityEngine.UIElements
 
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

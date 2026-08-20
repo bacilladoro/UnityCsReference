@@ -508,9 +508,9 @@ namespace UnityEditor.Search
 
             if (!m_ViewModel.state.isSimplePicker)
             {
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 var dbs = SearchDatabase.EnumerateAll().ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 if (dbs.Count > 1)
                 {
                     filterMenu.AddSeparator(string.Empty);

@@ -11,6 +11,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using Unity.Profiling;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.Bindings;
 
@@ -24,6 +25,7 @@ namespace UnityEditor.Search
         /// <summary>
         /// Represents a null search result.
         /// </summary>
+        [NoAutoStaticsCleanup]
         public static readonly SearchResult nil = new SearchResult(-1);
 
         /// <summary>Id of the document containing that result.</summary>
@@ -149,6 +151,7 @@ namespace UnityEditor.Search
     /// </summary>
     public readonly struct SearchDocument : IEquatable<SearchDocument>, IComparable<SearchDocument>
     {
+        [NoAutoStaticsCleanup]
         internal static readonly SearchDocument invalid = new SearchDocument();
 
         public readonly string id;
@@ -514,9 +517,9 @@ namespace UnityEditor.Search
             }
 
             if (args.orSet != null)
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 results = results.Concat(args.orSet);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             return SearchQueryEvaluator<SearchResult>.EvalResult.Combined(results);
         }
@@ -726,16 +729,16 @@ namespace UnityEditor.Search
             if (!parsedQuery.valid)
             {
                 if (context != null && provider != null)
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2001 // Avoid Linq
                     context.AddSearchQueryErrors(parsedQuery.errors.Select(e => new SearchQueryError(e, context, provider)));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 return Array.Empty<SearchResult>();
             }
             m_DoFuzzyMatch = parsedQuery.HasToggle("fuzzy");
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             return patternMatchLimit == int.MaxValue ? parsedQuery.Apply(null) : parsedQuery.Apply(null).Take(patternMatchLimit);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         [Obsolete("This method is no longer supported. The content of the indexer is automatically saved on disk.")]

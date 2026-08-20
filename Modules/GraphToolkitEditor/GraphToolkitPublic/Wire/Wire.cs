@@ -41,7 +41,7 @@ namespace Unity.GraphToolkit.Editor
         /// <summary>
         /// The <see cref="Graph"/> that contains the current wire connection.
         /// </summary>
-        public Graph Graph => (OutputPort as PortModel)?.GraphModel is GraphModelImp graphModelImp ? graphModelImp.Graph : null;
+        public Graph Graph => (OutputPort as PortModel)?.GraphModel is GraphModelImp graphModelImp ? graphModelImp.Graph as Graph : null;
 
         /// <summary>
         /// The width override applied to the wire.

@@ -12,7 +12,7 @@ namespace Unity.GraphToolkit.Editor
     /// </summary>
     [Serializable]
     [UnityRestricted]
-    internal abstract class ConditionModel : GraphElementModel, IHasTitle
+    internal abstract class ConditionModel : GraphElementModel, IHasTitle, ICondition
     {
         [SerializeField]
         string m_Title;

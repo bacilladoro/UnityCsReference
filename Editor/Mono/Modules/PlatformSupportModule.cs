@@ -458,6 +458,8 @@ namespace UnityEditor.Modules
         void OnBuildProfileCreated(BuildProfile buildProfile, int preconfiguredSettingsVariant);
 
         void OnDisable();
+
+        void OnBuildProfileWindowFocus();
     }
 
     // Interface for target device related operations

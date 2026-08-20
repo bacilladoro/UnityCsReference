@@ -82,9 +82,9 @@ namespace Unity.ProjectAuditor.Editor.SettingsAnalysis
         internal static bool IsMixedStandardShaderQuality(BuildTarget platform)
         {
             var buildGroup = BuildPipeline.GetBuildTargetGroup(platform);
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var standardShaderQualities = k_GraphicsTiers.Select(tier => EditorGraphicsSettings.GetTierSettings(buildGroup, tier).standardShaderQuality);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             return standardShaderQualities.DistinctCountGreaterThan(1);
         }
@@ -92,25 +92,25 @@ namespace Unity.ProjectAuditor.Editor.SettingsAnalysis
         internal static bool IsUsingForwardRendering(BuildTarget platform)
         {
             var buildGroup = BuildPipeline.GetBuildTargetGroup(platform);
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var renderingPaths = k_GraphicsTiers.Select(tier => EditorGraphicsSettings.GetTierSettings(buildGroup, tier).renderingPath);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
-            #pragma warning disable UA2006 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2006 // Avoid Linq
             return renderingPaths.Any(path => path == RenderingPath.Forward);
-#pragma warning restore UA2006
+#pragma warning restore UAC2006
         }
 
         internal static bool IsUsingDeferredRendering(BuildTarget platform)
         {
             var buildGroup = BuildPipeline.GetBuildTargetGroup(platform);
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var renderingPaths = k_GraphicsTiers.Select(tier => EditorGraphicsSettings.GetTierSettings(buildGroup, tier).renderingPath);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
-            #pragma warning disable UA2006 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2006 // Avoid Linq
             return renderingPaths.Any(path => path == RenderingPath.DeferredShading);
-#pragma warning restore UA2006
+#pragma warning restore UAC2006
         }
     }
 }

@@ -1,3 +1,4 @@
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: BuildSystems not yet converted
 using Microsoft.Win32.SafeHandles;
 using System;
 using System.Collections.Generic;
@@ -17,7 +18,7 @@ using File = NiceIO.Do_Not_Use_File_Directly_Use_FileSystem_Active_Instead;
 using Directory = NiceIO.Do_Not_Use_Directory_Directly_Use_FileSystem_Active_Instead;
 
 #nullable disable
-#pragma warning disable UA2001, UA2007 // Linq usages in external code won't be changed
+#pragma warning disable UAC2001, UAC2007 // Linq usages in external code won't be changed
 
 namespace NiceIO
 {
@@ -2773,3 +2774,4 @@ namespace NiceIO
     {
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

@@ -614,19 +614,19 @@ namespace UnityEditorInternal
 
             // find the methods on the behaviour that match the signature
             Type componentType = target.GetType();
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var componentMethods = componentType.GetMethods().Where(x => !x.IsSpecialName).ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var wantedProperties = componentType.GetProperties().AsEnumerable();
-#pragma warning restore UA2001
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+#pragma warning disable UAC2001 // Avoid Linq
             wantedProperties = wantedProperties.Where(x => !x.IsDefined(typeof(ObsoleteAttribute), true) && x.GetSetMethod() != null);
-#pragma warning restore UA2001
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+#pragma warning disable UAC2001 // Avoid Linq
             componentMethods.AddRange(wantedProperties.Select(x => x.GetSetMethod()));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             foreach (var componentMethod in componentMethods)
             {
@@ -764,9 +764,9 @@ namespace UnityEditorInternal
                 GetMethodsForTargetAndMode(target, delegateArgumentsTypes, methods, PersistentListenerMode.EventDefined);
                 if (methods.Count > 0)
                 {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                     menu.AddDisabledItem(new GUIContent(targetName + "/Dynamic " + string.Join(", ", delegateArgumentsTypes.Select(GetTypeName))));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     AddMethodsToMenu(menu, listener, methods, targetName);
                     didAddDynamic = true;
                 }
@@ -793,9 +793,9 @@ namespace UnityEditorInternal
         private static void AddMethodsToMenu(GenericMenu menu, SerializedProperty listener, List<ValidMethodMap> methods, string targetName)
         {
             // Note: sorting by a bool in OrderBy doesn't seem to work for some reason, so using numbers explicitly.
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             IEnumerable<ValidMethodMap> orderedMethods = methods.OrderBy(e => e.methodInfo.Name.StartsWith("set_") ? 0 : 1).ThenBy(e => e.methodInfo.Name);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             foreach (var validMethod in orderedMethods)
                 AddFunctionsForScript(menu, listener, validMethod, targetName);
         }

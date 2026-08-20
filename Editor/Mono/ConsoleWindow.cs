@@ -1181,9 +1181,9 @@ namespace UnityEditor
             if (methodsToHideInCallstack == null || methodSignatureRegex == null || lines == null)
                 return lines;
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var strippedLines = lines.ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             var isException = HasMode((int)mode, Mode.ScriptingException);
             strippedLines.RemoveAll(line =>
             {

@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEngine;
 
@@ -22,12 +23,13 @@ namespace Unity.Multiplayer.PlayMode.Editor
     {
     }
 
-    static class SerializeMessageMapping
+    static partial class SerializeMessageMapping
     {
-        public static readonly Dictionary<Type, SerializeMessageDelegates> SerializeMessageDelegatesMap = new Dictionary<Type, SerializeMessageDelegates>();
+        [AutoStaticsCleanupOnCodeReload] // filled by reflection at startup; Type keys stale after reload
+        public static Dictionary<Type, SerializeMessageDelegates> SerializeMessageDelegatesMap = new Dictionary<Type, SerializeMessageDelegates>();
 
-        // Automatically register every message type below into our list of serialization methods (by using attributes)
-        static SerializeMessageMapping()
+        [OnCodeLoaded]
+        static void Initialize()
         {
             var methods = TypeCache.GetMethodsWithAttribute<SerializeMessageDelegatesAttribute>();
             Debug.Assert(methods.Count > 0, "No methods with message serialization.");

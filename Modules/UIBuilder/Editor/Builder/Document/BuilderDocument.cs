@@ -7,6 +7,7 @@ using UnityEngine.UIElements;
 using System.Collections.Generic;
 using System;
 using System.IO;
+using Unity.UIToolkit.Editor;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine.Pool;
@@ -173,12 +174,14 @@ namespace Unity.UI.Builder
         {
             EditorApplication.wantsToQuit += UnityWantsToQuit;
             BuilderAssetPostprocessor.Register(this);
+            UICommandQueue.RegisterHandlerForCategory(CommandCategory.Save, OnExternalSave);
         }
 
         void OnDisable()
         {
             EditorApplication.wantsToQuit -= UnityWantsToQuit;
             BuilderAssetPostprocessor.Unregister(this);
+            UICommandQueue.UnregisterHandlerForCategory(CommandCategory.Save, OnExternalSave);
         }
 
         public static BuilderDocument CreateInstance()
@@ -283,6 +286,8 @@ namespace Unity.UI.Builder
         }
 
         public void RestoreAssetsFromBackup() => activeOpenUXMLFile.RestoreAssetsFromBackup();
+
+        public void NotifyRegistryOfDiscard() => activeOpenUXMLFile.NotifyRegistryOfDiscard();
 
         public bool CheckForUnsavedChanges(bool assetModifiedExternally = false)
             => activeOpenUXMLFile.CheckForUnsavedChanges(assetModifiedExternally);
@@ -561,5 +566,158 @@ namespace Unity.UI.Builder
         public void SaveSettingsToDisk() => activeOpenUXMLFile.settings.SaveSettingsToDisk();
 
         public BuilderUXMLFileSettings fileSettings => activeOpenUXMLFile.fileSettings;
+
+        void OnExternalSave(in CommandContext context)
+        {
+            if (context.Status != CommandExecutionStatus.Success)
+                return;
+
+            // The Builder handles its own save/discard, but needs to sync up when an asset is saved or
+            // discarded from a different tool.
+            if (context.Source == CommandSources.Builder)
+                return;
+
+            switch (context.Command)
+            {
+                case PreSaveCommand preSaveCommand:
+                    // Deactivate our own asset-postprocessor when a different tool is saving to avoid getting the
+                    // resolve conflict popup-up showing up.
+                    if (SharesAssetWithActiveDocument(preSaveCommand.Asset))
+                        activeOpenUXMLFile.IgnoreExternalChanges(true);
+                    break;
+
+                case PreDiscardCommand preDiscardCommand:
+                    if (SharesAssetWithActiveDocument(preDiscardCommand.Asset))
+                        activeOpenUXMLFile.IgnoreExternalChanges(true);
+                    break;
+
+                case PostSaveCommand postSaveCommand:
+                    activeOpenUXMLFile.IgnoreExternalChanges(false);
+
+                    // A save that failed to write leaves everything unsaved, so there is nothing to reconcile and
+                    // our discard backup still matches the last content on disk.
+                    if (!postSaveCommand.Succeeded)
+                        break;
+
+                    // Assets were saved from a different tool, so our in-memory backup (what a Discard reverts to)
+                    // is now older than disk. Resync it first, or a later Discard would revert the
+                    // shared asset PAST the other tool's saved content and then declare that stale state clean.
+                    if (SharesAssetWithActiveDocument(postSaveCommand.Asset))
+                        activeOpenUXMLFile.ResyncBackupToCurrentAsset();
+
+                    // Re-derive our own unsaved state from the registry: the other tool may have saved our whole
+                    // document, or only a stylesheet our document shares with a different one it was editing.
+                    ReconcileUnsavedMarkersFromRegistry();
+                    break;
+
+                case PostDiscardCommand postDiscardCommand:
+                    activeOpenUXMLFile.IgnoreExternalChanges(false);
+
+                    if (!postDiscardCommand.Succeeded)
+                        break;
+
+                    // The registry reverted the shared document to disk and re-imported it. If it is the document
+                    // we have open, adopt the fresh instance and re-clone our view against the reverted content;
+                    // otherwise just re-derive our markers (a shared stylesheet may have been reverted).
+                    if (postDiscardCommand.Context.EditedVisualTreeAsset == activeOpenUXMLFile.visualTreeAsset)
+                        RevertViewAfterExternalDiscard();
+                    else
+                        ReconcileUnsavedMarkersFromRegistry();
+
+                    break;
+            }
+        }
+
+        bool SharesAssetWithActiveDocument(UnityEngine.Object asset)
+        {
+            var vta = activeOpenUXMLFile?.visualTreeAsset;
+            if (asset == null || vta == null)
+                return false;
+            if (ReferenceEquals(asset, vta))
+                return true;
+
+            using var _ = ListPool<StyleSheet>.Get(out var ourSheets);
+            UIAssetRegistry.CollectDocumentStyleSheets(vta, ourSheets);
+
+            if (asset is StyleSheet styleSheet)
+                return ourSheets.Contains(styleSheet);
+
+            if (asset is VisualTreeAsset otherVta)
+            {
+                using var __ = ListPool<StyleSheet>.Get(out var theirSheets);
+                UIAssetRegistry.CollectDocumentStyleSheets(otherVta, theirSheets);
+                foreach (var sheet in theirSheets)
+                    if (ourSheets.Contains(sheet))
+                        return true;
+            }
+
+            return false;
+        }
+
+        void ReconcileUnsavedMarkersFromRegistry()
+        {
+            var vta = activeOpenUXMLFile?.visualTreeAsset;
+            if (vta == null)
+                return;
+
+            var registry = UIAssetRegistry.instance;
+
+            using var _ = ListPool<StyleSheet>.Get(out var sheets);
+            UIAssetRegistry.CollectDocumentStyleSheets(vta, sheets);
+
+            // The registry can only vouch for assets it tracks: IsDirty answers false for an untracked one,
+            // which is "I don't know", not "clean". Treating that as clean would clear a "*" that our own
+            // in-memory edits have earned — and the registry's open set does not survive a domain reload until
+            // every tool has re-reported. So only ever CLEAR the marker when the whole document is accounted for.
+            var allTracked = registry.IsTracked(vta);
+            var dirty = registry.IsDirty(vta);
+            foreach (var sheet in sheets)
+            {
+                if (sheet == null)
+                    continue;
+                allTracked &= registry.IsTracked(sheet);
+                dirty |= registry.IsDirty(sheet);
+            }
+
+            if (!dirty && !allTracked)
+                return;
+
+            if (activeOpenUXMLFile.hasUnsavedChanges == dirty)
+                return;
+
+            activeOpenUXMLFile.hasUnsavedChanges = dirty;
+            RefreshUnsavedChangesMarkers();
+        }
+
+        void RevertViewAfterExternalDiscard()
+        {
+            activeOpenUXMLFile.ResyncBackupToCurrentAsset();
+
+            var documentRootElement = primaryViewportWindow?.documentRootElement;
+            if (documentRootElement != null)
+                activeOpenUXMLFile.OnAfterBuilderDeserialize(documentRootElement);
+
+            activeOpenUXMLFile.hasUnsavedChanges = false;
+            RefreshUnsavedChangesMarkers();
+        }
+
+        // Re-notifies the Builder panes (hierarchy, style sheets) so they redraw their unsaved-changes "*".
+        void RefreshUnsavedChangesMarkers()
+        {
+            var selection = primaryViewportWindow?.selection;
+            if (selection == null)
+                return;
+
+            var wasApplyingExternalCommand = selection.isApplyingExternalCommand;
+            selection.isApplyingExternalCommand = true;
+            try
+            {
+                selection.NotifyOfHierarchyChange(this);
+            }
+            finally
+            {
+                selection.isApplyingExternalCommand = wasApplyingExternalCommand;
+            }
+        }
     }
 }

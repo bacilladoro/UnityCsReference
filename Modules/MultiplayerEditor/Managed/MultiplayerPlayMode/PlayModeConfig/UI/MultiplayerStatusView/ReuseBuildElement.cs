@@ -4,6 +4,7 @@
 
 using System;
 using System.IO;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEditor.Build.Profile;
 using UnityEditor.Multiplayer.Internal;
@@ -13,10 +14,13 @@ using UnityEngine.UIElements;
 
 namespace Unity.Multiplayer.PlayMode.Editor
 {
-    class ReuseBuildElement
+    partial class ReuseBuildElement
     {
+        [AutoStaticsCleanupOnCodeReload] // static event; stale handlers after reload pin old ALC
         internal static event Action<BuildProfile> RebuildStateChanged;
+        [AutoStaticsCleanupOnCodeReload] // static event; stale handlers after reload pin old ALC
         internal static event Action<BuildProfile, bool> UseExistingBuildChanged;
+        [AutoStaticsCleanupOnCodeReload] // transient rebuild state; must reset to null on reload
         internal static BuildProfile RebuildingBuildProfile { get; private set; }
 
         private const string k_UseExistingBuildLabel = "Use Existing Build";

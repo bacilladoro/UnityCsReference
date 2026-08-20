@@ -54,7 +54,7 @@ namespace Unity.GraphToolkit.Editor
         protected TransitionArrowPart(string name, Model model, ChildView ownerElement, string parentClassName)
             : base(name, model, ownerElement, parentClassName)
         {
-            if (m_Model is TransitionSupportModel { IsSingleStateTransition: true })
+            if (m_Model is TransitionSupportModel { IsSelfTransition: true })
             {
                 PartList.AppendPart(TransitionIconPart.Create(transitionIconPartName, m_Model, m_OwnerElement, ussClassName));
             }
@@ -84,6 +84,15 @@ namespace Unity.GraphToolkit.Editor
             else
             {
                 m_Arrow.ReplaceAndCacheClassName(shortArrowUssClassName, ref m_ShortLongClassName);
+            }
+
+            if (m_Model is SelfTransitionModel transition)
+            {
+                if (visitor.ChangeHints.HasChange(ChangeHint.Style))
+                {
+                    m_Arrow.FillColor = transition.ElementColor.Color;
+                    m_Arrow.tooltip = transition.Tooltip ?? string.Empty;
+                }
             }
 
             if (visitor.ChangeHints.HasChange(ChangeHint.Layout) || visitor.ChangeHints.HasChange(ChangeHint.Data))

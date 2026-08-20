@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -18,6 +19,7 @@ namespace Unity.GraphToolkit.Editor
         public static readonly string ussClassName = "ge-node-progress-bar";
         public static readonly string progressBarName = "progress";
 
+        [NoAutoStaticsCleanup] // CSS custom property descriptor; value is a fixed CSS property name
         static readonly CustomStyleProperty<float> k_DebugBackgroundAlphaProperty = new("--debug-background-alpha");
         float m_DebugBackgroundAlpha = k_DefaultDebugAlpha;
 
@@ -81,6 +83,11 @@ namespace Unity.GraphToolkit.Editor
         /// <inheritdoc />
         public override void UpdateUIFromModel(UpdateFromModelVisitor visitor)
         {
+            if (m_Model is IHasElementColor hasElementColor)
+            {
+                SetColor(hasElementColor.DefaultColor);
+            }
+
             if (m_Model is IHasProgress hasProgress)
             {
                 var value = hasProgress.Progress;
@@ -124,6 +131,9 @@ namespace Unity.GraphToolkit.Editor
 
         internal void SetColor(Color color)
         {
+            if (color == default)
+                color = GetColor();
+
             var currentColor = GetColor();
             currentColor.a = color.a;
             if (currentColor != color) // only update if the color changed, ignoring the current alpha

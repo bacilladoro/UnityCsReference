@@ -6,9 +6,9 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code.
+#pragma warning disable UAC2001 // The Banned API Analyzer produces compile errors for any new Linq code.
 using System.Linq;
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 using System.Text;
 using System.Text.RegularExpressions;
 using UnityEditor;
@@ -147,7 +147,7 @@ namespace Unity.Burst.Editor
                 return new ();
             if (Directory.Exists(BurstAotCompiler.OutputBaseFolder))
                 Directory.Delete(BurstAotCompiler.OutputBaseFolder, true);
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code.
+#pragma warning disable UAC2001 // The Banned API Analyzer produces compile errors for any new Linq code.
             var assemblies = args.assemblyFiles.Select(path =>
                 {
                     var name = Path.GetFileNameWithoutExtension(path);
@@ -162,7 +162,7 @@ namespace Unity.Burst.Editor
                         UnityEditor.Compilation.AssemblyFlags.None);
                 })
                 .ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             return BurstAotCompiler.OnPostBuildPlayerScriptDLLsImpl(settings, assemblies);
         }
@@ -247,7 +247,7 @@ namespace Unity.Burst.Editor
                 playerBuildAssemblies = BurstAotCompiler.GetPlayerAssemblies(report);
 
                 Hash128 definesHash = default;
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code.
+#pragma warning disable UAC2001 // The Banned API Analyzer produces compile errors for any new Linq code.
                 foreach (var assembly in playerBuildAssemblies.OrderBy(x => x.name))
                 {
                     definesHash.Append(assembly.name);
@@ -257,7 +257,7 @@ namespace Unity.Burst.Editor
                         definesHash.Append(symbol);
                     }
                 }
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
                 settings.symbolDefinesHash = definesHash;
 
@@ -573,9 +573,9 @@ namespace Unity.Burst.Editor
                 return new();
             }
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code.
+#pragma warning disable UAC2001 // The Banned API Analyzer produces compile errors for any new Linq code.
             commonOptions.AddRange(rootAssemblies.Select(root => GetOption(OptionRootAssembly, root)));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             // --------------------------------------------------------------------------------------------------------
             // 4) Compile each combination
@@ -640,9 +640,9 @@ namespace Unity.Burst.Editor
                         options.Add(GetOption(OptionBranchProtection, "Standard"));
                 }
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code.
+#pragma warning disable UAC2001 // The Banned API Analyzer produces compile errors for any new Linq code.
                 options.AddRange(assemblyFolders.Select(assemblyFolder => GetOption(OptionAotAssemblyFolder, assemblyFolder)));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
                 // Set the flag to print a message on missing MonoPInvokeCallback attribute on IL2CPP only
                 if (settings.scriptingBackend == ScriptingImplementation.IL2CPP)
@@ -1344,9 +1344,9 @@ static void BurstSetup()
             var outputDir = Path.GetDirectoryName(outputFile);
             Directory.CreateDirectory(outputDir);
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code.
+#pragma warning disable UAC2001 // The Banned API Analyzer produces compile errors for any new Linq code.
             var args = inputFiles.Where(input => !string.IsNullOrEmpty(input)).ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             args.Add("-create");
             args.Add("-output");
@@ -1661,10 +1661,10 @@ static void BurstSetup()
             var flags = System.Reflection.BindingFlags.Public |
                         System.Reflection.BindingFlags.Static |
                         System.Reflection.BindingFlags.FlattenHierarchy;
-#pragma warning disable UA2001
+#pragma warning disable UAC2001
             var assm = UnityEngine.Assemblies.CurrentAssemblies.GetLoadedAssemblies()
                 .SingleOrDefault(assembly => assembly.GetName().Name == assemblyName);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             var settingsType = assm?.GetType(settingsTypeFullName);
             var property = settingsType?.GetProperty("architecture", flags);
             if (property == null)
@@ -1916,9 +1916,9 @@ static void BurstSetup()
                         // Don't output the path if we are not burst-debugging or the exe exist
                         if (BurstLoader.IsDebugging || !File.Exists(exe))
                         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code.
+#pragma warning disable UAC2001 // The Banned API Analyzer produces compile errors for any new Linq code.
                             errorMessageBuilder.Append(exe).Append(" ").Append(string.Join(' ', args.Select(s => EscapeForShell(s))));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                             errorMessageBuilder.AppendLine();
                             errorMessageBuilder.AppendLine();
                         }

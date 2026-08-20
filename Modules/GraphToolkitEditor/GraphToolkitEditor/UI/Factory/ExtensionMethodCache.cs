@@ -8,6 +8,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using JetBrains.Annotations;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.Assertions;
 
@@ -64,12 +65,14 @@ namespace Unity.GraphToolkit.Editor
     /// A cache that holds extension methods on <typeparamref name="TExtendedType"/>.
     /// </summary>
     /// <typeparam name="TExtendedType">The type extended by the extension methods.</typeparam>
-    static class ExtensionMethodCache<TExtendedType>
+    static partial class ExtensionMethodCache<TExtendedType>
     {
         // ReSharper disable once StaticMemberInGenericType
+        [AutoStaticsCleanupOnCodeReload]
         static Dictionary<(Type, Type), MethodInfo> s_FactoryMethodCache = null;
 
         // ReSharper disable once StaticMemberInGenericType
+        [AutoStaticsCleanupOnCodeReload]
         static Queue<Type> s_CandidateTypes = new Queue<Type>();
 
         public static void ClearCache()
@@ -193,9 +196,9 @@ namespace Unity.GraphToolkit.Editor
             Type extendedType = typeof(TExtendedType);
             if (extensionMethods.TryGetValue(extendedType, out var allMethodInfos))
             {
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 foreach (var methodInfo in allMethodInfos.Where(filterMethods))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 {
                     if (methodInfo.DeclaringType == null)
                         continue;

@@ -200,6 +200,18 @@ namespace UnityEditor.Experimental
             LookupArtifacts((IntPtr)guids.GetUnsafePtr(), (IntPtr)hashes.GetUnsafePtr(), guids.Length, importerType);
         }
 
+        public unsafe static void LookupArtifacts(ReadOnlySpan<GUID> guids, Span<ImportResultID> hashes, Type importerType)
+        {
+            if (guids.Length != hashes.Length)
+                throw new ArgumentException("guids and hashes size mismatch!");
+
+            fixed (GUID* guidsPtr = guids)
+            fixed (ImportResultID* hashesPtr = hashes)
+            {
+                LookupArtifacts((IntPtr)guidsPtr, (IntPtr)hashesPtr, guids.Length, importerType);
+            }
+        }
+
         [FreeFunction("AssetDatabaseExperimental::LookupArtifacts")]
         [PreventExecutionInState(AssetDatabasePreventExecution.kCodeReload, PreventExecutionSeverity.PreventExecution_ManagedException, AssetDatabase.kPreventExecutionDuringCodeReloadHowToFixMsg)]
         static extern void LookupArtifacts_Span(ReadOnlySpan<ArtifactKey> artifactKeys, Span<ImportResultID> hashesOut);
@@ -219,6 +231,18 @@ namespace UnityEditor.Experimental
                 throw new ArgumentException("guids and hashesOut size mismatch!");
 
             LookupPrimaryArtifacts((IntPtr)guids.GetUnsafePtr(), (IntPtr)hashesOut.GetUnsafePtr(), guids.Length);
+        }
+
+        public unsafe static void LookupArtifacts(ReadOnlySpan<GUID> guids, Span<ImportResultID> hashesOut)
+        {
+            if (guids.Length != hashesOut.Length)
+                throw new ArgumentException("guids and hashesOut size mismatch!");
+
+            fixed (GUID* guidsPtr = guids)
+            fixed (ImportResultID* hashesPtr = hashesOut)
+            {
+                LookupPrimaryArtifacts((IntPtr)guidsPtr, (IntPtr)hashesPtr, guids.Length);
+            }
         }
 
         public static bool GetArtifactPaths(ImportResultID hash, out string[] paths)

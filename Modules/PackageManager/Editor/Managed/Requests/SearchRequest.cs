@@ -43,9 +43,9 @@ namespace UnityEditor.PackageManager.Requests
 
         protected override PackageInfo[] GetResult()
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             return GetOperationData(Id).Where(p => p.type != ShimPackageType).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
     }
 }

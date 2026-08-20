@@ -40,9 +40,9 @@ namespace UnityEditor.ScriptUpdater
 
         private static UnitySourceFileUpdatersResultHandler.ScriptUpdaterConsentType AskThroughDialog(string[] filesToOverWrite)
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var selection = filesToOverWrite.Take(30).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             var displayedFiles = selection.SeparateWith(Environment.NewLine);
             var omitted = filesToOverWrite.Length - selection.Length;
             if (omitted > 0)

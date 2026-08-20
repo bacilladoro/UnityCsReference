@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using Unity.Scripting.LifecycleManagement;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -45,6 +46,7 @@ namespace Unity.Multiplayer.PlayMode.Editor
             EditorApplication.playModeStateChanged += SendEnterPlayModeOnTagsAppliedEvent;
         }
 
+        [NoAutoStaticsCleanup] // constant list of required package names; never changes between reloads
         internal static readonly ReadOnlyCollection<string> k_RequiredPackagesForRemoteInstances = new List<string>()
         {
             "com.unity.services.multiplayer",

@@ -4,12 +4,15 @@
 
 using System;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Search
 {
     static class SearchIndexingService
     {
+        [NoAutoStaticsCleanup] // Test-only bool override flag with no user references; safe to persist across reload.
         private static bool m_IsIndexReadyOverride;
+        [NoAutoStaticsCleanup] // Test-only bool override flag with no user references; safe to persist across reload.
         private static bool m_IsIndexReady;
 
         public static bool IsDeepIndexingEnabled()

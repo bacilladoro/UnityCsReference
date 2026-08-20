@@ -3,33 +3,30 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
-using JetBrains.Annotations;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+using System.Text.Json;
+using Unity.Scripting.LifecycleManagement;
 
 namespace Unity.Multiplayer.PlayMode.Editor
 {
     struct ParsingSystemDelegates
-    {   // This simply represents the static methods of Newtonsoft.Json
-        public delegate JObject Parse(string json);
-        public delegate JObject FromObject(object o);
+    {   // This simply represents the static methods of System.Text.Json
         public delegate object DeserializeObject(string data, Type type);
-        public delegate string SerializeObject([CanBeNull] object data, Formatting formatting = Formatting.Indented);
+        public delegate string SerializeObject(object data);
 
-        public Parse ParseFunc;
-        public FromObject FromObjectFunc;
         public DeserializeObject DeserializeObjectFunc;
         public SerializeObject SerializeObjectFunc;
     }
 
     static class ParsingSystem
     {
+        [NoAutoStaticsCleanup] // immutable serializer options; safe to persist across reload
+        public static JsonSerializerOptions SerializerOptions { get; } = new JsonSerializerOptions { WriteIndented = true };
+
+        [NoAutoStaticsCleanup] // delegates only wrap System.Text.Json calls; no ALC pinning concern
         public static ParsingSystemDelegates Delegates { get; } = new ParsingSystemDelegates
         {
-            ParseFunc = JObject.Parse,
-            FromObjectFunc = JObject.FromObject,
-            SerializeObjectFunc = JsonConvert.SerializeObject,
-            DeserializeObjectFunc = JsonConvert.DeserializeObject,
+            SerializeObjectFunc = data => JsonSerializer.Serialize(data, SerializerOptions),
+            DeserializeObjectFunc = (data, type) => JsonSerializer.Deserialize(data, type, SerializerOptions),
         };
     }
 }

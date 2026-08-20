@@ -63,9 +63,9 @@ namespace UnityEditor.IMGUI.Controls
             if (orgSize != expandedSet.Count)
             {
                 // Bulk set expanded ids (is sorted in SetExpandedIDs)
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 SetExpandedIDs(expandedSet.ToArray());
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
                 // Refresh immediately if any Item was expanded
                 if (m_NeedRefreshRows)
@@ -86,9 +86,9 @@ namespace UnityEditor.IMGUI.Controls
             if (orgSize != expandedSet.Count)
             {
                 // Bulk set expanded ids (is sorted in SetExpandedIDs)
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 SetExpandedIDs(expandedSet.ToArray());
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
                 // Refresh immediately if any Item was expanded
                 if (m_NeedRefreshRows)
@@ -127,9 +127,9 @@ namespace UnityEditor.IMGUI.Controls
             else            oldExpandedSet.ExceptWith(candidates);
 
             // Bulk set expanded ids (is sorted in SetExpandedIDs)
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             SetExpandedIDs(oldExpandedSet.ToArray());
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             // Keep for debugging
             // Debug.Log ("New expanded state (bulk): " + DebugUtils.ListToString(new List<int>(expandedIDs)));

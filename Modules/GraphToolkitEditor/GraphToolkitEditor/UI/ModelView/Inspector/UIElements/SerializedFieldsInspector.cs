@@ -101,9 +101,9 @@ namespace Unity.GraphToolkit.Editor
         public IEnumerable<object> GetInspectedObjects()
         {
             // ReSharper disable once SuspiciousTypeConversion.Global : IHasInspectorSurrogate is for use by clients.
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             return m_Models.Select(t => t is IHasInspectorSurrogate surrogate ? surrogate.Surrogate : t);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         /// <summary>
@@ -118,9 +118,9 @@ namespace Unity.GraphToolkit.Editor
         protected override IReadOnlyList<BaseModelPropertyField> GetFields()
         {
             var fieldList = new List<BaseModelPropertyField>();
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var targets = GetInspectedObjects().ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             var inspectorOrderFields = new SortedDictionary<int, List<BaseModelPropertyField>>();
 

@@ -12,12 +12,17 @@ using static Unity.Collections.LowLevel.Unsafe.BurstLike;
 
 namespace UnityEngine.ParticleSystemJobs
 {
+    ///<summary>A container to hold x, y, and z-axis data for particles.</summary>
     public struct ParticleSystemNativeArray3
     {
+        ///<summary>The x-axis value for each particle.</summary>
         public NativeArray<float> x;
+        ///<summary>The y-axis value for each particle.</summary>
         public NativeArray<float> y;
+        ///<summary>The z-axis value for each particle.</summary>
         public NativeArray<float> z;
 
+        /// <exclude />
         public Vector3 this[int index]
         {
             get
@@ -34,13 +39,19 @@ namespace UnityEngine.ParticleSystemJobs
         }
     }
 
+    ///<summary>A container to hold 4 arrays of data for particles.</summary>
     public struct ParticleSystemNativeArray4
     {
+        ///<summary>The x-axis value for each particle.</summary>
         public NativeArray<float> x;
+        ///<summary>The y-axis value for each particle.</summary>
         public NativeArray<float> y;
+        ///<summary>The z-axis value for each particle.</summary>
         public NativeArray<float> z;
+        ///<summary>The w-axis value for each particle.</summary>
         public NativeArray<float> w;
 
+        /// <exclude />
         public Vector4 this[int index]
         {
             get
@@ -58,21 +69,46 @@ namespace UnityEngine.ParticleSystemJobs
         }
     }
 
+    ///<summary>This struct specifies all the per-particle data.</summary>
     public struct ParticleSystemJobData
     {
+        ///<summary>Specifies the number of particles alive in the Particle System.</summary>
         public int count { get; }
+        ///<summary>The position of each particle.</summary>
+        ///<remarks>This array is stored in the Simulation Space of the Particle System, therefore it may contain data in either World or Local space.</remarks>
         public ParticleSystemNativeArray3 positions { get; }
+        ///<summary>The velocity of each particle.</summary>
+        ///<remarks>This array is stored in the Simulation Space of the Particle System, therefore it may contain data in either World or Local space.</remarks>
         public ParticleSystemNativeArray3 velocities { get; }
+        ///<summary>Specifies an axis of rotation for each particles, in radians.</summary>
         public ParticleSystemNativeArray3 axisOfRotations { get; }
+        ///<summary>The rotation of each particle.</summary>
+        ///<remarks>When using 3D rotation, all three axes contain data, otherwise only the z-axis contains rotation data.</remarks>
         public ParticleSystemNativeArray3 rotations { get; }
+        ///<summary>The angular velocity of each particle.</summary>
+        ///<remarks>When using 3D rotation, all three axes contain data, otherwise only the z-axis contains angular velocity data.</remarks>
         public ParticleSystemNativeArray3 rotationalSpeeds { get; }
+        ///<summary>The size of each particle.</summary>
+        ///<remarks>When using 3D sizes, all three axes contain data, otherwise only the x-axis contains size data, and Unity applies it uniformly to each axis.</remarks>
         public ParticleSystemNativeArray3 sizes { get; }
+        ///<summary>The initial color of each particle.</summary>
+        ///<remarks>Unity multiplies these values by any settings in the SizeOverLifetimeModule and SizeBySpeedModule during rendering.</remarks>
         public NativeArray<Color32> startColors { get; }
+        ///<summary>Specifies how long each particle has been alive.</summary>
+        ///<remarks>The value is a value between 0 and 100, where 0 means the particle has just been born, and 100 means it is at the end of its lifetime.</remarks>
         public NativeArray<float> aliveTimePercent { get; }
+        ///<summary>The lifetime of each particle, stored as 1.0f / lifetime.</summary>
+        ///<remarks>There are more cases in the native code where we wish to divide by lifetime, rather than multiply by it. Therefore, storing the reciprocal allows us to perform efficent multiplies, rather than slow divides, in the majority of use-cases.</remarks>
         public NativeArray<float> inverseStartLifetimes { get; }
+        ///<summary>The random seed assigned to each particle.</summary>
+        ///<remarks>This value remains constant for each particle during the particle's lifetime.</remarks>
         public NativeArray<UInt32> randomSeeds { get; }
+        ///<summary>This array contains the custom data values when you use a CustomDataModule, or when you call SetCustomParticleData.</summary>
         public ParticleSystemNativeArray4 customData1 { get; }
+        ///<summary>This array contains the custom data values when you use a CustomDataModule, or when you call SetCustomParticleData.</summary>
         public ParticleSystemNativeArray4 customData2 { get; }
+        ///<summary>Specifies a mesh index for each particle.</summary>
+        ///<remarks>The mesh index determines the mesh Unity uses to render a particle.</remarks>
         public NativeArray<int> meshIndices { get; }
 
         internal AtomicSafetyHandle m_Safety;

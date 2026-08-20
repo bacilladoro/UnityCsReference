@@ -319,12 +319,12 @@ namespace UnityEditor.Search
         /// <summary>
         /// Color for matching text when using fuzzy search.
         /// </summary>
-        public static string HighlightColorTag = EditorGUIUtility.isProSkin ? "<color=#FF6100>" : "<color=#EE4400>";
+        public static readonly string HighlightColorTag = EditorGUIUtility.isProSkin ? "<color=#FF6100>" : "<color=#EE4400>";
 
         /// <summary>
         /// Color for special tags when using fuzzy search.
         /// </summary>
-        public static string HighlightColorTagSpecial = EditorGUIUtility.isProSkin ? "<color=#FF6100>" : "<color=#BB1100>";
+        public static readonly string HighlightColorTagSpecial = EditorGUIUtility.isProSkin ? "<color=#FF6100>" : "<color=#BB1100>";
 
         public static string FormatSuggestionTitle(string title, List<int> matches)
         {

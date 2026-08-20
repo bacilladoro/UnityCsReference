@@ -46,8 +46,16 @@ namespace Unity.UI.Builder
 
         public override void HierarchyChanged(VisualElement element, BuilderHierarchyChangeType changeType)
         {
-            var newUnsavedChanges = elementHierarchyView.hasUnsavedChanges != m_Selection.hasUnsavedChanges;
-            elementHierarchyView.hasUnsavedChanges = m_Selection.hasUnsavedChanges;
+            var newUnsavedChanges = false;
+            if (m_Selection.suppressHierarchyPaneUnsavedMark)
+            {
+                m_Selection.suppressHierarchyPaneUnsavedMark = false; // one-shot
+            }
+            else
+            {
+                newUnsavedChanges = elementHierarchyView.hasUnsavedChanges != m_Selection.hasUnsavedChanges;
+                elementHierarchyView.hasUnsavedChanges = m_Selection.hasUnsavedChanges;
+            }
 
             base.HierarchyChanged(element, changeType);
 

@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
@@ -11,6 +12,7 @@ using UnityEngine.Scripting;
 using UnityEngine.UIElements.Layout; // FixedBuffer4<T>
 using UnityEngine.UIElements.StyleSheets;
 using UnityEngine.UIElements.Unmanaged;
+using Unity.Scripting.LifecycleManagement;
 
 
 namespace UnityEngine.UIElements
@@ -24,7 +26,12 @@ namespace UnityEngine.UIElements
         // the up-to-18-channel filter writes per slot into a single ApplyPropertyAnimation call.
         // Lists are pooled and the dictionary is reused across passes (cleared on flush).
         private Dictionary<(VisualElement element, StylePropertyId id), List<FilterFunction>> m_PendingFilterWrites;
-        private bool m_BatchingFilterWrites;
+
+        // Same coalescing for the 32-channel background-image composite: channels accumulate
+        // into an unmanaged snapshot, flushed as one ApplyPropertyAnimation per (element, id).
+        private Dictionary<(VisualElement element, StylePropertyId id), PendingBackground> m_PendingBackgroundWrites;
+
+        private bool m_BatchingCompositeWrites;
 
         [VisibleToOtherModules("UnityEditor.UIToolkitAuthoringModule")]
         internal static int GetChannelCount(StylePropertyId id)
@@ -43,6 +50,9 @@ namespace UnityEngine.UIElements
         // inspector's value-diff can't detect it; the authoring inspector listens here to refresh its
         // driven-state affordances.
         [VisibleToOtherModules("UnityEditor.UIToolkitAuthoringModule")]
+        // Must NOT use a cleanup attribute: the codegen roots a UnityEngine.Object-derived type for the
+        // linker (see PanelRenderer.bindings.cs). Subscribers pair += with -= (StyleInspectorElement).
+        [NoAutoStaticsCleanup]
         internal static event Action<VisualElement> boundElementsStyleVersionChanged;
 
         [VisibleToOtherModules("UnityEditor.UIToolkitAuthoringModule")]
@@ -258,8 +268,22 @@ namespace UnityEngine.UIElements
                         WriteFilterType(filterList, filterIndex, BitConverter.SingleToInt32Bits(value));
                     else if (subChannel >= kFilterParamSubChannelStart)
                         WriteFilterValue(filterList, filterIndex, subChannel - kFilterParamSubChannelStart, value);
-                    if (!m_BatchingFilterWrites)
+                    if (!m_BatchingCompositeWrites)
                         FlushPendingFilterWrites();
+                    break;
+                }
+
+                case PropertyType.Background:
+                {
+                    // PPtr `.image` (channel 0) is routed to SetObjectValue; we only see the
+                    // gradient Float / Int channels here.
+                    if (channel < kBackgroundGradientTypeChannel)
+                        break;
+                    var pending = GetOrLoadPendingBackground(e, id);
+                    WriteBackgroundGradientChannel(ref pending.gradient, channel, value);
+                    m_PendingBackgroundWrites[(e, id)] = pending;
+                    if (!m_BatchingCompositeWrites)
+                        FlushPendingBackgroundWrites();
                     break;
                 }
 
@@ -345,10 +369,12 @@ namespace UnityEngine.UIElements
                 // PPtr `.customDefinition` sub-channels go through GetObjectValue.
                 PropertyType.Filter => ReadFilterFloatOrTypeChannel(element, channel),
 
+                // PPtr `.image` (channel 0) goes through GetObjectValue; gradient channels read here.
+                PropertyType.Background => ReadBackgroundGradientChannel(element, channel),
+
                 // PPtr-kind properties are routed through GetObjectValue; the rest advertise zero
                 // animatable channels in the generator tables, so the binder never reaches here.
                 PropertyType.Shorthand => throw new NotImplementedException(),
-                PropertyType.Background => throw new NotImplementedException(),
                 PropertyType.Font => throw new NotImplementedException(),
                 PropertyType.FontDefinition => throw new NotImplementedException(),
                 // Channel 0 (.image) is PPtr and goes through GetObjectValue; 1/2 are hotspot.x/.y.
@@ -380,11 +406,23 @@ namespace UnityEngine.UIElements
 
             switch (GetPropertyTypeMapping(id))
             {
-                case PropertyType.Background:
                 case PropertyType.Font:
                 case PropertyType.FontDefinition:
                     e.computedStyle.ApplyPropertyAnimation(e, id, value);
                     break;
+
+                case PropertyType.Background:
+                {
+                    // Only `.image` (channel 0) is PPtr; gradient channels ride SetFloatValue.
+                    if (channel != kBackgroundImageChannel)
+                        break;
+                    var pending = GetOrLoadPendingBackground(e, id);
+                    pending.imageEntityId = value;
+                    m_PendingBackgroundWrites[(e, id)] = pending;
+                    if (!m_BatchingCompositeWrites)
+                        FlushPendingBackgroundWrites();
+                    break;
+                }
 
                 case PropertyType.MaterialDefinition:
                 {
@@ -416,7 +454,7 @@ namespace UnityEngine.UIElements
                             : null;
                         var filterList = GetOrLoadFilterList(e, id);
                         WriteFilterCustomDefinition(filterList, filterIndex, newDef);
-                        if (!m_BatchingFilterWrites)
+                        if (!m_BatchingCompositeWrites)
                             FlushPendingFilterWrites();
                     }
                     break;
@@ -436,7 +474,8 @@ namespace UnityEngine.UIElements
 
             return GetPropertyTypeMapping(id) switch
             {
-                PropertyType.Background => element.computedStyle.ReadPropertyAnimationEntityId(id),
+                // Only `.image` (channel 0) is PPtr; gradient channels ride GetFloatValue.
+                PropertyType.Background => element.computedStyle.backgroundImage.imageEntityId,
                 PropertyType.Font => element.computedStyle.ReadPropertyAnimationEntityId(id),
                 PropertyType.FontDefinition => element.computedStyle.ReadPropertyAnimationEntityId(id),
                 PropertyType.MaterialDefinition => id switch
@@ -742,5 +781,170 @@ namespace UnityEngine.UIElements
             }
             m_PendingFilterWrites.Clear();
         }
+
+        // Background-image channel layout: `.image` (PPtr), 7 gradient header channels, then
+        // kBackgroundGradientStopCount stops of kBackgroundGradientChannelsPerStop channels
+        // (.color.r/.g/.b/.a, .position, .positionIsPercent). Mirrored in StylePropertyDefinitions.cs.
+        [VisibleToOtherModules("UnityEditor.UIToolkitAuthoringModule")]
+        internal const int kBackgroundImageChannel = 0;
+        [VisibleToOtherModules("UnityEditor.UIToolkitAuthoringModule")]
+        internal const int kBackgroundGradientTypeChannel = 1;
+        [VisibleToOtherModules("UnityEditor.UIToolkitAuthoringModule")]
+        internal const int kBackgroundGradientAngleChannel = 2;
+        [VisibleToOtherModules("UnityEditor.UIToolkitAuthoringModule")]
+        internal const int kBackgroundGradientShapeChannel = 3;
+        [VisibleToOtherModules("UnityEditor.UIToolkitAuthoringModule")]
+        internal const int kBackgroundGradientSizeChannel = 4;
+        [VisibleToOtherModules("UnityEditor.UIToolkitAuthoringModule")]
+        internal const int kBackgroundGradientCenterXChannel = 5;
+        [VisibleToOtherModules("UnityEditor.UIToolkitAuthoringModule")]
+        internal const int kBackgroundGradientCenterYChannel = 6;
+        [VisibleToOtherModules("UnityEditor.UIToolkitAuthoringModule")]
+        internal const int kBackgroundGradientStopCountChannel = 7;
+        [VisibleToOtherModules("UnityEditor.UIToolkitAuthoringModule")]
+        internal const int kBackgroundGradientStopChannelStart = 8;
+        [VisibleToOtherModules("UnityEditor.UIToolkitAuthoringModule")]
+        internal const int kBackgroundGradientChannelsPerStop = 6;
+        [VisibleToOtherModules("UnityEditor.UIToolkitAuthoringModule")]
+        internal const int kBackgroundGradientStopCount = UnmanagedBackgroundGradient.MaxStops;
+        // Per-stop sub-channels.
+        [VisibleToOtherModules("UnityEditor.UIToolkitAuthoringModule")]
+        internal const int kBackgroundGradientStopColorSubChannel = 0; // .r/.g/.b/.a = 0..3
+        [VisibleToOtherModules("UnityEditor.UIToolkitAuthoringModule")]
+        internal const int kBackgroundGradientStopPositionSubChannel = 4;
+        [VisibleToOtherModules("UnityEditor.UIToolkitAuthoringModule")]
+        internal const int kBackgroundGradientStopIsPercentSubChannel = 5;
+
+        // Accumulates per-channel writes before a single ApplyPropertyAnimation; unmanaged
+        // gradient snapshot so per-frame sampling stays allocation-free until flush.
+        private struct PendingBackground
+        {
+            public EntityId imageEntityId;
+            public UnmanagedBackgroundGradient gradient;
+        }
+
+        // Int channels ride the float pipeline as bit-cast ints (same as the filter `.type` channel).
+        private static void WriteBackgroundGradientChannel(ref UnmanagedBackgroundGradient g, int channel, float value)
+        {
+            switch (channel)
+            {
+                case kBackgroundGradientTypeChannel:
+                    g.type = (GradientType)BitConverter.SingleToInt32Bits(value);
+                    return;
+                case kBackgroundGradientAngleChannel:
+                    g.angle = value;
+                    return;
+                case kBackgroundGradientShapeChannel:
+                    g.shape = (BackgroundGradientShape)BitConverter.SingleToInt32Bits(value);
+                    return;
+                case kBackgroundGradientSizeChannel:
+                    g.size = (BackgroundGradientSize)BitConverter.SingleToInt32Bits(value);
+                    return;
+                case kBackgroundGradientCenterXChannel:
+                    g.position.x = value;
+                    return;
+                case kBackgroundGradientCenterYChannel:
+                    g.position.y = value;
+                    return;
+                case kBackgroundGradientStopCountChannel:
+                    g.stopCount = Mathf.Clamp(BitConverter.SingleToInt32Bits(value), 0, UnmanagedBackgroundGradient.MaxStops);
+                    return;
+            }
+
+            int stopIndex = (channel - kBackgroundGradientStopChannelStart) / kBackgroundGradientChannelsPerStop;
+            int sub = (channel - kBackgroundGradientStopChannelStart) % kBackgroundGradientChannelsPerStop;
+            if (stopIndex < 0 || stopIndex >= UnmanagedBackgroundGradient.MaxStops)
+                return;
+
+            var s = g.stops[stopIndex];
+            switch (sub)
+            {
+                case 0: s.color.r = value; break;
+                case 1: s.color.g = value; break;
+                case 2: s.color.b = value; break;
+                case 3: s.color.a = value; break;
+                case kBackgroundGradientStopPositionSubChannel: s.position = value; break;
+                case kBackgroundGradientStopIsPercentSubChannel: s.positionIsPercent = BitConverter.SingleToInt32Bits(value) != 0 ? 1 : 0; break;
+            }
+            g.stops[stopIndex] = s;
+        }
+
+        // Out-of-range stop reads return 0 so unauthored elements don't fault (same policy as filter).
+        private static float ReadBackgroundGradientChannel(VisualElement element, int channel)
+        {
+            var g = element.computedStyle.backgroundImage.GetGradient();
+            switch (channel)
+            {
+                case kBackgroundGradientTypeChannel: return BitConverter.Int32BitsToSingle((int)g.type);
+                case kBackgroundGradientAngleChannel: return g.angle;
+                case kBackgroundGradientShapeChannel: return BitConverter.Int32BitsToSingle((int)g.shape);
+                case kBackgroundGradientSizeChannel: return BitConverter.Int32BitsToSingle((int)g.size);
+                case kBackgroundGradientCenterXChannel: return g.position.x;
+                case kBackgroundGradientCenterYChannel: return g.position.y;
+                case kBackgroundGradientStopCountChannel: return BitConverter.Int32BitsToSingle(g.stopCount);
+            }
+
+            int stopIndex = (channel - kBackgroundGradientStopChannelStart) / kBackgroundGradientChannelsPerStop;
+            int sub = (channel - kBackgroundGradientStopChannelStart) % kBackgroundGradientChannelsPerStop;
+            if (stopIndex < 0 || stopIndex >= g.stopCount)
+                return sub == kBackgroundGradientStopIsPercentSubChannel ? BitConverter.Int32BitsToSingle(0) : 0f;
+
+            var s = g.stops[stopIndex];
+            return sub switch
+            {
+                0 => s.color.r,
+                1 => s.color.g,
+                2 => s.color.b,
+                3 => s.color.a,
+                kBackgroundGradientStopPositionSubChannel => s.position,
+                kBackgroundGradientStopIsPercentSubChannel => BitConverter.Int32BitsToSingle(s.positionIsPercent),
+                _ => 0f,
+            };
+        }
+
+        // Snapshot helper for the recording bridge, which can't reach the style data groups directly.
+        [VisibleToOtherModules("UnityEditor.UIToolkitAuthoringModule")]
+        internal static Background ReadBackgroundSnapshot(VisualElement element)
+        {
+            if (element == null)
+                return default;
+            return Background.From(element.computedStyle.backgroundImage);
+        }
+
+        // Returns the pending background snapshot for (e, id), lazily seeding it from
+        // computedStyle on first access so unanimated channels keep their current values.
+        private PendingBackground GetOrLoadPendingBackground(VisualElement e, StylePropertyId id)
+        {
+            m_PendingBackgroundWrites ??= new Dictionary<(VisualElement, StylePropertyId), PendingBackground>();
+            if (!m_PendingBackgroundWrites.TryGetValue((e, id), out var pending))
+            {
+                var current = e.computedStyle.backgroundImage;
+                pending = new PendingBackground
+                {
+                    imageEntityId = current.imageEntityId,
+                    gradient = current.GetGradient(),
+                };
+                m_PendingBackgroundWrites[(e, id)] = pending;
+            }
+            return pending;
+        }
+
+        // Called after IterateOnBoundValues finishes (and after each non-batched Set*Value
+        // call) to push the accumulated backgrounds onto each element's computedStyle in
+        // a single ApplyPropertyAnimation per (element, id) pair.
+        internal void FlushPendingBackgroundWrites()
+        {
+            if (m_PendingBackgroundWrites == null || m_PendingBackgroundWrites.Count == 0)
+                return;
+
+            foreach (var kvp in m_PendingBackgroundWrites)
+            {
+                var (e, id) = kvp.Key;
+                var pending = kvp.Value;
+                e.computedStyle.ApplyPropertyAnimation(e, id, Background.From(pending.imageEntityId, pending.gradient));
+            }
+            m_PendingBackgroundWrites.Clear();
+        }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

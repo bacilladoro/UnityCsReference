@@ -10,6 +10,7 @@ using UnityEditor.Profiling;
 using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEngine.UIElements.Internal;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Search
 {
@@ -56,7 +57,7 @@ namespace UnityEditor.Search
         }
 
         bool ITableView.readOnly => false;
-        internal static string resultViewId = "table";
+        internal const string resultViewId = "table";
         public override string ViewId => resultViewId;
         public override bool ShowNoResultMessage => m_ViewModel.displayMode != DisplayMode.Table;
 
@@ -631,7 +632,8 @@ namespace UnityEditor.Search
             };
         }
 
-        static ItemCellDescriptor k_InvalidDescriptor = new();
+        [NoAutoStaticsCleanup] // Immutable default/invalid sentinel value; holds no user-code references, safe to persist across reloads.
+        static readonly ItemCellDescriptor k_InvalidDescriptor = new();
 
         SearchTableViewCell GetCell(ItemCellDescriptor descriptor)
         {
@@ -733,9 +735,9 @@ namespace UnityEditor.Search
         float ITableView.GetRowHeight() => m_ListView.fixedItemHeight;
         IEnumerable<SearchItem> ITableView.GetRows() => m_ViewModel.results;
         SearchTable ITableView.GetSearchTable() => tableConfig;
-        #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+        #pragma warning disable UAC2001 // Avoid Linq
         void ITableView.SetSelection(IEnumerable<SearchItem> items) => m_ViewModel.SetSelection(items.Select(e => m_ViewModel.results.IndexOf(e)).Where(i => i != -1).ToArray());
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         void ITableView.OnItemExecuted(SearchItem item) => m_ViewModel.ExecuteSelection();
         void ITableView.SetDirty() => Refresh();
         int ITableView.GetColumnIndex(string name) => GetColumnIndex(name);
@@ -1031,14 +1033,14 @@ namespace UnityEditor.Search
                 return;
 
             var oldColumns = tableConfig.columns ?? Array.Empty<SearchColumn>();
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var uniqueColumns = newColumns.Where(newColumn => Array.TrueForAll(oldColumns, c => c.selector != newColumn.selector)).ToList();
             if (uniqueColumns.Count == 0)
             {
                 Debug.LogWarning($"Column already exists in table view: {string.Join(",", newColumns.Select(c => c.ToString()))}");
                 return;
             }
-            #pragma warning restore UA2001
+            #pragma warning restore UAC2001
 
             var searchColumns = new List<SearchColumn>(oldColumns);
             if (insertColumnAt == -1)
@@ -1093,9 +1095,9 @@ namespace UnityEditor.Search
 
             foreach (var sc in tableConfig.columns)
             {
-                #pragma warning disable UA2006 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2006 // Avoid Linq
                 if (!clear && columns.Any(x => string.Equals(x.name, sc.path, StringComparison.Ordinal)))
-#pragma warning restore UA2006
+#pragma warning restore UAC2006
                     continue;
 
                 // FIXME: Each call to Add here does a Rebuild of the table view
@@ -1134,14 +1136,14 @@ namespace UnityEditor.Search
 
             var fields = new HashSet<SearchField>();
             foreach (var e in items ?? GetElements())
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 fields.UnionWith(e.GetFields().Where(f => f.value != null));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             if (fields.Count > 0)
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 currentTableConfig.columns = fields.Select(f => ItemSelectors.CreateColumn(f.label, f.name, options: options)).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             tableConfig = currentTableConfig;
             UpdateItemHeight();
@@ -1149,9 +1151,9 @@ namespace UnityEditor.Search
 
         internal void SetupColumns(IList<SearchField> fields)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var searchColumns = tableConfig?.columns != null ? new List<SearchColumn>(tableConfig.columns.Where(c =>
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 var fp = fields.IndexOf(new SearchField(c.selector));
                 if (fp != -1)

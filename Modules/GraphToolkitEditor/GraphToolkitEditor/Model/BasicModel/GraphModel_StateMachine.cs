@@ -4,17 +4,39 @@
 
 using System;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 
 namespace Unity.GraphToolkit.Editor
 {
     abstract partial class GraphModel
     {
+        [NoAutoStaticsCleanup] // fixed array of condition type factories; lambdas capture no user state, safe to persist
         static readonly (string, ConditionModelFactory)[] k_DefaultConditionTypes =
         {
-            ("Add Group Condition", _ => new GroupConditionModel()),
-            ("Add Variable Condition", _ => new VariableConditionModel()),
+            ("Group Condition", _ => new GroupConditionModel()),
+            ("Variable Condition", _ => new VariableConditionModel()),
         };
+
+        [NoAutoStaticsCleanup] // fixed array of self transition types; safe to persist across reload
+        static readonly Type[] k_BuiltInSelfTransitionTypes =
+        {
+            typeof(SelfTransitionModel)
+        };
+
+        /// <summary>
+        /// Returns the single-state transition support types that can be created on a state in this graph.
+        /// </summary>
+        /// <returns>The single-state transition support types that can be created on a state in this graph.</returns>
+        /// <remarks>
+        /// The returned types are passed to <see cref="CreateSelfTransitionSupport"/>.
+        /// By default this is only the <see cref="SelfTransitionModel"/>).
+        /// Implementations override this to surface additional, user-defined transition types.
+        /// </remarks>
+        public virtual IReadOnlyList<Type> GetSelfTransitionModelTypes()
+        {
+            return k_BuiltInSelfTransitionTypes;
+        }
 
         /// <summary>
         /// A delegate to create a new condition model.
@@ -40,24 +62,22 @@ namespace Unity.GraphToolkit.Editor
         /// <param name="fromPort">The port from which the transition originates.</param>
         /// <param name="fromStateAnchorSide">The side of the state from which the transition originates.</param>
         /// <param name="fromStateAnchorOffset">The offset of the state from which the transition originates.</param>
-        /// <param name="transitionSupportKind">The kind of transition to create.</param>
+        /// <param name="transitionSupportType">The type of transition to create. Must derive from <see cref="TransitionSupportModel"/>.</param>
         /// <param name="guid">The guid to assign to the newly created item.</param>
         /// <returns>The newly created wire</returns>
         public virtual TransitionSupportModel CreateTransitionSupport(
             PortModel toPort, AnchorSide toStateAnchorSide, float toStateAnchorOffset,
             PortModel fromPort, AnchorSide fromStateAnchorSide, float fromStateAnchorOffset,
-            TransitionSupportKind transitionSupportKind, Hash128 guid = default)
+            Type transitionSupportType, Hash128 guid = default)
         {
-            var transitionType = GetTransitionType(toPort, fromPort, transitionSupportKind);
-            if (transitionType == null)
+            if (transitionSupportType == null)
                 return null;
 
-            var transitionSupport = CreateWire(transitionType, toPort, fromPort, false, guid) as TransitionSupportModel;
+            var transitionSupport = CreateWire(transitionSupportType, toPort, fromPort, false, guid) as TransitionSupportModel;
             if (transitionSupport != null)
             {
                 transitionSupport.SetFromAnchor(fromStateAnchorSide, fromStateAnchorOffset);
                 transitionSupport.SetToAnchor(toStateAnchorSide, toStateAnchorOffset);
-                transitionSupport.TransitionSupportKind = transitionSupportKind;
 
                 var transition = transitionSupport.CreateTransition();
                 transitionSupport.AddTransition(transition);

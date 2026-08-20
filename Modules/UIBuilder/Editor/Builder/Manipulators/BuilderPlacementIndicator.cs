@@ -101,6 +101,17 @@ namespace Unity.UI.Builder
             if (mouseOverElement == documentRootElement)
                 return;
 
+            // CSS Grid: items are placed by grid-column/row, not by sibling order, so a drop onto a
+            // grid container (or one of its items) simply appends to the grid, with no positional insert
+            // line. (indexWithinParent stays -1 from Reset() -> append.)
+            if (BuilderStyleUtilities.IsGridContainer(mouseOverElement))
+                return; // parentElement = mouseOverElement (append into the grid)
+            if (BuilderStyleUtilities.IsGridContainer(mouseOverElement.parent))
+            {
+                parentElement = mouseOverElement.parent; // append into the grid container
+                return;
+            }
+
             var mouseOverElementMouse = mouseOverElement.WorldToLocal(mousePosition);
             var mouseOverElementRect = mouseOverElement.rect;
             var mouseOverElementCanvasRect = BuilderTracker.GetRelativeRectFromTargetElement(mouseOverElement, this.hierarchy.parent);

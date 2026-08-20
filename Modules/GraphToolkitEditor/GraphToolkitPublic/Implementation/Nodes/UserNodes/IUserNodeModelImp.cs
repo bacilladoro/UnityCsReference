@@ -7,11 +7,9 @@ using UnityEngine;
 
 namespace Unity.GraphToolkit.Editor.Implementation
 {
-    interface IUserNodeModelImp : INode
+    interface IUserNodeModelImp : INode, IUserModelImp
     {
         public Node Node { get; }
-
-        bool OnEnableCalled { get; set; }
 
         void CustomOnDefineNode(NodeModel.NodeDefinitionScope definitionScope)
         {
@@ -29,13 +27,13 @@ namespace Unity.GraphToolkit.Editor.Implementation
             }
         }
 
-        void CallOnEnable()
+        void IUserModelImp.CallOnEnable()
         {
             Node?.OnEnable();
             OnEnableCalled = true;
         }
 
-        void CallOnDisable()
+        void IUserModelImp.CallOnDisable()
         {
             OnEnableCalled = false;
             Node?.OnDisable();

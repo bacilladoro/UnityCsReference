@@ -6,11 +6,12 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Threading;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 
 namespace UnityEditor.Search.Providers
 {
-    static class LogProvider
+    static partial class LogProvider
     {
         struct LogEntry
         {
@@ -24,8 +25,11 @@ namespace UnityEditor.Search.Providers
         internal const string type = "log";
         private const string displayName = "Logs";
 
+        [AutoStaticsCleanupOnCodeReload]
         private static int s_LogIndex = 0;
+        [AutoStaticsCleanupOnCodeReload]
         private static List<LogEntry> s_Logs = new List<LogEntry>();
+        [AutoStaticsCleanupOnCodeReload]
         private static volatile bool s_Initialized = false;
 
         [SearchItemProvider]

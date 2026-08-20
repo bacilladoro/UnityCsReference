@@ -48,9 +48,9 @@ namespace UnityEditor.Experimental.GraphView
 
                 if (dropTarget != null)
                 {
-                    #pragma warning disable UA2007 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2007 // Avoid Linq
                     if (exclusionList.Contains(picked))
-#pragma warning restore UA2007
+#pragma warning restore UAC2007
                     {
                         dropTarget = null;
                     }
@@ -235,13 +235,13 @@ namespace UnityEditor.Experimental.GraphView
 
                 m_OriginalPos = new Dictionary<GraphElement, OriginalPos>();
 
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 HashSet<GraphElement> elementsToMove = new HashSet<GraphElement>(m_GraphView.selection.OfType<GraphElement>());
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 var selectedPlacemats = new HashSet<Placemat>(elementsToMove.OfType<Placemat>());
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 foreach (var placemat in selectedPlacemats)
                     placemat.GetElementsToMove(e.shiftKey, elementsToMove);
 
@@ -432,9 +432,9 @@ namespace UnityEditor.Experimental.GraphView
             // TODO: Replace with a temp drawing or something...maybe manipulator could fake position
             // all this to let operation know which element sits under cursor...or is there another way to draw stuff that is being dragged?
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             IDropTarget dropTarget = GetDropTargetAt(e.mousePosition, selection.OfType<VisualElement>());
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             if (m_PrevDropTarget != dropTarget)
             {
@@ -553,16 +553,16 @@ namespace UnityEditor.Experimental.GraphView
                 {
                     if (m_Dragging)
                     {
-                        #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                        #pragma warning disable UAC2001 // Avoid Linq
                         foreach (IGrouping<StackNode, GraphElement> grouping in m_OriginalPos.GroupBy(v => v.Value.stack, v => v.Key))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                         {
-                            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                            #pragma warning disable UAC2001 // Avoid Linq
                             if (grouping.Key != null && m_GraphView.elementsRemovedFromStackNode != null)
-#pragma warning restore UA2001
-                                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+                                #pragma warning disable UAC2001 // Avoid Linq
                                 m_GraphView.elementsRemovedFromStackNode(grouping.Key, grouping);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
                             foreach (GraphElement ge in grouping)
                                 ge.UpdatePresenterPosition();

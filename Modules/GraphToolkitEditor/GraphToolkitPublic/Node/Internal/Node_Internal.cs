@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using Unity.GraphToolkit.Editor.Implementation;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 
 namespace Unity.GraphToolkit.Editor
@@ -612,7 +613,9 @@ namespace Unity.GraphToolkit.Editor
             }
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         static PortDefinitionContext s_PortDefinitionContext = new();
+        [AutoStaticsCleanupOnCodeReload]
         static OptionDefinitionContext s_OptionDefinitionContext = new();
 
         internal void CallOnDefineNode(IPortsDefinition context)

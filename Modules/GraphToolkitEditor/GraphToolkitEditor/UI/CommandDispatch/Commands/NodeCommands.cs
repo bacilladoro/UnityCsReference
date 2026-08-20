@@ -66,9 +66,9 @@ namespace Unity.GraphToolkit.Editor
             using (var graphUpdater = graphModelState.UpdateScope)
             using (var changeScope = graphModelState.GraphModel.ChangeDescriptionScope)
             {
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 foreach (var model in command.Models.OfType<ICollapsible>())
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 {
                     model.Collapsed = command.Value;
                 }
@@ -319,9 +319,9 @@ namespace Unity.GraphToolkit.Editor
         /// <param name="value">The new value.</param>
         public UpdateConstantsValueCommand(IEnumerable<Constant> constants, object value) : this()
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             Constants = constants?.ToList() ?? new List<Constant>();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             Value = value;
         }
 
@@ -407,9 +407,9 @@ namespace Unity.GraphToolkit.Editor
             {
                 foreach (var nodeModel in command.Models)
                 {
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2001 // Avoid Linq
                     var connectedWires = nodeModel.GetConnectedWires().ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     graphModel.DeleteWires(connectedWires);
                 }
                 graphUpdater.MarkUpdated(changeScope.ChangeDescription);
@@ -469,9 +469,9 @@ namespace Unity.GraphToolkit.Editor
             {
                 foreach (var port in command.Models)
                 {
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2001 // Avoid Linq
                     var connectedWires = port.GetConnectedWires().ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     graphModel.DeleteWires(connectedWires);
                 }
                 graphUpdater.MarkUpdated(changeScope.ChangeDescription);

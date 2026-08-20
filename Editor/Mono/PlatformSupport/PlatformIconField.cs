@@ -85,23 +85,23 @@ namespace UnityEditor.PlatformSupport
                 kindDictionary = m_IconsFields[kindKey];
             }
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var groupedBySubKind = icons.GroupBy(i => i.iconSubKind);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             foreach (var subKindGroup in groupedBySubKind)
             {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 var subKindGroupArray = subKindGroup.ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
                 var subKindIcons = Array.ConvertAll(subKindGroupArray, CreatePlatformIconField);
 
                 IconFieldGroupInfo subKindKey = new IconFieldGroupInfo();
                 subKindKey.m_Kind = null;
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 subKindKey.m_Label = subKindGroup.Key;
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 subKindKey.m_IconSlotCount = subKindIcons.Length;
                 subKindKey.m_SetIconSlots = PlayerSettings.GetNonEmptyPlatformIconCount(subKindGroupArray);
 
@@ -278,20 +278,20 @@ namespace UnityEditor.PlatformSupport
             int slotHeight = (int)((float)platformIcon.height / platformIcon.width * slotWidth);
             m_IconLayers.SetImageSize(slotWidth, slotHeight);
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             m_IconLayers.textures = platformIcon.GetTextures().ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             EnsureMinimumNumberOfTextures();
         }
 
         internal override void DrawAt(bool showValidationHelpBox = true)
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             m_IconLayers.textures = platformIcon.GetTextures().ToList();
-#pragma warning restore UA2001
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+#pragma warning disable UAC2001 // Avoid Linq
             m_IconLayers.previewTextures =  platformIcon.GetPreviewTextures().ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             EnsureMinimumNumberOfTextures();
 
             m_IconLayers.DoLayoutList();

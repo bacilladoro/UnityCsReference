@@ -109,6 +109,9 @@ namespace Unity.GraphToolkit.Editor
         /// <param name="evt">The mouse down event.</param>
         protected bool HandleMouseDown(MouseDownEvent evt)
         {
+            if (OwnerModel is IPlaceholder)
+                return false;
+
             var border = OwnerElement?.Border;
 
             if (border == null || !border.ContainsPoint(border.WorldToLocal(evt.mousePosition)))
@@ -357,6 +360,11 @@ namespace Unity.GraphToolkit.Editor
                         break;
                 }
 
+                // The library's callback can fire asynchronously (e.g. cancelling on focus loss is
+                // deferred by a scheduled task), so a new interaction may already have replaced
+                // m_TransitionCandidate by the time it runs. Only reset if this callback's candidate
+                // is still the current one, otherwise it would tear down an unrelated, in-flight drag.
+                var pendingCandidate = m_TransitionCandidate;
                 ItemLibraryService.ShowGraphNodes(GraphView, evt.mousePosition, item =>
                 {
                     if (item is GraphNodeModelLibraryItem nodeItem)
@@ -366,7 +374,9 @@ namespace Unity.GraphToolkit.Editor
                             anchorSide, anchorOffset,
                             newStateAnchorSide, newStateAnchorOffset));
                     }
-                    Reset();
+
+                    if (m_TransitionCandidate == pendingCandidate)
+                        Reset();
                 });
             }
             else if (targetStateSide != AnchorSide.None && snappedElement.Model is StateModel targetStateModel)
@@ -437,6 +447,9 @@ namespace Unity.GraphToolkit.Editor
 
         void CreateTransitionCandidate()
         {
+            if (m_TransitionCandidate != null)
+                Reset();
+
             var model = GhostTransitionModelCreator != null ? GhostTransitionModelCreator.Invoke(GraphView.GraphModel) : new GhostTransitionSupportModel { GraphModel = GraphView.GraphModel };
             m_TransitionCandidate = ModelViewFactory.CreateUI<AbstractTransition>(GraphView, model);
 
@@ -556,7 +569,7 @@ namespace Unity.GraphToolkit.Editor
                 if (wireModel == m_TransitionCandidate?.WireModel)
                     continue;
 
-                if (wireModel is TransitionSupportModel { IsSingleStateTransition: true })
+                if (wireModel is TransitionSupportModel { IsSelfTransition: true })
                     continue;
 
                 if (onlySelected && !GraphView.GraphViewModel.SelectionState.IsSelected(wireModel))

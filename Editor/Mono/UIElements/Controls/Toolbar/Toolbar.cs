@@ -2,8 +2,10 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
 using System;
 using System.Diagnostics;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -19,29 +21,31 @@ namespace UnityEditor.UIElements
         private static readonly string s_ToolbarDarkStyleSheetPath = "StyleSheets/Generated/ToolbarDark.uss.asset";
         private static readonly string s_ToolbarLightStyleSheetPath = "StyleSheets/Generated/ToolbarLight.uss.asset";
 
-        private static readonly StyleSheet s_ToolbarDarkStyleSheet;
-        private static readonly StyleSheet s_ToolbarLightStyleSheet;
+        [AutoStaticsCleanupOnCodeReload]
+        private static StyleSheet s_ToolbarDarkStyleSheet;
+        [AutoStaticsCleanupOnCodeReload]
+        private static StyleSheet s_ToolbarLightStyleSheet;
 
-        static Toolbar()
+        static StyleSheet GetOrLoadToolbarStyleSheet(ref StyleSheet cached, string path)
         {
-            if (Application.isBuildingEditorResources)
-                return;
-            s_ToolbarDarkStyleSheet = EditorGUIUtility.Load(UIElementsEditorUtility.GetStyleSheetPathForCurrentFont(s_ToolbarDarkStyleSheetPath)) as StyleSheet;
-            s_ToolbarDarkStyleSheet.isDefaultStyleSheet = true;
-
-            s_ToolbarLightStyleSheet = EditorGUIUtility.Load(UIElementsEditorUtility.GetStyleSheetPathForCurrentFont(s_ToolbarLightStyleSheetPath)) as StyleSheet;
-            s_ToolbarLightStyleSheet.isDefaultStyleSheet = true;
+            if (cached == null && !Application.isBuildingEditorResources)
+            {
+                cached = EditorGUIUtility.Load(UIElementsEditorUtility.GetStyleSheetPathForCurrentFont(path)) as StyleSheet;
+                if (cached != null)
+                    cached.isDefaultStyleSheet = true;
+            }
+            return cached;
         }
 
         internal static void SetToolbarStyleSheet(VisualElement ve)
         {
             if (EditorGUIUtility.isProSkin)
             {
-                ve.styleSheets.Add(s_ToolbarDarkStyleSheet);
+                ve.styleSheets.Add(GetOrLoadToolbarStyleSheet(ref s_ToolbarDarkStyleSheet, s_ToolbarDarkStyleSheetPath));
             }
             else
             {
-                ve.styleSheets.Add(s_ToolbarLightStyleSheet);
+                ve.styleSheets.Add(GetOrLoadToolbarStyleSheet(ref s_ToolbarLightStyleSheet, s_ToolbarLightStyleSheetPath));
             }
         }
 
@@ -60,3 +64,4 @@ namespace UnityEditor.UIElements
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

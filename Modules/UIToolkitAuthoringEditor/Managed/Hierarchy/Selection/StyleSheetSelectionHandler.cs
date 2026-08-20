@@ -17,7 +17,7 @@ namespace Unity.UIToolkit.Editor;
 /// - Returns EntityId from selection objects for hierarchy integration
 /// - Handles lifecycle with AcquireInstanceId() and ReleaseInstanceId()
 /// </summary>
-internal sealed class StyleSheetSelectionHandler : IStyleSheetSelectionHandler
+internal sealed partial class StyleSheetSelectionHandler : IStyleSheetSelectionHandler
 {
     private readonly struct RefCountedSelection
     {

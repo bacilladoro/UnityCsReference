@@ -59,9 +59,9 @@ namespace UnityEditor
             List<SettingsProvider> children = null;
             var pathItem = FindItem(path.GetHashCode(), rootItem);
             if (pathItem != null)
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 children = pathItem.children.Select(item => FindProviderById(item.id)).Where(p => p != null).ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             return children ?? new List<SettingsProvider>();
         }
 
@@ -98,9 +98,9 @@ namespace UnityEditor
 
         private SettingsProvider FindProviderById(int id)
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return providers.FirstOrDefault(p => p.settingsPath.GetHashCode() == id);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         protected override void RowGUI(RowGUIArgs args)
@@ -204,9 +204,9 @@ namespace UnityEditor
 
         private void AppendSettingsNode(SettingsNode node, string rootPath, int depth, ICollection<TreeViewItem> items)
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var sortedChildNames = node.children.Keys.ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             sortedChildNames.Sort();
             foreach (var nodeName in sortedChildNames)
             {

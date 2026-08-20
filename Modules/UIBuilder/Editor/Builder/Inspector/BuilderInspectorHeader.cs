@@ -31,6 +31,9 @@ namespace Unity.UI.Builder
         UnityEngine.UIElements.HelpBox m_EditorWarningHelpBox;
         VisualElement m_ErrorIcon;
 
+        Button m_StackingIndicator;
+        VisualElement m_StackingContextRoot;
+
         VisualElement currentVisualElement => m_Inspector.currentVisualElement;
 
         StyleSheet styleSheet => m_Inspector.styleSheet;
@@ -80,6 +83,11 @@ namespace Unity.UI.Builder
             m_ErrorIcon.style.backgroundImage = EditorGUIUtility.LoadIcon("console.erroricon");
             AdjustBottomPadding(false);
 
+            m_StackingIndicator = m_Inspector.Q<Button>("stacking-context-indicator");
+            m_StackingIndicator.style.backgroundImage = EditorGUIUtility.IconContent("UnityEditor.SceneHierarchyWindow").image as Texture2D;
+            m_StackingIndicator.clicked += OnStackingIndicatorClicked;
+            UIToolkitAuthoringSettings.EnableZIndexChanged += RefreshStackingIndicator;
+
             // Store callbacks to reduce delegate allocations
             m_ElementNameChangeCallback = OnNameAttributeChange;
             m_SelectorNameChangeCallback = OnStyleSelectorNameChange;
@@ -101,12 +109,15 @@ namespace Unity.UI.Builder
 
         public void Dispose()
         {
+            UIToolkitAuthoringSettings.EnableZIndexChanged -= RefreshStackingIndicator;
             m_DataSourceAndPathView.Dispose();
         }
 
         public void Refresh()
         {
             using var marker = k_RefreshMarker.Auto();
+
+            RefreshStackingIndicator();
 
             if (currentVisualElement == null)
             {
@@ -193,6 +204,36 @@ namespace Unity.UI.Builder
         void RefreshDataSourceAndPathView()
         {
             m_DataSourceAndPathView.Refresh();
+        }
+
+        void RefreshStackingIndicator()
+        {
+            m_StackingContextRoot = null;
+
+            var element = currentVisualElement;
+            if (!UIToolkitAuthoringSettings.EnableZIndex || element == null || m_Selection.selectionType == BuilderSelectionType.Nothing)
+            {
+                m_StackingIndicator.style.display = DisplayStyle.None;
+                return;
+            }
+
+            var root = VisualElement.FindStackingContextRootElement(element, m_Selection.documentRootElement);
+            if (root == null || BuilderSharedStyles.IsDocumentElement(root))
+            {
+                m_StackingIndicator.style.display = DisplayStyle.None;
+                return;
+            }
+
+            m_StackingContextRoot = root;
+            var rootName = !string.IsNullOrEmpty(root.name) ? root.name : root.typeName;
+            m_StackingIndicator.tooltip = string.Format(L10n.Tr("Inside a stacking context established by {0}. Click to select it."), rootName);
+            m_StackingIndicator.style.display = DisplayStyle.Flex;
+        }
+
+        void OnStackingIndicatorClicked()
+        {
+            if (m_StackingContextRoot != null)
+                m_Selection.Select(null, m_StackingContextRoot);
         }
 
         private void SetTypeAndIcon()

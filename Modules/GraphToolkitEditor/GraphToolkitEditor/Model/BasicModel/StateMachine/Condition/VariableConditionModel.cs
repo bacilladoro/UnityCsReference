@@ -17,7 +17,7 @@ namespace Unity.GraphToolkit.Editor
     /// types that need value semantics should implement <see cref="IEquatable{T}"/>.
     /// </remarks>
     [Serializable]
-    internal class VariableConditionModel : ConditionModel
+    internal class VariableConditionModel : ConditionModel, IComparisonConditionModel, IVariableCondition
     {
         [SerializeField]
         Hash128 m_VariableGuid;
@@ -76,6 +76,10 @@ namespace Unity.GraphToolkit.Editor
         /// The constant value the variable is compared against.
         /// </summary>
         public Constant Value => m_Value;
+
+        IVariable IVariableCondition.Variable => Variable;
+
+        object IVariableCondition.Value => Variable == null ? null : m_Value?.ObjectValue;
 
         /// <summary>
         /// Assigns the variable this condition compares.

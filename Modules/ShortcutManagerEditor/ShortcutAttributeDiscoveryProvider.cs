@@ -20,9 +20,9 @@ namespace UnityEditor.ShortcutManagement
             const BindingFlags staticMethodsBindings = BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
             var methods = EditorAssemblies.GetAllMethodsWithAttribute<ShortcutBaseAttribute>(staticMethodsBindings);
 
-            #pragma warning disable UA2005 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2005 // Avoid Linq
             var results = new List<IShortcutEntryDiscoveryInfo>(methods.Count());
-#pragma warning restore UA2005
+#pragma warning restore UAC2005
             foreach (var methodInfo in methods)
             {
                 var attributes = (ShortcutBaseAttribute[])methodInfo.GetCustomAttributes(typeof(ShortcutBaseAttribute), true);

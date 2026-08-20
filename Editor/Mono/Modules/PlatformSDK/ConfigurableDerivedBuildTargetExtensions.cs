@@ -85,6 +85,9 @@ internal class ConfigurableBuildProfileExtension : IBuildProfileExtension
     public void OnDisable() =>
         m_BaseBuildProfileExtension.OnDisable();
 
+    public void OnBuildProfileWindowFocus() =>
+        m_BaseBuildProfileExtension.OnBuildProfileWindowFocus();
+
     public ConfigurableBuildProfileExtension(IBuildProfileExtension baseBuildProfileExtension, SDKPlatformProvider sdkPlatformProvider)
     {
         m_BaseBuildProfileExtension = baseBuildProfileExtension;

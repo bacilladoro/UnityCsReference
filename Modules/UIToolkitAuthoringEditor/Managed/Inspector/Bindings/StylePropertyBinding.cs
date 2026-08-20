@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitAuthoringFramework not yet converted
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -182,6 +183,7 @@ sealed partial class StylePropertyBinding : CustomBinding, ITrackablePropertyPro
         }
     }
 
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     static readonly UnityEngine.Pool.ObjectPool<GenericValueAtPath> s_VisitorPool = new (CreateVisitor, null, OnReleaseVisitor);
 
     static GenericValueAtPath CreateVisitor()
@@ -1136,7 +1138,7 @@ sealed partial class StylePropertyBinding : CustomBinding, ITrackablePropertyPro
 
     private static bool IsStylePropertySupported(StylePropertyId stylePropertyId)
     {
-        return stylePropertyId is not (StylePropertyId.All or StylePropertyId.Custom) && !StyleDebug.IsShorthandProperty(stylePropertyId);
+        return stylePropertyId is not (StylePropertyId.Unknown or StylePropertyId.All or StylePropertyId.Custom) && !StyleDebug.IsShorthandProperty(stylePropertyId);
     }
 
     private static string GetUnsupportedPropertyId(StylePropertyId stylePropertyId)
@@ -1267,3 +1269,4 @@ sealed partial class StylePropertyBinding : CustomBinding, ITrackablePropertyPro
     object IDataSourceProvider.dataSource => null;
     PropertyPath IDataSourceProvider.dataSourcePath => PropertyPath.FromName(m_StylePropertyCSharpName);
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

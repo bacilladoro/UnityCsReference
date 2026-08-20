@@ -54,4 +54,30 @@ unsafe class LayoutProcessorNative : ILayoutProcessor
             }
         }
     }
+
+    LayoutSize ILayoutProcessor.Measure(LayoutNode node, float availableWidth, LayoutMeasureMode widthMode, float availableHeight, LayoutMeasureMode heightMode, LayoutDirection parentDirection)
+    {
+        var pNode = (IntPtr)(&node);
+
+        IntPtr exceptionPlaceHolder = IntPtr.Zero;
+
+        fixed (void* ptrState = &m_State)
+        {
+            var pState = (IntPtr) ptrState;
+
+            LayoutNative.MeasureNode(pNode, availableWidth, (int)widthMode, availableHeight, (int)heightMode, (int)parentDirection, pState, (IntPtr)(&exceptionPlaceHolder), out float w, out float h);
+
+            if (exceptionPlaceHolder != IntPtr.Zero)
+            {
+                GCHandle handle = GCHandle.FromIntPtr(exceptionPlaceHolder);
+                Exception e = handle.Target as Exception;
+                handle.Free();
+                m_State.error = false;
+                ExceptionDispatchInfo edi = ExceptionDispatchInfo.Capture(e);
+                edi.Throw();
+            }
+
+            return new LayoutSize(w, h);
+        }
+    }
 }

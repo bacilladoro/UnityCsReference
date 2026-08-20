@@ -19,7 +19,7 @@ namespace Unity.GraphToolkit.Editor
         [SerializeField, HideInInspector]
         string m_Name;
 
-        internal static string nameFieldName = nameof(m_Name);
+        internal const string nameFieldName = nameof(m_Name);
 
         /// <inheritdoc />
         /// <remarks>Setter implementations should set the <see cref="ChangeHint.Data"/> change hint.</remarks>

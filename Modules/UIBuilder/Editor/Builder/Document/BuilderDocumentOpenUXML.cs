@@ -10,6 +10,7 @@ using System;
 using System.IO;
 using System.Text;
 using Unity.Scripting.LifecycleManagement;
+using Unity.UIToolkit.Editor;
 using UnityEditor.UIElements;
 using UnityEngine.Pool;
 using UnityEngine.Serialization;
@@ -61,6 +62,13 @@ namespace Unity.UI.Builder
 
         bool m_HasUnsavedChanges;
         bool m_DocumentBeingSavedExplicitly;
+        // Stylesheet reimports we told the registry we would drive ourselves, so we can hand it the matching
+        // reload notifications once our own reload has settled.
+        List<StyleSheet> m_ClaimedExternalStyleSheets;
+        // The assets we last reported open to the registry, so we can release assets that were dropped.
+        // Not serialized on purpose: the registry's own open set does not survive a domain reload either.
+        List<Object> m_ReportedAssets;
+        bool m_ExternalReimportInProgress;
         BuilderUXMLFileSettings m_FileSettings;
         BuilderDocument m_Document;
         VisualTreeAsset m_VisualTreeAsset;
@@ -74,8 +82,6 @@ namespace Unity.UI.Builder
         // Used in tests
         internal bool isBackupSet => m_VisualTreeAssetBackup != null;
 
-        [AutoStaticsCleanupOnCodeReload]
-        internal static Func<string, int> s_UnsavedChangesDialogCallback = PromptForUnsavedChanges;
         [AutoStaticsCleanupOnCodeReload]
         internal static Action<string, string> s_WriteToDiskCallback = WriteToDisk;
         [AutoStaticsCleanupOnCodeReload]
@@ -312,9 +318,19 @@ namespace Unity.UI.Builder
 
         public void Clear()
         {
+            var sharedWithAnotherEditor =
+                UIAssetRegistry.LiveInstance?.IsOpenForWritingByOther(m_VisualTreeAsset, this) ?? false;
+
+            // Using LiveInstance here intentionally because Clear() runs from the BuilderDocument constructor,
+            // where accessing ScriptableSingleton.instance (which loads a file) is illegal. If the registry isn't alive
+            // yet there is nothing tracked to release anyway.
+            UIAssetRegistry.LiveInstance?.CloseAll(this);
+            m_ReportedAssets?.Clear();
+
             ClearUndo();
 
-            RestoreAssetsFromBackup();
+            if (!sharedWithAnotherEditor)
+                RestoreAssetsFromBackup();
 
             ClearBackups();
             m_OpenendVisualTreeAssetOldPath = string.Empty;
@@ -376,14 +392,24 @@ namespace Unity.UI.Builder
 
             AddStyleSheetsToAllRootElements();
 
+            if (styleSheet != null)
+                UIAssetRegistry.instance.Open(styleSheet, this, UIAssetAccess.ReadWrite);
+
             hasUnsavedChanges = true;
         }
 
         public void RemoveStyleSheetFromDocument(int ussIndex)
         {
+            var removedStyleSheet = ussIndex >= 0 && ussIndex < m_OpenUSSFiles.Count
+                ? m_OpenUSSFiles[ussIndex].styleSheet
+                : null;
+
             RemoveStyleSheetFromLists(ussIndex);
 
             AddStyleSheetsToAllRootElements();
+
+            if (removedStyleSheet != null)
+                UIAssetRegistry.instance.Close(removedStyleSheet, this);
 
             hasUnsavedChanges = true;
         }
@@ -475,48 +501,71 @@ namespace Unity.UI.Builder
                 }
             }
 
-            ClearUndo();
+            var savedContext = new VisualTreeAssetEditingContext(visualTreeAsset);
+            PreSaveCommand.Execute(CommandSources.Builder, savedContext);
 
-            var startTime = DateTime.UtcNow;
-            using var pool = ListPool<BuilderDocumentOpenUSS>.Get(out var savedUSSFiles);
-
-            // Save USS files.
-            foreach (var openUSSFile in m_OpenUSSFiles)
+            var succeeded = true;
+            try
             {
-                if (openUSSFile.SaveToDisk(visualTreeAsset))
+                ClearUndo();
+
+                var startTime = DateTime.UtcNow;
+                using var pool = ListPool<BuilderDocumentOpenUSS>.Get(out var savedUSSFiles);
+
+                // Save USS files.
+                foreach (var openUSSFile in m_OpenUSSFiles)
                 {
-                    savedUSSFiles.Add(openUSSFile);
+                    if (openUSSFile.SaveToDisk(visualTreeAsset, out var ussFailed))
+                    {
+                        savedUSSFiles.Add(openUSSFile);
+                    }
+                    succeeded &= !ussFailed;
                 }
+
+                var oldUxmlTest = m_VisualTreeAssetBackup ? m_VisualTreeAssetBackup.GenerateUXML() : string.Empty;
+
+                // Save UXML files
+                // Saving all open UXML files to ensure references correct upon changes in child documents.
+                foreach (var openUXMLFile in openUXMLFiles)
+                    openUXMLFile.PreSaveSyncBackup();
+
+                bool shouldSave = m_OpenendVisualTreeAssetOldPath != newUxmlPath;
+                var uxmlText = visualTreeAsset.GenerateUXML();
+
+                if (uxmlText != null)
+                {
+                    if (!shouldSave && m_VisualTreeAssetBackup)
+                    {
+                        shouldSave = oldUxmlTest != uxmlText;
+                    }
+
+                    if (shouldSave)
+                    {
+                        succeeded &= BuilderAssetUtilities.WriteTextFileToDisk(newUxmlPath, uxmlText);
+                    }
+                }
+                else
+                {
+                    // A null (not empty) export means the document could not be serialized at all.
+                    succeeded = false;
+                }
+
+                needsFullRefresh |= ReloadDocument(documentRootElement, newUxmlPath, savedUSSFiles);
+
+                // ReloadDocument clears the unsaved flag as part of its normal post-save bookkeeping. If a write
+                // failed the changes are still only in memory, so put the "*" back.
+                if (!succeeded)
+                    hasUnsavedChanges = true;
+
+                var assetSize = uxmlText?.Length ?? 0;
+                BuilderAnalyticsUtility.SendSaveEvent(startTime, this, newUxmlPath, assetSize);
+            }
+            finally
+            {
+                PostSaveCommand.Execute(CommandSources.Builder, savedContext, succeeded);
             }
 
-            var oldUxmlTest = m_VisualTreeAssetBackup ? m_VisualTreeAssetBackup.GenerateUXML() : string.Empty;
-
-            // Save UXML files
-            // Saving all open UXML files to ensure references correct upon changes in child documents.
-            foreach (var openUXMLFile in openUXMLFiles)
-                openUXMLFile.PreSaveSyncBackup();
-
-            bool shouldSave = m_OpenendVisualTreeAssetOldPath != newUxmlPath;
-            var uxmlText = visualTreeAsset.GenerateUXML();
-
-            if (uxmlText != null)
-            {
-                if (!shouldSave && m_VisualTreeAssetBackup)
-                {
-                    shouldSave = oldUxmlTest != uxmlText;
-                }
-
-                if (shouldSave)
-                {
-                    BuilderAssetUtilities.WriteTextFileToDisk(newUxmlPath, uxmlText);
-                }
-            }
-
-            needsFullRefresh |= ReloadDocument(documentRootElement, newUxmlPath, savedUSSFiles);
-            var assetSize = uxmlText?.Length ?? 0;
-            BuilderAnalyticsUtility.SendSaveEvent(startTime, this, newUxmlPath, assetSize);
-
-            return true;
+            return succeeded;
         }
 
         bool ReloadDocument(VisualElement documentRootElement, string newUxmlPath, List<BuilderDocumentOpenUSS> savedUSSFiles)
@@ -660,10 +709,8 @@ namespace Unity.UI.Builder
 
             if (assetModifiedExternally)
             {
-                // We can use the UXML and USS previews to detect if a change was really made externally. If not, we can
-                // restore the unsaved changes automatically. If a change was really made, then we offer the user with
-                // the choice of either keeping the UI Builder unsaved changes, use the external changes, or save the
-                // work in progress in the UI Builder to a temporary file and use the external changes.
+                // The reimport may not have actually changed the exported content (e.g. a touch/no-op import);
+                // in that case keep our unsaved edits silently rather than resolving a non-existent conflict.
                 var ussWasModified = false;
                 foreach (var openUssFile in m_OpenUSSFiles)
                 {
@@ -687,17 +734,16 @@ namespace Unity.UI.Builder
                     return false;
                 }
 
-                var promptTitle = string.Format(BuilderConstants.SaveDialogExternalChangesPromptTitle, uxmlPath);
-                var result = s_UnsavedChangesDialogCallback.Invoke(promptTitle);
-
-                switch (result)
+                // A genuine external change conflicts with our unsaved edits. The UIAssetRegistry is the single
+                // resolver: ask it for the decision instead of prompting ourselves, then apply the result.
+                switch (UIAssetRegistry.instance.ResolveExternalChange(visualTreeAsset))
                 {
-                    case 0:
+                    case UIAssetConflictChoice.Keep:
                         RestoreUnsavedChanges();
                         return false;
-                    case 1:
+                    case UIAssetConflictChoice.UseImported:
                         return true;
-                    case 2:
+                    case UIAssetConflictChoice.SaveBackupAndUseImported:
                         WritePreviewToDiskAndUseExternalChanges();
                         return true;
                 }
@@ -709,7 +755,7 @@ namespace Unity.UI.Builder
                     BuilderConstants.SaveDialogSaveChangesPromptMessage,
                     BuilderConstants.DialogSaveActionOption,
                     BuilderConstants.DialogCancelOption,
-                    BuilderConstants.DialogDontSaveActionOption);
+                    BuilderConstants.DialogDiscardChangesActionOption);
 
                 switch (option)
                 {
@@ -719,9 +765,8 @@ namespace Unity.UI.Builder
                     // Cancel
                     case 1:
                         return false;
-                    // Don't Save
                     case 2:
-                        RestoreAssetsFromBackup();
+                        UIAssetRegistry.instance.DiscardAsset(visualTreeAsset, this);
                         return true;
                 }
             }
@@ -764,6 +809,54 @@ namespace Unity.UI.Builder
             ReloadDocumentToCanvas(documentElement);
             GenerateUxmlPreview();
             GenerateUssPreview();
+
+            // The asset may already have unsaved changes from another tool (e.g. it was edited in the UI Stage
+            // before being opened here). LoadDocument forces a clean state, so reflect the registry's truth
+            // instead of showing no "*".
+            if (ReportOpenAssetsToRegistry())
+                hasUnsavedChanges = true;
+        }
+
+        /// <summary>
+        /// Reports the currently open document (and its stylesheets) to the unified asset registry as read-write,
+        /// so dirtiness/save/discard stay coordinated with the other authoring tools. Returns whether any of them
+        /// already had unsaved changes.
+        /// </summary>
+        internal bool ReportOpenAssetsToRegistry()
+        {
+            var registry = UIAssetRegistry.instance;
+
+            using var _ = ListPool<Object>.Get(out var current);
+            // A never-saved document has no file, so no other tool can share it and the registry has nothing to
+            // coordinate — and a save of it would fail the registry's "no path" check.
+            if (visualTreeAsset != null && EditorUtility.IsPersistent(visualTreeAsset))
+                current.Add(visualTreeAsset);
+            foreach (var openUss in m_OpenUSSFiles)
+                if (openUss?.styleSheet != null)
+                    current.Add(openUss.styleSheet);
+
+            var anyAlreadyDirty = false;
+            foreach (var asset in current)
+            {
+                registry.Open(asset, this, UIAssetAccess.ReadWrite);
+                anyAlreadyDirty |= registry.IsDirty(asset);
+            }
+
+            // Release only what we actually dropped. Closing everything first and re-opening would momentarily
+            // release the last read-write reference to a dirty asset, which the registry reads as "this needs
+            // saving" — a spurious save request on every re-report (an undo, a discard, a domain reload).
+            if (m_ReportedAssets != null)
+            {
+                foreach (var previous in m_ReportedAssets)
+                    if (!ReferenceEquals(previous, null) && !current.Contains(previous))
+                        registry.Close(previous, this);
+            }
+
+            m_ReportedAssets ??= new List<Object>();
+            m_ReportedAssets.Clear();
+            m_ReportedAssets.AddRange(current);
+
+            return anyAlreadyDirty;
         }
 
         public void PostLoadDocumentStyleSheetCleanup()
@@ -798,8 +891,13 @@ namespace Unity.UI.Builder
 
         public void OnPostProcessAsset(string assetPath)
         {
-            if (m_DocumentBeingSavedExplicitly)
+            if (m_DocumentBeingSavedExplicitly || m_ExternalReimportInProgress)
                 return;
+
+            // Only participate when a Builder window is open to drive the reload. Otherwise leave the external
+            // change entirely to the asset registry's own push handling (which the claim below would suppress) — so
+            // we never claim a reimport we won't reload, orphaning it.
+            var builderOpen = EditorWindow.HasOpenInstances<Builder>();
 
             var newVisualTreeAsset = visualTreeAsset;
             var isCurrentDocumentBeingProcessed = assetPath == uxmlOldPath;
@@ -807,17 +905,44 @@ namespace Unity.UI.Builder
 
             if (isCurrentDocumentBeingProcessed || wasCurrentDocumentRenamed)
             {
+                // Claim this reimport so the UIAssetRegistry defers its own external-change handling.
+                if (isCurrentDocumentBeingProcessed && builderOpen)
+                    UIAssetRegistry.instance.ClaimExternalChange(visualTreeAsset);
+
                 newVisualTreeAsset = BuilderPackageUtilities.LoadAssetAtPath<VisualTreeAsset>(assetPath);
             }
             else
             {
                 bool found = false;
+                StyleSheet trackedSheet = null;
                 foreach (var openUSSFile in m_OpenUSSFiles)
+                {
+                    // Capture the currently-held (registry-tracked) instance before CheckPostProcessAssetIfFileChanged
+                    // swaps in the freshly reimported one.
+                    var previousSheet = openUSSFile.styleSheet;
                     if (found = openUSSFile.CheckPostProcessAssetIfFileChanged(assetPath))
+                    {
+                        trackedSheet = previousSheet;
                         break;
+                    }
+                }
 
                 if (!found)
                     return;
+
+                // Claim the stylesheet reimport using the instance the registry actually tracks (the one we held
+                // before the reload). A reimport that replaces the managed object gives it a new entity id the
+                // registry has not rebound to yet, so claiming the freshly loaded instance would silently no-op.
+                if (builderOpen && trackedSheet != null)
+                {
+                    UIAssetRegistry.instance.ClaimExternalChange(trackedSheet);
+                    // Claiming makes the registry skip its own push for this asset, so we owe it the reload
+                    // notification once we are done — otherwise every other holder (the UI Stage) keeps
+                    // rendering the pre-import styles.
+                    m_ClaimedExternalStyleSheets ??= new List<StyleSheet>();
+                    if (!m_ClaimedExternalStyleSheets.Contains(trackedSheet))
+                        m_ClaimedExternalStyleSheets.Add(trackedSheet);
+                }
             }
 
             // LoadDocument() will call Clear() which will try to restore from Backup().
@@ -825,7 +950,7 @@ namespace Unity.UI.Builder
             // and re-imported asset we detected here.
             ClearBackups();
 
-            if (EditorWindow.HasOpenInstances<Builder>())
+            if (builderOpen)
             {
                 // LoadVisualTreeAsset needs to be delayed to ensure that this is called later, while in a correct state.
                 // If there isn't already a call to LoadVisualTreeAsset in the queue, we add one.
@@ -835,6 +960,16 @@ namespace Unity.UI.Builder
                     {
                         m_IsLoadQueued = false;
                         LoadVisualTreeAsset(newVisualTreeAsset);
+
+                        // Now that the reimport/keep existing change has been resolved, notify external tools/windows
+                        // to reload as well — for every asset whose reimport we claimed, not just the document.
+                        UIAssetRegistry.instance.NotifyExternalReload(visualTreeAsset);
+                        if (m_ClaimedExternalStyleSheets != null)
+                        {
+                            foreach (var claimed in m_ClaimedExternalStyleSheets)
+                                UIAssetRegistry.instance.NotifyExternalReload(claimed);
+                            m_ClaimedExternalStyleSheets.Clear();
+                        }
                     };
                     m_IsLoadQueued = true;
                 }
@@ -848,14 +983,34 @@ namespace Unity.UI.Builder
         public void HierarchyChanged(VisualElement element)
         {
             hasUnsavedChanges = true;
+            RefreshUnsavedSnapshots();
         }
 
         public void StylingChanged()
         {
             hasUnsavedChanges = true;
+            RefreshUnsavedSnapshots();
 
             // Make sure active stylesheet is still in the document.
             ValidateActiveStyleSheet();
+        }
+
+        // Re-exports the document and its stylesheets so the registry's "unsaved snapshot" of each matches what
+        // we currently have in memory.
+        //
+        // This has to happen eagerly on every edit. The snapshot is what "Keep My Changes" restores after an
+        // external reimport, and a reimport replaces the in-memory asset before anyone gets a chance to react —
+        // so a snapshot captured later than the edit is already too late. Regenerating it only when the UXML
+        // code-preview pane happens to refresh (which ignores several change types, inline styles among them)
+        // silently answered "keep" with pre-edit content.
+        void RefreshUnsavedSnapshots()
+        {
+            if (visualTreeAsset == null)
+                return;
+
+            GenerateUxmlPreview();
+            foreach (var openUSSFile in m_OpenUSSFiles)
+                openUSSFile?.GeneratePreview();
         }
 
         //
@@ -865,6 +1020,7 @@ namespace Unity.UI.Builder
         internal void GenerateUxmlPreview()
         {
             m_UxmlPreview = visualTreeAsset.GenerateUXML(); // Set this to false to see the special selection elements and attributes.
+            UIAssetRegistry.instance.SetUnsavedSnapshot(visualTreeAsset, m_UxmlPreview);
         }
 
         void GenerateUssPreview()
@@ -897,8 +1053,6 @@ namespace Unity.UI.Builder
 
         public void OnAfterBuilderDeserialize(VisualElement documentRootElement, bool restoringUnsavedChanges = false)
         {
-            visualTreeAsset?.inlineSheet?.RequestRebuild(StyleSheet.RebuildOptions.Synchronous);
-
             // Refresh StyleSheets.
             var styleSheetsUsed = visualTreeAsset.GetAllReferencedStyleSheets();
             while (m_OpenUSSFiles.Count < styleSheetsUsed.Count)
@@ -923,6 +1077,12 @@ namespace Unity.UI.Builder
             // Make sure active stylesheet is still in the document.
             ValidateActiveStyleSheet();
 
+            // The loops above add, replace and drop entries in m_OpenUSSFiles directly (an undo/redo, a discard,
+            // a domain reload), so the registry's view of what we hold is now stale: a dropped slot would leak a
+            // read-write reference that is never released, and a re-adopted one would be edited untracked — where
+            // the registry reports it clean and the next external save clears our "*" over real unsaved edits.
+            ReportOpenAssetsToRegistry();
+
             ReloadDocumentToCanvas(documentRootElement);
         }
 
@@ -945,17 +1105,6 @@ namespace Unity.UI.Builder
         //
         // Private Utilities
         //
-
-        internal static int PromptForUnsavedChanges(string promptTitle)
-        {
-            var result = BuilderDialogsUtility.DisplayDialogComplex(promptTitle,
-                BuilderConstants.SaveDialogExternalChangesPromptMessage,
-                BuilderConstants.SaveDialogExternalChangedOkButton,
-                BuilderConstants.SaveDialogExternalChangedCancelButton,
-                BuilderConstants.SaveDialogExternalChangedAltButton);
-
-            return result;
-        }
 
         static void WriteToDisk(string path, string content)
         {
@@ -986,6 +1135,12 @@ namespace Unity.UI.Builder
             }
 
             hasUnsavedChanges = false;
+        }
+
+        internal void NotifyRegistryOfDiscard()
+        {
+            if (visualTreeAsset != null)
+                UIAssetRegistry.instance.NotifyReverted(visualTreeAsset);
         }
 
         public void RestoreUnsavedChanges()
@@ -1247,6 +1402,9 @@ namespace Unity.UI.Builder
 
         internal void ResyncBackupToCurrentAsset()
         {
+            foreach (var openUSSFile in m_OpenUSSFiles)
+                openUSSFile.ResyncBackupToCurrentAsset();
+
             if (string.IsNullOrEmpty(uxmlOldPath))
                 return;
 
@@ -1404,6 +1562,11 @@ namespace Unity.UI.Builder
 
             // If this is a subdocument, check the parent document for the style sheet.
             return openSubDocumentParent?.GetUssFileFromSheet(styleSheet);
+        }
+
+        public void IgnoreExternalChanges(bool ignore)
+        {
+            m_ExternalReimportInProgress = ignore;
         }
     }
 }

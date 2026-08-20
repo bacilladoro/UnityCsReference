@@ -617,9 +617,9 @@ namespace UnityEditor
 
         private List<AudioCurveWrapper> GetShownAudioCurves()
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return m_AudioCurves.Where(f => m_CurveEditor.GetCurveWrapperFromID(f.id) != null).ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         private void SyncShownCurvesToLegend(List<AudioCurveWrapper> curves)

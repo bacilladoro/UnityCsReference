@@ -88,13 +88,13 @@ namespace UnityEditor.SceneTemplate
 
             var newDependenciesAdded = false;
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             dependencies = depList.Select(d =>
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 var oldDependencyInfo = dependencies.FirstOrDefault(di => di.dependency.GetEntityId() == d.GetEntityId());
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 if (oldDependencyInfo != null)
                     return oldDependencyInfo;
 
@@ -140,9 +140,9 @@ namespace UnityEditor.SceneTemplate
 
             var assetPath = AssetDatabase.GetAssetPath(this);
             var allAssets = AssetDatabase.LoadAllAssetsAtPath(assetPath);
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var oldTexture = allAssets.FirstOrDefault(obj => obj is Texture2D);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             if (oldTexture != null)
                 AssetDatabase.RemoveObjectFromAsset(oldTexture);
 

@@ -674,6 +674,24 @@ namespace Unity.U2D.Physics
         public static float linearSlop => PhysicsWorld_GetLinearSlop();
 
         /// <summary>
+        /// Get the minimum length allowed between the two points that define a segment-like edge (Segment, Capsule, ChainSegment), below which the edge is degenerate.
+        /// This value is <see cref="PhysicsWorld.linearSlop"/>.
+        /// </summary>
+        public static float minEdgeLength => linearSlop;
+
+        /// <summary>
+        /// Get the minimum length of an edge in a polygon built from arbitrary vertices. Two vertices closer together than this are welded into one when the polygon is built.
+        /// This value is 4.0f * <see cref="PhysicsWorld.linearSlop"/>.
+        /// </summary>
+        public static float minPolygonEdgeLength => 4.0f * linearSlop;
+
+        /// <summary>
+        /// Get the minimum perpendicular distance a vertex must be from the line through its neighbors in a polygon built from arbitrary vertices. A vertex closer than this is treated as collinear and removed when the polygon is built.
+        /// This value is 2.0f * <see cref="PhysicsWorld.linearSlop"/>.
+        /// </summary>
+        public static float minPolygonCollinearDistance => 2.0f * linearSlop;
+
+        /// <summary>
         /// Get the distance at which speculative contacts will be calculated. This reduces jitter.
         /// This value is 4.0f * <see cref="PhysicsWorld.lengthUnitsPerMeter"/>. Normally this is 2cm.
         /// </summary>
@@ -2072,7 +2090,19 @@ namespace Unity.U2D.Physics
         /// <param name="bodyCount">The number of bodies to create.</param>
         /// <param name="allocator">The memory allocator to use for the results. This can only be <see cref="Unity.Collections.Allocator.Temp"/>, <see cref="Unity.Collections.Allocator.TempJob"/> or <see cref="Unity.Collections.Allocator.Persistent"/>.</param>
         /// <returns>The created bodies. This NativeArray must be disposed of after use otherwise leaks will occur. The exception to this is if the array is empty.</returns>
-        public unsafe NativeArray<PhysicsBody> CreateBodyBatch(PhysicsBodyDefinition definition, int bodyCount, Allocator allocator = Unity.Collections.Allocator.Temp) => PhysicsBody.CreateBatch(this, definition, bodyCount, allocator);
+        public NativeArray<PhysicsBody> CreateBodyBatch(PhysicsBodyDefinition definition, int bodyCount, Allocator allocator = Unity.Collections.Allocator.Temp) => PhysicsBody.CreateBatch(this, definition, bodyCount, allocator);
+
+        /// <summary>
+        /// Create a batch of bodies in the world, assigning the given owner to every created body.
+        /// </summary>
+        /// <param name="definition">The body definition to use.</param>
+        /// <param name="bodyCount">The number of bodies to create.</param>
+        /// <param name="owner">The owner object to assign to every created body. If null, no owner is assigned.</param>
+        /// <param name="ownerKey">The owner key to assign. Must be non-zero when owner is not null. See <see cref="PhysicsWorld.CreateOwnerKey(UnityEngine.Object)"/>.</param>
+        /// <param name="allocator">The memory allocator to use for the results. This can only be <see cref="Unity.Collections.Allocator.Temp"/>, <see cref="Unity.Collections.Allocator.TempJob"/> or <see cref="Unity.Collections.Allocator.Persistent"/>.</param>
+        /// <remarks>See <see cref="PhysicsBody.SetOwner(UnityEngine.Object)"/>.</remarks>
+        /// <returns>The created bodies. This NativeArray must be disposed of after use otherwise leaks will occur. The exception to this is if the array is empty.</returns>
+        public NativeArray<PhysicsBody> CreateBodyBatch(PhysicsBodyDefinition definition, int bodyCount, UnityEngine.Object owner, int ownerKey, Allocator allocator = Unity.Collections.Allocator.Temp) => PhysicsBody.CreateBatch(this, definition, bodyCount, owner, ownerKey, allocator);
 
         /// <summary>
         /// Create a batch of bodies in the world.
@@ -2083,12 +2113,34 @@ namespace Unity.U2D.Physics
         public NativeArray<PhysicsBody> CreateBodyBatch(ReadOnlySpan<PhysicsBodyDefinition> definitions, Allocator allocator = Unity.Collections.Allocator.Temp) => PhysicsBody.CreateBatch(this, definitions, allocator);
 
         /// <summary>
+        /// Create a batch of bodies in the world, assigning the given owner to every created body.
+        /// </summary>
+        /// <param name="definitions">The definitions used to create the bodies. The number of bodies produced is implicitly controlled by the number of definitions in this span.</param>
+        /// <param name="owner">The owner object to assign to every created body. If null, no owner is assigned.</param>
+        /// <param name="ownerKey">The owner key to assign. Must be non-zero when owner is not null. See <see cref="PhysicsWorld.CreateOwnerKey(UnityEngine.Object)"/>.</param>
+        /// <param name="allocator">The memory allocator to use for the results. This can only be <see cref="Unity.Collections.Allocator.Temp"/>, <see cref="Unity.Collections.Allocator.TempJob"/> or <see cref="Unity.Collections.Allocator.Persistent"/>.</param>
+        /// <remarks>See <see cref="PhysicsBody.SetOwner(UnityEngine.Object)"/>.</remarks>
+        /// <returns>The created bodies. This NativeArray must be disposed of after use otherwise leaks will occur. The exception to this is if the array is empty.</returns>
+        public NativeArray<PhysicsBody> CreateBodyBatch(ReadOnlySpan<PhysicsBodyDefinition> definitions, UnityEngine.Object owner, int ownerKey, Allocator allocator = Unity.Collections.Allocator.Temp) => PhysicsBody.CreateBatch(this, definitions, owner, ownerKey, allocator);
+
+        /// <summary>
         /// Destroy a batch of bodies.
         /// Any invalid bodies will be ignored.
         /// Owned bodies will produce a warning and will not be destroyed (See <see cref="PhysicsBody.SetOwner(UnityEngine.Object)"/>).
         /// </summary>
         /// <param name="bodies">The bodies to destroy.</param>
         public static void DestroyBodyBatch(ReadOnlySpan<PhysicsBody> bodies) => PhysicsBody.DestroyBatch(bodies);
+
+        /// <summary>
+        /// Destroy a batch of bodies.
+        /// Any invalid bodies are ignored.
+        /// A body owned by a different owner key is skipped and left valid; a body with no owner, or one matching the given owner key, is destroyed.
+        /// One summary warning reports how many bodies were skipped this way, rather than one warning per body.
+        /// </summary>
+        /// <remarks>See <see cref="PhysicsBody.SetOwner(UnityEngine.Object)"/>.</remarks>
+        /// <param name="bodies">The bodies to destroy.</param>
+        /// <param name="ownerKey">Optional owner key returned when using <see cref="PhysicsBody.SetOwner(UnityEngine.Object)"/>.</param>
+        public static void DestroyBodyBatch(ReadOnlySpan<PhysicsBody> bodies, int ownerKey) => PhysicsBody.DestroyBatch(bodies, ownerKey);
 
         /// <summary>
         /// Destroy a batch of shapes, destroying all <see cref="PhysicsShape.Contact"/> the shapes are involved in.
@@ -2101,12 +2153,35 @@ namespace Unity.U2D.Physics
         public static void DestroyShapeBatch(ReadOnlySpan<PhysicsShape> shapes, bool updateBodyMass) => PhysicsShape.DestroyBatch(shapes, updateBodyMass);
 
         /// <summary>
+        /// Destroy a batch of shapes, destroying all contacts the shapes are involved in.
+        /// Any invalid shapes are ignored, including chain segment shapes created by a chain, which must be destroyed through their owning chain instead.
+        /// A shape owned by a different owner key is skipped and left valid; a shape with no owner, or one matching the given owner key, is destroyed.
+        /// One summary warning reports how many shapes were skipped this way, rather than one warning per shape.
+        /// </summary>
+        /// <remarks>See <see cref="PhysicsShape.Contact"/>, <see cref="PhysicsChain"/>, <see cref="PhysicsBody.MassConfiguration"/> and <see cref="PhysicsShape.SetOwner(UnityEngine.Object)"/>.</remarks>
+        /// <param name="shapes">The shapes to destroy.</param>
+        /// <param name="updateBodyMass">Whether to update the body mass configuration. Not doing so is faster, especially when destroying multiple shapes.</param>
+        /// <param name="ownerKey">Optional owner key returned when using <see cref="PhysicsShape.SetOwner(UnityEngine.Object)"/>.</param>
+        public static void DestroyShapeBatch(ReadOnlySpan<PhysicsShape> shapes, bool updateBodyMass, int ownerKey) => PhysicsShape.DestroyBatch(shapes, updateBodyMass, ownerKey);
+
+        /// <summary>
         /// Destroy a batch of joints.
         /// Any invalid joints will be ignored.
         /// Owned joints will produce a warning and will not be destroyed (<see cref="PhysicsJoint.SetOwner(UnityEngine.Object)"/>).
         /// </summary>
         /// <param name="joints">The joints to destroy.</param>
         public static void DestroyJointBatch(ReadOnlySpan<PhysicsJoint> joints) => PhysicsJoint.DestroyBatch(joints);
+
+        /// <summary>
+        /// Destroy a batch of joints.
+        /// Any invalid joints are ignored.
+        /// A joint owned by a different owner key is skipped and left valid; a joint with no owner, or one matching the given owner key, is destroyed.
+        /// One summary warning reports how many joints were skipped this way, rather than one warning per joint.
+        /// </summary>
+        /// <remarks>See <see cref="PhysicsJoint.SetOwner(UnityEngine.Object)"/>.</remarks>
+        /// <param name="joints">The joints to destroy.</param>
+        /// <param name="ownerKey">Optional owner key returned when using <see cref="PhysicsJoint.SetOwner(UnityEngine.Object)"/>.</param>
+        public static void DestroyJointBatch(ReadOnlySpan<PhysicsJoint> joints, int ownerKey) => PhysicsJoint.DestroyBatch(joints, ownerKey);
 
         /// <summary>
         /// Create a PhysicsDistanceJoint in the world.
@@ -3635,6 +3710,17 @@ namespace Unity.U2D.Physics
         /// <param name="scale"></param>
         /// <param name="lifetime">How long the element should be drawn for, in seconds. The default is zero indicating that it should only be drawn once. Lifetime is only used when the world is playing.</param>
         public readonly void DrawTransformAxis(PhysicsTransform transform, float scale, float lifetime = 0.0f) => PhysicsWorld_DrawTransformAxis(this, transform, scale, lifetime);
+
+        /// <summary>
+        /// Draw a batch of shapes, each drawn into the world it belongs to.
+        /// </summary>
+        /// <remarks>
+        /// The shapes can belong to different worlds; the world of each shape is locked only when it changes across the batch, so shapes should be ordered by world for the fewest locks.
+        /// Any invalid shape in the batch is ignored.
+        /// See <see cref="PhysicsShape.Draw"/> for drawing a single shape.
+        /// </remarks>
+        /// <param name="shapes">The shapes to draw.</param>
+        public static void DrawShapes(ReadOnlySpan<PhysicsShape> shapes) => PhysicsWorld_DrawShapes(shapes);
 
         /// <undoc/>
         internal static void DrawAllWorlds(PhysicsAABB drawAABB, DrawTarget cameraTarget) => PhysicsWorld_DrawAllWorlds(drawAABB, cameraTarget);

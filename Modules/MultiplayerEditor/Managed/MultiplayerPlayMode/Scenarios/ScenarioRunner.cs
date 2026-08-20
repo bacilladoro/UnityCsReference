@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using Unity.PlayMode.Editor;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using System;
 using System.Threading;
@@ -11,7 +12,7 @@ using UnityEngine;
 
 namespace Unity.Multiplayer.PlayMode.Editor
 {
-    internal class ScenarioRunner : ScriptableSingleton<ScenarioRunner>
+    internal partial class ScenarioRunner : ScriptableSingleton<ScenarioRunner>
     {
         [InitializeOnLoadMethod]
         private static void OnDomainReload()
@@ -49,6 +50,7 @@ namespace Unity.Multiplayer.PlayMode.Editor
         internal Scenario ActiveScenario => m_Scenario;
         internal bool IsRunning => m_IsRunning;
 
+        [AutoStaticsCleanupOnCodeReload] // static event; stale handlers after reload pin old ALC
         internal static event Action<ScenarioStatusData> StatusChanged;
 
         public static void LoadScenario(Scenario scenario)

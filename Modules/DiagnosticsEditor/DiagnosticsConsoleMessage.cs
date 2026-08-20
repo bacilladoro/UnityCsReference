@@ -29,11 +29,11 @@ namespace UnityEditor
 
         public void Update()
         {
-#pragma warning disable UA2001, UA2014 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001, UAC2014 // Avoid Linq
             var switchesInEffect = Debug.diagnosticSwitches.Where(diagnosticSwitch => !diagnosticSwitch.isSetToDefault)
                 .ToArray();
             if (switchesInEffect.SequenceEqual(m_SwitchesInEffect))
-#pragma warning restore UA2001, UA2014
+#pragma warning restore UAC2001, UAC2014
                 return;
 
             m_SwitchesInEffect = switchesInEffect;
@@ -46,9 +46,9 @@ namespace UnityEditor
                     "Diagnostic switches are active and may impact performance or degrade your user experience." +
                     " Switches can be configured through the Diagnostics section in the Preferences window.\n\t"
                     + string.Join("\n\t",
-                        #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                        #pragma warning disable UAC2001 // Avoid Linq
                         switchesInEffect.Select(
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                             diagnosticSwitch =>
                             {
                                 var report = $"{diagnosticSwitch.name}: {diagnosticSwitch.value}";

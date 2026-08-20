@@ -19,7 +19,7 @@ namespace UnityEngine.AdaptivePerformance
             base.Awake();
             if (m_Settings == null)
                 return;
-            ApplyDefaultSetting(m_Settings.scalerSettings.AdaptiveMSAA);
+            ApplyProfileSettings(m_Settings.scalerSettings.AdaptiveMSAA);
         }
 
         /// <summary>

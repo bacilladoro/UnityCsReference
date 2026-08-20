@@ -702,7 +702,9 @@ namespace UnityEditor.UIElements.Bindings
 
         string OnValidateArraySize(string entered)
         {
-            var currentSize = m_DataList?.arraySize ?? 0;
+            // arraySize reports 0 once a multi-selected array passes maxArraySizeForMultiEditing, which would make
+            // every size look like a huge increase. minArraySize reports the real size. (UUM-148151)
+            var currentSize = m_DataList?.minArraySize ?? 0;
             return EditorGUI.TryConfirmArraySizeChange(currentSize, entered, out var newSize)
                 ? newSize.ToString()
                 : currentSize.ToString();

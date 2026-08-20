@@ -26,9 +26,9 @@ namespace UnityEditor
                     as AssetFileNameExtensionAttribute;
                 try
                 {
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2001 // Avoid Linq
                     RegisterExtensionForType(type, attr.preferredExtension, attr.otherExtensions.ToArray());
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 }
                 catch (ArgumentException e)
                 {
@@ -76,12 +76,12 @@ namespace UnityEditor
         {
             if (string.Equals(extension, k_DefaultExtension, StringComparison.OrdinalIgnoreCase))
                 return extension;
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var registered = s_RegisteredExtensionsByType.FirstOrDefault(
-#pragma warning restore UA2001
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+                #pragma warning disable UAC2001 // Avoid Linq
                 kv => kv.Value.Count(ext => string.Equals(ext, extension, StringComparison.OrdinalIgnoreCase)) > 0
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             );
             if (registered.Key != null)
             {

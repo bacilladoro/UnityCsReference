@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Unity.Profiling;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor.Search.Providers;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -44,7 +45,7 @@ namespace UnityEditor.Search
     /// Specialized <see cref="SearchIndexer"/> used to index Unity Assets. See <see cref="AssetIndexer"/> for a specialized SearchIndexer used to index simple assets and
     /// see <see cref="SceneIndexer"/> for an indexer used to index scene and prefabs.
     /// </summary>
-    public abstract class ObjectIndexer : SearchIndexer
+    public abstract partial class ObjectIndexer : SearchIndexer
     {
         static readonly ProfilerMarker k_IndexWordMarker = new($"{nameof(ObjectIndexer)}.{nameof(IndexWord)}");
         static readonly ProfilerMarker k_IndexObjectMarker = new($"{nameof(ObjectIndexer)}.{nameof(IndexObject)}");
@@ -78,9 +79,9 @@ namespace UnityEditor.Search
             {
                 if (m_IgnoredProperties == null)
                 {
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2001 // Avoid Linq
                     m_IgnoredProperties = new HashSet<string>(SearchSettings.ignoredProperties.Split(new char[] { ';', '\n' },
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                                             StringSplitOptions.RemoveEmptyEntries).Select(t =>
                     {
                         if (t.StartsWith("m_"))
@@ -138,9 +139,9 @@ namespace UnityEditor.Search
                     if (m_DoFuzzyMatch)
                         options |= FindOptions.Fuzzy;
 
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2001 // Avoid Linq
                     var documents = subset != null ? subset.Select(r => GetDocument(r.index)) : GetDocuments(ignoreNulls: true);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     foreach (var r in FindProvider.SearchWord(false, word, options, documents))
                     {
                         var documentIndex = FindDocumentIndex(r.id);
@@ -174,9 +175,9 @@ namespace UnityEditor.Search
 
             if (checkRoots)
             {
-                #pragma warning disable UA2006 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2006 // Avoid Linq
                 if (!GetRoots().Any(r => path.StartsWith(r, StringComparison.OrdinalIgnoreCase)))
-#pragma warning restore UA2006
+#pragma warning restore UAC2006
                     return true;
             }
 
@@ -538,6 +539,7 @@ namespace UnityEditor.Search
             return propertyName.Replace("m_", "").Replace(" ", "").ToLowerInvariant();
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         static Func<SerializedProperty, bool> s_IndexAllPropertiesFunc = p => true;
 
         internal void IndexProperties(int documentIndex, in SerializedProperty p, bool recursive, int maxDepth)

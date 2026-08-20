@@ -2,6 +2,8 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
+using Unity.Scripting.LifecycleManagement;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -117,7 +119,7 @@ namespace UnityEngine.UIElements
     /// <summary>
     /// Dispatches events to a <see cref="IPanel"/>.
     /// </summary>
-    public sealed class EventDispatcher
+    public sealed partial class EventDispatcher
     {
         struct EventRecord
         {
@@ -129,6 +131,8 @@ namespace UnityEngine.UIElements
 
         internal ClickDetector m_ClickDetector = new ClickDetector();
 
+
+        [NoAutoStaticsCleanup]
         static readonly ObjectPool<Queue<EventRecord>> k_EventQueuePool = new ObjectPool<Queue<EventRecord>>(() => new Queue<EventRecord>());
         Queue<EventRecord> m_Queue;
         internal PointerDispatchState pointerState { get; } = new PointerDispatchState();
@@ -156,6 +160,8 @@ namespace UnityEngine.UIElements
 
         Stack<DispatchContext> m_DispatchContexts = new Stack<DispatchContext>();
 
+
+        [AutoStaticsCleanupOnCodeReload]
         static EventDispatcher s_EditorEventDispatcher;
 
         internal static EventDispatcher editorDispatcher
@@ -430,3 +436,4 @@ namespace UnityEngine.UIElements
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

@@ -8,6 +8,7 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Reflection;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Search
 {
@@ -69,9 +70,9 @@ namespace UnityEditor.Search
         public SelectorMatch(SearchSelector selector, IEnumerable<SelectorGroup> groups)
         {
             this.selector = selector;
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             this.groups = groups.ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         public override string ToString()
@@ -89,9 +90,9 @@ namespace UnityEditor.Search
         internal string path => groups[0].value;
 
         internal string this[int index] => groups[index + 1].value;
-        #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+        #pragma warning disable UAC2001 // Avoid Linq
         internal string this[string captureName] => groups.FirstOrDefault(g => string.Equals(captureName, g.name, StringComparison.OrdinalIgnoreCase)).value;
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
         internal SearchSelectorArgs(SelectorMatch match, SearchItem current)
         {
@@ -136,13 +137,20 @@ namespace UnityEditor.Search
         }
     }
 
-    static class SelectorManager
+    static partial class SelectorManager
     {
-        public static List<SearchSelector> selectors { get; private set; }
+        [AutoStaticsCleanupOnCodeReload]
+        private static List<SearchSelector> s_Selectors;
 
-        static SelectorManager()
+        public static List<SearchSelector> selectors
         {
-            RefreshSelectors();
+            get
+            {
+                if (s_Selectors == null)
+                    RefreshSelectors();
+                return s_Selectors;
+            }
+            private set { s_Selectors = value; }
         }
 
         public static IEnumerable<SelectorMatch> Match(string input, string provider = null)
@@ -155,9 +163,9 @@ namespace UnityEditor.Search
                 if (!match.Success)
                     continue;
 
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 yield return new SelectorMatch(e, match.Groups.Cast<Group>().Select(g => new SelectorGroup(g.Name, g.Value)));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             }
         }
 
@@ -181,9 +189,9 @@ namespace UnityEditor.Search
                 MethodSignature.FromDelegate<SearchSelectorHandler1>(),
                 MethodSignature.FromDelegate<SearchSelectorHandler2>()
             };
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             selectors = ReflectionUtils.LoadAllMethodsWithAttribute(generator, supportedSignatures, ReflectionUtils.AttributeLoaderBehavior.DoNotThrowOnValidation)
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 .Where(s => s.valid)
                 .OrderBy(s => s.priority)
                 .ThenBy(s => string.IsNullOrEmpty(s.provider))

@@ -2,16 +2,21 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
+using Unity.Scripting.LifecycleManagement;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 
 namespace UnityEngine.UIElements
 {
-    internal static class DragAndDropUtility
+    internal static partial class DragAndDropUtility
     {
+        [AutoStaticsCleanupOnCodeReload] // editor factory registered once at startup
         static Func<IDragAndDrop> s_MakeDragAndDropClientFunc;
+        [AutoStaticsCleanupOnCodeReload]
         static IDragAndDrop s_DragAndDropEditor;
+        [AutoStaticsCleanupOnCodeReload]
         static IDragAndDrop s_DragAndDropPlayMode;
 
         internal static IDragAndDrop GetDragAndDrop(IPanel panel)
@@ -126,3 +131,4 @@ namespace UnityEngine.UIElements
         public DragAndDropData data => this;
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

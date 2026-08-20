@@ -12,10 +12,11 @@ using System.Linq;
 using Debug = UnityEngine.Debug;
 using UnityEditor.Connect;
 using System.Globalization;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Search.Providers
 {
-    static class AssetStoreProvider
+    static partial class AssetStoreProvider
     {
  #pragma warning disable CS0649
         class AssetDocumentWrapper : UnityEngine.ScriptableObject
@@ -38,26 +39,30 @@ namespace UnityEditor.Search.Providers
                     SetupMargin(button);
                 }
 
+                [NoAutoStaticsCleanup]
                 public static GUIStyle label = new GUIStyle("label")
                 {
                     richText = true,
                     wordWrap = true,
                 };
 
+                [NoAutoStaticsCleanup]
                 public static GUIStyle nameLabel = new GUIStyle(label)
                 {
                     fontSize = label.fontSize + 2
                 };
 
+                [NoAutoStaticsCleanup]
                 public static GUIStyle separator = new GUIStyle("AnimLeftPaneSeparator");
-
+                [NoAutoStaticsCleanup]
                 public static GUIStyle linkButton = new GUIStyle(EditorStyles.linkLabel);
+                [NoAutoStaticsCleanup]
                 public static GUIStyle button = new GUIStyle(GUI.skin.button);
 
-                public static GUIContent viewMyAsset = new GUIContent(L10n.Tr("View in My Assets"));
-                public static GUIContent addToMyAsset = new GUIContent(L10n.Tr("Add to My Assets"));
-                public static GUIContent viewOnWeb = new GUIContent(L10n.Tr("View on Web"));
-                public static GUIContent eula = new GUIContent(L10n.Tr("Standard Unity Asset Store EULA"));
+                public static readonly GUIContent viewMyAsset = new GUIContent(L10n.Tr("View in My Assets"));
+                public static readonly GUIContent addToMyAsset = new GUIContent(L10n.Tr("Add to My Assets"));
+                public static readonly GUIContent viewOnWeb = new GUIContent(L10n.Tr("View on Web"));
+                public static readonly GUIContent eula = new GUIContent(L10n.Tr("Standard Unity Asset Store EULA"));
 
                 static void SetupMargin(GUIStyle style)
                 {
@@ -425,25 +430,41 @@ namespace UnityEditor.Search.Providers
 
         private const string kSearchEndPoint = "https://assetstore.unity.com/api/search";
         private const string kProductDetailsEndPoint = "https://api.unity.com/v1/products/list";
+        [AutoStaticsCleanupOnCodeReload]
         private static readonly Dictionary<string, PreviewData> s_Previews = new Dictionary<string, PreviewData>();
+        [AutoStaticsCleanupOnCodeReload]
         private static bool s_RequestCheckPurchases;
+        [AutoStaticsCleanupOnCodeReload]
         private static bool s_StartPurchaseRequest;
+        [AutoStaticsCleanupOnCodeReload]
         private static readonly List<PurchaseInfo> s_Purchases = new List<PurchaseInfo>();
+        [AutoStaticsCleanupOnCodeReload]
         private static HashSet<string> purchasePackageIds;
+        [AutoStaticsCleanupOnCodeReload]
         private static string s_PackagesKey;
+        [AutoStaticsCleanupOnCodeReload]
         private static string s_AuthCode;
+        [AutoStaticsCleanupOnCodeReload]
         private static AccessToken s_AccessTokenData;
+        [AutoStaticsCleanupOnCodeReload]
         private static TokenInfo s_TokenInfo;
+        [AutoStaticsCleanupOnCodeReload]
         private static UserInfo s_UserInfo;
         const string k_MultiValueQueryParameter = "multivalue";
+        [AutoStaticsCleanupOnCodeReload]
         private static QueryEngine<QueryDescriptor> s_QueryEngine;
+        [AutoStaticsCleanupOnCodeReload]
         private static List<AssetsLoadingPage> s_AssetsPage;
+        [AutoStaticsCleanupOnCodeReload]
         private static Dictionary<string, object> s_QueryParams;
+        [AutoStaticsCleanupOnCodeReload]
         private static ISearchView s_CurrentSearchView;
         const int kAssetsPerPage = 100;
 
+        [NoAutoStaticsCleanup]
         private static readonly HashSet<string> k_EuroCountries = new HashSet<string>(new[] { "AT", "BE", "ES", "FI", "FR", "DE", "GR", "IE", "IT", "LV", "LT", "LU", "MT", "NL", "PT", "SK", "SI", "ES", "BG", "HR", "CZ", "HU", "PL", "RO", "SE" });
 
+        [NoAutoStaticsCleanup]
         static QueryValue[] k_Categories =
         {
             new QueryValue("3D/All 3D", "3d"),
@@ -481,9 +502,9 @@ namespace UnityEditor.Search.Providers
             public QueryCategoryBlock(IQuerySource source, string id, string value, QueryListBlockAttribute attr)
                  : base(source, id, value, attr)
             {
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 var labelValue = k_Categories.FirstOrDefault(c => (string)c.value == value);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 if (labelValue.displayName != null)
                     label = labelValue.displayName.Split("/")[^1];
             }
@@ -503,6 +524,7 @@ namespace UnityEditor.Search.Providers
             }
         }
 
+        [NoAutoStaticsCleanup]
         static QueryValue[] k_UnityVersions =
         {
             new QueryValue("2022"),
@@ -531,6 +553,7 @@ namespace UnityEditor.Search.Providers
             }
         }
 
+        [NoAutoStaticsCleanup]
         static QueryValue[] k_Platforms =
         {
             new QueryValue("Windows", "standalonewindows64"),
@@ -605,6 +628,7 @@ namespace UnityEditor.Search.Providers
         }
 
 
+        [NoAutoStaticsCleanup]
         static QueryValue[] k_MinRating =
         {
             new QueryValue("5", null, 5),
@@ -631,6 +655,7 @@ namespace UnityEditor.Search.Providers
             }
         }
 
+        [NoAutoStaticsCleanup]
         static QueryValue[] k_PriceRange =
         {
             new QueryValue($"Free", null, 0),
@@ -694,6 +719,7 @@ namespace UnityEditor.Search.Providers
             USD
         }
 
+        [NoAutoStaticsCleanup]
         static Currency s_Currency;
         private static Currency currency
         {
@@ -726,9 +752,9 @@ namespace UnityEditor.Search.Providers
             var query = s_QueryEngine.ParseQuery(context.searchQuery);
             if (!query.valid)
             {
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 Debug.LogError(string.Join(" ", query.errors.Select(e => e.reason)));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 yield break;
             }
 
@@ -808,9 +834,9 @@ namespace UnityEditor.Search.Providers
             List<ISearchNode> searches = new();
             SearchUtils.GetQueryParts(query.queryGraph.root, filters, searches);
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var searchStr = string.Join(" ", searches.Select(s => s.searchValue)).Trim();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             s_QueryParams = new Dictionary<string, object>()
             {
                 { "q", searchStr },
@@ -828,9 +854,9 @@ namespace UnityEditor.Search.Providers
 
                 if (f.filterId == "price")
                 {
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2001 // Avoid Linq
                     var queryvalue = k_PriceRange.FirstOrDefault(qv => qv.value.ToString() == f.filterValue);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     if (queryvalue.value == null)
                         continue;
                     s_QueryParams.Add("max_price", queryvalue.value);
@@ -1141,9 +1167,9 @@ namespace UnityEditor.Search.Providers
 
         static SearchTable GetDefaultTableConfig(SearchContext context)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             return new SearchTable(k_ProviderId, new[] { new SearchColumn("Name", "label") }.Concat(FetchColumns(context, null)));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         static string FetchDescription(SearchItem item, SearchContext context)
@@ -1159,9 +1185,9 @@ namespace UnityEditor.Search.Providers
             if (item.data == null)
             {
                 // Found page for asset:
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 var page = s_AssetsPage.FirstOrDefault(p => p.startIndex <= item.score && item.score < p.endIndex);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 if (page == null)
                 {
                     // Can this happen?
@@ -1202,12 +1228,12 @@ namespace UnityEditor.Search.Providers
                         if (error != null || detail.results.Length == 0)
                             return;
                         doc.productDetail = detail.results[0];
-                        #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                        #pragma warning disable UAC2001 // Avoid Linq
                         doc.images = new[] { doc.productDetail.mainImage.big }.Concat(
-#pragma warning restore UA2001
-                            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+                            #pragma warning disable UAC2001 // Avoid Linq
                             doc.productDetail.images.Where(img => img.type == "screenshot").Select(imgDesc => imgDesc.imageUrl)).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     });
                 }
             }
@@ -1328,9 +1354,9 @@ namespace UnityEditor.Search.Providers
         {
             if (items.Count > 1)
                 return false;
-            #pragma warning disable UA2010 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2010 // Avoid Linq
             return CanShowInPackageManager(items.First());
-#pragma warning restore UA2010
+#pragma warning restore UAC2010
         }
 
         static bool IsItemOwned(SearchItem item)

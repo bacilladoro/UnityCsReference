@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.Bindings;
 using UnityEngine.Multiplayer.Internal;
@@ -17,7 +18,7 @@ namespace UnityEditor.Multiplayer.Internal
 {
     [NativeHeader("Modules/Multiplayer/MultiplayerManager.h")]
     [StaticAccessor("GetMultiplayerManager()", StaticAccessorType.Dot)]
-    internal static class EditorMultiplayerManager
+    internal static partial class EditorMultiplayerManager
     {
         public static extern bool enableMultiplayerRoles { get; set; }
         public static extern MultiplayerRoleFlags activeMultiplayerRoleMask { get; set; }
@@ -34,9 +35,13 @@ namespace UnityEditor.Multiplayer.Internal
         public static extern Hash128 ComputeDependencyHash();
 
 
+        [AutoStaticsCleanupOnCodeReload] // static event; stale handlers after reload pin old ALC
         public static event Func<Rect, UnityEngine.Object[], bool> drawingMultiplayerRoleField;
+        [AutoStaticsCleanupOnCodeReload] // static event; stale handlers after reload pin old ALC
         public static event Action<EditorToolbarDropdown> creatingMultiplayerRoleDropdown;
+        [AutoStaticsCleanupOnCodeReload] // static event; stale handlers after reload pin old ALC
         public static event Action activeMultiplayerRoleChanged;
+        [AutoStaticsCleanupOnCodeReload] // static event; stale handlers after reload pin old ALC
         public static event Action enableMultiplayerRolesChanged;
 
         public static event Action<BuildProfile> drawingMultiplayerBuildOptionsForBuildProfile

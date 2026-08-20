@@ -8,6 +8,7 @@ using System.Linq;
 using System.Reflection;
 using Unity.GraphToolkit.Editor.ContextualMenuItems;
 using Unity.GraphToolkit.Editor.Implementation;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -18,7 +19,7 @@ namespace Unity.GraphToolkit.Editor
     /// A GraphElement to display a <see cref="BlackboardContentModel"/>.
     /// </summary>
     [UnityRestricted]
-    internal class Blackboard : BlackboardElement, IHasContextualMenuItems
+    internal partial class Blackboard : BlackboardElement, IHasContextualMenuItems
     {
         /// <summary>
         /// The USS class name added to this element.
@@ -338,9 +339,9 @@ namespace Unity.GraphToolkit.Editor
                     else
                         insertAfter = (args.childIndex == 0 ? null : group.Items[args.childIndex - 1]);
 
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2001 // Avoid Linq
                     RootView.Dispatch(new ReorderGroupItemsCommand(group, insertAfter, draggedModels.Cast<IGroupItemModel>().ToList()));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     return DragVisualMode.Move;
                 }
             }
@@ -556,7 +557,9 @@ namespace Unity.GraphToolkit.Editor
             UpdateCollapse();
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         static PropertyInfo s_VirtualizationControllerProperty;
+        [AutoStaticsCleanupOnCodeReload]
         static MethodInfo s_GetIndexFromPositionMethod;
 
         /// <summary>
@@ -607,7 +610,8 @@ namespace Unity.GraphToolkit.Editor
         /// </summary>
         void InvokeUserBlackboardContextualMenu(ContextualMenuPopulateEvent evt)
         {
-            var graph = (BlackboardView?.BlackboardRootViewModel?.GraphModelState?.GraphModel as GraphModelImp)?.Graph;
+            // TODO: Add support for state machine menu options (https://jira.unity3d.com/browse/GTF-2539)
+            var graph = (BlackboardView?.BlackboardRootViewModel?.GraphModelState?.GraphModel as GraphModelImp)?.Graph as Graph;
             if (graph == null)
                 return;
 
@@ -726,9 +730,9 @@ namespace Unity.GraphToolkit.Editor
                 {
                     int index = (int)s_GetIndexFromPositionMethod.Invoke(s_VirtualizationControllerProperty.GetValue(m_TreeView), new object[] {m_TreeView.Q<ScrollView>().contentContainer.WorldToLocal(evt.mousePosition)});
                     var model = m_TreeView.GetItemDataForIndex<IGroupItemModel>(index);
-                    #pragma warning disable UA2001, UA2006 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2001, UAC2006 // Avoid Linq
                     if (model != null && model.ParentGroup is GroupModel && !BlackboardView.GetSelection().OfType<IGroupItemModel>().Any(t => t.GetSection() != model.GetSection() || t.ParentGroup is not GroupModel))
-#pragma warning restore UA2001, UA2006
+#pragma warning restore UAC2001, UAC2006
                     {
                         groupModel = model;
                     }
@@ -998,7 +1002,8 @@ namespace Unity.GraphToolkit.Editor
         /// <inheritdoc />
         public IReadOnlyList<ContextualMenuItem> ContextualMenuItems => k_ContextualMenuItems;
 
-        static readonly List<ContextualMenuItem> k_ContextualMenuItems = new() {
+        [AutoStaticsCleanupOnCodeReload]
+        static List<ContextualMenuItem> k_ContextualMenuItems = new() {
             ContextualMenuHelpers.createVariableItem,
             ContextualMenuHelpers.createGroupItem,
             ContextualMenuHelpers.pasteItem,

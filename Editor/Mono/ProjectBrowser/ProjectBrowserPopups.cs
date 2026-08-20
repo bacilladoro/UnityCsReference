@@ -179,9 +179,9 @@ namespace UnityEditor
                 if (prefix == "")
                     return m_ListElements;
                 else
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                     return m_ListElements.Where(
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                         element => element.m_Content.text.StartsWith(prefix, System.StringComparison.OrdinalIgnoreCase)
                     );
             }
@@ -190,13 +190,13 @@ namespace UnityEditor
             {
                 IEnumerable<ListElement> res = BuildQuery(prefix);
                 if (m_MaxCount > 0)
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                     res = res.OrderByDescending(element => element.filterScore).Take(m_MaxCount);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 if (m_SortAlphabetically)
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                     return res.OrderBy(element => element.text.ToLower());
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 else
                     return res;
             }
@@ -205,12 +205,12 @@ namespace UnityEditor
             {
                 IEnumerable<ListElement> res = BuildQuery(prefix);
                 if (m_MaxCount > 0)
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                     res = res.Take(m_MaxCount);
-#pragma warning restore UA2001
-#pragma warning disable UA2005 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+#pragma warning disable UAC2005 // Avoid Linq
                 return res.Count();
-#pragma warning restore UA2005
+#pragma warning restore UAC2005
             }
 
             public void AddElement(string label, string[] types)
@@ -449,17 +449,17 @@ namespace UnityEditor
         {
             if (!m_Data.m_EnableAutoCompletion)
                 return;
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             IEnumerable<string> query = m_Data.GetFilteredList(m_EnteredText).Select(element => element.text);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             if (m_EnteredTextCompletion != "" && m_EnteredTextCompletion.StartsWith(m_EnteredText, System.StringComparison.OrdinalIgnoreCase))
             {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
-#pragma warning disable UA2005 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
+#pragma warning disable UAC2005 // Avoid Linq
                 m_SelectedCompletionIndex = query.TakeWhile(element => element != m_EnteredTextCompletion).Count();
-#pragma warning restore UA2001
-#pragma warning restore UA2005
+#pragma warning restore UAC2001
+#pragma warning restore UAC2005
                 // m_EnteredTextCompletion is already correct
             }
             else
@@ -467,14 +467,14 @@ namespace UnityEditor
                 // Clamp m_SelectedCompletionIndex to 0..query.Count () - 1
                 if (m_SelectedCompletionIndex < 0)
                     m_SelectedCompletionIndex = 0;
-#pragma warning disable UA2005 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2005 // Avoid Linq
                 else if (m_SelectedCompletionIndex >= query.Count())
                     m_SelectedCompletionIndex = query.Count() - 1;
-#pragma warning restore UA2005
+#pragma warning restore UAC2005
 
-#pragma warning disable UA2001, UA2011 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001, UAC2011 // Avoid Linq
                 m_EnteredTextCompletion = query.Skip(m_SelectedCompletionIndex).DefaultIfEmpty("").FirstOrDefault();
-#pragma warning restore UA2001, UA2011
+#pragma warning restore UAC2001, UAC2011
             }
             AdjustRecycledEditorSelectionToCompletion();
         }

@@ -297,7 +297,39 @@ namespace UnityEngine.UIElements
         /// <summary>
         /// The element isn't visible and absent from the layout.
         /// </summary>
-        None = LayoutDisplay.None
+        None = LayoutDisplay.None,
+        /// <summary>
+        /// The element lays out its children using a two-dimensional CSS Grid.
+        /// </summary>
+
+        Grid = LayoutDisplay.Grid
+    }
+
+    /// <summary>
+    /// Controls how the auto-placement algorithm works for a CSS Grid container, specifying
+    /// exactly how auto-placed items get flowed into the grid.
+    /// </summary>
+    /// <remarks>
+    /// It only takes effect on an element with <see cref="DisplayStyle.Grid"/>.
+    /// </remarks>
+    public enum GridAutoFlow
+    {
+        /// <summary>
+        /// Items are placed by filling each row in turn, adding new rows as necessary. This is the default.
+        /// </summary>
+        Row = 0,
+        /// <summary>
+        /// Items are placed by filling each column in turn, adding new columns as necessary.
+        /// </summary>
+        Column = 1,
+        /// <summary>
+        /// Like <see cref="Row"/>, but uses a dense packing algorithm that fills holes earlier in the grid.
+        /// </summary>
+        RowDense = 2,
+        /// <summary>
+        /// Like <see cref="Column"/>, but uses a dense packing algorithm that fills holes earlier in the grid.
+        /// </summary>
+        ColumnDense = 3
     }
 
     /// <summary>
@@ -463,6 +495,29 @@ namespace UnityEngine.UIElements
         /// The animation is paused.
         /// </summary>
         Paused = 1
+    }
+
+    /// <summary>
+    /// Determines whether a USS animation plays forward, backward, or alternates direction across iterations.
+    /// </summary>
+    public enum AnimationDirection
+    {
+        /// <summary>
+        /// The animation plays forward on every iteration.
+        /// </summary>
+        Normal = 0,
+        /// <summary>
+        /// The animation plays backward on every iteration.
+        /// </summary>
+        Reverse = 1,
+        /// <summary>
+        /// The animation plays forward on even iterations and backward on odd iterations.
+        /// </summary>
+        Alternate = 2,
+        /// <summary>
+        /// The animation plays backward on even iterations and forward on odd iterations.
+        /// </summary>
+        AlternateReverse = 3
     }
 
     /// <summary>

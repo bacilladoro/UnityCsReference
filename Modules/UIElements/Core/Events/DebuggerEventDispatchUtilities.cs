@@ -2,12 +2,15 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
+using Unity.Scripting.LifecycleManagement;
 using JetBrains.Annotations;
 
 namespace UnityEngine.UIElements
 {
-    static class DebuggerEventDispatchUtilities
+    static partial class DebuggerEventDispatchUtilities
     {
+        [NoAutoStaticsCleanup] // editor debugger singleton
         internal static IGlobalPanelDebugger s_GlobalPanelDebug;
 
         public static bool InterceptEvent(EventBase evt, [NotNull] BaseVisualElementPanel panel)
@@ -44,3 +47,4 @@ namespace UnityEngine.UIElements
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

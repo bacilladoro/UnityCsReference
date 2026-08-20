@@ -10,6 +10,7 @@ using System.Linq;
 using UnityEditor.Compilation;
 using UnityEditorInternal;
 using UnityEngine;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Scripting.ScriptCompilation
 {
@@ -89,6 +90,7 @@ namespace UnityEditor.Scripting.ScriptCompilation
             }
         }
 
+        [NoAutoStaticsCleanup] // immutable predefined build-rule data set once, safe to persist across reload
         public static Dictionary<string, TargetAssembly> predefinedTargetAssemblies { get; private set; }
 
         internal static readonly string[] s_CSharpVersionDefines =
@@ -104,16 +106,16 @@ namespace UnityEditor.Scripting.ScriptCompilation
 
         public static TargetAssembly[] GetPredefinedTargetAssemblies()
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return predefinedTargetAssemblies.Values.ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         public static string[] PredefinedTargetAssemblyNames
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             get { return predefinedTargetAssemblies.Select(a => AssetPath.GetAssemblyNameWithoutExtension(a.Key)).ToArray(); }
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         /// <summary>
@@ -165,13 +167,13 @@ namespace UnityEditor.Scripting.ScriptCompilation
                     (settings, defines) => customAssembly.IsCompatibleWith(settings.BuildTarget, settings.Subtarget, settings.CompilationOptions, new SymbolDefinitionContext(defines, settings.ExtraGeneralDefines)),
                     customAssembly.CompilerOptions)
                 {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                     ExplicitPrecompiledReferences = customAssembly.PrecompiledReferences?.ToList() ?? new List<string>(),
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     VersionDefines = customAssembly.VersionDefines != null
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                         ? customAssembly.VersionDefines.ToList() : new List<VersionDefine>(),
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     RootNamespace = customAssembly.RootNamespace,
                     ResponseFileDefines = customAssembly.ResponseFileDefines,
                     AsmDefPath = customAssembly.FilePath
@@ -307,9 +309,9 @@ namespace UnityEditor.Scripting.ScriptCompilation
 
                 scriptAssembly.OutputDirectory = settings.OutputDirectory;
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 var cSharpVersionDefines = targetAssembly.Defines == null ? s_CSharpVersionDefines.ToList() : targetAssembly.Defines.Concat(s_CSharpVersionDefines).ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
                 //This is used for Source Generation
                 if ((targetAssembly.Flags & AssemblyFlags.EditorOnly) == AssemblyFlags.EditorOnly)
@@ -327,9 +329,9 @@ namespace UnityEditor.Scripting.ScriptCompilation
                 }
 
                 scriptAssembly.Defines = cSharpVersionDefines.ToArray();
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 scriptAssembly.Files = dirtyTargetAssembly.SourceFiles.ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 scriptAssembly.TargetAssemblyType = targetAssembly.Type;
                 scriptAssembly.AsmDefPath = targetAssembly.AsmDefPath;
 
@@ -383,16 +385,16 @@ namespace UnityEditor.Scripting.ScriptCompilation
                 else
                 {
                     if (settings.CompilationExtension != null)
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                         scriptAssembly.Defines = scriptAssembly.Defines.Concat(settings.CompilationExtension.GetAdditionalEditorDefines()).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 }
             }
 
             if (assemblies.RoslynAnalyzerDllPaths != null)
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 RoslynAnalyzers.SetAnalyzers(scriptAssemblies, assemblies.CustomTargetAssemblies.Values.ToArray(), assemblies.RoslynAnalyzerDllPaths, true);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             return scriptAssemblies;
         }
@@ -431,9 +433,9 @@ namespace UnityEditor.Scripting.ScriptCompilation
             if (!noEngineReferences)
             {
                 // Add predefined custom target references in a hash-set for fast lookup
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 var predefinedCustomTargetRefs = new HashSet<string>(predefinedCustomTargetReferences.Select(x => x.Filename));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 foreach (var unityReference in GetUnityReferences(scriptAssembly, targetAssembly,
                              assemblies.UnityAssemblies, predefinedCustomTargetRefs, settings.CompilationOptions,
                              UnityReferencesOptions.None))
@@ -486,9 +488,9 @@ namespace UnityEditor.Scripting.ScriptCompilation
             {
                 if (!noEngineReferences)
                 {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                     precompiledReferences.AddRange(allPrecompiledAssemblies
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                         .Where(x => (x.Value.Flags & AssemblyFlags.UserAssembly) != AssemblyFlags.UserAssembly)
                         .Select(x => x.Value));
                 }
@@ -504,15 +506,15 @@ namespace UnityEditor.Scripting.ScriptCompilation
             }
             else
             {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 var precompiledAssemblies = allPrecompiledAssemblies.Values.Where(x => (x.Flags & AssemblyFlags.ExplicitlyReferenced) != AssemblyFlags.ExplicitlyReferenced).ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
                 // if noEngineReferences, add just the non-explicitly-referenced user assemblies
                 if (noEngineReferences)
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                     precompiledReferences.AddRange(precompiledAssemblies.Where(x => (x.Flags & AssemblyFlags.UserAssembly) == AssemblyFlags.UserAssembly));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 else
                     precompiledReferences.AddRange(precompiledAssemblies);
             }
@@ -776,9 +778,9 @@ namespace UnityEditor.Scripting.ScriptCompilation
                 assembly.References.AddRange(editorFirstPassAssemblies);
             }
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return assemblies.ToDictionary(x => x.Filename);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         internal static TargetAssembly[] GetTargetAssembliesWithScripts(
@@ -787,9 +789,9 @@ namespace UnityEditor.Scripting.ScriptCompilation
             IDictionary<string, TargetAssembly> customTargetAssemblies,
             ScriptAssemblySettings settings)
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return GetTargetAssembliesWithScriptsHashSet(allScripts, projectDirectory, customTargetAssemblies, settings).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         internal static HashSet<TargetAssembly> GetTargetAssembliesWithScriptsHashSet(

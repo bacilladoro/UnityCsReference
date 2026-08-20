@@ -110,19 +110,19 @@ namespace Unity.UIToolkit.Editor
         // when the element is VTA-backed (staging or VTA-cloned scene); falls back to runtime-only otherwise.
         protected override void AssignClipToTarget(UIAnimationClip newClip)
         {
-            var styleValue = new StyleUIAnimationClip(newClip);
+            var styleValue = new StyleList<UIAnimationClip>(BuildClipListWithAppended(newClip));
 
             if (m_ClipOwner.visualElementAsset != null && m_ClipOwner.visualTreeAssetSource != null)
             {
-                SetInlineStylePropertyCommand<StyleUIAnimationClip>.Execute(CommandSources.Inspector,
+                SetInlineStylePropertyCommand<StyleList<UIAnimationClip>>.Execute(CommandSources.Inspector,
                     m_ClipOwner,
-                    StylePropertyId.UnityAnimationClip,
-                    StylePropertyBinding.SetUIAnimationClip,
+                    StylePropertyId.AnimationNames,
+                    StylePropertyBinding.SetUIAnimationClipList,
                     styleValue);
                 return;
             }
 
-            m_ClipOwner.style.unityAnimationClip = styleValue;
+            m_ClipOwner.style.animationNames = styleValue;
         }
 
         // The VE controller drives preview / record on m_ClipOwner; stop it before dropping the clip
@@ -174,24 +174,16 @@ namespace Unity.UIToolkit.Editor
 
         public override void Synchronize()
         {
-            // Treat a released or detached owner as "no clip" - reading resolvedStyle on a recycled
+            // Treat a released or detached owner as "no clips" - reading resolvedStyle on a recycled
             // layout node throws from LayoutDataAccess. The responder picks up a fresh selection on
             // the next selection-change event (Animator-deletion behavior).
             if (m_ClipOwner == null || m_ClipOwner.resourcesReleased)
             {
-                ClearClip();
+                ReconcileClips(null);
                 return;
             }
 
-            var resolvedClip = m_ClipOwner.resolvedStyle.unityAnimationClip;
-            if (resolvedClip == null)
-            {
-                ClearClip();
-                return;
-            }
-
-            if (resolvedClip != m_UIClip)
-                SetUIClip(resolvedClip);
+            ReconcileClips(m_ClipOwner.resolvedStyle.animationNames);
         }
 
         public override bool IsCompatibleWith(UnityEngine.Object selectedObject)

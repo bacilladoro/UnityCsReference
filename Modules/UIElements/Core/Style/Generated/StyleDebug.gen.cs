@@ -28,8 +28,48 @@ namespace UnityEngine.UIElements
                     return computedStyle.alignItems;
                 case StylePropertyId.AlignSelf:
                     return computedStyle.alignSelf;
-                case StylePropertyId.AnimationPlayState:
-                    return computedStyle.animationPlayState;
+                case StylePropertyId.AnimationDelay:
+                {
+                    var result = new List<float>();
+                    computedStyle.animationData.Read().animationDelay.CopyTo(ref result);
+                    return result;
+                }
+
+                case StylePropertyId.AnimationDirection:
+                {
+                    var result = new List<AnimationDirection>();
+                    computedStyle.animationData.Read().animationDirection.CopyTo(ref result);
+                    return result;
+                }
+
+                case StylePropertyId.AnimationDuration:
+                {
+                    var result = new List<float>();
+                    computedStyle.animationData.Read().animationDuration.CopyTo(ref result);
+                    return result;
+                }
+
+                case StylePropertyId.AnimationIterationCount:
+                {
+                    var result = new List<AnimationIterationCount>();
+                    computedStyle.animationData.Read().animationIterationCount.CopyTo(ref result);
+                    return result;
+                }
+
+                case StylePropertyId.AnimationNames:
+                {
+                    var result = new List<UIAnimationClip>();
+                    computedStyle.animationData.Read().animationNames.CopyTo(ref result);
+                    return result;
+                }
+
+                case StylePropertyId.AnimationPlayStates:
+                {
+                    var result = new List<AnimationPlayState>();
+                    computedStyle.animationData.Read().animationPlayStates.CopyTo(ref result);
+                    return result;
+                }
+
                 case StylePropertyId.AspectRatio:
                     return computedStyle.aspectRatio;
                 case StylePropertyId.BackdropFilter:
@@ -104,10 +144,52 @@ namespace UnityEngine.UIElements
                     return computedStyle.flexWrap;
                 case StylePropertyId.FontSize:
                     return computedStyle.fontSize;
+                case StylePropertyId.GridAutoColumns:
+                {
+                    var result = new List<GridTrackSize>();
+                    computedStyle.gridData.Read().gridAutoColumns.CopyTo(ref result);
+                    return result;
+                }
+
+                case StylePropertyId.GridAutoFlow:
+                    return computedStyle.gridAutoFlow;
+                case StylePropertyId.GridAutoRows:
+                {
+                    var result = new List<GridTrackSize>();
+                    computedStyle.gridData.Read().gridAutoRows.CopyTo(ref result);
+                    return result;
+                }
+
+                case StylePropertyId.GridColumnEnd:
+                    return computedStyle.gridColumnEnd;
+                case StylePropertyId.GridColumnStart:
+                    return computedStyle.gridColumnStart;
+                case StylePropertyId.GridRowEnd:
+                    return computedStyle.gridRowEnd;
+                case StylePropertyId.GridRowStart:
+                    return computedStyle.gridRowStart;
+                case StylePropertyId.GridTemplateColumns:
+                {
+                    var result = new List<GridTrackSize>();
+                    computedStyle.gridData.Read().gridTemplateColumns.CopyTo(ref result);
+                    return result;
+                }
+
+                case StylePropertyId.GridTemplateRows:
+                {
+                    var result = new List<GridTrackSize>();
+                    computedStyle.gridData.Read().gridTemplateRows.CopyTo(ref result);
+                    return result;
+                }
+
                 case StylePropertyId.Height:
                     return computedStyle.height;
                 case StylePropertyId.JustifyContent:
                     return computedStyle.justifyContent;
+                case StylePropertyId.JustifyItems:
+                    return computedStyle.justifyItems;
+                case StylePropertyId.JustifySelf:
+                    return computedStyle.justifySelf;
                 case StylePropertyId.Left:
                     return computedStyle.left;
                 case StylePropertyId.LetterSpacing:
@@ -188,8 +270,6 @@ namespace UnityEngine.UIElements
 
                 case StylePropertyId.Translate:
                     return computedStyle.translate;
-                case StylePropertyId.UnityAnimationClip:
-                    return (UIAnimationClip)Resources.EntityIdToObject(computedStyle.unityAnimationClip);
                 case StylePropertyId.UnityBackgroundImageTintColor:
                     return computedStyle.unityBackgroundImageTintColor;
                 case StylePropertyId.UnityEditorTextRenderingMode:
@@ -238,6 +318,8 @@ namespace UnityEngine.UIElements
                     return computedStyle.width;
                 case StylePropertyId.WordSpacing:
                     return computedStyle.wordSpacing;
+                case StylePropertyId.ZIndex:
+                    return computedStyle.zIndex;
                 default:
                 {
                     Debug.LogAssertion($"Cannot get computed style value for property id {id}");
@@ -256,8 +338,18 @@ namespace UnityEngine.UIElements
                     return typeof(Align);
                 case StylePropertyId.AlignSelf:
                     return typeof(Align);
-                case StylePropertyId.AnimationPlayState:
-                    return typeof(AnimationPlayState);
+                case StylePropertyId.AnimationDelay:
+                    return typeof(List<float>);
+                case StylePropertyId.AnimationDirection:
+                    return typeof(List<AnimationDirection>);
+                case StylePropertyId.AnimationDuration:
+                    return typeof(List<float>);
+                case StylePropertyId.AnimationIterationCount:
+                    return typeof(List<AnimationIterationCount>);
+                case StylePropertyId.AnimationNames:
+                    return typeof(List<UIAnimationClip>);
+                case StylePropertyId.AnimationPlayStates:
+                    return typeof(List<AnimationPlayState>);
                 case StylePropertyId.AspectRatio:
                     return typeof(Ratio);
                 case StylePropertyId.BackdropFilter:
@@ -322,10 +414,32 @@ namespace UnityEngine.UIElements
                     return typeof(Wrap);
                 case StylePropertyId.FontSize:
                     return typeof(Length);
+                case StylePropertyId.GridAutoColumns:
+                    return typeof(List<GridTrackSize>);
+                case StylePropertyId.GridAutoFlow:
+                    return typeof(GridAutoFlow);
+                case StylePropertyId.GridAutoRows:
+                    return typeof(List<GridTrackSize>);
+                case StylePropertyId.GridColumnEnd:
+                    return typeof(GridLine);
+                case StylePropertyId.GridColumnStart:
+                    return typeof(GridLine);
+                case StylePropertyId.GridRowEnd:
+                    return typeof(GridLine);
+                case StylePropertyId.GridRowStart:
+                    return typeof(GridLine);
+                case StylePropertyId.GridTemplateColumns:
+                    return typeof(List<GridTrackSize>);
+                case StylePropertyId.GridTemplateRows:
+                    return typeof(List<GridTrackSize>);
                 case StylePropertyId.Height:
                     return typeof(Length);
                 case StylePropertyId.JustifyContent:
                     return typeof(Justify);
+                case StylePropertyId.JustifyItems:
+                    return typeof(Align);
+                case StylePropertyId.JustifySelf:
+                    return typeof(Align);
                 case StylePropertyId.Left:
                     return typeof(Length);
                 case StylePropertyId.LetterSpacing:
@@ -386,8 +500,6 @@ namespace UnityEngine.UIElements
                     return typeof(List<EasingFunction>);
                 case StylePropertyId.Translate:
                     return typeof(Translate);
-                case StylePropertyId.UnityAnimationClip:
-                    return typeof(UIAnimationClip);
                 case StylePropertyId.UnityBackgroundImageTintColor:
                     return typeof(Color);
                 case StylePropertyId.UnityEditorTextRenderingMode:
@@ -436,6 +548,8 @@ namespace UnityEngine.UIElements
                     return typeof(Length);
                 case StylePropertyId.WordSpacing:
                     return typeof(Length);
+                case StylePropertyId.ZIndex:
+                    return typeof(int);
                 default:
                 {
                     Debug.LogAssertion($"Cannot get computed style type for property id {id}");
@@ -458,10 +572,16 @@ namespace UnityEngine.UIElements
                     return typeof(float);
                 case StylePropertyId.Gap:
                     return typeof(Length);
+                case StylePropertyId.GridColumn:
+                    return typeof(GridLine);
+                case StylePropertyId.GridRow:
+                    return typeof(GridLine);
                 case StylePropertyId.Margin:
                     return typeof(Length);
                 case StylePropertyId.Padding:
                     return typeof(Length);
+                case StylePropertyId.UnityAnimationClip:
+                    return typeof(ReadOnlySpan<EntityId>);
                 default:
                 {
                     Debug.LogAssertion($"Cannot get shorthand style type for property id {id}");
@@ -480,8 +600,18 @@ namespace UnityEngine.UIElements
                     return style.alignItems;
                 case StylePropertyId.AlignSelf:
                     return style.alignSelf;
-                case StylePropertyId.AnimationPlayState:
-                    return style.animationPlayState;
+                case StylePropertyId.AnimationDelay:
+                    return style.animationDelay;
+                case StylePropertyId.AnimationDirection:
+                    return style.animationDirection;
+                case StylePropertyId.AnimationDuration:
+                    return style.animationDuration;
+                case StylePropertyId.AnimationIterationCount:
+                    return style.animationIterationCount;
+                case StylePropertyId.AnimationNames:
+                    return style.animationNames;
+                case StylePropertyId.AnimationPlayStates:
+                    return style.animationPlayStates;
                 case StylePropertyId.AspectRatio:
                     return style.aspectRatio;
                 case StylePropertyId.BackdropFilter:
@@ -546,10 +676,32 @@ namespace UnityEngine.UIElements
                     return style.flexWrap;
                 case StylePropertyId.FontSize:
                     return style.fontSize;
+                case StylePropertyId.GridAutoColumns:
+                    return style.gridAutoColumns;
+                case StylePropertyId.GridAutoFlow:
+                    return style.gridAutoFlow;
+                case StylePropertyId.GridAutoRows:
+                    return style.gridAutoRows;
+                case StylePropertyId.GridColumnEnd:
+                    return style.gridColumnEnd;
+                case StylePropertyId.GridColumnStart:
+                    return style.gridColumnStart;
+                case StylePropertyId.GridRowEnd:
+                    return style.gridRowEnd;
+                case StylePropertyId.GridRowStart:
+                    return style.gridRowStart;
+                case StylePropertyId.GridTemplateColumns:
+                    return style.gridTemplateColumns;
+                case StylePropertyId.GridTemplateRows:
+                    return style.gridTemplateRows;
                 case StylePropertyId.Height:
                     return style.height;
                 case StylePropertyId.JustifyContent:
                     return style.justifyContent;
+                case StylePropertyId.JustifyItems:
+                    return style.justifyItems;
+                case StylePropertyId.JustifySelf:
+                    return style.justifySelf;
                 case StylePropertyId.Left:
                     return style.left;
                 case StylePropertyId.LetterSpacing:
@@ -610,8 +762,6 @@ namespace UnityEngine.UIElements
                     return style.transitionTimingFunction;
                 case StylePropertyId.Translate:
                     return style.translate;
-                case StylePropertyId.UnityAnimationClip:
-                    return style.unityAnimationClip;
                 case StylePropertyId.UnityBackgroundImageTintColor:
                     return style.unityBackgroundImageTintColor;
                 case StylePropertyId.UnityEditorTextRenderingMode:
@@ -660,6 +810,8 @@ namespace UnityEngine.UIElements
                     return style.width;
                 case StylePropertyId.WordSpacing:
                     return style.wordSpacing;
+                case StylePropertyId.ZIndex:
+                    return style.zIndex;
                 default:
                 {
                     Debug.LogAssertion($"Cannot get inline style value for property id {id}");
@@ -681,8 +833,23 @@ namespace UnityEngine.UIElements
                 case StylePropertyId.AlignSelf:
                     style.alignSelf = (StyleEnum<Align>)value;
                     break;
-                case StylePropertyId.AnimationPlayState:
-                    style.animationPlayState = (StyleEnum<AnimationPlayState>)value;
+                case StylePropertyId.AnimationDelay:
+                    style.animationDelay = (StyleList<float>)value;
+                    break;
+                case StylePropertyId.AnimationDirection:
+                    style.animationDirection = (StyleList<AnimationDirection>)value;
+                    break;
+                case StylePropertyId.AnimationDuration:
+                    style.animationDuration = (StyleList<float>)value;
+                    break;
+                case StylePropertyId.AnimationIterationCount:
+                    style.animationIterationCount = (StyleList<AnimationIterationCount>)value;
+                    break;
+                case StylePropertyId.AnimationNames:
+                    style.animationNames = (StyleList<UIAnimationClip>)value;
+                    break;
+                case StylePropertyId.AnimationPlayStates:
+                    style.animationPlayStates = (StyleList<AnimationPlayState>)value;
                     break;
                 case StylePropertyId.AspectRatio:
                     style.aspectRatio = (StyleRatio)value;
@@ -780,11 +947,44 @@ namespace UnityEngine.UIElements
                 case StylePropertyId.FontSize:
                     style.fontSize = (StyleLength)value;
                     break;
+                case StylePropertyId.GridAutoColumns:
+                    style.gridAutoColumns = (StyleList<GridTrackSize>)value;
+                    break;
+                case StylePropertyId.GridAutoFlow:
+                    style.gridAutoFlow = (StyleEnum<GridAutoFlow>)value;
+                    break;
+                case StylePropertyId.GridAutoRows:
+                    style.gridAutoRows = (StyleList<GridTrackSize>)value;
+                    break;
+                case StylePropertyId.GridColumnEnd:
+                    style.gridColumnEnd = (StyleGridLine)value;
+                    break;
+                case StylePropertyId.GridColumnStart:
+                    style.gridColumnStart = (StyleGridLine)value;
+                    break;
+                case StylePropertyId.GridRowEnd:
+                    style.gridRowEnd = (StyleGridLine)value;
+                    break;
+                case StylePropertyId.GridRowStart:
+                    style.gridRowStart = (StyleGridLine)value;
+                    break;
+                case StylePropertyId.GridTemplateColumns:
+                    style.gridTemplateColumns = (StyleList<GridTrackSize>)value;
+                    break;
+                case StylePropertyId.GridTemplateRows:
+                    style.gridTemplateRows = (StyleList<GridTrackSize>)value;
+                    break;
                 case StylePropertyId.Height:
                     style.height = (StyleLength)value;
                     break;
                 case StylePropertyId.JustifyContent:
                     style.justifyContent = (StyleEnum<Justify>)value;
+                    break;
+                case StylePropertyId.JustifyItems:
+                    style.justifyItems = (StyleEnum<Align>)value;
+                    break;
+                case StylePropertyId.JustifySelf:
+                    style.justifySelf = (StyleEnum<Align>)value;
                     break;
                 case StylePropertyId.Left:
                     style.left = (StyleLength)value;
@@ -876,9 +1076,6 @@ namespace UnityEngine.UIElements
                 case StylePropertyId.Translate:
                     style.translate = (StyleTranslate)value;
                     break;
-                case StylePropertyId.UnityAnimationClip:
-                    style.unityAnimationClip = (StyleUIAnimationClip)value;
-                    break;
                 case StylePropertyId.UnityBackgroundImageTintColor:
                     style.unityBackgroundImageTintColor = (StyleColor)value;
                     break;
@@ -951,6 +1148,9 @@ namespace UnityEngine.UIElements
                 case StylePropertyId.WordSpacing:
                     style.wordSpacing = (StyleLength)value;
                     break;
+                case StylePropertyId.ZIndex:
+                    style.zIndex = (StyleInt)value;
+                    break;
                 default:
                     Debug.LogAssertion($"Cannot set inline style value for property id {id}");
                     break;
@@ -970,8 +1170,23 @@ namespace UnityEngine.UIElements
                 case StylePropertyId.AlignSelf:
                     style.alignSelf = keyword;
                     break;
-                case StylePropertyId.AnimationPlayState:
-                    style.animationPlayState = keyword;
+                case StylePropertyId.AnimationDelay:
+                    style.animationDelay = keyword;
+                    break;
+                case StylePropertyId.AnimationDirection:
+                    style.animationDirection = keyword;
+                    break;
+                case StylePropertyId.AnimationDuration:
+                    style.animationDuration = keyword;
+                    break;
+                case StylePropertyId.AnimationIterationCount:
+                    style.animationIterationCount = keyword;
+                    break;
+                case StylePropertyId.AnimationNames:
+                    style.animationNames = keyword;
+                    break;
+                case StylePropertyId.AnimationPlayStates:
+                    style.animationPlayStates = keyword;
                     break;
                 case StylePropertyId.AspectRatio:
                     style.aspectRatio = keyword;
@@ -1069,11 +1284,44 @@ namespace UnityEngine.UIElements
                 case StylePropertyId.FontSize:
                     style.fontSize = keyword;
                     break;
+                case StylePropertyId.GridAutoColumns:
+                    style.gridAutoColumns = keyword;
+                    break;
+                case StylePropertyId.GridAutoFlow:
+                    style.gridAutoFlow = keyword;
+                    break;
+                case StylePropertyId.GridAutoRows:
+                    style.gridAutoRows = keyword;
+                    break;
+                case StylePropertyId.GridColumnEnd:
+                    style.gridColumnEnd = keyword;
+                    break;
+                case StylePropertyId.GridColumnStart:
+                    style.gridColumnStart = keyword;
+                    break;
+                case StylePropertyId.GridRowEnd:
+                    style.gridRowEnd = keyword;
+                    break;
+                case StylePropertyId.GridRowStart:
+                    style.gridRowStart = keyword;
+                    break;
+                case StylePropertyId.GridTemplateColumns:
+                    style.gridTemplateColumns = keyword;
+                    break;
+                case StylePropertyId.GridTemplateRows:
+                    style.gridTemplateRows = keyword;
+                    break;
                 case StylePropertyId.Height:
                     style.height = keyword;
                     break;
                 case StylePropertyId.JustifyContent:
                     style.justifyContent = keyword;
+                    break;
+                case StylePropertyId.JustifyItems:
+                    style.justifyItems = keyword;
+                    break;
+                case StylePropertyId.JustifySelf:
+                    style.justifySelf = keyword;
                     break;
                 case StylePropertyId.Left:
                     style.left = keyword;
@@ -1165,9 +1413,6 @@ namespace UnityEngine.UIElements
                 case StylePropertyId.Translate:
                     style.translate = keyword;
                     break;
-                case StylePropertyId.UnityAnimationClip:
-                    style.unityAnimationClip = keyword;
-                    break;
                 case StylePropertyId.UnityBackgroundImageTintColor:
                     style.unityBackgroundImageTintColor = keyword;
                     break;
@@ -1240,6 +1485,9 @@ namespace UnityEngine.UIElements
                 case StylePropertyId.WordSpacing:
                     style.wordSpacing = keyword;
                     break;
+                case StylePropertyId.ZIndex:
+                    style.zIndex = keyword;
+                    break;
                 default:
                     Debug.LogAssertion($"Cannot set inline keyword value for property id {id}");
                     break;
@@ -1265,7 +1513,28 @@ namespace UnityEngine.UIElements
                     {
                         StyleKeyword.Auto
                     };
-                case StylePropertyId.AnimationPlayState:
+                case StylePropertyId.AnimationDelay:
+                    return new()
+                    {
+                    };
+                case StylePropertyId.AnimationDirection:
+                    return new()
+                    {
+                    };
+                case StylePropertyId.AnimationDuration:
+                    return new()
+                    {
+                    };
+                case StylePropertyId.AnimationIterationCount:
+                    return new()
+                    {
+                    };
+                case StylePropertyId.AnimationNames:
+                    return new()
+                    {
+                        StyleKeyword.None
+                    };
+                case StylePropertyId.AnimationPlayStates:
                     return new()
                     {
                     };
@@ -1404,6 +1673,50 @@ namespace UnityEngine.UIElements
                     return new()
                     {
                     };
+                case StylePropertyId.GridAutoColumns:
+                    return new()
+                    {
+                        StyleKeyword.None
+                    };
+                case StylePropertyId.GridAutoFlow:
+                    return new()
+                    {
+                    };
+                case StylePropertyId.GridAutoRows:
+                    return new()
+                    {
+                        StyleKeyword.None
+                    };
+                case StylePropertyId.GridColumnEnd:
+                    return new()
+                    {
+                        StyleKeyword.Auto
+                    };
+                case StylePropertyId.GridColumnStart:
+                    return new()
+                    {
+                        StyleKeyword.Auto
+                    };
+                case StylePropertyId.GridRowEnd:
+                    return new()
+                    {
+                        StyleKeyword.Auto
+                    };
+                case StylePropertyId.GridRowStart:
+                    return new()
+                    {
+                        StyleKeyword.Auto
+                    };
+                case StylePropertyId.GridTemplateColumns:
+                    return new()
+                    {
+                        StyleKeyword.None
+                    };
+                case StylePropertyId.GridTemplateRows:
+                    return new()
+                    {
+                        StyleKeyword.None
+                    };
                 case StylePropertyId.Height:
                     return new()
                     {
@@ -1412,6 +1725,16 @@ namespace UnityEngine.UIElements
                 case StylePropertyId.JustifyContent:
                     return new()
                     {
+                    };
+                case StylePropertyId.JustifyItems:
+                    return new()
+                    {
+                        StyleKeyword.Auto
+                    };
+                case StylePropertyId.JustifySelf:
+                    return new()
+                    {
+                        StyleKeyword.Auto
                     };
                 case StylePropertyId.Left:
                     return new()
@@ -1548,11 +1871,6 @@ namespace UnityEngine.UIElements
                     {
                         StyleKeyword.None
                     };
-                case StylePropertyId.UnityAnimationClip:
-                    return new()
-                    {
-                        StyleKeyword.None
-                    };
                 case StylePropertyId.UnityBackgroundImageTintColor:
                     return new()
                     {
@@ -1652,6 +1970,11 @@ namespace UnityEngine.UIElements
                     return new()
                     {
                     };
+                case StylePropertyId.ZIndex:
+                    return new()
+                    {
+                        StyleKeyword.Auto
+                    };
                 default:
                     Debug.LogAssertion($"Cannot get valid keyword value for property id {id}"); return  null ; 
             }
@@ -1667,8 +1990,18 @@ namespace UnityEngine.UIElements
                     return (StyleEnum<Align>)(Align)value;
                 case StylePropertyId.AlignSelf:
                     return (StyleEnum<Align>)(Align)value;
-                case StylePropertyId.AnimationPlayState:
-                    return (StyleEnum<AnimationPlayState>)(AnimationPlayState)value;
+                case StylePropertyId.AnimationDelay:
+                    return (StyleList<float>)(List<float>)value;
+                case StylePropertyId.AnimationDirection:
+                    return (StyleList<AnimationDirection>)(List<AnimationDirection>)value;
+                case StylePropertyId.AnimationDuration:
+                    return (StyleList<float>)(List<float>)value;
+                case StylePropertyId.AnimationIterationCount:
+                    return (StyleList<AnimationIterationCount>)(List<AnimationIterationCount>)value;
+                case StylePropertyId.AnimationNames:
+                    return (StyleList<UIAnimationClip>)(List<UIAnimationClip>)value;
+                case StylePropertyId.AnimationPlayStates:
+                    return (StyleList<AnimationPlayState>)(List<AnimationPlayState>)value;
                 case StylePropertyId.AspectRatio:
                     return (StyleRatio)(Ratio)value;
                 case StylePropertyId.BackdropFilter:
@@ -1733,10 +2066,32 @@ namespace UnityEngine.UIElements
                     return (StyleEnum<Wrap>)(Wrap)value;
                 case StylePropertyId.FontSize:
                     return (StyleLength)(Length)value;
+                case StylePropertyId.GridAutoColumns:
+                    return (StyleList<GridTrackSize>)(List<GridTrackSize>)value;
+                case StylePropertyId.GridAutoFlow:
+                    return (StyleEnum<GridAutoFlow>)(GridAutoFlow)value;
+                case StylePropertyId.GridAutoRows:
+                    return (StyleList<GridTrackSize>)(List<GridTrackSize>)value;
+                case StylePropertyId.GridColumnEnd:
+                    return (StyleGridLine)(GridLine)value;
+                case StylePropertyId.GridColumnStart:
+                    return (StyleGridLine)(GridLine)value;
+                case StylePropertyId.GridRowEnd:
+                    return (StyleGridLine)(GridLine)value;
+                case StylePropertyId.GridRowStart:
+                    return (StyleGridLine)(GridLine)value;
+                case StylePropertyId.GridTemplateColumns:
+                    return (StyleList<GridTrackSize>)(List<GridTrackSize>)value;
+                case StylePropertyId.GridTemplateRows:
+                    return (StyleList<GridTrackSize>)(List<GridTrackSize>)value;
                 case StylePropertyId.Height:
                     return (StyleLength)(Length)value;
                 case StylePropertyId.JustifyContent:
                     return (StyleEnum<Justify>)(Justify)value;
+                case StylePropertyId.JustifyItems:
+                    return (StyleEnum<Align>)(Align)value;
+                case StylePropertyId.JustifySelf:
+                    return (StyleEnum<Align>)(Align)value;
                 case StylePropertyId.Left:
                     return (StyleLength)(Length)value;
                 case StylePropertyId.LetterSpacing:
@@ -1797,8 +2152,6 @@ namespace UnityEngine.UIElements
                     return (StyleList<EasingFunction>)(List<EasingFunction>)value;
                 case StylePropertyId.Translate:
                     return (StyleTranslate)(Translate)value;
-                case StylePropertyId.UnityAnimationClip:
-                    return (StyleUIAnimationClip)(UIAnimationClip)value;
                 case StylePropertyId.UnityBackgroundImageTintColor:
                     return (StyleColor)(Color)value;
                 case StylePropertyId.UnityEditorTextRenderingMode:
@@ -1847,6 +2200,8 @@ namespace UnityEngine.UIElements
                     return (StyleLength)(Length)value;
                 case StylePropertyId.WordSpacing:
                     return (StyleLength)(Length)value;
+                case StylePropertyId.ZIndex:
+                    return (StyleInt)(int)value;
                 default:
                 {
                     Debug.LogAssertion($"Cannot convert computed style value to inline style value for property id {id}");
@@ -1865,8 +2220,18 @@ namespace UnityEngine.UIElements
                     return typeof(StyleEnum<Align>);
                 case StylePropertyId.AlignSelf:
                     return typeof(StyleEnum<Align>);
-                case StylePropertyId.AnimationPlayState:
-                    return typeof(StyleEnum<AnimationPlayState>);
+                case StylePropertyId.AnimationDelay:
+                    return typeof(StyleList<float>);
+                case StylePropertyId.AnimationDirection:
+                    return typeof(StyleList<AnimationDirection>);
+                case StylePropertyId.AnimationDuration:
+                    return typeof(StyleList<float>);
+                case StylePropertyId.AnimationIterationCount:
+                    return typeof(StyleList<AnimationIterationCount>);
+                case StylePropertyId.AnimationNames:
+                    return typeof(StyleList<UIAnimationClip>);
+                case StylePropertyId.AnimationPlayStates:
+                    return typeof(StyleList<AnimationPlayState>);
                 case StylePropertyId.AspectRatio:
                     return typeof(StyleRatio);
                 case StylePropertyId.BackdropFilter:
@@ -1931,10 +2296,32 @@ namespace UnityEngine.UIElements
                     return typeof(StyleEnum<Wrap>);
                 case StylePropertyId.FontSize:
                     return typeof(StyleLength);
+                case StylePropertyId.GridAutoColumns:
+                    return typeof(StyleList<GridTrackSize>);
+                case StylePropertyId.GridAutoFlow:
+                    return typeof(StyleEnum<GridAutoFlow>);
+                case StylePropertyId.GridAutoRows:
+                    return typeof(StyleList<GridTrackSize>);
+                case StylePropertyId.GridColumnEnd:
+                    return typeof(StyleGridLine);
+                case StylePropertyId.GridColumnStart:
+                    return typeof(StyleGridLine);
+                case StylePropertyId.GridRowEnd:
+                    return typeof(StyleGridLine);
+                case StylePropertyId.GridRowStart:
+                    return typeof(StyleGridLine);
+                case StylePropertyId.GridTemplateColumns:
+                    return typeof(StyleList<GridTrackSize>);
+                case StylePropertyId.GridTemplateRows:
+                    return typeof(StyleList<GridTrackSize>);
                 case StylePropertyId.Height:
                     return typeof(StyleLength);
                 case StylePropertyId.JustifyContent:
                     return typeof(StyleEnum<Justify>);
+                case StylePropertyId.JustifyItems:
+                    return typeof(StyleEnum<Align>);
+                case StylePropertyId.JustifySelf:
+                    return typeof(StyleEnum<Align>);
                 case StylePropertyId.Left:
                     return typeof(StyleLength);
                 case StylePropertyId.LetterSpacing:
@@ -1995,8 +2382,6 @@ namespace UnityEngine.UIElements
                     return typeof(StyleList<EasingFunction>);
                 case StylePropertyId.Translate:
                     return typeof(StyleTranslate);
-                case StylePropertyId.UnityAnimationClip:
-                    return typeof(StyleUIAnimationClip);
                 case StylePropertyId.UnityBackgroundImageTintColor:
                     return typeof(StyleColor);
                 case StylePropertyId.UnityEditorTextRenderingMode:
@@ -2045,6 +2430,8 @@ namespace UnityEngine.UIElements
                     return typeof(StyleLength);
                 case StylePropertyId.WordSpacing:
                     return typeof(StyleLength);
+                case StylePropertyId.ZIndex:
+                    return typeof(StyleInt);
                 default:
                 {
                     Debug.LogAssertion($"Cannot get computed style type for property id {id}");
@@ -2059,6 +2446,16 @@ namespace UnityEngine.UIElements
             {
                 case StylePropertyId.All:
                     return Array.Empty<string>();
+                case StylePropertyId.Animation:
+                    return new string[]
+                    {
+                        "animation-name",
+                        "animation-duration",
+                        "animation-delay",
+                        "animation-iteration-count",
+                        "animation-direction",
+                        "animation-play-state"
+                    };
                 case StylePropertyId.BackgroundPosition:
                     return new string[]
                     {
@@ -2102,6 +2499,18 @@ namespace UnityEngine.UIElements
                         "row-gap",
                         "column-gap"
                     };
+                case StylePropertyId.GridColumn:
+                    return new string[]
+                    {
+                        "grid-column-start",
+                        "grid-column-end"
+                    };
+                case StylePropertyId.GridRow:
+                    return new string[]
+                    {
+                        "grid-row-start",
+                        "grid-row-end"
+                    };
                 case StylePropertyId.Margin:
                     return new string[]
                     {
@@ -2125,6 +2534,11 @@ namespace UnityEngine.UIElements
                         "transition-duration",
                         "transition-property",
                         "transition-timing-function"
+                    };
+                case StylePropertyId.UnityAnimationClip:
+                    return new string[]
+                    {
+                        "animation-name"
                     };
                 case StylePropertyId.UnityBackgroundScaleMode:
                     return new string[]
@@ -2153,6 +2567,14 @@ namespace UnityEngine.UIElements
             switch (shorthandId)
             {
                 case StylePropertyId.All:
+                    return;
+                case StylePropertyId.Animation:
+                    longhandIds.Add(StylePropertyId.AnimationNames);
+                    longhandIds.Add(StylePropertyId.AnimationDuration);
+                    longhandIds.Add(StylePropertyId.AnimationDelay);
+                    longhandIds.Add(StylePropertyId.AnimationIterationCount);
+                    longhandIds.Add(StylePropertyId.AnimationDirection);
+                    longhandIds.Add(StylePropertyId.AnimationPlayStates);
                     return;
                 case StylePropertyId.BackgroundPosition:
                     longhandIds.Add(StylePropertyId.BackgroundPositionX);
@@ -2185,6 +2607,14 @@ namespace UnityEngine.UIElements
                     longhandIds.Add(StylePropertyId.RowGap);
                     longhandIds.Add(StylePropertyId.ColumnGap);
                     return;
+                case StylePropertyId.GridColumn:
+                    longhandIds.Add(StylePropertyId.GridColumnStart);
+                    longhandIds.Add(StylePropertyId.GridColumnEnd);
+                    return;
+                case StylePropertyId.GridRow:
+                    longhandIds.Add(StylePropertyId.GridRowStart);
+                    longhandIds.Add(StylePropertyId.GridRowEnd);
+                    return;
                 case StylePropertyId.Margin:
                     longhandIds.Add(StylePropertyId.MarginTop);
                     longhandIds.Add(StylePropertyId.MarginRight);
@@ -2202,6 +2632,9 @@ namespace UnityEngine.UIElements
                     longhandIds.Add(StylePropertyId.TransitionDuration);
                     longhandIds.Add(StylePropertyId.TransitionProperty);
                     longhandIds.Add(StylePropertyId.TransitionTimingFunction);
+                    return;
+                case StylePropertyId.UnityAnimationClip:
+                    longhandIds.Add(StylePropertyId.AnimationNames);
                     return;
                 case StylePropertyId.UnityBackgroundScaleMode:
                     longhandIds.Add(StylePropertyId.BackgroundPositionX);
@@ -2227,6 +2660,8 @@ namespace UnityEngine.UIElements
             {
                 case StylePropertyId.All:
                     return true;
+                case StylePropertyId.Animation:
+                    return true;
                 case StylePropertyId.BackgroundPosition:
                     return true;
                 case StylePropertyId.BorderColor:
@@ -2239,11 +2674,17 @@ namespace UnityEngine.UIElements
                     return true;
                 case StylePropertyId.Gap:
                     return true;
+                case StylePropertyId.GridColumn:
+                    return true;
+                case StylePropertyId.GridRow:
+                    return true;
                 case StylePropertyId.Margin:
                     return true;
                 case StylePropertyId.Padding:
                     return true;
                 case StylePropertyId.Transition:
+                    return true;
+                case StylePropertyId.UnityAnimationClip:
                     return true;
                 case StylePropertyId.UnityBackgroundScaleMode:
                     return true;
@@ -2347,6 +2788,14 @@ namespace UnityEngine.UIElements
                 case StylePropertyId.FlexDirection:
                     return true;
                 case StylePropertyId.FlexWrap:
+                    return true;
+                case StylePropertyId.GridColumnEnd:
+                    return true;
+                case StylePropertyId.GridColumnStart:
+                    return true;
+                case StylePropertyId.GridRowEnd:
+                    return true;
+                case StylePropertyId.GridRowStart:
                     return true;
                 case StylePropertyId.JustifyContent:
                     return true;

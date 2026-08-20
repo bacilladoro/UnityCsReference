@@ -4,7 +4,6 @@
 
 using System;
 using System.Runtime.InteropServices;
-using RequiredByNativeCodeAttribute = UnityEngine.Scripting.RequiredByNativeCodeAttribute;
 
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -23,6 +22,12 @@ namespace UnityEditor.Rendering
     {
         ProgressiveLightBaker = 0, // Use the Progressive Lightmapper (CPU or GPU).
         UnityComputeLightBaker,    // Use the Unified Light Baker.
+    }
+
+    public enum DefaultMeshBufferTarget
+    {
+        None = 0,
+        Raw = 1,
     }
 
     public struct AlbedoSwatchInfo

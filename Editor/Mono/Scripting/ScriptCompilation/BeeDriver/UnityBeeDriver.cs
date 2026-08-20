@@ -62,9 +62,9 @@ namespace UnityEditor.Scripting.ScriptCompilation
 
         public static BeeBuildProgramCommon.Data.PackageInfo[] GetPackageInfos(string projectDirectory)
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return PackageManager.PackageInfo.GetAllRegisteredPackages().Select(p =>
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 NPath resolvedPath = new NPath(p.resolvedPath);
                 if (resolvedPath.IsChildOf(projectDirectory))
@@ -162,10 +162,6 @@ namespace UnityEditor.Scripting.ScriptCompilation
             RecreateDagDirectoryIfNeeded(dagDir);
             var performingPlayerBuild = UnityBeeDriverProfilerSession.PerformingPlayerBuild;
             NPath profilerOutputFile =  performingPlayerBuild ? UnityBeeDriverProfilerSession.GetTraceEventsOutputForPlayerBuild() : $"{dagDir}/fullprofile.json";
-#pragma warning disable CS0618
-            string il2CppBclDistributionDirectory = (PlayerSettings.GetApiCompatibilityLevel(NamedBuildTarget.FromActiveSettings(target)) == ApiCompatibilityLevel.NET) ?
-                IL2CPPUtils.GetIl2CppBclDistributionDirectory(target, buildOptions) : null;
-#pragma warning restore CS0618
 
             return new BuildRequest()
             {
@@ -189,7 +185,6 @@ namespace UnityEditor.Scripting.ScriptCompilation
                 Il2CppDir = IL2CPPUtils.GetIl2CppFolder(),
                 Il2CppPath = IL2CPPUtils.GetExePath("il2cpp", out var il2CppIsDevelopmentLocation),
                 Il2CppUsingDevelopmentLocation = il2CppIsDevelopmentLocation,
-                Il2CppBclDistributionDirectory = il2CppBclDistributionDirectory,
                 UnityLinkerPath = IL2CPPUtils.GetExePath("UnityLinker"),
                 DotNetExe = NetCoreProgram.DotNetMuxerPath.ToString(),
                 EditorContentsPath = EditorApplication.applicationContentsPath,
@@ -260,9 +255,9 @@ namespace UnityEditor.Scripting.ScriptCompilation
             }
             Console.WriteLine($"Total cache size {cacheSize}");
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             foreach (var entry in cacheEntries.OrderBy(x => x.Timestamp))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 if (cacheSize <= targetCacheSize)
                     break;

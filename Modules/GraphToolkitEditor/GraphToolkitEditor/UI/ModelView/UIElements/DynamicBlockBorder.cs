@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -13,6 +14,7 @@ namespace Unity.GraphToolkit.Editor
     /// </summary>
     class DynamicBlockBorder : DynamicBorder
     {
+        [NoAutoStaticsCleanup] // mutable scratch array for etch corner coordinates; recomputed each paint call, no user-type references
         static Vector2[] s_EtchCorners = new Vector2[4];
 
         /// <summary>

@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using Unity.GraphToolkit.Editor.ContextualMenuItems;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEngine;
 
@@ -15,7 +16,7 @@ namespace Unity.GraphToolkit.Editor
     /// </summary>
     [Serializable]
     [UnityRestricted]
-    internal class StateModel : PortNodeModel, IRenamable
+    internal partial class StateModel : PortNodeModel, IRenamable
     {
         const string k_DefaultName = "State";
 
@@ -34,7 +35,7 @@ namespace Unity.GraphToolkit.Editor
         public override bool AllowSelfConnect => true;
 
         /// <inheritdoc />
-        public override string IconTypeString { get; set; } = string.Empty;
+        public override string IconTypeString { get; set; } = "state";
 
         /// <inheritdoc />
         public override ElementColor ElementColor => m_ElementColor;
@@ -117,6 +118,12 @@ namespace Unity.GraphToolkit.Editor
         public override void OnCreateNode()
         {
             base.OnCreateNode();
+
+            var baseName = string.IsNullOrEmpty(Title) ? k_DefaultName : Title;
+            var uniqueName = GetUniqueName(baseName);
+            if (uniqueName != Title)
+                Title = uniqueName;
+
             DefinePorts();
         }
 
@@ -163,7 +170,7 @@ namespace Unity.GraphToolkit.Editor
                 setName = k_DefaultName;
             }
 
-            Title = GetUniqueName(setName);
+            Title = setName;
         }
 
         string GetUniqueName(string name)
@@ -198,12 +205,12 @@ namespace Unity.GraphToolkit.Editor
         /// <inheritdoc />
         public override IReadOnlyList<ContextualMenuItem> ContextualMenuItems => k_ContextualMenuItems;
 
-        static readonly List<ContextualMenuItem> k_ContextualMenuItems = new() {
+        [AutoStaticsCleanupOnCodeReload]
+        static List<ContextualMenuItem> k_ContextualMenuItems = new() {
             ContextualMenuHelpers.createTransitionMenuItem,
-            ContextualMenuHelpers.createLocalTransitionMenuItem,
-            ContextualMenuHelpers.createOnEnterTransitionMenuItem,
             ContextualMenuHelpers.createSelfTransitionMenuItem,
             ContextualMenuHelpers.createPlacematItem,
+            ContextualMenuHelpers.createLocalSubgraphFromSelectionItem,
 
             ContextualMenuHelpers.cutItem,
             ContextualMenuHelpers.copyItem,

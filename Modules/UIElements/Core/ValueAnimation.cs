@@ -2,6 +2,8 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
+using Unity.Scripting.LifecycleManagement;
 using System;
 using UnityEngine.UIElements.Experimental;
 
@@ -45,7 +47,7 @@ namespace UnityEngine.UIElements.Experimental
     /// <summary>
     /// Implementation object for transition animations.
     /// </summary>
-    public sealed class ValueAnimation<T> : IValueAnimationUpdate, IValueAnimation
+    public sealed partial class ValueAnimation<T> : IValueAnimationUpdate, IValueAnimation
     {
         const int k_DefaultDurationMs = 400;
         const int k_DefaultMaxPoolSize = 100;
@@ -87,6 +89,7 @@ namespace UnityEngine.UIElements.Experimental
         /// </summary>
         public bool autoRecycle {get; set;}
         private bool recycled { get; set; }
+        [NoAutoStaticsCleanup]
         static ObjectPool<ValueAnimation<T>> sObjectPool = new ObjectPool<ValueAnimation<T>>(() => new ValueAnimation<T>(), k_DefaultMaxPoolSize);
 
         private VisualElement owner { get; set; }
@@ -343,3 +346,4 @@ namespace UnityEngine.UIElements.Experimental
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

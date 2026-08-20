@@ -10,6 +10,8 @@ namespace UnityEngine.AdaptivePerformance
     public class AdaptivePhysics : AdaptivePerformanceScaler
     {
         float m_fixedDeltaTimeDefault;
+        int m_idleScale = 1;
+
         /// <summary>
         /// Ensures settings are applied during startup.
         /// </summary>
@@ -18,7 +20,21 @@ namespace UnityEngine.AdaptivePerformance
             base.Awake();
             if (m_Settings == null)
                 return;
-            ApplyDefaultSetting(m_Settings.scalerSettings.AdaptivePhysics);
+            ApplyProfileSettings(m_Settings.scalerSettings.AdaptivePhysics);
+        }
+
+        protected override void OnOperationMode()
+        {
+
+            if (Holder.Instance == null || Holder.Instance.Indexer == null)
+                return;
+
+            if(IndexerOperationMode == OperationMode.BatteryMode && m_idleScale != Holder.Instance.Indexer.IdleScale)
+            {
+                // Scales fixedDeltaTime based on idle time and the level.
+                m_idleScale = Holder.Instance.Indexer.IdleScale;
+                Time.fixedDeltaTime = Mathf.Min(m_fixedDeltaTimeDefault * m_idleScale, MaxBound);
+            }
         }
 
         /// <summary>
@@ -27,6 +43,7 @@ namespace UnityEngine.AdaptivePerformance
         protected override void OnDisabled()
         {
             Time.fixedDeltaTime = m_fixedDeltaTimeDefault;
+            m_idleScale = 1;
         }
 
         /// <summary>
@@ -44,7 +61,8 @@ namespace UnityEngine.AdaptivePerformance
         {
             if (ScaleChanged())
             {
-                Time.fixedDeltaTime = m_fixedDeltaTimeDefault / Scale;
+                if(IndexerOperationMode == OperationMode.NormalMode)
+                    Time.fixedDeltaTime = m_fixedDeltaTimeDefault / Scale;
             }
         }
     }

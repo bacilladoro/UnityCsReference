@@ -106,7 +106,7 @@ namespace UnityEditor.Search
 
         public static readonly string ussClassName = "search-list-view";
 
-        internal static string resultViewId = "list";
+        internal const string resultViewId = "list";
         public override string ViewId => resultViewId;
 
         public static SearchListView Create(ISearchView viewModel)

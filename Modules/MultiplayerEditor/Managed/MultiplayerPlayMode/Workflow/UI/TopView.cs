@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -16,14 +17,17 @@ using Toolbar = UnityEditor.UIElements.Toolbar;
 
 namespace Unity.Multiplayer.PlayMode.Editor
 {
-    static class TopViewPermanence
+    static partial class TopViewPermanence
     {
         public const string k_EnableMultiplayerRoles = nameof(k_EnableMultiplayerRoles);
 
-        public static readonly bool Initialized; // Note: the constructor won't run without some data being in the static class
+        [AutoStaticsCleanupOnCodeReload] // reset to false on reload, then set true by InitializeOnLoad
+        public static bool Initialized; // Note: the constructor won't run without some data being in the static class
+        [AutoStaticsCleanupOnCodeReload] // delegate; stale handler after reload pins old ALC
         public static Action EnableMultiplayerRolesEvent;
 
-        static TopViewPermanence()
+        [OnCodeLoaded]
+        static void InitializeOnLoad()
         {
             Initialized = true;
             SessionState.SetBool(k_EnableMultiplayerRoles, EditorMultiplayerManager.enableMultiplayerRoles);
@@ -38,9 +42,11 @@ namespace Unity.Multiplayer.PlayMode.Editor
         }
     }
 
-    class TopView : EditorWindow
+    partial class TopView : EditorWindow
     {
+        [AutoStaticsCleanupOnCodeReload] // live window count; must reset to 0 on code reload
         public static int NumberOfTopViews;
+        [AutoStaticsCleanupOnCodeReload] // editor toolbar element; stale after reload
         static MultiplayerRolesToolbarExtensions.MultiplayerRolesToolbarDropdown s_ToolbarButton;
 
         public void OnDestroy()

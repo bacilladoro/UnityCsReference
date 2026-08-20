@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using Unity.GraphToolkit.CSO;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -28,6 +29,7 @@ namespace Unity.GraphToolkit.Editor
         /// </summary>
         public static readonly string focusedViewUssClassName = ussClassName.WithUssModifier("focused");
 
+        [NoAutoStaticsCleanup] // fixed list of stateless visitor singletons; safe to persist across reloads
         protected static ViewUpdateVisitor[] s_DefaultViewUpdateVisitorList = { UpdateFromModelVisitor.genericUpdateFromModelVisitor, UpdateSelectionVisitor.Visitor };
 
         bool m_RequiresCompleteUIBuild;

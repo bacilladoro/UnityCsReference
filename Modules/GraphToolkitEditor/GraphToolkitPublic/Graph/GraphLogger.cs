@@ -2,13 +2,14 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
-using System;
+using System.Collections.Generic;
 using Unity.GraphToolkit.Editor.Implementation;
 
 namespace Unity.GraphToolkit.Editor
 {
     /// <summary>
     /// Provides methods for logging messages, warnings, and errors associated with a graph.
+    /// Also tracks what changed in the graph during the current callback.
     /// </summary>
     /// <remarks>
     /// <c>GraphLogger</c> integrates with the Unity Console to display logs relevant to graph operations.
@@ -20,10 +21,32 @@ namespace Unity.GraphToolkit.Editor
     /// <br/>
     /// Console messages are only shown if the graph editor for the corresponding graph is currently open. If the editor is closed,
     /// the logs will not appear in the Unity Console.
+    /// <br/>
+    /// <br/>
+    /// The logger also provides read-only access to what changed in the graph via <see cref="GraphChanges"/>.
     /// </remarks>
     public class GraphLogger
     {
         internal ErrorsAndWarningsImp errorsAndWarnings { get; set; }
+
+        /// <summary>
+        /// The set of changes recorded on the graph during the current <see cref="Graph.OnGraphChanged"/> callback.
+        /// </summary>
+        /// <remarks>
+        /// Inspect the collections on <see cref="Editor.GraphChanges"/> (nodes, variables, constant nodes, and subgraph nodes)
+        /// to react to what was added, removed, or modified. Only valid inside <see cref="Graph.OnGraphChanged"/>.
+        /// </remarks>
+        public GraphChanges GraphChanges { get; private set; }
+
+        internal void SetChangeData(
+            IReadOnlyList<ChangedNode> changedNodes,
+            IReadOnlyList<ChangedVariable> changedVariables,
+            IReadOnlyList<ChangedConstantNode> changedConstantNodes,
+            IReadOnlyList<ChangedSubgraphNode> changedSubgraphNodes)
+        {
+            GraphChanges ??= new GraphChanges();
+            GraphChanges.SetChangeData(changedNodes, changedVariables, changedConstantNodes, changedSubgraphNodes);
+        }
 
         /// <summary>
         /// Logs an error message.

@@ -194,9 +194,9 @@ namespace UnityEditor
             m_NoEngineReferences = extraDataSerializedObject.FindProperty("noEngineReferences");
             m_AssemblyProvider = EditorCompilationInterface.Instance.PrecompiledAssemblyProvider;
             m_AssetIsReadonly = false;
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             foreach (var assetPath in targets.OfType<AssetImporter>().Select(i => i.assetPath))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 try
                 {
@@ -247,9 +247,9 @@ namespace UnityEditor
                     }
                     using (new EditorGUI.DisabledScope(true))
                     {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                         var value = string.Join(", ", extraDataTargets.Select(t => t.name));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                         EditorGUILayout.TextField(Styles.name, value, EditorStyles.textField);
                     }
                 }
@@ -319,9 +319,9 @@ namespace UnityEditor
                         // Invert state include/exclude compatibility of states that have the opposite compatibility,
                         // so all states are either include or exclude.
                         var compatibleWithAny = m_CompatibleWithAnyPlatform.boolValue;
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                         var needToSwap = extraDataTargets.Where(p => ((AssemblyDefinitionState)p).compatibleWithAnyPlatform != compatibleWithAny).ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                         extraDataSerializedObject.ApplyModifiedProperties();
                         foreach (AssemblyDefinitionState state in needToSwap)
                         {
@@ -550,20 +550,20 @@ namespace UnityEditor
         {
             var responseFileDefinesFromAssemblyName = CompilationPipeline.GetResponseFileDefinesFromAssemblyName(m_AssemblyName.stringValue) ?? Array.Empty<string>();
             var definesFromAssemblyName = CompilationPipeline.GetDefinesFromAssemblyName(m_AssemblyName.stringValue) ?? Array.Empty<string>();
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var defines = definesFromAssemblyName.Concat(responseFileDefinesFromAssemblyName);
 
             return defines.Distinct().ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         private List<VersionMetaData> BuildListOfVersionDefineResourceOptions(string preselectedResourceName)
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var versionDefineResourceOptions = (MsBuildCompilationInterface.IsEnabled()
                 ? MsBuildCompilationInterface.Instance.GetVersionMetaDatas()
                 : EditorCompilationInterface.Instance.GetVersionMetaDatas()).Values.ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             if (!string.IsNullOrEmpty(preselectedResourceName) && !versionDefineResourceOptions.Exists(x => x.Name == preselectedResourceName))
             {
@@ -729,9 +729,9 @@ namespace UnityEditor
             if (selectedIndex > 0)
             {
                 var selectedAssemblyName = m_PrecompileReferenceListEntry[selectedIndex];
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 var assembly = m_AssemblyProvider.GetPrecompiledAssemblies(
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     EditorScriptCompilationOptions.BuildingForEditor | EditorScriptCompilationOptions.BuildingWithAsserts | EditorScriptCompilationOptions.BuildingWithInstrumentation,
                     EditorUserBuildSettings.activeBuildTarget)
                     .First(x => AssetPath.GetFileName(x.Path) == selectedAssemblyName);
@@ -857,9 +857,9 @@ namespace UnityEditor
                 }
             }
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var nameToPrecompiledReference = EditorCompilationInterface.Instance.PrecompiledAssemblyProvider
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 .GetPrecompiledAssemblies(
                     EditorScriptCompilationOptions.BuildingForEditor | EditorScriptCompilationOptions.BuildingWithAsserts | EditorScriptCompilationOptions.BuildingWithInstrumentation,
                     EditorUserBuildSettings.activeBuildTarget)
@@ -936,9 +936,9 @@ namespace UnityEditor
 
             if (state.useGUIDs)
             {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 data.references = references.Select(r =>
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 {
                     var guid = AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(r.asset));
 
@@ -950,14 +950,14 @@ namespace UnityEditor
             }
             else
             {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 data.references = references.Select(r => r.name).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             }
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             data.defineConstraints = state.defineConstraints
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 .Where(x => !string.IsNullOrEmpty(x.name))
                 .Select(r => r.name)
                 .ToArray();
@@ -966,9 +966,9 @@ namespace UnityEditor
             data.autoReferenced = state.autoReferenced;
             data.overrideReferences = state.overrideReferences;
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             data.precompiledReferences = state.precompiledReferences
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 .Select(r => r.name).ToArray();
 
             data.allowUnsafeCode = state.allowUnsafeCode;

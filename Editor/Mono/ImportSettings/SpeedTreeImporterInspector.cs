@@ -75,9 +75,9 @@ namespace UnityEditor
 
         internal IEnumerable<SpeedTreeImporter> importers
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             get { return targets.Cast<SpeedTreeImporter>(); }
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         internal bool upgradeMaterials
@@ -149,23 +149,23 @@ namespace UnityEditor
 
         private void GenerateMaterials()
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var matFolders = importers.Where(im => im.materialLocation == SpeedTreeImporter.MaterialLocation.External).Select(im => im.materialFolderPath).ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             var guids = AssetDatabase.FindAssets("t:Material", matFolders.ToArray());
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var paths = guids.Select(guid => AssetDatabase.GUIDToAssetPath(guid)).ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var importersWithEmbeddedMaterials = importers.Where(im => im.materialLocation == SpeedTreeImporter.MaterialLocation.InPrefab);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             foreach (var importer in importersWithEmbeddedMaterials)
             {
                 var remappedAssets = importer.GetExternalObjectMap();
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 var materials = remappedAssets.Where(kv => kv.Value is Material && kv.Value != null).Select(kv => kv.Value);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 foreach (var material in materials)
                 {
                     var path = AssetDatabase.GetAssetPath(material);

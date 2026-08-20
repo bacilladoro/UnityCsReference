@@ -40,6 +40,7 @@ internal class VariableNameValuePair
 /// Collection of <see cref="IVariable"/> that can be used during formatting of a localized string.
 /// </summary>
 [CreateAssetMenu(menuName = "Smart Strings/Variables Group")]
+[HelpURL("smart-strings/persistent-variables-source")]
 public class VariablesGroupAsset : ScriptableObject, IVariableGroup, IVariable, IDictionary<string, IVariable>, ISerializationCallbackReceiver
 {
     [SerializeField]

@@ -49,9 +49,9 @@ namespace UnityEditor.Search
         public static IEnumerable<THandlerWrapper> LoadAllMethodsWithAttribute<TAttribute, THandlerWrapper>(Func<IReadOnlyCollection<THandlerWrapper>, MethodInfo, TAttribute, Delegate, THandlerWrapper> generator, MethodSignature[] supportedSignatures, AttributeLoaderBehavior behavior = AttributeLoaderBehavior.ThrowOnValidation)
             where TAttribute : Attribute
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             return TypeCache.GetMethodsWithAttribute<TAttribute>()
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 .Where(mi => !mi.IsConstructor)
                 .Aggregate(new List<THandlerWrapper>(), (accumulated, mi) =>
                 {

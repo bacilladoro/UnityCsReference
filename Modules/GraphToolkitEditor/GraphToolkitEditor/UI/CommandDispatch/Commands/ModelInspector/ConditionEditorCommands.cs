@@ -677,9 +677,10 @@ namespace Unity.GraphToolkit.Editor
     }
 
     /// <summary>
-    /// Command to set the comparison operator of a <see cref="VariableConditionModel"/>.
+    /// Command to set the comparison operator of a <see cref="ConditionModel"/> implementing
+    /// <see cref="IComparisonConditionModel"/>.
     /// </summary>
-    internal class SetVariableConditionComparisonCommand : ModelCommand<VariableConditionModel>
+    internal class SetConditionComparisonCommand : ModelCommand<ConditionModel>
     {
         const string k_UndoString = "Set Condition Comparison";
 
@@ -689,12 +690,12 @@ namespace Unity.GraphToolkit.Editor
         public ConditionComparison Comparison;
 
         /// <summary>
-        /// Creates a new instance of <see cref="SetVariableConditionComparisonCommand"/>.
+        /// Creates a new instance of <see cref="SetConditionComparisonCommand"/>.
         /// </summary>
         /// <param name="conditionModel">The target condition.</param>
         /// <param name="comparison">The new comparison operator to apply.</param>
-        public SetVariableConditionComparisonCommand(VariableConditionModel conditionModel, ConditionComparison comparison)
-            : base(k_UndoString, k_UndoString, conditionModel != null ? new[] { conditionModel } : Array.Empty<VariableConditionModel>())
+        public SetConditionComparisonCommand(ConditionModel conditionModel, ConditionComparison comparison)
+            : base(k_UndoString, k_UndoString, conditionModel != null ? new[] { conditionModel } : Array.Empty<ConditionModel>())
         {
             Comparison = comparison;
         }
@@ -706,7 +707,7 @@ namespace Unity.GraphToolkit.Editor
         /// <param name="graphModelState">The state of the graph model.</param>
         /// <param name="command">The command.</param>
         [UsedImplicitly]
-        public static void DefaultCommandHandler(UndoStateComponent undoState, GraphModelStateComponent graphModelState, SetVariableConditionComparisonCommand command)
+        public static void DefaultCommandHandler(UndoStateComponent undoState, GraphModelStateComponent graphModelState, SetConditionComparisonCommand command)
         {
             if (command.Models.Count == 0)
                 return;
@@ -721,7 +722,10 @@ namespace Unity.GraphToolkit.Editor
             {
                 foreach (var model in command.Models)
                 {
-                    model.Comparison = command.Comparison;
+                    if (model is not IComparisonConditionModel comparisonModel)
+                        continue;
+
+                    comparisonModel.Comparison = command.Comparison;
                     updater.MarkUpdated(changeScope.ChangeDescription);
                 }
             }

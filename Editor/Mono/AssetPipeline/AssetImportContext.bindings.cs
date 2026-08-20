@@ -16,6 +16,14 @@ using System.Runtime.InteropServices;
 
 namespace UnityEditor.AssetImporters
 {
+    // Outcome of the reference-based DependsOnArtifact overloads, which never throw.
+    public enum ArtifactDependencyResult
+    {
+        Registered = 0,
+        ReferenceNotSet = 1,
+        ReferenceNotAnAsset = 2,
+    }
+
     /// Universal structure that holds all the data relevant to importing an asset, including temporary data that needs to be shared across stages that make on any given importer's pipeline.
     ///
     /// Breaking up legacy importers into peaces and re-arranging them as pipelines that use those pieces so that the pieces can become building blocks that other importers can re-use implies that the pieces
@@ -184,37 +192,41 @@ namespace UnityEditor.AssetImporters
         [NativeName("DependsOnArtifact")]
         private extern void DependsOnArtifactInternalPath(string path);
 
-        public void DependsOnArtifact(Object artifact)
+        public ArtifactDependencyResult DependsOnArtifact(Object artifact)
         {
             // An unassigned reference is either a true null or a Unity "fake null" (EntityId.None).
             if (ReferenceEquals(artifact, null))
-                return;
+                return ArtifactDependencyResult.ReferenceNotSet;
 
             var entityId = artifact.GetEntityId();
             if (entityId == EntityId.None)
-                return;
+                return ArtifactDependencyResult.ReferenceNotSet;
 
             if (!AssetDatabase.TryGetGUIDAndLocalFileIdentifier(entityId, out string guidString, out long _)
                 || !GUID.TryParse(guidString, out GUID guid))
             {
-                return;
+                return ArtifactDependencyResult.ReferenceNotAnAsset;
             }
 
-            DependsOnArtifact(guid);
+            // Call the internal binding directly; the public GUID overload throws, and these overloads never throw.
+            DependsOnArtifactInternalGUID(guid);
+            return ArtifactDependencyResult.Registered;
         }
 
-        public void DependsOnArtifact<T>(LazyLoadReference<T> artifact) where T : Object
+        public ArtifactDependencyResult DependsOnArtifact<T>(LazyLoadReference<T> artifact) where T : Object
         {
             if (!artifact.isSet)
-                return;
+                return ArtifactDependencyResult.ReferenceNotSet;
 
             if (!AssetDatabase.TryGetGUIDAndLocalFileIdentifier(artifact.entityId, out string guidString, out long _)
                 || !GUID.TryParse(guidString, out GUID guid))
             {
-                return;
+                return ArtifactDependencyResult.ReferenceNotAnAsset;
             }
 
-            DependsOnArtifact(guid);
+            // Call the internal binding directly; the public GUID overload throws, and these overloads never throw.
+            DependsOnArtifactInternalGUID(guid);
+            return ArtifactDependencyResult.Registered;
         }
 
         public void DependsOnCustomDependency(string dependency)

@@ -63,9 +63,9 @@ namespace UnityEditor
             if (m_Views.Count == 0)
             {
                 var view = new MixerGroupView();
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 view.guids = m_Controller.GetAllAudioGroupsSlow().Select(gr => gr.groupID).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 view.name = "View";
                 m_Views.Add(view);
                 SaveToBackend();

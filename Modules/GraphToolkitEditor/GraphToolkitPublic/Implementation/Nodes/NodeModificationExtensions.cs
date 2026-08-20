@@ -8,7 +8,7 @@ namespace Unity.GraphToolkit.Editor.Implementation
 {
     static class NodeModificationExtensions
     {
-        public static void SetNodeModelPosition(this NodeModel nodeModel, Vector2 position)
+        public static void SetNodeModelPosition(this AbstractNodeModel nodeModel, Vector2 position)
         {
             if (nodeModel == null)
                 return;

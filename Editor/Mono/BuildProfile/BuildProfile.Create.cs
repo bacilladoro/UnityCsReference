@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: BuildSettingsWindow not yet converted
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -12,12 +13,14 @@ using UnityEngine;
 using UnityEngine.Bindings;
 using UnityEngine.Events;
 using UnityEngine.Profiling;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Build.Profile
 {
     public sealed partial class BuildProfile
     {
         [UsedImplicitly]
+        [AutoStaticsCleanupOnCodeReload]
         internal static event Action<BuildProfile> onBuildProfileEnable;
         [VisibleToOtherModules]
         internal static void AddOnBuildProfileEnable(Action<BuildProfile> action) => onBuildProfileEnable += action;
@@ -27,6 +30,7 @@ namespace UnityEditor.Build.Profile
         // This callback is of use when a build profile is created via AssetDatabase, and we need to notify the UI
         // and select the newly created profile in the listview.
         [UsedImplicitly]
+        [AutoStaticsCleanupOnCodeReload]
         internal static event Action<BuildProfile> onBuildProfileCreated;
         [VisibleToOtherModules]
         internal static void AddOnBuildProfileCreated(Action<BuildProfile> action) => onBuildProfileCreated += action;
@@ -240,3 +244,4 @@ namespace UnityEditor.Build.Profile
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

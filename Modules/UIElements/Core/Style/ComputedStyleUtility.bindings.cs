@@ -15,10 +15,11 @@ namespace UnityEngine.UIElements
             return HasStaleAssetReference(
                 (IntPtr)style.inheritedData.GetValuePtr(),
                 (IntPtr)style.visualData.GetValuePtr(),
-                (IntPtr)style.rareData.GetValuePtr());
+                (IntPtr)style.rareData.GetValuePtr(),
+                (IntPtr)style.animationData.GetValuePtr());
         }
 
         [FreeFunction("UIToolkit::ComputedStyleUtility::HasStaleAssetReference")]
-        static extern bool HasStaleAssetReference(IntPtr inheritedData, IntPtr visualData, IntPtr rareData);
+        static extern bool HasStaleAssetReference(IntPtr inheritedData, IntPtr visualData, IntPtr rareData, IntPtr animationData);
     }
 }

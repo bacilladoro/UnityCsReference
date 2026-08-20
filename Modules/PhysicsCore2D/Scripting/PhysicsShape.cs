@@ -762,13 +762,27 @@ namespace Unity.U2D.Physics
             /// </summary>
             /// <param name="count">The number of shape array elements to return.</param>
             /// <returns>The span representing the shape array.</returns>
-            /// <exception cref="System.IndexOutOfRangeException">Thrown if the count is not in the range [0, <see cref="PhysicsConstants.MaxPolygonVertices"/>].</exception>
+            /// <exception cref="System.IndexOutOfRangeException">Thrown if the count is not in the range [1, <see cref="PhysicsConstants.MaxPolygonVertices"/>].</exception>
             public Span<Vector2> AsSpan(int count = PhysicsConstants.MaxPolygonVertices)
             {
                 if (count > 0 && count <= PhysicsConstants.MaxPolygonVertices)
                     return MemoryMarshal.CreateSpan(ref m_Vertex0, count);
 
-                throw new IndexOutOfRangeException($"{count} must be in the range [0, {PhysicsConstants.MaxPolygonVertices}]");
+                throw new IndexOutOfRangeException($"{count} must be in the range [1, {PhysicsConstants.MaxPolygonVertices}]");
+            }
+
+            /// <summary>
+            /// Get the shape array as a read-only span, callable from a readonly context without copying.
+            /// </summary>
+            /// <param name="count">The number of shape array elements to return.</param>
+            /// <returns>The read-only span representing the shape array.</returns>
+            /// <exception cref="System.IndexOutOfRangeException">Thrown if the count is not in the range [1, <see cref="PhysicsConstants.MaxPolygonVertices"/>].</exception>
+            public readonly ReadOnlySpan<Vector2> AsReadOnlySpan(int count = PhysicsConstants.MaxPolygonVertices)
+            {
+                if (count > 0 && count <= PhysicsConstants.MaxPolygonVertices)
+                    return MemoryMarshal.CreateReadOnlySpan(ref Unsafe.AsRef(in m_Vertex0), count);
+
+                throw new IndexOutOfRangeException($"{count} must be in the range [1, {PhysicsConstants.MaxPolygonVertices}]");
             }
 
             #region Internal
@@ -1111,7 +1125,20 @@ namespace Unity.U2D.Physics
         /// <param name="definition">The shape definition to use.</param>
         /// <param name="allocator">The memory allocator to use for the results. This can only be <see cref="Unity.Collections.Allocator.Temp"/>, <see cref="Unity.Collections.Allocator.TempJob"/> or <see cref="Unity.Collections.Allocator.Persistent"/>.</param>
         /// <returns>The created shapes. This NativeArray must be disposed of after use otherwise leaks will occur. The exception to this is if the array is empty.</returns>
-        public unsafe static NativeArray<PhysicsShape> CreateShapeBatch(PhysicsBody body, ReadOnlySpan<CircleGeometry> geometry, PhysicsShapeDefinition definition, Allocator allocator = Unity.Collections.Allocator.Temp) => PhysicsShape_CreateShapeBatch(body, PhysicsBuffer.FromSpan<CircleGeometry>(geometry), PhysicsShape.ShapeType.Circle, definition, allocator).ToNativeArray<PhysicsShape>();
+        public static NativeArray<PhysicsShape> CreateShapeBatch(PhysicsBody body, ReadOnlySpan<CircleGeometry> geometry, PhysicsShapeDefinition definition, Allocator allocator = Unity.Collections.Allocator.Temp) => CreateShapeBatch(body, geometry, definition, null, 0, allocator);
+
+        /// <summary>
+        /// Create a batch of Circle shapes attached to the specified body, assigning the given owner to every created shape.
+        /// </summary>
+        /// <param name="body">The body to attach the shape to.</param>
+        /// <param name="geometry">The shape geometry to use.</param>
+        /// <param name="definition">The shape definition to use.</param>
+        /// <param name="owner">The owner object to assign to every created shape. If null, no owner is assigned.</param>
+        /// <param name="ownerKey">The owner key to assign. Must be non-zero when owner is not null. See <see cref="PhysicsWorld.CreateOwnerKey(UnityEngine.Object)"/>.</param>
+        /// <param name="allocator">The memory allocator to use for the results. This can only be <see cref="Unity.Collections.Allocator.Temp"/>, <see cref="Unity.Collections.Allocator.TempJob"/> or <see cref="Unity.Collections.Allocator.Persistent"/>.</param>
+        /// <remarks>See <see cref="PhysicsShape.SetOwner(UnityEngine.Object)"/>.</remarks>
+        /// <returns>The created shapes. This NativeArray must be disposed of after use otherwise leaks will occur. The exception to this is if the array is empty.</returns>
+        public static NativeArray<PhysicsShape> CreateShapeBatch(PhysicsBody body, ReadOnlySpan<CircleGeometry> geometry, PhysicsShapeDefinition definition, UnityEngine.Object owner, int ownerKey, Allocator allocator = Allocator.Temp) => PhysicsShape_CreateShapeBatch(body, PhysicsBuffer.FromSpan<CircleGeometry>(geometry), PhysicsShape.ShapeType.Circle, definition, owner, ownerKey, allocator).ToNativeArray<PhysicsShape>();
 
         /// <summary>
         /// Create a Polygon shape, using its default definition, attached to the specified body.
@@ -1140,7 +1167,20 @@ namespace Unity.U2D.Physics
         /// <param name="definition">The shape definition to use.</param>
         /// <param name="allocator">The memory allocator to use for the results. This can only be <see cref="Unity.Collections.Allocator.Temp"/>, <see cref="Unity.Collections.Allocator.TempJob"/> or <see cref="Unity.Collections.Allocator.Persistent"/>.</param>
         /// <returns>The created shapes. This NativeArray must be disposed of after use otherwise leaks will occur. The exception to this is if the array is empty.</returns>
-        public unsafe static NativeArray<PhysicsShape> CreateShapeBatch(PhysicsBody body, ReadOnlySpan<PolygonGeometry> geometry, PhysicsShapeDefinition definition, Allocator allocator = Allocator.Temp) => PhysicsShape_CreateShapeBatch(body, PhysicsBuffer.FromSpan<PolygonGeometry>(geometry), PhysicsShape.ShapeType.Polygon, definition, allocator).ToNativeArray<PhysicsShape>();
+        public static NativeArray<PhysicsShape> CreateShapeBatch(PhysicsBody body, ReadOnlySpan<PolygonGeometry> geometry, PhysicsShapeDefinition definition, Allocator allocator = Allocator.Temp) => CreateShapeBatch(body, geometry, definition, null, 0, allocator);
+
+        /// <summary>
+        /// Create a batch of Polygon shapes attached to the specified body, assigning the given owner to every created shape.
+        /// </summary>
+        /// <param name="body">The body to attach the shape to.</param>
+        /// <param name="geometry">The shape geometry to use.</param>
+        /// <param name="definition">The shape definition to use.</param>
+        /// <param name="owner">The owner object to assign to every created shape. If null, no owner is assigned.</param>
+        /// <param name="ownerKey">The owner key to assign. Must be non-zero when owner is not null. See <see cref="PhysicsWorld.CreateOwnerKey(UnityEngine.Object)"/>.</param>
+        /// <param name="allocator">The memory allocator to use for the results. This can only be <see cref="Unity.Collections.Allocator.Temp"/>, <see cref="Unity.Collections.Allocator.TempJob"/> or <see cref="Unity.Collections.Allocator.Persistent"/>.</param>
+        /// <remarks>See <see cref="PhysicsShape.SetOwner(UnityEngine.Object)"/>.</remarks>
+        /// <returns>The created shapes. This NativeArray must be disposed of after use otherwise leaks will occur. The exception to this is if the array is empty.</returns>
+        public static NativeArray<PhysicsShape> CreateShapeBatch(PhysicsBody body, ReadOnlySpan<PolygonGeometry> geometry, PhysicsShapeDefinition definition, UnityEngine.Object owner, int ownerKey, Allocator allocator = Allocator.Temp) => PhysicsShape_CreateShapeBatch(body, PhysicsBuffer.FromSpan<PolygonGeometry>(geometry), PhysicsShape.ShapeType.Polygon, definition, owner, ownerKey, allocator).ToNativeArray<PhysicsShape>();
 
         /// <summary>
         /// Create a Capsule shape, using its default definition, attached to the specified body.
@@ -1169,7 +1209,20 @@ namespace Unity.U2D.Physics
         /// <param name="definition">The shape definition to use.</param>
         /// <param name="allocator">The memory allocator to use for the results. This can only be <see cref="Unity.Collections.Allocator.Temp"/>, <see cref="Unity.Collections.Allocator.TempJob"/> or <see cref="Unity.Collections.Allocator.Persistent"/>.</param>
         /// <returns>The created shapes. This NativeArray must be disposed of after use otherwise leaks will occur. The exception to this is if the array is empty.</returns>
-        public unsafe static NativeArray<PhysicsShape> CreateShapeBatch(PhysicsBody body, ReadOnlySpan<CapsuleGeometry> geometry, PhysicsShapeDefinition definition, Allocator allocator = Allocator.Temp) => PhysicsShape_CreateShapeBatch(body, PhysicsBuffer.FromSpan<CapsuleGeometry>(geometry), PhysicsShape.ShapeType.Capsule, definition, allocator).ToNativeArray<PhysicsShape>();
+        public static NativeArray<PhysicsShape> CreateShapeBatch(PhysicsBody body, ReadOnlySpan<CapsuleGeometry> geometry, PhysicsShapeDefinition definition, Allocator allocator = Allocator.Temp) => CreateShapeBatch(body, geometry, definition, null, 0, allocator);
+
+        /// <summary>
+        /// Create a batch of Capsule shapes attached to the specified body, assigning the given owner to every created shape.
+        /// </summary>
+        /// <param name="body">The body to attach the shape to.</param>
+        /// <param name="geometry">The shape geometry to use.</param>
+        /// <param name="definition">The shape definition to use.</param>
+        /// <param name="owner">The owner object to assign to every created shape. If null, no owner is assigned.</param>
+        /// <param name="ownerKey">The owner key to assign. Must be non-zero when owner is not null. See <see cref="PhysicsWorld.CreateOwnerKey(UnityEngine.Object)"/>.</param>
+        /// <param name="allocator">The memory allocator to use for the results. This can only be <see cref="Unity.Collections.Allocator.Temp"/>, <see cref="Unity.Collections.Allocator.TempJob"/> or <see cref="Unity.Collections.Allocator.Persistent"/>.</param>
+        /// <remarks>See <see cref="PhysicsShape.SetOwner(UnityEngine.Object)"/>.</remarks>
+        /// <returns>The created shapes. This NativeArray must be disposed of after use otherwise leaks will occur. The exception to this is if the array is empty.</returns>
+        public static NativeArray<PhysicsShape> CreateShapeBatch(PhysicsBody body, ReadOnlySpan<CapsuleGeometry> geometry, PhysicsShapeDefinition definition, UnityEngine.Object owner, int ownerKey, Allocator allocator = Allocator.Temp) => PhysicsShape_CreateShapeBatch(body, PhysicsBuffer.FromSpan<CapsuleGeometry>(geometry), PhysicsShape.ShapeType.Capsule, definition, owner, ownerKey, allocator).ToNativeArray<PhysicsShape>();
 
         /// <summary>
         /// Create a Segment shape, using its default definition, attached to the specified body.
@@ -1198,7 +1251,20 @@ namespace Unity.U2D.Physics
         /// <param name="definition">The shape definition to use.</param>
         /// <param name="allocator">The memory allocator to use for the results. This can only be <see cref="Unity.Collections.Allocator.Temp"/>, <see cref="Unity.Collections.Allocator.TempJob"/> or <see cref="Unity.Collections.Allocator.Persistent"/>.</param>
         /// <returns>The created shapes. This NativeArray must be disposed of after use otherwise leaks will occur. The exception to this is if the array is empty.</returns>
-        public unsafe static NativeArray<PhysicsShape> CreateShapeBatch(PhysicsBody body, ReadOnlySpan<SegmentGeometry> geometry, PhysicsShapeDefinition definition, Allocator allocator = Allocator.Temp) => PhysicsShape_CreateShapeBatch(body, PhysicsBuffer.FromSpan<SegmentGeometry>(geometry), PhysicsShape.ShapeType.Segment, definition, allocator).ToNativeArray<PhysicsShape>();
+        public static NativeArray<PhysicsShape> CreateShapeBatch(PhysicsBody body, ReadOnlySpan<SegmentGeometry> geometry, PhysicsShapeDefinition definition, Allocator allocator = Allocator.Temp) => CreateShapeBatch(body, geometry, definition, null, 0, allocator);
+
+        /// <summary>
+        /// Create a batch of Segment shapes attached to the specified body, assigning the given owner to every created shape.
+        /// </summary>
+        /// <param name="body">The body to attach the shape to.</param>
+        /// <param name="geometry">The shape geometry to use.</param>
+        /// <param name="definition">The shape definition to use.</param>
+        /// <param name="owner">The owner object to assign to every created shape. If null, no owner is assigned.</param>
+        /// <param name="ownerKey">The owner key to assign. Must be non-zero when owner is not null. See <see cref="PhysicsWorld.CreateOwnerKey(UnityEngine.Object)"/>.</param>
+        /// <param name="allocator">The memory allocator to use for the results. This can only be <see cref="Unity.Collections.Allocator.Temp"/>, <see cref="Unity.Collections.Allocator.TempJob"/> or <see cref="Unity.Collections.Allocator.Persistent"/>.</param>
+        /// <remarks>See <see cref="PhysicsShape.SetOwner(UnityEngine.Object)"/>.</remarks>
+        /// <returns>The created shapes. This NativeArray must be disposed of after use otherwise leaks will occur. The exception to this is if the array is empty.</returns>
+        public static NativeArray<PhysicsShape> CreateShapeBatch(PhysicsBody body, ReadOnlySpan<SegmentGeometry> geometry, PhysicsShapeDefinition definition, UnityEngine.Object owner, int ownerKey, Allocator allocator = Allocator.Temp) => PhysicsShape_CreateShapeBatch(body, PhysicsBuffer.FromSpan<SegmentGeometry>(geometry), PhysicsShape.ShapeType.Segment, definition, owner, ownerKey, allocator).ToNativeArray<PhysicsShape>();
 
         /// <summary>
         /// Create a Chain Segment shape attached to the specified body.
@@ -1227,7 +1293,20 @@ namespace Unity.U2D.Physics
         /// <param name="definition">The shape definition to use.</param>
         /// <param name="allocator">The memory allocator to use for the results. This can only be <see cref="Unity.Collections.Allocator.Temp"/>, <see cref="Unity.Collections.Allocator.TempJob"/> or <see cref="Unity.Collections.Allocator.Persistent"/>.</param>
         /// <returns>The created shapes. This NativeArray must be disposed of after use otherwise leaks will occur. The exception to this is if the array is empty.</returns>
-        public unsafe static NativeArray<PhysicsShape> CreateShapeBatch(PhysicsBody body, ReadOnlySpan<ChainSegmentGeometry> geometry, PhysicsShapeDefinition definition, Allocator allocator = Allocator.Temp) => PhysicsShape_CreateShapeBatch(body, PhysicsBuffer.FromSpan<ChainSegmentGeometry>(geometry), PhysicsShape.ShapeType.ChainSegment, definition, allocator).ToNativeArray<PhysicsShape>();
+        public static NativeArray<PhysicsShape> CreateShapeBatch(PhysicsBody body, ReadOnlySpan<ChainSegmentGeometry> geometry, PhysicsShapeDefinition definition, Allocator allocator = Allocator.Temp) => CreateShapeBatch(body, geometry, definition, null, 0, allocator);
+
+        /// <summary>
+        /// Create a batch of Chain Segment shapes attached to the specified body, assigning the given owner to every created shape.
+        /// </summary>
+        /// <param name="body">The body to attach the shape to.</param>
+        /// <param name="geometry">The shape geometry to use.</param>
+        /// <param name="definition">The shape definition to use.</param>
+        /// <param name="owner">The owner object to assign to every created shape. If null, no owner is assigned.</param>
+        /// <param name="ownerKey">The owner key to assign. Must be non-zero when owner is not null. See <see cref="PhysicsWorld.CreateOwnerKey(UnityEngine.Object)"/>.</param>
+        /// <param name="allocator">The memory allocator to use for the results. This can only be <see cref="Unity.Collections.Allocator.Temp"/>, <see cref="Unity.Collections.Allocator.TempJob"/> or <see cref="Unity.Collections.Allocator.Persistent"/>.</param>
+        /// <remarks>See <see cref="PhysicsShape.SetOwner(UnityEngine.Object)"/>.</remarks>
+        /// <returns>The created shapes. This NativeArray must be disposed of after use otherwise leaks will occur. The exception to this is if the array is empty.</returns>
+        public static NativeArray<PhysicsShape> CreateShapeBatch(PhysicsBody body, ReadOnlySpan<ChainSegmentGeometry> geometry, PhysicsShapeDefinition definition, UnityEngine.Object owner, int ownerKey, Allocator allocator = Allocator.Temp) => PhysicsShape_CreateShapeBatch(body, PhysicsBuffer.FromSpan<ChainSegmentGeometry>(geometry), PhysicsShape.ShapeType.ChainSegment, definition, owner, ownerKey, allocator).ToNativeArray<PhysicsShape>();
 
         /// <summary>
         /// Set a batch of <see cref="PhysicsShape"/> to the corresponding <see cref="CircleGeometry"/>.
@@ -1396,7 +1475,19 @@ namespace Unity.U2D.Physics
         /// </summary>
         /// <param name="shapes">The shapes to destroy.</param>
         /// <param name="updateBodyMass">Whether to update the body mass configuration. Not doing so is faster, especially when destroying multiple shapes.</param>
-        public static void DestroyBatch(ReadOnlySpan<PhysicsShape> shapes, bool updateBodyMass) => PhysicsShape_DestroyBatch(shapes, updateBodyMass);
+        public static void DestroyBatch(ReadOnlySpan<PhysicsShape> shapes, bool updateBodyMass) => DestroyBatch(shapes, updateBodyMass, 0);
+
+        /// <summary>
+        /// Destroy a batch of shapes, destroying all contacts the shapes are involved in.
+        /// Any invalid shapes are ignored, including chain segment shapes created by a chain, which must be destroyed through their owning chain instead.
+        /// A shape owned by a different owner key is skipped and left valid; a shape with no owner, or one matching the given owner key, is destroyed.
+        /// One summary warning reports how many shapes were skipped this way, rather than one warning per shape.
+        /// </summary>
+        /// <remarks>See <see cref="Contact"/>, <see cref="PhysicsChain"/>, <see cref="PhysicsBody.MassConfiguration"/> and <see cref="PhysicsShape.SetOwner(UnityEngine.Object)"/>.</remarks>
+        /// <param name="shapes">The shapes to destroy.</param>
+        /// <param name="updateBodyMass">Whether to update the body mass configuration. Not doing so is faster, especially when destroying multiple shapes.</param>
+        /// <param name="ownerKey">Optional owner key returned when using <see cref="PhysicsShape.SetOwner(UnityEngine.Object)"/>.</param>
+        public static void DestroyBatch(ReadOnlySpan<PhysicsShape> shapes, bool updateBodyMass, int ownerKey) => PhysicsShape_DestroyBatch(shapes, updateBodyMass, ownerKey);
 
         /// <summary>
         /// Apply buoyancy, flow and damping forces to this shape based on how it is submerged in a fluid plane.
@@ -1904,7 +1995,7 @@ namespace Unity.U2D.Physics
         /// </summary>
         /// <param name="shapes">The shapes to set ownership for.</param>
         /// <param name="owner">The object that owns this key. Whilst it is valid to not specify an owner object (NULL), it is recommended for debugging purposes.</param>
-        /// <param name="ownerKey">The owner key to be used. The value must be non-zero. You can use <see cref="PhysicsWorld.CreateOwnerKey(UnityEngine.Object)"/> for this value although any non-zero integer will work.</param>
+        /// <param name="ownerKey">The owner key to be used. If zero then a new owner key is derived from the owner. You can use <see cref="PhysicsWorld.CreateOwnerKey(UnityEngine.Object)"/> for this value although any non-zero integer will work.</param>
         public static void SetOwner(ReadOnlySpan<PhysicsShape> shapes, UnityEngine.Object owner, int ownerKey) => PhysicsShape_SetOwner(shapes, owner, ownerKey);
 
         /// <summary>
@@ -1999,6 +2090,15 @@ namespace Unity.U2D.Physics
         /// <param name="physicsUserData">The user data to set.</param>
         /// <param name="ownerKey">Optional owner key returned when using <see cref="PhysicsShape.SetOwner(UnityEngine.Object)"/>.</param>
         public readonly void SetOwnerUserData(PhysicsUserData physicsUserData, int ownerKey = 0) => PhysicsShape_SetOwnerUserData(this, physicsUserData, ownerKey);
+
+        /// <summary>
+        /// Set <see cref="PhysicsUserData"/> on a batch of shapes that can be used for any purpose, typically by the owner only.
+        /// The shapes and userDatas spans must be the same length; shapes[n] receives userDatas[n].
+        /// </summary>
+        /// <param name="shapes">The shapes to set the owner user data on.</param>
+        /// <param name="userDatas">The user data to set, one entry per shape.</param>
+        /// <param name="ownerKey">Optional owner key returned when using <see cref="PhysicsShape.SetOwner(UnityEngine.Object)"/>.</param>
+        public static void SetOwnerUserData(ReadOnlySpan<PhysicsShape> shapes, ReadOnlySpan<PhysicsUserData> userDatas, int ownerKey = 0) => PhysicsShape_SetOwnerUserDataSpan(shapes, userDatas, ownerKey);
 
         /// <summary>
         /// Create a shape proxy from the shape.

@@ -2,10 +2,12 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
 using System;
 using UnityEngine;
 using UnityEngine.Bindings;
 using UnityEngine.UIElements;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.UIElements
 {
@@ -30,7 +32,7 @@ namespace UnityEditor.UIElements
     /// <summary>
     /// Provides VisualElement extension methods that implement data binding between INotifyValueChanged fields and SerializedObjects.
     /// </summary>
-    public static class BindingExtensions
+    public static partial class BindingExtensions
     {
         /// <summary>
         /// USS class added to element when in prefab override mode.
@@ -58,6 +60,7 @@ namespace UnityEditor.UIElements
         internal static readonly string s_SerializedBindingId = "--unity-serialized-object-bindings";
         internal static readonly string s_SerializedBindingContextUpdaterId = "--unity-serialized-object-bindings-context-updater";
 
+        [AutoStaticsCleanupOnCodeReload]
         internal static ISerializedObjectBindingImplementation bindingImpl = null;
 
         /// <summary>
@@ -152,3 +155,4 @@ namespace UnityEditor.UIElements
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

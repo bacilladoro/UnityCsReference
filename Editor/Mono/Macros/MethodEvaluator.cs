@@ -19,6 +19,15 @@ namespace UnityEditor.Macros
         internal class EvalDataParcel
         {
             /// <summary>
+            /// Directories to search when resolving the executed method's assembly and its dependencies,
+            /// declared explicitly by the sender (e.g. the test runner's base directory, which holds the
+            /// shared libraries of player assemblies deployed into per-player subdirectories).
+            /// Optional: senders that predate this member leave it null.
+            /// </summary>
+            [DataMember]
+            public string[] AssemblySearchPaths;
+
+            /// <summary>
             /// Paths to assembly file which contains the known type at the same index as KnownTypeNames.
             /// </summary>
             [DataMember]
@@ -60,21 +69,42 @@ namespace UnityEditor.Macros
 
         private class AssemblyResolver
         {
-            private readonly string m_AssemblyDirectory;
+            private readonly string[] m_SearchDirectories;
 
-            public AssemblyResolver(string assemblyDirectory)
+            public AssemblyResolver(string assemblyDirectory, string[] additionalSearchPaths)
             {
-                m_AssemblyDirectory = assemblyDirectory;
+                // The parcel assembly's own directory first (most specific wins), then the search paths
+                // the sender declared in the parcel. Every codeEval must be able to reload the executed
+                // method's assembly and its full dependency closure from disk, because a domain reload
+                // unloads anything a previous codeEval already resolved.
+                var searchDirectories = new List<string> { assemblyDirectory };
+                if (additionalSearchPaths != null)
+                {
+                    foreach (var path in additionalSearchPaths)
+                    {
+                        if (!string.IsNullOrEmpty(path) && !searchDirectories.Contains(path))
+                            searchDirectories.Add(path);
+                    }
+                }
+                m_SearchDirectories = searchDirectories.ToArray();
+            }
+
+            private Assembly LoadFromSearchDirectories(string simpleName)
+            {
+                foreach (var directory in m_SearchDirectories)
+                {
+                    var assemblyFile = Path.Combine(directory, simpleName + ".dll");
+                    if (File.Exists(assemblyFile))
+                        return CurrentAssemblies.LoadFromPath(assemblyFile);
+                }
+
+                return null;
             }
 
             public Assembly AssemblyResolve(object sender, ResolveEventArgs args)
             {
                 var simpleName = args.Name.Split(',')[0];
-                var assemblyFile = Path.Combine(m_AssemblyDirectory, simpleName + ".dll");
-                if (File.Exists(assemblyFile))
-                    return CurrentAssemblies.LoadFromPath(assemblyFile);
-
-                return null;
+                return LoadFromSearchDirectories(simpleName);
             }
 
 
@@ -211,7 +241,7 @@ namespace UnityEditor.Macros
             AssemblyResolver resolver = null;
             if (assemblyPath != "netstandard")
             {
-                resolver = new AssemblyResolver(Path.GetDirectoryName(assemblyPath));
+                resolver = new AssemblyResolver(Path.GetDirectoryName(assemblyPath), evalDataParcel.AssemblySearchPaths);
                 // TypeResolve is used to find types which are not defined in the Assembly.GetExecutingAssembly.
                 // E.g. test methods which are called with MethodEvaluator are defined in the test assembly IntegrationTests.dll (explicitly or as generated delegates),
                 // and thus are called but are called within executing assembly IntegrationTests.dll assembly.
@@ -288,9 +318,9 @@ namespace UnityEditor.Macros
             var parts = serialized.Split('\n', StringSplitOptions.RemoveEmptyEntries);
             var declaringType = TypeOrTypeName(parts[0]);
             var methodName = parts[1];
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var parameterTypes = TypesOrTypeNames(parts.Skip(2).ToArray());
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             const BindingFlags methodVisibility = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static;
             var method = declaringType.GetMethod(methodName, methodVisibility, null, parameterTypes, null);
             if (method == null)

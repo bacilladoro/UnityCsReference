@@ -37,9 +37,9 @@ namespace Unity.GraphToolkit.Editor
             Dictionary<Model, Vector2> results = GetElementDeltaResults();
 
             // Dispatch command
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             SendPlacementCommand(results.Keys.ToList(), results.Values.ToList());
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         protected override Dictionary<Model, Vector2> GetDeltas(List<(Rect, List<Model>)> boundingRects)
@@ -52,21 +52,21 @@ namespace Unity.GraphToolkit.Editor
             float alignmentBorderPosition;
             if (m_AlignmentReference == AlignmentReference.Left || m_AlignmentReference == AlignmentReference.Top)
             {
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 alignmentBorderPosition = boundingRects.Min(rect => GetPosition(rect.Item1, m_AlignmentReference));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             }
             else if (m_AlignmentReference == AlignmentReference.Right || m_AlignmentReference == AlignmentReference.Bottom)
             {
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 alignmentBorderPosition = boundingRects.Max(rect => GetPosition(rect.Item1, m_AlignmentReference));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             }
             else
             {
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 alignmentBorderPosition = boundingRects.Average(rect => GetPosition(rect.Item1, m_AlignmentReference));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             }
 
             return alignmentBorderPosition;

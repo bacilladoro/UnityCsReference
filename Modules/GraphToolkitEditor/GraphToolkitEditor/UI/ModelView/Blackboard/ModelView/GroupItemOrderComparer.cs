@@ -4,12 +4,14 @@
 
 using System;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 
 namespace Unity.GraphToolkit.Editor
 {
     class GroupItemOrderComparer : IComparer<IGroupItemModel>
     {
-        public static GroupItemOrderComparer Default = new GroupItemOrderComparer();
+        [NoAutoStaticsCleanup] // singleton comparer instance; safe to persist across reload
+        public static readonly GroupItemOrderComparer Default = new GroupItemOrderComparer();
         public int Compare(IGroupItemModel a, IGroupItemModel b)
         {
             if (a == null && b == null)

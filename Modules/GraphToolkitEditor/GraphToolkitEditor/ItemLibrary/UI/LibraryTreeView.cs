@@ -349,7 +349,7 @@ namespace Unity.GraphToolkit.ItemLibrary.Editor
             if (!string.IsNullOrEmpty(treeItem.IconPath))
             {
                 // If there is a custom icon path for the item's icon, use it
-                var iconImage = EditorGUIUtility.IconContent(treeItem.IconPath).image as Texture2D;
+                var iconImage = EditorGUIUtility.LoadIcon(treeItem.IconPath);
                 if (iconImage != null)
                     iconTexture.image = iconImage;
             }
@@ -418,6 +418,15 @@ namespace Unity.GraphToolkit.ItemLibrary.Editor
 
             // Try to get the icon if it is a subgraph.
             if (TryAddSubgraphIcon(icon, itemView)) return;
+
+            // Try to get the icon if it is a node or a state.
+            if (itemView.Item is GraphNodeModelLibraryItem { Data: NodeItemLibraryData nodeData })
+            {
+                icon.AddToClassList(nodeData.IsInStateMachine
+                    ? GraphElementHelper.iconUssClassName.WithUssModifier("state") // states
+                    : GraphElementHelper.iconUssClassName.WithUssModifier("node")); // regular nodes
+                return;
+            }
 
             // Last resort: try to get an icon with the item name.
             var itemName = itemView.Name.ToKebabCase();
@@ -496,7 +505,7 @@ namespace Unity.GraphToolkit.ItemLibrary.Editor
         bool TryAddSubgraphIcon(Image iconElement, IItemView itemView)
         {
             var graphReference = itemView?.GraphReference;
-            if (graphReference is { } gr && m_Library.Adapter is GraphNodeLibraryAdapter nodeLibraryAdapter && nodeLibraryAdapter.PreviewGraphView != null)
+            if (graphReference is { GraphModelGuid.isValid: true } gr && m_Library.Adapter is GraphNodeLibraryAdapter nodeLibraryAdapter && nodeLibraryAdapter.PreviewGraphView != null)
             {
                 if (gr.AssetGuid == default) // local sub graphs will not have the AssetGuid set.
                 {
@@ -506,7 +515,17 @@ namespace Unity.GraphToolkit.ItemLibrary.Editor
                 else
                 {
                     var assetIconTexture = AssetDatabase.GetCachedIcon(gr.FilePath);
-                    iconElement.Add(new Image { image = assetIconTexture });
+                    if (assetIconTexture != null && !string.IsNullOrEmpty(assetIconTexture.name)) // GetCachedIcon returns a blank, nameless Texture2D when no icon is registered for the asset type
+                    {
+                        iconElement.Add(new Image { image = assetIconTexture });
+                    }
+                    else if (itemView.Item is GraphNodeModelLibraryItem { Data: NodeItemLibraryData nodeData })
+                    {
+                        // If no icon is found for the asset, we fall back to the default subgraph icon.
+                        iconElement.AddToClassList(nodeData.IsInStateMachine
+                            ? GraphElementHelper.iconUssClassName.WithUssModifier("state") // asset subgraph states
+                            : GraphElementHelper.iconUssClassName.WithUssModifier("graph-object")); // regular asset subgraph nodes
+                    }
                 }
 
                 return true;

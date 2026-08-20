@@ -23,7 +23,12 @@ namespace UnityEngine.UIElements
         private StylePropertyData<StyleEnum<Align>, Align> m_AlignContent = new(StylePropertyId.AlignContent);
         private StylePropertyData<StyleEnum<Align>, Align> m_AlignItems = new(StylePropertyId.AlignItems);
         private StylePropertyData<StyleEnum<Align>, Align> m_AlignSelf = new(StylePropertyId.AlignSelf);
-        private StylePropertyData<StyleEnum<AnimationPlayState>, AnimationPlayState> m_AnimationPlayState = new(StylePropertyId.AnimationPlayState);
+        private StylePropertyData<StyleList<float>, List<float>> m_AnimationDelay = new(StylePropertyId.AnimationDelay);
+        private StylePropertyData<StyleList<AnimationDirection>, List<AnimationDirection>> m_AnimationDirection = new(StylePropertyId.AnimationDirection);
+        private StylePropertyData<StyleList<float>, List<float>> m_AnimationDuration = new(StylePropertyId.AnimationDuration);
+        private StylePropertyData<StyleList<AnimationIterationCount>, List<AnimationIterationCount>> m_AnimationIterationCount = new(StylePropertyId.AnimationIterationCount);
+        private StylePropertyData<StyleList<UIAnimationClip>, List<UIAnimationClip>> m_AnimationNames = new(StylePropertyId.AnimationNames);
+        private StylePropertyData<StyleList<AnimationPlayState>, List<AnimationPlayState>> m_AnimationPlayStates = new(StylePropertyId.AnimationPlayStates);
         private StylePropertyData<StyleRatio, Ratio> m_AspectRatio = new(StylePropertyId.AspectRatio);
         private StylePropertyData<StyleList<FilterFunction>, List<FilterFunction>> m_BackdropFilter = new(StylePropertyId.BackdropFilter);
         private StylePropertyData<StyleColor, Color> m_BackgroundColor = new(StylePropertyId.BackgroundColor);
@@ -56,8 +61,19 @@ namespace UnityEngine.UIElements
         private StylePropertyData<StyleFloat, float> m_FlexShrink = new(StylePropertyId.FlexShrink);
         private StylePropertyData<StyleEnum<Wrap>, Wrap> m_FlexWrap = new(StylePropertyId.FlexWrap);
         private StylePropertyData<StyleLength, Length> m_FontSize = new(StylePropertyId.FontSize);
+        private StylePropertyData<StyleList<GridTrackSize>, List<GridTrackSize>> m_GridAutoColumns = new(StylePropertyId.GridAutoColumns);
+        private StylePropertyData<StyleEnum<GridAutoFlow>, GridAutoFlow> m_GridAutoFlow = new(StylePropertyId.GridAutoFlow);
+        private StylePropertyData<StyleList<GridTrackSize>, List<GridTrackSize>> m_GridAutoRows = new(StylePropertyId.GridAutoRows);
+        private StylePropertyData<StyleGridLine, GridLine> m_GridColumnEnd = new(StylePropertyId.GridColumnEnd);
+        private StylePropertyData<StyleGridLine, GridLine> m_GridColumnStart = new(StylePropertyId.GridColumnStart);
+        private StylePropertyData<StyleGridLine, GridLine> m_GridRowEnd = new(StylePropertyId.GridRowEnd);
+        private StylePropertyData<StyleGridLine, GridLine> m_GridRowStart = new(StylePropertyId.GridRowStart);
+        private StylePropertyData<StyleList<GridTrackSize>, List<GridTrackSize>> m_GridTemplateColumns = new(StylePropertyId.GridTemplateColumns);
+        private StylePropertyData<StyleList<GridTrackSize>, List<GridTrackSize>> m_GridTemplateRows = new(StylePropertyId.GridTemplateRows);
         private StylePropertyData<StyleLength, Length> m_Height = new(StylePropertyId.Height);
         private StylePropertyData<StyleEnum<Justify>, Justify> m_JustifyContent = new(StylePropertyId.JustifyContent);
+        private StylePropertyData<StyleEnum<Align>, Align> m_JustifyItems = new(StylePropertyId.JustifyItems);
+        private StylePropertyData<StyleEnum<Align>, Align> m_JustifySelf = new(StylePropertyId.JustifySelf);
         private StylePropertyData<StyleLength, Length> m_Left = new(StylePropertyId.Left);
         private StylePropertyData<StyleLength, Length> m_LetterSpacing = new(StylePropertyId.LetterSpacing);
         private StylePropertyData<StyleLength, Length> m_MarginBottom = new(StylePropertyId.MarginBottom);
@@ -88,7 +104,6 @@ namespace UnityEngine.UIElements
         private StylePropertyData<StyleList<StylePropertyName>, List<StylePropertyName>> m_TransitionProperty = new(StylePropertyId.TransitionProperty);
         private StylePropertyData<StyleList<EasingFunction>, List<EasingFunction>> m_TransitionTimingFunction = new(StylePropertyId.TransitionTimingFunction);
         private StylePropertyData<StyleTranslate, Translate> m_Translate = new(StylePropertyId.Translate);
-        private StylePropertyData<StyleUIAnimationClip, UIAnimationClip> m_UnityAnimationClip = new(StylePropertyId.UnityAnimationClip);
         private StylePropertyData<StyleColor, Color> m_UnityBackgroundImageTintColor = new(StylePropertyId.UnityBackgroundImageTintColor);
         private StylePropertyData<StyleEnum<EditorTextRenderingMode>, EditorTextRenderingMode> m_UnityEditorTextRenderingMode = new(StylePropertyId.UnityEditorTextRenderingMode);
         private StylePropertyData<StyleFont, Font> m_UnityFont = new(StylePropertyId.UnityFont);
@@ -113,16 +128,21 @@ namespace UnityEngine.UIElements
         private StylePropertyData<StyleEnum<WhiteSpace>, WhiteSpace> m_WhiteSpace = new(StylePropertyId.WhiteSpace);
         private StylePropertyData<StyleLength, Length> m_Width = new(StylePropertyId.Width);
         private StylePropertyData<StyleLength, Length> m_WordSpacing = new(StylePropertyId.WordSpacing);
+        private StylePropertyData<StyleInt, int> m_ZIndex = new(StylePropertyId.ZIndex);
         private ShortHandStylePropertyData m_All;
+        private ShortHandStylePropertyData m_Animation;
         private ShortHandStylePropertyData m_BackgroundPosition;
         private ShortHandStylePropertyData m_BorderColor;
         private ShortHandStylePropertyData m_BorderRadius;
         private ShortHandStylePropertyData m_BorderWidth;
         private ShortHandStylePropertyData m_Flex;
         private ShortHandStylePropertyData m_Gap;
+        private ShortHandStylePropertyData m_GridColumn;
+        private ShortHandStylePropertyData m_GridRow;
         private ShortHandStylePropertyData m_Margin;
         private ShortHandStylePropertyData m_Padding;
         private ShortHandStylePropertyData m_Transition;
+        private ShortHandStylePropertyData m_UnityAnimationClip;
         private ShortHandStylePropertyData m_UnityBackgroundScaleMode;
         private ShortHandStylePropertyData m_UnityTextOutline;
         [CreateProperty]
@@ -135,7 +155,22 @@ namespace UnityEngine.UIElements
         public StylePropertyData<StyleEnum<Align>, Align> alignSelf => m_AlignSelf;
 
         [CreateProperty]
-        public StylePropertyData<StyleEnum<AnimationPlayState>, AnimationPlayState> animationPlayState => m_AnimationPlayState;
+        public StylePropertyData<StyleList<float>, List<float>> animationDelay => m_AnimationDelay;
+
+        [CreateProperty]
+        public StylePropertyData<StyleList<AnimationDirection>, List<AnimationDirection>> animationDirection => m_AnimationDirection;
+
+        [CreateProperty]
+        public StylePropertyData<StyleList<float>, List<float>> animationDuration => m_AnimationDuration;
+
+        [CreateProperty]
+        public StylePropertyData<StyleList<AnimationIterationCount>, List<AnimationIterationCount>> animationIterationCount => m_AnimationIterationCount;
+
+        [CreateProperty]
+        public StylePropertyData<StyleList<UIAnimationClip>, List<UIAnimationClip>> animationNames => m_AnimationNames;
+
+        [CreateProperty]
+        public StylePropertyData<StyleList<AnimationPlayState>, List<AnimationPlayState>> animationPlayStates => m_AnimationPlayStates;
 
         [CreateProperty]
         public StylePropertyData<StyleRatio, Ratio> aspectRatio => m_AspectRatio;
@@ -234,10 +269,43 @@ namespace UnityEngine.UIElements
         public StylePropertyData<StyleLength, Length> fontSize => m_FontSize;
 
         [CreateProperty]
+        public StylePropertyData<StyleList<GridTrackSize>, List<GridTrackSize>> gridAutoColumns => m_GridAutoColumns;
+
+        [CreateProperty]
+        public StylePropertyData<StyleEnum<GridAutoFlow>, GridAutoFlow> gridAutoFlow => m_GridAutoFlow;
+
+        [CreateProperty]
+        public StylePropertyData<StyleList<GridTrackSize>, List<GridTrackSize>> gridAutoRows => m_GridAutoRows;
+
+        [CreateProperty]
+        public StylePropertyData<StyleGridLine, GridLine> gridColumnEnd => m_GridColumnEnd;
+
+        [CreateProperty]
+        public StylePropertyData<StyleGridLine, GridLine> gridColumnStart => m_GridColumnStart;
+
+        [CreateProperty]
+        public StylePropertyData<StyleGridLine, GridLine> gridRowEnd => m_GridRowEnd;
+
+        [CreateProperty]
+        public StylePropertyData<StyleGridLine, GridLine> gridRowStart => m_GridRowStart;
+
+        [CreateProperty]
+        public StylePropertyData<StyleList<GridTrackSize>, List<GridTrackSize>> gridTemplateColumns => m_GridTemplateColumns;
+
+        [CreateProperty]
+        public StylePropertyData<StyleList<GridTrackSize>, List<GridTrackSize>> gridTemplateRows => m_GridTemplateRows;
+
+        [CreateProperty]
         public StylePropertyData<StyleLength, Length> height => m_Height;
 
         [CreateProperty]
         public StylePropertyData<StyleEnum<Justify>, Justify> justifyContent => m_JustifyContent;
+
+        [CreateProperty]
+        public StylePropertyData<StyleEnum<Align>, Align> justifyItems => m_JustifyItems;
+
+        [CreateProperty]
+        public StylePropertyData<StyleEnum<Align>, Align> justifySelf => m_JustifySelf;
 
         [CreateProperty]
         public StylePropertyData<StyleLength, Length> left => m_Left;
@@ -330,9 +398,6 @@ namespace UnityEngine.UIElements
         public StylePropertyData<StyleTranslate, Translate> translate => m_Translate;
 
         [CreateProperty]
-        public StylePropertyData<StyleUIAnimationClip, UIAnimationClip> unityAnimationClip => m_UnityAnimationClip;
-
-        [CreateProperty]
         public StylePropertyData<StyleColor, Color> unityBackgroundImageTintColor => m_UnityBackgroundImageTintColor;
 
         [CreateProperty]
@@ -405,6 +470,9 @@ namespace UnityEngine.UIElements
         public StylePropertyData<StyleLength, Length> wordSpacing => m_WordSpacing;
 
         [CreateProperty]
+        public StylePropertyData<StyleInt, int> zIndex => m_ZIndex;
+
+        [CreateProperty]
         public ShortHandStylePropertyData all
         {
             get => m_All;
@@ -413,6 +481,19 @@ namespace UnityEngine.UIElements
                 if (m_All == value)
                     return;
                 m_All = value;
+                Notify();
+            }
+        }
+
+        [CreateProperty]
+        public ShortHandStylePropertyData animation
+        {
+            get => m_Animation;
+            private set
+            {
+                if (m_Animation == value)
+                    return;
+                m_Animation = value;
                 Notify();
             }
         }
@@ -496,6 +577,32 @@ namespace UnityEngine.UIElements
         }
 
         [CreateProperty]
+        public ShortHandStylePropertyData gridColumn
+        {
+            get => m_GridColumn;
+            private set
+            {
+                if (m_GridColumn == value)
+                    return;
+                m_GridColumn = value;
+                Notify();
+            }
+        }
+
+        [CreateProperty]
+        public ShortHandStylePropertyData gridRow
+        {
+            get => m_GridRow;
+            private set
+            {
+                if (m_GridRow == value)
+                    return;
+                m_GridRow = value;
+                Notify();
+            }
+        }
+
+        [CreateProperty]
         public ShortHandStylePropertyData margin
         {
             get => m_Margin;
@@ -530,6 +637,19 @@ namespace UnityEngine.UIElements
                 if (m_Transition == value)
                     return;
                 m_Transition = value;
+                Notify();
+            }
+        }
+
+        [CreateProperty]
+        public ShortHandStylePropertyData unityAnimationClip
+        {
+            get => m_UnityAnimationClip;
+            private set
+            {
+                if (m_UnityAnimationClip == value)
+                    return;
+                m_UnityAnimationClip = value;
                 Notify();
             }
         }
@@ -585,11 +705,46 @@ namespace UnityEngine.UIElements
                 Notify(nameof(alignSelf));
 
             notify = false;
-            notify |= SetInlineValue(ref m_AnimationPlayState, element.style.animationPlayState);
-            notify |= SetComputedValue(ref m_AnimationPlayState, element.computedStyle.animationPlayState);
-            notify |= ApplyContext(ref m_AnimationPlayState, in context);
+            notify |= SetInlineValue(ref m_AnimationDelay, element.style.animationDelay);
+            notify |= SetComputedValue(ref m_AnimationDelay, element.computedStyle.animationDelay);
+            notify |= ApplyContext(ref m_AnimationDelay, in context);
             if (notify)
-                Notify(nameof(animationPlayState));
+                Notify(nameof(animationDelay));
+
+            notify = false;
+            notify |= SetInlineValue(ref m_AnimationDirection, element.style.animationDirection);
+            notify |= SetComputedValue(ref m_AnimationDirection, element.computedStyle.animationDirection);
+            notify |= ApplyContext(ref m_AnimationDirection, in context);
+            if (notify)
+                Notify(nameof(animationDirection));
+
+            notify = false;
+            notify |= SetInlineValue(ref m_AnimationDuration, element.style.animationDuration);
+            notify |= SetComputedValue(ref m_AnimationDuration, element.computedStyle.animationDuration);
+            notify |= ApplyContext(ref m_AnimationDuration, in context);
+            if (notify)
+                Notify(nameof(animationDuration));
+
+            notify = false;
+            notify |= SetInlineValue(ref m_AnimationIterationCount, element.style.animationIterationCount);
+            notify |= SetComputedValue(ref m_AnimationIterationCount, element.computedStyle.animationIterationCount);
+            notify |= ApplyContext(ref m_AnimationIterationCount, in context);
+            if (notify)
+                Notify(nameof(animationIterationCount));
+
+            notify = false;
+            notify |= SetInlineValue(ref m_AnimationNames, element.style.animationNames);
+            notify |= SetComputedValue(ref m_AnimationNames, element.computedStyle.animationNames);
+            notify |= ApplyContext(ref m_AnimationNames, in context);
+            if (notify)
+                Notify(nameof(animationNames));
+
+            notify = false;
+            notify |= SetInlineValue(ref m_AnimationPlayStates, element.style.animationPlayStates);
+            notify |= SetComputedValue(ref m_AnimationPlayStates, element.computedStyle.animationPlayStates);
+            notify |= ApplyContext(ref m_AnimationPlayStates, in context);
+            if (notify)
+                Notify(nameof(animationPlayStates));
 
             notify = false;
             notify |= SetInlineValue(ref m_AspectRatio, element.style.aspectRatio);
@@ -816,6 +971,69 @@ namespace UnityEngine.UIElements
                 Notify(nameof(fontSize));
 
             notify = false;
+            notify |= SetInlineValue(ref m_GridAutoColumns, element.style.gridAutoColumns);
+            notify |= SetComputedValue(ref m_GridAutoColumns, element.computedStyle.gridAutoColumns);
+            notify |= ApplyContext(ref m_GridAutoColumns, in context);
+            if (notify)
+                Notify(nameof(gridAutoColumns));
+
+            notify = false;
+            notify |= SetInlineValue(ref m_GridAutoFlow, element.style.gridAutoFlow);
+            notify |= SetComputedValue(ref m_GridAutoFlow, element.computedStyle.gridAutoFlow);
+            notify |= ApplyContext(ref m_GridAutoFlow, in context);
+            if (notify)
+                Notify(nameof(gridAutoFlow));
+
+            notify = false;
+            notify |= SetInlineValue(ref m_GridAutoRows, element.style.gridAutoRows);
+            notify |= SetComputedValue(ref m_GridAutoRows, element.computedStyle.gridAutoRows);
+            notify |= ApplyContext(ref m_GridAutoRows, in context);
+            if (notify)
+                Notify(nameof(gridAutoRows));
+
+            notify = false;
+            notify |= SetInlineValue(ref m_GridColumnEnd, element.style.gridColumnEnd);
+            notify |= SetComputedValue(ref m_GridColumnEnd, element.computedStyle.gridColumnEnd);
+            notify |= ApplyContext(ref m_GridColumnEnd, in context);
+            if (notify)
+                Notify(nameof(gridColumnEnd));
+
+            notify = false;
+            notify |= SetInlineValue(ref m_GridColumnStart, element.style.gridColumnStart);
+            notify |= SetComputedValue(ref m_GridColumnStart, element.computedStyle.gridColumnStart);
+            notify |= ApplyContext(ref m_GridColumnStart, in context);
+            if (notify)
+                Notify(nameof(gridColumnStart));
+
+            notify = false;
+            notify |= SetInlineValue(ref m_GridRowEnd, element.style.gridRowEnd);
+            notify |= SetComputedValue(ref m_GridRowEnd, element.computedStyle.gridRowEnd);
+            notify |= ApplyContext(ref m_GridRowEnd, in context);
+            if (notify)
+                Notify(nameof(gridRowEnd));
+
+            notify = false;
+            notify |= SetInlineValue(ref m_GridRowStart, element.style.gridRowStart);
+            notify |= SetComputedValue(ref m_GridRowStart, element.computedStyle.gridRowStart);
+            notify |= ApplyContext(ref m_GridRowStart, in context);
+            if (notify)
+                Notify(nameof(gridRowStart));
+
+            notify = false;
+            notify |= SetInlineValue(ref m_GridTemplateColumns, element.style.gridTemplateColumns);
+            notify |= SetComputedValue(ref m_GridTemplateColumns, element.computedStyle.gridTemplateColumns);
+            notify |= ApplyContext(ref m_GridTemplateColumns, in context);
+            if (notify)
+                Notify(nameof(gridTemplateColumns));
+
+            notify = false;
+            notify |= SetInlineValue(ref m_GridTemplateRows, element.style.gridTemplateRows);
+            notify |= SetComputedValue(ref m_GridTemplateRows, element.computedStyle.gridTemplateRows);
+            notify |= ApplyContext(ref m_GridTemplateRows, in context);
+            if (notify)
+                Notify(nameof(gridTemplateRows));
+
+            notify = false;
             notify |= SetInlineValue(ref m_Height, element.style.height);
             notify |= SetComputedValue(ref m_Height, element.computedStyle.height);
             notify |= ApplyContext(ref m_Height, in context);
@@ -828,6 +1046,20 @@ namespace UnityEngine.UIElements
             notify |= ApplyContext(ref m_JustifyContent, in context);
             if (notify)
                 Notify(nameof(justifyContent));
+
+            notify = false;
+            notify |= SetInlineValue(ref m_JustifyItems, element.style.justifyItems);
+            notify |= SetComputedValue(ref m_JustifyItems, element.computedStyle.justifyItems);
+            notify |= ApplyContext(ref m_JustifyItems, in context);
+            if (notify)
+                Notify(nameof(justifyItems));
+
+            notify = false;
+            notify |= SetInlineValue(ref m_JustifySelf, element.style.justifySelf);
+            notify |= SetComputedValue(ref m_JustifySelf, element.computedStyle.justifySelf);
+            notify |= ApplyContext(ref m_JustifySelf, in context);
+            if (notify)
+                Notify(nameof(justifySelf));
 
             notify = false;
             notify |= SetInlineValue(ref m_Left, element.style.left);
@@ -1040,13 +1272,6 @@ namespace UnityEngine.UIElements
                 Notify(nameof(translate));
 
             notify = false;
-            notify |= SetInlineValue(ref m_UnityAnimationClip, element.style.unityAnimationClip);
-            notify |= SetComputedValue(ref m_UnityAnimationClip, element.computedStyle.unityAnimationClip);
-            notify |= ApplyContext(ref m_UnityAnimationClip, in context);
-            if (notify)
-                Notify(nameof(unityAnimationClip));
-
-            notify = false;
             notify |= SetInlineValue(ref m_UnityBackgroundImageTintColor, element.style.unityBackgroundImageTintColor);
             notify |= SetComputedValue(ref m_UnityBackgroundImageTintColor, element.computedStyle.unityBackgroundImageTintColor);
             notify |= ApplyContext(ref m_UnityBackgroundImageTintColor, in context);
@@ -1214,16 +1439,27 @@ namespace UnityEngine.UIElements
             if (notify)
                 Notify(nameof(wordSpacing));
 
+            notify = false;
+            notify |= SetInlineValue(ref m_ZIndex, element.style.zIndex);
+            notify |= SetComputedValue(ref m_ZIndex, element.computedStyle.zIndex);
+            notify |= ApplyContext(ref m_ZIndex, in context);
+            if (notify)
+                Notify(nameof(zIndex));
+
             all = ComputeStyleProperty(StylePropertyId.All, nameof(all), in context);
+            animation = ComputeStyleProperty(StylePropertyId.Animation, nameof(animation), in context);
             backgroundPosition = ComputeStyleProperty(StylePropertyId.BackgroundPosition, nameof(backgroundPosition), in context);
             borderColor = ComputeStyleProperty(StylePropertyId.BorderColor, nameof(borderColor), in context);
             borderRadius = ComputeStyleProperty(StylePropertyId.BorderRadius, nameof(borderRadius), in context);
             borderWidth = ComputeStyleProperty(StylePropertyId.BorderWidth, nameof(borderWidth), in context);
             flex = ComputeStyleProperty(StylePropertyId.Flex, nameof(flex), in context);
             gap = ComputeStyleProperty(StylePropertyId.Gap, nameof(gap), in context);
+            gridColumn = ComputeStyleProperty(StylePropertyId.GridColumn, nameof(gridColumn), in context);
+            gridRow = ComputeStyleProperty(StylePropertyId.GridRow, nameof(gridRow), in context);
             margin = ComputeStyleProperty(StylePropertyId.Margin, nameof(margin), in context);
             padding = ComputeStyleProperty(StylePropertyId.Padding, nameof(padding), in context);
             transition = ComputeStyleProperty(StylePropertyId.Transition, nameof(transition), in context);
+            unityAnimationClip = ComputeStyleProperty(StylePropertyId.UnityAnimationClip, nameof(unityAnimationClip), in context);
             unityBackgroundScaleMode = ComputeStyleProperty(StylePropertyId.UnityBackgroundScaleMode, nameof(unityBackgroundScaleMode), in context);
             unityTextOutline = ComputeStyleProperty(StylePropertyId.UnityTextOutline, nameof(unityTextOutline), in context);
         }

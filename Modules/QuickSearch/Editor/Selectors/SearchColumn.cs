@@ -12,6 +12,7 @@ using System.Runtime.Serialization.Formatters.Binary;
 using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEditor.Macros.Utilities;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Search
 {
@@ -277,9 +278,9 @@ namespace UnityEditor.Search
         {
             var columns = new List<SearchColumn>(ItemSelectors.Enumerate(items));
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var providerTypes = new HashSet<string>(context.providers.Select(p => p.type));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             // In case there is a valid search group selected in the search view, lets use that instead.
             var currentGroup = context.searchView?.currentGroup;
@@ -308,9 +309,9 @@ namespace UnityEditor.Search
                 if (!providerTypes.Contains(p.type))
                     continue;
 
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 columns.AddRange(p.fetchColumns(context, items.Take(50)));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             }
 
             return columns;
@@ -381,7 +382,7 @@ namespace UnityEditor.Search
 
     delegate void SearchColumnProviderHandler(SearchColumn column);
 
-    readonly struct SearchColumnProvider
+    readonly partial struct SearchColumnProvider
     {
         public readonly string provider;
         public readonly SearchColumnProviderHandler handler;
@@ -393,8 +394,11 @@ namespace UnityEditor.Search
             this.handler = handler;
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         public static List<SearchColumnProvider> providers { get; private set; }
-        static SearchColumnProvider()
+
+        [OnCodeLoaded]
+        static void InitializeStatics()
         {
             RefreshProviders();
         }
@@ -409,9 +413,9 @@ namespace UnityEditor.Search
             };
 
             var supportedSignatures = new[] { MethodSignature.FromDelegate<SearchColumnProviderHandler>() };
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             providers = ReflectionUtils.LoadAllMethodsWithAttribute(generator, supportedSignatures, ReflectionUtils.AttributeLoaderBehavior.DoNotThrowOnValidation).ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         public static void Initialize(SearchColumn column)

@@ -58,9 +58,9 @@ namespace UnityEditor.Scripting.Compilers
         internal static string GenerateResponseFile(IEnumerable<string> arguments)
         {
             string tempFile = FileUtil.GetUniqueTempPathInProject();
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             File.WriteAllLines(tempFile, arguments.Where(a => a != null).ToArray());
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             return tempFile;
         }
     }

@@ -248,7 +248,7 @@ namespace Unity.GraphToolkit.Editor
                 // Snap the connector dot if it's hovering over a transition endpoint, otherwise place it at mouse position
                 if (GetTransitionUnderMouse(evt.mousePosition, out var transition, true))
                 {
-                    var isSingleStateTransition = (transition.Model as TransitionSupportModel)?.IsSingleStateTransition ?? false;
+                    var isSingleStateTransition = (transition.Model as TransitionSupportModel)?.IsSelfTransition ?? false;
                     if (isSingleStateTransition)
                     {
                         DisplayConnectorUnderMouse(evt);

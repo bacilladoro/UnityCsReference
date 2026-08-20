@@ -11,15 +11,11 @@ namespace UnityEditor.PackageManager.UI.Internal
     [Serializable]
     internal class PackageInfoDictionary : ISerializationCallbackReceiver
     {
+        [SerializeField]
         private Dictionary<string, PackageInfo> m_ByName = new();
         private readonly Dictionary<long, PackageInfo> m_ByProductId = new();
+        [SerializeField]
         private Dictionary<string, long> m_TimestampByName = new();
-
-        [SerializeField]
-        private PackageInfo[] m_Serialized = Array.Empty<PackageInfo>();
-
-        [SerializeField]
-        private long[] m_SerializedTimestamps = Array.Empty<long>();
 
         [SerializeField]
         private long m_Timestamp = -1;
@@ -118,8 +114,6 @@ namespace UnityEditor.PackageManager.UI.Internal
             m_ByName.Clear();
             m_ByProductId.Clear();
             m_TimestampByName.Clear();
-            m_Serialized = Array.Empty<PackageInfo>();
-            m_SerializedTimestamps = Array.Empty<long>();
             m_Timestamp = -1;
         }
 
@@ -134,21 +128,8 @@ namespace UnityEditor.PackageManager.UI.Internal
             }
         }
 
-        public void OnBeforeSerialize()
-        {
-            m_ByName.Values.ToArray(ref m_Serialized);
-            m_SerializedTimestamps = m_TimestampByName.Count > 0
-                ? m_Serialized.SelectToNewArray(p => m_TimestampByName.GetValueOrDefault(p.name))
-                : Array.Empty<long>();
-        }
+        public void OnBeforeSerialize() {}
 
-        public void OnAfterDeserialize()
-        {
-            m_Serialized.ToDictionary(p => p.name, ref m_ByName);
-            m_TimestampByName = new Dictionary<string, long>();
-            for (var i = 0; i < m_SerializedTimestamps.Length && i < m_Serialized.Length; i++)
-                m_TimestampByName[m_Serialized[i].name] = m_SerializedTimestamps[i];
-            RebuildByProductId();
-        }
+        public void OnAfterDeserialize() => RebuildByProductId();
     }
 }

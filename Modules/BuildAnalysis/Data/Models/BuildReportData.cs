@@ -11,7 +11,6 @@ namespace UnityEditor.Build.Analysis
     internal class BuildReportData
     {
         public BuildReportStepData[] Steps = Array.Empty<BuildReportStepData>();
-        public BuildReportMessageData[] Messages = Array.Empty<BuildReportMessageData>();
         public BuildReportAssetData[] Assets = Array.Empty<BuildReportAssetData>();
         public long TotalDurationMs;
         public int TotalErrors;
@@ -25,14 +24,6 @@ namespace UnityEditor.Build.Analysis
         public string Name;
         public int Depth;
         public long DurationMs;
-    }
-
-    [Serializable]
-    internal struct BuildReportMessageData
-    {
-        public string Severity;
-        public int StepIndex;
-        public string Content;
     }
 
     [Serializable]

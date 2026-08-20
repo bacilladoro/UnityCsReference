@@ -126,9 +126,9 @@ namespace UnityEditor
                 GUILayout.FlexibleSpace();
                 if (GUILayout.Button(s_Styles.FixSpeedTreeShaders, GUILayout.ExpandWidth(false)))
                 {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                     Undo.RecordObjects(speedTreeV7MaterialsToFix.Concat(speedTreeV8MaterialsToFix).ToArray(), "Fix SpeedTree Shaders");
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     foreach (var material in speedTreeV7MaterialsToFix)
                         material.shader = defaultSpeedTree7Shader;
                     foreach (var material in speedTreeV8MaterialsToFix)

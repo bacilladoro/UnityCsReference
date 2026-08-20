@@ -39,40 +39,27 @@ namespace UnityEditor.PackageManager.UI.Internal
     [Serializable]
     internal class AssetStoreCache : BaseService<IAssetStoreCache>, IAssetStoreCache, ISerializationCallbackReceiver
     {
+        [SerializeField]
         private Dictionary<string, long> m_Categories = new();
 
+        [SerializeField]
         private Dictionary<long, AssetStorePurchaseInfo> m_PurchaseInfos = new();
 
+        [SerializeField]
         private Dictionary<long, AssetStoreProductInfo> m_ProductInfos = new();
 
+        [SerializeField]
         private Dictionary<long, AssetStoreLocalInfo> m_LocalInfos = new();
 
+        [SerializeField]
         private Dictionary<long, AssetStoreUpdateInfo> m_UpdateInfos = new();
 
         // We use the path string as the key for each imported asset
+        [SerializeField]
         private Dictionary<string, Asset> m_ImportedAssets = new();
-        private Dictionary<long, AssetStoreImportedPackage> m_ImportedPackages = new();
 
-        [SerializeField]
-        private string[] m_SerializedCategories = Array.Empty<string>();
-
-        [SerializeField]
-        private long[] m_SerializedCategoryCounts = Array.Empty<long>();
-
-        [SerializeField]
-        private AssetStorePurchaseInfo[] m_SerializedPurchaseInfos = Array.Empty<AssetStorePurchaseInfo>();
-
-        [SerializeField]
-        private AssetStoreProductInfo[] m_SerializedProductInfos = Array.Empty<AssetStoreProductInfo>();
-
-        [SerializeField]
-        private AssetStoreLocalInfo[] m_SerializedLocalInfos = Array.Empty<AssetStoreLocalInfo>();
-
-        [SerializeField]
-        private AssetStoreUpdateInfo[] m_SerializedUpdateInfos = Array.Empty<AssetStoreUpdateInfo>();
-
-        [SerializeField]
-        private Asset[] m_SerializedImportedAssets = Array.Empty<Asset>();
+		// We don't serialize imported packages, because the list of imported packages can be constructed from imported assets
+        private readonly Dictionary<long, AssetStoreImportedPackage> m_ImportedPackages = new();
 
         public event Action<IReadOnlyCollection<AssetStoreLocalInfo> /*addedOrUpdated*/, IReadOnlyCollection<AssetStoreLocalInfo> /*removed*/> onLocalInfosChanged;
         public event Action<AssetStoreProductInfo> onProductInfoChanged;
@@ -97,33 +84,12 @@ namespace UnityEditor.PackageManager.UI.Internal
             m_IOProxy = RegisterDependency(iOProxy);
         }
 
-        public void OnBeforeSerialize()
-        {
-            m_Categories.Keys.ToArray(ref m_SerializedCategories);
-            m_Categories.Values.ToArray(ref m_SerializedCategoryCounts);
-
-            m_PurchaseInfos.Values.ToArray(ref m_SerializedPurchaseInfos);
-            m_ProductInfos.Values.ToArray(ref m_SerializedProductInfos);
-            m_LocalInfos.Values.ToArray(ref m_SerializedLocalInfos);
-            m_UpdateInfos.Values.ToArray(ref m_SerializedUpdateInfos);
-
-            m_ImportedAssets.Values.ToArray(ref m_SerializedImportedAssets);
-        }
+        public void OnBeforeSerialize() {}
 
         public void OnAfterDeserialize()
         {
-            for (var i = 0; i < m_SerializedCategories.Length; i++)
-                m_Categories[m_SerializedCategories[i]] = m_SerializedCategoryCounts[i];
-
-            m_SerializedPurchaseInfos.ToDictionary(info => info.productId, ref m_PurchaseInfos);
-            m_SerializedProductInfos.ToDictionary(info => info.productId, ref m_ProductInfos);
-            m_SerializedLocalInfos.ToDictionary(info => info.productId, ref m_LocalInfos);
-            m_SerializedUpdateInfos.ToDictionary(info => info.productId, ref m_UpdateInfos);
-
-            m_SerializedImportedAssets.ToDictionary(asset => asset.importedPath, ref m_ImportedAssets);
-
-            // We don't serialize imported packages, because the list of imported packages can be constructed from imported assets
-            foreach (var asset in m_SerializedImportedAssets)
+            m_ImportedPackages.Clear();
+            foreach (var asset in m_ImportedAssets.Values)
             {
                 if (m_ImportedPackages.TryGetValue(asset.origin.productId, out var importedPackage))
                 {

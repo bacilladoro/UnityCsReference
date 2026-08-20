@@ -3,11 +3,13 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEngine.TextCore.Text
 {
-    class MaterialReferenceManager
+    partial class MaterialReferenceManager
     {
+        [AutoStaticsCleanupOnCodeReload]
         static MaterialReferenceManager s_Instance;
 
         // Dictionaries used to track Asset references.

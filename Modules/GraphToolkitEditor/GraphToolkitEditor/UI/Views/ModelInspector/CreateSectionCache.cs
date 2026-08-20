@@ -5,13 +5,14 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Assertions;
 
 namespace Unity.GraphToolkit.Editor
 {
-    static class CreateSectionCache
+    static partial class CreateSectionCache
     {
         public static MultipleModelsView CallCreateSection(ElementBuilder eb, Model model)
         {
@@ -152,7 +153,9 @@ namespace Unity.GraphToolkit.Editor
             }
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         static Dictionary<(Type, Type), Func<ElementBuilder, IReadOnlyList<Model>, MultipleModelsView>> s_EnumFunctions;
+        [AutoStaticsCleanupOnCodeReload]
         static Dictionary<(Type, Type), Func<ElementBuilder, Model, MultipleModelsView>> s_SingleFunctions;
     }
 }

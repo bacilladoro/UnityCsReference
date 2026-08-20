@@ -94,15 +94,15 @@ namespace UnityEditor.Scripting.ScriptCompilation
 
         public string[] GetAllReferences()
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return References.Concat(ScriptAssemblyReferences.Select(a => a.FullPath)).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         public IEnumerable<ScriptAssembly> AllRecursiveScripAssemblyReferencesIncludingSelf() =>
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             ScriptAssemblyReferences
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 .SelectMany(a => a.AllRecursiveScripAssemblyReferencesIncludingSelf())
                 .Concat(new[] {this});
 

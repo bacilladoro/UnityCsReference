@@ -54,34 +54,51 @@ namespace UnityEngine.AdaptivePerformance
     public abstract class AdaptivePerformanceScaler : ScriptableObject
     {
         private AdaptivePerformanceIndexer m_Indexer;
+
+        internal AdaptivePerformanceScalerSettingsBase ActiveSetting
+        {
+            get
+            {
+                switch (IndexerOperationMode)
+                {
+                    case OperationMode.BatteryMode: return m_batteryModeSetting;
+                    default:                        return m_defaultSetting;
+                }
+            }
+        }
+
         /// <summary>
         /// Returns a string with the name of the scaler.
         /// </summary>
         public virtual string Name
         {
-            get => m_defaultSetting.name;
+            get => ActiveSetting.name;
             set
             {
-                if (m_defaultSetting.name == value)
+                if (ActiveSetting.name == value)
                     return;
 
-                m_defaultSetting.name = value;
+                ActiveSetting.name = value;
             }
         }
 
         /// <summary>
         /// Returns `true` if this scaler is active, otherwise returns `false`.
+        /// Routed through <see cref="ActiveSetting"/>, so reads and writes target
+        /// the current mode's per-mode settings struct. Switching
+        /// <see cref="IAdaptivePerformanceSettings.IndexerOperationMode"/> changes
+        /// which struct this getter reads from, so per-mode enabled state takes
+        /// effect on mode change without any explicit sync.
         /// </summary>
         public virtual bool Enabled
         {
-            get => m_defaultSetting.enabled;
+            get => ActiveSetting.enabled;
             set
             {
-                if (m_defaultSetting.enabled == value)
+                if (ActiveSetting.enabled == value)
                     return;
-
-                m_defaultSetting.enabled = value;
-                AdaptivePerformanceAnalytics.SendAdaptiveFeatureUpdateEvent(Name, m_defaultSetting.enabled);
+                ActiveSetting.enabled = value;
+                AdaptivePerformanceAnalytics.SendAdaptiveFeatureUpdateEvent(Name, value);
             }
         }
         /// <summary>
@@ -89,13 +106,13 @@ namespace UnityEngine.AdaptivePerformance
         /// </summary>
         public virtual float Scale
         {
-            get => m_defaultSetting.scale;
+            get => ActiveSetting.scale;
             set
             {
-                if (m_defaultSetting.scale == value)
+                if (ActiveSetting.scale == value)
                     return;
 
-                m_defaultSetting.scale = value;
+                ActiveSetting.scale = value;
             }
         }
         /// <summary>
@@ -103,13 +120,13 @@ namespace UnityEngine.AdaptivePerformance
         /// </summary>
         public virtual ScalerVisualImpact VisualImpact
         {
-            get => m_defaultSetting.visualImpact;
+            get => ActiveSetting.visualImpact;
             set
             {
-                if (m_defaultSetting.visualImpact == value)
+                if (ActiveSetting.visualImpact == value)
                     return;
 
-                m_defaultSetting.visualImpact = value;
+                ActiveSetting.visualImpact = value;
             }
         }
         /// <summary>
@@ -117,13 +134,13 @@ namespace UnityEngine.AdaptivePerformance
         /// </summary>
         public virtual ScalerTarget Target
         {
-            get => m_defaultSetting.target;
+            get => ActiveSetting.target;
             set
             {
-                if (m_defaultSetting.target == value)
+                if (ActiveSetting.target == value)
                     return;
 
-                m_defaultSetting.target = value;
+                ActiveSetting.target = value;
             }
         }
         /// <summary>
@@ -131,13 +148,13 @@ namespace UnityEngine.AdaptivePerformance
         /// </summary>
         public virtual int MaxLevel
         {
-            get => m_defaultSetting.maxLevel;
+            get => ActiveSetting.maxLevel;
             set
             {
-                if (m_defaultSetting.maxLevel == value)
+                if (ActiveSetting.maxLevel == value)
                     return;
 
-                m_defaultSetting.maxLevel = value;
+                ActiveSetting.maxLevel = value;
             }
         }
         /// <summary>
@@ -145,13 +162,13 @@ namespace UnityEngine.AdaptivePerformance
         /// </summary>
         public virtual float MinBound
         {
-            get => m_defaultSetting.minBound;
+            get => ActiveSetting.minBound;
             set
             {
-                if (m_defaultSetting.minBound == value)
+                if (ActiveSetting.minBound == value)
                     return;
 
-                m_defaultSetting.minBound = value;
+                ActiveSetting.minBound = value;
             }
         }
         /// <summary>
@@ -159,13 +176,13 @@ namespace UnityEngine.AdaptivePerformance
         /// </summary>
         public virtual float MaxBound
         {
-            get => m_defaultSetting.maxBound;
+            get => ActiveSetting.maxBound;
             set
             {
-                if (m_defaultSetting.maxBound == value)
+                if (ActiveSetting.maxBound == value)
                     return;
 
-                m_defaultSetting.maxBound = value;
+                ActiveSetting.maxBound = value;
             }
         }
         /// <summary>
@@ -191,7 +208,7 @@ namespace UnityEngine.AdaptivePerformance
 
         int m_OverrideLevel = -1;
         /// <summary>
-        /// Default settings for this scaler.
+        /// Default settings for this scaler in normal mode.
         /// </summary>
         public AdaptivePerformanceScalerSettingsBase DefaultSetting
         {
@@ -199,8 +216,21 @@ namespace UnityEngine.AdaptivePerformance
             set => m_defaultSetting = value;
         }
 
+        /// <summary>
+        /// Default settings for this scaler in battery mode.
+        /// </summary>
+        public AdaptivePerformanceScalerSettingsBase BatteryModeSetting
+        {
+            get => m_batteryModeSetting;
+            set => m_batteryModeSetting = value;
+        }
+
         [SerializeField]
         AdaptivePerformanceScalerSettingsBase m_defaultSetting = new AdaptivePerformanceScalerSettingsBase();
+
+        [SerializeField]
+        AdaptivePerformanceScalerSettingsBase m_batteryModeSetting = new AdaptivePerformanceScalerSettingsBase();
+
 
         /// <summary>
         /// Settings reference for all scalers.
@@ -219,6 +249,14 @@ namespace UnityEngine.AdaptivePerformance
                 m_OverrideLevel = value;
                 m_Indexer.UpdateOverrideLevel(this);
             }
+        }
+
+        /// <summary>
+        /// Returns the current operation mode of the indexer.
+        /// </summary>
+        protected OperationMode IndexerOperationMode
+        {
+            get => m_Settings?.IndexerOperationMode ?? OperationMode.NormalMode;
         }
 
         /// <summary>
@@ -353,6 +391,16 @@ namespace UnityEngine.AdaptivePerformance
             m_Indexer?.NotifyScalerLevelChanged(this);
         }
 
+        internal void ResetLevel()
+        {
+            CurrentLevel = 0;
+        }
+
+        internal void ApplyOperationMode()
+        {
+            OnOperationMode();
+        }
+
         internal void Activate()
         {
             OnEnabled();
@@ -367,10 +415,43 @@ namespace UnityEngine.AdaptivePerformance
         /// Any scaler with settings in <see cref="IAdaptivePerformanceSettings"/> needs to call this method and provide the scaler specific setting. Unity uses the setting arguments in the base-scaler as the default settings.
         /// This is also used by Scaler Profiles to apply their Settings.
         /// </summary>
-        /// <param name="defaultSetting">The settings to apply to the scaler.</param>
+        /// <param name="defaultSetting">The settings to apply to the scaler for normal mode.</param>
         public void ApplyDefaultSetting(AdaptivePerformanceScalerSettingsBase defaultSetting)
         {
             m_defaultSetting = defaultSetting;
+        }
+
+        /// <summary>
+        /// Apply battery mode settings to the scaler. This allows scalers to have separate configurations for normal and battery operation modes.
+        /// This is used by Scaler Profiles to apply battery mode settings.
+        /// </summary>
+        /// <param name="batteryModeSetting">The settings to apply to the scaler for battery mode.</param>
+        public void ApplyBatteryModeSetting(AdaptivePerformanceScalerSettingsBase batteryModeSetting)
+        {
+            m_batteryModeSetting = batteryModeSetting;
+        }
+
+        /// <summary>
+        /// Hydrates this scaler from a profile setting in one shot: installs the
+        /// per-mode override for every mode (default / battery). Enabled state rides
+        /// inside each mode's settings struct, so applying the per-mode structs is
+        /// sufficient — <see cref="Enabled"/> reads from the active struct via
+        /// <see cref="ActiveSetting"/>.
+        /// Intended for subclasses to call from Awake with their own typed setting,
+        /// e.g. ApplyProfileSettings(m_Settings.scalerSettings.AdaptivePhysics).
+        /// No-op if setting is null.
+        /// </summary>
+        /// <param name="setting">The default-mode setting from the active profile;
+        /// its Get*ModeSetting() accessors supply the per-mode overrides.</param>
+        protected void ApplyProfileSettings(AdaptivePerformanceScalerSettingsBase setting)
+        {
+            if (setting == null)
+                return;
+
+            ApplyDefaultSetting(setting);
+            var battery = setting.GetBatteryModeSetting();
+            if (battery != null)
+                ApplyBatteryModeSetting(battery);
         }
 
         /// <summary>
@@ -407,5 +488,11 @@ namespace UnityEngine.AdaptivePerformance
         /// Callback when scaler gets disabled and removed from indexer
         /// </summary>
         protected virtual void OnDisabled() {}
+        /// <summary>
+        /// Callback every frame for actions in a specific mode.
+        /// </summary>
+        protected virtual void OnOperationMode() {}
+
+
     }
 }

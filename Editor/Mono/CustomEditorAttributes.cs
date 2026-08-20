@@ -70,9 +70,9 @@ namespace UnityEditor
                 if (!m_Cache.TryGet(inspected, multiEdit, out var foundEditors))
                     continue;
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 var filteredEditors = foundEditors
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     .Where(e => IsAppropriateEditor(e, type != inspected, pass == Pass.Fallback))
                     .ToList();
 
@@ -214,9 +214,9 @@ namespace UnityEditor
                     return false;
                 }
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 var supportedPipelines = supportedOnAttribute.renderPipelineTypes
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     .Where(r => r != null)
                     .Distinct()
                     .ToArray();

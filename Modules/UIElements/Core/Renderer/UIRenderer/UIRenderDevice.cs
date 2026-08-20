@@ -2,6 +2,8 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
+using Unity.Scripting.LifecycleManagement;
 using System;
 using Unity.Collections;
 using UnityEngine.Rendering;
@@ -47,7 +49,7 @@ namespace UnityEngine.UIElements.UIR
         ViewChange,
     }
 
-    class UIRenderDevice : IDisposable
+    partial class UIRenderDevice : IDisposable
     {
         public static class Testing
         {
@@ -106,9 +108,13 @@ namespace UnityEngine.UIElements.UIR
 
         readonly UIRRenderDeviceProfiler m_Profiler = new();
 
+        [NoAutoStaticsCleanup]
         static LinkedList<DeviceToFree> m_DeviceFreeQueue = new LinkedList<DeviceToFree>();   // Not thread safe for now
+        [NoAutoStaticsCleanup] // tracks active devices; instances persist across reload
         static int m_ActiveDeviceCount = 0; // Not thread safe for now
+        [NoAutoStaticsCleanup] // subscription guard; prevents double-subscription
         static bool m_SubscribedToNotifications; // Not thread safe for now
+        [NoAutoStaticsCleanup] // set on domain unload/app quit; irreversible
         static bool m_SynchronousFree; // This is set on domain unload or app quit, so it is irreversible
 
         static readonly int s_GradientSettingsTexID = Shader.PropertyToID("_GradientSettingsTex");
@@ -121,10 +127,10 @@ namespace UnityEngine.UIElements.UIR
         static readonly int s_ElementInfoPagePosID = Shader.PropertyToID("_ElementInfoPagePos");
         static readonly int s_SkipGammaConversionID = Shader.PropertyToID("_SkipGammaConversion");
 
-        static ProfilerMarker s_MarkerFree = new ProfilerMarker(ProfilerCategory.UIToolkit, "UIR.Free");
-        static ProfilerMarker s_MarkerAdvanceFrame = new ProfilerMarker(ProfilerCategory.UIToolkit, "UIR.AdvanceFrame");
-        static ProfilerMarker s_MarkerFence = new ProfilerMarker(ProfilerCategory.UIToolkit, "UIR.WaitOnFence");
-        static ProfilerMarker s_MarkerBeforeDraw = new ProfilerMarker(ProfilerCategory.UIToolkit, "UIR.BeforeDraw");
+        static readonly ProfilerMarker s_MarkerFree = new ProfilerMarker(ProfilerCategory.UIToolkit, "UIR.Free");
+        static readonly ProfilerMarker s_MarkerAdvanceFrame = new ProfilerMarker(ProfilerCategory.UIToolkit, "UIR.AdvanceFrame");
+        static readonly ProfilerMarker s_MarkerFence = new ProfilerMarker(ProfilerCategory.UIToolkit, "UIR.WaitOnFence");
+        static readonly ProfilerMarker s_MarkerBeforeDraw = new ProfilerMarker(ProfilerCategory.UIToolkit, "UIR.BeforeDraw");
 
         public bool breakBatches { get; set; }
         public bool isFlat { get; }
@@ -1321,3 +1327,4 @@ namespace UnityEngine.UIElements.UIR
         #endregion // Internals
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

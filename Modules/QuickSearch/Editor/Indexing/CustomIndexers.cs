@@ -7,6 +7,7 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -89,9 +90,9 @@ namespace UnityEditor.Search
         }
     }
 
-    [InitializeOnLoad]
-    static class CustomIndexers
+    static partial class CustomIndexers
     {
+        [AutoStaticsCleanupOnCodeReload]
         private static readonly Dictionary<Type, List<CustomIndexerHandler>> s_CustomObjectIndexers = new Dictionary<Type, List<CustomIndexerHandler>>();
 
         public static IEnumerable<Type> types
@@ -103,11 +104,16 @@ namespace UnityEditor.Search
             }
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         static bool s_Initialized;
 
-        static CustomIndexers()
+        [OnCodeLoaded]
+        static void Init()
         {
-            LoadCustomObjectIndexers();
+            // Defer to after the editor finishes loading (AssetDatabase/TypeCache ready), matching the
+            // original [InitializeOnLoad] timing. Running eagerly during code load NREs in RefreshCustomIndexers.
+            EditorApplication.delayCall -= LoadCustomObjectIndexers;
+            EditorApplication.delayCall += LoadCustomObjectIndexers;
         }
 
         public static IList<CustomIndexerHandler> GetHandlers(Type type)

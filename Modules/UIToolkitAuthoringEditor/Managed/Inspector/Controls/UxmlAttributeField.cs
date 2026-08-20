@@ -453,6 +453,9 @@ internal partial class UxmlAttributeFieldDecorator : VisualElement, ITrackablePr
             GetFullBindingPath(),
             context.isInTemplateInstance,
             true);
+
+        context.rootSerializedObject.UpdateIfRequiredOrScript();
+        ScheduleRefresh();
     }
 
     readonly record struct UnsetAllAttributesContext(
@@ -561,6 +564,9 @@ internal partial class UxmlAttributeFieldDecorator : VisualElement, ITrackablePr
             context.element,
             context.isInTemplateInstance,
             resolvedContext.ignoredAttributeNames);
+
+        context.rootSerializedObject.UpdateIfRequiredOrScript();
+        context.editingController.RefreshAllDecorators();
     }
 
     void UpdateBoundAttribute()

@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
 using System;
 using System.Linq;
 using System.Reflection;
@@ -10,14 +11,16 @@ using UnityEditor.UIElements.Debugger;
 using UnityEditor.UIElements.Experimental.UILayoutDebugger;
 using UnityEngine;
 using UnityEngine.UIElements;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.UIElements
 {
-    internal class DefaultEditorWindowBackend : DefaultWindowBackend, IEditorWindowBackend
+    internal partial class DefaultEditorWindowBackend : DefaultWindowBackend, IEditorWindowBackend
     {
         private const string k_LiveReloadMenuText = "UI Toolkit Live Reload";
         private const string k_LiveReloadPreferenceKeySuffix = ".LiveReloadOn";
         private const string k_BindingLogLevelKeySuffix = ".DataBinding.LogLevel";
+        [NoAutoStaticsCleanup]
         private static string k_GameViewLiveReloadPreferenceKey = null;
 
         private IMGUIContainer m_NotificationContainer;
@@ -28,7 +31,7 @@ namespace UnityEditor.UIElements
 
         protected IEditorWindowModel editorWindowModel => m_Model as IEditorWindowModel;
 
-        private class EditorWindowVisualTreeAssetTracker : BaseLiveReloadVisualTreeAssetTracker
+        private partial class EditorWindowVisualTreeAssetTracker : BaseLiveReloadVisualTreeAssetTracker
         {
             private DefaultEditorWindowBackend m_Owner;
 
@@ -543,6 +546,7 @@ namespace UnityEditor.UIElements
             }
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         internal static Action<bool> SetupLiveReloadPanelTrackers;
 
         private static string GetWindowLiveReloadPreferenceKey(Type windowType)
@@ -566,3 +570,4 @@ namespace UnityEditor.UIElements
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

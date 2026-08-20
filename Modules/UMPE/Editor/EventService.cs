@@ -236,9 +236,9 @@ namespace UnityEditor.MPE
             if (HasHandlers(eventType))
             {
                 var results = NotifyLocalListeners(eventType, args, false);
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 var exception = results.FirstOrDefault(r => r is Exception);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 if (exception != null)
                 {
                     Reject(request, exception as Exception);
@@ -459,9 +459,9 @@ namespace UnityEditor.MPE
             if (s_Requests.Count > 0)
             {
                 var now = Stopwatch.GetTimestamp();
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 var pendingRequests = s_Requests.Values.ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 foreach (var request in pendingRequests)
                 {
                     var elapsedTime = new TimeSpan(now - request.offerStartTime).TotalMilliseconds;
@@ -485,9 +485,9 @@ namespace UnityEditor.MPE
             {
                 try
                 {
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2001 // Avoid Linq
                     result = handlers.Select(handler => handler(eventType, data)).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 }
                 catch (Exception e)
                 {

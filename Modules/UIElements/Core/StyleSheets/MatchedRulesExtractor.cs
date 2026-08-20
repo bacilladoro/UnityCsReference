@@ -2,7 +2,9 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
 using System;
+using Unity.Scripting.LifecycleManagement;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine.Bindings;
@@ -12,7 +14,7 @@ using UnityEngine.UIElements.StyleSheets;
 namespace UnityEngine.UIElements
 {
     [VisibleToOtherModules("UnityEditor.UIBuilderModule", "UnityEditor.UIToolkitAuthoringModule")]
-    internal struct MatchedRule
+    internal partial struct MatchedRule
     {
         public readonly SelectorMatchRecord matchRecord;
         public readonly string displayPath;
@@ -63,12 +65,14 @@ namespace UnityEngine.UIElements
             }
         }
 
+        [NoAutoStaticsCleanup]
         public static IEqualityComparer<MatchedRule> lineNumberFullPathComparer = new LineNumberFullPathEqualityComparer();
     }
 
     [VisibleToOtherModules("UnityEditor.UIBuilderModule", "UnityEditor.UIToolkitAuthoringModule")]
-    internal class MatchedRulesExtractor
+    internal partial class MatchedRulesExtractor
     {
+        [NoAutoStaticsCleanup]
         private static readonly Func<StyleSheet, string> k_defaultGetPath = ss => ss.name;
 
         private Func<StyleSheet, string> m_GetStyleSheetPath;
@@ -170,3 +174,4 @@ namespace UnityEngine.UIElements
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

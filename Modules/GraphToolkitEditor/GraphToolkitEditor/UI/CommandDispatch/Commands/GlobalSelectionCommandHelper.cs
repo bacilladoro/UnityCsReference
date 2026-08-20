@@ -30,9 +30,9 @@ namespace Unity.GraphToolkit.Editor
             /// <summary>
             /// The <see cref="SelectionStateComponent.StateUpdater"/> for the <see cref="SelectionStateComponent"/> passed in the constructor.
             /// </summary>
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             public SelectionStateComponent.StateUpdater MainUpdateScope => this.First(u => u.IsUpdaterForState(m_MainSelectionState));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             /// <summary>
             /// Initializes a new instance of the <see cref="UpdateScopeList"/> class.
@@ -59,9 +59,9 @@ namespace Unity.GraphToolkit.Editor
         {
             get
             {
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 var selectionUpdateScopes = m_AllSelectionStates.Select(s => s.UpdateScope);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 return new UpdateScopeList(m_MainSelectionState, selectionUpdateScopes);
             }
         }
@@ -73,9 +73,9 @@ namespace Unity.GraphToolkit.Editor
         public GlobalSelectionCommandHelper(SelectionStateComponent mainSelectionState)
         {
             m_MainSelectionState = mainSelectionState;
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             m_AllSelectionStates = mainSelectionState.State.AllStateComponents.OfType<SelectionStateComponent>().ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
     }
 }

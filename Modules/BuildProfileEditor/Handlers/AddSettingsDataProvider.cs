@@ -2,11 +2,13 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: BuildSettingsWindow not yet converted
 using System;
 using System.Collections.Generic;
 using UnityEditor.Build.Profile.AdaptivePerformance;
 using UnityEditor.Build.Profile.Elements;
 using UnityEditor.Build.Profile.Internal;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Build.Profile.Handlers
 {
@@ -14,8 +16,9 @@ namespace UnityEditor.Build.Profile.Handlers
     /// Build profile editor setting foldout data provider. Tracks
     /// ordered collection of all possible build profile setting sections.
     /// </summary>
-    class AddSettingsDataProvider : IAddSettingsDataProvider
+    partial class AddSettingsDataProvider : IAddSettingsDataProvider
     {
+        [NoAutoStaticsCleanup] // fixed registry of internal providers, allocated once, no user-code references
         static readonly IList<IBuildProfileSettingsProvider> s_InternalSettings = new List<IBuildProfileSettingsProvider>
         {
             new SceneListProvider(),
@@ -28,6 +31,7 @@ namespace UnityEditor.Build.Profile.Handlers
             new BuildDestinationSettingsProvider()
         };
 
+        [AutoStaticsCleanupOnCodeReload]
         static IList<IBuildProfileSettingsProvider> s_GenericSettingProviders = null;
 
         readonly BuildProfile m_BuildProfile;
@@ -147,3 +151,4 @@ namespace UnityEditor.Build.Profile.Handlers
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

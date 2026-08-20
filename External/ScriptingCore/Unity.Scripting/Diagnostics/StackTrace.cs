@@ -1,3 +1,4 @@
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: ScriptingRuntime not yet converted
 using System.Diagnostics;
 using System.Reflection;
 using System.Text;
@@ -264,3 +265,4 @@ internal static class StackTrace
         return false;
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

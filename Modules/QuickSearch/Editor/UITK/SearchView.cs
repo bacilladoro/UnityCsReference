@@ -593,9 +593,9 @@ namespace UnityEditor.Search
         {
             if (m_ViewState.filterHandler != null)
             {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 items = items.Where(item => m_ViewState.filterHandler(item));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             }
             m_FilteredItems.AddItems(items);
         }
@@ -629,11 +629,11 @@ namespace UnityEditor.Search
             {
                 if (selectionSynced)
                 {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                     // TODO Selection: serlection coming from Model, need to force update the view.
                     SetSelection(trackSelection: false, selection.indexes.ToArray());
                     NotifyResultViewOfSelectionChanged();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 }
                 return;
             }
@@ -745,9 +745,9 @@ namespace UnityEditor.Search
             m_FilteredItems.Clear();
             m_FilteredItems.AddItems(newItems);
             if (!string.IsNullOrEmpty(context.filterId))
-                #pragma warning disable UA2010 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2010 // Avoid Linq
                 m_FilteredItems.AddGroup(context.providers.First());
-#pragma warning restore UA2010
+#pragma warning restore UAC2010
 
             var actualCount = 0;
             for (var i = 0; i < tempSelectedItems.Count; ++i)
@@ -785,13 +785,13 @@ namespace UnityEditor.Search
         {
             var shortcutIndex = 0;
 
-            #pragma warning disable UA2006 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2006 // Avoid Linq
             var useSelection = searchView.context?.selection?.Any(e => string.Equals(e.id, item.id, StringComparison.OrdinalIgnoreCase)) ?? false;
-#pragma warning restore UA2006
+#pragma warning restore UAC2006
             var currentSelection = useSelection ? searchView.context.selection : new SearchSelection(new[] { item });
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             foreach (var action in item.provider.actions.Where(a => a.enabled?.Invoke(currentSelection) ?? true))
-                #pragma warning restore UA2001
+                #pragma warning restore UAC2001
             {
                 var itemName = !string.IsNullOrWhiteSpace(action.content.text) ? action.content.text : action.content.tooltip;
                 if (shortcutIndex == 0)
@@ -799,9 +799,9 @@ namespace UnityEditor.Search
                 else if (shortcutIndex == 1)
                     itemName += " _&enter";
 
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 menu.AddItem(itemName, false, () => searchView.ExecuteAction(action, currentSelection.ToArray(), true));
-                #pragma warning restore UA2001
+                #pragma warning restore UAC2001
                 ++shortcutIndex;
             }
 
@@ -957,9 +957,9 @@ namespace UnityEditor.Search
         {
             var groups = m_FilteredItems.EnumerateGroups(showAll);
             if (showAll)
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 groups = groups.Where(g => !string.Equals(g.id, "default", StringComparison.Ordinal));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             return groups;
         }
 
@@ -984,13 +984,13 @@ namespace UnityEditor.Search
         IEnumerable<SearchQueryError> ISearchView.GetAllVisibleErrors() => GetAllVisibleErrors();
         internal IEnumerable<SearchQueryError> GetAllVisibleErrors()
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var visibleProviders = EnumerateGroups().Select(g => g.id).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             var defaultProvider = SearchService.GetDefaultProvider();
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             return context.GetAllErrors().Where(e => visibleProviders.Contains(e.provider.type) || e.provider.type == defaultProvider.type);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         public bool IsPicker()

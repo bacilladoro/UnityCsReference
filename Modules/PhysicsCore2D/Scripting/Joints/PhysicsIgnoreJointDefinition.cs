@@ -49,7 +49,7 @@ namespace Unity.U2D.Physics
 
         PhysicsBody m_BodyA;
         PhysicsBody m_BodyB;
-        [SerializeField] bool m_WorldDrawing;
+        [SerializeField] internal bool m_WorldDrawing;
 
         #endregion
     }

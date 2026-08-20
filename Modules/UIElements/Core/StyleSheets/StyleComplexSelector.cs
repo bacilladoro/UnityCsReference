@@ -2,6 +2,8 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
+using Unity.Scripting.LifecycleManagement;
 using System;
 using System.Collections.Generic;
 using UnityEngine.Bindings;
@@ -39,7 +41,7 @@ namespace UnityEngine.UIElements
 
     [Serializable]
     [VisibleToOtherModules("UnityEditor.UIBuilderModule", "UnityEditor.UIToolkitAuthoringModule")]
-    internal class StyleComplexSelector
+    internal partial class StyleComplexSelector
     {
         // Hash keys for the most relevant parts of a complex selector to use against the style sheet's Bloom filter.
         [NonSerialized] public Hashes ancestorHashes;
@@ -108,6 +110,7 @@ namespace UnityEngine.UIElements
                 this.negate = negate;
             }
         }
+        [NoAutoStaticsCleanup]
         static Dictionary<string, PseudoStateData> s_PseudoStates;
 
         internal void CachePseudoStateMasks(StyleSheet styleSheet)
@@ -187,6 +190,7 @@ namespace UnityEngine.UIElements
                 return y.value.CompareTo(x.value);
         }
 
+        [NoAutoStaticsCleanup]
         static readonly List<StyleSelectorPart> s_HashList = new ();
 
         internal unsafe void CalculateHashes()
@@ -292,3 +296,4 @@ namespace UnityEngine.UIElements
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

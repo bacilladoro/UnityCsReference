@@ -294,9 +294,9 @@ namespace UnityEditor
             else
             {
                 // Map serialized icons to required icons
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 icons = PlayerSettings.GetPlatformIconsFromStruct(icons, kind, serializedIcons.ToArray());
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             }
 
             return icons;
@@ -334,9 +334,9 @@ namespace UnityEditor
             }
             else
             {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 iconStructs = icons.Select(
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     i => i.GetPlatformIconStruct()
                     ).ToArray<PlatformIconStruct>();
             }
@@ -567,9 +567,9 @@ namespace UnityEditor
                         foreach (var subKindGroup in kindGroup.Value)
                         {
                             subKindGroup.Key.m_SetIconSlots =
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                                 PlayerSettings.GetNonEmptyPlatformIconCount(subKindGroup.Value.Select(x => x.platformIcon)
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                                     .ToArray());
                             kindGroup.Key.m_SetIconSlots += subKindGroup.Key.m_SetIconSlots;
 

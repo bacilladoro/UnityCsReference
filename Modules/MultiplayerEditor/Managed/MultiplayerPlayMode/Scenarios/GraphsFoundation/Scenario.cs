@@ -9,6 +9,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Unity.PlayMode.Editor;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 
 namespace Unity.Multiplayer.PlayMode.Editor
@@ -19,7 +20,7 @@ namespace Unity.Multiplayer.PlayMode.Editor
     /// associated Instances across Preparation, Deployment, and Running phases. It also notifies
     /// all attached callbacks of Scenario status and completion results.
     /// </summary>
-    internal class Scenario : ScriptableObject
+    internal partial class Scenario : ScriptableObject
     {
         [SerializeField] private ScenarioStatusData m_StatusData;
         [SerializeField] private bool m_HasStarted;
@@ -28,6 +29,7 @@ namespace Unity.Multiplayer.PlayMode.Editor
         public ScenarioStatusData StatusData => m_StatusData;
 
         // Scenario Callbacks
+        [AutoStaticsCleanupOnCodeReload] // static event; stale handlers after reload pin old ALC
         internal static event Action<Scenario> ScenarioStarted;
         internal event Action<ScenarioStatusData> StatusRefreshed;
 

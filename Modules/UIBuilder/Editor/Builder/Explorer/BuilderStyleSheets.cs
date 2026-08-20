@@ -353,8 +353,15 @@ namespace Unity.UI.Builder
             var inlineStyleChange = styles != null && !selectionIsStyles;
             if (changeType == BuilderStylingChangeType.Default && !inlineStyleChange)
             {
-                elementHierarchyView.hasUnsavedChanges = m_Selection.hasUnsavedChanges;
-                UpdateHierarchyAndSelection(m_Selection.hasUnsavedChanges);
+                if (m_Selection.suppressStyleSheetsPaneUnsavedMark)
+                {
+                    m_Selection.suppressStyleSheetsPaneUnsavedMark = false;
+                }
+                else
+                {
+                    elementHierarchyView.hasUnsavedChanges = m_Selection.hasUnsavedChanges;
+                    UpdateHierarchyAndSelection(m_Selection.hasUnsavedChanges);
+                }
             }
         }
 

@@ -2,7 +2,9 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
 using System;
+using Unity.Scripting.LifecycleManagement;
 using System.Runtime.CompilerServices;
 using Unity.Properties;
 using UnityEngine.Bindings;
@@ -438,12 +440,15 @@ namespace UnityEngine.UIElements
             }
         }
 
-        private static class Callbacks
+        private static partial class Callbacks
         {
+            [NoAutoStaticsCleanup]
             public static readonly EventCallbackDefinition<Button> OnNavigationSubmit =
                 EventCallback.Create<NavigationSubmitEvent, Button>(static (e, self) => self.OnNavigationSubmit(e));
+            [NoAutoStaticsCleanup]
             public static readonly EventCallbackDefinition<Button> OnCustomStyleResolved =
                 EventCallback.Create<CustomStyleResolvedEvent, Button>(static (e, self) => self.OnCustomStyleResolved(e));
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

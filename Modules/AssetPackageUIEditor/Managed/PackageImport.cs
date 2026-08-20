@@ -182,9 +182,9 @@ namespace UnityEditor
         {
             if (m_ImportPackageItems == null)
                 return;
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var restrictedItems = m_ImportPackageItems.Where(i => i.isRestricted).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             if (restrictedItems.Length > 0)
             {
                 GUILayout.BeginHorizontal(EditorStyles.helpBox); // Horizontal layout for icon and text
@@ -707,9 +707,9 @@ namespace UnityEditor
 
         private void FinishImport()
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             Utility.ImportPackageAssetsWithOrigin(m_AssetOrigin, m_AssetContentItems.Concat(m_ProjectSettingItems).ToArray(), m_PackageExtractedPath, true);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             CloseImportWindow();
         }
 

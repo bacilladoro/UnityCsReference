@@ -47,6 +47,9 @@ namespace UnityEditor
         [NativeMethod("SetContextGroupNameIF")]
         extern public static void SetContextGroupName(string groupName);
 
+        [NativeMethod("SetGroupNameOverridesIF")]
+        extern internal static void SetGroupNameOverrides(string[] assemblyNames, string[] groupNames);
+
         [NativeMethod(Name = "EnableEditorLocalization", IsThreadSafe = true)]
         extern public static bool enableEditorLocalization { get; set; }
 

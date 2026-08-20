@@ -46,17 +46,17 @@ namespace Unity.GraphToolkit.Editor
         /// <summary>
         /// Handles the creation of a subgraph node by transferring the selected graph elements to the subgraph and creating the connections to the subgraph node in the main graph.
         /// </summary>
+        /// <param name="mainGraph">The main graph.</param>
         /// <param name="subgraphNodeModel">The newly created subgraph node.</param>
         /// <param name="selectedElements">The elements that were selected to be transferred to the subgraph.</param>
         /// <param name="elementsToDelete">Additional elements that need to be deleted from the main graph.</param>
         /// <param name="portIdsToAlign">The ids of the ports that need to have their connections aligned to them.</param>
-        public void HandleSubgraphNodeCreation(SubgraphNodeModel subgraphNodeModel, List<GraphElementModel> selectedElements, List<GraphElementModel> elementsToDelete, List<string> portIdsToAlign)
+        public void HandleSubgraphNodeCreation(GraphModel mainGraph, ISubgraphNodeInternal subgraphNodeModel, List<GraphElementModel> selectedElements, List<GraphElementModel> elementsToDelete, List<string> portIdsToAlign)
         {
             if (subgraphNodeModel == null)
                 return;
 
             var subgraphNodePortInfos = new List<SubgraphNodePortInfo>();
-            var mainGraph = subgraphNodeModel.GraphModel;
             var subgraph = subgraphNodeModel.GetSubgraphModel();
 
             // 1. Get elements to transfer to subgraph.
@@ -66,7 +66,8 @@ namespace Unity.GraphToolkit.Editor
             PopulateSubgraph(subgraph, elementsToTransfer, subgraphNodePortInfos);
 
             // 3. Initialize the subgraph node in the current graph.
-            subgraphNodeModel.DefineNode();
+            // StateModel nodes manage their ports via the transition system directly; DefineNode is a NodeModel concept.
+            (subgraphNodeModel as NodeModel)?.DefineNode();
             InitializeSubgraphNode(subgraphNodeModel);
 
             // 4. Delete the elements that has been transferred to the subgraph.
@@ -111,6 +112,12 @@ namespace Unity.GraphToolkit.Editor
         }
 
         /// <summary>
+        /// Whether variable declarations should be created in the subgraph during population.
+        /// Subclasses that do not use data-flow ports (e.g. state machines) can return false.
+        /// </summary>
+        protected virtual bool ShouldCreateVariableDeclarations => true;
+
+        /// <summary>
         /// Populates the subgraph with variable declarations and graph elements.
         /// </summary>
         /// <param name="newSubgraph">The created subgraph.</param>
@@ -125,14 +132,17 @@ namespace Unity.GraphToolkit.Editor
             // We get the delta before adding the new inputs, outputs and portals.
             var repositionDelta = GetDeltaToCenter(newSubgraph);
 
-            // 2. Create variable declarations in the subgraph.
-            CreateVariableDeclarations(newSubgraph, elementsToTransfer, subgraphNodePortInfos);
+            if (ShouldCreateVariableDeclarations)
+            {
+                // 2. Create variable declarations in the subgraph.
+                CreateVariableDeclarations(newSubgraph, elementsToTransfer, subgraphNodePortInfos);
 
-            // 3. Create the variable nodes in the subgraph from the new declarations.
-            CreateInputOutputVariableNodes(newSubgraph, elementsToTransfer, subgraphNodePortInfos, nodeMapping);
+                // 3. Create the variable nodes in the subgraph from the new declarations.
+                CreateInputOutputVariableNodes(newSubgraph, elementsToTransfer, subgraphNodePortInfos, nodeMapping);
 
-            // 4. Order the variable declarations properly.
-            OrderVariableDeclarations(newSubgraph, subgraphNodePortInfos);
+                // 4. Order the variable declarations properly.
+                OrderVariableDeclarations(newSubgraph, subgraphNodePortInfos);
+            }
 
             // 5. Move all elements to the center of the subgraph.
             RepositionElements(newSubgraph, repositionDelta);
@@ -142,7 +152,7 @@ namespace Unity.GraphToolkit.Editor
         /// Initializes the subgraph node model after the subgraph has been created.
         /// </summary>
         /// <param name="subgraphNodeModel">The associated subgraph node in the main graph.</param>
-        protected virtual void InitializeSubgraphNode(SubgraphNodeModel subgraphNodeModel) { }
+        protected virtual void InitializeSubgraphNode(ISubgraphNodeInternal subgraphNodeModel) { }
 
         /// <summary>
         /// Deletes the graph elements in the main graph that were transferred to the subgraph.
@@ -173,11 +183,16 @@ namespace Unity.GraphToolkit.Editor
         /// <param name="mainGraph">The main graph.</param>
         /// <param name="subgraphNodeModel">The associated subgraph node.</param>
         /// <param name="subgraphNodePortInfos">The information on the ports of the subgraph node in the main graph.</param>
-        protected virtual void CreateWiresToSubgraphNode(GraphModel mainGraph, SubgraphNodeModel subgraphNodeModel, List<SubgraphNodePortInfo> subgraphNodePortInfos)
+        protected virtual void CreateWiresToSubgraphNode(GraphModel mainGraph, ISubgraphNodeInternal subgraphNodeModel, List<SubgraphNodePortInfo> subgraphNodePortInfos)
         {
             // Get all the ports on the subgraph node.
-            var subgraphNodeInputs = new List<PortModel>(subgraphNodeModel.InputPortToVariableDeclarationDictionary.Keys);
-            var subgraphNodeOutputs = new List<PortModel>(subgraphNodeModel.OutputPortToVariableDeclarationDictionary.Keys);
+            using var disposeInputs = ListPool<PortModel>.Get(out var subgraphNodeInputs);
+            using var disposeOutputs = ListPool<PortModel>.Get(out var subgraphNodeOutputs);
+            if (subgraphNodeModel is InputOutputPortsNodeModel inputOutputPortsNode)
+            {
+                subgraphNodeInputs.AddRange(inputOutputPortsNode.InputPorts);
+                subgraphNodeOutputs.AddRange(inputOutputPortsNode.OutputPorts);
+            }
 
             // Get the pairs of ports to create wires.
             var allPortPairsToCreateWires = new List<(PortModel, PortModel)>();
@@ -559,7 +574,7 @@ namespace Unity.GraphToolkit.Editor
         /// <summary>
         /// The default name for a local subgraph.
         /// </summary>
-        public static string defaultLocalSubgraphName = "Local Subgraph";
+        public const string DefaultLocalSubgraphName = "Local Subgraph";
 
         /// <summary>
         /// Computes the bounds of the subgraph.

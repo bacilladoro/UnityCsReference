@@ -282,9 +282,9 @@ namespace UnityEditor
             else if (validSignatures.Count == 1)
                 Debug.LogError(MethodToString(method) + " does not match " + attributeType + " expected signature.\n Use " + MethodToString(validSignatures[0]));
             else
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 Debug.LogError(MethodToString(method) + " does not match any of " + attributeType + " expected signatures.\n Valid signatures are: " + string.Join(" , ", validSignatures.Select(MethodToString)));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             return false;
         }
 
@@ -303,9 +303,9 @@ namespace UnityEditor
 
             public IEnumerable<MethodInfo> FilterAndSortOnAttribute<T>(Func<T, bool> filter, Func<T, IComparable> sorter) where T : Attribute
             {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 return methodsWithAttributes.Where(a => filter((T)a.attribute)).OrderBy(c => sorter((T)c.attribute)).Select(o => o.info);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             }
 
             public IReadOnlyList<MethodWithAttribute> methodsWithAttributes { get; }

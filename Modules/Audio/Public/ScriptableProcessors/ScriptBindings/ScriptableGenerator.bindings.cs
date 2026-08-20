@@ -514,8 +514,8 @@ namespace UnityEngine.Audio
             return m_ProcessorInstance.GetHashCode();
         }
 
-        internal GeneratorInstance(GeneratorHeader* header)
-            => m_ProcessorInstance = new ProcessorInstance(header->Processor.DualThreadHandle, &header->Processor);
+        internal GeneratorInstance(DualThreadHandle handle)
+            => m_ProcessorInstance = new ProcessorInstance(handle);
 
         internal readonly ProcessorInstance m_ProcessorInstance;
     }

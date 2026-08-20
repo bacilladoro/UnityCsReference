@@ -2,7 +2,9 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
 using System;
+using Unity.Scripting.LifecycleManagement;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Unity.Properties;
@@ -40,13 +42,15 @@ namespace UnityEngine.UIElements
     }
 
     [VisibleToOtherModules("UnityEditor.UIToolkitAuthoringModule")]
-    sealed class DataBindingManager : IDisposable
+    sealed partial class DataBindingManager : IDisposable
     {
         private  readonly List<BindingData> m_BindingDataLocalPool = new List<BindingData>(64);
 
         static readonly PropertyName k_RequestBindingPropertyName = "__unity-binding-request";
         static readonly BindingId k_ClearBindingsToken = "$__BindingManager--ClearAllBindings";
 
+
+        [NoAutoStaticsCleanup]
         internal static BindingLogLevel globalLogLevel = BindingLogLevel.All;
 
         BindingLogLevel? m_LogLevel;
@@ -197,6 +201,7 @@ namespace UnityEngine.UIElements
             public bool IsValid => version == bindingData.version && binding == bindingData.binding;
         }
 
+        [NoAutoStaticsCleanup]
         static readonly List<BindingData> s_Empty = new List<BindingData>();
 
         class HierarchyBindingTracker : IDisposable
@@ -1259,3 +1264,4 @@ namespace UnityEngine.UIElements
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

@@ -272,19 +272,19 @@ namespace UnityEditor
 
         internal static Dictionary<Type, string> GetAvailableWindowTypes()
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return s_AvailableWindowTypes ?? (s_AvailableWindowTypes = TypeCache.GetTypesDerivedFrom(typeof(PlayModeView)).OrderBy(GetWindowTitle).ToDictionary(t => t, GetWindowTitle));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         private void SetSerializedViews(Dictionary<string, string> serializedViews)
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             m_SerializedViewNames = serializedViews.Keys.ToList();
-#pragma warning restore UA2001
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+#pragma warning disable UAC2001 // Avoid Linq
             m_SerializedViewValues = serializedViews.Values.ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         private string GetTypeName()
@@ -294,9 +294,9 @@ namespace UnityEditor
 
         private Dictionary<string, string> ListsToDictionary(List<string> keys, List<string> values)
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var dict = keys.Select((key, val) => new { key, val = values[val] }).ToDictionary(x => x.key, x => x.val);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             return dict;
         }
 

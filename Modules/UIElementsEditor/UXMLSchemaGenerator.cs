@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -11,6 +12,7 @@ using System.Xml.Schema;
 using UnityEngine;
 using UnityEngine.Assemblies;
 using UnityEngine.UIElements;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.UIElements
 {
@@ -79,6 +81,7 @@ namespace UnityEditor.UIElements
             public string namepacePrefix { get; }
             public HashSet<string> importNamespaces { get; } = new();
 
+            [NoAutoStaticsCleanup]
             static Dictionary<string, string> s_NamespacePrefix { get; }
 
             static SchemaInfo()
@@ -135,9 +138,13 @@ namespace UnityEditor.UIElements
         {
             const string k_XmlSchemaNamespace = "http://www.w3.org/2001/XMLSchema";
 
+            [NoAutoStaticsCleanup]
             static readonly XmlQualifiedName s_StringTypeQualifiedName = new XmlQualifiedName("string", k_XmlSchemaNamespace);
+            [NoAutoStaticsCleanup]
             static readonly XmlQualifiedName s_BoolTypeQualifiedName = new XmlQualifiedName("boolean", k_XmlSchemaNamespace);
+            [NoAutoStaticsCleanup]
             static readonly XmlQualifiedName s_BaseTypeAnyType = new XmlQualifiedName("anyType", k_XmlSchemaNamespace);
+            [NoAutoStaticsCleanup]
             static readonly XmlQualifiedName s_VisualElementName = new XmlQualifiedName(nameof(VisualElement), k_DefaultNamespace);
 
             public Dictionary<string, SchemaInfo> schemas { get; } = new();
@@ -1044,3 +1051,4 @@ namespace UnityEditor.UIElements
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

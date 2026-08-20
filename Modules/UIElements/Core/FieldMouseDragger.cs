@@ -2,6 +2,8 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Scripting.APIUpdating;
 
 namespace UnityEngine.UIElements
@@ -37,7 +39,7 @@ namespace UnityEngine.UIElements
     /// and then set the drag zone using <see cref="BaseFieldMouseDragger.SetDragZone(VisualElement)"/>
     /// </description>
     [MovedFrom(true, UpgradeConstants.EditorNamespace, UpgradeConstants.EditorAssembly)]
-    public class FieldMouseDragger<T> : BaseFieldMouseDragger
+    public partial class FieldMouseDragger<T> : BaseFieldMouseDragger
     {
         /// <summary>
         /// FieldMouseDragger's constructor.
@@ -78,6 +80,8 @@ namespace UnityEngine.UIElements
             }
         }
 
+
+        [NoAutoStaticsCleanup]
         private static readonly EventCallbackGroupFactory<FieldMouseDragger<T>> k_CallbackFactory = new(arg => new Callbacks(arg).OnDragElementPointerAndKeyDown);
         private EventCallbackGroupFactory<FieldMouseDragger<T>>.Group m_RegisteredCallbacks;
 
@@ -185,3 +189,4 @@ namespace UnityEngine.UIElements
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

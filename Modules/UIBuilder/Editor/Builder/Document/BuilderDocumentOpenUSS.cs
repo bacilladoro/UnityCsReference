@@ -5,6 +5,7 @@
 using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEditor;
+using Unity.UIToolkit.Editor;
 using System;
 
 namespace Unity.UI.Builder
@@ -97,10 +98,16 @@ namespace Unity.UI.Builder
 
             m_UssPreview = m_StyleSheet.GenerateUSS();
             m_ContentHash = m_StyleSheet.contentHash;
+            // Hand the current serialized content to the registry as this stylesheet's unsaved snapshot
+            // (used to restore edits on an external-reimport "keep"), since Builder edits bypass the queue.
+            UIAssetRegistry.instance.SetUnsavedSnapshot(m_StyleSheet, m_UssPreview);
         }
 
-        public bool SaveToDisk(VisualTreeAsset visualTreeAsset)
+        public bool SaveToDisk(VisualTreeAsset visualTreeAsset, out bool failed)
         {
+            // Failed here means that the saving operation itself failed rather than the asset was not saved (i.e. no
+            // changes were made on the asset)
+            failed = false;
             var newUSSPath = assetPath;
 
             // There should not be a way to have an unsaved USS. The newUSSPath should always be non-empty.
@@ -109,7 +116,11 @@ namespace Unity.UI.Builder
             visualTreeAsset.ReplaceStyleSheetPaths(m_OldPath, newUSSPath);
 
             if (ussPreview == null)
+            {
+                failed = true;
                 return false;
+            }
+
 
             bool shouldSave = m_OldPath != newUSSPath;
             if (!shouldSave && m_BackupStyleSheet)
@@ -132,7 +143,9 @@ namespace Unity.UI.Builder
             // We just saved. Clear the dirty flags.
             EditorUtility.ClearDirty(m_StyleSheet);
 
-            return BuilderAssetUtilities.WriteTextFileToDisk(newUSSPath, ussPreview);
+            var written = BuilderAssetUtilities.WriteTextFileToDisk(newUSSPath, ussPreview);
+            failed = !written;
+            return written;
         }
 
         public bool PostSaveToDiskChecksAndFixes()
@@ -174,6 +187,29 @@ namespace Unity.UI.Builder
 
             m_BackupStyleSheet = styleSheet.DeepCopy();
             restoredStyleSheet.DeepOverwrite(styleSheet);
+        }
+
+        // Re-points this file at the stylesheet currently on disk and syncs the discard backup to it. Called when
+        // another tool saved (or reverted) a sheet we share: our backup is still the pre-save copy, so a later
+        // RestoreFromBackup would otherwise revert the shared instance PAST the other tool's saved content.
+        internal void ResyncBackupToCurrentAsset()
+        {
+            if (string.IsNullOrEmpty(m_OldPath))
+                return;
+
+            var fresh = BuilderPackageUtilities.LoadAssetAtPath<StyleSheet>(m_OldPath);
+            if (fresh == null)
+                return;
+
+            m_StyleSheet = fresh;
+            m_ContentHash = fresh.contentHash;
+            m_UssPreview = fresh.GenerateUSS();
+            UIAssetRegistry.instance.SetUnsavedSnapshot(m_StyleSheet, m_UssPreview);
+
+            if (m_BackupStyleSheet == null)
+                m_BackupStyleSheet = fresh.DeepCopy();
+            else
+                fresh.DeepOverwrite(m_BackupStyleSheet);
         }
 
         public void RestoreFromBackup()

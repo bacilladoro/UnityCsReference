@@ -14,7 +14,7 @@ namespace Unity.GraphToolkit.Editor.Implementation
         {
             var graphModel = GetSubgraphModel();
 
-            return (graphModel as GraphModelImp)?.Graph;
+            return (graphModel as GraphModelImp)?.Graph as Graph;
         }
 
         protected override void OnDefineNode(NodeDefinitionScope definitionScope)

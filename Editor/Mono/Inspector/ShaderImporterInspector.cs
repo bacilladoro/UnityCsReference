@@ -175,20 +175,20 @@ namespace UnityEditor
                 return;
 
             var properties = (ShaderProperties)extraDataTarget;
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var defaultNames = properties.m_Properties.Where(x => x.modifiable).Select(x => x.propertyName).ToArray();
-#pragma warning restore UA2001
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+#pragma warning disable UAC2001 // Avoid Linq
             var defaultTextures = properties.m_Properties.Where(x => x.modifiable).Select(x => x.texture).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             importer.SetDefaultTextures(defaultNames, defaultTextures);
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var nonModNames = properties.m_Properties.Where(x => !x.modifiable).Select(x => x.propertyName).ToArray();
-#pragma warning restore UA2001
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+#pragma warning disable UAC2001 // Avoid Linq
             var nonModTextures = properties.m_Properties.Where(x => !x.modifiable).Select(x => x.texture).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             importer.SetNonModifiableTextures(nonModNames, nonModTextures);
 
             AssetDatabase.ImportAsset(AssetDatabase.GetAssetPath(importer));

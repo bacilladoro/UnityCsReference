@@ -15,6 +15,7 @@ namespace UnityEditor.UIElements.ProjectSettings
     {
         internal class Styles
         {
+            [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup] // cached style block resolved from a fixed catalog key; safe to persist
             public static StyleBlock settingsBtn { get; } = EditorResources.GetStyle("sb-settings-icon-btn");
 
             public const string k_TitleBarClassName = "project-settings-title-bar";

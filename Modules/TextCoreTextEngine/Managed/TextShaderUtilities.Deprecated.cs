@@ -5,6 +5,7 @@
 using System;
 using UnityEngine.Bindings;
 using Unity.Collections;
+using Unity.Scripting.LifecycleManagement;
 
 #pragma warning disable CS0618 // TextShaderUtilities, TextCoreShaderGUI, TextCoreShaderGUISDF, TextCoreShaderGUIBitmap are obsolete; handled natively by ATG
 
@@ -15,131 +16,196 @@ namespace UnityEngine.TextCore.Text
     /// </summary>
     [UnityEngine.Internal.ExcludeFromDocs]
     [Obsolete("Advanced Text Generator (ATG) is moving away from the material-per-font approach. This type is no longer required.", false)]
-    public static class TextShaderUtilities
+    public static partial class TextShaderUtilities
     {
-        // Shader Property IDs
+        // Shader Property IDs. Each is a value-type int resolved once via Shader.PropertyToID and
+        // stable for the process lifetime, so all are [NoAutoStaticsCleanup]: safe to persist across
+        // code reload, nothing to clean up.
+        [NoAutoStaticsCleanup]
         public static int ID_MainTex;
 
+        [NoAutoStaticsCleanup]
         public static int ID_FaceTex;
+        [NoAutoStaticsCleanup]
         public static int ID_FaceColor;
+        [NoAutoStaticsCleanup]
         public static int ID_FaceDilate;
+        [NoAutoStaticsCleanup]
         public static int ID_Shininess;
 
         /// <summary>
         /// Property ID for the _OutlineOffset1 shader property used by URP and HDRP shaders
         /// </summary>
+        [NoAutoStaticsCleanup]
         public static int ID_OutlineOffset1;
 
         /// <summary>
         /// Property ID for the _OutlineOffset2 shader property used by URP and HDRP shaders
         /// </summary>
+        [NoAutoStaticsCleanup]
         public static int ID_OutlineOffset2;
 
         /// <summary>
         /// Property ID for the _OutlineOffset3 shader property used by URP and HDRP shaders
         /// </summary>
+        [NoAutoStaticsCleanup]
         public static int ID_OutlineOffset3;
 
         /// <summary>
         /// Property ID for the ID_AdditiveOutlineMode shader property used by URP and HDRP shaders
         /// </summary>
+        [NoAutoStaticsCleanup]
         public static int ID_OutlineMode;
 
         /// <summary>
         /// Property ID for the _IsoPerimeter shader property used by URP and HDRP shaders
         /// </summary>
+        [NoAutoStaticsCleanup]
         public static int ID_IsoPerimeter;
 
         /// <summary>
         /// Property ID for the _Softness shader property used by URP and HDRP shaders
         /// </summary>
+        [NoAutoStaticsCleanup]
         public static int ID_Softness;
 
+        [NoAutoStaticsCleanup]
         public static int ID_UnderlayColor;
+        [NoAutoStaticsCleanup]
         public static int ID_UnderlayOffsetX;
+        [NoAutoStaticsCleanup]
         public static int ID_UnderlayOffsetY;
+        [NoAutoStaticsCleanup]
         public static int ID_UnderlayDilate;
+        [NoAutoStaticsCleanup]
         public static int ID_UnderlaySoftness;
 
         /// <summary>
         /// Property ID for the _UnderlayOffset shader property used by URP and HDRP shaders
         /// </summary>
+        [NoAutoStaticsCleanup]
         public static int ID_UnderlayOffset;
 
         /// <summary>
         /// Property ID for the _UnderlayIsoPerimeter shader property used by URP and HDRP shaders
         /// </summary>
+        [NoAutoStaticsCleanup]
         public static int ID_UnderlayIsoPerimeter;
 
+        [NoAutoStaticsCleanup]
         public static int ID_WeightNormal;
+        [NoAutoStaticsCleanup]
         public static int ID_WeightBold;
 
+        [NoAutoStaticsCleanup]
         public static int ID_OutlineTex;
+        [NoAutoStaticsCleanup]
         public static int ID_OutlineWidth;
+        [NoAutoStaticsCleanup]
         public static int ID_OutlineSoftness;
+        [NoAutoStaticsCleanup]
         public static int ID_OutlineColor;
 
+        [NoAutoStaticsCleanup]
         public static int ID_Outline2Color;
+        [NoAutoStaticsCleanup]
         public static int ID_Outline2Width;
 
+        [NoAutoStaticsCleanup]
         public static int ID_Padding;
+        [NoAutoStaticsCleanup]
         public static int ID_GradientScale;
+        [NoAutoStaticsCleanup]
         public static int ID_ScaleX;
+        [NoAutoStaticsCleanup]
         public static int ID_ScaleY;
+        [NoAutoStaticsCleanup]
         public static int ID_PerspectiveFilter;
+        [NoAutoStaticsCleanup]
         public static int ID_Sharpness;
 
+        [NoAutoStaticsCleanup]
         public static int ID_TextureWidth;
+        [NoAutoStaticsCleanup]
         public static int ID_TextureHeight;
 
+        [NoAutoStaticsCleanup]
         public static int ID_BevelAmount;
 
+        [NoAutoStaticsCleanup]
         public static int ID_GlowColor;
+        [NoAutoStaticsCleanup]
         public static int ID_GlowOffset;
+        [NoAutoStaticsCleanup]
         public static int ID_GlowPower;
+        [NoAutoStaticsCleanup]
         public static int ID_GlowOuter;
+        [NoAutoStaticsCleanup]
         public static int ID_GlowInner;
 
+        [NoAutoStaticsCleanup]
         public static int ID_LightAngle;
 
+        [NoAutoStaticsCleanup]
         public static int ID_EnvMap;
+        [NoAutoStaticsCleanup]
         public static int ID_EnvMatrix;
+        [NoAutoStaticsCleanup]
         public static int ID_EnvMatrixRotation;
 
+        [NoAutoStaticsCleanup]
         //public static int ID_MaskID;
         public static int ID_MaskCoord;
+        [NoAutoStaticsCleanup]
         public static int ID_ClipRect;
+        [NoAutoStaticsCleanup]
         public static int ID_MaskSoftnessX;
+        [NoAutoStaticsCleanup]
         public static int ID_MaskSoftnessY;
+        [NoAutoStaticsCleanup]
         public static int ID_VertexOffsetX;
+        [NoAutoStaticsCleanup]
         public static int ID_VertexOffsetY;
+        [NoAutoStaticsCleanup]
         public static int ID_UseClipRect;
 
+        [NoAutoStaticsCleanup]
         public static int ID_StencilID;
+        [NoAutoStaticsCleanup]
         public static int ID_StencilOp;
+        [NoAutoStaticsCleanup]
         public static int ID_StencilComp;
+        [NoAutoStaticsCleanup]
         public static int ID_StencilReadMask;
+        [NoAutoStaticsCleanup]
         public static int ID_StencilWriteMask;
 
+        [NoAutoStaticsCleanup]
         public static int ID_ShaderFlags;
+        [NoAutoStaticsCleanup]
         public static int ID_ScaleRatio_A;
+        [NoAutoStaticsCleanup]
         public static int ID_ScaleRatio_B;
+        [NoAutoStaticsCleanup]
         public static int ID_ScaleRatio_C;
 
-        public static string Keyword_Bevel = "BEVEL_ON";
-        public static string Keyword_Glow = "GLOW_ON";
-        public static string Keyword_Underlay = "UNDERLAY_ON";
-        public static string Keyword_Ratios = "RATIOS_OFF";
+        // Public API: kept mutable (adding readonly would be a source-breaking change). Strings are
+        // value-safe, so [NoAutoStaticsCleanup]: safe to persist across code reload, nothing to clean up.
+        [NoAutoStaticsCleanup] public static string Keyword_Bevel = "BEVEL_ON";
+        [NoAutoStaticsCleanup] public static string Keyword_Glow = "GLOW_ON";
+        [NoAutoStaticsCleanup] public static string Keyword_Underlay = "UNDERLAY_ON";
+        [NoAutoStaticsCleanup] public static string Keyword_Ratios = "RATIOS_OFF";
         //public static string Keyword_MASK_OFF = "MASK_OFF";
-        public static string Keyword_MASK_SOFT = "MASK_SOFT";
-        public static string Keyword_MASK_HARD = "MASK_HARD";
-        public static string Keyword_MASK_TEX = "MASK_TEX";
-        public static string Keyword_Outline = "OUTLINE_ON";
+        [NoAutoStaticsCleanup] public static string Keyword_MASK_SOFT = "MASK_SOFT";
+        [NoAutoStaticsCleanup] public static string Keyword_MASK_HARD = "MASK_HARD";
+        [NoAutoStaticsCleanup] public static string Keyword_MASK_TEX = "MASK_TEX";
+        [NoAutoStaticsCleanup] public static string Keyword_Outline = "OUTLINE_ON";
 
-        public static string ShaderTag_ZTestMode = "unity_GUIZTestMode";
-        public static string ShaderTag_CullMode = "_CullMode";
+        [NoAutoStaticsCleanup] public static string ShaderTag_ZTestMode = "unity_GUIZTestMode";
+        [NoAutoStaticsCleanup] public static string ShaderTag_CullMode = "_CullMode";
 
-        private static float m_clamp = 1.0f;
+        private static readonly float m_clamp = 1.0f;
+        [NoAutoStaticsCleanup] // One-time guard for resolving shader property IDs, which are stable for the process lifetime; safe to persist across code reload.
         public static bool isInitialized = false;
 
         [VisibleToOtherModules("UnityEngine.UIElementsModule")]
@@ -164,6 +230,7 @@ namespace UnityEngine.TextCore.Text
                 return k_ShaderRef_MobileSDF;
             }
         }
+        [AutoStaticsCleanupOnCodeReload]
         static Shader k_ShaderRef_MobileSDF;
 
         /// <summary>
@@ -179,6 +246,7 @@ namespace UnityEngine.TextCore.Text
                 return k_ShaderRef_MobileBitmap;
             }
         }
+        [AutoStaticsCleanupOnCodeReload]
         static Shader k_ShaderRef_MobileBitmap;
 
 
@@ -196,6 +264,7 @@ namespace UnityEngine.TextCore.Text
                 return k_ShaderRef_Sprite;
             }
         }
+        [AutoStaticsCleanupOnCodeReload]
         static Shader k_ShaderRef_Sprite;
 
 

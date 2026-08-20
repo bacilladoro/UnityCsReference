@@ -27,6 +27,7 @@ namespace UnityEngine.UIElements.StyleSheets
             Gradian,
             Radian,
             Turn,
+            Fraction,
         }
 
         public Unit unit;

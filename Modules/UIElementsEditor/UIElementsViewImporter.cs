@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -19,6 +20,7 @@ using UnityEngine.Pool;
 using UnityEngine.UIElements;
 using Object = UnityEngine.Object;
 using StyleSheet = UnityEngine.UIElements.StyleSheet;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.UIElements
 {
@@ -132,6 +134,7 @@ namespace UnityEditor.UIElements
         const string k_AttributeOverridesElementNameAttr = "element-name";
         #pragma warning restore CS0618 // Type or member is obsolete
 
+        [NoAutoStaticsCleanup]
         static UxmlAssetAttributeCache s_UxmlAssetAttributeCache = new();
 
         /// <summary>
@@ -921,6 +924,7 @@ namespace UnityEditor.UIElements
             }
         }
 
+        [NoAutoStaticsCleanup]
         static ProfilerMarker s_ResolveAttributeOverrides = new ProfilerMarker(ProfilerCategory.UIToolkit, "UXMLImport.ResolveAttributeOverrideTargets");
 
         void LoadAttributeOverridesNode(TemplateAsset templateAsset, XElement attributeOverridesElt, VisualTreeAsset vta)
@@ -1411,24 +1415,24 @@ namespace UnityEditor.UIElements
                             vta,
                             ImportErrorType.Semantic,
                             ImportErrorCode.InvalidCssInStyleAttribute,
-                            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                            #pragma warning disable UAC2001 // Avoid Linq
                             parser.errors.Aggregate("", (s, error) => s + error.ToString() + "\n"),
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                             xattr);
                         return true;
                     }
 
-                    #pragma warning disable UA2005 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2005 // Avoid Linq
                     if (parsed.StyleRules.Count() != 1)
-#pragma warning restore UA2005
+#pragma warning restore UAC2005
                     {
                         LogWarning(
                             vta,
                             ImportErrorType.Semantic,
                             ImportErrorCode.InvalidCssInStyleAttribute,
-                            #pragma warning disable UA2005 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                            #pragma warning disable UAC2005 // Avoid Linq
                             "Expected one style rule, found " + parsed.StyleRules.Count(),
-#pragma warning restore UA2005
+#pragma warning restore UAC2005
                             xattr);
                         return true;
                     }
@@ -1438,9 +1442,9 @@ namespace UnityEditor.UIElements
                     // it's then applied during tree cloning
                     m_Builder.BeginRule(-1);
                     m_CurrentLine = ((IXmlLineInfo)xattr).LineNumber;
-                    #pragma warning disable UA2010 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2010 // Avoid Linq
                     foreach (var prop in parsed.StyleRules.First().Style.Declarations)
-#pragma warning restore UA2010
+#pragma warning restore UAC2010
                     {
                         m_Builder.BeginProperty(prop.Name);
                         VisitValue(prop);
@@ -1497,3 +1501,4 @@ namespace UnityEditor.UIElements
         Semantic
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

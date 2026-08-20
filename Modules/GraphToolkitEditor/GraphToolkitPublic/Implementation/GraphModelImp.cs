@@ -12,13 +12,13 @@ using UnityEngine.Pool;
 namespace Unity.GraphToolkit.Editor.Implementation
 {
     [Serializable]
-    class GraphModelImp : GraphModel
+    partial class GraphModelImp : GraphModel
     {
         [NonSerialized]
-        IReadOnlyList<Type> m_SupportedNodes;
+        protected IReadOnlyList<Type> m_SupportedNodes;
 
         [NonSerialized]
-        HashSet<Type> m_AutoSupportedTypes;
+        protected HashSet<Type> m_AutoSupportedTypes;
         [NonSerialized]
         HashSet<Type> m_SupportedTypes;
         [NonSerialized]
@@ -46,15 +46,38 @@ namespace Unity.GraphToolkit.Editor.Implementation
         bool m_IsBuildingAvailableConstantTypes;
 
         [SerializeReference]
-        Graph m_Graph;
+        IGraphInternal m_Graph;
 
         [NonSerialized]
         UndoStateComponent m_CurrentUndoStateComponent;
 
         [NonSerialized]
+        readonly List<GraphElementModel> m_ScopePendingModels = new();
+
+        // Coalescing state for consecutive params-mode UndoBeginRecordGraph scopes.
+        // A "chain" is a run of scopes that share the same action name and model set with no
+        // unrelated undo activity in between; the whole chain folds into one undo entry.
+        [NonSerialized]
+        int m_UndoChainStartGroup = -1;
+        [NonSerialized]
+        int m_UndoChainEndGroup = -1;
+        [NonSerialized]
+        string m_UndoChainActionName;
+        [NonSerialized]
+        readonly List<GraphElementModel> m_UndoChainModels = new();
+        [NonSerialized]
+        bool m_ScopeExtendsChain;
+
+        [NonSerialized]
         List<INode> m_Nodes;
 
-        public Graph Graph => m_Graph;
+        // Maps a deleted port's guid to its owning node's guid (captured before the port is unregistered).
+        [NonSerialized]
+        Dictionary<Hash128, Hash128> m_DeletedPortToNodeGuid = new Dictionary<Hash128, Hash128>();
+
+        // Typed as the internal IGraphInternal contract so this can hold either a Graph or a StateMachine (which are
+        // independent public types). Use `Graph as Graph` / `Graph as StateMachine` to get the concrete wrapper.
+        public IGraphInternal Graph => m_Graph;
 
         public override bool AllowSubgraphCreation => Graph?.GetType().GetCustomAttribute<GraphAttribute>()?.Options.HasFlag(GraphOptions.SupportsSubgraphs) ?? false;
 
@@ -67,7 +90,7 @@ namespace Unity.GraphToolkit.Editor.Implementation
             {
                 Debug.LogError("InstantiateGraph called while Graph was already created.");
             }
-            m_Graph = (Graph)Activator.CreateInstance(graphType);
+            m_Graph = (IGraphInternal)Activator.CreateInstance(graphType);
         }
 
         public override void OnEnable()
@@ -78,7 +101,7 @@ namespace Unity.GraphToolkit.Editor.Implementation
                 var graphType = graphObject.GraphType;
                 if (graphType != null)
                 {
-                    m_Graph = (Graph)Activator.CreateInstance(graphType);
+                    m_Graph = (IGraphInternal)Activator.CreateInstance(graphType);
                 }
             }
 
@@ -100,18 +123,22 @@ namespace Unity.GraphToolkit.Editor.Implementation
                 try
                 {
                     m_Graph.OnEnable();
-
-                    foreach (var nodeModel in NodeModels)
-                    {
-                        if (nodeModel is IUserNodeModelImp userNodeModelImp)
-                        {
-                            userNodeModelImp.CallOnEnable();
-                        }
-                    }
+                    OnEnableGraphElementModels();
                 }
                 finally
                 {
                     LockForModification = false;
+                }
+            }
+        }
+
+        protected virtual void OnEnableGraphElementModels()
+        {
+            foreach (var nodeModel in NodeModels)
+            {
+                if (nodeModel is IUserModelImp userModelImp)
+                {
+                    userModelImp.CallOnEnable();
                 }
             }
         }
@@ -121,13 +148,7 @@ namespace Unity.GraphToolkit.Editor.Implementation
             LockForModification = true;
             try
             {
-                foreach (var nodeModel in NodeModels)
-                {
-                    if (nodeModel is IUserNodeModelImp userNodeModelImp)
-                    {
-                        userNodeModelImp.CallOnDisable();
-                    }
-                }
+                OnDisableGraphElementModels();
                 m_Graph?.OnDisable();
             }
             finally
@@ -138,17 +159,28 @@ namespace Unity.GraphToolkit.Editor.Implementation
             base.OnDisable();
         }
 
+        protected virtual void OnDisableGraphElementModels()
+        {
+            foreach (var nodeModel in NodeModels)
+            {
+                if (nodeModel is IUserModelImp userModelImp)
+                {
+                    userModelImp.CallOnDisable();
+                }
+            }
+        }
+
         public IReadOnlyList<IVariable> VariableModels => this.VariableDeclarations;
         public IReadOnlyList<IVariable> VariableModelsByDisplayOrder => GetVariableDeclarationsByDisplayOrder();
 
         protected override Type VariableNodeType => typeof(VariableNodeModelImp);
-        protected override Type SubgraphNodeType => typeof(SubgraphNodeModelImp);
+        protected override Type SubgraphNodeType => IsStateMachineGraph ? typeof(SubgraphStateModelImp) : typeof(SubgraphNodeModelImp);
         protected override Type ConstantNodeType => typeof(ConstantNodeModelImp);
 
         public override bool CanAssignTo(PortModel destination, PortModel source)
         {
-            if (m_Graph != null)
-                return m_Graph.IsConnectionAllowed(source, destination);
+            if (m_Graph is Graph graphInstance)
+                return graphInstance.IsConnectionAllowed(source, destination);
 
             if (destination.PortDataType == typeof(Untyped))
                 return source.PortDataType == typeof(Untyped);
@@ -196,9 +228,48 @@ namespace Unity.GraphToolkit.Editor.Implementation
             return true;
         }
 
-        public void UndoBeginRecordGraph(string actionName )
+        public void UndoBeginRecordGraph(string actionName)
+        {
+            UndoBeginRecordGraph(actionName, Array.Empty<Node>());
+        }
+
+        public void UndoBeginRecordGraph(string actionName, params Node[] nodesToRecord)
         {
             CheckModificationLock();
+
+            // Filter to nodes that actually belong to this graph. Callers may pass nodes from other
+            // graphs (or loose nodes), and tracking those here would attach the wrong undo/dirty
+            // signals to this graph.
+            m_ScopePendingModels.Clear();
+            if (nodesToRecord != null)
+            {
+                for (var i = 0; i < nodesToRecord.Length; i++)
+                {
+                    var node = nodesToRecord[i];
+                    if (node != null && node.Graph == m_Graph)
+                        m_ScopePendingModels.Add(node.GetImplementation());
+                }
+            }
+
+            var pendingCount = m_ScopePendingModels.Count;
+
+            // Decide whether this scope continues a coalescing chain established by a prior
+            // params-mode scope. The chain is broken if anything else advanced the current
+            // undo group between the previous End and this Begin.
+            m_ScopeExtendsChain =
+                pendingCount > 0
+                && m_UndoChainStartGroup >= 0
+                && m_UndoChainActionName == actionName
+                && Undo.GetCurrentGroup() == m_UndoChainEndGroup
+                && SameNodeSet(m_UndoChainModels, m_ScopePendingModels);
+
+            if (pendingCount > 0 && !m_ScopeExtendsChain)
+            {
+                m_UndoChainStartGroup = Undo.GetCurrentGroup();
+                m_UndoChainActionName = actionName;
+                m_UndoChainModels.Clear();
+                m_UndoChainModels.AddRange(m_ScopePendingModels);
+            }
 
             var window = GraphViewEditorWindowImp.GetOpenedWindow((GraphObjectImp)GraphObject);
 
@@ -211,6 +282,7 @@ namespace Unity.GraphToolkit.Editor.Implementation
 
                 m_CurrentUndoStateComponent = window.GraphTool.UndoState;
                 m_CurrentUndoStateComponent.BeginOperation(actionName);
+
                 using (var undoStateUpdater = m_CurrentUndoStateComponent.UpdateScope)
                 {
                     undoStateUpdater.SaveState(window.GraphView.GraphViewModel.GraphModelState);
@@ -252,25 +324,71 @@ namespace Unity.GraphToolkit.Editor.Implementation
                             "There is no undo operation currently registered to the Graph. Use RegisterUndo to begin recording an undo operation.");
                     }
 
+                    // AddChangedModel also calls SetGraphObjectDirty and feeds the observer that dispatches
+                    // OnGraphChanged; without this the user's direct field mutation is invisible to both.
+                    var pendingCount = m_ScopePendingModels.Count;
+                    if (pendingCount > 0)
+                    {
+                        var desc = CurrentGraphChangeDescription;
+                        foreach (var model in m_ScopePendingModels)
+                        {
+                            desc.AddChangedModel(model, ChangeHint.Data);
+                        }
+                    }
+
                     var currentGraphModelStateUpdater = window.GraphView.GraphViewModel.GraphModelState.UpdateScope;
                     currentGraphModelStateUpdater.MarkUpdated(CurrentGraphChangeDescription);
                     currentGraphModelStateUpdater.Dispose();
                     PopGraphChangeDescription();
                     m_CurrentUndoStateComponent.EndOperation();
+
+                    // Fold this scope into the chain's single undo entry. The framework's
+                    // EndOperation just collapsed this scope; we now collapse the whole chain
+                    // back to the group index captured before its first Begin.
+                    if (m_ScopeExtendsChain && m_UndoChainStartGroup >= 0)
+                    {
+                        Undo.CollapseUndoOperations(m_UndoChainStartGroup);
+                    }
+
+                    if (pendingCount > 0)
+                    {
+                        m_UndoChainEndGroup = Undo.GetCurrentGroup();
+                    }
                 }
                 finally
                 {
                     m_CurrentUndoStateComponent = null;
+                    m_ScopeExtendsChain = false;
+                    m_ScopePendingModels.Clear();
                 }
             }
+        }
+
+        static bool SameNodeSet(List<GraphElementModel> a, List<GraphElementModel> b)
+        {
+            if (a == null || b == null || a.Count != b.Count)
+                return false;
+            for (var i = 0; i < a.Count; i++)
+            {
+                var aNode = a[i];
+                var bNode = b[i];
+                if (!ReferenceEquals(bNode, aNode))
+                {
+                    return false;
+                }
+            }
+            return true;
         }
 
         protected override void CreateGraphProcessors()
         {
             base.CreateGraphProcessors();
 
-            var declaringType = Graph?.GetType().GetMethod(nameof(GraphToolkit.Editor.Graph.OnGraphChanged))?.DeclaringType;
-            var overridden = declaringType != null && declaringType != typeof(Graph);
+            var changedMethodName = Graph is StateMachine
+                ? nameof(GraphToolkit.Editor.StateMachine.OnStateMachineChanged)
+                : nameof(GraphToolkit.Editor.Graph.OnGraphChanged);
+            var declaringType = Graph?.GetType().GetMethod(changedMethodName, new[] { typeof(GraphLogger) })?.DeclaringType;
+            var overridden = declaringType != null && declaringType != typeof(Graph) && declaringType != typeof(StateMachine);
 
             if (overridden)
                 GetGraphProcessorContainer().AddGraphProcessor(new GraphProcessorImp(this));
@@ -332,7 +450,7 @@ namespace Unity.GraphToolkit.Editor.Implementation
             if (variable is not VariableDeclarationModelBase variableModel)
                 return false;
 
-            if (variable.Graph != Graph)
+            if (variable.Graph != Graph && variable.StateMachine != Graph)
                 throw new ArgumentException("The variable provided does not belong to this graph.", nameof(variable));
 
             if (!VariableDeclarations.Contains(variableModel))
@@ -363,7 +481,7 @@ namespace Unity.GraphToolkit.Editor.Implementation
             if (node is BlockNode)
                 throw new ArgumentException("Cannot add a BlockNode directly to a Graph. Use ContextNode.AddBlockNode instead.");
 
-            if (!IsNodeCompatible(node))
+            if (!IsTypeCompatibleWithGraph(node.GetType()))
             {
                 throw new ArgumentException($"Node '{node.GetType().Name}' is not compatible with this graph type ({Graph.GetType().Name}). Ensure it is decorated with [UseWithGraph] or is in the same assembly.");
             }
@@ -537,7 +655,7 @@ namespace Unity.GraphToolkit.Editor.Implementation
             }
 
             // Create the local subgraph model
-            name ??= SubgraphCreationHelper.defaultLocalSubgraphName;
+            name ??= SubgraphCreationHelper.DefaultLocalSubgraphName;
             var template = new SubgraphTemplateImp(subgraphType, name);
             var localSubgraphModel = CreateLocalSubgraph(typeof(GraphModelImp), name, template);
 
@@ -725,7 +843,7 @@ namespace Unity.GraphToolkit.Editor.Implementation
             switch (originalModel)
             {
                 case IUserNodeModelImp customNodeModel:
-                    return IsNodeCompatible(customNodeModel.Node);
+                    return IsTypeCompatibleWithGraph(customNodeModel.Node.GetType());
 
                 case VariableNodeModel variableNodeModel:
                     return variableNodeModel.VariableDeclarationModel.GetType() == typeof(VariableDeclarationModel) && SupportedTypesSet.Contains(variableNodeModel.VariableDeclarationModel.DataType.Resolve());
@@ -737,6 +855,11 @@ namespace Unity.GraphToolkit.Editor.Implementation
                     return SupportedTypesSet.Contains(portalNodeModel.GetPortDataTypeHandle().Resolve());
 
                 case SubgraphNodeModel subgraphNodeModel:
+                    if (!AllowSubgraphCreation)
+                    {
+                        Debug.LogError($"Graph {Name} does not support subgraph creation. Subgraph nodes cannot be added to the graph.");
+                        return false;
+                    }
                     var subgraph = (subgraphNodeModel.GetSubgraphModel() as GraphModelImp)?.Graph ??
                                    (GraphReference.ResolveGraphModel(subgraphNodeModel.SubgraphReference) as GraphModelImp)?.Graph;
 
@@ -760,25 +883,36 @@ namespace Unity.GraphToolkit.Editor.Implementation
             return false;
         }
 
-        bool IsNodeCompatible(Node node)
+        protected bool IsTypeCompatibleWithGraph(Type elementType)
         {
             var graphType = m_Graph.GetType();
 
-            // If the attribute is present, we do not fall into auto inclusion
-            var attr = node.GetType().GetCustomAttribute<UseWithGraphAttribute>(true);
-            if (attr != null)
-            {
-                return attr.IsGraphTypeSupported(graphType);
-            }
+            // If the compatibility attribute is present, we do not fall into auto inclusion
+            if (TryGetGraphElementCompatibility(elementType, graphType, out var isCompatible))
+                return isCompatible;
 
             // Default behaviour : Check Assembly Auto-inclusion rules
             var graphAttr = graphType.GetCustomAttribute<GraphAttribute>();
             bool autoInclude = graphAttr == null || !graphAttr.Options.HasFlag(GraphOptions.DisableAutoInclusionOfNodesFromGraphAssembly);
-            if (autoInclude && node.GetType().Assembly == graphType.Assembly)
+            return autoInclude && elementType.Assembly == graphType.Assembly;
+        }
+
+        /// <summary>
+        /// Determines whether <paramref name="elementType"/> explicitly declares its compatibility with
+        /// <paramref name="graphType"/> through a compatibility attribute (<see cref="UseWithGraphAttribute"/> for
+        /// regular graphs). When it does, <paramref name="isCompatible"/> reports the result and auto-inclusion is
+        /// bypassed. State machines override this to read <see cref="UseWithStateMachineAttribute"/> instead.
+        /// </summary>
+        protected virtual bool TryGetGraphElementCompatibility(Type elementType, Type graphType, out bool isCompatible)
+        {
+            var attr = elementType.GetCustomAttribute<UseWithGraphAttribute>(true);
+            if (attr != null)
             {
+                isCompatible = attr.IsGraphTypeSupported(graphType);
                 return true;
             }
 
+            isCompatible = false;
             return false;
         }
 
@@ -851,11 +985,24 @@ namespace Unity.GraphToolkit.Editor.Implementation
                 m_Nodes.Remove((INode)nodeModel);
         }
 
-        protected override void AddNode(AbstractNodeModel nodeModel)
+        protected virtual void TrackAddedNode(AbstractNodeModel nodeModel)
+        {
+            if (m_Nodes == null)
+                BuildNodesFromNodeModels();
+            else
+                AddNodeFromNodeModel(nodeModel);
+        }
+
+        protected virtual void TrackRemovedNode(AbstractNodeModel nodeModel)
         {
             BuildNodesFromNodeModels();
+            RemoveNodeFromNodeModel(nodeModel);
+        }
+
+        protected override void AddNode(AbstractNodeModel nodeModel)
+        {
             base.AddNode(nodeModel);
-            AddNodeFromNodeModel(nodeModel);
+            TrackAddedNode(nodeModel);
         }
 
         public IConstantNode CreateConstantNode(string name, Vector2 position, Type valueType, object defaultValue = null)
@@ -865,9 +1012,22 @@ namespace Unity.GraphToolkit.Editor.Implementation
 
         protected override void RemoveNode(AbstractNodeModel nodeModel)
         {
-            BuildNodesFromNodeModels();
-            RemoveNodeFromNodeModel(nodeModel);
+            TrackRemovedNode(nodeModel);
             base.RemoveNode(nodeModel);
+        }
+
+        protected override void UnregisterElement(GraphElementModel model)
+        {
+            if (model != null)
+            {
+                if (model is PortModel portModel)
+                {
+                    // Capture the parent node guid now; once base.UnregisterElement runs we may lose the link.
+                    var ownerGuid = portModel.NodeModel?.Guid ?? default;
+                    m_DeletedPortToNodeGuid[portModel.Guid] = ownerGuid;
+                }
+            }
+            base.UnregisterElement(model);
         }
 
         public override bool CanExpandPort(PortModel port)
@@ -875,7 +1035,7 @@ namespace Unity.GraphToolkit.Editor.Implementation
             return port.IsExpandable;
         }
 
-        public IReadOnlyList<Type> SupportedNodes => m_SupportedNodes ??= PublicGraphFactory.GetNodeTypes(m_Graph.GetType());
+        public virtual IReadOnlyList<Type> SupportedNodes => m_SupportedNodes ??= PublicGraphFactory.GetNodeTypes(m_Graph.GetType());
 
         IReadOnlyCollection<Type> AutoSupportedTypes
         {
@@ -1005,6 +1165,26 @@ namespace Unity.GraphToolkit.Editor.Implementation
             }
         }
 
+        /// <inheritdoc />
+        protected override WireModel InstantiateWire(Type wireType, PortModel toPort, PortModel fromPort, Hash128 guid = default)
+        {
+            // A custom single-state transition is authored as a public SelfTransition. Map it to its backing model
+            // (mirrors how a custom State maps to UserStateModelImp) so the public type flows through the regular wire
+            // creation chain.
+            if (typeof(SelfTransition).IsAssignableFrom(wireType))
+            {
+                var transitionImp = new UserSelfTransitionModelImp();
+                transitionImp.InitCustomTransition((SelfTransition)Activator.CreateInstance(wireType));
+                transitionImp.GraphModel = this;
+                if (guid.isValid)
+                    transitionImp.SetGuid(guid);
+                transitionImp.SetPorts(toPort, fromPort);
+                return transitionImp;
+            }
+
+            return base.InstantiateWire(wireType, toPort, fromPort, guid);
+        }
+
         internal static GraphElementModel CreateContextNodeFromData(IGraphNodeCreationData nodeCreationData, Type customNodeType)
         {
             return nodeCreationData.CreateNode(UserNodeHelper.GetNodeImpType(customNodeType),
@@ -1041,7 +1221,7 @@ namespace Unity.GraphToolkit.Editor.Implementation
         public class DummyContext : ContextNode
         {}
 
-        void InitializeAutoSupportedTypes()
+        protected virtual void InitializeAutoSupportedTypes()
         {
             m_AutoSupportedTypes = [];
 
@@ -1138,6 +1318,9 @@ namespace Unity.GraphToolkit.Editor.Implementation
                 sourceGraphModel.GetType(),
                 name, subgraphTemplate);
 
+            if (newSubgraph == null)
+                return null;
+
             newSubgraph.CloneGraph(sourceGraphModel, true);
 
             return newSubgraph;
@@ -1154,12 +1337,15 @@ namespace Unity.GraphToolkit.Editor.Implementation
         {
             var result = new ErrorsAndWarningsImp(this);
 
-            var graphChanges = new GraphLogger();
-            graphChanges.errorsAndWarnings = result;
+            var graphLogger = new GraphLogger();
+            graphLogger.errorsAndWarnings = result;
+
+            CollectChangeData(changes, graphLogger);
+
             LockForModification = true;
             try
             {
-                Graph.OnGraphChanged(graphChanges);
+                Graph.OnGraphChanged(graphLogger);
                 for (var i = 0; i < NodeModels.Count; i++)
                 {
                     if (NodeModels[i] is NodeModel nodeModel)
@@ -1194,18 +1380,23 @@ namespace Unity.GraphToolkit.Editor.Implementation
             LockForModification = true;
             try
             {
-                foreach (var nodeModel in NodeAndBlockModels)
-                {
-                    // Skip nodes that weren't recreated by undo/redo. They haven't lost their non-serialized state, so we don't need to call OnEnable on them.
-                    if (nodeModel is not IUserNodeModelImp userNodeModelImp || userNodeModelImp.OnEnableCalled)
-                        continue;
-
-                    userNodeModelImp.CallOnEnable();
-                }
+                OnUndoRedoGraphElementModels();
             }
             finally
             {
                 LockForModification = false;
+            }
+        }
+
+        protected virtual void OnUndoRedoGraphElementModels()
+        {
+            foreach (var nodeModel in NodeAndBlockModels)
+            {
+                // Skip nodes that weren't recreated by undo/redo. They haven't lost their non-serialized state, so we don't need to call OnEnable on them.
+                if (nodeModel is IUserModelImp userModelImp && !userModelImp.OnEnableCalled)
+                {
+                    userModelImp.CallOnEnable();
+                }
             }
         }
     }

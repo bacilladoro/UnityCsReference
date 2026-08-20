@@ -489,9 +489,9 @@ namespace UnityEditor
             if (maskValue == 0)
                 selected = Array.Empty<uint>();
             else if (maskValue == int.MaxValue)
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 selected = Enumerable.Range(1, size).Select(i => (uint)i).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             else
             {
                 List<uint> selectedMaskToIndex = new List<uint>();

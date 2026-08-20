@@ -2,6 +2,8 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
+using Unity.Scripting.LifecycleManagement;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
@@ -16,7 +18,7 @@ namespace UnityEngine.UIElements;
 /// <remarks>
 /// Ids may very between consecutive runs and may be regenerated on domain reload.
 /// </remarks>
-public readonly struct UniqueStyleString : IEquatable<UniqueStyleString>
+public readonly partial struct UniqueStyleString : IEquatable<UniqueStyleString>
 {
     /// <summary>
     /// The UniqueStyleString representation of a @@null@@ string.
@@ -29,7 +31,12 @@ public readonly struct UniqueStyleString : IEquatable<UniqueStyleString>
     /// </summary>
     public static readonly UniqueStyleString Empty = new(1);
 
+    // These tables persist across code reload, and persisted statics elsewhere cache ids handed
+    // out by them (e.g. CustomStyleProperty.nameId). If these ever become cleanable on reload,
+    // every such cached id must be cleaned in the same change, or stale ids resolve wrong strings.
+    [NoAutoStaticsCleanup]
     private static Dictionary<string, int> k_StringToIndex = new() { { "", 1 } };
+    [NoAutoStaticsCleanup]
     private static List<string> k_IndexToString = new() { null, "" };
 
     // For tests, operations inside this scope target a fresh internal storage so that pollution
@@ -246,3 +253,4 @@ public readonly struct UniqueStyleString : IEquatable<UniqueStyleString>
         return a.m_Id != b.m_Id;
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

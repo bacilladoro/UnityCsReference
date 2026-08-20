@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -20,11 +21,14 @@ namespace Unity.GraphToolkit.Editor
     ///   make a UI dependent on additional models.
     /// </remarks>
     [UnityRestricted]
-    internal class UIDependencies
+    internal partial class UIDependencies
     {
+        [AutoStaticsCleanupOnCodeReload]
         static Dictionary<Hash128, HashSet<ModelView>> s_ModelDependencies = new Dictionary<Hash128, HashSet<ModelView>>();
 
+        [NoAutoStaticsCleanup] // cached visitor object for layout change notifications; stateless, safe to persist
         static UpdateFromModelVisitor s_LayoutChangeUpdater = new(ChangeHintList.Layout);
+        [NoAutoStaticsCleanup] // cached visitor object for style change notifications; stateless, safe to persist
         static UpdateFromModelVisitor s_StyleChangeUpdater = new(ChangeHintList.Style);
 
         ModelView m_Owner;

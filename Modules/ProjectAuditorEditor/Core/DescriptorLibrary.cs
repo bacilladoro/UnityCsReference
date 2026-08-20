@@ -4,18 +4,14 @@
 
 using System;
 using System.Collections.Generic;
-using UnityEditor;
 using Unity.Scripting.LifecycleManagement;
 
 namespace Unity.ProjectAuditor.Editor.Core
 {
-    static class DescriptorLibrary
+    static partial class DescriptorLibrary
     {
         [AutoStaticsCleanupOnCodeReload] // Lazy-initialized descriptor registry; must be reset on code reload so descriptors are re-registered
         static Dictionary<int, Descriptor> s_Descriptors;
-
-        [NoAutoStaticsCleanup] // Lazy-initialized cache of area strings; data is still valid after code reload
-        static Dictionary<Areas, string> s_DescriptorAreaStrings;
 
         public static bool RegisterDescriptor(string id, Descriptor descriptor)
         {
@@ -50,19 +46,6 @@ namespace Unity.ProjectAuditor.Editor.Core
         public static bool HasDescriptor(int idAsInt)
         {
             return s_Descriptors.ContainsKey(idAsInt);
-        }
-
-        public static string GetAreasString(Areas areas)
-        {
-            if (s_DescriptorAreaStrings == null)
-                s_DescriptorAreaStrings = new Dictionary<Areas, string>();
-
-            if (s_DescriptorAreaStrings.TryGetValue(areas, out string desc))
-                return desc;
-
-            desc = ObjectNames.NicifyVariableName(areas.ToString());
-            s_DescriptorAreaStrings[areas] = desc;
-            return desc;
         }
 
         // Builds the list of Descriptors to serialize into a Report. Serialization is needed to survive domain

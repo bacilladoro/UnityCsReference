@@ -2,12 +2,15 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
+using Unity.Scripting.LifecycleManagement;
 using Unity.Properties;
 
 namespace UnityEngine.UIElements
 {
-    internal class SetValueVisitor<TSrcValue> : PathVisitor
+    internal partial class SetValueVisitor<TSrcValue> : PathVisitor
     {
+        [NoAutoStaticsCleanup]
         public static readonly UnityEngine.Pool.ObjectPool<SetValueVisitor<TSrcValue>> Pool = new (() => new SetValueVisitor<TSrcValue>(), v => v.Reset());
         public TSrcValue Value;
 
@@ -43,3 +46,4 @@ namespace UnityEngine.UIElements
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

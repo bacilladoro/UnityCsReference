@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using Unity.Profiling;
 using Unity.Profiling.LowLevel.Unsafe;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Search.Providers
 {
@@ -18,6 +19,7 @@ namespace UnityEditor.Search.Providers
             public long maxValue;
             public double average;
 
+            [NoAutoStaticsCleanup]
             public static ProfilerRecorderCumulativeData clear = new();
         }
 

@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: DiagnosticsEditor not yet converted
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -59,21 +60,21 @@ namespace UnityEditor
 
         public override void OnActivate(string searchContext, VisualElement rootElement)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             m_Switches = Debug.diagnosticSwitches
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 .GroupBy(s => s.owningModule)
                 .Select(group => new SwitchGroup
                 {
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2001 // Avoid Linq
                     name = group.Key,
-#pragma warning restore UA2001
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+                    #pragma warning disable UAC2001 // Avoid Linq
                     switches = group.OrderBy(s => s.name).ToArray(),
-#pragma warning restore UA2001
-                    #pragma warning disable UA2006 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+                    #pragma warning disable UAC2006 // Avoid Linq
                     foldout = group.Any(s => !s.isSetToDefault)
-#pragma warning restore UA2006
+#pragma warning restore UAC2006
                 })
                 .OrderBy(group => group.name)
                 .ToList();
@@ -98,9 +99,9 @@ namespace UnityEditor
             {
                 if (GUILayout.Button("Reset all"))
                 {
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2001 // Avoid Linq
                     foreach (var diagnosticSwitch in m_Switches.SelectMany(group => group.switches))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                         diagnosticSwitch.persistentValue = diagnosticSwitch.defaultValue;
                     DiagnosticSwitchesConsoleMessage.instance.Update();
                 }
@@ -281,3 +282,4 @@ namespace UnityEditor
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

@@ -11,7 +11,6 @@ using Object = UnityEngine.Object;
 using System.Globalization;
 using AnimatorController = UnityEditor.Animations.AnimatorController;
 using AnimatorControllerLayer = UnityEditor.Animations.AnimatorControllerLayer;
-using UnityEditorInternal;
 using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
@@ -1974,9 +1973,9 @@ namespace UnityEditor
         {
             GenericMenu menu = new GenericMenu();
             var ctx = new EventModificationContextMenuObject(info, time, eventIndex, selectedEvents);
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var selectedCount = selectedEvents.Count(selected => selected);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             menu.AddItem(AnimationClipEditor.Styles.AddEvent, false, EventLineContextMenuAdd, ctx);
             if (selectedCount > 0 || eventIndex != -1)
@@ -2100,14 +2099,17 @@ namespace UnityEditor
             {
                 // Draw body of tooltip
                 GUIStyle style = (GUIStyle)"AnimationEventTooltip";
-                Vector2 size = style.CalcSize(new GUIContent(m_InstantTooltipText));
-                Rect rect = new Rect(window.x + m_InstantTooltipPoint.x, window.y + m_InstantTooltipPoint.y, size.x, size.y);
+                using (new SDFStyleScope(style))
+                {
+                    Vector2 size = style.CalcSize(new GUIContent(m_InstantTooltipText));
+                    Rect rect = new Rect(window.x + m_InstantTooltipPoint.x, window.y + m_InstantTooltipPoint.y, size.x, size.y);
 
-                // Right align tooltip rect if it would otherwise exceed the bounds of the window
-                if (rect.xMax > window.width)
-                    rect.x = window.width - rect.width;
+                    // Right align tooltip rect if it would otherwise exceed the bounds of the window
+                    if (rect.xMax > window.width)
+                        rect.x = window.width - rect.width;
 
-                GUI.Label(rect, m_InstantTooltipText, style);
+                    GUI.Label(rect, m_InstantTooltipText, style);
+                }
             }
         }
 

@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Bindings;
 using UnityEngine.TextCore.Text;
 using static UnityEngine.TextEditingUtilities;
@@ -314,6 +315,7 @@ namespace UnityEngine
         }
 
         //Used for tests
+        [NoAutoStaticsCleanup] // Immutable value-type keymap table (struct keys, enum ops), built once; no user-code references, safe to persist
         internal static readonly List<(KeyEvent keyEvent, TextSelectOp operation)> s_GlobalKeyMappings = new()
         {
             (new KeyEvent(KeyCode.LeftArrow, EventModifiers.Shift | EventModifiers.FunctionKey), TextSelectOp.SelectLeft),
@@ -323,6 +325,7 @@ namespace UnityEngine
         };
 
         //Used for tests
+        [NoAutoStaticsCleanup] // Immutable value-type keymap table (struct keys, enum ops), built once; no user-code references, safe to persist
         internal static readonly List<(KeyEvent keyEvent, TextSelectOp operation)> s_MacKeyMappings = new()
         {
             (new (KeyCode.Home, EventModifiers.Shift | EventModifiers.FunctionKey), TextSelectOp.SelectTextStart),
@@ -348,6 +351,7 @@ namespace UnityEngine
         };
 
         //Used for tests
+        [NoAutoStaticsCleanup] // Immutable value-type keymap table (struct keys, enum ops), built once; no user-code references, safe to persist
         internal static readonly List<(KeyEvent keyEvent, TextSelectOp operation)> s_WindowsLinuxKeyMappings = new()
         {
             (new(KeyCode.LeftArrow, EventModifiers.Shift | EventModifiers.Control | EventModifiers.FunctionKey), TextSelectOp.SelectToEndOfPreviousWord),

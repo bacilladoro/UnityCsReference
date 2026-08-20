@@ -2,6 +2,8 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
+using Unity.Scripting.LifecycleManagement;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -44,7 +46,7 @@ namespace UnityEngine.UIElements
     /// Generates an instance of the declaring element when the <see cref="UxmlElementAttribute"/> is used in a custom control.
     /// </summary>
     [Serializable]
-    public abstract class UxmlSerializedData
+    public abstract partial class UxmlSerializedData
     {
         /// <summary>
         /// This is used by the code generator when a custom control is using the <see cref="UxmlElementAttribute"/>. You should not need to call it.
@@ -82,6 +84,7 @@ namespace UnityEngine.UIElements
         [SerializeField, UxmlIgnore, HideInInspector]
         internal int uxmlAssetId;
 
+        [NoAutoStaticsCleanup]
         static UxmlAttributeFlags s_CurrentDeserializeFlags = k_DefaultFlags;
 
         /// <summary>
@@ -138,7 +141,7 @@ namespace UnityEngine.UIElements
     }
 
     [Serializable]
-    internal sealed class UxmlSerializableAdapter<T> : UxmlSerializableAdapterBase
+    internal sealed partial class UxmlSerializableAdapter<T> : UxmlSerializableAdapterBase
     {
         public T data;
 
@@ -206,8 +209,9 @@ namespace UnityEngine.UIElements
     /// <summary>
     /// This is used by the code generator when a custom control is using the <see cref="UxmlElementAttribute"/>.
     /// </summary>
-    public static class UxmlSerializedDataUtility
+    public static partial class UxmlSerializedDataUtility
     {
+        [AutoStaticsCleanupOnCodeReload]
         internal static Dictionary<Type, UxmlSerializableAdapterBase> s_Adapters = new Dictionary<Type, UxmlSerializableAdapterBase>();
 
         /// <summary>
@@ -240,6 +244,7 @@ namespace UnityEngine.UIElements
 
         static class UxmlSerializableCopyAdapter<T>
         {
+            [NoAutoStaticsCleanup] // per-type serialization adapter singleton; no user refs
             public static readonly UxmlSerializableAdapterBase Instance = Register();
 
             static UxmlSerializableAdapterBase Register()
@@ -269,3 +274,4 @@ namespace UnityEngine.UIElements
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

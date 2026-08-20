@@ -11,8 +11,11 @@ namespace Unity.UI.Builder
 {
     internal static partial class BuilderDialogsUtility
     {
-        [AutoStaticsCleanupOnCodeReload]
-        public static bool preventDialogsFromOpening { get; set; }
+        public static bool preventDialogsFromOpening
+        {
+            get => UIToolkit.Editor.UIAssetRegistry.PreventDialogsFromOpening;
+            set => UIToolkit.Editor.UIAssetRegistry.PreventDialogsFromOpening = value;
+        }
 
         private static bool cannotOpenDialogs => Application.isBatchMode || preventDialogsFromOpening;
 
@@ -83,7 +86,7 @@ namespace Unity.UI.Builder
             if (string.IsNullOrWhiteSpace(newPath))
                 return null;
 
-            
+
             var projectPath = BuilderAssetUtilities.GetPathRelativeToProject(newPath.Trim());
             if (string.IsNullOrWhiteSpace(projectPath))
                 DisplayDialog("Opening document failed", $"Could not open the document at the requested path ('{newPath}'): the path is outside of the project.");

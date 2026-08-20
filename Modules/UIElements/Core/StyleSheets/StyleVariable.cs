@@ -2,6 +2,8 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
+using Unity.Scripting.LifecycleManagement;
 using System.Collections.Generic;
 using UnityEngine.Bindings;
 using UnityEngine.UIElements.StyleSheets;
@@ -46,8 +48,9 @@ namespace UnityEngine.UIElements
     }
 
     [VisibleToOtherModules("UnityEditor.UIBuilderModule", "UnityEditor.UIToolkitAuthoringModule")]
-    internal class StyleVariableContext
+    internal partial class StyleVariableContext
     {
+        [NoAutoStaticsCleanup]
         public static readonly StyleVariableContext none = new StyleVariableContext();
 
         private int m_VariableHash;
@@ -172,7 +175,7 @@ namespace UnityEngine.UIElements
         }
     }
 
-    internal class StyleVariableResolver
+    internal partial class StyleVariableResolver
     {
         private enum Result
         {
@@ -189,6 +192,7 @@ namespace UnityEngine.UIElements
 
         // Max resolves is to protect against long variables : https://drafts.csswg.org/css-variables/#long-variables
         internal const int kMaxResolves = 100;
+        [AutoStaticsCleanupOnCodeReload]
         private static StyleSyntaxParser s_SyntaxParser = new StyleSyntaxParser();
 
         private StylePropertyValueMatcher m_Matcher = new StylePropertyValueMatcher();
@@ -372,3 +376,4 @@ namespace UnityEngine.UIElements
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

@@ -10,14 +10,13 @@ namespace UnityEngine.AdaptivePerformance
     internal class AdaptivePerformanceManager
         : MonoBehaviour
         , IAdaptivePerformance
-        , IThermalStatus, IPerformanceStatus, IDevicePerformanceControl, IDevelopmentSettings, IPerformanceModeStatus
+        , IThermalStatus, IPerformanceStatus, IDevicePerformanceControl, IDevelopmentSettings, IPerformanceModeStatus, IOperationModeStatus
     {
         public event ThermalEventHandler ThermalEvent;
         public event PerformanceBottleneckChangeHandler PerformanceBottleneckChangeEvent;
         public event PerformanceLevelChangeHandler PerformanceLevelChangeEvent;
         public event PerformanceBoostChangeHandler PerformanceBoostChangeEvent;
         public event PerformanceModeEventHandler PerformanceModeEvent;
-
         private bool m_JustResumed = false;
 
         private int m_RequestedCpuLevel = Constants.UnknownPerformanceLevel;
@@ -27,6 +26,7 @@ namespace UnityEngine.AdaptivePerformance
         private bool m_RequestedGpuBoost = false;
         private bool m_NewUserCpuPerformanceBoostRequest = false;
         private bool m_NewUserGpuPerformanceBoostRequest = false;
+        private bool m_EnergyEfficiencyMode = false;
 
         private ThermalMetrics m_ThermalMetrics = new ThermalMetrics
         {
@@ -153,11 +153,52 @@ namespace UnityEngine.AdaptivePerformance
             }
         }
 
+        public bool EnergyEfficiencyMode
+        {
+            get { return m_EnergyEfficiencyMode; }
+            set
+            {
+                // Apply synchronously so the getter reflects the actually-applied state, not
+                // just the last requested value. On providers that don't implement the hint
+                // (Basic, Apple, etc.) SetEnergyEfficiencyMode returns false and the cached
+                // state stays at its previous value.
+                if (m_Subsystem?.PerformanceLevelControl != null &&
+                    m_Subsystem.PerformanceLevelControl.SetEnergyEfficiencyMode(value))
+                {
+                    m_EnergyEfficiencyMode = value;
+                }
+            }
+        }
+
         public IDevelopmentSettings DevelopmentSettings { get { return this; } }
         public IThermalStatus ThermalStatus { get { return this; } }
         public IPerformanceStatus PerformanceStatus { get { return this; } }
         public IDevicePerformanceControl DevicePerformanceControl { get { return this; } }
         public IPerformanceModeStatus PerformanceModeStatus { get { return this; } }
+        public IOperationModeStatus OperationModeStatus { get { return this; } }
+        public IAdaptivePerformanceModeProvider CurrentOperationalModeProvider
+        {
+            get
+            {
+                if (m_Settings != null)
+                    return m_Settings.ActiveModeProvider;
+
+                return null;
+            }
+            set
+            {
+                if (m_Settings != null)
+                {
+                    if (m_Settings.ActiveModeProvider != value)
+                    {
+                        m_Settings.ActiveModeProvider?.OnOperationModeEnd();
+                        m_Settings.ActiveModeProvider = value;
+                        m_Settings.ActiveModeProvider?.OnOperationModeStart();
+                    }
+                }
+            }
+        }
+
 
         public AdaptivePerformanceIndexer Indexer { get; private set; }
 
@@ -347,7 +388,6 @@ namespace UnityEngine.AdaptivePerformance
                 return;
 
             UpdateSubsystem();
-
             Indexer.Update();
 
             if (Profiler.enabled)
@@ -405,6 +445,7 @@ namespace UnityEngine.AdaptivePerformance
 
             m_ThermalMetrics.WarningLevel = updateResult.WarningLevel;
             m_ThermalMetrics.TemperatureLevel = updateResult.TemperatureLevel;
+            m_PerformanceMetrics.LowPowerMode = updateResult.LowPowerMode;
 
             if (!m_JustResumed)
             {
@@ -561,6 +602,7 @@ namespace UnityEngine.AdaptivePerformance
                 m_Subsystem.PerformanceLevelControl.EnableGpuBoost();
             }
 
+
             if (m_DevicePerfControl.Update(out levelChangeEventArgs) && PerformanceLevelChangeEvent != null)
                 PerformanceLevelChangeEvent.Invoke(levelChangeEventArgs);
 
@@ -680,7 +722,7 @@ namespace UnityEngine.AdaptivePerformance
                 AdaptivePerformanceAnalytics.SendAdaptiveStartupEvent(m_Subsystem);
                 return;
             }
-            m_Settings.LoadScalerProfile(scalerProfiles[m_Settings.defaultScalerProfilerIndex]);
+            //m_Settings.LoadScalerProfile(scalerProfiles[m_Settings.defaultScalerProfilerIndex]);
 
             AutomaticPerformanceControl = m_Settings.automaticPerformanceMode;
             LoggingFrequencyInFrames = m_Settings.statsLoggingFrequencyInFrames;
@@ -756,7 +798,6 @@ namespace UnityEngine.AdaptivePerformance
                     PerformanceBoostChangeEvent += LogBoostEvent;
 
                 Indexer = new AdaptivePerformanceIndexer(ref m_Settings, new PerformanceStateTracker(120));
-
                 UpdateSubsystem();
             }
             AdaptivePerformanceAnalytics.SendAdaptiveStartupEvent(m_Subsystem);

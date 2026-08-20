@@ -19,9 +19,9 @@ namespace Unity.GraphToolkit.Editor.Implementation
         {
             if (m_PreviewedElement != null)
             {
-                if (m_PreviewedElement.Model is IUserNodeModelImp userNodeModelImp)
+                if (m_PreviewedElement.Model is IUserModelImp userModelImp)
                 {
-                    userNodeModelImp.CallOnDisable();
+                    userModelImp.CallOnDisable();
                 }
                 m_PreviewedElement = null;
             }
@@ -29,9 +29,9 @@ namespace Unity.GraphToolkit.Editor.Implementation
 
         public override void RemoveElement(GraphElement graphElement)
         {
-            if (graphElement?.Model is IUserNodeModelImp userNodeModelImp)
+            if (graphElement?.Model is IUserModelImp userModelImp)
             {
-                userNodeModelImp.CallOnDisable();
+                userModelImp.CallOnDisable();
             }
             base.RemoveElement(graphElement);
             m_PreviewedElement = null;

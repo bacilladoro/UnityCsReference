@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Text;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -50,6 +51,7 @@ namespace Unity.GraphToolkit.Editor
             : base(name, models, ownerElement, parentClassName, filter) { }
 
 
+        [NoAutoStaticsCleanup] // reusable string builder used as a scratch buffer within BuildUI; cleared before each use
         static StringBuilder s_BuildPartUI_typeText = new StringBuilder(16);
 
         protected override void BuildUI(VisualElement parent)

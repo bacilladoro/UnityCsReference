@@ -2,6 +2,8 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
+using Unity.Scripting.LifecycleManagement;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
@@ -109,8 +111,9 @@ namespace UnityEngine.UIElements
         }
     }
 
-    internal class EventCallbackList
+    internal partial class EventCallbackList
     {
+        [NoAutoStaticsCleanup]
         public static readonly EventCallbackList EmptyList = new EventCallbackList();
 
         private EventCallbackInternal[] m_Array = Array.Empty<EventCallbackInternal>();
@@ -252,6 +255,7 @@ namespace UnityEngine.UIElements
         // EventCallbackDefinition and EventCallbackGroup apis at the moment. We can bring this number down a bit when they do.
         internal const int k_PoolMaxSize = 1024;
 
+        [NoAutoStaticsCleanup]
         // Pool is modified by perf tests to exclude the allocation costs from the measurements.
         internal static ObjectPool<EventCallbackInternal> s_Pool = new(() => new(), k_PoolMaxSize);
 
@@ -271,10 +275,12 @@ namespace UnityEngine.UIElements
         }
     }
 
-    internal class EventCallbackRegistry
+    internal partial class EventCallbackRegistry
     {
         public const int k_PoolMaxSize = 1024;
 
+
+        [NoAutoStaticsCleanup]
         private static readonly EventCallbackListPool k_ListPool = new();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -584,9 +590,13 @@ namespace UnityEngine.UIElements
             return m_ArgValues.Remove(argId);
         }
 
+
+        [NoAutoStaticsCleanup]
         internal static readonly EventCallbackPool k_LocalCallbackPool = new();
+        [NoAutoStaticsCleanup]
         internal static readonly List<(EventCallbackRegistry registry, EventCallbackInternal callback)>
             k_UnregisteredLocalCallbacksDuringInvoke = new();
+        [NoAutoStaticsCleanup]
         internal static int s_GlobalInvokeCount;
         private bool m_HasLocalCallbacks;
 
@@ -801,6 +811,8 @@ namespace UnityEngine.UIElements
             return m_ArgValues.FindByValue(in value, out _);
         }
 
+
+        [NoAutoStaticsCleanup]
         private static readonly ObjectPool<EventCallbackRegistry> k_RegistryPool = new(() => new(), k_PoolMaxSize);
         public static EventCallbackRegistry GetPooled() => k_RegistryPool.Get();
 
@@ -811,3 +823,4 @@ namespace UnityEngine.UIElements
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

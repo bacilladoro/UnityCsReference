@@ -11,7 +11,7 @@ using Object = UnityEngine.Object;
 
 namespace Unity.UIToolkit.Editor;
 
-internal sealed class StyleRuleSelectionHandler : IStyleRuleSelectionHandler
+internal sealed partial class StyleRuleSelectionHandler : IStyleRuleSelectionHandler
 {
     private readonly struct RefCountedSelection
     {

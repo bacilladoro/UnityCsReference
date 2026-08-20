@@ -420,9 +420,9 @@ namespace UnityEditor
                     // Select added scenes and frame last scene
                     if (insertedScenes.Count > 0)
                     {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                         Selection.entityIds = insertedScenes.Select(x => x.handle).ToArray().ToEntityIdArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                         m_TreeView.Frame(insertedScenes[^1].handle.ToEntityId(), true, false);
                     }
                 }

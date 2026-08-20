@@ -60,7 +60,7 @@ class UxmlAttributesEditingContext : IDisposable
         public static TempSerializedData Create(VisualElement element, bool isTemplateInstance)
         {
             var instance = ScriptableObject.CreateInstance<TempSerializedData>();
-            var desc = UxmlSerializedDataRegistry.GetDescription(element.fullTypeName);
+            instance.hideFlags = HideFlags.DontSaveInEditor | HideFlags.DontSaveInBuild;
 
             var type = element.GetType();
             var elementAsset = new VisualElementAsset(type.FullName);
@@ -304,6 +304,10 @@ class UxmlAttributesEditingContext : IDisposable
 
                 this.visualTreeAsset = visualTreeAsset;
                 this.elementAsset = elementAsset;
+
+                // The UXML importer marks imported assets NotEditable, which disables every bound attribute field.
+                if (!isReadOnly)
+                    visualTreeAsset.hideFlags &= ~HideFlags.NotEditable;
 
                 rootSerializedObject = new SerializedObject(visualTreeAsset);
                 serializedBasePath = GetSerializedPath(elementAsset);

@@ -7,6 +7,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using Unity.Profiling;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor.Search.Providers;
 using UnityEditorInternal;
 using UnityEngine;
@@ -32,11 +33,13 @@ namespace UnityEditor.Search
         public bool isAltered;
     }
 
-    static class IndexerExtensions
+    static partial class IndexerExtensions
     {
         static readonly ProfilerMarker k_IndexPrefabPropertiesMarker = new($"{nameof(IndexerExtensions)}.{nameof(IndexPrefabProperties)}");
 
+        [AutoStaticsCleanupOnCodeReload]
         static ConcurrentDictionary<ObjectIndexer, HashSet<PrefabPropertyIndexKey>> s_PrefabIndexCaches = new();
+        [AutoStaticsCleanupOnCodeReload]
         static ConcurrentDictionary<ObjectIndexer, Dictionary<EntityId, PrefabPropertyIndexData>> s_PrefabInstanceRootCaches = new();
 
         [CustomObjectIndexer(typeof(GameObject), version = 2)]

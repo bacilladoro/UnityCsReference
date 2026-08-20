@@ -392,6 +392,25 @@ namespace UnityEngine.UIElements
 
         IPanelComponent IPanelComponent.parentUI => parentUI;
 
+        /// <summary>
+        /// Finds the PanelRenderer whose UI hierarchy contains the given element.
+        /// </summary>
+        /// <remarks>
+        /// If the element is inside a nested PanelRenderer, the closest one is returned.
+        /// </remarks>
+        /// <param name="ve">The element to search from.</param>
+        /// <returns>The PanelRenderer containing the element, or null if the element is not part of a PanelRenderer.</returns>
+        public static PanelRenderer FindPanelRenderer(VisualElement ve)
+        {
+            for (var current = ve; current != null; current = current.hierarchy.parent)
+            {
+                if (current is IPanelComponentRootElement { panelComponent: PanelRenderer renderer })
+                    return renderer;
+            }
+
+            return null;
+        }
+
         private int m_FirstChildInsertIndex;
         internal int firstChildInsertIndex
         {
@@ -742,10 +761,15 @@ namespace UnityEngine.UIElements
 
             if (isWorldSpace)
             {
-                if (PanelComponentUtils.IsTransformControlledByGameObject(this))
-                    SetTransform();
-                else
-                    ClearTransform();
+                // UUM-119563: while hidden, PivotOffset()'s 3D bounds collapse to zero; recomputing would cache a
+                // stale zero transform that snaps the panel in one frame after it reappears. Skip until visible.
+                if (rootVisualElement.areAncestorsAndSelfDisplayed)
+                {
+                    if (PanelComponentUtils.IsTransformControlledByGameObject(this))
+                        SetTransform();
+                    else
+                        ClearTransform();
+                }
 
                 UpdateLocalBounds();
 

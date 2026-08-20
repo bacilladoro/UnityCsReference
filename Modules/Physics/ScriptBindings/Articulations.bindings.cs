@@ -458,6 +458,16 @@ namespace UnityEngine
             return GetAccumulatedTorque(Time.fixedDeltaTime);
         }
 
+        ///<summary>Clears all pending forces accumulated on this <see cref="ArticulationBody" />.</summary>
+        ///<remarks>Removes any forces that have been applied with <see cref="AddForce" /> since the last simulation step.
+        ///Has no effect on immovable or inactive articulation bodies.</remarks>
+        extern internal void ClearForce();
+
+        ///<summary>Clears all pending torques accumulated on this <see cref="ArticulationBody" />.</summary>
+        ///<remarks>Removes any torques that have been applied with <see cref="AddTorque" /> since the last simulation step.
+        ///Has no effect on immovable or inactive articulation bodies.</remarks>
+        extern internal void ClearTorque();
+
         ///<summary>Applies a force to the <see cref="ArticulationBody" />.</summary>
         ///<remarks>Note that the force accumulates over the duration of a simulation frame. It is only physically applied to the articulation body during the simulation step, after <see cref="PlayerLoop.FixedUpdate">FixedUpdate</see> has been called to scripts. Specifying the <see cref="ForceMode" /><c>mode</c> allows the type of force to be changed to an Acceleration, Impulse or Velocity Change.
         ///

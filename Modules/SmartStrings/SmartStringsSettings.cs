@@ -2,7 +2,9 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
 using UnityEngine;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Bindings;
 
 namespace Unity.SmartStrings;
@@ -11,11 +13,16 @@ namespace Unity.SmartStrings;
 /// Project-wide Smart Strings settings. The active instance is included in player builds as a
 /// preloaded asset and exposes the default <see cref="SmartFormatter"/> used to format Smart Strings.
 /// </summary>
+[HelpURL("smart-strings/smart-strings-settings")]
 public class SmartStringsSettings : ScriptableObject
 {
     // Key used to store the active settings as an EditorBuildSettings config object.
     internal const string ConfigName = "com.unity.smartstrings.settings";
 
+    // Must NOT use a cleanup attribute: the codegen roots a UnityEngine.Object-derived type for the
+    // linker (keeping all its methods; see PanelRenderer.bindings.cs). A destroyed instance compares
+    // == null via the UnityEngine.Object fake-null, so a stale wrapper re-resolves on next access.
+    [NoAutoStaticsCleanup]
     static SmartStringsSettings s_Instance;
 
     // The editor calls this at play-mode transitions to mimic the domain reload skipped when reload is disabled.
@@ -58,3 +65,4 @@ public class SmartStringsSettings : ScriptableObject
             s_Instance = this;
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

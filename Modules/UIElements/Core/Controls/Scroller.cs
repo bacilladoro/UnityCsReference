@@ -2,6 +2,8 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
+using Unity.Scripting.LifecycleManagement;
 using Unity.Properties;
 
 namespace UnityEngine.UIElements
@@ -268,11 +270,13 @@ namespace UnityEngine.UIElements
             value += factor * (slider.pageSize * (slider.lowValue < slider.highValue ? 1f : -1f));
         }
 
-        private static class Callbacks
+        private static partial class Callbacks
         {
+            [NoAutoStaticsCleanup]
             public static readonly EventCallbackDefinition<Slider> OnSliderValueChanged =
                 EventCallback.Create<ChangeEvent<float>, Slider>(static (e, slider) =>
                     slider.GetFirstAncestorOfType<Scroller>()?.OnSliderValueChange(e));
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

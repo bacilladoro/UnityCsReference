@@ -4,6 +4,7 @@
 
 using System;
 using Unity.GraphToolkit.InternalBridge;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -15,9 +16,12 @@ namespace Unity.GraphToolkit.Editor
     [UnityRestricted]
     internal class TransitionControl : VisualElement
     {
-        static CustomStyleProperty<float> s_TransitionWidthProperty = new("--wire-width");
-        static CustomStyleProperty<float> s_TransitionPaddingProperty = new("--wire-padding");
-        static CustomStyleProperty<Color> s_TransitionColorProperty = new("--wire-color");
+        [NoAutoStaticsCleanup] // CSS custom property descriptor; value is a fixed CSS property name
+        static readonly CustomStyleProperty<float> s_TransitionWidthProperty = new("--wire-width");
+        [NoAutoStaticsCleanup] // CSS custom property descriptor; value is a fixed CSS property name
+        static readonly CustomStyleProperty<float> s_TransitionPaddingProperty = new("--wire-padding");
+        [NoAutoStaticsCleanup] // CSS custom property descriptor; value is a fixed CSS property name
+        static readonly CustomStyleProperty<Color> s_TransitionColorProperty = new("--wire-color");
 
         static readonly float k_DefaultPadding = 10.0f;
 
@@ -26,7 +30,7 @@ namespace Unity.GraphToolkit.Editor
         // The points that will be rendered. Expressed in coordinates local to the element.
         protected Vector2[] m_ControlPoints = new Vector2[4];
 
-        bool IsSelfTransition => m_Transition?.TransitionModel?.IsSingleStateTransition ?? false;
+        bool IsSelfTransition => m_Transition?.TransitionModel?.IsSelfTransition ?? false;
 
         bool ShowCounter => m_Transition.TransitionModel?.Transitions.Count > 1;
 

@@ -1784,9 +1784,9 @@ namespace Unity.UI.Builder
                 if (fields.Count > 1)
                 {
                     // Skip the box model and fetch the desired field.
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2001 // Avoid Linq
                     field = fields.First(f => f is not BoxModel && string.IsNullOrEmpty(((BindableElement)f).bindingPath));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 }
                 else
                 {
@@ -1885,9 +1885,9 @@ namespace Unity.UI.Builder
         public T FindBoxModelRelatedStyleField<T>(string styleName, bool expand = true) where T : BindableElement
         {
             var fields = styleFields.m_StyleFields[styleName];
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var field = fields.OfType<T>().FirstOrDefault(s => string.IsNullOrEmpty(s.bindingPath));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             if (expand)
                 ExpandParentFoldouts(field);
             return field;

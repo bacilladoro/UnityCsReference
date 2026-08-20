@@ -34,7 +34,10 @@ namespace UnityEngine.UIElements
     class MultilineDecoratorAttribute : PropertyAttribute { }
 
     [VisibleToOtherModules("UnityEditor.UIToolkitAuthoringModule")]
-    class MultilineTextFieldAttribute() : PropertyAttributeWithDisplayName { }
+    class MultilineTextFieldAttribute() : PropertyAttributeWithDisplayName
+    {
+        public int lines = 1;
+    }
 
     [VisibleToOtherModules("UnityEditor.UIToolkitAuthoringModule")]
     class LayerDecoratorAttribute : PropertyAttribute { }

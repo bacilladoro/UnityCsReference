@@ -16,9 +16,9 @@ namespace UnityEditor.Search
         public static IEnumerable<SearchItem> Count(SearchExpressionContext c)
         {
             foreach (var arg in c.args)
-                #pragma warning disable UA2005 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2005 // Avoid Linq
                 yield return SearchExpression.CreateItem(arg.Execute(c).Count(), c.ResolveAlias(arg, "Count"));
-#pragma warning restore UA2005
+#pragma warning restore UAC2005
         }
 
         [Description("Find the minimal value for each expression."), Category("Math")]
@@ -34,9 +34,9 @@ namespace UnityEditor.Search
                 selector = c.args[0].innerText.ToString();
             }
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             foreach (var arg in c.args.Skip(skipCount))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 double min = double.MaxValue;
                 foreach (var r in arg.Execute(c))
@@ -58,9 +58,9 @@ namespace UnityEditor.Search
                 selector = c.args[0].innerText.ToString();
             }
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             foreach (var arg in c.args.Skip(skipCount))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 double max = double.MinValue;
                 foreach (var r in arg.Execute(c))
@@ -82,9 +82,9 @@ namespace UnityEditor.Search
                 selector = c.args[0].innerText.ToString();
             }
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             foreach (var arg in c.args.Skip(skipCount))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 var avg = Average.Zero;
                 foreach (var r in arg.Execute(c))
@@ -106,9 +106,9 @@ namespace UnityEditor.Search
                 selector = c.args[0].innerText.ToString();
             }
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             foreach (var arg in c.args.Skip(skipCount))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 var sum = 0d;
                 foreach (var r in arg.Execute(c))

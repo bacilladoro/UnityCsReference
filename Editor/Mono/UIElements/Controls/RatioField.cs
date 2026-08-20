@@ -2,10 +2,12 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.Bindings;
 using UnityEngine.UIElements;
@@ -26,6 +28,7 @@ namespace UnityEditor.UIElements
 
         internal record struct CommonOption(string Name, float w, float h);
 
+        [NoAutoStaticsCleanup]
         internal static readonly List<CommonOption> commonOptions = new()
         {
              new CommonOption("auto", 0, 0),
@@ -188,3 +191,4 @@ namespace UnityEditor.UIElements
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

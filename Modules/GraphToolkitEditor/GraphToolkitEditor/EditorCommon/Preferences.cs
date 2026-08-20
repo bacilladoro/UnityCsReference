@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using Unity.GraphToolkit.CSO;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 
 namespace Unity.GraphToolkit.Editor
@@ -21,6 +22,7 @@ namespace Unity.GraphToolkit.Editor
         /// <summary>
         /// Toggles logging of UI build time.
         /// </summary>
+        [NoAutoStaticsCleanup] // enum-like preference key constant; value is a fixed identifier
         public static readonly BoolPref LogUIBuildTime = new BoolPref(2, nameof(LogUIBuildTime));
 
         // 3 was BoundObjectLogging, now unused
@@ -28,21 +30,25 @@ namespace Unity.GraphToolkit.Editor
         /// <summary>
         /// Only process the graph model when user stops moving the mouse for a while. Otherwise, graph is processed after each change.
         /// </summary>
+        [NoAutoStaticsCleanup] // enum-like preference key constant; value is a fixed identifier
         public static readonly BoolPref OnlyProcessWhenIdle = new BoolPref(4, nameof(OnlyProcessWhenIdle), new[] { "AutoRecompile", "AutoProcess" });
 
         /// <summary>
         /// Toggles automatic alignment of nodes created from a port.
         /// </summary>
+        [NoAutoStaticsCleanup] // enum-like preference key constant; value is a fixed identifier
         public static readonly BoolPref AutoAlignDraggedWires = new BoolPref(5, nameof(AutoAlignDraggedWires));
 
         /// <summary>
         /// Toggles logging of dependencies between models by the <see cref="PositionDependenciesManager"/>.
         /// </summary>
+        [NoAutoStaticsCleanup] // enum-like preference key constant; value is a fixed identifier
         public static readonly BoolPref DependenciesLogging = new BoolPref(6, nameof(DependenciesLogging));
 
         /// <summary>
         /// Enables or disables the display of error messages when an <see cref="ICommand"/> is dispatched while another <see cref="ICommand"/> is still being processed.
         /// </summary>
+        [NoAutoStaticsCleanup] // enum-like preference key constant; value is a fixed identifier
         public static readonly BoolPref ErrorOnRecursiveDispatch = new BoolPref(7, nameof(ErrorOnRecursiveDispatch));
 
         // 8 was ErrorOnMultipleDispatchesPerFrame, now unused
@@ -50,34 +56,40 @@ namespace Unity.GraphToolkit.Editor
         /// <summary>
         /// Toggles logging of all dispatched <see cref="ICommand"/>.
         /// </summary>
+        [NoAutoStaticsCleanup] // enum-like preference key constant; value is a fixed identifier
         public static readonly BoolPref LogAllDispatchedCommands = new BoolPref(9, nameof(LogAllDispatchedCommands), new[] { "LogAllDispatchedActions" });
 
         /// <summary>
         /// Toggles displaying unused nodes in a different style.
         /// </summary>
+        [NoAutoStaticsCleanup] // enum-like preference key constant; value is a fixed identifier
         public static readonly BoolPref ShowUnusedNodes = new BoolPref(10, nameof(ShowUnusedNodes));
 
         /// <summary>
         /// Toggles logging of UI update information.
         /// </summary>
+        [NoAutoStaticsCleanup] // enum-like preference key constant; value is a fixed identifier
         public static readonly BoolPref LogUIUpdate = new BoolPref(12, nameof(LogUIUpdate));
 
         /// <summary>
         /// Toggles the automatic itemizing of variable nodes.
         /// </summary>
         /// <remarks>Itemizing variables duplicates a variable node connected to multiples ports, so there is one variable node per wire.</remarks>
+        [NoAutoStaticsCleanup] // enum-like preference key constant; value is a fixed identifier
         public static readonly BoolPref AutoItemizeVariables = new BoolPref(13, nameof(AutoItemizeVariables));
 
         /// <summary>
         /// Toggles the automatic itemizing of constant nodes.
         /// </summary>
         /// <remarks>Itemizing variables duplicates a constant node connected to multiples ports, so there is one variable node per wire.</remarks>
+        [NoAutoStaticsCleanup] // enum-like preference key constant; value is a fixed identifier
         public static readonly BoolPref AutoItemizeConstants = new BoolPref(14, nameof(AutoItemizeConstants));
 
         /// <summary>
         /// Prevents the Item Library to close after losing focus.
         /// </summary>
         /// <remarks>For debugging purposes</remarks>
+        [NoAutoStaticsCleanup] // enum-like preference key constant; value is a fixed identifier
         public static readonly BoolPref ItemLibraryStaysOpenOnBlur = new BoolPref(15, nameof(ItemLibraryStaysOpenOnBlur));
 
         /// <summary>
@@ -122,7 +134,9 @@ namespace Unity.GraphToolkit.Editor
     [UnityRestricted]
     internal class StringPref : Enumeration
     {
+        [NoAutoStaticsCleanup] // enum-like preference key constant; value is a fixed identifier
         public static readonly StringPref ItemLibrarySize = new StringPref(0, nameof(ItemLibrarySize));
+        [NoAutoStaticsCleanup] // enum-like preference key constant; value is a fixed identifier
         public static readonly StringPref OverlayPositions = new StringPref(1, nameof(OverlayPositions));
 
         /// <summary>

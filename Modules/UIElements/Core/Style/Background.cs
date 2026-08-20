@@ -40,6 +40,16 @@ namespace UnityEngine.UIElements
             return result;
         }
 
+        // Composes asset slot and gradient without the public setters' mutual-exclusion,
+        // matching From(UnmanagedBackground) semantics for the animation binder.
+        internal static Background From(in EntityId imageEntityId, in UnmanagedBackgroundGradient gradient)
+        {
+            var result = FromObject(Resources.EntityIdToObject(imageEntityId));
+            if (gradient.stopCount > 0)
+                result.m_Gradient = gradient.ToManaged();
+            return result;
+        }
+
         [SerializeField]
         Texture2D m_Texture;
         /// <summary>

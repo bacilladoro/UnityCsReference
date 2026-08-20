@@ -2,18 +2,22 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
 using System.Text;
 using UnityEngine.Bindings;
 using UnityEngine.Pool;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.UIElements;
 
 [VisibleToOtherModules("UnityEditor.UIBuilderModule", "UnityEditor.UIToolkitAuthoringModule")]
 internal static class StringBuilderPool
 {
+    [NoAutoStaticsCleanup]
     internal static readonly ObjectPool<StringBuilder> s_Pool = new (() => new StringBuilder(), null, sb => sb.Clear());
 
     public static StringBuilder Get() => s_Pool.Get();
     public static PooledObject<StringBuilder> Get(out StringBuilder value) => s_Pool.Get(out value);
     public static void Release(StringBuilder toRelease) => s_Pool.Release(toRelease);
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

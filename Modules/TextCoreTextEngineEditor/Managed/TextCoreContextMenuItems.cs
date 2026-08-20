@@ -6,6 +6,7 @@ using System.IO;
 using UnityEngine;
 using UnityEngine.TextCore.Text;
 using UnityEngine.TextCore.LowLevel;
+using Unity.Scripting.LifecycleManagement;
 
 #pragma warning disable CS0618 // TextShaderUtilities, TextCoreShaderGUI, TextCoreShaderGUISDF, TextCoreShaderGUIBitmap are obsolete; handled natively by ATG
 
@@ -13,8 +14,11 @@ namespace UnityEditor.TextCore.Text
 {
     internal class TextCoreContextMenuItems : Editor
     {
+        [NoAutoStaticsCleanup] // Clipboard cache for context-menu copy/paste; safe to persist across reload
         private static Texture m_copiedTexture;
+        [NoAutoStaticsCleanup] // Clipboard cache for context-menu copy/paste; safe to persist across reload
         private static Material m_copiedProperties;
+        [NoAutoStaticsCleanup] // Clipboard cache for context-menu copy/paste; safe to persist across reload
         private static Material m_copiedAtlasProperties;
 
         // ================================================================================

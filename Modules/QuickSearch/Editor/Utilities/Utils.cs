@@ -22,6 +22,7 @@ using Debug = UnityEngine.Debug;
 
 using UnityEditor.Connect;
 using UnityEditor.StyleSheets;
+using Unity.Scripting.LifecycleManagement;
 
 [assembly: System.Runtime.CompilerServices.InternalsVisibleTo("com.unity.quicksearch.tests")]
 [assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Unity.Environment.Core.Editor")]
@@ -50,13 +51,15 @@ namespace UnityEditor.Search
     /// <summary>
     /// This utility class mainly contains proxy to internal API that are shared between the version in trunk and the package version.
     /// </summary>
-    static class Utils
+    static partial class Utils
     {
         const int k_MaxRegexTimeout = 25;
 
 
         internal static readonly bool isDeveloperBuild = false;
+        [NoAutoStaticsCleanup]
         internal static bool runningTests { get; set; }
+        [NoAutoStaticsCleanup]
         internal static bool fakeWorkerProcess { get; set; }
         private static readonly Regex s_RangeRx = new Regex(@"(-?[\d\.]+)\.\.(-?[\d\.]+)");
         public static readonly char[] k_AdbInvalidCharacters = { '/', '?', '<', '>', '\\', ':', '*', '|', '"' };
@@ -78,15 +81,17 @@ namespace UnityEditor.Search
             }
         }
 
+        [NoAutoStaticsCleanup]
         static RootDescriptor[] s_RootDescriptors;
 
         static RootDescriptor[] rootDescriptors
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             get { return s_RootDescriptors ?? (s_RootDescriptors = GetAssetRootFolders().Select(root => new RootDescriptor(root)).OrderByDescending(desc => desc.absPath.Length).ToArray()); }
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         private static UnityEngine.Object[] s_LastDraggedObjects;
 
 
@@ -391,9 +396,9 @@ namespace UnityEditor.Search
             }
             catch (ReflectionTypeLoadException e)
             {
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 return e.Types.Where(t => t != null);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             }
         }
 
@@ -462,9 +467,9 @@ namespace UnityEditor.Search
                 var t = obj.GetType();
                 var bindingAttr = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
                 var sb = new System.Text.StringBuilder();
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 foreach (var item in t.GetFields(bindingAttr).Where(p => PrintField(p)))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     Append(sb, item.Name, item.GetValue(obj), level, seen);
 
                 var result = sb.ToString().Trim(' ', '\r', '\n');
@@ -478,9 +483,9 @@ namespace UnityEditor.Search
 
         internal static string FormatProviderList(IEnumerable<SearchProvider> providers, bool fullTimingInfo = false, bool showFetchTime = true)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             return string.Join(fullTimingInfo ? "\r\n" : ", ", providers.Select(p =>
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 var fetchTime = p.fetchTime;
                 if (fullTimingInfo)
@@ -739,9 +744,9 @@ namespace UnityEditor.Search
 
         internal static Type GetTypeFromName(string typeName)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             return TypeCache.GetTypesDerivedFrom<UnityEngine.Object>().FirstOrDefault(t => string.Equals(t.Name, typeName, StringComparison.Ordinal)) ?? typeof(UnityEngine.Object);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         internal static string StripHTML(string input)
@@ -1750,7 +1755,7 @@ namespace UnityEditor.Search
         }
     }
 
-    static class SerializedPropertyExtension
+    static partial class SerializedPropertyExtension
     {
         readonly struct Cache : IEquatable<Cache>
         {
@@ -1790,7 +1795,9 @@ namespace UnityEditor.Search
             public Type type;
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         static Type s_NativePropertyAttributeType;
+        [AutoStaticsCleanupOnCodeReload]
         static Dictionary<Cache, MemberInfoCache> s_MemberInfoFromPropertyPathCache = new Dictionary<Cache, MemberInfoCache>();
 
         public static Type GetManagedType(this SerializedProperty property)

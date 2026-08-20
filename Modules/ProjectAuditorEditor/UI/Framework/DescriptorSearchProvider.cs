@@ -46,29 +46,19 @@ namespace Unity.ProjectAuditor.Editor.UI.Framework
             return s_SearchIcon;
         }
 
-        // The individual Areas flags a descriptor can belong to (excludes None and the All bitmask).
-        private static IEnumerable<Areas> SelectableAreas()
-        {
-            foreach (Areas area in Enum.GetValues(typeof(Areas)))
-            {
-                if (area != Areas.None && area != Areas.All)
-                    yield return area;
-            }
-        }
-
         IEnumerable<SearchProposition> FetchPropositions(SearchContext context, SearchPropositionOptions options)
         {
             var sb = new StringBuilder();
 
             // Areas
             {
-                var areas = new List<Areas>(SelectableAreas());
+                var areas = new List<Areas>(AreasExtensions.AlphabeticalAreas);
 
                 foreach (var area in areas)
                     sb.Append($"\"{area}\", ");
                 var allAreas = sb.ToString().TrimEnd(',', ' ');
                 foreach (var area in areas)
-                    yield return new SearchProposition(category: "Area", label: DescriptorLibrary.GetAreasString(area), replacement: $"area=<$list:\"{area}\", [{allAreas}]$>", moveCursor: TextCursorPlacement.MoveAutoComplete, icon: GetSearchIcon(), color: QueryColors.filter);
+                    yield return new SearchProposition(category: "Area", label: area.ToFrontendString(), replacement: $"area=<$list:\"{area}\", [{allAreas}]$>", moveCursor: TextCursorPlacement.MoveAutoComplete, icon: GetSearchIcon(), color: QueryColors.filter);
                 sb.Clear();
             }
 
@@ -157,7 +147,7 @@ namespace Unity.ProjectAuditor.Editor.UI.Framework
                 item.SetField("Suppressed", isSuppressed ? k_SuppressedYes : k_SuppressedNo);
                 item.SetField("Id", descriptor.Id);
                 item.SetField("Title", descriptor.Title);
-                item.SetField("Area", DescriptorLibrary.GetAreasString(areas));
+                item.SetField("Area", areas.ToFrontendString());
                 item.SetField("Severity", descriptor.DefaultSeverity.ToFrontendString());
                 item.SetField("Description", descriptor.Description);
 

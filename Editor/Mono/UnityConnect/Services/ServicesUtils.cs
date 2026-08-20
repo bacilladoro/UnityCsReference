@@ -122,37 +122,37 @@ namespace UnityEditor.Connect
 
         public static List<string> GetCloudDiagCrashSupportedPlatforms()
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return k_CloudDiagCrashSupportedPlatforms.ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         public static List<string> GetCloudDiagUserReportSupportedPlatforms()
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return k_CloudDiagCrashSupportedPlatforms.ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         public static List<string> GetAnalyticsSupportedPlatforms()
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return k_AnalyticsSupportedPlatforms.ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         public static List<string> GetMultiplayerSupportedPlatforms()
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return k_MultiplayerSupportedPlatforms.ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         public static List<string> GetAdsSupportedPlatforms()
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return k_AdsSupportedPlatforms.ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         public static VisualElement SetupSupportedPlatformsBlock(List<string> platforms)

@@ -79,12 +79,12 @@ namespace UnityEditor.Search
 
         public bool valid => errors.Count == 0;
 
-        #pragma warning disable UA2011 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+        #pragma warning disable UAC2011 // Avoid Linq
         public QueryBlock currentBlock => selectedBlocks.FirstOrDefault();
-#pragma warning restore UA2011
-        #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2011
+        #pragma warning disable UAC2001 // Avoid Linq
         public IEnumerable<QueryBlock> selectedBlocks => EnumerateBlocks().Where(b => b.selected);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
         protected QueryBuilder()
         {
@@ -221,9 +221,9 @@ namespace UnityEditor.Search
         public string BuildQuery()
         {
             var query = new StringBuilder();
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             BuildQuery(query, EnumerateBlocks().Where(b => !b.disabled));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             return Utils.Simplify(query.ToString());
         }
 
@@ -267,16 +267,16 @@ namespace UnityEditor.Search
                 if (context != null)
                 {
                     if (!string.IsNullOrEmpty(context.filterId))
-                        #pragma warning disable UA2010 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                        #pragma warning disable UAC2010 // Avoid Linq
                         newBlocks.Add(new QueryAreaBlock(this, context.providers.First()));
-#pragma warning restore UA2010
+#pragma warning restore UAC2010
                     searchQuery = context.rawSearchQuery;
                 }
                 else
                 {
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2001 // Avoid Linq
                     var baseExpressionProviders = SearchService.Providers.Where(p => char.IsLetter(p.filterId[0]));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     searchQuery = SearchUtils.ParseSearchText(searchText, baseExpressionProviders, out var filteredProvider);
                     if (filteredProvider != null)
                     {
@@ -386,9 +386,9 @@ namespace UnityEditor.Search
 
             if (!node.leaf && node.children.Count > 1)
             {
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 foreach (var c in node.children.Skip(1))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     ParseNode(c, blocks);
             }
         }
@@ -436,9 +436,9 @@ namespace UnityEditor.Search
         {
             SetSelection(-1);
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             QueryBlock insertAt = EnumerateBlocks().FirstOrDefault(b => b.editor != null);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             if (searchProposition.data is SearchProvider provider)
                 return InsertBlock(insertAt, new QueryAreaBlock(this, provider));

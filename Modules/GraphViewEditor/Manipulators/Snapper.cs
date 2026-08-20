@@ -51,9 +51,9 @@ namespace UnityEditor.Experimental.GraphView
             // the groups border might adjust and we don't want to snap to that.
             // We also check if there are any GraphElement children of the selected graphelement
             // And add them to the ignore list.
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             foreach (GraphElement ge in m_GraphView.selection.OfType<GraphElement>())
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 if (ge is Group)
                 {

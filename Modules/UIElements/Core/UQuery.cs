@@ -2,6 +2,8 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
+using Unity.Scripting.LifecycleManagement;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -34,7 +36,7 @@ namespace UnityEngine.UIElements
     /// UQuery is a set of extension methods allowing you to select individual or collection of visualElements inside a complex hierarchy.
     /// See UQuery [[wiki:UIE-UQuery|manual page]] for further information.
     /// </summary>
-    public static class UQuery
+    public static partial class UQuery
     {
         //This scheme saves us 20 bytes instead of saving a Func<object, bool> directly (12 vs 32 bytes)
         internal interface IVisualPredicateWrapper
@@ -42,8 +44,9 @@ namespace UnityEngine.UIElements
             bool Predicate(object e);
         }
 
-        internal class IsOfType<T> : IVisualPredicateWrapper where T : VisualElement
+        internal partial class IsOfType<T> : IVisualPredicateWrapper where T : VisualElement
         {
+            [AutoStaticsCleanupOnCodeReload]
             public static IsOfType<T> s_Instance = new IsOfType<T>();
 
             public bool Predicate(object e)
@@ -144,9 +147,10 @@ namespace UnityEngine.UIElements
             public abstract SingleQueryMatcher CreateNew();
         }
 
-        internal class FirstQueryMatcher : SingleQueryMatcher
+        internal partial class FirstQueryMatcher : SingleQueryMatcher
         {
-            public static readonly FirstQueryMatcher Instance = new FirstQueryMatcher();
+            [AutoStaticsCleanupOnCodeReload]
+            public static FirstQueryMatcher Instance = new FirstQueryMatcher();
             protected override bool OnRuleMatchedElement(RuleMatcher matcher, VisualElement element)
             {
                 if (match == null)
@@ -157,9 +161,10 @@ namespace UnityEngine.UIElements
             public override SingleQueryMatcher CreateNew() => new FirstQueryMatcher();
         }
 
-        internal class LastQueryMatcher : SingleQueryMatcher
+        internal partial class LastQueryMatcher : SingleQueryMatcher
         {
-            public static readonly LastQueryMatcher Instance = new LastQueryMatcher();
+            [AutoStaticsCleanupOnCodeReload]
+            public static LastQueryMatcher Instance = new LastQueryMatcher();
 
             protected override bool OnRuleMatchedElement(RuleMatcher matcher, VisualElement element)
             {
@@ -170,9 +175,10 @@ namespace UnityEngine.UIElements
             public override SingleQueryMatcher CreateNew() => new LastQueryMatcher();
         }
 
-        internal class IndexQueryMatcher : SingleQueryMatcher
+        internal partial class IndexQueryMatcher : SingleQueryMatcher
         {
-            public static readonly IndexQueryMatcher Instance = new IndexQueryMatcher();
+            [AutoStaticsCleanupOnCodeReload]
+            public static IndexQueryMatcher Instance = new IndexQueryMatcher();
 
             private int matchCount = -1;
             private int _matchIndex;
@@ -211,9 +217,10 @@ namespace UnityEngine.UIElements
     /// <summary>
     /// Query object containing all the selection rules. The object can be saved and rerun later without re-allocating memory.
     /// </summary>
-    public struct UQueryState<T> : IEnumerable<T>, IEquatable<UQueryState<T>> where T : VisualElement
+    public partial struct UQueryState<T> : IEnumerable<T>, IEquatable<UQueryState<T>> where T : VisualElement
     {
         //this makes it non-thread safe. But saves on allocations...
+        [AutoStaticsCleanupOnCodeReload]
         private static ActionQueryMatcher s_Action = new ActionQueryMatcher();
 
         private readonly VisualElement m_Element;
@@ -278,7 +285,8 @@ namespace UnityEngine.UIElements
             }
         }
 
-        private static readonly ListQueryMatcher<T> s_List = new ListQueryMatcher<T>();
+        [AutoStaticsCleanupOnCodeReload]
+        private static ListQueryMatcher<T> s_List = new ListQueryMatcher<T>();
 
         /// <summary>
         /// Adds all elements satisfying selection rules to the list.
@@ -355,12 +363,13 @@ namespace UnityEngine.UIElements
             }
         }
 
-        private class DelegateQueryMatcher<TReturnType> : UQuery.UQueryMatcher
+        private partial class DelegateQueryMatcher<TReturnType> : UQuery.UQueryMatcher
         {
             public Func<T, TReturnType> callBack { get; set; }
 
             public List<TReturnType> result { get; set; }
 
+            [AutoStaticsCleanupOnCodeReload]
             public static DelegateQueryMatcher<TReturnType> s_Instance = new DelegateQueryMatcher<TReturnType>();
 
             protected override bool OnRuleMatchedElement(RuleMatcher matcher, VisualElement element)
@@ -422,7 +431,8 @@ namespace UnityEngine.UIElements
 
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
-        private static readonly ListQueryMatcher<VisualElement> s_EnumerationList = new ListQueryMatcher<VisualElement>();
+        [AutoStaticsCleanupOnCodeReload]
+        private static ListQueryMatcher<VisualElement> s_EnumerationList = new ListQueryMatcher<VisualElement>();
 
         /// <undoc/>
         public struct Enumerator : IEnumerator<T>
@@ -1232,17 +1242,25 @@ namespace UnityEngine.UIElements
     /// UQuery is a set of extension methods allowing you to select individual or collection of visualElements inside a complex hierarchy.
     /// For more information, refer to [[wiki:UIE-UQuery|Find visual elements with UQuery]].
     /// </summary>
-    public static class UQueryExtensions
+    public static partial class UQueryExtensions
     {
+        [AutoStaticsCleanupOnCodeReload]
         private static UQueryState<VisualElement> SingleElementEmptyQuery = new UQueryBuilder<VisualElement>(null).Build();
 
+        [AutoStaticsCleanupOnCodeReload]
         private static UQueryState<VisualElement> SingleElementNameQuery = new UQueryBuilder<VisualElement>(null).Name(String.Empty).Build();
+        [AutoStaticsCleanupOnCodeReload]
         private static UQueryState<VisualElement> SingleElementClassQuery = new UQueryBuilder<VisualElement>(null).Class(String.Empty).Build();
+        [AutoStaticsCleanupOnCodeReload]
         private static UQueryState<VisualElement> SingleElementNameAndClassQuery = new UQueryBuilder<VisualElement>(null).Name(String.Empty).Class(String.Empty).Build();
 
+        [AutoStaticsCleanupOnCodeReload]
         private static UQueryState<VisualElement> SingleElementTypeQuery = new UQueryBuilder<VisualElement>(null).SingleBaseType().Build();
+        [AutoStaticsCleanupOnCodeReload]
         private static UQueryState<VisualElement> SingleElementTypeAndNameQuery = new UQueryBuilder<VisualElement>(null).SingleBaseType().Name(String.Empty).Build();
+        [AutoStaticsCleanupOnCodeReload]
         private static UQueryState<VisualElement> SingleElementTypeAndClassQuery = new UQueryBuilder<VisualElement>(null).SingleBaseType().Class(String.Empty).Build();
+        [AutoStaticsCleanupOnCodeReload]
         private static UQueryState<VisualElement> SingleElementTypeAndNameAndClassQuery = new UQueryBuilder<VisualElement>(null).SingleBaseType().Name(String.Empty).Class(String.Empty).Build();
 
         /// <summary>
@@ -1457,3 +1475,4 @@ namespace UnityEngine.UIElements
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

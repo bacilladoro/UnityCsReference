@@ -173,14 +173,14 @@ namespace UnityEditor
                 int modes;
 
                 // Hide unsupported items and headers
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 headers = Styles.sBuiltinCameraModes.Where(mode => m_SceneView.IsCameraDrawModeSupported(mode) && mode.show)
                               .Select(mode => mode.section).DistinctCount() +
                           SceneView.userDefinedModes.Where(mode => m_SceneView.IsCameraDrawModeSupported(mode) && mode.show)
                               .Select(mode => mode.section).DistinctCount();
                 modes = Styles.sBuiltinCameraModes.Count(mode => m_SceneView.IsCameraDrawModeSupported(mode) && mode.show) +
                         SceneView.userDefinedModes.Count(mode => m_SceneView.IsCameraDrawModeSupported(mode) && mode.show);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
                 return UpdatedHeight(headers, modes, GraphicsSettings.isScriptableRenderPipelineEnabled);
             }
@@ -269,9 +269,9 @@ namespace UnityEditor
             var drawPos = new Rect(0, 0, listElementWidth, EditorGUI.kSingleLineHeight);
             string lastSection = null;
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             foreach (SceneView.CameraMode mode in SceneView.userDefinedModes.OrderBy(mode => mode.section)
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                          .Concat(Styles.sBuiltinCameraModes))
             {
                 if (!mode.show)
@@ -339,9 +339,9 @@ namespace UnityEditor
             int modes = 0;
 
             string lastSection = null;
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             foreach (SceneView.CameraMode mode in SceneView.userDefinedModes.OrderBy(mode => mode.section)
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                          .Concat(Styles.sBuiltinCameraModes))
             {
                 if (!mode.show)
@@ -400,9 +400,9 @@ namespace UnityEditor
         {
             if (drawCameraMode == DrawCameraMode.UserDefined)
                 return GUIContent.none;
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return EditorGUIUtility.TextContent(Styles.sBuiltinCameraModes
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 .Single(mode => mode.drawMode == drawCameraMode).name);
         }
 
@@ -410,9 +410,9 @@ namespace UnityEditor
         {
             if (drawMode == DrawCameraMode.Normal)
                 drawMode = DrawCameraMode.Textured;
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return Styles.sBuiltinCameraModes.Single(mode => mode.drawMode == drawMode);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         internal static bool DrawCameraModeExists(DrawCameraMode drawMode)

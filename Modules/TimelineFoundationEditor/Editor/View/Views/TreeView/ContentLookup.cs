@@ -25,10 +25,10 @@ namespace Unity.Timeline.Foundation.View
             m_ItemElementLookup = itemLookup;
         }
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
         public IEnumerable<TrackHeaderElement> GetTrackHeaderElements() => m_TrackHeaderLookup.Values.Cast<TrackHeaderElement>();
         public IEnumerable<TrackElement> GetTrackElements() => m_TrackContentLookup.Values.Cast<TrackElement>();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         public IEnumerable<ItemElement> GetItemElements() => m_ItemElementLookup.Values;
 
         public TrackHeaderElement GetTrackHeaderElement(UniqueID trackId) => m_TrackHeaderLookup.GetValue(trackId) as TrackHeaderElement;

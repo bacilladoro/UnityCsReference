@@ -70,6 +70,22 @@ namespace UnityEngine.UIElements.StyleSheets
             computedStyle.layoutData.Write().columnGap = columnGap;
         }
 
+        public static void ApplyGridColumn(StylePropertyReader reader, ref ComputedStyle computedStyle)
+        {
+            CompileGridColumn(reader, out GridLine gridColumnStart, out GridLine gridColumnEnd);
+
+            computedStyle.gridData.Write().gridColumnStart = gridColumnStart;
+            computedStyle.gridData.Write().gridColumnEnd = gridColumnEnd;
+        }
+
+        public static void ApplyGridRow(StylePropertyReader reader, ref ComputedStyle computedStyle)
+        {
+            CompileGridRow(reader, out GridLine gridRowStart, out GridLine gridRowEnd);
+
+            computedStyle.gridData.Write().gridRowStart = gridRowStart;
+            computedStyle.gridData.Write().gridRowEnd = gridRowEnd;
+        }
+
         public static void ApplyMargin(StylePropertyReader reader, ref ComputedStyle computedStyle)
         {
             CompileBoxArea(reader, out Length marginTop, out Length marginRight, out Length marginBottom, out Length marginLeft);

@@ -33,9 +33,9 @@ namespace UnityEditor.MPE
                 if (!s_ImportRefreshEnabled)
                     return;
 
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 s_ImportedAssets = s_ImportedAssets.Concat(importedAssets).Concat(deletedAssets).Concat(movedAssets).Concat(movedFromAssetPaths).Distinct()
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     .ToArray();
 
                 if (s_AboutToRefresh)
@@ -67,9 +67,9 @@ namespace UnityEditor.MPE
         {
             EventService.RegisterEventHandler(nameof(DataServiceEvent.AUTO_REFRESH), (eventType, data) =>
             {
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 string[] paths = data.Cast<string>().ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 Console.WriteLine($"Secondary process need to refresh the following assets: {String.Join(", ", paths)}");
                 AssetDatabase.Refresh();
                 if (Array.Exists(paths, p => p.EndsWith(".cs")))

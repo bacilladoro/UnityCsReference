@@ -101,6 +101,7 @@ internal sealed class RemoveBindingCommand : Command<RemoveBindingCommand>
     void ResetInlineStyle()
     {
         StyleDebug.SetInlineKeyword(Element.style, StylePropertyId, StyleKeyword.Null);
+        Element.IncrementVersion(VersionChangeType.Styles);
 
         var vea = Element.visualElementAsset;
         var vta = Element.visualElementAsset.visualTreeAsset;
@@ -111,6 +112,5 @@ internal sealed class RemoveBindingCommand : Command<RemoveBindingCommand>
         var inlineStyleSheet = vta.GetOrCreateInlineStyleSheet();
         var rule = inlineStyleSheet.rules[vea.ruleIndex];
         Element.UpdateInlineRule(inlineStyleSheet, rule);
-        Element.IncrementVersion(VersionChangeType.Styles);
     }
 }

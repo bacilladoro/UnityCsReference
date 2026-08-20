@@ -20,7 +20,12 @@ namespace UnityEngine.UIElements
         public Align alignContent => ve.computedStyle.alignContent;
         public Align alignItems => ve.computedStyle.alignItems;
         public Align alignSelf => ve.computedStyle.alignSelf;
-        public AnimationPlayState animationPlayState => ve.computedStyle.animationPlayState;
+        public IEnumerable<float> animationDelay => ve.computedStyle.animationDelay.ToArray();
+        public IEnumerable<AnimationDirection> animationDirection => ve.computedStyle.animationDirection.ToArray();
+        public IEnumerable<float> animationDuration => ve.computedStyle.animationDuration.ToArray();
+        public IEnumerable<AnimationIterationCount> animationIterationCount => ve.computedStyle.animationIterationCount.ToArray();
+        public IEnumerable<UIAnimationClip> animationNames => System.Array.ConvertAll(ve.computedStyle.animationNames.ToArray(), id => (UIAnimationClip)Resources.EntityIdToObject(id));
+        public IEnumerable<AnimationPlayState> animationPlayStates => ve.computedStyle.animationPlayStates.ToArray();
         public Ratio aspectRatio => ve.computedStyle.aspectRatio;
         public IEnumerable<FilterFunction> backdropFilter => ve.computedStyle.rareData.Read().backdropFilter.ToManaged();
         public Color backgroundColor => ve.computedStyle.backgroundColor;
@@ -52,8 +57,15 @@ namespace UnityEngine.UIElements
         public float flexShrink => ve.computedStyle.flexShrink;
         public Wrap flexWrap => ve.computedStyle.flexWrap;
         public float fontSize => ve.computedStyle.fontSize.value;
+        public GridAutoFlow gridAutoFlow => ve.computedStyle.gridAutoFlow;
+        public GridLine gridColumnEnd => ve.computedStyle.gridColumnEnd;
+        public GridLine gridColumnStart => ve.computedStyle.gridColumnStart;
+        public GridLine gridRowEnd => ve.computedStyle.gridRowEnd;
+        public GridLine gridRowStart => ve.computedStyle.gridRowStart;
         public float height => ve.layoutNode.LayoutHeight;
         public Justify justifyContent => ve.computedStyle.justifyContent;
+        public Align justifyItems => ve.computedStyle.justifyItems;
+        public Align justifySelf => ve.computedStyle.justifySelf;
         public float left => ve.layoutNode.LayoutX;
         public float letterSpacing => ve.computedStyle.letterSpacing.value;
         public float marginBottom => ve.layoutNode.LayoutMarginBottom;
@@ -83,7 +95,6 @@ namespace UnityEngine.UIElements
         public IEnumerable<StylePropertyName> transitionProperty => ve.computedStyle.transitionData.Read().transitionProperty.ToManaged();
         public IEnumerable<EasingFunction> transitionTimingFunction => ve.computedStyle.transitionTimingFunction.ToArray();
         public Vector3 translate => ve.ResolveTranslate();
-        public UIAnimationClip unityAnimationClip => (UIAnimationClip)Resources.EntityIdToObject(ve.computedStyle.unityAnimationClip);
         public Color unityBackgroundImageTintColor => ve.computedStyle.unityBackgroundImageTintColor;
         public EditorTextRenderingMode unityEditorTextRenderingMode => ve.computedStyle.unityEditorTextRenderingMode;
         public Font unityFont => (Font)Resources.EntityIdToObject(ve.computedStyle.unityFont);
@@ -106,6 +117,7 @@ namespace UnityEngine.UIElements
         public WhiteSpace whiteSpace => ve.computedStyle.whiteSpace;
         public float width => ve.layoutNode.LayoutWidth;
         public float wordSpacing => ve.computedStyle.wordSpacing.value;
+        public StyleInt zIndex => ve.computedStyle.zIndex == int.MinValue ? new StyleInt(StyleKeyword.Auto) : new StyleInt(ve.computedStyle.zIndex);
     }
 
     public partial class VisualElement : IResolvedStyle
@@ -116,7 +128,17 @@ namespace UnityEngine.UIElements
 
         Align IResolvedStyle.alignSelf => resolvedStyle.alignSelf;
 
-        AnimationPlayState IResolvedStyle.animationPlayState => resolvedStyle.animationPlayState;
+        IEnumerable<float> IResolvedStyle.animationDelay => resolvedStyle.animationDelay;
+
+        IEnumerable<AnimationDirection> IResolvedStyle.animationDirection => resolvedStyle.animationDirection;
+
+        IEnumerable<float> IResolvedStyle.animationDuration => resolvedStyle.animationDuration;
+
+        IEnumerable<AnimationIterationCount> IResolvedStyle.animationIterationCount => resolvedStyle.animationIterationCount;
+
+        IEnumerable<UIAnimationClip> IResolvedStyle.animationNames => resolvedStyle.animationNames;
+
+        IEnumerable<AnimationPlayState> IResolvedStyle.animationPlayStates => resolvedStyle.animationPlayStates;
 
         Ratio IResolvedStyle.aspectRatio => resolvedStyle.aspectRatio;
 
@@ -180,9 +202,23 @@ namespace UnityEngine.UIElements
 
         float IResolvedStyle.fontSize => resolvedStyle.fontSize;
 
+        GridAutoFlow IResolvedStyle.gridAutoFlow => resolvedStyle.gridAutoFlow;
+
+        GridLine IResolvedStyle.gridColumnEnd => resolvedStyle.gridColumnEnd;
+
+        GridLine IResolvedStyle.gridColumnStart => resolvedStyle.gridColumnStart;
+
+        GridLine IResolvedStyle.gridRowEnd => resolvedStyle.gridRowEnd;
+
+        GridLine IResolvedStyle.gridRowStart => resolvedStyle.gridRowStart;
+
         float IResolvedStyle.height => resolvedStyle.height;
 
         Justify IResolvedStyle.justifyContent => resolvedStyle.justifyContent;
+
+        Align IResolvedStyle.justifyItems => resolvedStyle.justifyItems;
+
+        Align IResolvedStyle.justifySelf => resolvedStyle.justifySelf;
 
         float IResolvedStyle.left => resolvedStyle.left;
 
@@ -242,8 +278,6 @@ namespace UnityEngine.UIElements
 
         Vector3 IResolvedStyle.translate => resolvedStyle.translate;
 
-        UIAnimationClip IResolvedStyle.unityAnimationClip => resolvedStyle.unityAnimationClip;
-
         Color IResolvedStyle.unityBackgroundImageTintColor => resolvedStyle.unityBackgroundImageTintColor;
 
         EditorTextRenderingMode IResolvedStyle.unityEditorTextRenderingMode => resolvedStyle.unityEditorTextRenderingMode;
@@ -287,5 +321,7 @@ namespace UnityEngine.UIElements
         float IResolvedStyle.width => resolvedStyle.width;
 
         float IResolvedStyle.wordSpacing => resolvedStyle.wordSpacing;
+
+        StyleInt IResolvedStyle.zIndex => resolvedStyle.zIndex;
     }
 }

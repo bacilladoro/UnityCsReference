@@ -2,24 +2,33 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
+using Unity.Scripting.LifecycleManagement;
 using System;
 using UnityEngine.Bindings;
 
 namespace UnityEngine.UIElements
 {
     [VisibleToOtherModules("UnityEditor.UIToolkitAuthoringModule")]
-    internal class NavigateFocusRing : IFocusRing
+    internal partial class NavigateFocusRing : IFocusRing
     {
         public class ChangeDirection : FocusChangeDirection
         {
             public ChangeDirection(int i) : base(i) {}
         }
 
+
+        [NoAutoStaticsCleanup]
         public static readonly ChangeDirection Left = new ChangeDirection(1);
+        [NoAutoStaticsCleanup]
         public static readonly ChangeDirection Right = new ChangeDirection(2);
+        [NoAutoStaticsCleanup]
         public static readonly ChangeDirection Up = new ChangeDirection(3);
+        [NoAutoStaticsCleanup]
         public static readonly ChangeDirection Down = new ChangeDirection(4);
+        [NoAutoStaticsCleanup]
         public static readonly FocusChangeDirection Next = VisualElementFocusChangeDirection.right;
+        [NoAutoStaticsCleanup]
         public static readonly FocusChangeDirection Previous = VisualElementFocusChangeDirection.left;
 
         private readonly VisualElement m_Root;
@@ -292,3 +301,4 @@ namespace UnityEngine.UIElements
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

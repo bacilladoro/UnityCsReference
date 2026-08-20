@@ -86,9 +86,9 @@ namespace Unity.Timeline.Foundation.CSO
 
         void SortObservers()
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var observers = new List<IStateObserver>(m_StateObservers.Values.SelectMany(x => x).Distinct());
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             SortObservers(observers, out m_SortedObservers);
         }
@@ -109,9 +109,9 @@ namespace Unity.Timeline.Foundation.CSO
                 {
                     var observer = observersToSort[index];
 
-#pragma warning disable UA2006 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2006 // Avoid Linq
                     if (observer.ObservedStateComponents.Any(observedStateComponent => modifiedStates.Contains(observedStateComponent)))
-#pragma warning restore UA2006
+#pragma warning restore UAC2006
                     {
                         remainingObserverCount--;
                     }

@@ -201,8 +201,8 @@ namespace Unity.GraphToolkit.Editor
             AddStylesheet(ve, stylesheetName, null);
         }
 
-        internal static string k_StyleSheetFolder = "StyleSheets/GraphToolkit/";
-        internal static string k_IconFolder = "Icons/GraphToolkit/";
+        internal const string k_StyleSheetFolder = "StyleSheets/GraphToolkit/";
+        internal const string k_IconFolder = "Icons/GraphToolkit/";
 
         internal static void AddStylesheet(this VisualElement ve, string stylesheetName, string path)
         {

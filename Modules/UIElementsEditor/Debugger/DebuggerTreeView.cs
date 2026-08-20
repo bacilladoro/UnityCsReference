@@ -203,17 +203,17 @@ namespace UnityEditor.UIElements.Debugger
                 if (m_SelectElementCallback == null)
                     return;
 
-#pragma warning disable UA2002 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2002 // Avoid Linq
                 if (!items.Any())
-#pragma warning restore UA2002
+#pragma warning restore UAC2002
                 {
                     m_SelectElementCallback(null);
                     return;
                 }
 
-                #pragma warning disable UA2010 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2010 // Avoid Linq
                 var index = items.First();
-#pragma warning restore UA2010
+#pragma warning restore UAC2010
                 var element = m_TreeViewController.GetDataForIndex(index);
                 m_SelectElementCallback(element);
             };

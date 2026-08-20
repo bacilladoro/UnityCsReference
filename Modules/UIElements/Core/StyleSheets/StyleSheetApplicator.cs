@@ -2,6 +2,8 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
+using Unity.Scripting.LifecycleManagement;
 using System;
 using System.Collections.Generic;
 using Unity.Collections.LowLevel.Unsafe;
@@ -14,10 +16,27 @@ namespace UnityEngine.UIElements.StyleSheets
     [VisibleToOtherModules]
     internal static partial class ShorthandApplicator
     {
+        [NoAutoStaticsCleanup]
         private static List<TimeValue> s_TransitionDelayList = new List<TimeValue>();
+        [NoAutoStaticsCleanup]
         private static List<TimeValue> s_TransitionDurationList = new List<TimeValue>();
+        [NoAutoStaticsCleanup]
         private static List<StylePropertyName> s_TransitionPropertyList = new List<StylePropertyName>();
+        [NoAutoStaticsCleanup]
         private static List<EasingFunction> s_TransitionTimingFunctionList = new List<EasingFunction>();
+
+        [NoAutoStaticsCleanup]
+        private static List<EntityId> s_AnimationClipList = new List<EntityId>();
+        [NoAutoStaticsCleanup]
+        private static List<float> s_AnimationDurationList = new List<float>();
+        [NoAutoStaticsCleanup]
+        private static List<float> s_AnimationDelayList = new List<float>();
+        [NoAutoStaticsCleanup]
+        private static List<AnimationIterationCount> s_AnimationIterationCountList = new List<AnimationIterationCount>();
+        [NoAutoStaticsCleanup]
+        private static List<AnimationDirection> s_AnimationDirectionList = new List<AnimationDirection>();
+        [NoAutoStaticsCleanup]
+        private static List<AnimationPlayState> s_AnimationPlayStateList = new List<AnimationPlayState>();
 
         private static bool CompileFlexShorthand(StylePropertyReader reader, out float grow, out float shrink, out Length basis)
         {
@@ -107,6 +126,77 @@ namespace UnityEngine.UIElements.StyleSheets
             }
 
             return valid;
+        }
+
+        // grid-column / grid-row shorthand -> (start line, end line). Grammar: "<n>", "<n> / <n>",
+        // "span <n>", "<n> / span <n>". End encodes: an explicit end line, or (auto start) a span count.
+        private static void CompileGridColumn(StylePropertyReader reader, out GridLine gridColumnStart, out GridLine gridColumnEnd)
+            => CompileGridLine(reader, out gridColumnStart, out gridColumnEnd);
+
+        private static void CompileGridRow(StylePropertyReader reader, out GridLine gridRowStart, out GridLine gridRowEnd)
+            => CompileGridLine(reader, out gridRowStart, out gridRowEnd);
+
+        // CSS Grid. Shorthand: "<line> [ / [ <line> | span <n> ] ]? | span <n>". Span is kept
+        // as GridLine.Span (not baked into an absolute line) so authored values round-trip.
+        private static void CompileGridLine(StylePropertyReader reader, out GridLine start, out GridLine end)
+        {
+            start = GridLine.Auto;
+            end = GridLine.Auto;
+            int valueCount = reader.valueCount;
+
+            int slash = -1;
+            for (int i = 0; i < valueCount; i++)
+            {
+                if (reader.GetValueType(i) == StyleValueType.String &&
+                    string.Equals(reader.ReadAsString(i), "/", StringComparison.Ordinal))
+                {
+                    slash = i;
+                    break;
+                }
+            }
+
+            // Parse one side [from, to) into a GridLine.
+            GridLine ParseSide(int from, int to)
+            {
+                bool spanKeyword = false;
+                bool hasNumber = false;
+                int number = 0;
+                for (int i = from; i < to; i++)
+                {
+                    var t = reader.GetValueType(i);
+                    if (t == StyleValueType.Float)
+                    {
+                        number = (int)reader.ReadFloat(i);
+                        hasNumber = true;
+                    }
+                    else if (t == StyleValueType.Enum &&
+                             string.Equals(reader.ReadAsString(i), "span", StringComparison.OrdinalIgnoreCase))
+                    {
+                        spanKeyword = true;
+                    }
+                }
+                if (spanKeyword)
+                {
+                    int c = hasNumber ? number : 1; // "span" with the integer omitted defaults to 1
+                    return c >= 1 ? GridLine.Span(c) : GridLine.Auto;
+                }
+                if (hasNumber)
+                    return number >= 1 ? GridLine.AtLine(number) : GridLine.Auto;
+                return GridLine.Auto; // auto / empty
+            }
+
+            if (slash < 0)
+            {
+                var side = ParseSide(0, valueCount);
+                // "span n" applies to the end (auto start); a bare line applies to the start.
+                if (side.isSpan) end = side;
+                else start = side;
+            }
+            else
+            {
+                start = ParseSide(0, slash);
+                end = ParseSide(slash + 1, valueCount);
+            }
         }
 
         private static void CompileBorderRadius(StylePropertyReader reader, out Length top, out Length right, out Length bottom, out Length left)
@@ -506,5 +596,184 @@ namespace UnityEngine.UIElements.StyleSheets
                 outTimingFunction.CopyFrom(InitialStyle.transitionTimingFunction);
             }
         }
+
+        public static void ApplyAnimation(StylePropertyReader reader, ref ComputedStyle computedStyle)
+        {
+            ref var anim = ref computedStyle.animationData.Write();
+            CompileAnimation(reader, ref anim.animationNames, ref anim.animationDuration, ref anim.animationDelay,
+                ref anim.animationIterationCount, ref anim.animationDirection, ref anim.animationPlayStates);
+        }
+
+        private static void CompileAnimation(StylePropertyReader reader,
+            ref UnmanagedRefCountedList<EntityId> outClip, ref UnmanagedRefCountedList<float> outDuration,
+            ref UnmanagedRefCountedList<float> outDelay, ref UnmanagedRefCountedList<AnimationIterationCount> outIterationCount,
+            ref UnmanagedRefCountedList<AnimationDirection> outDirection, ref UnmanagedRefCountedList<AnimationPlayState> outPlayState)
+        {
+            s_AnimationClipList.Clear();
+            s_AnimationDurationList.Clear();
+            s_AnimationDelayList.Clear();
+            s_AnimationIterationCountList.Clear();
+            s_AnimationDirectionList.Clear();
+            s_AnimationPlayStateList.Clear();
+
+            bool isValid = true;
+            var valueCount = reader.valueCount;
+            int i = 0;
+            do
+            {
+                var clip = InitialStyle.animationNames[0];
+                var duration = InitialStyle.animationDuration[0];
+                var delay = InitialStyle.animationDelay[0];
+                var iterationCount = InitialStyle.animationIterationCount[0];
+                var direction = InitialStyle.animationDirection[0];
+                var playState = InitialStyle.animationPlayStates[0];
+
+                bool durationFound = false;
+                bool delayFound = false;
+                bool commaFound = false;
+                for (; i < valueCount && !commaFound; ++i)
+                {
+                    switch (reader.GetValueType(i))
+                    {
+                        case StyleValueType.Dimension:
+                            var seconds = reader.ReadTimeValueAsSeconds(i);
+                            if (!durationFound)
+                            {
+                                durationFound = true;
+                                duration = seconds;
+                            }
+                            else if (!delayFound)
+                            {
+                                delayFound = true;
+                                delay = seconds;
+                            }
+                            else
+                            {
+                                isValid = false;
+                            }
+                            break;
+
+                        case StyleValueType.Float:
+                            iterationCount = reader.ReadFloat(i);
+                            break;
+
+                        case StyleValueType.Keyword:
+                            if (reader.IsKeyword(i, StyleValueKeyword.None))
+                                clip = EntityId.None;
+                            else
+                                isValid = false;
+                            break;
+
+                        case StyleValueType.Enum:
+                            var str = reader.ReadAsString(i);
+                            if (string.Equals(str, "infinite", StringComparison.OrdinalIgnoreCase))
+                                iterationCount = AnimationIterationCount.Infinite();
+                            else if (StylePropertyUtil.TryGetEnumIntValue(StyleEnumType.AnimationDirection, str, out var dirValue))
+                                direction = (AnimationDirection)dirValue;
+                            else if (StylePropertyUtil.TryGetEnumIntValue(StyleEnumType.AnimationPlayState, str, out var playValue))
+                                playState = (AnimationPlayState)playValue;
+                            else
+                                isValid = false;
+                            break;
+
+                        case StyleValueType.ResourcePath:
+                        case StyleValueType.AssetReference:
+                        case StyleValueType.MissingAssetReference:
+                            clip = reader.ReadUIAnimationClip(i);
+                            break;
+
+                        case StyleValueType.CommaSeparator:
+                            commaFound = true;
+                            break;
+
+                        default:
+                            isValid = false;
+                            break;
+                    }
+                }
+
+                s_AnimationClipList.Add(clip);
+                s_AnimationDurationList.Add(duration);
+                s_AnimationDelayList.Add(delay);
+                s_AnimationIterationCountList.Add(iterationCount);
+                s_AnimationDirectionList.Add(direction);
+                s_AnimationPlayStateList.Add(playState);
+            }
+            while (i < valueCount && isValid);
+
+            if (isValid)
+            {
+                outClip.CopyFrom(s_AnimationClipList);
+                outDuration.CopyFrom(s_AnimationDurationList);
+                outDelay.CopyFrom(s_AnimationDelayList);
+                outIterationCount.CopyFrom(s_AnimationIterationCountList);
+                outDirection.CopyFrom(s_AnimationDirectionList);
+                outPlayState.CopyFrom(s_AnimationPlayStateList);
+            }
+            else
+            {
+                outClip.CopyFrom(InitialStyle.animationNames);
+                outDuration.CopyFrom(InitialStyle.animationDuration);
+                outDelay.CopyFrom(InitialStyle.animationDelay);
+                outIterationCount.CopyFrom(InitialStyle.animationIterationCount);
+                outDirection.CopyFrom(InitialStyle.animationDirection);
+                outPlayState.CopyFrom(InitialStyle.animationPlayStates);
+            }
+        }
+
+        public static void ApplyUnityAnimationClip(StylePropertyReader reader, ref ComputedStyle computedStyle)
+        {
+            ref var anim = ref computedStyle.animationData.Write();
+            CompileUnityAnimationClipAlias(reader, ref anim.animationNames);
+        }
+
+        private static void CompileUnityAnimationClipAlias(StylePropertyReader reader, ref UnmanagedRefCountedList<EntityId> outClip)
+        {
+            s_AnimationClipList.Clear();
+
+            bool isValid = true;
+            var valueCount = reader.valueCount;
+            int i = 0;
+            do
+            {
+                var clip = InitialStyle.animationNames[0];
+                bool commaFound = false;
+                for (; i < valueCount && !commaFound; ++i)
+                {
+                    switch (reader.GetValueType(i))
+                    {
+                        case StyleValueType.Keyword:
+                            if (reader.IsKeyword(i, StyleValueKeyword.None))
+                                clip = EntityId.None;
+                            else
+                                isValid = false;
+                            break;
+
+                        case StyleValueType.ResourcePath:
+                        case StyleValueType.AssetReference:
+                        case StyleValueType.MissingAssetReference:
+                            clip = reader.ReadUIAnimationClip(i);
+                            break;
+
+                        case StyleValueType.CommaSeparator:
+                            commaFound = true;
+                            break;
+
+                        default:
+                            isValid = false;
+                            break;
+                    }
+                }
+
+                s_AnimationClipList.Add(clip);
+            }
+            while (i < valueCount && isValid);
+
+            if (isValid)
+                outClip.CopyFrom(s_AnimationClipList);
+            else
+                outClip.CopyFrom(InitialStyle.animationNames);
+        }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

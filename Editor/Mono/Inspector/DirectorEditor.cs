@@ -159,16 +159,16 @@ namespace UnityEditor
             if (playableAsset == null)
                 return true;
 
-#pragma warning disable UA2005 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2005 // Avoid Linq
             if (playableAsset.outputs.Count() != m_SynchedPlayableBindings.Length)
-#pragma warning restore UA2005
+#pragma warning restore UAC2005
                 return true;
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
-#pragma warning disable UA2002 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
+#pragma warning disable UAC2002 // Avoid Linq
             return playableAsset.outputs.Where((t, i) => t.sourceObject != m_SynchedPlayableBindings[i].sourceObject).Any();
-#pragma warning restore UA2001
-#pragma warning restore UA2002
+#pragma warning restore UAC2001
+#pragma warning restore UAC2002
         }
 
         GUIContent GetContentForOutput(PlayableBinding binding, UnityEngine.Object source)
@@ -223,9 +223,9 @@ namespace UnityEditor
             if (source == null || key == null)
                 return default(PlayableBinding);
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return source.outputs.FirstOrDefault(a => a.sourceObject == key);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         void SynchronizeSceneBindings()
@@ -313,9 +313,9 @@ namespace UnityEditor
             if (playableAsset != null)
             {
                 var bindings = playableAsset.outputs;
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 m_SynchedPlayableBindings = bindings.ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             }
 
             foreach (var binding in m_SynchedPlayableBindings)

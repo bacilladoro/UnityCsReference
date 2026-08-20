@@ -104,7 +104,7 @@ namespace Unity.GraphToolkit.Editor
         /// <returns>The newly created subgraph node.</returns>
         public static AbstractNodeModel CreateSubgraphNode(this IGraphNodeCreationData data, GraphModel subgraphModel)
         {
-            return data.GraphModel.CreateSubgraphNode(subgraphModel, data.Position, data.Guid, data.SpawnFlags);
+            return data.GraphModel.CreateSubgraphNode(subgraphModel, data.Position, data.Guid, data.SpawnFlags) as AbstractNodeModel;
         }
     }
 }

@@ -2,10 +2,12 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
 using UnityEngine;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using Unity.SmartStrings.Core.Extensions;
 using Unity.SmartStrings.PersistentVariables;
 
@@ -17,7 +19,7 @@ namespace Unity.SmartStrings.Extensions;
 /// Note: The group name and variable names must not contain any spaces.
 /// </summary>
 [Serializable]
-public class PersistentVariablesSource : ISource, IDictionary<string, VariablesGroupAsset>, ISerializationCallbackReceiver
+public partial class PersistentVariablesSource : ISource, IDictionary<string, VariablesGroupAsset>, ISerializationCallbackReceiver
 {
     [Serializable]
     class NameValuePair
@@ -44,6 +46,7 @@ public class PersistentVariablesSource : ISource, IDictionary<string, VariablesG
 
     readonly Dictionary<string, NameValuePair> m_GroupLookup = new();
 
+    [AutoStaticsCleanupOnCodeReload] // mirrors ResetStatics(): a reload must not leave an update in progress
     internal static int s_IsUpdating;
 
     // Used to mimic domain reload in the editor.
@@ -109,6 +112,7 @@ public class PersistentVariablesSource : ISource, IDictionary<string, VariablesG
     /// being generated, by using begin and end  the string generation can be deferred until the
     /// final change so that only 1 update is performed.
     /// </summary>
+    [AutoStaticsCleanupOnCodeReload] // drops user handlers on reload; mirrors ResetStatics()
     public static event Action EndUpdate;
 
     /// <summary>
@@ -319,3 +323,4 @@ public class PersistentVariablesSource : ISource, IDictionary<string, VariablesG
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

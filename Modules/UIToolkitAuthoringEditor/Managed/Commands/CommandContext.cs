@@ -105,3 +105,36 @@ internal readonly ref struct CommandContext
         Status = status;
     }
 }
+
+/// <summary>
+/// Context provided when a command group ends. Carries the group's undo name and the set of objects
+/// that were recorded for undo across every command executed within the group, allowing listeners to
+/// react to exactly which objects were modified.
+/// </summary>
+/// <remarks>
+/// The <see cref="UndoObjects"/> collection is owned by the command system and is only valid for the
+/// duration of the <see cref="CommandSystem.GroupEnded"/> callback. Copy its contents if you need to
+/// retain them beyond the callback.
+/// </remarks>
+[VisibleToOtherModules("UnityEditor.UIBuilderModule")]
+internal readonly ref struct GroupEndedContext
+{
+    readonly HashSet<UnityEngine.Object> m_UndoObjects;
+
+    /// <summary>
+    /// The undo name of the outermost group that just closed.
+    /// </summary>
+    public readonly string UndoName;
+
+    /// <summary>
+    /// The objects recorded for undo across every command executed in the group. Empty when no command
+    /// in the group recorded an object (for example, a single command that did not modify any asset).
+    /// </summary>
+    public IReadOnlyCollection<UnityEngine.Object> UndoObjects => m_UndoObjects;
+
+    internal GroupEndedContext(string undoName, HashSet<UnityEngine.Object> undoObjects)
+    {
+        UndoName = undoName;
+        m_UndoObjects = undoObjects;
+    }
+}

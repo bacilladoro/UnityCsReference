@@ -77,9 +77,9 @@ namespace UnityEditorInternal
 
         internal static IEnumerable<NPath> GetUserBlacklistFiles()
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return Directory.GetFiles("Assets", "link.xml", SearchOption.AllDirectories)
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 .Select(s => Path.Combine(Directory.GetCurrentDirectory(), s))
                 .ToNPaths();
         }
@@ -112,9 +112,9 @@ namespace UnityEditorInternal
                 }
             }
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return linkXmlFiles
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 .Where(p => p?.FileExists() ?? false)
                 .Select(p => p.MakeAbsolute().ToString())
                 .ToArray();
@@ -134,9 +134,9 @@ namespace UnityEditorInternal
 
             var sb = new StringBuilder();
             sb.AppendLine("<linker>");
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             foreach (var assemblyTypePair in items.OrderBy(t => t.Key))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 // Some how stuff for assemblies that will not be in the build make it into UsedTypePerUserAssembly such as
                 // ex: [UnityEditor.TestRunner.dll] UnityEditor.TestTools.TestRunner.TestListCacheData
@@ -155,9 +155,9 @@ namespace UnityEditorInternal
                 }
 
                 sb.AppendLine($"\t<assembly fullname=\"{filename}\">");
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 foreach (var type in assemblyTypePair.Value.OrderBy(s => s))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 {
                     sb.AppendLine($"\t\t<type fullname=\"{EscapeXmlString(type)}\" preserve=\"nothing\"/>");
                 }
@@ -176,18 +176,18 @@ namespace UnityEditorInternal
             var oneOrMoreItemsWritten = false;
             var sb = new StringBuilder();
             sb.AppendLine("<linker>");
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             foreach (var assemblyTypePair in items.OrderBy(t => t.Key))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 // Filter anything out where the assembly doesn't exist so that UnityLinker can be strict about preservations in link xml files
                 if (Array.TrueForAll(buildFiles, file => !BuildFileMatchesAssembly(file, assemblyTypePair.Key)))
                     continue;
 
                 sb.AppendLine($"\t<assembly fullname=\"{assemblyTypePair.Key}\">");
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 foreach (var type in assemblyTypePair.Value.OrderBy(s => s))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 {
                     oneOrMoreItemsWritten = true;
                     sb.AppendLine($"\t\t<type fullname=\"{EscapeXmlString(type)}\" preserve=\"nothing\" serialized=\"true\"/>");
@@ -268,11 +268,11 @@ namespace UnityEditorInternal
         {
             CollectIncludedAndExcludedModules(out var forceIncludeModules, out var forceExcludeModules);
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var typesInScenes = GetTypesInScenesInformation(args.report, args.usedClassRegistry)
                 .OrderBy(data => data.fullManagedTypeName ?? data.nativeClass)
                 .ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             var editorToLinkerData = new EditorToLinkerData
             {
@@ -409,7 +409,7 @@ namespace UnityEditorInternal
             var sb = new StringBuilder();
             sb.AppendLine("<linker>");
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var groupedByAssembly = rcr.GetMethodsToPreserve().GroupBy(m => m.assembly);
             foreach (var assembly in groupedByAssembly.OrderBy(a => a.Key))
             {
@@ -420,7 +420,7 @@ namespace UnityEditorInternal
                 {
                     sb.AppendLine(string.Format("\t\t<type fullname=\"{0}\">", EscapeXmlString(type.Key)));
                     foreach (var method in type.OrderBy(m => m.methodName))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                         sb.AppendLine(string.Format("\t\t\t<method name=\"{0}\"/>", EscapeXmlString(method.methodName)));
                     sb.AppendLine("\t\t</type>");
                 }

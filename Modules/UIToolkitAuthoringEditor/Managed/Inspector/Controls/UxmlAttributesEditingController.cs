@@ -178,6 +178,12 @@ class UxmlAttributesEditingController : IDisposable, IVisualElementChangeProcess
         m_RegisteredDecorators.Remove(decorator);
     }
 
+    public void RefreshAllDecorators()
+    {
+        foreach (var decorator in m_RegisteredDecorators)
+            decorator.ScheduleRefresh();
+    }
+
     public void BeginProcessing(BaseVisualElementPanel panel)
     {
         UpdateDecoratorsForBoundProperties();

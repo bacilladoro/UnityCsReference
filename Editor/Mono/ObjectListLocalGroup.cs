@@ -29,6 +29,153 @@ namespace UnityEditor
         [AutoStaticsCleanupOnCodeReload]
         internal static event OnAssetLabelDrawDelegate postAssetLabelDrawCallback = null;
 
+        // One item in a local group's draw order.
+        internal readonly struct LocalGroupItem
+        {
+            // Grid index
+            public readonly int Index;
+            public readonly EntityId EntityId;
+
+            // The filtered result behind this item, or null for the 'None' item, the placeholder
+            // for an asset being created, and builtin resources.
+            public readonly FilteredHierarchy.FilterResult Result;
+
+            // True for the slot held by an asset currently being created, which has no entry in
+            // the filtered results yet and pushes every following item forward.
+            public readonly bool IsNewAssetPlaceholder;
+
+            public LocalGroupItem(int index, EntityId entityId, FilteredHierarchy.FilterResult result, bool isNewAssetPlaceholder)
+            {
+                Index = index;
+                EntityId = entityId;
+                Result = result;
+                IsNewAssetPlaceholder = isNewAssetPlaceholder;
+            }
+        }
+
+        // What a local group contains and in what order:
+        // 1. The optional 'None' item.
+        // 2. Then the filtered results with the new-asset placeholder at its slot.
+        // 3. Then builtin resources.
+        //
+        // Takes its inputs as arguments rather than reading the group, so the ordering can be tested
+        // without a live FilteredHierarchy and grid. LocalGroup.EnumerateItemsInDrawOrder supplies
+        // them from the real group.
+        internal static IEnumerable<LocalGroupItem> EnumerateItemsInDrawOrder(
+            bool showNoneItem,
+            IReadOnlyList<FilteredHierarchy.FilterResult> results,
+            IReadOnlyList<BuiltinResource> builtins,
+            int newAssetIndexInList,
+            EntityId newAssetEntityId)
+        {
+            int idx = 0;
+
+            // 1. 'none' first (has instanceID 0)
+            if (showNoneItem)
+                yield return new LocalGroupItem(idx++, EntityId.None, null, false);
+
+            // 2. Project assets
+            foreach (var r in results)
+            {
+                if (newAssetIndexInList == idx)
+                    yield return new LocalGroupItem(idx++, newAssetEntityId, null, true);
+
+                yield return new LocalGroupItem(idx++, r.entityId, r, false);
+            }
+
+            // The placeholder sits after every result when the new name sorts last, and is the only
+            // item in an empty folder. DrawInternal reaches both because it tests for the placeholder
+            // before it stops on running out of results, so the ordering has to do the same.
+            if (newAssetIndexInList == idx)
+                yield return new LocalGroupItem(idx++, newAssetEntityId, null, true);
+
+            // 3. Builtin resources
+            foreach (var b in builtins)
+                yield return new LocalGroupItem(idx++, b.m_EntityId, null, false);
+        }
+
+        // Resolves a grid index to the asset drawn in that cell. Takes gridCellCount (rows * columns)
+        // rather than the group, so it can be tested without a live grid.
+        internal static bool TryGetAssetIdAtIndex(
+            IEnumerable<LocalGroupItem> items,
+            int index,
+            int gridCellCount,
+            out EntityId assetId)
+        {
+            assetId = EntityId.None;
+            if (index >= gridCellCount)
+                return false;
+
+            foreach (var item in items)
+            {
+                // Keep the last item passed, the asset being created included: ItemCount counts it as
+                // a drawn item, so an index past the end has to clamp to it and not step back over it.
+                assetId = item.EntityId;
+
+                if (item.Index == index)
+                    return true;
+            }
+
+            // Inside the grid but past the last item, so an empty cell on a partly filled final row.
+            // Callers move the selection with this, so answer with the last item instead of failing.
+            return true;
+        }
+
+        // The flattened grid, used by GetNewSelection to resolve a shift-range against what the user
+        // can see. Takes the items rather than the group for the same reason as the helpers above.
+        internal static void CollectAssetIds(IEnumerable<LocalGroupItem> items, List<EntityId> assetIds)
+        {
+            foreach (var item in items)
+                assetIds.Add(item.EntityId);
+        }
+
+        // Grid index of the item with this id, or -1.
+        //
+        // The asset being created is deliberately not searchable by id, matching the long-standing
+        // behavior here ("assuming we do not search for that new asset"). Note that this makes IndexOf
+        // and TryGetAssetIdAtIndex disagree about the placeholder: the latter resolves its slot to the
+        // asset being created, this one reports that same asset as absent. See
+        // ObjectListItemOrderingTests.Placeholder_IsDrawnButNotSearchableById.
+        internal static int IndexOfItem(IEnumerable<LocalGroupItem> items, EntityId entityId)
+        {
+            foreach (var item in items)
+            {
+                if (item.IsNewAssetPlaceholder)
+                    continue;
+
+                if (item.EntityId == entityId)
+                    return item.Index;
+            }
+            return -1;
+        }
+
+        // Grid index of the item with this id, the new-asset placeholder included, or -1.
+        //
+        // The counterpart to IndexOfItem, for callers that have to resolve an id TryGetAssetIdAtIndex
+        // produced. Matching the placeholder by id needs no separate "is an asset being created" test:
+        // it is emitted only while one is, and it carries that asset's id.
+        internal static int IndexOfDrawnItem(IEnumerable<LocalGroupItem> items, EntityId entityId)
+        {
+            foreach (var item in items)
+            {
+                if (item.EntityId == entityId)
+                    return item.Index;
+            }
+            return -1;
+        }
+
+        // The filtered result behind this id, or null. Only real assets have one, so the 'None' item,
+        // the placeholder and builtin resources never match.
+        internal static FilteredHierarchy.FilterResult LookupResult(IEnumerable<LocalGroupItem> items, EntityId entityId)
+        {
+            foreach (var item in items)
+            {
+                if (item.Result != null && item.EntityId == entityId)
+                    return item.Result;
+            }
+            return null;
+        }
+
         // Asset on local disk in project
         protected class LocalGroup : Group
         {
@@ -1050,32 +1197,14 @@ namespace UnityEditor
             {
             }
 
+            // The flattened grid, used by GetNewSelection to resolve a shift-range against what the
+            // user can see. It has to agree with the draw order: this previously appended the asset
+            // being created after every result instead of at its own slot, so a range across a
+            // placeholder picked up an extra item at the end.
             public void GetAssetIds(out List<EntityId> assetIds)
             {
                 assetIds = new List<EntityId>();
-
-                // 1. None item
-                if (m_NoneList.Length > 0)
-                {
-                    assetIds.Add(m_NoneList[0].m_EntityId);
-                }
-
-                // 2. Project Assets
-                foreach (FilteredHierarchy.FilterResult r in m_FilteredHierarchy.results)
-                {
-                    assetIds.Add(r.entityId);
-                }
-
-                if (m_Owner.m_State.m_NewAssetIndexInList >= 0)
-                {
-                    assetIds.Add(m_Owner.GetCreateAssetUtility().entityId);
-                }
-
-                // 3. Builtin
-                for (int i = 0; i < m_ActiveBuiltinList.Length; ++i)
-                {
-                    assetIds.Add(m_ActiveBuiltinList[i].m_EntityId);
-                }
+                CollectAssetIds(EnumerateItemsInDrawOrder(), assetIds);
             }
 
             // Returns list of selected instanceIDs
@@ -1379,41 +1508,36 @@ namespace UnityEditor
                 return idx;
             }
 
+            // Supplies the live group's contents to the ordering. See
+            // ObjectListArea.EnumerateItemsInDrawOrder.
+            internal IEnumerable<LocalGroupItem> EnumerateItemsInDrawOrder()
+            {
+                // Qualified: the name lookup would otherwise stop at this class's own overload.
+                return ObjectListArea.EnumerateItemsInDrawOrder(
+                    m_ShowNoneItem,
+                    m_FilteredHierarchy.results,
+                    m_ActiveBuiltinList,
+                    m_Owner.m_State.m_NewAssetIndexInList,
+                    m_Owner.GetCreateAssetUtility().entityId);
+            }
+
             public int IndexOf(EntityId instanceID)
             {
-                int idx = 0;
-
-                // 1. 'none' first (has instanceID 0)
-                if (m_ShowNoneItem)
-                {
-                    if (instanceID == EntityId.None)
-                        return 0;
-                    else
-                        idx++;
-                }
-                else if (instanceID == EntityId.None)
+                if (instanceID == EntityId.None && !m_ShowNoneItem)
                     return -1;
 
-                // 2. Project assets
-                foreach (FilteredHierarchy.FilterResult r in m_FilteredHierarchy.results)
-                {
-                    // When creating new asset we jump over that item (assuming we do not search for that new asset)
-                    if (m_Owner.m_State.m_NewAssetIndexInList == idx)
-                        idx++;
+                return IndexOfItem(EnumerateItemsInDrawOrder(), instanceID);
+            }
 
-                    if (r.entityId == instanceID)
-                        return idx;
-                    idx++;
-                }
+            // Grid index for keyboard navigation. Unlike IndexOf this resolves the asset being
+            // created, because AssetIdAtIndex hands that asset's id back for the slot it is drawn in
+            // and navigation has to be able to turn it into a position again.
+            internal int IndexOfNavigationTarget(EntityId instanceID)
+            {
+                if (instanceID == EntityId.None && !m_ShowNoneItem)
+                    return -1;
 
-                // 3. Builtin resources
-                foreach (BuiltinResource b in m_ActiveBuiltinList)
-                {
-                    if (instanceID == b.m_EntityId)
-                        return idx;
-                    idx++;
-                }
-                return -1;
+                return IndexOfDrawnItem(EnumerateItemsInDrawOrder(), instanceID);
             }
 
             public FilteredHierarchy.FilterResult LookupByInstanceID(EntityId instanceID)
@@ -1421,62 +1545,14 @@ namespace UnityEditor
                 if (instanceID == EntityId.None)
                     return null;
 
-                int idx = 0;
-                foreach (FilteredHierarchy.FilterResult r in m_FilteredHierarchy.results)
-                {
-                    // When creating new asset we jump over that item (assuming we do not search for that new asset)
-                    if (m_Owner.m_State.m_NewAssetIndexInList == idx)
-                        idx++;
-
-                    if (r.entityId == instanceID)
-                        return r;
-                    idx++;
-                }
-                return null;
+                return LookupResult(EnumerateItemsInDrawOrder(), instanceID);
             }
 
             // Returns true if index was valid. Note that instance can be 0 if 'None' item was found at index
             public bool AssetIdAtIndex(int index, out EntityId assetId)
             {
-                assetId = EntityId.None;
-                if (index >= m_Grid.rows * m_Grid.columns)
-                    return false;
-
-                int idx = 0;
-
-                // 1. 'none' first (has instanceID 0)
-                if (m_ShowNoneItem)
-                {
-                    if (index == 0)
-                        return true;
-                    else
-                        idx++;
-                }
-
-                // 2. Project assets
-                foreach (FilteredHierarchy.FilterResult r in m_FilteredHierarchy.results)
-                {
-                    assetId = r.entityId;
-                    if (idx == index)
-                        return true;
-                    idx++;
-                }
-
-                // 3. Builtin resources
-                foreach (BuiltinResource b in m_ActiveBuiltinList)
-                {
-                    assetId = b.m_EntityId;
-                    if (idx == index)
-                        return true;
-                    idx++;
-                }
-
-                // If last row and the row is not entirely filled
-                // we just use the last item on that row
-                if (index < m_Grid.rows * m_Grid.columns)
-                    return true;
-
-                return false;
+                return TryGetAssetIdAtIndex(
+                    EnumerateItemsInDrawOrder(), index, m_Grid.rows * m_Grid.columns, out assetId);
             }
 
             public virtual void StartDrag(EntityId draggedInstanceID, List<EntityId> selectedInstanceIDs)

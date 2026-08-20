@@ -42,6 +42,9 @@ namespace Unity.GraphToolkit.Editor
                 case DeclarationModel:
                     category = ManagedMissingTypeModelCategory.PortalDeclaration;
                     break;
+                case StateModel:
+                    category = ManagedMissingTypeModelCategory.State;
+                    break;
             }
 
             return category;
@@ -107,6 +110,9 @@ namespace Unity.GraphToolkit.Editor
                 case ManagedMissingTypeModelCategory.PortalDeclaration:
                     TryCreatePortalDeclarationPlaceholder(graphModel, referenceMissingType, guid, out createdPlaceholder);
                     break;
+                case ManagedMissingTypeModelCategory.State:
+                    TryCreateStatePlaceholder(graphModel, referenceMissingType, guid, out createdPlaceholder);
+                    break;
                 default:
                     Debug.LogWarning("This category of missing model is not managed.");
                     break;
@@ -141,6 +147,19 @@ namespace Unity.GraphToolkit.Editor
             }
         }
 
+        static void TryCreateStatePlaceholder(GraphModel graphModel, ManagedReferenceMissingType referenceMissingType, Hash128 guid, out IPlaceholder createdPlaceholder)
+        {
+            createdPlaceholder = null;
+
+            if (!YamlParsingHelper.TryParseString(referenceMissingType.serializedData, AbstractNodeModel.titleFieldName, 0, out var name) ||
+                !YamlParsingHelper.TryParseVector2(referenceMissingType.serializedData, AbstractNodeModel.positionFieldName, 0, out var position))
+                return;
+
+            name = string.Format(k_PlaceholderModelName, string.IsNullOrEmpty(name) ? referenceMissingType.className : name);
+
+            createdPlaceholder = graphModel.CreateStatePlaceholder(name, position, guid, referenceMissingType.referenceId);
+        }
+
         static void TryCreateContextNodePlaceholder(GraphModel graphModel, ManagedReferenceMissingType referenceMissingType, Hash128 guid, out IPlaceholder createdPlaceholder)
         {
             createdPlaceholder = null;
@@ -153,12 +172,12 @@ namespace Unity.GraphToolkit.Editor
 
             if (YamlParsingHelper.TryParseList(ContextNodeModel.blocksFieldName, k_ReferenceIdStr, referenceMissingType.serializedData, 0, out var listStr))
             {
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 var referenceIds = listStr.Select(long.Parse);
-#pragma warning restore UA2001
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+                #pragma warning disable UAC2001 // Avoid Linq
                 var blocks = referenceIds.Select(id => ManagedReferenceUtility.GetManagedReference(graphModel.GraphObject, id) as BlockNodeModel);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 createdPlaceholder = graphModel.CreateContextNodePlaceholder(name, position, guid, blocks, referenceMissingType.referenceId);
             }
             else
@@ -206,12 +225,12 @@ namespace Unity.GraphToolkit.Editor
                 return;
 
             // Create the missing wire
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var toPort = toNodeModel.GetPorts().FirstOrDefault(p => p.UniqueName == toPortUniqueId);
-#pragma warning restore UA2001
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+            #pragma warning disable UAC2001 // Avoid Linq
             var fromPort = fromNodeModel.GetPorts().FirstOrDefault(p => p.UniqueName == fromPortUniqueId);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             if (fromPort != null && toPort != null)
                 createdPlaceholder = graphModel.CreateWirePlaceholder(toPort, fromPort, guid, referenceMissingType.referenceId);

@@ -126,9 +126,9 @@ namespace UnityEditor
             var toAngle = new Vector3(Mathf.Sin(surfaceAngle + halfSurfaceArcRadians), Mathf.Cos(surfaceAngle + halfSurfaceArcRadians), 0.0f);
 
             // Fetch all the effector-collider bounds.
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             foreach (var collider in effector.gameObject.GetComponents<Collider2D>().Where(collider => collider.enabled && collider.usedByEffector))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 var center = collider.bounds.center;
                 var arcRadius = HandleUtility.GetHandleSize(center);
@@ -169,9 +169,9 @@ namespace UnityEditor
             var toAngleRight = new Vector3(Mathf.Sin(sideAngleRight + halfSideArcRadians), Mathf.Cos(sideAngleRight + halfSideArcRadians), 0.0f);
 
             // Fetch all the effector-collider bounds.
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             foreach (var collider in effector.gameObject.GetComponents<Collider2D>().Where(collider => collider.enabled && collider.usedByEffector))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 var center = collider.bounds.center;
                 var arcRadius = HandleUtility.GetHandleSize(center) * 0.8f;

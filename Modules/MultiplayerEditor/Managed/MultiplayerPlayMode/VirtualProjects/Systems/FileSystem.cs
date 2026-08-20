@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 
 namespace Unity.Multiplayer.PlayMode.Editor
@@ -44,13 +45,14 @@ namespace Unity.Multiplayer.PlayMode.Editor
         public WriteBytes WriteBytesFunc;
     }
 
-    static class FileSystem
+    static partial class FileSystem
     {
         // We subtract longest file length found in this package from the max length supported by Windows
         // to account for additional path length applied to subdirectories (i.e 259 minus 77 chars)
         const int k_MaxPathLengthForWindows = 182;
         const string k_WindowsExtendedPathLengthPrefix = "\\\\?\\";
 
+        [NoAutoStaticsCleanup] // delegates point only to local static methods in this long-living module assembly; MultiplayerEditorModule isn't torn down by ordinary user-code CodeReload, so these never go stale
         public static FileSystemDelegates Delegates { get; } = new FileSystemDelegates
         {
             GetParentPathFunc = GetParentPath,

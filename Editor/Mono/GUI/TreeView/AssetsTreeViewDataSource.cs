@@ -296,9 +296,9 @@ namespace UnityEditor
                 if (id != assetsInstanceIDs)
                 {
                     // Search in created first-level root items
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                     var item = m_RootsTreeViewItem.Values.FirstOrDefault(tvi => tvi.id == id && tvi.depth == 0);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     if (item != null)
                     {
                         parentsBelow.Add(id);

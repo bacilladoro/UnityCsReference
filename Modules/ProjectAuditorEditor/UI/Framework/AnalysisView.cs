@@ -70,9 +70,9 @@ namespace Unity.ProjectAuditor.Editor.UI.Framework
         public virtual bool OnlyPerfCriticalIssues() { return false; }
         public virtual bool OnlyFixableIssues() { return false; }
 
-        #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+        #pragma warning disable UAC2001 // Avoid Linq
         public string DocumentationUrl => Documentation.GetPageUrl(new string(m_Desc.DisplayName.Where(char.IsLetterOrDigit).ToArray()));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
         public int NumIssues => m_Issues.Count;
 
@@ -115,9 +115,9 @@ namespace Unity.ProjectAuditor.Editor.UI.Framework
             if (layout.Properties == null || layout.Properties.Length == 0)
                 return;
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             m_GroupDropdownItems = m_Layout.Properties.Select(p => new Utility.DropdownItem
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 Content = new GUIContent(p.IsDefaultGroup ? p.Name + " (default)" : p.Name),
                 SelectionContent = new GUIContent("Group By: " + p.Name),
@@ -190,9 +190,9 @@ namespace Unity.ProjectAuditor.Editor.UI.Framework
 
         public virtual void AddIssues(IEnumerable<ReportItem> allIssues)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var issues = allIssues.Where(i => i.Category == m_Desc.Category).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             if (issues.Length == 0)
                 return;
 
@@ -749,9 +749,9 @@ namespace Unity.ProjectAuditor.Editor.UI.Framework
             SetRowsExpanded(true);
 
             var rows = m_Table.GetRows();
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var selectedIDs = new List<int>(rows.Select(item => item as IssueTableItem).Where(i => i != null && i.ReportItem != null && predicate(i.ReportItem)).Select(i => i.id));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             m_Table.SetSelection(selectedIDs);
         }
@@ -777,9 +777,9 @@ namespace Unity.ProjectAuditor.Editor.UI.Framework
             {
                 var rows = m_Table.GetRows();
 
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 m_Table.SetExpanded(rows.Select(r => r.id).ToList());
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             }
             else
             {

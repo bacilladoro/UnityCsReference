@@ -12,9 +12,9 @@ namespace UnityEditor.Scripting.ScriptCompilation
     internal static class RoslynAnalyzers
     {
         private static readonly string[] Unset = null;
-#pragma warning disable UA2003 // The way this is used means it must be an explicit empty array, not Array.Empty<string>()
+#pragma warning disable UAC2003 // The way this is used means it must be an explicit empty array, not Array.Empty<string>()
         private static readonly string[] CyclicDependencies = {};
-#pragma warning restore UA2003
+#pragma warning restore UAC2003
 
         private static string[] SetAnalyzers(ScriptAssembly scriptAssembly, IEnumerable<(string scriptAssemblyFileName, string analyzerDll)> allAnalyzers, bool scanPrecompiledReferences)
         {
@@ -47,13 +47,13 @@ namespace UnityEditor.Scripting.ScriptCompilation
             }
 
             scriptAssembly.CompilerOptions.RoslynAnalyzerDllPaths =
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 scriptAssembly.ScriptAssemblyReferences
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     .SelectMany(sa => SetAnalyzers(sa, allAnalyzers, scanPrecompiledReferences))
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                     .Concat(allAnalyzers
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                         .Where(a => a.scriptAssemblyFileName == null ||
                                     a.scriptAssemblyFileName == scriptAssembly.Filename ||
                                     (referenceFileNames != null && referenceFileNames.Contains(a.scriptAssemblyFileName)))
@@ -79,9 +79,9 @@ namespace UnityEditor.Scripting.ScriptCompilation
                         scriptAssembly.CompilerOptions.AnalyzerConfigPath = RoslynAnalyzerConfigFiles.GetAnalyzerConfigForAssembly(scriptAssembly.OriginPath);
                     }
                 }
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 scriptAssembly.CompilerOptions.RoslynAdditionalFilePaths = scriptAssembly.CompilerOptions.RoslynAnalyzerDllPaths
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     .SelectMany(a=>RoslynAdditionalFiles.GetAnalyzerAdditionalFilesForTargetAssembly(a, scriptAssembly.OriginPath))
                     .Distinct()
                     .ToArray();
@@ -93,13 +93,13 @@ namespace UnityEditor.Scripting.ScriptCompilation
         internal static void SetAnalyzers(ScriptAssembly[] scriptAssemblies, TargetAssembly[] potentialAnalyzerOwners, string[] analyzerDlls, bool scanPrecompiledReferences)
         {
             // Figure out what assemblies own each analyzer
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var analyzerAssemblies = analyzerDlls.Select(analyzerDll =>
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
-#pragma warning disable UA2001, UA2011 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001, UAC2011 // Avoid Linq
                 var potentialAnalyzerOwner = potentialAnalyzerOwners
-#pragma warning restore UA2001, UA2011
+#pragma warning restore UAC2001, UAC2011
                     .Where(targetAssembly => targetAssembly.PathFilter(analyzerDll) > 0)
                     .OrderByDescending(targetAssembly => targetAssembly.PathFilter(analyzerDll))
                     .FirstOrDefault();

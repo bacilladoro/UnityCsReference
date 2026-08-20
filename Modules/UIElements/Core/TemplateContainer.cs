@@ -20,7 +20,7 @@ namespace UnityEngine.UIElements
     /// When using <see cref="VisualTreeAsset.Instantiate()"/>, a TemplateContainer instance is returned to you to represent the root of the hierarchy.
     /// When using UXML templates, a TemplateContainer is generated for the template instance and inserted into the hierarchy of the parent UXML file.
     /// </remarks>
-    [UxmlElement("Instance"), HideInInspector]
+    [UxmlElement("Instance", visibility = LibraryVisibility.Hidden), HideInInspector]
     [Icon("UIToolkit/Icons/TemplateContainer.png")]
     public partial class TemplateContainer : BindableElement
     {

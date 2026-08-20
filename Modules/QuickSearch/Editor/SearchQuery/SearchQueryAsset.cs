@@ -11,6 +11,7 @@ using UnityEngine;
 using UnityEditor.Callbacks;
 using UnityEngine.Serialization;
 using Unity.Collections;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Search
 {
@@ -19,9 +20,11 @@ namespace UnityEditor.Search
     /// </summary>
     [Serializable, ExcludeFromPreset]
     [HelpURL("search-usage")]
-    class SearchQueryAsset : ScriptableObject, ISearchQuery
+    partial class SearchQueryAsset : ScriptableObject, ISearchQuery
     {
+        [AutoStaticsCleanupOnCodeReload]
         static bool s_ListeningToAssetChanges = false;
+        [AutoStaticsCleanupOnCodeReload]
         static List<SearchQueryAsset> s_SavedQueries;
 
         private bool? m_isReadOnlyQuery;
@@ -144,9 +147,9 @@ namespace UnityEditor.Search
             set
             {
                 if (viewState != null)
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2001 // Avoid Linq
                     viewState.providerIds = value?.ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             }
         }
         public SearchViewState viewState;
@@ -186,17 +189,17 @@ namespace UnityEditor.Search
 
                 if (hasUpdated)
                 {
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2001 // Avoid Linq
                     var updatedQueries = updated.Select(AssetDatabase.LoadAssetAtPath<SearchQueryAsset>).Where(q => q).ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     Dispatcher.Emit(SearchEvent.PostProcessProjectQueryAdded, new SearchEventPayload((ISearchElement)null, updatedQueries));
                 }
 
                 if (hasMoved)
                 {
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2001 // Avoid Linq
                     var movedQueries = moved.Select(AssetDatabase.LoadAssetAtPath<SearchQueryAsset>).Where(q => q).ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     Dispatcher.Emit(SearchEvent.PostProcessProjectQueryMoved, new SearchEventPayload((ISearchElement)null, movedQueries));
                 }
 
@@ -220,13 +223,13 @@ namespace UnityEditor.Search
                 {
                     if (!s_ListeningToAssetChanges)
                         ListenToAssetChanges();
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2001 // Avoid Linq
                     s_SavedQueries = EnumerateAll().Where(asset => asset).ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 }
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 return s_SavedQueries.Where(s => s);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             }
         }
 
@@ -280,18 +283,18 @@ namespace UnityEditor.Search
         {
             var queryAsset = CreateInstance<SearchQueryAsset>();
             queryAsset.text = searchQuery;
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             queryAsset.providerIds = providerIds.ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             queryAsset.description = description;
             return queryAsset;
         }
 
         public static SearchQueryAsset Create(string searchQuery, IEnumerable<SearchProvider> providers, string description = null)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             return Create(searchQuery, providers.Select(p => p.id), description);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         public static string GetQueryName(string query)
@@ -323,9 +326,9 @@ namespace UnityEditor.Search
             name += ".asset";
 
             asset.text = context.searchText;
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             asset.providerIds = new List<string>(context.GetProviders().Except(SearchService.GetActiveProviders()).Select(p => p.id));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             SearchWindowCustomPanelConfig customPanelConfigToRestore = null;
             if (asset.viewState != null && asset.viewState.customPanelConfig != null && !asset.viewState.customPanelConfig.serializableInQuery)
@@ -378,9 +381,9 @@ namespace UnityEditor.Search
 
         public static IEnumerable<SearchQueryAsset> GetFilteredSearchQueries(SearchContext context)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             return savedQueries.Where(query => query && (query.providerIds.Count == 0 || query.providerIds.Exists(id => context.IsEnabled(id))));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         public static void ResetSearchQueryItems()
@@ -434,9 +437,9 @@ namespace UnityEditor.Search
 
         public IEnumerable<string> GetProviderTypes()
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             return GetProviders().Select(p => p.type).Distinct();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         public SearchViewState GetViewState()

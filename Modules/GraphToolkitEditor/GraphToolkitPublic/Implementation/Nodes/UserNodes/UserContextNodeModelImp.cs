@@ -52,7 +52,7 @@ namespace Unity.GraphToolkit.Editor.Implementation
             m_Blocks?.Remove(userBlockNodeModelImp.Node);
         }
 
-        void IUserNodeModelImp.CallOnEnable()
+        void IUserModelImp.CallOnEnable()
         {
             m_OnEnableCalled = true;
             Node?.OnEnable();
@@ -65,7 +65,7 @@ namespace Unity.GraphToolkit.Editor.Implementation
             }
         }
 
-        void IUserNodeModelImp.CallOnDisable()
+        void IUserModelImp.CallOnDisable()
         {
             m_OnEnableCalled = false;
             foreach (var block in GetGraphElementModels())

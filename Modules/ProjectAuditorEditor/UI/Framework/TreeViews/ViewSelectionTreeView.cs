@@ -196,6 +196,9 @@ namespace Unity.ProjectAuditor.Editor.UI.Framework
 
             foreach (var category in page.AllCategories)
             {
+                if (category.IsPopulatedByPlayerBuild())
+                    continue;
+
                 if (!m_ViewManager.Report.HasCategory(category) && !m_ViewManager.HasPendingCategory(category))
                     return true;
             }

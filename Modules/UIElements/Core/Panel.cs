@@ -2,6 +2,8 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
+using Unity.Scripting.LifecycleManagement;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
@@ -470,7 +472,7 @@ namespace UnityEngine.UIElements
     }
 
     [VisibleToOtherModules("UnityEditor.UIBuilderModule", "UnityEditor.UIToolkitAuthoringModule", "UnityEditor.VectorGraphicsModule", "UnityEditor.GraphToolkitModule")]
-    abstract class BaseVisualElementPanel : IPanel, IGroupBox
+    abstract partial class BaseVisualElementPanel : IPanel, IGroupBox
     {
     	// TODO: Make sure we do not use new native layout before we fix android 32bit (arm v7) failing test.
         // VisualPanel m_VisualPanel;
@@ -489,6 +491,9 @@ namespace UnityEngine.UIElements
         // Allows native code to call back into panel methods.
         // Note that keeping a static link to all living panels would normally prevent GC from collecting panels,
         // but the panel lifecycle destroys panels explicitly, so this shouldn't be a problem.
+        // Cleared on code reload: the handles die with the LayoutManager node store, and
+        // panels re-register on creation.
+        [AutoStaticsCleanupOnCodeReload]
         internal static readonly Dictionary<UnmanagedDataHandle, BaseVisualElementPanel> PanelsByHandle = new(UnmanagedDataHandle.k_EqualityComparer);
 
         // Allows native code to call back into panel methods.
@@ -1012,6 +1017,7 @@ namespace UnityEngine.UIElements
 
             var oldCamera = Camera.current;
             var oldActive = RenderTexture.active;
+            var oldEvent = Event.current;
             try
             {
                 // Runtime panels derive their viewport from the active render texture; editor panels
@@ -1022,6 +1028,11 @@ namespace UnityEngine.UIElements
                 // Panels don't clear their own background, and UI clipping/masking relies on a
                 // clean stencil buffer, so clear color and depth/stencil to transparent first.
                 GL.Clear(true, true, Color.clear);
+                // Give IMGUIContainers a Repaint event so they emit their content into the capture.
+                // This only takes effect when the capture itself runs inside an OnGUI context: outside
+                // one, the editor Event.current getter reads back null and IMGUI content stays blank.
+                // Place the mouse offscreen so controls aren't captured in a hovered/highlighted state.
+                Event.current = new Event { type = EventType.Repaint, mousePosition = new Vector2(-10000, -10000) };
                 Render();
             }
             finally
@@ -1029,6 +1040,7 @@ namespace UnityEngine.UIElements
                 // Always restore the global render state, even if rendering throws.
                 Camera.SetupCurrent(oldCamera);
                 RenderTexture.active = oldActive;
+                Event.current = oldEvent;
             }
             return true;
         }
@@ -1099,7 +1111,7 @@ namespace UnityEngine.UIElements
 
     // Default panel implementation
     [VisibleToOtherModules("UnityEditor.UIBuilderModule", "UnityEditor.UIToolkitAuthoringModule", "UnityEditor.GraphToolkitModule")]
-    internal class Panel : BaseVisualElementPanel
+    internal partial class Panel : BaseVisualElementPanel
     {
         internal const int k_DefaultPixelsPerUnit = 100;
 
@@ -1126,7 +1138,7 @@ namespace UnityEngine.UIElements
         protected ProfilerMarker m_MarkerTickScheduledActionsPreLayout;
         protected ProfilerMarker m_MarkerTickScheduledActionsPostLayout;
         ProfilerMarker m_MarkerPanelChangeReceiver;
-        static ProfilerMarker s_MarkerPickAll = new ProfilerMarker(ProfilerCategory.UIToolkit, "UIElements.PickAll");
+        static readonly ProfilerMarker s_MarkerPickAll = new ProfilerMarker(ProfilerCategory.UIToolkit, "UIElements.PickAll");
 
         public sealed override VisualElement visualTree
         {
@@ -1134,7 +1146,7 @@ namespace UnityEngine.UIElements
         }
 
         // For UI Test Framework.
-        internal class UIFrameState
+        internal partial class UIFrameState
         {
             internal virtual long[] updatersFrameCount { get; }
 
@@ -1145,7 +1157,7 @@ namespace UnityEngine.UIElements
             internal virtual ContextType panelContextType { get; }
 
             internal virtual long[] editorUpdatersFrameCount { get; }
-            internal static int[] updaterSubsetForEditor = new int[]
+            internal static readonly int[] updaterSubsetForEditor = new int[]
             {
                 (int)VisualTreeUpdatePhase.Bindings,
                 (int)VisualTreeUpdatePhase.DataBinding,
@@ -1296,10 +1308,13 @@ namespace UnityEngine.UIElements
             atlas?.Reset();
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         internal static LoadResourceFunction loadResourceFunc { private get; set; }
 
+        [AutoStaticsCleanupOnCodeReload]
         internal static InitEditorUpdaterFunction initEditorUpdaterFunc { private get; set; }
 
+        [NoAutoStaticsCleanup]
         internal static Func<Object, string> getAssetPathFunc { private get; set; }
 
         [VisibleToOtherModules("UnityEditor.UIBuilderModule", "UnityEditor.UIToolkitAuthoringModule")]
@@ -1400,6 +1415,7 @@ namespace UnityEngine.UIElements
 
         [Obsolete("Use the non-static TimeSinceStartupFunc instead")]
         [VisibleToOtherModules("UnityEditor.GraphToolkitModule")]
+        [AutoStaticsCleanupOnCodeReload]
         internal static TimeMsFunction TimeSinceStartup { get; set; }
 
         public override IMGUIContainer rootIMGUIContainer { get; set; }
@@ -1764,11 +1780,14 @@ namespace UnityEngine.UIElements
         }
 
         [VisibleToOtherModules("UnityEditor.UIToolkitAuthoringModule")]
+        [NoAutoStaticsCleanup]
         internal static event Action<Panel> beforeTickingAnyScheduledPanel;
 
+        [AutoStaticsCleanupOnCodeReload]
         internal static event Action<Panel> beforeAnyRepaint;
 
         [VisibleToOtherModules("UnityEditor.UIToolkitAuthoringModule")]
+        [NoAutoStaticsCleanup]
         internal static event Action<Panel> afterRepaint;
 
         public override void Repaint()
@@ -1861,7 +1880,7 @@ namespace UnityEngine.UIElements
     }
 
     [VisibleToOtherModules("UnityEditor.UIToolkitAuthoringModule", "UnityEditor.VectorGraphicsModule")]
-    internal abstract class BaseRuntimePanel : Panel
+    internal abstract partial class BaseRuntimePanel : Panel
     {
         private GameObject m_SelectableGameObject;
         public GameObject selectableGameObject
@@ -1880,6 +1899,7 @@ namespace UnityEngine.UIElements
 
         // We count instances of Runtime panels to be able to insert panels that have the same sort order in a deterministic
         // way throughout the same session (i.e. instances created before will be placed before in the visual tree).
+        [NoAutoStaticsCleanup]
         private static int s_CurrentRuntimePanelCounter = 0;
         internal readonly int m_RuntimePanelCreationIndex;
 
@@ -2018,6 +2038,7 @@ namespace UnityEngine.UIElements
             RenderTexture.active = oldRT;
         }
 
+        [NoAutoStaticsCleanup]
         internal static readonly Func<Vector2, Vector3> DefaultScreenToPanelSpace = (p) => (p);
         private Func<Vector2, Vector3> m_ScreenToPanelSpace = DefaultScreenToPanelSpace;
 
@@ -2118,3 +2139,4 @@ namespace UnityEngine.UIElements
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

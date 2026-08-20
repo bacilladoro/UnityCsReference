@@ -68,9 +68,19 @@ namespace UnityEditor.UIElements.Samples
             }
         }
 
+        void OnGridLayoutSettingChanged(bool enabled) => CreateGUI();
+
+        void OnDisable()
+        {
+            UIToolkitProjectSettings.onEnableGridLayoutChanged -= OnGridLayoutSettingChanged;
+        }
+
         public void CreateGUI()
         {
             var root = rootVisualElement;
+            root.Clear();
+            UIToolkitProjectSettings.onEnableGridLayoutChanged -= OnGridLayoutSettingChanged;
+            UIToolkitProjectSettings.onEnableGridLayoutChanged += OnGridLayoutSettingChanged;
             root.disablePlayModeTint = true;
 
             var styleSheet = EditorGUIUtility.Load(s_StyleSheetPath) as StyleSheet;
@@ -173,6 +183,9 @@ namespace UnityEditor.UIElements.Samples
                 //}),
             };
 
+            if (UIToolkitProjectSettings.enableGridLayout)
+                items.Insert(1, new TreeViewItemData<SampleTreeItem>(nextId++, new SampleTreeItem("Grid", GridSnippet.Create)));
+
             var treeView = new TreeView() { name = k_TreeViewName };
             treeView.AddToClassList(k_TreeViewClassName);
             m_ContentPanel = new VisualElement() { name = k_ContentPanelName };
@@ -198,16 +211,21 @@ namespace UnityEditor.UIElements.Samples
 
             Action<IEnumerable<int>> onSelectionChanged = selectedIndices =>
             {
-#pragma warning disable UA2002 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2002 // Avoid Linq
                 if (!selectedIndices.Any())
-#pragma warning restore UA2002
+#pragma warning restore UAC2002
                     return;
 
-                #pragma warning disable UA2010 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2010 // Avoid Linq
                 var sampleItem = treeView.GetItemDataForIndex<SampleTreeItem>(selectedIndices.First());
-#pragma warning restore UA2010
+#pragma warning restore UAC2010
                 m_ContentPanel.Clear();
-                m_ContentPanel.Add(sampleItem.makeItem(sampleItem));
+                // Host the sample in a scroll view so tall samples (e.g. the multi-grid Grid demo) are
+                // fully reachable instead of overflowing the content pane.
+                var sampleScrollView = new ScrollView() { name = "sample-scroll-view" };
+                sampleScrollView.style.flexGrow = 1;
+                sampleScrollView.Add(sampleItem.makeItem(sampleItem));
+                m_ContentPanel.Add(sampleScrollView);
             };
 
             var splitter = new TwoPaneSplitView(0, k_SplitterLeftPaneStartingWidth,TwoPaneSplitViewOrientation.Horizontal);
@@ -234,9 +252,9 @@ namespace UnityEditor.UIElements.Samples
             // Force TreeView to select something if nothing is selected.
             treeView.schedule.Execute(() =>
             {
-                #pragma warning disable UA2002 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2002 // Avoid Linq
                 if (treeView.selectedItems.Any())
-#pragma warning restore UA2002
+#pragma warning restore UAC2002
                     return;
 
                 treeView.SetSelection(0);

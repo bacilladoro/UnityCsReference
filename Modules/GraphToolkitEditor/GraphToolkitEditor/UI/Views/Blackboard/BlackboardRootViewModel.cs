@@ -64,7 +64,7 @@ namespace Unity.GraphToolkit.Editor
         }
 
         /// <inheritdoc />
-        public override void AddToState(IState state)
+        public override void AddToState(CSO.IState state)
         {
             state?.AddStateComponent(BlackboardContentState);
             state?.AddStateComponent(ViewState);
@@ -72,7 +72,7 @@ namespace Unity.GraphToolkit.Editor
         }
 
         /// <inheritdoc />
-        public override void RemoveFromState(IState state)
+        public override void RemoveFromState(CSO.IState state)
         {
             state?.RemoveStateComponent(BlackboardContentState);
             state?.RemoveStateComponent(ViewState);

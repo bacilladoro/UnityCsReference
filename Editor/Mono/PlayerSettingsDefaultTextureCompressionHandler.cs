@@ -260,9 +260,9 @@ namespace UnityEditor
 
             if (CurrentPlatformGlobalEditorTextureFormat != null)
             {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 return CurrentPlatformGlobalEditorTextureFormat.ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             }
 
             return new List<TextureCompressionFormat>();
@@ -270,9 +270,9 @@ namespace UnityEditor
 
         private bool UpdateTextureCompressionFormatSerialization(SerializedProperty serializedProperty, TextureCompressionFormat[] formats)
         {
-#pragma warning disable UA2014 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2014 // Avoid Linq
             var same = m_LastSavedFormat != null && m_LastSavedFormat.Length == formats.Length && m_LastSavedFormat.SequenceEqual(formats);
-#pragma warning restore UA2014
+#pragma warning restore UAC2014
             if (same) return false;
             m_LastSavedFormat = formats;
             var intValues = Array.ConvertAll(formats, format => (int)format);
@@ -305,14 +305,14 @@ namespace UnityEditor
         private void AddTextureCompressionElement(Rect rect, ReorderableList list)
         {
             var availableTextureCompressions = m_AvailableTextureCompressionsProvider();
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var names = availableTextureCompressions
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 .Select(m => ToString(m))
                 .ToArray();
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var enabled = availableTextureCompressions
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 .Select(m => !list.list.Contains(m))
                 .ToArray();
 

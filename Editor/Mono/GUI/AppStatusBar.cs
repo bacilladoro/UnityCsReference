@@ -130,9 +130,9 @@ namespace UnityEditor
             m_LastUpdate = now;
             if (Progress.running)
             {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 var unresponsiveItem = Progress.EnumerateItems().FirstOrDefault(item => !item.responding);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 if (unresponsiveItem != null)
                 {
                     m_CurrentProgressNotResponding = true;
@@ -362,9 +362,9 @@ namespace UnityEditor
                 return;
             }
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var idleCount = Progress.EnumerateItems().Count(item => item.running && item.priority == (int)Progress.Priority.Idle);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             var taskCount = Progress.GetRunningProgressCount() - idleCount;
             if (taskCount == 0)
             {

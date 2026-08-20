@@ -60,7 +60,7 @@ namespace Unity.GraphToolkit.Editor
             switch (model)
             {
                 case StateModel:
-                    ui = new State();
+                    ui = new StateView();
                     break;
                 case VariableNodeModel variableNode:
                     if (variableNode.Mode == VariableNodeMode.Set)
@@ -177,6 +177,14 @@ namespace Unity.GraphToolkit.Editor
         public static ModelView CreateSubgraphNodeUI(this ElementBuilder elementBuilder, SubgraphNodeModel model)
         {
             var ui = new SubgraphNodeView();
+
+            ui.SetupBuildAndUpdate(model, elementBuilder.View, elementBuilder.Context);
+            return ui;
+        }
+
+        public static ModelView CreateSubgraphStateUI(this ElementBuilder elementBuilder, SubgraphStateModel model)
+        {
+            var ui = new SubgraphStateView();
 
             ui.SetupBuildAndUpdate(model, elementBuilder.View, elementBuilder.Context);
             return ui;

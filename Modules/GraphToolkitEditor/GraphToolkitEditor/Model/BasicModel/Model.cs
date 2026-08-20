@@ -23,9 +23,9 @@ namespace Unity.GraphToolkit.Editor
         Hash128 m_HashGuid;
 
 #pragma warning disable CS0612
-        internal static string obsoleteGuidFieldName = nameof(m_Guid);
+        internal const string obsoleteGuidFieldName = nameof(m_Guid);
 #pragma warning restore CS0612
-        internal static string hashGuidFieldName = nameof(m_HashGuid);
+        internal const string hashGuidFieldName = nameof(m_HashGuid);
 
         /// <summary>
         /// The unique identifier of the element.

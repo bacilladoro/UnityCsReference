@@ -1110,9 +1110,9 @@ namespace UnityEditor
         {
             var ancestors = new HashSet<EntityId>();
             GetAncestors(instanceID, ancestors);
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return ancestors.ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         [Obsolete("GetAncestors is deprecated. Use GetAncestors(EntityId) instead.", true)]
@@ -1325,9 +1325,9 @@ namespace UnityEditor
             }
 
             bool reparentMaterials = false;
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var paths = GetMainPathsOfAssets(instanceIDs).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             if (paths.Length == 0)
                 return false;

@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitAuthoringFramework not yet converted
 using System;
 using System.Collections.Generic;
 using UnityEditor.ShortcutManagement;
@@ -245,9 +246,11 @@ internal sealed partial class InspectorSearchField : VisualElement, IShortcutCon
                 else
                 {
                     bool matchesSearch = false;
+                    var normalizedStr = NormalizeForSearch(str);
                     foreach (var property in row.trackedProperties)
                     {
-                        if (property.Contains(str, StringComparison.OrdinalIgnoreCase))
+                        if (property.Contains(str, StringComparison.OrdinalIgnoreCase)
+                            || NormalizeForSearch(property).Contains(normalizedStr, StringComparison.OrdinalIgnoreCase))
                         {
                             matchesSearch = true;
                             break;
@@ -367,6 +370,8 @@ internal sealed partial class InspectorSearchField : VisualElement, IShortcutCon
         ClearSearch();
     }
 
+    private static string NormalizeForSearch(string value) => value.Replace("-", "").Replace(" ", "");
+
     private static bool IsInHeader(VisualElement element) =>
         element.GetFirstAncestorOfType<UISelectionObjectHeader>() != null;
 
@@ -392,3 +397,4 @@ internal sealed partial class InspectorSearchField : VisualElement, IShortcutCon
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

@@ -2,7 +2,6 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
-using System.Collections.Generic;
 using UnityEngine.UIElements;
 
 namespace Unity.GraphToolkit.Editor
@@ -105,12 +104,9 @@ namespace Unity.GraphToolkit.Editor
             if (variable == null)
                 return;
 
-            var choices = new List<ConditionComparison>(ConditionComparisonExtensions.GetAvailableComparisons(variable.DataType));
-            var current = choices.Contains(model.Comparison) ? model.Comparison : choices[0];
-            m_OperatorField = new PopupField<ConditionComparison>(choices, current, ConditionComparisonExtensions.ToGlyph, ConditionComparisonExtensions.ToGlyph);
+            m_OperatorField = ConditionComparisonExtensions.CreateComparisonPopup(
+                variable.DataType.Resolve(), model, RootView);
             m_OperatorField.AddToClassList(operatorUssClassName);
-            m_OperatorField.RegisterValueChangedCallback(evt =>
-                RootView.Dispatch(new SetVariableConditionComparisonCommand(model, evt.newValue)));
             m_Container.Add(m_OperatorField);
 
             if (model.Value != null)

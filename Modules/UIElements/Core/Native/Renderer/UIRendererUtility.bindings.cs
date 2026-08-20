@@ -2,6 +2,8 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
+using Unity.Scripting.LifecycleManagement;
 using System;
 using System.Runtime.InteropServices;
 using Unity.Collections;
@@ -101,8 +103,11 @@ namespace UnityEngine.UIElements.UIR
             SetVectorArray(shaderPropertySheet, nameID, vector4s, vector4s.Length);
         }
 
+        [NoAutoStaticsCleanup]
         public static event Action<bool> GraphicsResourcesRecreate;
+        [NoAutoStaticsCleanup]
         public static event Action EngineUpdate;
+        [NoAutoStaticsCleanup]
         public static event Action FlushPendingResources;
 
         [RequiredByNativeCode]
@@ -111,7 +116,7 @@ namespace UnityEngine.UIElements.UIR
             GraphicsResourcesRecreate?.Invoke(recreate);
         }
 
-        static ProfilerMarker s_MarkerRaiseEngineUpdate = new ProfilerMarker(ProfilerCategory.UIToolkit, "UIR.RaiseEngineUpdate");
+        static readonly ProfilerMarker s_MarkerRaiseEngineUpdate = new ProfilerMarker(ProfilerCategory.UIToolkit, "UIR.RaiseEngineUpdate");
 
         [RequiredByNativeCode]
         internal static void RaiseEngineUpdate()
@@ -168,3 +173,4 @@ namespace UnityEngine.UIElements.UIR
         [NativeMethod(IsThreadSafe = true)] public extern static bool DebugIsMainThread(); // For debug code only
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

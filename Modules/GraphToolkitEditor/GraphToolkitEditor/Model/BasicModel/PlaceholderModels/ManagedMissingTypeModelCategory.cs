@@ -14,6 +14,7 @@ namespace Unity.GraphToolkit.Editor
         Wire,
         PortalDeclaration,
         ContextNode,
-        BlockNode
+        BlockNode,
+        State
     }
 }

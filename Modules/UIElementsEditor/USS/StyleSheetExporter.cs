@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -28,18 +29,31 @@ namespace UnityEditor.UIElements
 
         public const string ColorsPreferenceCategory = "USS Syntax Highlighting";
 
+        [NoAutoStaticsCleanup] // preference color registrations; readonly, persist across reload
         static readonly UIPrefColor k_AtKeywordColor = new (ColorsPreferenceCategory, "At Keyword", HtmlColor("#871094"), HtmlColor("#BC8DF8"));
+        [NoAutoStaticsCleanup]
         static readonly UIPrefColor k_FunctionColor = new (ColorsPreferenceCategory, "Function", HtmlColor("#0058A8"), HtmlColor("#70B0FF"));
+        [NoAutoStaticsCleanup]
         static readonly UIPrefColor k_KeywordColor = new (ColorsPreferenceCategory, "Keyword", HtmlColor("#0033B3"), HtmlColor("#FFFFFF"));
+        [NoAutoStaticsCleanup]
         static readonly UIPrefColor k_NumberColor = new (ColorsPreferenceCategory, "Number", HtmlColor("#1750EB"), HtmlColor("#FF9668"));
+        [NoAutoStaticsCleanup]
         static readonly UIPrefColor k_PunctuationColor = new (ColorsPreferenceCategory, "Punctuation", HtmlColor("#000000"), HtmlColor("#70B0FF"));
+        [NoAutoStaticsCleanup]
         static readonly UIPrefColor k_PropertyColor = new (ColorsPreferenceCategory, "Property Name", HtmlColor("#0058A8"), HtmlColor("#B6C4F2"));
+        [NoAutoStaticsCleanup]
         static readonly UIPrefColor k_SelectorClassColor = new (ColorsPreferenceCategory, "Selector Class", HtmlColor("#9C5F00"), HtmlColor("#DBBE7F"));
+        [NoAutoStaticsCleanup]
         static readonly UIPrefColor k_SelectorIdColor = new (ColorsPreferenceCategory,  "Selector Id", HtmlColor("#7F0055"), HtmlColor("#70B0FF"));
+        [NoAutoStaticsCleanup]
         static readonly UIPrefColor k_SelectorPseudoClassColor = new (ColorsPreferenceCategory, "Selector Pseudo-Class", HtmlColor("#00796B"), HtmlColor("#4FD6BE"));
+        [NoAutoStaticsCleanup]
         static readonly UIPrefColor k_SelectorTypeColor = new (ColorsPreferenceCategory, "Selector Type", HtmlColor("#5B3F00"), HtmlColor("#DBBE7F"));
+        [NoAutoStaticsCleanup]
         static readonly UIPrefColor k_String = new (ColorsPreferenceCategory, "String", HtmlColor("#067D17"), HtmlColor("#64D1A9"));
+        [NoAutoStaticsCleanup]
         static readonly UIPrefColor k_UnitColor = new (ColorsPreferenceCategory, "Unit", HtmlColor("#871094"), HtmlColor("#F3C1FF"));
+        [NoAutoStaticsCleanup]
         static readonly UIPrefColor k_ValueColor = new (ColorsPreferenceCategory, "Value", HtmlColor("#871094"), HtmlColor("#F3C1FF"));
 
         public static Color AtKeywordColor { get => k_AtKeywordColor.Color; set { k_AtKeywordColor.Color = value; PrefSettings.Set(k_AtKeywordColor.StorageKey, k_AtKeywordColor); } }
@@ -108,6 +122,7 @@ namespace UnityEditor.UIElements
         {
             const string k_DefaultIndex = "    ";
 
+            [NoAutoStaticsCleanup]
             public static UssExportOptions Default => new()
             {
                 propertyIndent  = k_DefaultIndex,
@@ -255,6 +270,7 @@ namespace UnityEditor.UIElements
             }
         }
 
+        [NoAutoStaticsCleanup] // singleton exporter instance; safe to persist
         public static StyleSheetExporter Default { get; } = new();
 
         /// <summary>
@@ -905,3 +921,4 @@ namespace UnityEditor.UIElements
         static Color HtmlColor(string htmlColor) => ColorUtility.TryParseHtmlString(htmlColor, out var color) ? color : Color.clear;
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

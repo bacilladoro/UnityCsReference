@@ -5,12 +5,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace Unity.GraphToolkit.Editor
 {
-    class SnapToBordersStrategy : SnapStrategy
+    partial class SnapToBordersStrategy : SnapStrategy
     {
         class SnapToBordersResult
         {
@@ -99,22 +100,23 @@ namespace Unity.GraphToolkit.Editor
             }
         }
 
-        static readonly List<ChildView> k_GetNotSelectedElementRectsInViewAllUIs = new();
+        [AutoStaticsCleanupOnCodeReload]
+        static List<ChildView> k_GetNotSelectedElementRectsInViewAllUIs = new();
         List<Rect> GetNotSelectedElementRectsInView(GraphElement selectedElement)
         {
             var notSelectedElementRects = new List<Rect>();
             var graphView = selectedElement.GraphView;
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var ignoredModels = graphView.GetSelection().Cast<Model>().ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             // Consider only the visible nodes.
             var rectToFit = graphView.layout;
 
             graphView.GraphModel.GetGraphElementModels().GetAllViews(graphView, null, k_GetNotSelectedElementRectsInViewAllUIs);
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             foreach (var element in k_GetNotSelectedElementRectsInViewAllUIs.OfType<ModelView>())
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 if (selectedElement is Placemat placemat && element.layout.Overlaps(placemat.layout))
                 {
@@ -214,9 +216,9 @@ namespace Unity.GraphToolkit.Editor
         List<SnapToBordersResult> GetClosestSnapElements(Rect sourceRect)
         {
             var snapToBordersResults = GetClosestSnapElements(sourceRect, PortOrientation.Horizontal);
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             return snapToBordersResults.Union(GetClosestSnapElements(sourceRect, PortOrientation.Vertical)).ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         static Line GetSnapLine(Rect r, SnapReference reference)

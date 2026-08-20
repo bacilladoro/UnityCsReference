@@ -83,9 +83,9 @@ namespace UnityEditorInternal.VersionControl
             // and in-order list back.
             var taskResultList = task.assetList;
             var result = new AssetList {Capacity = fromPaths.Count};
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             result.AddRange(fromPaths.Select(path => taskResultList.SingleOrDefault(a => a.path == path)));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             return result;
         }
 
@@ -296,9 +296,9 @@ namespace UnityEditorInternal.VersionControl
                 return true; // everything is editable
 
             // paths that are empty/null are considered to be editable, so remove them from consideration
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             assetPaths = assetPaths.Where(p => !string.IsNullOrEmpty(p)).ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             AssetList assets;
             if (statusOptions == StatusQueryOptions.UseCachedIfPossible || statusOptions == StatusQueryOptions.UseCachedAsync)

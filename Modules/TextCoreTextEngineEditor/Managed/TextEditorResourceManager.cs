@@ -7,6 +7,7 @@ using UnityEditor.TextCore.LowLevel;
 using UnityEngine.TextCore.Text;
 using UnityEngine;
 using UnityEngine.Rendering;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.TextCore.Text
 {
@@ -45,8 +46,9 @@ namespace UnityEditor.TextCore.Text
         }
     }
 
-    internal class TextEditorResourceManager
+    internal partial class TextEditorResourceManager
     {
+        [AutoStaticsCleanupOnCodeReload]
         private static TextEditorResourceManager s_Instance;
 
         private readonly List<Object> m_ObjectUpdateQueue = new List<Object>();

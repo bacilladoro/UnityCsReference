@@ -107,6 +107,12 @@ namespace UnityEngine.AdaptivePerformance
         IDevelopmentSettings DevelopmentSettings { get; }
 
         /// <summary>
+        /// Access to the active operation mode.
+        /// </summary>
+        /// <value>Interface to read and change the active operation mode provider.</value>
+        IOperationModeStatus OperationModeStatus { get; }
+
+        /// <summary>
         /// Access to the Indexer system. See <see cref="AdaptivePerformanceIndexer"/>
         /// </summary>
         /// <value>Interface to scalers that are active and their associated settings.</value>

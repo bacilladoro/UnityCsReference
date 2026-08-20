@@ -337,9 +337,9 @@ namespace UnityEditor
 
         internal static bool IsValidModeId(string id)
         {
-#pragma warning disable UA2008 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2008 // Avoid Linq
             return !string.IsNullOrEmpty(id) && id.All(c => char.IsLetterOrDigit(c) || c == '_' || c == '-' || c == '.');
-#pragma warning restore UA2008
+#pragma warning restore UAC2008
         }
 
         internal static string GetDefaultModeLayout(string modeId = null)

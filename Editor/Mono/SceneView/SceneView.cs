@@ -1575,9 +1575,9 @@ namespace UnityEditor
             rootVisualElement.RegisterCallback<MouseEnterWindowEvent>(e => m_SceneViewMotion.viewportsUnderMouse = true);
             rootVisualElement.RegisterCallback<MouseLeaveWindowEvent>(e => m_SceneViewMotion.viewportsUnderMouse = false);
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             m_OrientationGizmo = overlayCanvas.overlays.FirstOrDefault(x => x is SceneOrientationGizmo) as SceneOrientationGizmo;
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             titleContent = GetLocalizedTitleContent();
 
@@ -4097,10 +4097,10 @@ namespace UnityEditor
                 case EventCommandNames.InvertSelection:
                     if (execute)
                     {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
 #pragma warning disable CS0618 // Type or member is obsolete
                         Selection.objects = FindObjectsByType<GameObject>(FindObjectsSortMode.InstanceID).Except(Selection.gameObjects).Where(SceneVisibilityManager.instance.IsSelectable).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 #pragma warning restore CS0618 // Type or member is obsolete
                     }
                     Event.current.Use();
@@ -4111,13 +4111,13 @@ namespace UnityEditor
                         List<GameObject> gameObjects = new List<GameObject>(Selection.gameObjects);
                         foreach (var gameObject in Selection.gameObjects)
                         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                             gameObjects.AddRange(gameObject.transform.GetComponentsInChildren<Transform>(true).Select(t => t.gameObject));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                         }
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                         Selection.objects = gameObjects.Distinct().Cast<Object>().ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     }
                     Event.current.Use();
                     break;
@@ -4133,9 +4133,9 @@ namespace UnityEditor
                                 gameObjects.Add(root);
                             }
                         }
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                         Selection.objects = gameObjects.Distinct().Cast<Object>().ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     }
                     Event.current.Use();
                     break;
@@ -4377,15 +4377,15 @@ namespace UnityEditor
                         m_Cache[type] = null;
                     else
                     {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                         var param = Expression.Parameter(typeof(Editor), "a");
-#pragma warning restore UA2001
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+#pragma warning disable UAC2001 // Avoid Linq
                         onSceneGui = m_Cache[type] = Expression.Lambda<Action<Editor>>(
-#pragma warning restore UA2001
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+#pragma warning disable UAC2001 // Avoid Linq
                             Expression.Call(Expression.Convert(param, type), method),
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                             param
                         ).Compile();
                     }

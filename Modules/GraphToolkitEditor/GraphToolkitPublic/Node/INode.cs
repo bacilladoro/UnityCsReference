@@ -46,7 +46,7 @@ namespace Unity.GraphToolkit.Editor
     }
 
     /// <summary>
-    /// Interface for a node.
+    /// Interface for a node in a <see cref="Graph"/>.
     /// </summary>
     /// <remarks>
     /// This interface provides methods for accessing input and output ports, which are essential for connecting nodes.
@@ -203,7 +203,7 @@ namespace Unity.GraphToolkit.Editor
         /// <summary>
         /// The Graph that contains this node.
         /// </summary>
-        Graph Graph => (NodeModel.GraphModel as GraphModelImp)?.Graph;
+        Graph Graph => (NodeModel.GraphModel as GraphModelImp)?.Graph as Graph;
 
         /// <summary>
         /// Removes the node from its graph.

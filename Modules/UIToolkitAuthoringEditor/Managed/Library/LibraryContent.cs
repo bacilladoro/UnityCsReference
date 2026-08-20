@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitAuthoringFramework not yet converted
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -10,13 +11,30 @@ using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.Bindings;
 using UnityEngine.UIElements;
+using PackageInfo = UnityEditor.PackageManager.PackageInfo;
 
 namespace Unity.UIToolkit.Editor
 {
     [VisibleToOtherModules("UnityEditor.UIBuilderModule")]
     internal static class LibraryContent
     {
+        const string k_ShowInternalControlsPrefKey = "UIToolkit.UILibrary.ShowInternalControls";
+        const string k_ShowPackageControlsPrefKey = "UIToolkit.UILibrary.ShowPackageControls";
+
         static readonly Dictionary<LibraryTypeKey, LibraryItem> s_LibraryTypes = GenerateLibraryTypeFromSerializedDataTypes();
+        static readonly Dictionary<Assembly, bool> s_IsPackageAssembly = new();
+
+        internal static bool ShowInternalControls
+        {
+            get => EditorPrefs.GetBool(k_ShowInternalControlsPrefKey, false);
+            set => EditorPrefs.SetBool(k_ShowInternalControlsPrefKey, value);
+        }
+
+        internal static bool ShowPackageControls
+        {
+            get => EditorPrefs.GetBool(k_ShowPackageControlsPrefKey, false);
+            set => EditorPrefs.SetBool(k_ShowPackageControlsPrefKey, value);
+        }
 
         static Dictionary<LibraryTypeKey, LibraryItem> GenerateLibraryTypeFromSerializedDataTypes()
         {
@@ -109,18 +127,11 @@ namespace Unity.UIToolkit.Editor
 
             if (uxmlAttr == null || uxmlAttr.visibility == LibraryVisibility.Default)
             {
-                if (!Unsupported.IsDeveloperMode())
-                {
-                    var a = type.Assembly.GetCustomAttribute<UILibraryVisibilityAttribute>();
-                    if (a != null && a.Visibility == LibraryVisibility.Hidden)
-                        return false;
+                if (IsInternalType(type) && !ShowInternalControls)
+                    return false;
 
-                    if (IsUnityBuiltInEditorAssembly(type.Assembly))
-                        return false;
-
-                    if (type.Namespace != null && type.Namespace.StartsWith("UnityEditor."))
-                        return false;
-                }
+                if (IsPackageType(type) && !ShowPackageControls)
+                    return false;
             }
 
             if (type.IsAbstract)
@@ -129,18 +140,39 @@ namespace Unity.UIToolkit.Editor
             return true;
         }
 
+        static bool IsPackageType(Type type)
+        {
+            var assembly = type.Assembly;
+            if (!s_IsPackageAssembly.TryGetValue(assembly, out var isPackage))
+            {
+                isPackage = PackageInfo.FindForAssembly(assembly) != null;
+                s_IsPackageAssembly[assembly] = isPackage;
+            }
+
+            return isPackage;
+        }
+
+        static bool IsInternalType(Type type)
+        {
+            var a = type.Assembly.GetCustomAttribute<UILibraryVisibilityAttribute>();
+            if (a != null && a.Visibility == LibraryVisibility.Hidden)
+                return true;
+
+            if (IsUnityBuiltInEditorAssembly(type.Assembly))
+                return true;
+
+            return type.Namespace != null && type.Namespace.StartsWith("UnityEditor.");
+        }
+
         static bool IsUnityBuiltInEditorAssembly(System.Reflection.Assembly assembly) =>
             assembly.GetCustomAttribute<AssemblyIsEditorAssembly>() != null &&
             assembly.GetName().Name.StartsWith("UnityEditor");
 
         /// <summary>
-        /// Returns the explicit library path declared on the type, or null when the type isn't visible in the library or has no path set.
+        /// Returns the explicit library path declared on the type, or null when the type has no path set.
         /// </summary>
         static string ResolveLibraryPath(Type type)
         {
-            if (!IsVisibleInLibrary(type))
-                return null;
-
             var uxmlAttr = type.GetCustomAttribute<UxmlElementAttribute>();
             if (uxmlAttr is { libraryPath: not null })
                 return uxmlAttr.libraryPath == "" ? string.Empty : uxmlAttr.libraryPath;
@@ -149,3 +181,4 @@ namespace Unity.UIToolkit.Editor
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

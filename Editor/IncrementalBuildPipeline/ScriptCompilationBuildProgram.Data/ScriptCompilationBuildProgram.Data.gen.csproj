@@ -8,7 +8,7 @@
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
     <EnableDefaultItems>false</EnableDefaultItems>
-    <LangVersion>12.0</LangVersion>
+    <LangVersion>14.0</LangVersion>
     <NoWarn>1701</NoWarn>
     <Nullable>disable</Nullable>
     <EnableUnsafeBinaryFormatterSerialization>false</EnableUnsafeBinaryFormatterSerialization>
@@ -29,6 +29,6 @@
   </ItemGroup>
   <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />
   <ItemGroup>
-    <Analyzer Include="/tmp/uitoolkit_gen__2wk85wp/Unity.UIToolkit.SourceGenerator.dll" />
+    <Analyzer Include="/tmp/uitoolkit_gen_1la1q1fv/Unity.UIToolkit.SourceGenerator.dll" />
   </ItemGroup>
 </Project>

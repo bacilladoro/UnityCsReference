@@ -2,6 +2,8 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
+using Unity.Scripting.LifecycleManagement;
 using System;
 using System.Collections.Generic;
 
@@ -24,9 +26,10 @@ namespace UnityEngine.UIElements
         public Rect boundingBoxWithoutNested;
     }
 
-    internal static class WorldSpaceDataStore
+    internal static partial class WorldSpaceDataStore
     {
-        private static Dictionary<uint, WorldSpaceData> m_WorldSpaceData = new();
+        [NoAutoStaticsCleanup]
+        private static readonly Dictionary<uint, WorldSpaceData> m_WorldSpaceData = new();
 
         // For unit tests
         internal static int Count => m_WorldSpaceData.Count;
@@ -64,3 +67,4 @@ namespace UnityEngine.UIElements
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

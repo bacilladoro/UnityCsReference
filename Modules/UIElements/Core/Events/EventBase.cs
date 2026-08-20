@@ -2,6 +2,8 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
+using Unity.Scripting.LifecycleManagement;
 using System;
 using System.Collections.Generic;
 using UnityEngine.Bindings;
@@ -17,7 +19,7 @@ namespace UnityEngine.UIElements
     /// <summary>
     /// The base class for all UIElements events.  The class implements IDisposable to ensure proper release of the event from the pool and of any unmanaged resources, when necessary.
     /// </summary>
-    public abstract class EventBase : IDisposable
+    public abstract partial class EventBase : IDisposable
     {
         internal class TypeData
         {
@@ -38,6 +40,8 @@ namespace UnityEngine.UIElements
             }
         }
 
+
+        [NoAutoStaticsCleanup]
         private static long s_LastTypeId = 0;
 
         /// <summary>
@@ -84,6 +88,7 @@ namespace UnityEngine.UIElements
 
         internal int eventCategories { get; }
 
+        [NoAutoStaticsCleanup]
         static ulong s_NextEventId = 0;
 
         // Read-only state
@@ -624,9 +629,10 @@ namespace UnityEngine.UIElements
     /// Generic base class for events, implementing event pooling and automatic registration to the event type system.
     /// </summary>
     [EventCategory(EventCategory.Default)]
-    public abstract class EventBase<T> : EventBase where T : EventBase<T>, new()
+    public abstract partial class EventBase<T> : EventBase where T : EventBase<T>, new()
     {
         static readonly long s_TypeId = RegisterEventType();
+        [NoAutoStaticsCleanup]
         static readonly ObjectPool<T> s_Pool = new ObjectPool<T>(() => new T());
 
         /// <summary>
@@ -657,6 +663,7 @@ namespace UnityEngine.UIElements
 
         internal static readonly EventCategory EventCategory = EventInterestReflectionUtils.GetEventCategory(typeof(T));
 
+        [NoAutoStaticsCleanup]
         internal static readonly TypeData k_TypeData = new(s_TypeId, EventCategory
                 , typeof(T)
             );
@@ -748,3 +755,4 @@ namespace UnityEngine.UIElements
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

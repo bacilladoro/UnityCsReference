@@ -2,15 +2,19 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
 using UnityEngine;
 using UnityEngine.UIElements;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.UIElements
 {
     [InitializeOnLoad]
-    class EditorMonitor
+    partial class EditorMonitor
     {
-        public static EditorMonitor instance { get; } = new EditorMonitor();
+        // Cleanup re-runs the initializer on code reload; the fresh instance re-subscribes its callbacks.
+        [AutoStaticsCleanupOnCodeReload]
+        public static EditorMonitor instance { get; private set; } = new EditorMonitor();
 
         public EditorMonitor()
         {
@@ -101,3 +105,4 @@ namespace UnityEditor.UIElements
         public static void SetResetPanelRenderingOnAssetChange(EditorWindow window, bool reset) => window.resetPanelRenderingOnAssetChange = reset;
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

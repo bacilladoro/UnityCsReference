@@ -2,6 +2,8 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
+using Unity.Scripting.LifecycleManagement;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -165,7 +167,7 @@ namespace UnityEngine.UIElements
     /// For more information on the different properties of the PanelSettings object, refer to [[wiki:UIE-Runtime-Panel-Settings|Panel Settings properties reference]].
     /// </remarks>
     [HelpURL("UIE-Runtime-Panel-Settings")]
-    public class PanelSettings : ScriptableObject, IPanelSettings
+    public partial class PanelSettings : ScriptableObject, IPanelSettings
     {
         private const int k_DefaultSortingOrder = 0;
 
@@ -722,16 +724,20 @@ namespace UnityEngine.UIElements
             set => m_TextureSlotCount = value;
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         internal static Action<BaseRuntimePanel> CreateRuntimePanelDebug;
 
         [VisibleToOtherModules("UnityEditor.VectorGraphicsModule")]
+        [AutoStaticsCleanupOnCodeReload]
         internal static Func<ThemeStyleSheet> GetOrCreateDefaultTheme;
         internal static Func<int, IGameViewRenderInfo> GetGameViewRenderInfo
         {
             get => GameViewRenderInfoQuery.getImplementation;
             set => GameViewRenderInfoQuery.getImplementation = value;
         }
+        [AutoStaticsCleanupOnCodeReload]
         internal static Action<PanelSettings> SetPanelSettingsAssetDirty;
+        [AutoStaticsCleanupOnCodeReload] // re-registered by EditorDelegateRegistration on load
         internal static Action RequestEditorPlayerLoopUpdate;
 
         internal static void SetupLiveReloadPanelTrackers(bool isLiveReloadOn)
@@ -891,6 +897,9 @@ namespace UnityEngine.UIElements
         {
             InitializeShaders();
             AssignICUData();
+
+            if (m_ICUDataAsset != null)
+                TextCore.Text.TextHandle.RegisterICUDataAsset(m_ICUDataAsset);
         }
 
         private void OnDisable()
@@ -1124,6 +1133,7 @@ namespace UnityEngine.UIElements
         private float m_OldSortingOrder;
         private PanelRenderMode m_OldRenderMode;
         private bool m_IsLoaded = false;
+        [AutoStaticsCleanupOnCodeReload]
         internal static Action<PanelSettings> s_AssignICUData;
 
         private void OnValidate()
@@ -1204,3 +1214,4 @@ namespace UnityEngine.UIElements
 }
 
 #pragma warning restore CS0618
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

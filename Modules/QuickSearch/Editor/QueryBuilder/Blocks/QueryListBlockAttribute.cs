@@ -5,13 +5,14 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.Bindings;
 
 namespace UnityEditor.Search
 {
     [AttributeUsage(AttributeTargets.Class)]
-    public class QueryListBlockAttribute : Attribute
+    public partial class QueryListBlockAttribute : Attribute
     {
         internal class ListBlockData
         {
@@ -21,7 +22,9 @@ namespace UnityEditor.Search
             public QueryListBlock templateBlock => m_TemplateBlock ??= (QueryListBlock)Activator.CreateInstance(attribute.type, new object[] { null, attribute.id, string.Empty, attribute });
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         static Dictionary<string, ListBlockData> s_IdToAttribute;
+        [AutoStaticsCleanupOnCodeReload]
         static Dictionary<Type, ListBlockData> s_TypeToAttribute;
 
         public QueryListBlockAttribute(string category, string name, string id, string op = "=")

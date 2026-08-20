@@ -2,11 +2,13 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
 // 
 // Copyright SmartFormat Project maintainers and contributors.
 // Licensed under the MIT license.
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using System.Collections.Generic;
 
 namespace Unity.SmartStrings.Utilities;
@@ -18,11 +20,12 @@ namespace Unity.SmartStrings.Utilities;
 /// Maps two-letter ISO language codes to their pluralization rules.
 /// <see cref="PluralRules"/> are used by extensions like <c>TimeFormatter</c> and <c>PluralLocalizationFormatter</c>.
 /// </summary>
-public static class PluralRules
+public static partial class PluralRules
 {
     /// <summary>
     /// Mapping of each two-letter ISO language code to its <see cref="PluralRuleDelegate"/>.
     /// </summary>
+    [AutoStaticsCleanupOnCodeReload] // public dictionary of delegates; drop user-added entries on reload
     public static Dictionary<string, PluralRuleDelegate> IsoLangToDelegate { get; } =
         new() {
             // Singular
@@ -378,3 +381,4 @@ public static class PluralRules
 #pragma warning restore S3358
 #pragma warning restore S3776
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

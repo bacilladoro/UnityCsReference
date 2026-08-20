@@ -41,16 +41,6 @@ namespace UnityEngine.Audio
         public readonly ushort GetVersion() => (ushort)((Bits >> 16) & 0xFFF);
         public readonly byte GetDTMId() => (byte)(Bits >> 28);
 
-        /// <summary>
-        /// Throws an exception if this handle was not created.
-        /// This only checks if the handle is non-null; it does NOT validate against the DualThreadManager.
-        /// </summary>
-        public readonly void CheckValidOrThrow()
-        {
-            if (!WasCreated)
-                throw new System.InvalidOperationException("Attempting to use invalid DualThreadHandle");
-        }
-
         public readonly bool Equals(DualThreadHandle other) => Bits == other.Bits;
         public readonly override bool Equals(object obj) => obj is DualThreadHandle other && Equals(other);
         public readonly override int GetHashCode() => (int)Bits;
@@ -500,7 +490,6 @@ namespace UnityEngine.Audio
         }
 
         internal readonly DualThreadHandle Handle;
-        internal readonly unsafe ProcessorHeader* Header;
 
         /// <summary>
         /// Checks if this instance equals another.
@@ -556,10 +545,9 @@ namespace UnityEngine.Audio
             return Handle.GetHashCode();
         }
 
-        internal unsafe ProcessorInstance(DualThreadHandle handle, ProcessorHeader* header)
+        internal ProcessorInstance(DualThreadHandle handle)
         {
             Handle = handle;
-            Header = header;
         }
     }
 
@@ -638,55 +626,24 @@ namespace UnityEngine.Audio
         Message = 0xFF + 4
     };
 
+    // Layout mirror of the native audio::ProcessorHeader. C# never stores this; it is resolved transiently from a
+    // handle (see ControlContext.GetProcessorHeader) only to read ControlReflectionData / Configuration. Keep the
+    // field order in lockstep with the native struct.
     [NativeHeader("Modules/Audio/Public/ScriptableProcessors/ScriptableProcessor.h"), RequiredByNativeCode]
     unsafe struct ProcessorHeader
     {
-        void* m_Control;
-        internal DualThreadHandle DualThreadHandle;
         internal delegate* unmanaged[Cdecl]<ProcessorHeader*, ProcessorFunction, void*, void> NativeProcessorFunction;
         internal delegate* unmanaged[Cdecl]<ProcessorHeader*, ControlFunction, void*, void> NativeControlFunction;
 
         internal IntPtr ProcessorReflectionData;
         internal IntPtr ControlReflectionData;
-
-        /// <summary>
-        /// Call the C# / Job / native function directly.
-        /// This only happens in response from direct C# handle APIs, like nested produce, main-thread commands etc.
-        /// </summary>
-        /// <remarks>
-        /// This does NOT assert validity of the handle.
-        /// TODO: Maybe we shouldn't have an implementation of this in C# as well. We could just defer into the engine implementation
-        /// at the expense of additional managed/native trampolines or extra virtual function calls.
-        /// </remarks>
-        public void InvokeProcessor(ProcessorFunction fn, void* args)
-        {
-            fixed (ProcessorHeader* pThis = &this)
-            {
-                switch (fn)
-                {
-                    case ProcessorFunction.Update:
-                    case ProcessorFunction.OutputProcessEarly:
-                    case ProcessorFunction.OutputProcess:
-                    case ProcessorFunction.OutputProcessEnd:
-                    case ProcessorFunction.OutputRemoved:
-                        throw new NotSupportedException($"Cannot manually invoke {fn}, these are called automatically");
-
-                    default:
-                        break;
-                }
-
-                NativeProcessorFunction(pThis, fn, args);
-            }
-        }
-
-        public bool IsSameControl(ControlHeader* other) => m_Control == other;
     }
 
     [NativeHeader("Modules/Audio/Public/ScriptableProcessors/ScriptBindings/ScriptableProcessor.bindings.h")]
     internal static class ScriptableProcessorBindings
     {
-        public static unsafe void QueueProcessorDispose(ProcessorHeader* header, ControlHeader* control)
-            => QueueProcessorDisposeInternal(header, control);
+        public static unsafe void QueueProcessorDispose(DualThreadHandle handle, ControlHeader* control)
+            => QueueProcessorDisposeInternal(handle, control);
 
         public static unsafe bool AddDataToProcessorHandle(ControlHeader* control, DualThreadHandle handle, void* data, int size, int align, long typeHash)
         {
@@ -711,6 +668,15 @@ namespace UnityEngine.Audio
             fixed (RealtimeAccess* pAccess = &access)
             {
                 ReturnDataFromProcessorInternal(pAccess, handle, data, size, align, typeHash);
+            }
+        }
+
+        public static unsafe void InvokeRealtimeGenerate(in RealtimeAccess access, in IGeneratorProcessorExtensions.ProcessArguments args)
+        {
+            fixed (RealtimeAccess* pAccess = &access)
+            {
+                fixed (IGeneratorProcessorExtensions.ProcessArguments* pArgs = &args)
+                    InvokeRealtimeGenerateInternal(pAccess, pArgs);
             }
         }
 
@@ -746,19 +712,19 @@ namespace UnityEngine.Audio
             return IsSystemWideReconfiguringInternal(control);
         }
 
-        public static unsafe ProcessorInstance.Response SendMessageToProcessor(ProcessorHeader* header, ControlHeader* control, ProcessorInstance.Message* message)
+        public static unsafe ProcessorInstance.Response SendMessageToProcessor(DualThreadHandle handle, ControlHeader* control, ProcessorInstance.Message* message)
         {
-            return SendMessageToProcessorInternal(header, control, message);
+            return SendMessageToProcessorInternal(handle, control, message);
         }
 
         public static unsafe ProcessorHeader* GetProcessorHeaderFromHandle(ControlHeader* control, DualThreadHandle handle)
         {
             return (ProcessorHeader*)GetProcessorHeaderFromHandleInternal(control, handle);
         }
-        [NativeMethod(Name = "audio::GetProcessorHeaderFromHandle", IsFreeFunction = true)]
+        [NativeMethod(Name = "audio::GetProcessorHeaderFromHandle", IsFreeFunction = true, ThrowsException = true)]
         static extern unsafe /*ProcessorHeader*/ void* GetProcessorHeaderFromHandleInternal(/*ControlHeader*/ void* control, DualThreadHandle handle);
         [NativeMethod(Name = "audio::SendMessageToProcessor", IsFreeFunction = true, ThrowsException = true)]
-        static extern unsafe ProcessorInstance.Response SendMessageToProcessorInternal(/*ProcessorHeader* */ void* header, /*ControlHeader* */ void* control, /* Message* */ void* message);
+        static extern unsafe ProcessorInstance.Response SendMessageToProcessorInternal(DualThreadHandle handle, /*ControlHeader* */ void* control, /* Message* */ void* message);
 
         [NativeMethod(Name = "audio::PerformRecursiveUpdate", IsFreeFunction = true, ThrowsException = true)]
         static extern unsafe void PerformRecursiveUpdateInternal(DualThreadHandle handle, /*ControlHeader* */ void* control);
@@ -773,7 +739,7 @@ namespace UnityEngine.Audio
         static extern unsafe void ValidateCanProcessInternal(DualThreadHandle handle, /* ProcessContext* */ void* processingContext);
 
         [NativeMethod(Name = "audio::QueueProcessorDispose", IsFreeFunction = true, ThrowsException = true)]
-        static extern unsafe void QueueProcessorDisposeInternal(/*ProcessorHeader* */ void* header, /*ControlHeader* */ void* control);
+        static extern unsafe void QueueProcessorDisposeInternal(DualThreadHandle handle, /*ControlHeader* */ void* control);
 
         [NativeMethod(Name = "audio::GetRealtimeDataElementListForProcessor", IsFreeFunction = true, IsThreadSafe = true, ThrowsException = true)]
         static extern unsafe /*DataElement*/ void* GetRealtimeDataElementListForProcessorInternal(/*RealtimeAccess**/ void* access, DualThreadHandle handle);
@@ -783,6 +749,9 @@ namespace UnityEngine.Audio
 
         [NativeMethod(Name = "audio::ReturnDataFromProcessor", IsFreeFunction = true, IsThreadSafe = true, ThrowsException = true)]
         static extern unsafe void ReturnDataFromProcessorInternal(/*RealtimeAccess**/ void* access, DualThreadHandle handle, void* data, int size, int align, long typeHash);
+
+        [NativeMethod(Name = "audio::InvokeRealtimeGenerate", IsFreeFunction = true, IsThreadSafe = true, ThrowsException = true)]
+        static extern unsafe void InvokeRealtimeGenerateInternal(/*RealtimeAccess**/ void* access, /* GeneratorProduceDataArguments**/ void* args);
 
         [NativeMethod(Name = "audio::AddDataToProcessor", IsFreeFunction = true, ThrowsException = true)]
         static extern unsafe bool AddDataToProcessorHandleInternal(/*ControlHeader* */ void* control, DualThreadHandle handle, void* data, int size, int align, long typeHash);

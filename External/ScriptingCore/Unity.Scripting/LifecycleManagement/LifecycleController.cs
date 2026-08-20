@@ -1,3 +1,4 @@
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: ScriptingRuntime not yet converted
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using Unity.Scripting.LifecycleManagement.CodeGen;
@@ -317,3 +318,4 @@ namespace Unity.Scripting.LifecycleManagement
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

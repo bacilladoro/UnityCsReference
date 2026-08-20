@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitAuthoringFramework not yet converted
 using System;
 using UnityEngine.Bindings;
 
@@ -59,6 +60,22 @@ static class CommandSources
     /// Command source representing any menu (context menu, top bar menu, etc.)
     /// </summary>
     public static readonly CommandSource Menus = new();
+
+    /// <summary>
+    /// Command source representing a UI Stage instance.
+    /// </summary>
+    public static readonly CommandSource Stage = new();
+
+    /// <summary>
+    /// Command source representing a UI Builder instance.
+    /// </summary>
+    public static readonly CommandSource Builder = new();
+
+    /// <summary>
+    /// Command source representing the unified asset registry (e.g. a "Save All" driven centrally rather
+    /// than by a specific window).
+    /// </summary>
+    public static readonly CommandSource Registry = new();
 }
 
 /// <summary>
@@ -68,6 +85,7 @@ static class CommandSources
 /// Multiple categories can be combined using bitwise OR (e.g., InlineRule | StyleSheetRule).
 /// </summary>
 [Flags]
+[VisibleToOtherModules("UnityEditor.UIBuilderModule")]
 internal enum CommandCategory
 {
     /// <summary>
@@ -118,4 +136,11 @@ internal enum CommandCategory
     /// Commands in this category either request or process variable changes.
     /// </summary>
     Variables = 1 << 6,
+
+    /// <summary>
+    /// Command category for the save/discard lifecycle (pre/post save and pre/post discard).
+    /// Commands in this category either request or process saving or discarding a document.
+    /// </summary>
+    Save = 1 << 7,
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

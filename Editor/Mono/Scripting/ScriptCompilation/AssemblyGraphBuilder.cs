@@ -85,16 +85,16 @@ namespace UnityEditor.Scripting.ScriptCompilation
         public void Initialize(IReadOnlyCollection<CustomScriptAssembly> assemblies,
             IReadOnlyCollection<CustomScriptAssemblyReference> customScriptAssemblyReferences)
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var assemblyByNameLookup = assemblies.ToDictionary(x => x.Name, x => x);
-#pragma warning restore UA2001
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+#pragma warning disable UAC2001 // Avoid Linq
             var assemblyByGuidLookup = assemblies.ToDictionary(x => x.GUID, x => x);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
-#pragma warning disable UA2006 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2006 // Avoid Linq
             bool rootOverridden = assemblies.Any(x => AssetPath.ComparePaths(x.PathPrefix, _projectPath));
-#pragma warning restore UA2006
+#pragma warning restore UAC2006
             if (!rootOverridden)
             {
                 _npp.Insert(_globalAssemblyDefinition.PathPrefix, _globalAssemblyDefinition);

@@ -37,8 +37,8 @@ namespace UnityEngine.TextCore.Text
     [VisibleToOtherModules("UnityEngine.IMGUIModule", "UnityEngine.UIElementsModule")]
     internal class TextInfo
     {
-        static Vector2 s_InfinityVectorPositive = new Vector2(32767, 32767);
-        static Vector2 s_InfinityVectorNegative = new Vector2(-32767, -32767);
+        static readonly Vector2 s_InfinityVectorPositive = new Vector2(32767, 32767);
+        static readonly Vector2 s_InfinityVectorNegative = new Vector2(-32767, -32767);
 
         public int characterCount;
         public int spriteCount;

@@ -427,6 +427,7 @@ namespace UnityEngine
 
         public static extern DerivedScriptableObject[] ReturnDerivedScriptableObjectArray(DerivedScriptableObject param);
         public static extern DerivedScriptableObject2[] ReturnDerivedScriptableObject2Array(DerivedScriptableObject2 param);
+
     }
 
     [NativeHeader("Modules/Marshalling/MarshallingTests.h")]

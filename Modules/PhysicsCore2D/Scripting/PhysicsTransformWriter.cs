@@ -8,6 +8,7 @@ using Unity.Collections.LowLevel.Unsafe;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Profiling;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.Jobs;
 using UnityEngine.Scripting;
@@ -25,6 +26,11 @@ namespace Unity.U2D.Physics
         static readonly ProfilerMarker s_WriteTransformsWriteTransformsParallelJobMarker = new ProfilerMarker("PhysicsWorld.WriteTransforms.WriteTransformsParallelJob");
         static readonly ProfilerMarker s_WriteTransformsWriteTransformsSequentialJobMarker = new ProfilerMarker("PhysicsWorld.WriteTransforms.WriteTransformsSequentialJob");
         static readonly ProfilerMarker s_WriteTransformsCustomMarker = new ProfilerMarker("PhysicsWorld.WriteTransforms.Custom");
+
+        // Set by the writers when a body pose is not finite, read and cleared on the main thread after the write completes.
+        // A plain static is safe here: the writers only ever store true (a benign race) and job completion is a synchronization point, and these jobs are never Burst-compiled (engine modules cannot use Burst).
+        [NoAutoStaticsCleanup] // engine-internal incident flag, no user-code reference — a stale value after a code reload costs one empty scan at most
+        static bool s_NonFinitePoseSeen;
 
         /// <undoc/>
         [RequiredByNativeCode]
@@ -81,6 +87,13 @@ namespace Unity.U2D.Physics
                         }
                     }
 
+                    // A non-finite pose was seen (rare): quarantine the offending bodies before the tweens are exposed to the tween writer.
+                    if (s_NonFinitePoseSeen)
+                    {
+                        s_NonFinitePoseSeen = false;
+                        QuarantineNonFinitePoses(ref transformWriteTweens);
+                    }
+
                     // Set the transform write tweens (if active).
                     if (transformTweening)
                         world.SetTransformWriteTweens(new Span<PhysicsBody.TransformWriteTween>(transformWriteTweens.GetUnsafeReadOnlyPtr(), transformWriteTweens.Length));
@@ -123,6 +136,9 @@ namespace Unity.U2D.Physics
                     // Yes, so calculate if we should be calculate transform tweens.
                     var transformTweening = simulationType == PhysicsWorld.SimulationType.FixedUpdate;
 
+                    // No writer job runs on this path, so the quarantine scan is also the detection: it runs before the tweens reach the user callback or the tween writer.
+                    QuarantineNonFinitePoses(ref transformWriteTweens);
+
                     // Fetch the callback target.
                     var callbackTarget = transformWriteCallbackTarget as PhysicsCallbacks.ITransformWriteCallback;
                     if (callbackTarget != null)
@@ -153,12 +169,54 @@ namespace Unity.U2D.Physics
 
         /// <undoc/>
         [RequiredByNativeCode]
-        static unsafe void WriteWorldTransformsGetPhysicsTransformPose3D(
+        static void WriteWorldTransformsGetPhysicsTransformPose3D(
             PhysicsBody.TransformWriteTween transformWriteTween,
             PhysicsWorld.TransformPlane transformPlane,
             PhysicsWorld.TransformPlaneCustom transfomPlaneCustom,
             bool fast2D,
             out Vector3 position, out Quaternion rotation) => transformWriteTween.GetPose(transformPlane, ref transfomPlaneCustom, fast2D, out position, out rotation);
+
+        // Quarantine every body whose pose is not finite: disable it so it cannot simulate or reach the writers again,
+        // turn its tween off so the tween writer never consumes the bad pose, and report it once by name.
+        // This only runs on the rare step where a writer saw a non-finite pose, so the scan cost never touches the steady state.
+        static void QuarantineNonFinitePoses(ref NativeArray<PhysicsBody.TransformWriteTween> transformWriteTweens)
+        {
+            for (var i = 0; i < transformWriteTweens.Length; ++i)
+            {
+                // Fetch the transform tween.
+                var transformTween = transformWriteTweens[i];
+                if (transformTween.physicsTransform.isFinite)
+                    continue;
+
+                // Turn the tween off so the tween writer drops it.
+                transformTween.transformWriteMode = PhysicsBody.TransformWriteMode.Off;
+                transformWriteTweens[i] = transformTween;
+
+                // Disable the body.
+                var body = transformTween.body;
+                if (!body.isValid)
+                    continue;
+
+                // Disable the body.
+                body.enabled = false;
+                Debug.LogWarning($"The PhysicsBody on '{GetBodyDisplayName(in transformTween, body)}' was disabled because its pose is not finite. This usually indicates an unstable simulation.");
+            }
+        }
+
+        // Resolve a display name for the quarantine report: the owner GameObject when the owner is part of one, else the Transform being written, else the body itself.
+        static string GetBodyDisplayName(in PhysicsBody.TransformWriteTween transformTween, PhysicsBody body)
+        {
+            // A Component's name is its GameObject's name, so both cases read the same way.
+            var owner = body.owner;
+            if (owner is Component or GameObject)
+                return owner.name;
+
+            var transform = transformTween.transform;
+            if (transform != null)
+                return transform.name;
+
+            return body.ToString();
+        }
 
         #region Writers
 
@@ -182,6 +240,13 @@ namespace Unity.U2D.Physics
 
                 // Fetch the body transform.
                 var physicsTransform = transformTween.physicsTransform;
+
+                // A pose that is not finite (an unstable simulation can produce one) is never written; the flag defers all reporting and quarantine to the rare main-thread path.
+                if (!physicsTransform.isFinite)
+                {
+                    s_NonFinitePoseSeen = true;
+                    return;
+                }
 
                 Vector3 newPosition;
                 Quaternion newRotation;
@@ -230,6 +295,13 @@ namespace Unity.U2D.Physics
 
                 // Fetch the body transform.
                 var physicsTransform = transformTween.physicsTransform;
+
+                // A pose that is not finite (an unstable simulation can produce one) is never written; the flag defers all reporting and quarantine to the rare path below.
+                if (!physicsTransform.isFinite)
+                {
+                    s_NonFinitePoseSeen = true;
+                    continue;
+                }
 
                 Vector3 newPosition;
                 Quaternion newRotation;

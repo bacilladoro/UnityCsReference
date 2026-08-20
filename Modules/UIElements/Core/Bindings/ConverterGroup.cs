@@ -66,6 +66,12 @@ namespace UnityEngine.UIElements
             m_Registry.Register(typeof(TSource), typeof(TDestination), converter);
         }
 
+        // Invoked by the code-reload cleanup of the static groups in ConverterGroups.
+        internal void Clear()
+        {
+            m_Registry.Clear();
+        }
+
         /// <summary>
         /// Converts the specified value from <typeparamref name="TSource"/> to <typeparamref name="TDestination"/> using only the converter group.
         /// </summary>

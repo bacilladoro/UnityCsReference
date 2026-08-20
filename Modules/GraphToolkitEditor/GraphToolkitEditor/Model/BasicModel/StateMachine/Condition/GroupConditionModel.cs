@@ -23,7 +23,7 @@ namespace Unity.GraphToolkit.Editor
     [Serializable]
     [MovedFrom(false, "Unity.Motion.Editor", "Unity.Motion.Editor")]
     [UnityRestricted]
-    internal class GroupConditionModel : ConditionModel, IGraphElementContainer
+    internal class GroupConditionModel : ConditionModel, IGraphElementContainer, IGroupCondition
     {
         /// <summary>
         /// Create an instance of <see cref="GroupConditionModel"/>.
@@ -80,7 +80,8 @@ namespace Unity.GraphToolkit.Editor
                 base.Transition = value;
                 foreach (var condition in SubConditions)
                 {
-                    condition.Transition = value;
+                    if (condition != null)
+                        condition.Transition = value;
                 }
             }
         }
@@ -89,6 +90,23 @@ namespace Unity.GraphToolkit.Editor
         /// The sub-conditions of this <see cref="GroupConditionModel"/>.
         /// </summary>
         public IReadOnlyList<ConditionModel> SubConditions => m_SubConditions ??= new List<ConditionModel>();
+
+        /// <inheritdoc />
+        GroupConditionOperation IGroupCondition.Operation => GroupOperation == Operation.And ? GroupConditionOperation.And : GroupConditionOperation.Or;
+
+        /// <inheritdoc />
+        IEnumerable<ICondition> IGroupCondition.Get()
+        {
+            foreach (var subCondition in SubConditions)
+            {
+                if (subCondition == null)
+                    continue;
+
+                yield return subCondition is IUserConditionModel { UserCondition: not null } userConditionModel
+                    ? userConditionModel.UserCondition
+                    : subCondition;
+            }
+        }
 
         /// <inheritdoc />
         public override IEnumerable<GraphElementModel> DependentModels => GetGraphElementModels();
@@ -196,15 +214,11 @@ namespace Unity.GraphToolkit.Editor
             Verbose
         }
 
-        internal static DisplayMode DefaultDisplayMode = DisplayMode.Consise;
+        internal const DisplayMode DefaultDisplayMode = DisplayMode.Consise;
 
         internal string GetLabel()
         {
-            if (DefaultDisplayMode == DisplayMode.Consise)
-            {
-                return GroupOperation == Operation.And ? "AND" : "OR";
-            }
-            return GroupOperation == Operation.And ? "All conditions need to be true" : "One condition needs to be true";
+            return GroupOperation == Operation.And ? "AND" : "OR";
         }
 
         /// <inheritdoc />
@@ -217,6 +231,9 @@ namespace Unity.GraphToolkit.Editor
             sb.AppendLine();
             foreach (var condition in SubConditions)
             {
+                if (condition == null)
+                    continue;
+
                 sb.Append(condition.ToString(indentLevel + 1));
                 sb.AppendLine();
             }

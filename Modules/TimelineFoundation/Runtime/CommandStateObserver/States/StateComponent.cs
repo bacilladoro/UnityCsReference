@@ -95,10 +95,10 @@ namespace Unity.Timeline.Foundation.CSO
 
             void BeginStateChange()
             {
-#pragma warning disable UA2007 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2007 // Avoid Linq
                 if (StateObserverHelper.CurrentObserver != null &&
                     !StateObserverHelper.CurrentObserver.ModifiedStateComponents.Contains(m_State))
-#pragma warning restore UA2007
+#pragma warning restore UAC2007
                 {
                     Debug.LogError($"Observer {StateObserverHelper.CurrentObserver?.GetType()} does not specify that it modifies {m_State}. Please add the state component to its {nameof(IStateObserver.ModifiedStateComponents)}.");
                 }

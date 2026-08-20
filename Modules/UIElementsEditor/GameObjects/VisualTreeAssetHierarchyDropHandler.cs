@@ -2,12 +2,14 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
 using System.Collections.Generic;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UIElements;
 using Object = UnityEngine.Object;
+using Unity.Scripting.LifecycleManagement;
 
 #nullable enable
 namespace UnityEditor.UIElements
@@ -22,6 +24,7 @@ namespace UnityEditor.UIElements
         /// <summary>GenericData key for tests: when the hierarchy passes null for parentForDraggedObjects, the handler may use this Transform as the parent for new objects.</summary>
         internal const string k_GenericDataParentForNewObjects = "VisualTreeAssetHierarchyDropHandler.ParentForNewObjects";
 
+        [NoAutoStaticsCleanup]
         static bool s_Registered;
 
         internal static void Register()
@@ -345,3 +348,4 @@ namespace UnityEditor.UIElements
 
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

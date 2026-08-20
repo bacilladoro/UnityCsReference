@@ -8,6 +8,7 @@ using System.Linq;
 using UnityEditor.Search.Providers;
 using UnityEditor.SearchService;
 using UnityEngine;
+using Unity.Scripting.LifecycleManagement;
 using Object = UnityEngine.Object;
 
 namespace UnityEditor.Search
@@ -82,9 +83,9 @@ namespace UnityEditor.Search
 
         public static IEnumerable<string> DefaultSearchItemConverter(IEnumerable<SearchItem> items)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             return items.Select(item => item.id);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
     }
 
@@ -106,9 +107,9 @@ namespace UnityEditor.Search
             if (searchSessions.ContainsKey(context.guid))
                 return;
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var provider = SearchService.Providers.First(p => p.id == providerId);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             searchSessions.Add(context.guid, new SearchApiSession(context, provider));
         }
 
@@ -132,7 +133,7 @@ namespace UnityEditor.Search
 
         public virtual void EndSearch(ISearchContext context) {}
 
-        internal static string k_Name = "Advanced";
+        internal static readonly string k_Name = "Advanced";
 
         public string name => k_Name;
 
@@ -160,11 +161,14 @@ namespace UnityEditor.Search
     }
 
     [ProjectSearchEngine]
-    class ProjectSearchEngine : QuickSearchEngine, IProjectSearchEngine
+    partial class ProjectSearchEngine : QuickSearchEngine, IProjectSearchEngine
     {
         public override string providerId => "asset";
+        [AutoStaticsCleanupOnCodeReload]
         private static QueryEngine s_QueryEngine = new QueryEngine(validateFilters: false);
+        [AutoStaticsCleanupOnCodeReload]
         private static List<IFilterNode> s_Filters = new();
+        [AutoStaticsCleanupOnCodeReload]
         private static List<ISearchNode> s_Searches = new();
 
         public override void BeginSession(ISearchContext context)
@@ -220,13 +224,13 @@ namespace UnityEditor.Search
 
         public static void SetSearchContext(string query, ProjectSearchContext project, SearchContext context)
         {
-            #pragma warning disable UA2011 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2011 // Avoid Linq
             if (project.requiredTypeNames != null && project.requiredTypeNames.FirstOrDefault() != null)
-#pragma warning restore UA2011
+#pragma warning restore UAC2011
             {
-                #pragma warning disable UA2010 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2010 // Avoid Linq
                 context.filterType = Utils.GetTypeFromName(project.requiredTypeNames.First());
-#pragma warning restore UA2010
+#pragma warning restore UAC2010
             }
             else
             {
@@ -265,9 +269,9 @@ namespace UnityEditor.Search
 
         static IEnumerable<string> SearchItemConverter(IEnumerable<SearchItem> items)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             return items.Select(ToPath);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         static string ToPath(SearchItem item)
@@ -302,13 +306,13 @@ namespace UnityEditor.Search
                 return;
 
             searchSession.context.searchText = query;
-            #pragma warning disable UA2011 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2011 // Avoid Linq
             if (context.requiredTypeNames != null && context.requiredTypeNames.FirstOrDefault() != null)
-#pragma warning restore UA2011
+#pragma warning restore UAC2011
             {
-                #pragma warning disable UA2010 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2010 // Avoid Linq
                 searchSession.context.filterType = Utils.GetTypeFromName(context.requiredTypeNames.First());
-#pragma warning restore UA2010
+#pragma warning restore UAC2010
             }
             else
             {
@@ -429,9 +433,9 @@ namespace UnityEditor.Search
 
         static IEnumerable<AdvancedObjectSelector> GetActiveSelectors()
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             return SearchService.OrderedObjectSelectors.Where(p => p.active);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
     }
 }

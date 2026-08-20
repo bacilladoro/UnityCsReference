@@ -111,15 +111,15 @@ namespace UnityEditor.SceneManagement
         internal static void RemapAssetReferencesInScene(UnityEngine.SceneManagement.Scene scene, Dictionary<string, string> pathMap, Dictionary<EntityId, EntityId> idMap = null)
         {
             RemapAssetReferencesInSceneInternal(scene,
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 pathMap.Keys.ToArray(), pathMap.Values.ToArray(),
-#pragma warning restore UA2001
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+#pragma warning disable UAC2001 // Avoid Linq
                 idMap == null ? Array.Empty<EntityId>() : idMap.Keys.ToArray(),
-#pragma warning restore UA2001
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+#pragma warning disable UAC2001 // Avoid Linq
                 idMap == null ? Array.Empty<EntityId>() : idMap.Values.ToArray()
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             );
         }
 

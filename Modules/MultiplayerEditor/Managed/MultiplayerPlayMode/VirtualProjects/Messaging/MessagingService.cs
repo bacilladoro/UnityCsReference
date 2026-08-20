@@ -6,10 +6,11 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System.Text.Json;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEditor.MPE;
 using UnityEngine;
-using Newtonsoft.Json;
 using Unity.Multiplayer.PlayMode.Editor;
 
 namespace Unity.Multiplayer.PlayMode.Editor
@@ -37,6 +38,11 @@ namespace Unity.Multiplayer.PlayMode.Editor
         public const string k_DefaultChannelName = "vp-channel";
         const int k_MessageTimeoutSeconds = 60;
         const string k_HasEditorTickedSessionStateKey = "MPPM_" + nameof(HasEditorTicked);
+
+        // Message types carry their payload in public fields (e.g. CloneState, LogCounts), which
+        // System.Text.Json skips by default (Newtonsoft included them).
+        [NoAutoStaticsCleanup] // Immutable debug-logging config; holds no user code or scene objects, safe across Code Reload
+        static readonly JsonSerializerOptions s_DebugSerializerOptions = new JsonSerializerOptions { IncludeFields = true };
 
         readonly IDictionary<Type, List<Action<object>>> m_Handlers = new Dictionary<Type, List<Action<object>>>();
         readonly List<(MessageId MessageId, PendingAck Ack)> m_Acks = new List<(MessageId, PendingAck)>();
@@ -199,7 +205,7 @@ namespace Unity.Multiplayer.PlayMode.Editor
 
                 m_Delegates.SendFunc(payloadStream.ToArray());
 
-                MppmLog.Debug($"Message Sent: {message.GetType().Name} (to '{targetIdentifier}')\nPayload: {JsonConvert.SerializeObject(message)}");
+                MppmLog.Debug($"Message Sent: {message.GetType().Name} (to '{targetIdentifier}')\nPayload: {JsonSerializer.Serialize(message, s_DebugSerializerOptions)}");
             }
         }
 
@@ -298,7 +304,7 @@ namespace Unity.Multiplayer.PlayMode.Editor
                     return;
                 }
 
-                MppmLog.Debug($"Message Received: {message.GetType().Name}\nPayload:{JsonConvert.SerializeObject(message)}");
+                MppmLog.Debug($"Message Received: {message.GetType().Name}\nPayload:{JsonSerializer.Serialize(message, s_DebugSerializerOptions)}");
 
                 var handled = false;
                 foreach (var (handlerType, handlerActions) in m_Handlers)

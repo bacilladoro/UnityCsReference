@@ -166,9 +166,9 @@ namespace UnityEditor.Search
             if (m_ResultView == null)
                 return;
 
-            #pragma warning disable UA2011 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2011 // Avoid Linq
             var selectedItem = m_ResultView.selection.FirstOrDefault();
-#pragma warning restore UA2011
+#pragma warning restore UAC2011
             if (selectedItem == null)
                 return;
 
@@ -182,9 +182,9 @@ namespace UnityEditor.Search
             if (m_ResultView == null)
                 return GUIContent.none;
 
-            #pragma warning disable UA2011 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2011 // Avoid Linq
             var selectedItem = m_ResultView.selection.FirstOrDefault();
-#pragma warning restore UA2011
+#pragma warning restore UAC2011
             if (selectedItem == null)
                 return GUIContent.Temp("No selection");
 
@@ -196,9 +196,9 @@ namespace UnityEditor.Search
             if (m_ResultView == null)
                 return string.Empty;
 
-            #pragma warning disable UA2011 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2011 // Avoid Linq
             var selectedItem = m_ResultView.selection.FirstOrDefault();
-#pragma warning restore UA2011
+#pragma warning restore UAC2011
             if (selectedItem == null)
                 return query.description;
 

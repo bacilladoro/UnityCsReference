@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using Unity.GraphToolkit.ItemLibrary.Editor;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 
 namespace Unity.GraphToolkit.Editor
@@ -20,6 +21,7 @@ namespace Unity.GraphToolkit.Editor
         /// </summary>
         /// <remarks>'k_NoDatabase' is a static, read-only list of <see cref="ItemLibraryDatabaseBase"/> used to represent an empty database collection. It helps
         /// optimize performance by reusing a predefined empty list instead of creating new instances when no databases are available, which prevents memory allocations.</remarks>
+        [NoAutoStaticsCleanup] // empty sentinel list; never holds data, reused to avoid allocations
         protected static readonly IReadOnlyList<ItemLibraryDatabaseBase> k_NoDatabase = new List<ItemLibraryDatabaseBase>();
 
         /// <summary>
@@ -28,6 +30,7 @@ namespace Unity.GraphToolkit.Editor
         /// <remarks>'k_NoTypeList' is a static, read-only collection of <see cref="Type"/> used to represent an empty type collection. It helps optimize
         /// performance by reusing a predefined empty collection instead of creating new instances when no types are available, which prevents memory allocations.
         /// </remarks>
+        [NoAutoStaticsCleanup] // empty sentinel array; never holds data, reused to avoid allocations
         protected static readonly IReadOnlyCollection<Type> k_NoTypeList = Array.Empty<Type>();
 
         /// <summary>

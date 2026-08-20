@@ -203,10 +203,10 @@ namespace UnityEditor
             float width = billboard.width;
             float height = billboard.height;
             float bottom = billboard.bottom;
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             mesh.SetVertices(Enumerable.Repeat(
                 billboard.GetVertices().Select(v => new Vector3(
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     (v.x - 0.5f) * width,
                     v.y * height + bottom,
                     0)),
@@ -215,10 +215,10 @@ namespace UnityEditor
 
             // (0,0,1) for the front-facing vertices and (0,0,-1) for the back-facing vertices
             mesh.SetNormals(
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 Enumerable.Repeat(Vector3.forward, billboard.vertexCount).Concat(
                     Enumerable.Repeat(-Vector3.forward, billboard.vertexCount)).ToList());
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             // make a new triangle list with second half triangles flipped
             var indices = new int[billboard.indexCount * 2];

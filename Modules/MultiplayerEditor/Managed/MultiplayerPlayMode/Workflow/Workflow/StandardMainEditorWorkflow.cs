@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEditor.Multiplayer.Internal;
 using UnityEngine;
@@ -11,8 +12,9 @@ using UnityEngine.SceneManagement;
 
 namespace Unity.Multiplayer.PlayMode.Editor
 {
-    class StandardMainEditorWorkflow
+    partial class StandardMainEditorWorkflow
     {
+        [AutoStaticsCleanupOnCodeReload] // last write time for change detection; must reset so changes during reload are detected
         static string s_LastWriteTime;
 
         /*

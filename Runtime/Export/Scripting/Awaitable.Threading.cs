@@ -10,7 +10,7 @@ using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEngine
 {
-    partial class Awaitable
+    public partial class Awaitable
     {
         [AutoStaticsCleanupOnCodeReload]
         static SynchronizationContext _synchronizationContext;

@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
 //
 // Copyright SmartFormat Project maintainers and contributors.
 // Licensed under the MIT license.
@@ -9,12 +10,14 @@
 using System;
 using System.Collections.Generic;
 using Unity.SmartStrings.Core.Extensions;
+using Unity.Scripting.LifecycleManagement;
 
 namespace Unity.SmartStrings.Extensions;
 
 /// <summary>
 /// Helper class for dealing with well-known <see cref="ISource"/> and <see cref="IFormatter"/> extensions.
 /// </summary>
+[NoAutoStaticsCleanup] // immutable well-known type-name -> order lookups
 static class WellKnownExtensionTypes
 {
     /// <summary>
@@ -85,3 +88,4 @@ static class WellKnownExtensionTypes
         return 0;
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

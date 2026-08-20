@@ -250,17 +250,17 @@ namespace UnityEditor
         {
             // Find the lower detail lod... clamp value to stop overlapping slider
             var minimum = 0.0f;
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var lowerLOD = lods.FirstOrDefault(x => x.LODIndex == lods[lod].LODIndex + 1);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             if (lowerLOD != null)
                 minimum = lowerLOD.RawScreenPercent;
 
             // Find the higher detail lod... clamp value to stop overlapping slider
             var maximum = 1.0f;
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var higherLOD = lods.FirstOrDefault(x => x.LODIndex == lods[lod].LODIndex - 1);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             if (higherLOD != null)
                 maximum = higherLOD.RawScreenPercent;
 

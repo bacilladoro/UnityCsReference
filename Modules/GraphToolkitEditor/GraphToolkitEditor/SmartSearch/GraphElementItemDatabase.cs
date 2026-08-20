@@ -77,7 +77,7 @@ namespace Unity.GraphToolkit.Editor
 
                     var node = new GraphNodeModelLibraryItem(
                         name,
-                        new NodeItemLibraryData(type),
+                        new NodeItemLibraryData(type, GraphModel.IsStateMachineGraph),
                         data => data.CreateNode(type, name, n =>
                         {
                             if (attribute.Mode != null && n is NodeModel nodeModel)
@@ -318,7 +318,7 @@ namespace Unity.GraphToolkit.Editor
             {
                 IItemLibraryData libraryData;
                 if (graphModel.GraphObject is not null)
-                    libraryData = new NodeItemLibraryData(graphModel.GraphObject.GetType(), graphModel.GetGraphReference(true));
+                    libraryData = new NodeItemLibraryData(graphModel.GraphObject.GetType(), graphModel.GetGraphReference(true), graphModel.IsStateMachineGraph);
                 else
                     libraryData = new TypeItemLibraryData(GraphModel.GetSubgraphTypeHandle(), graphModel);
 

@@ -11,6 +11,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditorInternal;
 using UnityEngine;
 
@@ -47,6 +48,7 @@ namespace UnityEditor.Search
 
     class PropertyDatabaseLock : IDisposable
     {
+        [NoAutoStaticsCleanup]
         static Dictionary<string, SharedCounter> s_DatabaseFiles = new Dictionary<string, SharedCounter>();
 
         class SharedCounter
@@ -583,9 +585,9 @@ namespace UnityEditor.Search
                 sb.AppendLine($"\t\tTop {longestStringsCount} longest strings:");
 
                 var strings = view.GetAllStrings();
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 foreach (var str in strings.OrderByDescending(s => s.Length).Take(longestStringsCount))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 {
                     sb.AppendLine($"\t\t\t{str}");
                 }

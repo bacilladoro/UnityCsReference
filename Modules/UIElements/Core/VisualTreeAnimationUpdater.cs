@@ -178,11 +178,7 @@ namespace UnityEngine.UIElements
                 if (ve.panel != panel)
                     continue;
 
-                styleAnim.UpdateElementClipAnimation(
-                    ve,
-                    ve.resolvedStyle.unityAnimationClip,
-                    ve.resolvedStyle.animationPlayState,
-                    now);
+                styleAnim.UpdateElementClipAnimation(ve, now);
             }
 
             m_DirtyElements.Clear();

@@ -271,13 +271,26 @@ namespace UnityEngine.UIElements
 
         private bool SetComputedValue<TComputed>(ref StylePropertyData<StyleList<TComputed>, List<TComputed>> property,
             ReadOnlySpan<TComputed> computedValue)
-            where TComputed : unmanaged, IEquatable<TComputed>
+            where TComputed : unmanaged
         {
             if (ValueEquals(computedValue, property.computedValue))
                 return false;
 
             var result = property.computedValue;
             computedValue.CopyTo(ref result);
+            property.computedValue = result;
+            return true;
+        }
+
+        private bool SetComputedValue(ref StylePropertyData<StyleList<UIAnimationClip>, List<UIAnimationClip>> property,
+            ReadOnlySpan<EntityId> computedValue)
+        {
+            if (ValueEquals(computedValue, property.computedValue,
+                    (id, clip) => id == (clip != null ? clip.GetEntityId() : EntityId.None)))
+                return false;
+
+            var result = property.computedValue;
+            computedValue.CopyTo(ref result, id => (UIAnimationClip)Resources.EntityIdToObject(id));
             property.computedValue = result;
             return true;
         }
@@ -344,13 +357,15 @@ namespace UnityEngine.UIElements
         }
 
         private static bool ValueEquals<T>(ReadOnlySpan<T> a, List<T> b)
-            where T : unmanaged, IEquatable<T>
+            where T : unmanaged
         {
             if (b == null) return false; // As long as ToList(empty) doesn't return null, we need them to differ
             if (a.IsEmpty) return b.Count == 0;
             if (a.Length != b.Count) return false;
+            // EqualityComparer<T>.Default handles enum element types (which don't implement IEquatable<T>) without boxing.
+            var comparer = EqualityComparer<T>.Default;
             for (var i = 0; i < a.Length; i++)
-                if (!a[i].Equals(b[i]))
+                if (!comparer.Equals(a[i], b[i]))
                     return false;
             return true;
         }

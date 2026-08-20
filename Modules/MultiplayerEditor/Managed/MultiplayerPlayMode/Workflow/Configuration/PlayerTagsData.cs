@@ -4,13 +4,16 @@
 
 using System;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace Unity.Multiplayer.PlayMode.Editor
 {
     [Serializable]
     struct PlayerTagsData
     {
+        [JsonInclude]
         public List<string> PlayerTags;
+        [JsonInclude]
         public string version;
     }
 }

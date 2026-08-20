@@ -131,12 +131,12 @@ namespace Unity.Timeline.Foundation.View
             if (m_SelectionRectangleHasStarted && CanStopManipulation(e))
             {
                 IEnumerable<ItemElement> overlappedElements = m_SelectionRectangleOverlay.GetOverlappedElements();
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 IEnumerable<UniqueID> elementIds = overlappedElements.Select(element => element.ID);
-#pragma warning restore UA2001
-#pragma warning disable UA2002 // System.Linq.Any() usage
+#pragma warning restore UAC2001
+#pragma warning disable UAC2002 // System.Linq.Any() usage
                 if (elementIds.Any())
-#pragma warning restore UA2002 // System.Linq.Any() usage
+#pragma warning restore UAC2002 // System.Linq.Any() usage
                 {
                     if (!(e.shiftKey || e.actionKey))
                         m_SelectionBehaviour.ClearSelection(viewModel);
@@ -182,9 +182,9 @@ namespace Unity.Timeline.Foundation.View
         {
             IEnumerable<UniqueID> pickedSelection = new[] { pickedSelectable.ID };
             IEnumerable<UniqueID> rangeSelection = ShiftSelection.GetSelectableElements(pickedSelectable, viewModel.selectionData, viewModel.sequenceData);
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             m_SelectionBehaviour.Select(viewModel, pickedSelection.Concat(rangeSelection));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         void DoSingleSelection(ISelectableElement pickedSelectable, ISelectionBehaviour.Location edgeLocation)

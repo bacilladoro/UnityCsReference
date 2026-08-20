@@ -277,9 +277,9 @@ namespace UnityEditorInternal
             region.AddToClassList(GrowClass);
             container.Add(region);
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var mode = new PopupField<string>(s_Styles.modes.Select(m => m.text).ToList(), m_Property.mode.intValue);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             container.Add(mode);
 
             EventCallback<ChangeEvent<string>> valueChangeAction = (e) =>

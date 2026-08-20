@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -14,7 +15,9 @@ namespace Unity.GraphToolkit.Editor
     [UnityRestricted]
     internal abstract class Marker : GraphElement
     {
+        [NoAutoStaticsCleanup] // CSS custom property descriptor; value is a fixed CSS property name
         static readonly CustomStyleProperty<int> k_HorizontalDistanceProperty = new CustomStyleProperty<int>("--horizontal-distance");
+        [NoAutoStaticsCleanup] // CSS custom property descriptor; value is a fixed CSS property name
         static readonly CustomStyleProperty<int> k_VerticalDistanceProperty = new CustomStyleProperty<int>("--vertical-distance");
         public static readonly int k_DefaultDistanceValue = 6;
 

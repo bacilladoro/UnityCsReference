@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -24,7 +25,7 @@ namespace UnityEditor.UIElements
     }
 
     [VisibleToOtherModules("UnityEditor.UIBuilderModule")]
-    internal class UIToolkitSettingsProvider : SettingsProvider
+    internal partial class UIToolkitSettingsProvider : SettingsProvider
     {
         const string k_EditorExtensionsModeToggleName = "editor-extensions-mode-toggle";
         const string k_DisableMouseWheelZoomingToggleName = "disable-mouse-wheel-zooming";
@@ -34,11 +35,13 @@ namespace UnityEditor.UIElements
         const string k_EnableLayoutDebugger = "enable-layout-debugger";
         const string k_EnableUSSStatsWindow = "enable-uss-stats-window";
         const string k_EnablePanelRendererAnimation = "enable-panel-renderer-animation";
+        const string k_EnableGridLayout = "enable-grid-layout";
         const string k_EnableDebuggerLowLevelName = "enable-debugger-low-level";
         const string k_DefaultRuntimeTheme = "default-runtime-theme";
         const string k_DefaultEditorTheme = "default-editor-theme";
 
-        private static readonly List<Type> s_ExtensionTypes = new();
+        [AutoStaticsCleanupOnCodeReload]
+        private static List<Type> s_ExtensionTypes = new();
 
         [InitializeOnLoadMethod, UsedImplicitly]
         private static void GetExtensionTypes()
@@ -60,7 +63,9 @@ namespace UnityEditor.UIElements
 
         private readonly List<IUIToolkitSettingsProviderExtension> m_Extensions = new ();
 
+        [NoAutoStaticsCleanup]
         private static EventCallback<ChangeEvent<string>> s_RuntimeThemeCallback;
+        [NoAutoStaticsCleanup]
         private static EventCallback<ChangeEvent<string>> s_EditorThemeCallback;
 
         private VisualElement m_HelpVisualTree;
@@ -185,6 +190,14 @@ namespace UnityEditor.UIElements
                 UIToolkitProjectSettings.enablePanelRendererAnimation = e.newValue;
                 if (animationRestartWarning != null)
                     animationRestartWarning.style.display = UIToolkitProjectSettings.isAnimationSettingDirty ? DisplayStyle.Flex : DisplayStyle.None;
+            });
+
+            // CSS Grid takes effect live (the setter pushes to the native solver), so there is no restart warning.
+            var gridLayoutToggle = rootElement.Q<Toggle>(k_EnableGridLayout);
+            gridLayoutToggle.SetValueWithoutNotify(UIToolkitProjectSettings.enableGridLayout);
+            gridLayoutToggle.RegisterValueChangedCallback(e =>
+            {
+                UIToolkitProjectSettings.enableGridLayout = e.newValue;
             });
 
             var enableDebuggerLowLevelToggle = rootElement.Q<Toggle>(k_EnableDebuggerLowLevelName);
@@ -320,3 +333,4 @@ namespace UnityEditor.UIElements
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

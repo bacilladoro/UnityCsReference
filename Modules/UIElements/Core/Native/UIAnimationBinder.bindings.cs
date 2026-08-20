@@ -2,6 +2,8 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
+using Unity.Scripting.LifecycleManagement;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
@@ -73,6 +75,7 @@ namespace UnityEngine.UIElements
         /// </para>
         /// </summary>
         [VisibleToOtherModules("UnityEditor.UIToolkitAuthoringModule")]
+        [NoAutoStaticsCleanup]
         internal static event Action<UIAnimationBinder, UIAnimationClip, float> editorPostSample;
 
         /// <summary>
@@ -310,9 +313,9 @@ namespace UnityEngine.UIElements
         {
             var boundValues = new ReadOnlySpan<UIAnimationBoundProperty>(values.ToPointer(), count);
 
-            // Batch filter writes: WriteFilter* mutate a per-(element, id) cached list, and we
-            // call ApplyPropertyAnimation once per pair in FlushPendingFilterWrites.
-            m_BatchingFilterWrites = true;
+            // Batch composite writes (filter, background): the Set* calls mutate a per-(element, id)
+            // buffer, and we call ApplyPropertyAnimation once per pair in the Flush* methods.
+            m_BatchingCompositeWrites = true;
             try
             {
                 foreach (ref readonly var boundValue in boundValues)
@@ -329,8 +332,9 @@ namespace UnityEngine.UIElements
             }
             finally
             {
-                m_BatchingFilterWrites = false;
+                m_BatchingCompositeWrites = false;
                 FlushPendingFilterWrites();
+                FlushPendingBackgroundWrites();
             }
         }
 
@@ -443,6 +447,7 @@ namespace UnityEngine.UIElements
         /// Set by editor-only code (VisualElementObjectTypeCustomizer) to provide custom selection handling.
         /// </summary>
         [VisibleToOtherModules("UnityEditor.UIToolkitAuthoringModule")]
+        [NoAutoStaticsCleanup]
         internal static Func<VisualElement, EntityId> s_GetSelectionEntityIdCallback;
 
         private VisualElement GetVisualElementForElementIndex(int elementIndex)
@@ -463,3 +468,4 @@ namespace UnityEngine.UIElements
 
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

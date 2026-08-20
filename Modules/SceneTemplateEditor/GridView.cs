@@ -213,12 +213,12 @@ namespace UnityEditor.SceneTemplate
 
         public void SetItems(IEnumerable<Item> items)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             m_UnpinnedItems = items.ToList();
-#pragma warning restore UA2001
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+            #pragma warning disable UAC2001 // Avoid Linq
             m_Items = items.ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             for (var i = 0; i < m_Items.Count; i++)
             {
                 var item = m_Items[i];
@@ -262,29 +262,29 @@ namespace UnityEditor.SceneTemplate
             if (m_SelectedItems.Count > 0)
             {
                 // Unselect currently selected item:
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 foreach (var toUnselectElement in m_SelectedItems.Select(item => m_IdToElements[item.id]))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 {
                     toUnselectElement.RemoveFromClassList(Styles.selected);
                 }
             }
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var oldSelection = m_SelectedItems.ToList();
-#pragma warning restore UA2001
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+            #pragma warning disable UAC2001 // Avoid Linq
             m_SelectedItems = itemToSelect.ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
-#pragma warning disable UA2002 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2002 // Avoid Linq
             if (itemToSelect.Any())
-#pragma warning restore UA2002
+#pragma warning restore UAC2002
             {
                 // Select new item
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 var toSelectElements = itemToSelect.Select(item => m_IdToElements[item.id]);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 foreach (var toSelectElement in toSelectElements)
                 {
                     toSelectElement.AddToClassList(Styles.selected);
@@ -311,16 +311,16 @@ namespace UnityEditor.SceneTemplate
 
         public void SetSelection(IEnumerable<int> idToSelect)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             SetSelection(idToSelect.Select(IdToItem));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         public void SetPinned(IEnumerable<int> idToPinned)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             SetPinned(idToPinned.Select(IdToItem));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         public void SetPinned(IEnumerable<Item> idToPinned)
@@ -509,9 +509,9 @@ namespace UnityEditor.SceneTemplate
 
         private void AddToSelection(Item item)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var oldSelection = m_SelectedItems.ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             m_SelectedItems.Add(item);
             m_IdToElements[item.id].AddToClassList(Styles.selected);
             onSelectionChanged?.Invoke(oldSelection, m_SelectedItems);
@@ -519,9 +519,9 @@ namespace UnityEditor.SceneTemplate
 
         private void RemoveFromSelection(Item item)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var oldSelection = m_SelectedItems.ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             m_SelectedItems.Remove(item);
             m_IdToElements[item.id].RemoveFromClassList(Styles.selected);
             onSelectionChanged?.Invoke(oldSelection, m_SelectedItems);

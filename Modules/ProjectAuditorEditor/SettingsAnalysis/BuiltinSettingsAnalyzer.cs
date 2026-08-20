@@ -13,6 +13,7 @@ using UnityEngine.Assemblies;
 
 namespace Unity.ProjectAuditor.Editor.SettingsAnalysis
 {
+    [MigratedToRulesPackage(2)]
     class BuiltinSettingsAnalyzer : SettingsModuleAnalyzer
     {
         readonly List<Assembly> m_Assemblies = new List<Assembly>();
@@ -23,10 +24,10 @@ namespace Unity.ProjectAuditor.Editor.SettingsAnalysis
         public override void Initialize(Action<Descriptor> registerDescriptor)
         {
             var assemblies = CurrentAssemblies.GetLoadedAssemblies();
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             m_Assemblies.Add(assemblies.First(a => a.GetLoadedAssemblyPath()?.Contains("UnityEngine.dll") ?? false));
             m_Assemblies.Add(assemblies.First(a => a.GetLoadedAssemblyPath()?.Contains("UnityEditor.dll") ?? false));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             // UnityEditor
             m_ProjectSettingsMapping.Add(new KeyValuePair<string, string>("UnityEditor.PlayerSettings",
@@ -56,9 +57,9 @@ namespace Unity.ProjectAuditor.Editor.SettingsAnalysis
             if (m_Descriptors == null)
                 throw new Exception("Descriptors Database not initialized.");
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             foreach (var descriptor in m_Descriptors.Where(d => d.IsSupported(context.Params)))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 var issue = Evaluate(context, descriptor);
                 if (issue != null)
@@ -69,9 +70,9 @@ namespace Unity.ProjectAuditor.Editor.SettingsAnalysis
         ReportItem Evaluate(AnalysisContext context, Descriptor descriptor)
         {
             // evaluate a Unity API static method or property
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var assembly = m_Assemblies.First(a => a.GetType(descriptor.Type) != null);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             var type = assembly.GetType(descriptor.Type);
 
             var methodName = descriptor.Method;
@@ -101,9 +102,9 @@ namespace Unity.ProjectAuditor.Editor.SettingsAnalysis
         ReportItem NewIssue(AnalysisContext context, Descriptor descriptor, string description)
         {
             var projectWindowPath = string.Empty;
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var mappings = m_ProjectSettingsMapping.Where(p => descriptor.Type.StartsWith(p.Key)).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             if (mappings.Length > 0)
                 projectWindowPath = mappings[0].Value;
             return context.CreateIssue

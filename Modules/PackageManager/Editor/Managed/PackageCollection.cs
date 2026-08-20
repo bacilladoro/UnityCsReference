@@ -32,9 +32,9 @@ namespace UnityEditor.PackageManager
             IEnumerable<PackageInfo> packages,
             Error error)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             m_PackageList = (packages ?? Array.Empty<PackageInfo>()).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             m_Error = error;
             m_HasError = (m_Error != null);
         }

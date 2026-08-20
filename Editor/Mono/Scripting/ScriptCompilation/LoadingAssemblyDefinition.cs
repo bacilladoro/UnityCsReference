@@ -56,9 +56,9 @@ namespace UnityEditor.Scripting.ScriptCompilation
             HashSet<string> predefinedAssemblyNames = null;
 
             // To check if a path prefix is already being used we use a Dictionary where the key is the prefix and the value is the file path.
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var prefixToFilePathLookup = CustomScriptAssemblyReferences.ToDictionary(x => x.PathPrefix,
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 x => new List<string> {x.FilePath}, StringComparer.OrdinalIgnoreCase);
 
             m_CompilationSetupErrorsTracker.ClearCompilationSetupErrors(CompilationSetupErrors.LoadError);
@@ -94,13 +94,13 @@ namespace UnityEditor.Scripting.ScriptCompilation
                         if (predefinedAssemblyNames == null)
                         {
                             predefinedAssemblyNames = new HashSet<string>(EditorBuildRules.PredefinedTargetAssemblyNames);
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                             var netfw = MonoLibraryHelpers
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                                 .GetSystemLibraryReferences(ApiCompatibilityLevel.NET_Unity_4_8).Select(Path.GetFileNameWithoutExtension);
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                             var netstandard21 = MonoLibraryHelpers
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                                 .GetSystemLibraryReferences(ApiCompatibilityLevel.NET_Standard).Select(Path.GetFileNameWithoutExtension);
                             predefinedAssemblyNames.UnionWith(netfw);
                             predefinedAssemblyNames.UnionWith(netstandard21);
@@ -155,9 +155,9 @@ namespace UnityEditor.Scripting.ScriptCompilation
             {
                 try
                 {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                     var references = loadedCustomScriptAssembly.References.Where(r => !string.IsNullOrEmpty(r))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                         .ToArray();
 
                     if (references.Length == references.DistinctCount())
@@ -165,9 +165,9 @@ namespace UnityEditor.Scripting.ScriptCompilation
                         continue;
                     }
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                     var duplicateRefs = references.GroupBy(r => r).SelectMany(g => g.Skip(1)).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     var duplicateRefsString = string.Join(",", duplicateRefs);
 
                     throw new AssemblyDefinitionException(
@@ -217,9 +217,9 @@ namespace UnityEditor.Scripting.ScriptCompilation
             // To check if a path prefix is already being used we use a Dictionary where the key is the prefix and the value is the file path.
             var prefixToFilePathLookup = m_SkipCustomScriptAssemblyGraphValidation ?
                 null :
-#pragma warning disable UA2001, UA2010 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001, UAC2010 // Avoid Linq
                 CustomScriptAssemblies.GroupBy(x => x.PathPrefix).ToDictionary(x => x.First().PathPrefix, x => new List<string>() { x.First().FilePath }, StringComparer.OrdinalIgnoreCase);
-#pragma warning restore UA2001, UA2010
+#pragma warning restore UAC2001, UAC2010
 
             for (var i = 0; i < paths.Length; ++i)
             {
@@ -258,9 +258,9 @@ namespace UnityEditor.Scripting.ScriptCompilation
                     if (GUIDReference.IsGUIDReference(loadedCustomScriptAssemblyReference.Reference))
                     {
                         // Generate the guid to assembly lookup?
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                         guidsToAssemblies = guidsToAssemblies ?? CustomScriptAssemblies.ToDictionary(x => x.GUID);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
                         var guid = Utility.FastToLower(GUIDReference.GUIDReferenceToGUID(loadedCustomScriptAssemblyReference.Reference));
                         if (guidsToAssemblies.TryGetValue(guid, out var foundAssembly))

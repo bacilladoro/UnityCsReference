@@ -4,6 +4,7 @@
 
 using System.Collections.Generic;
 using System.IO;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEngine;
 
@@ -19,6 +20,7 @@ namespace Unity.Multiplayer.PlayMode.Editor
             Settings,
         }
 
+        [NoAutoStaticsCleanup] // Texture2D cache loaded by fixed path; assets survive reload, cache self-refreshes
         static readonly Dictionary<string, Texture2D> CachedImagesByPath = new Dictionary<string, Texture2D>();
 
         internal static Texture2D GetImage(ImageName imageName)

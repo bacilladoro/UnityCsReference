@@ -45,12 +45,12 @@ namespace UnityEditor.Search
             {
                 if (m_ActiveQuery == null && !string.IsNullOrEmpty(m_ActiveQueryGuid))
                 {
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2001 // Avoid Linq
                     ISearchQuery loadedActiveQuery = SearchQuery.searchQueries.FirstOrDefault(query => query.guid == m_ActiveQueryGuid)
-#pragma warning restore UA2001
-                        #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+                        #pragma warning disable UAC2001 // Avoid Linq
                         ?? (ISearchQuery)SearchQueryAsset.savedQueries.FirstOrDefault(query => query.guid == m_ActiveQueryGuid);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     m_ActiveQuery = loadedActiveQuery;
                     m_ActiveQueryGuid = null;
                 }
@@ -448,9 +448,9 @@ namespace UnityEditor.Search
             }
             searchFlags = searchContext?.options ?? sourceState.searchFlags;
             searchText = searchContext?.searchText ?? sourceState.searchText;
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             providerIds = searchContext?.GetProviders().Select(p => p.id).ToArray() ?? sourceState.providerIds.ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             if (tableConfig != null && sourceState.tableConfig?.columns?.Length > 0)
             {
@@ -585,9 +585,9 @@ namespace UnityEditor.Search
                 return;
             searchFlags = context.options;
             searchText = context.searchText;
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             providerIds = GetProviderIds().ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             m_ActiveQueryGuid = m_ActiveQuery?.guid;
             m_ContextUseExplicitProvidersAsNormalProviders = context.useExplicitProvidersAsNormalProviders;
         }
@@ -603,27 +603,27 @@ namespace UnityEditor.Search
         public IEnumerable<string> GetProviderIds()
         {
             if (m_Context != null)
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 return m_Context.GetProviders().Select(p => p.id);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             return providerIds;
         }
 
         internal SearchProvider GetProviderById(string providerId)
         {
             if (m_Context != null)
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 return m_Context.GetProviders().FirstOrDefault(p => p.active && p.id == providerId);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             return null;
         }
 
         public IEnumerable<string> GetProviderTypes()
         {
             var providers = m_Context != null ? m_Context.GetProviders() : SearchService.GetProviders(providerIds);
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             return providers.Select(p => p.type).Distinct();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         public bool HasFlag(SearchViewFlags flags) => (this.flags & flags) != 0;

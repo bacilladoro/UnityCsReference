@@ -61,9 +61,9 @@ namespace UnityEditor.Search
 
             public override string ToString()
             {
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 return string.Join(", ", arguments.Select(a => a.types));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             }
         }
 
@@ -116,11 +116,11 @@ namespace UnityEditor.Search
             // Second pass to validate the argument types. The last error is kept (lowest number of arguments if no signature matches the number of argument, wrong type if there is at least one)
             var lastError = "";
             var errorPosition = StringView.nil;
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             if (signatures.Where(s => ValidateExpressionArgumentsCount(c.expression.evaluator.name, c.args, s, (msg, errorPos) => { lastError = msg; errorPosition = errorPos; })).ToList()
                 .Exists(s => ValidateExpressionArguments(c.expression.evaluator.name, c.args, s, (msg, errorPos) => { lastError = msg; errorPosition = errorPos; })))
                 return;
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             if (!errorPosition.valid)
                 errorPosition = c.expression.innerText;
@@ -133,11 +133,11 @@ namespace UnityEditor.Search
             // Second pass to validate the argument types. The last error is kept (lowest number of arguments if no signature matches the number of argument, wrong type if there is at least one)
             var lastError = "";
             var errorPosition = StringView.nil;
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             if (signatures.Where(s => ValidateExpressionArgumentsCount(evaluator.name, args, s, (msg, errorPos) => { lastError = msg; errorPosition = errorPos; })).ToList()
                 .Exists(s => ValidateExpressionArguments(evaluator.name, args, s, (msg, errorPos) => { lastError = msg; errorPosition = errorPos; })))
                 return;
-            #pragma warning restore UA2001
+            #pragma warning restore UAC2001
 
             if (!errorPosition.valid)
                 errorPosition = expressionInnerText;

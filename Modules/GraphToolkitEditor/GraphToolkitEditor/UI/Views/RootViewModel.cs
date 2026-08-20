@@ -32,12 +32,12 @@ namespace Unity.GraphToolkit.Editor
         /// Adds the <see cref="StateComponent{TUpdater}"/>s of this object to the <paramref name="state"/>.
         /// </summary>
         /// <param name="state">The state to which to add the components.</param>
-        public abstract void AddToState(IState state);
+        public abstract void AddToState(CSO.IState state);
 
         /// <summary>
         /// Removes the <see cref="StateComponent{TUpdater}"/>s of this object from the <paramref name="state"/>.
         /// </summary>
         /// <param name="state">The state from which to remove the components.</param>
-        public abstract void RemoveFromState(IState state);
+        public abstract void RemoveFromState(CSO.IState state);
     }
 }

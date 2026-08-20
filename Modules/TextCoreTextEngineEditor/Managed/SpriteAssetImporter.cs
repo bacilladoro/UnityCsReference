@@ -10,6 +10,7 @@ using UnityEngine.TextCore.Text;
 using TextAsset = UnityEngine.TextAsset;
 using GlyphRect = UnityEngine.TextCore.GlyphRect;
 using GlyphMetrics = UnityEngine.TextCore.GlyphMetrics;
+using Unity.Scripting.LifecycleManagement;
 
 #pragma warning disable CS0618 // TextShaderUtilities is obsolete; internal usage
 
@@ -35,6 +36,7 @@ namespace UnityEditor.TextCore.Text
         SpriteAsset m_SpriteAsset;
 
         static readonly GUIContent k_ConvertSpriteNameToUnicodeLabel = new GUIContent("Use sprite filename as Unicode", "Should sprite filenames be converted and assigned as Unicode code points for each sprite? This conversion assumes the sprite filenames represent valid Unicode code points.");
+        [NoAutoStaticsCleanup] // Transient editor-window toggle state; safe to persist across reload
         static bool k_SpriteNameIsUnicodeValue;
 
         /// <summary>

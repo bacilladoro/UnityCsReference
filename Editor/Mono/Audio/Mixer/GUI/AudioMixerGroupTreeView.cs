@@ -52,14 +52,14 @@ namespace UnityEditor
         public override DragAndDropVisualMode DoDrag(TreeViewItem<EntityId> parentNode, TreeViewItem<EntityId> targetNode, bool perform, DropPosition dragPos)
         {
             var parentGroupNode = parentNode as AudioMixerTreeViewNode;
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var draggedGroups = new List<Object>(DragAndDrop.objectReferences).OfType<AudioMixerGroupController>().ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             if (parentGroupNode != null && draggedGroups.Count > 0)
             {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 var draggedIDs = (from i in draggedGroups select i.GetEntityId()).ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 bool validDrag = ValidDrag(parentNode, draggedIDs) && !AudioMixerController.WillModificationOfTopologyCauseFeedback(m_owner.Controller.GetAllAudioGroupsSlow(), draggedGroups, parentGroupNode.group, null);
                 if (perform && validDrag)
                 {
@@ -429,9 +429,9 @@ namespace UnityEditor
             {
                 ReloadTree();
                 m_Controller.OnSubAssetChanged();
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 var instanceIDs = duplicatedRoots.Select(audioMixerGroup => audioMixerGroup.GetEntityId()).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 m_AudioGroupTree.SetSelection(instanceIDs, false);
                 m_AudioGroupTree.Frame(instanceIDs[instanceIDs.Length - 1], true, false);
             }
@@ -553,9 +553,9 @@ namespace UnityEditor
                 return;
 
             var groups = m_Controller.CachedSelection;
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             m_AudioGroupTree.SetSelection((from x in groups select x.GetEntityId()).ToArray(), revealSelectionAndFrameLastSelected);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         public float GetTotalHeight()

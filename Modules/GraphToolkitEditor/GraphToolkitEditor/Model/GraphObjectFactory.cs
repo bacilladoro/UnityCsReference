@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq.Expressions;
 using System.Reflection;
 using Unity.GraphToolsAuthoringFramework.InternalEditorBridge;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEditor.Callbacks;
 using UnityEngine;
@@ -18,11 +19,13 @@ using Object = UnityEngine.Object;
 
 namespace Unity.GraphToolkit.Editor
 {
-    static class GraphObjectFactory
+    static partial class GraphObjectFactory
     {
-        static readonly MethodInfo k_DefaultLoadGraphObjectAtPathMethod;
+        [AutoStaticsCleanupOnCodeReload]
+        static MethodInfo k_DefaultLoadGraphObjectAtPathMethod;
 
-        static GraphObjectFactory()
+        [OnCodeLoaded]
+        static void Initialize()
         {
             EditorApplication.focusChanged += OnFocusChanged;
             EditorBridge.RegisterFileSavedCallback(OnFileSave);
@@ -79,6 +82,13 @@ namespace Unity.GraphToolkit.Editor
                     RegisterGraphEditorWindowType(attribute.GraphObjectType, graphEditorWindowType);
                 }
             }
+        }
+
+        [OnCodeUnloading]
+        static void Shutdown()
+        {
+            EditorApplication.focusChanged -= OnFocusChanged;
+            EditorBridge.UnregisterFileSavedCallback(OnFileSave);
         }
 
         static void OnFileSave()
@@ -145,9 +155,9 @@ namespace Unity.GraphToolkit.Editor
 
         public static MethodInfo GetMethodInfo(Expression<GraphObjectDefinitionAttribute.LoadGraphObjectLoader> expression)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             return ((MethodCallExpression)expression.Body).Method;
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         static GraphObjectDefinitionAttribute.LoadGraphObjectLoader MakeLoaderDelegate(Type graphObjectType)
@@ -238,8 +248,11 @@ namespace Unity.GraphToolkit.Editor
             public GraphObjectDefinitionAttribute.LoadGraphObjectLoader loaderFunction;
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         static Dictionary<string, GraphObjectInfos> s_GraphObjectInfosByExtension = new();
+        [AutoStaticsCleanupOnCodeReload]
         static Dictionary<Type, Type> s_WindowTypeForGraphObjectType = new();
+        [AutoStaticsCleanupOnCodeReload]
         static Dictionary<GUID, GraphObject> s_LoadedGraphObjects;
 
         static string InstanceIdToFileExtension(EntityId entityId)

@@ -48,9 +48,9 @@ namespace UnityEditor
         public GUID guid { get { return m_guid; } set { m_guid = value; } }
         public static string[] GetActiveSceneList(EditorBuildSettingsScene[] scenes)
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return scenes.Where(scene => scene.enabled && !string.IsNullOrEmpty(scene.path)).Select(scene => scene.path).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         public int CompareTo(object obj)

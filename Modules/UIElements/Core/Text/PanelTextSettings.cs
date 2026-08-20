@@ -2,6 +2,8 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
+using Unity.Scripting.LifecycleManagement;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -16,8 +18,9 @@ namespace UnityEngine.UIElements
     /// <seealso cref="PanelSettings.textSettings"/>
     /// </summary>
     [HelpURL("UIE-text-setting-asset")]
-    public class PanelTextSettings : TextSettings
+    public partial class PanelTextSettings : TextSettings
     {
+        [AutoStaticsCleanupOnCodeReload]
         private static PanelTextSettings s_DefaultPanelTextSettings;
 
         internal static PanelTextSettings defaultPanelTextSettings
@@ -38,3 +41,4 @@ namespace UnityEngine.UIElements
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

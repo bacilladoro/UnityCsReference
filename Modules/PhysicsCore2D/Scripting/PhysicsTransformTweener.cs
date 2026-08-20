@@ -27,7 +27,7 @@ namespace Unity.U2D.Physics
         static readonly ProfilerMarker s_WriteTransformTweensCustomMarker = new ProfilerMarker("PhysicsWorld.WriteTransformTweens.Custom");
 
         [RequiredByNativeCode]
-        static unsafe void WriteTransformTweens(
+        static void WriteTransformTweens(
             bool syncInterpolation,
             PhysicsWorld world,
             float interpolationTime,
@@ -107,7 +107,7 @@ namespace Unity.U2D.Physics
 
         /// <undoc/>
         [RequiredByNativeCode]
-        static unsafe void WriteTransformTweensCustom(
+        static void WriteTransformTweensCustom(
             System.Object transformWriteCallbackTarget,
             PhysicsWorld world,
             float interpolationTime,

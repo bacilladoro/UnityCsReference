@@ -190,30 +190,30 @@ namespace Unity.U2D.Physics
 
         PhysicsBody m_BodyA;
         PhysicsBody m_BodyB;
-        [SerializeField] PhysicsTransform m_LocalAnchorA;
-        [SerializeField] PhysicsTransform m_LocalAnchorB;
-        [SerializeField] bool m_AutoAnchorA;
-        [SerializeField] bool m_AutoAnchorB;
-        [SerializeField] bool m_AutoDistance;
-        [SerializeField] [Min(float.Epsilon)] float m_Distance;
-        [SerializeField] bool m_EnableSpring;
-        [SerializeField] [Min(0.0f)] float m_SpringFrequency;
-        [SerializeField] [Min(0.0f)] float m_SpringDamping;
-        [SerializeField] float m_SpringLowerForce;
-        [SerializeField] float m_SpringUpperForce;
-        [SerializeField] bool m_EnableMotor;
-        [SerializeField] float m_MotorSpeed;
-        [SerializeField] float m_MaxMotorForce;
-        [SerializeField] bool m_EnableLimit;
-        [SerializeField] [Min(0.0f)] float m_MinDistanceLimit;
-        [SerializeField] [Min(0.0f)] float m_MaxDistanceLimit;
-        [SerializeField] [Min(0.0f)] float m_ForceThreshold;
-        [SerializeField] [Min(0.0f)] float m_TorqueThreshold;
-        [SerializeField] [Range(0.0f, 1000.0f)] float m_TuningFrequency;
-        [SerializeField] [Range(0.0f, 10.0f)] float m_TuningDamping;
-        [SerializeField] [Range(0.0001f, 10.0f)] float m_DrawScale;
-        [SerializeField] bool m_WorldDrawing;
-        [SerializeField] bool m_CollideConnected;
+        [SerializeField] internal PhysicsTransform m_LocalAnchorA;
+        [SerializeField] internal PhysicsTransform m_LocalAnchorB;
+        [SerializeField] internal bool m_AutoAnchorA;
+        [SerializeField] internal bool m_AutoAnchorB;
+        [SerializeField] internal bool m_AutoDistance;
+        [SerializeField] [Min(float.Epsilon)] internal float m_Distance;
+        [SerializeField] internal bool m_EnableSpring;
+        [SerializeField] [Min(0.0f)] internal float m_SpringFrequency;
+        [SerializeField] [Min(0.0f)] internal float m_SpringDamping;
+        [SerializeField] internal float m_SpringLowerForce;
+        [SerializeField] internal float m_SpringUpperForce;
+        [SerializeField] internal bool m_EnableMotor;
+        [SerializeField] internal float m_MotorSpeed;
+        [SerializeField] internal float m_MaxMotorForce;
+        [SerializeField] internal bool m_EnableLimit;
+        [SerializeField] [Min(0.0f)] internal float m_MinDistanceLimit;
+        [SerializeField] [Min(0.0f)] internal float m_MaxDistanceLimit;
+        [SerializeField] [Min(0.0f)] internal float m_ForceThreshold;
+        [SerializeField] [Min(0.0f)] internal float m_TorqueThreshold;
+        [SerializeField] [Range(0.0f, 1000.0f)] internal float m_TuningFrequency;
+        [SerializeField] [Range(0.0f, 10.0f)] internal float m_TuningDamping;
+        [SerializeField] [Range(0.0001f, 10.0f)] internal float m_DrawScale;
+        [SerializeField] internal bool m_WorldDrawing;
+        [SerializeField] internal bool m_CollideConnected;
 
         #endregion
     }

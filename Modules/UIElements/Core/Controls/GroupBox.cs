@@ -52,7 +52,7 @@ namespace UnityEngine.UIElements
         /// <summary>
         /// The title text of the box.
         /// </summary>
-        [MultilineTextField]
+        [MultilineTextField(lines = 3)]
         [CreateProperty]
         [UxmlAttribute]
         public string text

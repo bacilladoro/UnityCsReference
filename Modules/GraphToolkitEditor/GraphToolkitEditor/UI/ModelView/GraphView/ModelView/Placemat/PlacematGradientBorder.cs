@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -14,10 +15,12 @@ namespace Unity.GraphToolkit.Editor
     /// Class to draw the placemat border
     /// </summary>
     [UnityRestricted]
-    internal class PlacematGradientBorder : ImmediateModeElement
+    internal partial class PlacematGradientBorder : ImmediateModeElement
     {
         const string k_PlacematborderShaderPath = "Shaders/GraphToolkit/PlacematBorder.shader";
+        [NoAutoStaticsCleanup] // shader asset loaded at static init; asset survives reload, no null-check lazy pattern
         static Shader s_Shader = EditorGUIUtility.LoadRequired(k_PlacematborderShaderPath) as Shader;
+        [AutoStaticsCleanupOnCodeReload]
         static Mesh s_Mesh;
 
         Material m_Mat;

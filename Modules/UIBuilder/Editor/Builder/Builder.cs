@@ -370,17 +370,13 @@ namespace Unity.UI.Builder
 
         public override void DiscardChanges()
         {
-            // Restore UXML and USS assets from backup
-            document.RestoreAssetsFromBackup();
+            // Restore UXML and USS assets from our in-memory backup (their last clean, on-disk state).
+            UIAssetRegistry.instance.DiscardAsset(document.visualTreeAsset, document.activeOpenUXMLFile);
 
             // If the asset is not saved yet then reset to blank document
             if (string.IsNullOrEmpty(document.uxmlFileName))
             {
                 document.NewDocument(m_Viewport.documentRootElement);
-            }
-            else
-            {
-                document.OnAfterBuilderDeserialize(m_Viewport.documentRootElement);
             }
 
             base.DiscardChanges();
@@ -398,14 +394,21 @@ namespace Unity.UI.Builder
             minSize = new Vector2(972, 400);
             SetTitleContent(BuilderConstants.BuilderWindowTitle, BuilderConstants.BuilderWindowIcon);
 
-            if (rootVisualElement.panel != null)
-                SetupPanel();
-            // Sometimes, the panel is not already set
-            else
-                rootVisualElement.RegisterCallback<AttachToPanelEvent>(SetupPanelAttach);
+            SetupPanelHandling();
         }
 
-        void SetupPanelAttach(AttachToPanelEvent evt)
+        // The root can be adopted by a different EditorPanel when the dock area changes (UUM-130011), so
+        // re-register on every attach; a layout-restored window is already attached at OnEnable and gets
+        // no AttachToPanelEvent, so set its panel up immediately.
+        internal void SetupPanelHandling()
+        {
+            rootVisualElement.RegisterCallback<AttachToPanelEvent>(SetupPanelAttach);
+
+            if (rootVisualElement.panel != null)
+                SetupPanel();
+        }
+
+        internal void SetupPanelAttach(AttachToPanelEvent evt)
         {
             SetupPanel();
         }

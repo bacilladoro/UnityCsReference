@@ -252,6 +252,23 @@ namespace UnityEditor.Media
                 m_ThisPtr, width, height, rowBytes, format, data.GetUnsafeReadOnlyPtr(), data.Length, time);
         }
 
+        public bool AddFrame(
+            int width, int height, int rowBytes, TextureFormat format, ReadOnlySpan<byte> data)
+        {
+            return AddFrame(width, height, rowBytes, format, data, MediaTime.Invalid);
+        }
+
+        unsafe public bool AddFrame(
+            int width, int height, int rowBytes, TextureFormat format, ReadOnlySpan<byte> data, MediaTime time)
+        {
+            ThrowIfDisposed();
+            fixed (byte* dataPtr = data)
+            {
+                return Internal_AddFrameRaw(
+                    m_ThisPtr, width, height, rowBytes, format, dataPtr, data.Length, time);
+            }
+        }
+
         public bool AddFrame(Texture2D texture)
         {
             ThrowIfDisposed();
@@ -273,6 +290,20 @@ namespace UnityEditor.Media
         }
 
         public bool AddSamples(NativeArray<float> interleavedSamples)
+        {
+            return AddSamples(0, interleavedSamples);
+        }
+
+        unsafe public bool AddSamples(ushort trackIndex, ReadOnlySpan<float> interleavedSamples)
+        {
+            ThrowIfDisposed();
+            fixed (float* samplesPtr = interleavedSamples)
+            {
+                return Internal_AddSamples(m_ThisPtr, trackIndex, samplesPtr, interleavedSamples.Length);
+            }
+        }
+
+        public bool AddSamples(ReadOnlySpan<float> interleavedSamples)
         {
             return AddSamples(0, interleavedSamples);
         }

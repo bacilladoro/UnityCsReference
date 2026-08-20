@@ -490,6 +490,11 @@ namespace UnityEditor.Build.Profile
             }
         }
 
+        void OnFocus()
+        {
+            buildProfileEditor?.OnBuildProfileWindowFocus();
+        }
+
         /// <summary>
         /// Build Profile Workflow state change callback. Invoked when <see cref="m_WindowState"/> is refreshed
         /// by this class or changes are attempted by an embedded <see cref="BuildProfileEditor"/>.

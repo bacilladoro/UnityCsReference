@@ -4,7 +4,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.IO;
 using Unity.Hierarchy.Editor;
 using UnityEditor;
 using UnityEditor.IMGUI.Controls;
@@ -19,14 +18,20 @@ namespace Unity.UIToolkit.Editor;
 
 internal class VisualElementEditingStage : PreviewSceneStage, ISerializationCallbackReceiver
 {
+    const CommandCategory k_ExternalChangesTrackedCategories = ~CommandCategory.Save;
+
     private GlobalObjectId m_MainAsset;
     private int[] m_SerializedPath;
     private SubDocumentOptions m_Options;
     private GlobalObjectId m_PanelSettings;
-    private AssetHash[] m_SerializedBaselines;
     private Clipboard m_Clipboard;
     private bool m_FrameUpdateRequested;
+    private bool m_ExternalChanges;
+    private bool m_ExternalSave;
     private bool m_InsideGroup;
+    // Set while we drive our own discard reload, so the registry's AssetReloaded event (which we also
+    // subscribe to for other tools' changes) does not make us re-clone a second time.
+    private bool m_SelfReloading;
 
     private GUIContent m_HeaderContent;
 
@@ -35,14 +40,12 @@ internal class VisualElementEditingStage : PreviewSceneStage, ISerializationCall
     private PanelElement m_PanelElement;
     readonly MatchedRulesExtractor m_RulesExtractor = new (AssetDatabase.GetAssetPath);
 
-    private readonly Dictionary<EntityId, AssetHash> m_DirtyCaches = new();
-
     public event Action<VisualElementEditingStage> MainDocumentWasCloned;
     public event Action<PanelElement> PanelWasRepainted;
 
     public override string assetPath => AssetDatabase.GetAssetPath(EditedVisualTreeAsset);
 
-    internal Panel GetAuthoringPanel() => m_PanelElement.SubPanel;
+    internal Panel GetAuthoringPanel() => m_PanelElement?.SubPanel;
 
     internal override bool isValid => ValidateContext();
 
@@ -164,6 +167,7 @@ internal class VisualElementEditingStage : PreviewSceneStage, ISerializationCall
                 throw new ArgumentOutOfRangeException();
         }
         MainDocumentWasCloned?.Invoke(this);
+        UIAssetRegistry.instance.RefreshPanel(m_PanelElement?.SubPanel);
     }
 
     protected override void OnEnable()
@@ -185,11 +189,15 @@ internal class VisualElementEditingStage : PreviewSceneStage, ISerializationCall
         {
             HierarchyWindow.RegisterNodeTypeHandler<VisualElementEditingNodeHandler>();
             TrackStagePanel();
+            AttachToRegistry();
         }
         UICommandQueue.RegisterHandler<RequestHighlightsCommand>(OnHighlightsRequested);
         UICommandQueue.RegisterHandlerForCategory(CommandCategory.Styling, OnStylingChanged);
         UICommandQueue.GroupBegan += OnGroupBegan;
         UICommandQueue.GroupEnded += OnGroupEnded;
+        UICommandQueue.RegisterHandlerForCategory(k_ExternalChangesTrackedCategories, CheckForBuilderChanges);
+        UICommandQueue.RegisterHandlerForCategory(CommandCategory.Save, OnBuilderSave);
+        UIAssetRegistry.instance.AssetReloaded += OnRegistryAssetReloaded;
     }
 
     protected override void OnDisable()
@@ -204,8 +212,11 @@ internal class VisualElementEditingStage : PreviewSceneStage, ISerializationCall
         m_Clipboard = null;
         UICommandQueue.UnregisterHandler<RequestHighlightsCommand>(OnHighlightsRequested);
         UICommandQueue.UnregisterHandlerForCategory(CommandCategory.Styling, OnStylingChanged);
+        UICommandQueue.UnregisterHandlerForCategory(k_ExternalChangesTrackedCategories, CheckForBuilderChanges);
+        UICommandQueue.UnregisterHandlerForCategory(CommandCategory.Save, OnBuilderSave);
         UICommandQueue.GroupBegan -= OnGroupBegan;
         UICommandQueue.GroupEnded -= OnGroupEnded;
+        UIAssetRegistry.LiveInstance?.AssetReloaded -= OnRegistryAssetReloaded;
     }
 
     protected internal override bool OnOpenStage()
@@ -213,7 +224,7 @@ internal class VisualElementEditingStage : PreviewSceneStage, ISerializationCall
         m_PanelElement.PanelSettings = Context.PanelSettings;
         TrackStagePanel();
         ReloadAssets();
-        CaptureCleanBaseline();
+        AttachToRegistry();
         RequestRefresh();
         return true;
     }
@@ -231,7 +242,6 @@ internal class VisualElementEditingStage : PreviewSceneStage, ISerializationCall
     {
         if (StageUtility.GetCurrentStage() == this)
         {
-            EditedVisualTreeAsset?.inlineSheet?.RequestRebuild(StyleSheet.RebuildOptions.Synchronous);
             foreach (var styleSheet in EditedVisualTreeAsset.GetAllReferencedStyleSheets())
             {
                 styleSheet.RequestRebuild(StyleSheet.RebuildOptions.Synchronous);
@@ -245,6 +255,7 @@ internal class VisualElementEditingStage : PreviewSceneStage, ISerializationCall
     protected override void OnCloseStage()
     {
         UntrackStagePanel();
+        DetachFromRegistry();
         m_PanelElement?.DestroyPanelPermanently();
         m_PanelElement = null;
         base.OnCloseStage();
@@ -254,6 +265,7 @@ internal class VisualElementEditingStage : PreviewSceneStage, ISerializationCall
     {
         base.OnReturnToStage();
         TrackStagePanel();
+        AttachToRegistry();
         ReimportAssets();
         RequestRefresh();
     }
@@ -275,213 +287,98 @@ internal class VisualElementEditingStage : PreviewSceneStage, ISerializationCall
 
     private bool AnyReferencedAssetDirty()
     {
-        if (IsAssetModified(EditedVisualTreeAsset))
+        var vta = EditedVisualTreeAsset;
+        if (vta == null)
+            return false;
+
+        var registry = UIAssetRegistry.instance;
+        if (registry.IsDirty(vta))
             return true;
 
         using var _ = ListPool<StyleSheet>.Get(out var styleSheets);
-        EditedVisualTreeAsset.GetAllReferencedStyleSheets(styleSheets);
+        UIAssetRegistry.CollectDocumentStyleSheets(vta, styleSheets);
         foreach (var styleSheet in styleSheets)
-            if (IsAssetModified(styleSheet))
+            if (registry.IsDirty(styleSheet))
                 return true;
         return false;
     }
 
-    private bool IsAssetModified(UnityEngine.Object asset)
+    void AttachToRegistry()
     {
-        if (asset == null)
-            return false;
+        var panel = m_PanelElement?.SubPanel;
+        if (panel != null)
+            UIAssetRegistry.instance.AttachPanel(panel, this, CollectStageRoots, ResolveStageAccess);
+    }
 
-        // We can't rely on this call alone to determine if the asset is dirty or not. This is because it relies on the
-        // dirty count, which will be increased on reported asset changes, on undo/redo operations and when using driven
-        // properties, leading to assets being "dirty" even if the exported version of the asset would have no actual
-        // changes.
-        if (!EditorUtility.IsDirty(asset))
-            return false;
+    void DetachFromRegistry()
+    {
+        var panel = m_PanelElement?.SubPanel;
+        if (panel != null)
+            UIAssetRegistry.instance.DetachPanel(panel);
+    }
 
-        var entityId = asset.GetEntityId();
-        if (!m_DirtyCaches.TryGetValue(entityId, out var cache))
+    void CollectStageRoots(List<VisualTreeAsset> roots)
+    {
+        if (Context.RootVisualTreeAsset != null)
+            roots.Add(Context.RootVisualTreeAsset);
+        if (EditedVisualTreeAsset != null)
+            roots.Add(EditedVisualTreeAsset);
+    }
+
+    // The edited document and the stylesheets it references are writable; everything else in the hierarchy
+    // (enclosing/nested templates, imported sheets) is tracked read-only.
+    UIAssetAccess ResolveStageAccess(UnityEngine.Object asset)
+    {
+        var edited = EditedVisualTreeAsset;
+        if (ReferenceEquals(asset, edited))
+            return UIAssetAccess.ReadWrite;
+
+        if (asset is StyleSheet styleSheet && edited != null)
         {
-            return true;
+            using var _ = ListPool<StyleSheet>.Get(out var sheets);
+            edited.GetAllReferencedStyleSheets(sheets);
+            if (sheets.Contains(styleSheet))
+                return UIAssetAccess.ReadWrite;
         }
-
-        var dirtyCount = EditorUtility.GetDirtyCount(entityId);
-        if (dirtyCount == cache.LastDirtyCount)
-            return cache.LastResult;
-
-        cache.LastDirtyCount = dirtyCount;
-        cache.LastResult = ComputeContentHash(asset) != cache.Hash;
-        m_DirtyCaches[entityId] = cache;
-        return cache.LastResult;
+        return UIAssetAccess.ReadOnly;
     }
 
-    private void CaptureCleanBaseline()
-    {
-        m_DirtyCaches.Clear();
-
-        using var _ = ListPool<UnityEngine.Object>.Get(out var assets);
-        CollectTrackedAssets(assets);
-        foreach (var asset in assets)
-            TryCaptureBaseline(asset);
-    }
-
-    private void CollectTrackedAssets(List<UnityEngine.Object> assets)
+    void MarkTrackedAssetsClean()
     {
         var vta = EditedVisualTreeAsset;
         if (vta == null)
             return;
 
-        assets.Add(vta);
-
+        var registry = UIAssetRegistry.instance;
+        registry.MarkClean(vta);
         using var _ = ListPool<StyleSheet>.Get(out var styleSheets);
-        vta.GetAllReferencedStyleSheets(styleSheets);
+        UIAssetRegistry.CollectDocumentStyleSheets(vta, styleSheets);
         foreach (var styleSheet in styleSheets)
             if (styleSheet != null)
-                assets.Add(styleSheet);
-    }
-
-    private void TryCaptureBaseline(UnityEngine.Object asset)
-    {
-        if (asset == null || EditorUtility.IsDirty(asset))
-            return;
-
-        CaptureBaseline(asset);
-    }
-
-    private void CaptureBaseline(UnityEngine.Object asset)
-    {
-        var entityId = asset.GetEntityId();
-        m_DirtyCaches[entityId] = new AssetHash
-        {
-            AssetId = GlobalObjectId.GetGlobalObjectIdSlow(asset),
-            Hash = ComputeContentHash(asset),
-            LastDirtyCount = EditorUtility.GetDirtyCount(entityId),
-            LastResult = false,
-        };
-    }
-
-    private void SerializeBaselines()
-    {
-        var baselines = new AssetHash[m_DirtyCaches.Count];
-        m_DirtyCaches.Values.CopyTo(baselines, 0);
-        m_SerializedBaselines = baselines;
-    }
-
-    private void RestoreBaselines()
-    {
-        m_DirtyCaches.Clear();
-
-        if (m_SerializedBaselines == null)
-            return;
-
-        foreach (var serialized in m_SerializedBaselines)
-        {
-            var asset = GlobalObjectId.GlobalObjectIdentifierToObjectSlow(serialized.AssetId);
-            if (asset == null)
-                continue;
-
-            RestoreBaseline(asset, serialized.AssetId, serialized.Hash);
-        }
-    }
-
-    private void RestoreBaseline(UnityEngine.Object asset, GlobalObjectId assetId, Hash128 baseline)
-    {
-        var entityId = asset.GetEntityId();
-        m_DirtyCaches[entityId] = new AssetHash
-        {
-            AssetId = assetId,
-            Hash = baseline,
-            LastDirtyCount = EditorUtility.GetDirtyCount(entityId),
-            LastResult = EditorUtility.IsDirty(asset) && ComputeContentHash(asset) != baseline,
-        };
-    }
-
-    private static Hash128 ComputeContentHash(UnityEngine.Object asset)
-    {
-        switch (asset)
-        {
-            case VisualTreeAsset vta:
-                return Hash128.Compute(VisualTreeAssetExporter.Default.ToUxmlString(vta));
-            case StyleSheet styleSheet:
-                return Hash128.Compute(StyleSheetExporter.Default.ToUssString(styleSheet));
-            default:
-                return default;
-        }
-    }
-
-    [Serializable]
-    private struct AssetHash
-    {
-        public GlobalObjectId AssetId;
-        public Hash128 Hash;
-
-        [NonSerialized] public int LastDirtyCount;
-        [NonSerialized] public bool LastResult;
+                registry.MarkClean(styleSheet);
     }
 
     internal override bool Save()
     {
-        var succeeded = true;
-        using (new AssetDatabase.AssetEditingScope())
-        {
-
-            var styleSheets = EditedVisualTreeAsset.GetAllReferencedStyleSheets();
-            foreach (var styleSheet in styleSheets)
-            {
-                if (IsAssetModified(styleSheet))
-                {
-                    var styleSheetPath = AssetDatabase.GetAssetPath(styleSheet);
-                    if (string.IsNullOrEmpty(styleSheetPath))
-                        // [TODO] Figure out Save as...
-                        continue;
-                    var styleSheetStr = StyleSheetExporter.Default.ToUssString(styleSheet);
-                    succeeded &= WriteTextFileToDisk(styleSheetPath, styleSheetStr);
-                    AssetDatabase.ImportAsset(styleSheetPath);
-                }
-                else
-                {
-                    EditorUtility.ClearDirty(styleSheet);
-                }
-            }
-
-            if (string.IsNullOrEmpty(assetPath))
-            {
-                // [TODO] Figure out Save as...
-                return false;
-            }
-
-            if (IsAssetModified(EditedVisualTreeAsset))
-            {
-                VisualTreeAsset.HarmonizeIds(EditedVisualTreeAsset);
-                // HarmonizeIds renumbers the document's element ids. The live tree still references the
-                // just-renumbered assets here, so re-file the selection registry's id-path caches before
-                // the re-clone below; otherwise the re-clone can't match the renumbered elements to their
-                // existing entries and the live selection (and its EntityId) is silently lost.
-                VisualElementSelectionRegistry.Instance?.ResyncStablePaths(m_PanelElement?.SubPanel);
-                var assetStr = VisualTreeAssetExporter.Default.ToUxmlString(EditedVisualTreeAsset);
-                succeeded &= WriteTextFileToDisk(assetPath, assetStr);
-                AssetDatabase.ImportAsset(assetPath);
-            }
-            else
-            {
-                EditorUtility.ClearDirty(EditedVisualTreeAsset);
-            }
-        }
-
-        if (succeeded)
-        {
-            ClearUndoForEditedAssets();
-            CaptureCleanBaseline();
-        }
-
+        var succeeded = UIAssetRegistry.instance.SaveAsset(EditedVisualTreeAsset, CommandSources.Stage);
         ReloadAssets();
         CloneTree();
-
         return succeeded;
     }
 
     internal override void DiscardChanges()
     {
-        ReimportAssets();
+        m_SelfReloading = true;
+        try
+        {
+            UIAssetRegistry.instance.DiscardAsset(EditedVisualTreeAsset, CommandSources.Stage);
+        }
+        finally
+        {
+            m_SelfReloading = false;
+        }
+
+        ReloadAssets();
         CloneTree();
     }
 
@@ -499,7 +396,7 @@ internal class VisualElementEditingStage : PreviewSceneStage, ISerializationCall
             "UI Stage - Unsaved Changes Detected",
             "Do you want to save changes you made?",
             "Save",
-            "Discard",
+            "Discard Changes",
             "Cancel",
             DialogIconType.Info
             );
@@ -545,20 +442,6 @@ internal class VisualElementEditingStage : PreviewSceneStage, ISerializationCall
         };
     }
 
-    private bool WriteTextFileToDisk(string path, string content)
-    {
-        // Make sure the folders exist.
-        var folder = Path.GetDirectoryName(path);
-        if (folder != null && !Directory.Exists(folder))
-            Directory.CreateDirectory(folder);
-
-        var success = FileUtil.WriteTextFileToDisk(path, content, out var message);
-
-        if (!success)
-            Debug.LogError(message);
-        return success;
-    }
-
     private void ReloadAssets()
     {
         Context = VisualTreeAssetEditingContext.Reload(Context);
@@ -567,13 +450,11 @@ internal class VisualElementEditingStage : PreviewSceneStage, ISerializationCall
     private void ReimportAssets()
     {
         Context = VisualTreeAssetEditingContext.Reimport(Context);
-        CaptureCleanBaseline();
+        // A force reimport brings the assets back to their on-disk state, so re-baseline them clean.
+        MarkTrackedAssetsClean();
         ClearUndoForEditedAssets();
     }
 
-    // Saving or reimporting reloads the edited VisualTreeAsset (and its inline sheet and referenced style sheets)
-    // from disk into new instances. Drop their undo/redo entries so a subsequent undo/redo cannot restore a
-    // pre-reload snapshot into the reloaded object. Mirrors UIBuilder's VisualTreeAsset/StyleSheet.ClearUndo.
     private void ClearUndoForEditedAssets()
     {
         var vta = EditedVisualTreeAsset;
@@ -636,8 +517,6 @@ internal class VisualElementEditingStage : PreviewSceneStage, ISerializationCall
 
         m_PanelSettings = GlobalObjectId.GetGlobalObjectIdSlow(m_Context.PanelSettings);
         m_Options = m_Context.SubDocumentOptions;
-
-        SerializeBaselines();
     }
 
     public void OnAfterDeserialize()
@@ -677,7 +556,6 @@ internal class VisualElementEditingStage : PreviewSceneStage, ISerializationCall
         var settings = (PanelSettings)GlobalObjectId.GlobalObjectIdentifierToObjectSlow(m_PanelSettings);
         Context = new VisualTreeAssetEditingContext(main, path, options, settings);
         m_PanelElement.PanelSettings = Context.PanelSettings;
-        RestoreBaselines();
 
         CloneTree();
     }
@@ -794,7 +672,7 @@ internal class VisualElementEditingStage : PreviewSceneStage, ISerializationCall
         m_InsideGroup = true;
     }
 
-    void OnGroupEnded(string undoGroup)
+    void OnGroupEnded(in GroupEndedContext context)
     {
         m_InsideGroup = false;
         ProcessDelayedCommands();
@@ -807,6 +685,125 @@ internal class VisualElementEditingStage : PreviewSceneStage, ISerializationCall
             PanelElement.FrameUpdate();
             m_FrameUpdateRequested = false;
         }
+
+        if (m_ExternalChanges)
+        {
+            ProcessBuilderChanges();
+        }
+    }
+
+    void CheckForBuilderChanges(in CommandContext context)
+    {
+        if (context.Status != CommandExecutionStatus.Success || context.Source != CommandSources.Builder)
+            return;
+
+        m_ExternalChanges = true;
+        if (m_InsideGroup)
+            return;
+
+        ProcessBuilderChanges();
+    }
+
+    void ProcessBuilderChanges()
+    {
+        // Here, we take for granted that the UI Builder made a change. Go nuclear.
+        EditorApplication.delayCall += DoProcessBuilderChanges;
+    }
+
+    void DoProcessBuilderChanges()
+    {
+        if (!m_ExternalChanges)
+            return;
+        RequestRefresh();
+        m_ExternalChanges = false;
+    }
+
+    void OnBuilderSave(in CommandContext context)
+    {
+        if (context.Status != CommandExecutionStatus.Success || context.Source != CommandSources.Builder)
+            return;
+
+        if (context.Command is not PostSaveCommand postSaveCommand)
+            return;
+
+        // A save that failed to write leaves the document unsaved, so adopting it as clean would drop the "*"
+        // while the edits are still only in memory.
+        if (!postSaveCommand.Succeeded)
+            return;
+
+        // Ignore saves of documents we are not editing so a save of an unrelated document never discards our
+        // own in-memory edits.
+        if (postSaveCommand.Context.EditedVisualTreeAsset != EditedVisualTreeAsset)
+            return;
+
+        m_ExternalSave = true;
+        // Defer so the reload runs after the Builder's save has fully settled.
+        EditorApplication.delayCall += DoProcessBuilderSave;
+    }
+
+    void DoProcessBuilderSave()
+    {
+        if (!m_ExternalSave)
+            return;
+        m_ExternalSave = false;
+
+        AdoptReloadedContext(markClean: true);
+    }
+
+    void OnRegistryAssetReloaded(UnityEngine.Object asset)
+    {
+        if (m_SelfReloading || m_PanelElement == null || !IsPartOfEditedDocument(asset))
+            return;
+
+        AdoptReloadedContext(markClean: false);
+    }
+
+    bool IsPartOfEditedDocument(UnityEngine.Object asset)
+    {
+        if (asset == null)
+            return false;
+
+        // Fast path: the common reimport reuses the managed instance, so a reference match settles it.
+        if (ReferenceEquals(asset, EditedVisualTreeAsset) || ReferenceEquals(asset, Context.RootVisualTreeAsset))
+            return true;
+
+        var path = AssetDatabase.GetAssetPath(asset);
+        if (string.IsNullOrEmpty(path))
+            return false;
+
+        var root = (VisualTreeAsset)GlobalObjectId.GlobalObjectIdentifierToObjectSlow(m_MainAsset);
+        if (root != null && AssetDatabase.GetAssetPath(root) == path)
+            return true;
+
+        var edited = EditedVisualTreeAsset;
+        if (edited == null)
+            return false;
+        if (AssetDatabase.GetAssetPath(edited) == path)
+            return true;
+
+        using var _ = ListPool<StyleSheet>.Get(out var sheets);
+        edited.GetAllReferencedStyleSheets(sheets);
+        foreach (var sheet in sheets)
+            if (sheet != null && AssetDatabase.GetAssetPath(sheet) == path)
+                return true;
+        return false;
+    }
+
+    void AdoptReloadedContext(bool markClean)
+    {
+        if (m_PanelElement == null)
+            return;
+
+        var freshRoot = (VisualTreeAsset)GlobalObjectId.GlobalObjectIdentifierToObjectSlow(m_MainAsset);
+        if (freshRoot && (Context.SubDocumentPath == null || Context.SubDocumentPath.Length == 0))
+            Context = new VisualTreeAssetEditingContext(freshRoot, Context.PanelSettings);
+        else
+            ReloadAssets();
+
+        if (markClean)
+            MarkTrackedAssetsClean();
+        CloneTree();
+        ClearUndoForEditedAssets();
     }
 
     internal override string GetErrorMessage()

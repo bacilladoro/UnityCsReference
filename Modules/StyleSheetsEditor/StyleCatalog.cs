@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: StyleSheetsEditor not yet converted
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -1441,9 +1442,9 @@ namespace UnityEditor.StyleSheets
 
         public StyleBlock GetComposedStyle(int selectorKey, params StyleState[] states)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             return GetStyle(selectorKey, states.Concat(new[] {StyleState.normal}).ToArray());
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         public void Load(params string[] paths)
@@ -1453,9 +1454,9 @@ namespace UnityEditor.StyleSheets
 
         public void Load(IEnumerable<string> paths)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var sheets = paths.Select(p =>
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 var x = EditorResources.Load<UnityEngine.Object>(p, false) as StyleSheet;
 
@@ -1473,9 +1474,9 @@ namespace UnityEditor.StyleSheets
             try
             {
                 var resolver = new StyleSheetResolver();
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 resolver.AddStyleSheets(sheets.ToArray());
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 resolver.Resolve();
                 Load(resolver);
             }
@@ -1714,9 +1715,9 @@ namespace UnityEditor.StyleSheets
         private List<StyleValue> ExpandValues(List<StyleValue> values,
             List<float> numbers, List<Color> colors, List<string> strings, List<StyleRect> rects, List<StyleValueGroup> groups)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var states = values.Select(v => v.state).Distinct().ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             // Rects
             values = ExpandRect(states, values, numbers, rects, StyleCatalogKeyword.position, StyleCatalogKeyword.top, StyleCatalogKeyword.right, StyleCatalogKeyword.bottom, StyleCatalogKeyword.left);
@@ -2228,3 +2229,4 @@ namespace UnityEditor.StyleSheets
         #endregion
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

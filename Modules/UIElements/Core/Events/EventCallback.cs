@@ -2,6 +2,8 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
+using Unity.Scripting.LifecycleManagement;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
@@ -46,6 +48,7 @@ namespace UnityEngine.UIElements
     /// <seealso cref="EventCallbackDefinition"/>
     public abstract class EventArg
     {
+        [NoAutoStaticsCleanup]
         private static int s_NextId = 2;
 
         internal readonly int m_Id;
@@ -124,6 +127,7 @@ namespace UnityEngine.UIElements
         /// </summary>
         public static int Id => EventArgId.Self;
 
+        [NoAutoStaticsCleanup]
         private static EventSelfArgValue<TElement> s_SelfInvoker;
         public static EventSelfArgValue<TElement> GetSelfInvoker() => s_SelfInvoker ??= new();
     }
@@ -133,12 +137,14 @@ namespace UnityEngine.UIElements
         void Invoke(EventBase evt, EventCallbackInternal c);
     }
 
-    internal abstract class EventArgValue : IEventInvoker
+    internal abstract partial class EventArgValue : IEventInvoker
     {
         public EventArgValue nextArg;
         public int argId;
         public int temporaryCount;
 
+
+        [NoAutoStaticsCleanup]
         public static readonly EventNoArgValue None = new();
         public static IEventInvoker Self(VisualElement ve) => ve.typeData.selfEventInvoker;
 
@@ -159,25 +165,29 @@ namespace UnityEngine.UIElements
             evt.InvokeCallback(c.userCallback, (TElement)evt.currentTarget);
     }
 
-    internal static class EventArgValueFactory<TArg>
+    internal static partial class EventArgValueFactory<TArg>
     {
         public delegate EventArgValue GetPooledFunc(int id, in TArg value);
 
+
+        [NoAutoStaticsCleanup]
         public static readonly GetPooledFunc GetPooled = typeof(TArg).IsValueType
             ? EventArgValue<TArg>.GetPooled
             : EventArgObjectValue.GetPooled;
     }
 
-    internal class EventArgObjectValue : EventArgValue
+    internal partial class EventArgObjectValue : EventArgValue
     {
+        [NoAutoStaticsCleanup]
         private static readonly ObjectPool<EventArgObjectValue> k_Pool = new(() => new(),
             EventCallbackRegistry.k_PoolMaxSize);
 
         private object value;
         private Action<EventArgObjectValue, EventBase, EventCallbackInternal> invoke;
 
-        private static class Invoker<TArg>
+        private static partial class Invoker<TArg>
         {
+            [NoAutoStaticsCleanup]
             public static readonly Action<EventArgObjectValue, EventBase, EventCallbackInternal> k_Invoke =
                 (self, evt, c) => evt.InvokeCallback(c.userCallback, (TArg)self.value);
         }
@@ -209,10 +219,12 @@ namespace UnityEngine.UIElements
         }
     }
 
-    internal class EventArgValue<TArg> : EventArgValue
+    internal partial class EventArgValue<TArg> : EventArgValue
     {
         private const int k_PoolMaxSize = 64;
+        [NoAutoStaticsCleanup]
         private static readonly EqualityComparer<TArg> k_EqualityComparer = EqualityComparer<TArg>.Default;
+        [NoAutoStaticsCleanup]
         private static ObjectPool<EventArgValue<TArg>> s_Pool;
 
         private TArg value;
@@ -959,3 +971,4 @@ namespace UnityEngine.UIElements
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

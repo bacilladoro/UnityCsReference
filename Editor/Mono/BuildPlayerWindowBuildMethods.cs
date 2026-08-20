@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: BuildSettingsWindow not yet converted
 using UnityEditor.Modules;
 using UnityEditor.Build;
 using UnityEngine;
@@ -15,14 +16,19 @@ using UnityEditor.Connect;
 using UnityEditor.Profiling;
 using UnityEditor.Utils;
 using UnityEditor.Build.Profile;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor
 {
     public partial class BuildPlayerWindow : EditorWindow
     {
+        [AutoStaticsCleanupOnCodeReload]
         private static Func<BuildPlayerOptions, BuildPlayerOptions> getBuildPlayerOptionsHandler;
+        [AutoStaticsCleanupOnCodeReload]
         private static Action<BuildPlayerOptions> buildPlayerHandler;
+        [NoAutoStaticsCleanup] // build-in-progress guard, set/cleared within a single build call
         private static bool m_Building = false;
+        [AutoStaticsCleanupOnCodeReload]
         internal static Action<BuildReport> buildCompletionHandler;
 
         /// <summary>
@@ -518,9 +524,9 @@ namespace UnityEditor
                     NormalizePath(basePath + "/UserSettings")
                 };
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 var invalidPath = invalidPaths.FirstOrDefault(p => cleanedPath.Contains(p, StringComparison.OrdinalIgnoreCase));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 if (!string.IsNullOrEmpty(invalidPath))
                 {
                     var dirName = Path.GetFileName(invalidPath);
@@ -576,3 +582,4 @@ namespace UnityEditor
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

@@ -108,6 +108,11 @@ namespace UnityEditor.PackageManager.UI.Internal
         private TrustAndSignature m_TrustAndSignature;
         public override TrustAndSignature trustAndSignature => m_TrustAndSignature;
 
+        // Computed against the trust policy level at creation time; packages are regenerated when the setting changes.
+        [SerializeField]
+        private bool m_MeetsTrustPolicy;
+        public override bool meetsTrustPolicy => m_MeetsTrustPolicy;
+
         [SerializeField]
         private string m_SignatureOrgName;
         public override string signatureOrgName => m_SignatureOrgName;
@@ -135,8 +140,9 @@ namespace UnityEditor.PackageManager.UI.Internal
             return packageVersion;
         }
 
-        public static UpmPackageVersion CreateWithCompleteInfo(IUpmPackageData packageData, PackageInfo packageInfo, bool isInstalled, IIOProxy ioProxy, IApplicationProxy applicationProxy, bool processLoadingError)
+        public static UpmPackageVersion CreateWithCompleteInfo(IUpmPackageData packageData, PackageInfo packageInfo, bool isInstalled, IIOProxy ioProxy, IApplicationProxy applicationProxy, bool processLoadingError, TrustPolicyLevel trustPolicyLevel)
         {
+            var trustAndSignature = TrustAndSignatureHelper.GetTrustAndSignature(packageInfo, isInstalled);
             var packageVersion = new UpmPackageVersion(packageInfo.name, packageInfo.version, packageData.availableRegistryType)
             {
                 m_IsFullyFetched = true,
@@ -154,7 +160,8 @@ namespace UnityEditor.PackageManager.UI.Internal
                 m_PublishedDateTicks = GetPublishDateTicks(packageInfo),
                 m_MinimumUnityVersion = packageInfo.editorCompatibility?.minimumUnityVersion,
                 m_Author = packageInfo.author,
-                m_TrustAndSignature = TrustAndSignatureHelper.GetTrustAndSignature(packageInfo, isInstalled),
+                m_TrustAndSignature = trustAndSignature,
+                m_MeetsTrustPolicy = !TrustAndSignatureHelper.IsBlocked(trustPolicyLevel, trustAndSignature),
                 m_SignatureOrgName = packageInfo.signature?.attestation?.ownerOrgName ?? string.Empty,
             };
 

@@ -2,21 +2,27 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEditor.PackageManager;
 
 namespace Unity.Multiplayer.PlayMode.Editor
 {
-    static class MigrationUtility
+    static partial class MigrationUtility
     {
         const string k_MppmPackageName = "com.unity.multiplayer.playmode";
         const string k_MultiplayerModuleName = "com.unity.modules.multiplayer";
         const string k_TestPackageName = "com.unity.modules.multiplayer.playmode.editor.tests";
 
+        [AutoStaticsCleanupOnCodeReload] // init gate; must re-query package state after reload
         static bool s_Initialized;
+        [AutoStaticsCleanupOnCodeReload]
         static bool s_IsMppmPackageInstalled;
+        [AutoStaticsCleanupOnCodeReload]
         static bool s_IsVirtualProjectsInPackage;
+        [AutoStaticsCleanupOnCodeReload]
         static bool s_IsMultiplayerModuleInstalled;
+        [AutoStaticsCleanupOnCodeReload]
         static bool s_TestPackageInstalled;
 
         // Watches for the MPPM package being installed/removed so the feature can be enabled

@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
 using System;
 using System.Collections.Generic;
 using UnityEditor.Profiling;
@@ -10,6 +11,7 @@ using UnityEditorInternal;
 using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEngine.UIElements.Internal;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.UIElements
 {
@@ -239,6 +241,7 @@ namespace UnityEditor.UIElements
         /// live-object lookups on this single flag. EntityIds from captured or remote-player frames
         /// resolve against a different session and must not be matched to live editor objects.
         /// </summary>
+        [NoAutoStaticsCleanup] // refreshed on each frame load; transient bool session flag
         public static bool IsCurrentEditorSessionFrame { get; private set; }
 
         /// <summary>
@@ -268,3 +271,4 @@ namespace UnityEditor.UIElements
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

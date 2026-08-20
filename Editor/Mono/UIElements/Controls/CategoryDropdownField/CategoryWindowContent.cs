@@ -2,8 +2,10 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
 using System;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.Bindings;
 using UnityEngine.UIElements;
@@ -14,7 +16,7 @@ namespace UnityEditor.UIElements
     using ItemType = CategoryDropdownContent.ItemType;
 
     [VisibleToOtherModules("UnityEditor.UIBuilderModule")]
-    internal class CategoryWindowContent : PopupWindowContent
+    internal partial class CategoryWindowContent : PopupWindowContent
     {
         const string k_SelectionContextKey = "CategoryDropdownField.SelectionContext";
         const string k_BaseClass = "unity-category-dropdown-field";
@@ -31,6 +33,7 @@ namespace UnityEditor.UIElements
             public CategoryWindowContent content;
         }
 
+        [AutoStaticsCleanupOnCodeReload] // discards stale pooled elements (with old SelectionContext/callbacks) across reload
         static readonly UnityEngine.Pool.ObjectPool<TextElement> s_CategoryPool = new (() =>
         {
             var category = new TextElement();
@@ -41,6 +44,7 @@ namespace UnityEditor.UIElements
             te.style.display = DisplayStyle.Flex;
         });
 
+        [AutoStaticsCleanupOnCodeReload] // discards stale pooled elements (with old SelectionContext/callbacks) across reload
         static readonly UnityEngine.Pool.ObjectPool<TextElement> s_ItemPool = new (() =>
         {
             var value = new TextElement();
@@ -54,6 +58,7 @@ namespace UnityEditor.UIElements
             te.RemoveFromClassList(k_ItemInCategory);
         });
 
+        [AutoStaticsCleanupOnCodeReload] // discards stale pooled elements across reload
         static readonly UnityEngine.Pool.ObjectPool<VisualElement> s_SeparatorPool = new (() =>
         {
             var separator = new VisualElement();
@@ -478,3 +483,4 @@ namespace UnityEditor.UIElements
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

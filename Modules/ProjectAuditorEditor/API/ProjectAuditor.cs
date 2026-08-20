@@ -114,11 +114,11 @@ namespace Unity.ProjectAuditor.Editor
 
             var categories = analysisParams.Categories != null
                 ? analysisParams.Categories.ToValuesArray()
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 : m_Modules
                     .SelectMany(m => m.Categories)
                     .ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             var report = analysisParams.ExistingReport;
             if (report == null)
             {
@@ -130,10 +130,9 @@ namespace Unity.ProjectAuditor.Editor
                 var reportCategories = report.SessionInfo.Categories.ToValuesList();
                 reportCategories.AddRange(categories);
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 report.SessionInfo.Categories = reportCategories.Distinct().ToSerializableArray();
-#pragma warning restore UA2001
-                report.SessionInfo.UseRoslynAnalyzers = UserPreferences.UseRoslynAnalyzers;
+#pragma warning restore UAC2001
                 report.SessionInfo.ProjectAreas |= analysisParams.ExistingReportProjectAreas;
 
                 if ((analysisParams.ExistingReportProjectAreas & ProjectAreaFlags.Code) != 0)
@@ -158,7 +157,7 @@ namespace Unity.ProjectAuditor.Editor
                 return;
             }
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var requestedModules = categories.SelectMany(GetModules).Distinct().ToArray();
             var supportedModules = requestedModules.Where(m => m != null).ToArray();
 
@@ -166,7 +165,7 @@ namespace Unity.ProjectAuditor.Editor
                 report,
                 supportedModules.Select(m => m.Name).ToArray(),
                 analysisParams.Categories.ToValuesArray());
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             var numModules = supportedModules.Length;
             if (numModules == 0)
@@ -221,9 +220,9 @@ namespace Unity.ProjectAuditor.Editor
                             // requested (e.g. TextureModule runs because it also handles AssetIssue, but also
                             // emits Texture items that were never cleared from the report). Filter to only the
                             // categories that were explicitly cleared and re-analyzed to prevent duplication.
-                            #pragma warning disable UA2001
+                            #pragma warning disable UAC2001
                             results = results.Where(i => categoriesSet.Contains(i.Category));
-                            #pragma warning restore UA2001
+                            #pragma warning restore UAC2001
                         }
 
                         var resultsList = new List<ReportItem>();
@@ -367,9 +366,9 @@ namespace Unity.ProjectAuditor.Editor
 
         internal Module[] GetModules(IssueCategory category)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             return m_Modules.Where(a => a.SupportedLayouts.FirstOrDefault(l => l.Category == category) != null).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         internal List<Module> GetModules()
@@ -422,17 +421,17 @@ namespace Unity.ProjectAuditor.Editor
         // Only used for testing
         internal DescriptorId[] GetDescriptorIDs()
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             return m_Modules.SelectMany(m => m.SupportedDescriptorIds).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         // Only used for testing
         internal bool IsModuleSupported(IssueCategory category)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             return m_Modules.Exists(a => a.SupportedLayouts.FirstOrDefault(l => l.Category == category) != null);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         // Only used for testing

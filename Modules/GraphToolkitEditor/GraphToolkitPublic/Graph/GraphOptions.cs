@@ -32,7 +32,8 @@ namespace Unity.GraphToolkit.Editor
         /// Indicates that this graph supports subgraphs.
         /// </summary>
         /// <remarks>
-        /// When enabled, the “Convert Selection to Subgraph” item will be available in the right click menu of a selection of elements in the graph.
+        /// When enabled, the “Create Local Subgraph from Selection” item will be available in the right click menu of a selection of elements in the graph and
+        /// the “Create Empty Local Subgraph” item will be available in the right click menu of the graph canvas.
         /// </remarks>
         SupportsSubgraphs = 1 << 0,
 

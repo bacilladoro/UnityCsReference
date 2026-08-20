@@ -58,9 +58,9 @@ namespace Unity.GraphToolkit.Editor
         {
             ConstantModels = new List<Constant>(constantModels);
             Owners = owners == null ? Array.Empty<GraphElementModel>() : new List<GraphElementModel>(owners);
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             m_CommonConstantType = ModelHelpers.GetCommonBaseType(ConstantModels.Select(
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 t => t.ObjectValue != null ? t.ObjectValue.GetType() : t.Type));
 
             CreateField();
@@ -116,9 +116,9 @@ namespace Unity.GraphToolkit.Editor
         {
             // PF TODO when this is a module, submit modifications to UIToolkit to avoid having to do reflection.
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var registerCallbackMethod = typeof(CallbackEventHandler)
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 .GetMethods(BindingFlags.Public | BindingFlags.DeclaredOnly | BindingFlags.Instance)
                 .SingleOrDefault(m => m.Name == nameof(RegisterCallback) && m.GetGenericArguments().Length == 2 &&
                                       m.GetParameters().Length == 3 && m.GetParameters()[2].ParameterType == typeof(TrickleDown));
@@ -180,7 +180,7 @@ namespace Unity.GraphToolkit.Editor
             while (enu.MoveNext())
             {
                 var current = enu.Current;
-                if (current != null && !Equals(current.ObjectValue, displayedValue.ObjectValue))
+                if (current != null && !ConstantValuesEqual(current.ObjectValue, displayedValue.ObjectValue))
                 {
                     same = false;
                     break;
@@ -198,7 +198,16 @@ namespace Unity.GraphToolkit.Editor
 
             if (Field is ListView)
             {
-                SetFieldValue(Field, typeof(ListView), displayedValue);
+                if (!isConnected && same)
+                {
+                    SetFieldValue(Field, Field.GetType(), displayedValue);
+                    Field.SetEnabled(true);
+                }
+                else
+                {
+                    Field.SetEnabled(false);
+                }
+
                 return;
             }
 
@@ -399,7 +408,7 @@ namespace Unity.GraphToolkit.Editor
 
             for (int i = 0; i < Owners.Count; i++)
             {
-                if (Owners[i] is VariableDeclarationModelBase || Owners[i] is ConstantNodeModel)
+                if (Owners[i] is VariableDeclarationModelBase || Owners[i] is ConstantNodeModel || Owners[i] is PortModel)
                     return true;
             }
 
@@ -575,6 +584,26 @@ namespace Unity.GraphToolkit.Editor
             }
 
             return true;
+        }
+
+        static bool ConstantValuesEqual(object a, object b)
+        {
+            // If a and b are lists, check if their elements are equal
+            if (a is IList listA && b is IList listB)
+            {
+                if (listA.Count != listB.Count)
+                    return false;
+
+                for (var i = 0; i < listA.Count; i++)
+                {
+                    if (!Equals(listA[i], listB[i]))
+                        return false;
+                }
+
+                return true;
+            }
+
+            return Equals(a, b);
         }
 
         private void BindSafe(VisualElement element, object value)

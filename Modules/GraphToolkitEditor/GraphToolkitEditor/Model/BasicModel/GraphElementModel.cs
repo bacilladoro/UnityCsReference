@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using Unity.GraphToolkit.Editor.ContextualMenuItems;
 using Unity.GraphToolkit.Editor.Implementation;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 
 namespace Unity.GraphToolkit.Editor
@@ -137,7 +138,8 @@ namespace Unity.GraphToolkit.Editor
         /// <inheritdoc />
         public virtual IReadOnlyList<ContextualMenuItem> ContextualMenuItems => k_CommonGraphElementMenuItems;
 
-        static readonly List<ContextualMenuItem> k_CommonGraphElementMenuItems = new() {
+        [AutoStaticsCleanupOnCodeReload]
+        static List<ContextualMenuItem> k_CommonGraphElementMenuItems = new() {
             ContextualMenuHelpers.createPlacematItem,
             ContextualMenuHelpers.createLocalSubgraphFromSelectionItem,
             ContextualMenuHelpers.cutItem,

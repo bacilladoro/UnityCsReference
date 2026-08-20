@@ -7,6 +7,6 @@ namespace UnityEditor.Scripting.Compilers
     internal class CompilerSpecificResponseFiles
     {
         public const string MicrosoftCSharpCompiler = "csc.rsp";
-        public static string[] MicrosoftCSharpCompilerObsolete = new[] { "mcs.rsp" };
+        public static readonly string[] MicrosoftCSharpCompilerObsolete = new[] { "mcs.rsp" };
     }
 }

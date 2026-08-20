@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -10,11 +11,12 @@ using UnityEngine;
 using UnityEngine.Bindings;
 using UnityEngine.UIElements;
 using Object = UnityEngine.Object;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.UIElements.Bindings;
 
 [VisibleToOtherModules("UnityEditor.UIBuilderModule")]
-internal class SerializedObjectBindingContext
+internal partial class SerializedObjectBindingContext
 {
     public ulong lastRevision { get; private set; }
     private SerializedObject serializedObject { get; set; }
@@ -32,6 +34,7 @@ internal class SerializedObjectBindingContext
     private long m_LastFrame = long.MinValue;
 
     delegate void BindGenericMethod(SerializedObjectBindingContext context, VisualElement element, SerializedProperty prop);
+    [NoAutoStaticsCleanup]
     static readonly Dictionary<Type, BindGenericMethod> s_DefaultBindGenericMethods = new();
 
     public SerializedObjectBindingContext(SerializedObject so)
@@ -746,7 +749,7 @@ internal class SerializedObjectBindingContext
         }
     }
 
-    class TrackedValues
+    partial class TrackedValues
     {
         // MultiValueDictionary?
         private Dictionary<int, List<TrackedValue>> m_TrackedValues = new Dictionary<int, List<TrackedValue>>();
@@ -963,6 +966,7 @@ internal class SerializedObjectBindingContext
         m_RegisteredBindings.Remove(b);
     }
 
+    [AutoStaticsCleanupOnCodeReload]
     private static event Action<uint,uint> m_PostProcessTrackedPropertyChanges;
 
 
@@ -1013,3 +1017,4 @@ internal class SerializedObjectBindingContext
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

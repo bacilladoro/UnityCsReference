@@ -2,8 +2,10 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: BuildSettingsWindow not yet converted
 using System;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -17,6 +19,7 @@ namespace UnityEditor.Build.Profile
     {
         const string k_Uxml = "BuildProfile/UXML/AssetImportOverridesWindow.uxml";
 
+        [NoAutoStaticsCleanup] // static dropdown labels, allocated once, only localized string literals
         static readonly List<string> k_MaxTextureSizeLabels = new()
         {
             L10n.Tr("No Override", "Use maximum texture size as specified in per-texture import settings."),
@@ -28,6 +31,7 @@ namespace UnityEditor.Build.Profile
             L10n.Tr("Max 64", "Make imported textures never exceed 64 pixels in width or height."),
         };
 
+        [NoAutoStaticsCleanup] // static dropdown labels, allocated once, only localized string literals
         static readonly List<string> k_TextureCompressionLabels = new()
         {
             L10n.Tr("No Override", "Do not modify texture import compression settings."),
@@ -36,6 +40,7 @@ namespace UnityEditor.Build.Profile
             L10n.Tr("Force No Crunch", "Disable crunch compression on textures.")
         };
 
+        [NoAutoStaticsCleanup] // static dropdown values, allocated once, only int literals
         static readonly List<int> k_MaxTextureSizeValues = new()
         {
             0,
@@ -47,6 +52,7 @@ namespace UnityEditor.Build.Profile
             64,
         };
 
+        [NoAutoStaticsCleanup] // static dropdown values, allocated once, only enum-backed int literals
         static readonly List<int> k_TextureCompressionValues = new()
         {
             (int)OverrideTextureCompression.NoOverride,
@@ -168,3 +174,4 @@ namespace UnityEditor.Build.Profile
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

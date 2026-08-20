@@ -58,9 +58,9 @@ namespace UnityEditor.Scripting
                 + assemblyFullPath
                 + " --output " + CommandLineFormatter.PrepareFileName(tempOutputPath)
                 + APIVersionArgument()
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 + AssemblySearchPathArgument(updateConfigSourcePaths.Select(Path.GetDirectoryName).Distinct())
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 + ConfigurationProviderAssembliesPathArgument(updateConfigSourcePaths);
         }
 
@@ -120,9 +120,9 @@ namespace UnityEditor.Scripting
 
             if (configurationSourceDirectories != null)
             {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 var searchPathFromConfigSources = configurationSourceDirectories.Aggregate("", (acc, curr) =>  acc + $"{Path.PathSeparator}+" + curr.Escape(Path.PathSeparator));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 searchPath += searchPathFromConfigSources;
             }
 

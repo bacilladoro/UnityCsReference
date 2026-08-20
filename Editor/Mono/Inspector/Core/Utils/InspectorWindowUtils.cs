@@ -135,9 +135,9 @@ namespace UnityEditor
                         continue;
                     }
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                     foreach (var customPreviewType in new[] { previewAttr.m_Type }.Concat(TypeCache.GetTypesDerivedFrom(previewAttr.m_Type)))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     {
                         if (!previewableTypes.TryGetValue(customPreviewType, out var types))
                         {

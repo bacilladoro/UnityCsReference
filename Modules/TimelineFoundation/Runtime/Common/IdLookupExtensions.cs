@@ -19,9 +19,9 @@ namespace Unity.Timeline.Foundation.Common
 
         public static IEnumerable<T> GetValues<T>(this IReadOnlyDictionary<UniqueID, T> dictionary, IEnumerable<UniqueID> ids)
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return dictionary.Keys.Intersect(ids).Select(id => dictionary[id]);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         public static void RemoveIntersection<T>(this Dictionary<UniqueID, T> dictionary, IReadOnlyDictionary<UniqueID, T> other)

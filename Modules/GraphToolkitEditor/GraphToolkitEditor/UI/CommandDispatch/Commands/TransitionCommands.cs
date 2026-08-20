@@ -11,10 +11,10 @@ using UnityEngine;
 namespace Unity.GraphToolkit.Editor
 {
     /// <summary>
-    /// Command to create a single state transition.
+    /// Command to create a self transition.
     /// </summary>
     [UnityRestricted]
-    internal class CreateSingleStateTransitionSupportCommand : UndoableCommand
+    internal class CreateSelfTransitionSupportCommand : UndoableCommand
     {
         /// <summary>
         /// The state machine to create the transition in.
@@ -27,42 +27,33 @@ namespace Unity.GraphToolkit.Editor
         public readonly StateModel State;
 
         /// <summary>
-        /// The type of transition to create. Must be one of the following:
-        /// - <see cref="TransitionSupportKind.Local"/>
-        /// - <see cref="TransitionSupportKind.Self"/>
-        /// - <see cref="TransitionSupportKind.OnEnter"/>
+        /// The type of transition to create.
         /// </summary>
-        public readonly TransitionSupportKind Kind;
+        public readonly Type TransitionSupportType;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="CreateSingleStateTransitionSupportCommand"/> class.
+        /// Initializes a new instance of the <see cref="CreateSelfTransitionSupportCommand"/> class.
         /// </summary>
         /// <param name="stateMachine">The state machine to create the transition in.</param>
         /// <param name="state">The state to create the transition on.</param>
-        /// <param name="kind">The type of transition to create.</param>
-        public CreateSingleStateTransitionSupportCommand(GraphModel stateMachine, StateModel state, TransitionSupportKind kind)
+        /// <param name="transitionSupportType">The type of transition to create.</param>
+        public CreateSelfTransitionSupportCommand(GraphModel stateMachine, StateModel state, Type transitionSupportType)
         {
             StateMachine = stateMachine;
             State = state;
-            Kind = kind;
-            UndoString = kind switch
-            {
-                TransitionSupportKind.Local => "Create Local Transition",
-                TransitionSupportKind.OnEnter => "Create On Enter Transition",
-                TransitionSupportKind.Self => "Create Self Transition",
-                _ => throw new ArgumentException("Invalid transition type", nameof(kind))
-            };
+            TransitionSupportType = transitionSupportType;
+            UndoString = "Create Transition";
         }
 
         /// <summary>
-        /// Default command handler for <see cref="CreateSingleStateTransitionSupportCommand"/>.
+        /// Default command handler for <see cref="CreateSelfTransitionSupportCommand"/>.
         /// </summary>
         /// <param name="undoState">The undo state component.</param>
         /// <param name="graphModelState">The graph model state component.</param>
         /// <param name="selectionState">The selection state component.</param>
         /// <param name="command">The command to execute.</param>
         [UsedImplicitly]
-        public static void DefaultCommandHandler(UndoStateComponent undoState, GraphModelStateComponent graphModelState, SelectionStateComponent selectionState, CreateSingleStateTransitionSupportCommand command)
+        public static void DefaultCommandHandler(UndoStateComponent undoState, GraphModelStateComponent graphModelState, SelectionStateComponent selectionState, CreateSelfTransitionSupportCommand command)
         {
             using (var undoStateUpdater = undoState.UpdateScope)
             {
@@ -73,7 +64,7 @@ namespace Unity.GraphToolkit.Editor
             TransitionSupportModel existingTargetTransitionSupport = null;
             foreach (var wire in command.State.GetInPort().GetConnectedWires())
             {
-                if (wire is TransitionSupportModel transitionSupportModel && transitionSupportModel.TransitionSupportKind == command.Kind)
+                if (wire is TransitionSupportModel transitionSupportModel && transitionSupportModel.TransitionSupportType == command.TransitionSupportType)
                 {
                     existingTargetTransitionSupport = transitionSupportModel;
                     break;
@@ -92,7 +83,7 @@ namespace Unity.GraphToolkit.Editor
                 }
                 else
                 {
-                    var newTransitionSupport = command.StateMachine.CreateSingleStateTransitionSupport(command.State, command.Kind);
+                    var newTransitionSupport = command.StateMachine.CreateSelfTransitionSupport(command.State, command.TransitionSupportType);
                     modelToSelect = newTransitionSupport;
                 }
 
@@ -188,7 +179,7 @@ namespace Unity.GraphToolkit.Editor
             {
                 var newTransition = graphModelState.GraphModel.CreateTransitionSupport(command.ToStateModel.GetInPort(), command.ToStateAnchorSide, command.ToStateAnchorOffset,
                     command.FromStateModel.GetOutPort(), command.FromStateAnchorSide, command.FromStateAnchorOffset,
-                    TransitionSupportKind.StateToState);
+                    typeof(StateToStateTransitionModel));
 
                 if (newTransition != null)
                 {
@@ -325,7 +316,7 @@ namespace Unity.GraphToolkit.Editor
                 {
                     wireSide = WireSide.To;
                     graphModelState.GraphModel.CreateTransitionSupport(newStateModel.GetInPort(), command.ToStateAnchorSide, command.ToStateAnchorOffset,
-                        command.FromStateModel.GetOutPort(), command.FromStateAnchorSide, command.FromStateAnchorOffset, TransitionSupportKind.StateToState);
+                        command.FromStateModel.GetOutPort(), command.FromStateAnchorSide, command.FromStateAnchorOffset, typeof(StateToStateTransitionModel));
                 }
                 else
                 {
@@ -454,10 +445,10 @@ namespace Unity.GraphToolkit.Editor
     }
 
     /// <summary>
-    /// Command to paste single state transition supports on a state.
+    /// Command to paste self transition supports on a state.
     /// </summary>
     [UnityRestricted]
-    internal class PasteSingleStateTransitionSupportsCommand : UndoableCommand
+    internal class PasteSelfTransitionSupportsCommand : UndoableCommand
     {
         const string k_SingularUndoString = "Paste Transition";
         const string k_PluralUndoString = "Paste Transitions";
@@ -483,13 +474,13 @@ namespace Unity.GraphToolkit.Editor
         public readonly bool IsAdditivePaste;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="PasteSingleStateTransitionSupportsCommand"/> class.
+        /// Initializes a new instance of the <see cref="PasteSelfTransitionSupportsCommand"/> class.
         /// </summary>
         /// <param name="stateMachine">The state machine to create the transition supports in.</param>
         /// <param name="state">The state to create the transition supports on.</param>
         /// <param name="transitionSupportModels">The transition supports to paste.</param>
         /// <param name="isAdditivePaste">Whether to paste the transition from the source transition supports additively or to replace the existing transitions.</param>
-        public PasteSingleStateTransitionSupportsCommand(GraphModel stateMachine, StateModel state, IReadOnlyList<TransitionSupportModel> transitionSupportModels, bool isAdditivePaste)
+        public PasteSelfTransitionSupportsCommand(GraphModel stateMachine, StateModel state, IReadOnlyList<TransitionSupportModel> transitionSupportModels, bool isAdditivePaste)
         {
             StateMachine = stateMachine;
             State = state;
@@ -499,14 +490,14 @@ namespace Unity.GraphToolkit.Editor
         }
 
         /// <summary>
-        /// Default command handler for <see cref="CreateSingleStateTransitionSupportCommand"/>.
+        /// Default command handler for <see cref="CreateSelfTransitionSupportCommand"/>.
         /// </summary>
         /// <param name="undoState">The undo state component.</param>
         /// <param name="graphModelState">The graph model state component.</param>
         /// <param name="selectionState">The selection state component.</param>
         /// <param name="command">The command to execute.</param>
         [UsedImplicitly]
-        public static void DefaultCommandHandler(UndoStateComponent undoState, GraphModelStateComponent graphModelState, SelectionStateComponent selectionState, PasteSingleStateTransitionSupportsCommand command)
+        public static void DefaultCommandHandler(UndoStateComponent undoState, GraphModelStateComponent graphModelState, SelectionStateComponent selectionState, PasteSelfTransitionSupportsCommand command)
         {
             using (var undoStateUpdater = undoState.UpdateScope)
             {
@@ -523,13 +514,13 @@ namespace Unity.GraphToolkit.Editor
             {
                 foreach (var pastedTransitionSupport in command.PastedTransitionSupportModels)
                 {
-                    var kind = pastedTransitionSupport.TransitionSupportKind;
-                    if (kind == TransitionSupportKind.StateToState)
-                        kind = TransitionSupportKind.Self;
+                    var transitionSupportType = pastedTransitionSupport.TransitionSupportType;
+                    if (transitionSupportType == typeof(StateToStateTransitionModel))
+                        transitionSupportType = typeof(SelfTransitionModel);
 
                     foreach (var wire in connectedWires)
                     {
-                        if (wire is TransitionSupportModel baseTransitionModel && baseTransitionModel.TransitionSupportKind == kind)
+                        if (wire is TransitionSupportModel baseTransitionModel && baseTransitionModel.TransitionSupportType == transitionSupportType)
                         {
                             existingTargetTransition = baseTransitionModel;
                             break;
@@ -551,7 +542,7 @@ namespace Unity.GraphToolkit.Editor
                     }
                     else
                     {
-                        var newTransition = command.StateMachine.CreateSingleStateTransitionSupport(command.State, kind);
+                        var newTransition = command.StateMachine.CreateSelfTransitionSupport(command.State, transitionSupportType);
                         newTransition.ReplaceTransitions(pastedTransitionSupport);
                         modelsToSelect.Add(newTransition);
                     }

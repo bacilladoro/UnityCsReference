@@ -14,8 +14,10 @@ namespace Unity.GraphToolkit.Editor
     /// </summary>
     [Serializable]
     [UnityRestricted]
-    internal class TransitionModel : GraphElementModel, IHasTitle, IRenamable, IGraphElementContainer
+    internal class TransitionModel : GraphElementModel, IHasTitle, IRenamable, IGraphElementContainer, ITransitionRule
     {
+        internal const string k_DefaultTitle = "Transition Rule";
+
         [FormerlySerializedAs("Enable")]
         [SerializeField, HideInInspector, InspectorUseProperty("Enabled")]
         bool m_Enabled = true;
@@ -61,6 +63,9 @@ namespace Unity.GraphToolkit.Editor
             }
         }
 
+        /// <inheritdoc cref="ITransitionRule.RootCondition" />
+        public IGroupCondition RootCondition => ConditionModel;
+
         /// <summary>
         /// Clone the passed <see cref="GroupConditionModel"/> into this transition.
         /// </summary>
@@ -86,7 +91,7 @@ namespace Unity.GraphToolkit.Editor
         /// <inheritdoc />
         public string Title
         {
-            get => m_Title;
+            get => string.IsNullOrEmpty(m_Title) ? k_DefaultTitle : m_Title;
             set
             {
                 m_Title = value;

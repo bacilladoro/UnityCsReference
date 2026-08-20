@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using Unity.Collections.LowLevel.Unsafe;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Bindings;
 using UnityEngine.Scripting;
 using UnityEngine.TextCore.Text;
@@ -13,11 +14,14 @@ namespace UnityEngine.TextCore
 {
     [NativeHeader("Modules/TextCoreTextEngine/Native/RichTextAssetPreload.h")]
     [VisibleToOtherModules("UnityEngine.UIElementsModule", "UnityEngine.IMGUIModule")]
-    internal static class NativeRichTextAssetRegistry
+    internal static partial class NativeRichTextAssetRegistry
     {
+        [AutoStaticsCleanupOnCodeReload]
         [VisibleToOtherModules("UnityEngine.UIElementsModule")]
         internal static readonly Dictionary<uint, FontAsset> s_FontAssetCache = new();
+        [AutoStaticsCleanupOnCodeReload]
         internal static readonly Dictionary<uint, SpriteAsset> s_SpriteAssetCache = new();
+        [AutoStaticsCleanupOnCodeReload]
         internal static readonly Dictionary<uint, TextColorGradient> s_GradientAssetCache = new();
 
         [VisibleToOtherModules("UnityEngine.UIElementsModule")]

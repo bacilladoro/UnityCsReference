@@ -350,13 +350,13 @@ namespace UnityEditor.Networking.PlayerConnection
         protected override TreeViewItem BuildRoot()
         {
             var root = new TreeViewItem { id = -1, depth = -1, displayName = "Root" };
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             foreach (var connectionType in dropDownItems.OrderBy(x => x.m_TopLevelGroup).GroupBy(x => x.m_TopLevelGroup))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 if (connectionType.Key == ConnectionDropDownItem.ConnectionMajorGroup.Editor)
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 {
                     foreach (var connectionDropDownItem in connectionType)
                     {
@@ -365,22 +365,22 @@ namespace UnityEditor.Networking.PlayerConnection
                     continue;
                 }
                 // connection major group
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 var i = new TreeViewItem { displayName = ConnectionDropDownItem.ConnectionMajorGroupLabels[(int)connectionType.Key]};
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 i.id = (i.displayName + root.displayName).GetHashCode();
                 root.AddChild(i);
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 foreach (var playerType in connectionType.Where(x => x.m_SubGroup != null).GroupBy(x => x.m_SubGroup).OrderBy(x => x.Key))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 {
                     // direct and preeasy id connections dont have any subgrouping
                     if (i.displayName == ConnectionDropDownItem.ConnectionMajorGroupLabels[(int)ConnectionDropDownItem.ConnectionMajorGroup.Direct] ||
                         i.displayName == ConnectionDropDownItem.ConnectionMajorGroupLabels[(int)ConnectionDropDownItem.ConnectionMajorGroup.ConnectionsWithoutID])
                     {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                         foreach (var player in playerType.OrderBy(x => x.DisplayName).Where(x => x.DisplayName.ToLower().Contains(search.ToLower())))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                             i.AddChild(player);
                         continue;
                     }
@@ -393,9 +393,9 @@ namespace UnityEditor.Networking.PlayerConnection
                         return root;
                     }
                     // if we match a player type add all of its children and continue
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                     if (string.Equals(playerType.Key.ToLower(), search.ToLower(), StringComparison.Ordinal))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     {
                         AddChildren(playerType, i);
                         continue;
@@ -425,18 +425,18 @@ namespace UnityEditor.Networking.PlayerConnection
             if (filter == null)
             {
                 var header = AddHeaderItem(group.Key, treeViewItem);
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 foreach (var player in group.OrderBy(x => x.DisplayName))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     header.AddChild(player);
             }
             else
             {
                 var header = AddHeaderItem(group.Key, treeViewItem);
                 bool addedChild = false;
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 foreach (var player in group.Where(x => x.DisplayName.Contains(filter, StringComparison.OrdinalIgnoreCase))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                          .OrderBy(x => x.DisplayName))
                 {
                     addedChild = true;
@@ -831,9 +831,9 @@ namespace UnityEditor.Networking.PlayerConnection
             connectionItems ??= new List<ConnectionDropDownItem>();
             // *end-nonstandard-formatting*
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             var dupes = connectionItems.FirstOrDefault(x => x.DisplayName == connectionDropDownItem.DisplayName && x.IP == connectionDropDownItem.IP && x.Port == connectionDropDownItem.Port);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             if (dupes != null)
                 connectionItems.Remove(dupes);
 
@@ -880,31 +880,31 @@ namespace UnityEditor.Networking.PlayerConnection
         private float GetRequiredProjectNameColumnWidth()
         {
             return Mathf.Max(Content.ProjectNameMinWidth,
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 connectionItems.Max(x => x.ProjectNameSize));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         private float GetRequiredDisplayNameColumnWidth()
         {
             return Mathf.Max(Content.PlayerNameMinWidth,
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 connectionItems.Max(x => x.DisplayNameSize) + m_connectionTreeView.DisplayNameIndent );
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         private float GetRequiredIPColumnWidth()
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return Mathf.Max(Content.IPMinWidth, connectionItems.Max(x => x.IPSize));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         private float GetRequiredPortColumnWidth()
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return Mathf.Max(Content.PortMinWidth, connectionItems.Max(x => x.PortSize));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         float GetTotalVisibleWidth()

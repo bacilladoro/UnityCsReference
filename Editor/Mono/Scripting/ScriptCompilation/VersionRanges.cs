@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine.Assertions;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Scripting.ScriptCompilation
 {
@@ -13,6 +14,7 @@ namespace UnityEditor.Scripting.ScriptCompilation
         private readonly Dictionary<ExpressionTypeKey, ExpressionTypeValue<TVersion>> m_ExpressionTypes;
         private static readonly char[] k_LeftValidSymbols = new[] { '[', '(', };
         private static readonly char[] k_RightValidSymbols = new[] { ']', ')', };
+        [NoAutoStaticsCleanup] // immutable value-type proxy set once in static ctor, safe to persist across reload
         private static readonly TVersion m_versionTypeStaticFunctionalityProxy;
 
         static VersionRanges()

@@ -68,6 +68,7 @@ namespace UnityEngine.AdaptivePerformance
         }
     }
 
+
     /// <summary>
     /// Scaler profiles are used to combine all settings of scalers into one profile to be able to change the settings of each scaler at once.
     /// </summary>
@@ -127,11 +128,107 @@ namespace UnityEngine.AdaptivePerformance
     }
 
     /// <summary>
+    /// Wrapper that redirects the name property to shared per-scaler storage while
+    /// routing all per-mode properties (enabled, scale, bounds, target, ...) through
+    /// the active mode's underlying settings struct. Uses a function to dynamically
+    /// get the current base settings, so it automatically reflects operation mode changes.
+    /// </summary>
+    internal class ScalerSettingsEnabledWrapper : AdaptivePerformanceScalerSettingsBase
+    {
+        private System.Func<AdaptivePerformanceScalerSettingsBase> m_BaseSettingsGetter;
+        private System.Func<string> m_NameGetter;
+        private System.Action<string> m_NameSetter;
+        private System.Func<AdaptivePerformanceScalerSettingsBase> m_NormalModeGetter;
+        private System.Func<AdaptivePerformanceScalerSettingsBase> m_BatteryModeGetter;
+
+        public ScalerSettingsEnabledWrapper(System.Func<AdaptivePerformanceScalerSettingsBase> baseSettingsGetter, System.Func<string> nameGetter, System.Action<string> nameSetter, System.Func<AdaptivePerformanceScalerSettingsBase> normalModeGetter = null, System.Func<AdaptivePerformanceScalerSettingsBase> batteryModeGetter = null)
+        {
+            m_BaseSettingsGetter = baseSettingsGetter;
+            m_NameGetter = nameGetter;
+            m_NameSetter = nameSetter;
+            m_NormalModeGetter = normalModeGetter;
+            m_BatteryModeGetter = batteryModeGetter;
+        }
+
+        public override string name
+        {
+            get => m_NameGetter();
+            set => m_NameSetter(value);
+        }
+
+        public override bool enabled
+        {
+            get => m_BaseSettingsGetter().enabled;
+            set => m_BaseSettingsGetter().enabled = value;
+        }
+
+        public override float scale
+        {
+            get => m_BaseSettingsGetter().scale;
+            set => m_BaseSettingsGetter().scale = value;
+        }
+
+        public override ScalerVisualImpact visualImpact
+        {
+            get => m_BaseSettingsGetter().visualImpact;
+            set => m_BaseSettingsGetter().visualImpact = value;
+        }
+
+        public override ScalerTarget target
+        {
+            get => m_BaseSettingsGetter().target;
+            set => m_BaseSettingsGetter().target = value;
+        }
+
+        public override int maxLevel
+        {
+            get => m_BaseSettingsGetter().maxLevel;
+            set => m_BaseSettingsGetter().maxLevel = value;
+        }
+
+        public override float minBound
+        {
+            get => m_BaseSettingsGetter().minBound;
+            set => m_BaseSettingsGetter().minBound = value;
+        }
+
+        public override float maxBound
+        {
+            get => m_BaseSettingsGetter().maxBound;
+            set => m_BaseSettingsGetter().maxBound = value;
+        }
+
+        public override AdaptivePerformanceScalerSettingsBase GetNormalModeSetting()
+        {
+            return m_NormalModeGetter != null ? m_NormalModeGetter() : m_BaseSettingsGetter();
+        }
+
+        public override AdaptivePerformanceScalerSettingsBase GetBatteryModeSetting()
+        {
+            return m_BatteryModeGetter != null ? m_BatteryModeGetter() : m_BaseSettingsGetter();
+        }
+    }
+
+    /// <summary>
     /// Settings of indexer system.
     /// </summary>
     [System.Serializable]
     public class AdaptivePerformanceScalerSettings
     {
+        [SerializeField]
+        OperationMode m_OperationMode = OperationMode.NormalMode;
+
+        /// <summary>
+        /// Current operation mode for the settings (NormalMode or BatteryMode).
+        /// Controls which settings (normal or battery) are returned by scaler properties.
+        /// Wrappers dynamically reflect the mode change, so no cache invalidation needed.
+        /// </summary>
+        public OperationMode OperationMode
+        {
+            get { return m_OperationMode; }
+            set { m_OperationMode = value; }
+        }
+
         /// <summary>
         /// Apply existing external settings to a scaler to override the existing settings.
         /// </summary>
@@ -141,21 +238,42 @@ namespace UnityEngine.AdaptivePerformance
             if (settings == null)
                 return;
 
-            ApplySettingsBase(AdaptiveFramerate, settings.AdaptiveFramerate);
-            ApplySettingsBase(AdaptiveLOD, settings.AdaptiveLOD);
-            ApplySettingsBase(AdaptiveLut, settings.AdaptiveLut);
-            ApplySettingsBase(AdaptiveMSAA, settings.AdaptiveMSAA);
-            ApplySettingsBase(AdaptiveResolution, settings.AdaptiveResolution);
-            ApplySettingsBase(AdaptiveShadowCascade, settings.AdaptiveShadowCascade);
-            ApplySettingsBase(AdaptiveShadowDistance, settings.AdaptiveShadowDistance);
-            ApplySettingsBase(AdaptiveShadowmapResolution, settings.AdaptiveShadowmapResolution);
-            ApplySettingsBase(AdaptiveShadowQuality, settings.AdaptiveShadowQuality);
-            ApplySettingsBase(AdaptiveTransparency, settings.AdaptiveTransparency);
-            ApplySettingsBase(AdaptiveSorting, settings.AdaptiveSorting);
-            ApplySettingsBase(AdaptiveViewDistance, settings.AdaptiveViewDistance);
-            ApplySettingsBase(AdaptivePhysics, settings.AdaptivePhysics);
-            ApplySettingsBase(AdaptiveLayerCulling, settings.AdaptiveLayerCulling);
-            ApplySettingsBase(AdaptiveDecals, settings.AdaptiveDecals);
+            ApplySettingsAllModes(AdaptiveFramerate, settings.AdaptiveFramerate);
+            ApplySettingsAllModes(AdaptiveLOD, settings.AdaptiveLOD);
+            ApplySettingsAllModes(AdaptiveLut, settings.AdaptiveLut);
+            ApplySettingsAllModes(AdaptiveMSAA, settings.AdaptiveMSAA);
+            ApplySettingsAllModes(AdaptiveResolution, settings.AdaptiveResolution);
+            ApplySettingsAllModes(AdaptiveShadowCascade, settings.AdaptiveShadowCascade);
+            ApplySettingsAllModes(AdaptiveShadowDistance, settings.AdaptiveShadowDistance);
+            ApplySettingsAllModes(AdaptiveShadowmapResolution, settings.AdaptiveShadowmapResolution);
+            ApplySettingsAllModes(AdaptiveShadowQuality, settings.AdaptiveShadowQuality);
+            ApplySettingsAllModes(AdaptiveTransparency, settings.AdaptiveTransparency);
+            ApplySettingsAllModes(AdaptiveSorting, settings.AdaptiveSorting);
+            ApplySettingsAllModes(AdaptiveViewDistance, settings.AdaptiveViewDistance);
+            ApplySettingsAllModes(AdaptivePhysics, settings.AdaptivePhysics);
+            ApplySettingsAllModes(AdaptiveLayerCulling, settings.AdaptiveLayerCulling);
+            ApplySettingsAllModes(AdaptiveDecals, settings.AdaptiveDecals);
+            ApplySettingsAllModes(AdaptiveOnDemandRendering, settings.AdaptiveOnDemandRendering);
+        }
+
+        // Copies the underlying per-mode settings for every OperationMode, bypassing the
+        // operation-mode routing of the wrapper accessors. Without this, ApplySettings
+        // would silently drop a mode's data because the wrapper's mode-routed properties
+        // only expose the currently-active mode's struct based on OperationMode.
+        //
+        // The 'name' field is routed by the wrapper to shared per-scaler storage and is
+        // copied directly. 'enabled' lives per-mode on each PerModeScalerSettings.settings
+        // .enabled and is copied per mode via ApplySettingsBase along with the other
+        // mode-specific visual fields (scale, visualImpact, target, minBound, maxBound,
+        // maxLevel) on the raw structs returned by GetNormalModeSetting() /
+        // GetBatteryModeSetting().
+        void ApplySettingsAllModes(AdaptivePerformanceScalerSettingsBase destination, AdaptivePerformanceScalerSettingsBase sources)
+        {
+            if (destination == null || sources == null)
+                return;
+            destination.name = sources.name;
+            ApplySettingsBase(destination.GetNormalModeSetting(),  sources.GetNormalModeSetting());
+            ApplySettingsBase(destination.GetBatteryModeSetting(), sources.GetBatteryModeSetting());
         }
 
         void ApplySettingsBase(AdaptivePerformanceScalerSettingsBase destination, AdaptivePerformanceScalerSettingsBase sources)
@@ -167,6 +285,444 @@ namespace UnityEngine.AdaptivePerformance
             destination.minBound = sources.minBound;
             destination.maxBound = sources.maxBound;
             destination.maxLevel = sources.maxLevel;
+        }
+
+
+        // === Per-mode scaler storage ===
+        //
+        // Each scaler is described by:
+        //   - PerModeScalerSettings : one row per (scalerKey, mode) — bounds, scale,
+        //                             visualImpact, target that may differ per mode.
+        //   - SharedScalerState     : one row per scalerKey — displayName (the bit that
+        //                             doesn't vary by mode). enabled is NOT here — it
+        //                             lives per-mode on each PerModeScalerSettings
+        //                             .settings.enabled.
+        //
+        // The legacy m_AdaptiveX* fields are kept around so MigrateToPerModeLayout can
+        // copy data out of them on first load. They can be removed in a follow-up
+        // Unity version after the migration grace period.
+
+        /// <summary>
+        /// Per-(scaler, mode) tuneable settings. One row per scaler per OperationMode.
+        /// </summary>
+        [System.Serializable]
+        internal class PerModeScalerSettings
+        {
+            public string scalerKey;
+            public OperationMode mode;
+            public AdaptivePerformanceScalerSettingsBase settings;
+        }
+
+        /// <summary>
+        /// Per-scaler state that does NOT differ by mode (displayName).
+        /// Note: enabled lives per-mode on each PerModeScalerSettings.settings.enabled, not here.
+        /// </summary>
+        [System.Serializable]
+        internal class SharedScalerState
+        {
+            public string scalerKey;
+            public string displayName;
+        }
+
+        /// <summary>
+        /// String keys for the built-in scalers. Used as the lookup key in
+        /// <see cref="m_PerModeSettings"/> and <see cref="m_SharedScalerState"/>.
+        /// </summary>
+        internal static class ScalerKeys
+        {
+            public const string AdaptiveFramerate           = "AdaptiveFramerate";
+            public const string AdaptiveResolution          = "AdaptiveResolution";
+            public const string AdaptiveBatching            = "AdaptiveBatching";
+            public const string AdaptiveLOD                 = "AdaptiveLOD";
+            public const string AdaptiveLut                 = "AdaptiveLut";
+            public const string AdaptiveMSAA                = "AdaptiveMSAA";
+            public const string AdaptiveShadowCascade       = "AdaptiveShadowCascade";
+            public const string AdaptiveShadowDistance      = "AdaptiveShadowDistance";
+            public const string AdaptiveShadowmapResolution = "AdaptiveShadowmapResolution";
+            public const string AdaptiveShadowQuality       = "AdaptiveShadowQuality";
+            public const string AdaptiveSorting             = "AdaptiveSorting";
+            public const string AdaptiveTransparency        = "AdaptiveTransparency";
+            public const string AdaptiveViewDistance        = "AdaptiveViewDistance";
+            public const string AdaptivePhysics             = "AdaptivePhysics";
+            public const string AdaptiveDecals              = "AdaptiveDecals";
+            public const string AdaptiveLayerCulling        = "AdaptiveLayerCulling";
+            public const string AdaptiveOnDemandRendering           = "AdaptiveOnDemandRendering";
+        }
+
+        // Single source of truth for the per-(scaler, mode) inline defaults. Each
+        // factory produces a fresh struct so callers can mutate the result without
+        // aliasing. Used by FindOrCreatePerMode to lazy-create a per-mode row when
+        // none exists, and by Migrate to seed BatteryMode rows for legacy assets
+        // (which only stored a single normal-mode struct per scaler).
+        [NoAutoStaticsCleanup] 
+        static readonly Dictionary<string, Dictionary<OperationMode, Func<AdaptivePerformanceScalerSettingsBase>>>
+            k_ScalerDefaults = new Dictionary<string, Dictionary<OperationMode, Func<AdaptivePerformanceScalerSettingsBase>>>
+        {
+            {
+                ScalerKeys.AdaptiveFramerate,
+                new Dictionary<OperationMode, Func<AdaptivePerformanceScalerSettingsBase>>
+                {
+                    {
+                        OperationMode.NormalMode,
+                        () => new AdaptivePerformanceScalerSettingsBase
+                        {
+                            name = "Adaptive Framerate",
+                            enabled = false,
+                            scale = 1.0f,
+                            visualImpact = ScalerVisualImpact.High,
+                            target = ScalerTarget.CPU | ScalerTarget.GPU | ScalerTarget.FillRate,
+                            minBound = 15,
+                            maxBound = 60,
+                            maxLevel = 60 - 15,
+                        }
+                    },
+                    {
+                        OperationMode.BatteryMode,
+                        () => new AdaptivePerformanceScalerSettingsBase
+                        {
+                            name = "Adaptive Framerate",
+                            enabled = false,
+                            scale = 1.0f,
+                            visualImpact = ScalerVisualImpact.High,
+                            target = ScalerTarget.CPU | ScalerTarget.GPU | ScalerTarget.FillRate,
+                            minBound = 30,
+                            maxBound = 30,
+                            maxLevel = 1,
+                        }
+                    },
+                }
+            },
+            {
+                ScalerKeys.AdaptiveResolution,
+                new Dictionary<OperationMode, Func<AdaptivePerformanceScalerSettingsBase>>
+                {
+                    { OperationMode.NormalMode, () => new AdaptivePerformanceScalerSettingsBase
+                        { name = "Adaptive Resolution", enabled = false, scale = 1.0f, visualImpact = ScalerVisualImpact.Low,
+                          target = ScalerTarget.FillRate | ScalerTarget.GPU, maxLevel = 9, minBound = 0.5f, maxBound = 1 } },
+                    { OperationMode.BatteryMode, () => new AdaptivePerformanceScalerSettingsBase
+                        { name = "Adaptive Resolution", enabled = false, scale = 1.0f, visualImpact = ScalerVisualImpact.Low,
+                          target = ScalerTarget.FillRate | ScalerTarget.GPU, maxLevel = 1, minBound = 0.5f, maxBound = 0.5f } },
+                }
+            },
+            {
+                ScalerKeys.AdaptiveBatching,
+                new Dictionary<OperationMode, Func<AdaptivePerformanceScalerSettingsBase>>
+                {
+                    { OperationMode.NormalMode, () => new AdaptivePerformanceScalerSettingsBase
+                        { name = "Adaptive Batching", enabled = false, scale = 1, visualImpact = ScalerVisualImpact.Medium,
+                          target = ScalerTarget.CPU, maxLevel = 1, minBound = 0, maxBound = 1 } },
+                    { OperationMode.BatteryMode, () => new AdaptivePerformanceScalerSettingsBase
+                        { name = "Adaptive Batching", enabled = false, scale = 1, visualImpact = ScalerVisualImpact.Medium,
+                          target = ScalerTarget.CPU, maxLevel = 1, minBound = 0, maxBound = 0 } },
+                }
+            },
+            {
+                ScalerKeys.AdaptiveLOD,
+                new Dictionary<OperationMode, Func<AdaptivePerformanceScalerSettingsBase>>
+                {
+                    { OperationMode.NormalMode, () => new AdaptivePerformanceScalerSettingsBase
+                        { name = "Adaptive LOD", enabled = false, scale = 1, visualImpact = ScalerVisualImpact.High,
+                          target = ScalerTarget.GPU, maxLevel = 3, minBound = 0.4f, maxBound = 1 } },
+                    { OperationMode.BatteryMode, () => new AdaptivePerformanceScalerSettingsBase
+                        { name = "Adaptive LOD", enabled = false, scale = 1, visualImpact = ScalerVisualImpact.High,
+                          target = ScalerTarget.GPU, maxLevel = 1, minBound = 0.4f, maxBound = 0.4f } },
+                }
+            },
+            {
+                ScalerKeys.AdaptiveLut,
+                new Dictionary<OperationMode, Func<AdaptivePerformanceScalerSettingsBase>>
+                {
+                    { OperationMode.NormalMode, () => new AdaptivePerformanceScalerSettingsBase
+                        { name = "Adaptive Lut", enabled = false, scale = 1, visualImpact = ScalerVisualImpact.Medium,
+                          target = ScalerTarget.GPU | ScalerTarget.CPU, maxLevel = 1, minBound = 0, maxBound = 1 } },
+                    { OperationMode.BatteryMode, () => new AdaptivePerformanceScalerSettingsBase
+                        { name = "Adaptive Lut", enabled = false, scale = 1, visualImpact = ScalerVisualImpact.Medium,
+                          target = ScalerTarget.GPU | ScalerTarget.CPU, maxLevel = 1, minBound = 0, maxBound = 0 } },
+                }
+            },
+            {
+                ScalerKeys.AdaptiveMSAA,
+                new Dictionary<OperationMode, Func<AdaptivePerformanceScalerSettingsBase>>
+                {
+                    { OperationMode.NormalMode, () => new AdaptivePerformanceScalerSettingsBase
+                        { name = "Adaptive MSAA", enabled = false, scale = 1, visualImpact = ScalerVisualImpact.Medium,
+                          target = ScalerTarget.GPU | ScalerTarget.FillRate, maxLevel = 2, minBound = 0, maxBound = 1 } },
+                    { OperationMode.BatteryMode, () => new AdaptivePerformanceScalerSettingsBase
+                        { name = "Adaptive MSAA", enabled = false, scale = 1, visualImpact = ScalerVisualImpact.Medium,
+                          target = ScalerTarget.GPU | ScalerTarget.FillRate, maxLevel = 1, minBound = 0, maxBound = 0 } },
+                }
+            },
+            {
+                ScalerKeys.AdaptiveShadowCascade,
+                new Dictionary<OperationMode, Func<AdaptivePerformanceScalerSettingsBase>>
+                {
+                    { OperationMode.NormalMode, () => new AdaptivePerformanceScalerSettingsBase
+                        { name = "Adaptive Shadow Cascade", enabled = false, scale = 1, visualImpact = ScalerVisualImpact.Medium,
+                          target = ScalerTarget.GPU | ScalerTarget.CPU, maxLevel = 2, minBound = 0, maxBound = 1 } },
+                    { OperationMode.BatteryMode, () => new AdaptivePerformanceScalerSettingsBase
+                        { name = "Adaptive Shadow Cascade", enabled = false, scale = 1, visualImpact = ScalerVisualImpact.Medium,
+                          target = ScalerTarget.GPU | ScalerTarget.CPU, maxLevel = 1, minBound = 0, maxBound = 0 } },
+                }
+            },
+            {
+                ScalerKeys.AdaptiveShadowDistance,
+                new Dictionary<OperationMode, Func<AdaptivePerformanceScalerSettingsBase>>
+                {
+                    { OperationMode.NormalMode, () => new AdaptivePerformanceScalerSettingsBase
+                        { name = "Adaptive Shadow Distance", enabled = false, scale = 1, visualImpact = ScalerVisualImpact.Low,
+                          target = ScalerTarget.GPU, maxLevel = 3, minBound = 0.15f, maxBound = 1 } },
+                    { OperationMode.BatteryMode, () => new AdaptivePerformanceScalerSettingsBase
+                        { name = "Adaptive Shadow Distance", enabled = false, scale = 1, visualImpact = ScalerVisualImpact.Low,
+                          target = ScalerTarget.GPU, maxLevel = 1, minBound = 0.15f, maxBound = 0.15f } },
+                }
+            },
+            {
+                ScalerKeys.AdaptiveShadowmapResolution,
+                new Dictionary<OperationMode, Func<AdaptivePerformanceScalerSettingsBase>>
+                {
+                    { OperationMode.NormalMode, () => new AdaptivePerformanceScalerSettingsBase
+                        { name = "Adaptive Shadowmap Resolution", enabled = false, scale = 1, visualImpact = ScalerVisualImpact.Low,
+                          target = ScalerTarget.GPU, maxLevel = 3, minBound = 0.15f, maxBound = 1 } },
+                    { OperationMode.BatteryMode, () => new AdaptivePerformanceScalerSettingsBase
+                        { name = "Adaptive Shadowmap Resolution", enabled = false, scale = 1, visualImpact = ScalerVisualImpact.Low,
+                          target = ScalerTarget.GPU, maxLevel = 1, minBound = 0.15f, maxBound = 0.15f } },
+                }
+            },
+            {
+                ScalerKeys.AdaptiveShadowQuality,
+                new Dictionary<OperationMode, Func<AdaptivePerformanceScalerSettingsBase>>
+                {
+                    { OperationMode.NormalMode, () => new AdaptivePerformanceScalerSettingsBase
+                        { name = "Adaptive Shadow Quality", enabled = false, scale = 1, visualImpact = ScalerVisualImpact.High,
+                          target = ScalerTarget.GPU | ScalerTarget.CPU, maxLevel = 3, minBound = 0, maxBound = 1 } },
+                    { OperationMode.BatteryMode, () => new AdaptivePerformanceScalerSettingsBase
+                        { name = "Adaptive Shadow Quality", enabled = false, scale = 1, visualImpact = ScalerVisualImpact.High,
+                          target = ScalerTarget.GPU | ScalerTarget.CPU, maxLevel = 1, minBound = 0, maxBound = 0 } },
+                }
+            },
+            {
+                ScalerKeys.AdaptiveSorting,
+                new Dictionary<OperationMode, Func<AdaptivePerformanceScalerSettingsBase>>
+                {
+                    { OperationMode.NormalMode, () => new AdaptivePerformanceScalerSettingsBase
+                        { name = "Adaptive Sorting", enabled = false, scale = 1, visualImpact = ScalerVisualImpact.Medium,
+                          target = ScalerTarget.CPU, maxLevel = 1, minBound = 0, maxBound = 1 } },
+                    { OperationMode.BatteryMode, () => new AdaptivePerformanceScalerSettingsBase
+                        { name = "Adaptive Sorting", enabled = false, scale = 1, visualImpact = ScalerVisualImpact.Medium,
+                          target = ScalerTarget.CPU, maxLevel = 1, minBound = 0, maxBound = 0 } },
+                }
+            },
+            {
+                ScalerKeys.AdaptiveTransparency,
+                new Dictionary<OperationMode, Func<AdaptivePerformanceScalerSettingsBase>>
+                {
+                    { OperationMode.NormalMode, () => new AdaptivePerformanceScalerSettingsBase
+                        { name = "Adaptive Transparency", enabled = false, scale = 1, visualImpact = ScalerVisualImpact.High,
+                          target = ScalerTarget.GPU, maxLevel = 1, minBound = 0, maxBound = 1 } },
+                    { OperationMode.BatteryMode, () => new AdaptivePerformanceScalerSettingsBase
+                        { name = "Adaptive Transparency", enabled = false, scale = 1, visualImpact = ScalerVisualImpact.High,
+                          target = ScalerTarget.GPU, maxLevel = 1, minBound = 0, maxBound = 0 } },
+                }
+            },
+            {
+                ScalerKeys.AdaptiveViewDistance,
+                new Dictionary<OperationMode, Func<AdaptivePerformanceScalerSettingsBase>>
+                {
+                    { OperationMode.NormalMode, () => new AdaptivePerformanceScalerSettingsBase
+                        { name = "Adaptive View Distance", enabled = false, scale = 1, visualImpact = ScalerVisualImpact.High,
+                          target = ScalerTarget.GPU, maxLevel = 40, minBound = 50f, maxBound = 1000 } },
+                    { OperationMode.BatteryMode, () => new AdaptivePerformanceScalerSettingsBase
+                        { name = "Adaptive View Distance", enabled = false, scale = 1, visualImpact = ScalerVisualImpact.High,
+                          target = ScalerTarget.GPU, maxLevel = 1, minBound = 50f, maxBound = 50f } },
+                }
+            },
+            {
+                ScalerKeys.AdaptivePhysics,
+                new Dictionary<OperationMode, Func<AdaptivePerformanceScalerSettingsBase>>
+                {
+                    { OperationMode.NormalMode, () => new AdaptivePerformanceScalerSettingsBase
+                        { name = "Adaptive Physics", enabled = false, scale = 1, visualImpact = ScalerVisualImpact.Low,
+                          target = ScalerTarget.CPU, maxLevel = 5, minBound = 0.5f, maxBound = 1 } },
+                    { OperationMode.BatteryMode, () => new AdaptivePerformanceScalerSettingsBase
+                        { name = "Adaptive Physics", enabled = false, scale = 1, visualImpact = ScalerVisualImpact.Low,
+                          target = ScalerTarget.CPU, maxLevel = 1, minBound = 0.5f, maxBound = 0.5f } },
+                }
+            },
+            {
+                ScalerKeys.AdaptiveDecals,
+                new Dictionary<OperationMode, Func<AdaptivePerformanceScalerSettingsBase>>
+                {
+                    { OperationMode.NormalMode, () => new AdaptivePerformanceScalerSettingsBase
+                        { name = "Adaptive Decals", enabled = false, scale = 1, visualImpact = ScalerVisualImpact.Medium,
+                          target = ScalerTarget.GPU, maxLevel = 20, minBound = 0.01f, maxBound = 1 } },
+                    { OperationMode.BatteryMode, () => new AdaptivePerformanceScalerSettingsBase
+                        { name = "Adaptive Decals", enabled = false, scale = 1, visualImpact = ScalerVisualImpact.Medium,
+                          target = ScalerTarget.GPU, maxLevel = 1, minBound = 0.01f, maxBound = 0.01f } },
+                }
+            },
+            {
+                ScalerKeys.AdaptiveLayerCulling,
+                new Dictionary<OperationMode, Func<AdaptivePerformanceScalerSettingsBase>>
+                {
+                    { OperationMode.NormalMode, () => new AdaptivePerformanceScalerSettingsBase
+                        { name = "Adaptive Layer Culling", enabled = false, scale = 1, visualImpact = ScalerVisualImpact.Medium,
+                          target = ScalerTarget.CPU, maxLevel = 40, minBound = 0.01f, maxBound = 1 } },
+                    { OperationMode.BatteryMode, () => new AdaptivePerformanceScalerSettingsBase
+                        { name = "Adaptive Layer Culling", enabled = false, scale = 1, visualImpact = ScalerVisualImpact.Medium,
+                          target = ScalerTarget.CPU, maxLevel = 1, minBound = 0.01f, maxBound = 0.01f } },
+                }
+            },
+            {
+                ScalerKeys.AdaptiveOnDemandRendering,
+                new Dictionary<OperationMode, Func<AdaptivePerformanceScalerSettingsBase>>
+                {
+                    { OperationMode.NormalMode, () => new AdaptivePerformanceScalerSettingsBase
+                        { name = "Adaptive On Demand Rendering", enabled = false, scale = 1.0f, visualImpact = ScalerVisualImpact.High,
+                          target = ScalerTarget.CPU | ScalerTarget.GPU | ScalerTarget.FillRate, minBound = 1, maxBound = 60, maxLevel = 59 } },
+                    { OperationMode.BatteryMode, () => new AdaptivePerformanceScalerSettingsBase
+                        { name = "Adaptive On Demand Rendering", enabled = false, scale = 1.0f, visualImpact = ScalerVisualImpact.High,
+                          target = ScalerTarget.CPU | ScalerTarget.GPU | ScalerTarget.FillRate, minBound = 1, maxBound = 60, maxLevel = 59 } },
+                }
+            },
+        };
+
+        [SerializeField] List<PerModeScalerSettings> m_PerModeSettings = new List<PerModeScalerSettings>();
+        [SerializeField] List<SharedScalerState> m_SharedScalerState = new List<SharedScalerState>();
+        [SerializeField] bool m_PerModeLayoutMigrated = false;
+
+        // Runtime-only cache: rebuilt after deserialization since wrappers capture
+        // references to entries in the (re-deserialized) per-mode collections.
+        readonly Dictionary<string, ScalerSettingsEnabledWrapper> m_WrapperCache =
+            new Dictionary<string, ScalerSettingsEnabledWrapper>();
+
+        PerModeScalerSettings FindOrCreatePerMode(string key, OperationMode mode)
+        {
+            for (int i = 0; i < m_PerModeSettings.Count; i++)
+            {
+                var row = m_PerModeSettings[i];
+                if (row.scalerKey == key && row.mode == mode)
+                    return row;
+            }
+            var fresh = new PerModeScalerSettings
+            {
+                scalerKey = key,
+                mode = mode,
+                settings = k_ScalerDefaults[key][mode](),
+            };
+            m_PerModeSettings.Add(fresh);
+            return fresh;
+        }
+
+        SharedScalerState FindOrCreateShared(string key)
+        {
+            for (int i = 0; i < m_SharedScalerState.Count; i++)
+            {
+                var row = m_SharedScalerState[i];
+                if (row.scalerKey == key)
+                    return row;
+            }
+            var fresh = new SharedScalerState
+            {
+                scalerKey = key,
+                displayName = k_ScalerDefaults[key][OperationMode.NormalMode]().name,
+            };
+            m_SharedScalerState.Add(fresh);
+            return fresh;
+        }
+
+        /// <summary>
+        /// Builds and caches a wrapper for the given scaler key. The wrapper captures
+        /// references to entries in m_PerModeSettings / m_SharedScalerState so reads and
+        /// writes through the wrapper hit the new storage directly.
+        /// </summary>
+        ScalerSettingsEnabledWrapper GetWrapper(string key)
+        {
+            MigrateToPerModeLayout();
+
+            if (m_WrapperCache.TryGetValue(key, out var cached))
+                return cached;
+
+            var shared  = FindOrCreateShared(key);
+            var normal  = FindOrCreatePerMode(key, OperationMode.NormalMode);
+            var battery = FindOrCreatePerMode(key, OperationMode.BatteryMode);
+
+            var wrapper = new ScalerSettingsEnabledWrapper(
+                () =>
+                {
+                    switch (OperationMode)
+                    {
+                        case OperationMode.BatteryMode: return battery.settings;
+                        default:                        return normal.settings;
+                    }
+                },
+                () => shared.displayName,
+                (val) => shared.displayName = val,
+                () => normal.settings,
+                () => battery.settings
+            );
+            m_WrapperCache[key] = wrapper;
+            return wrapper;
+        }
+
+        /// <summary>
+        /// Setter shared by all converted scaler properties. Routes the assigned value
+        /// to the row matching the current OperationMode and syncs the shared per-scaler
+        /// fields. Same mode-selection logic as the wrapper getter so a write hits the
+        /// same backing struct that a read would return.
+        /// </summary>
+        void AssignScaler(string key, AdaptivePerformanceScalerSettingsBase value)
+        {
+            MigrateToPerModeLayout();
+
+            var shared = FindOrCreateShared(key);
+            // value.enabled is carried inside the assigned struct, so it lands per-mode.
+            FindOrCreatePerMode(key, OperationMode).settings = value;
+            shared.displayName = value.name;
+        }
+
+        /// <summary>
+        /// One-time migration of legacy per-scaler m_AdaptiveX* fields into the
+        /// m_PerModeSettings / m_SharedScalerState collections. Idempotent via
+        /// m_PerModeLayoutMigrated. Safe to call on every load.
+        /// </summary>
+        internal void MigrateToPerModeLayout()
+        {
+            if (m_PerModeLayoutMigrated)
+                return;
+
+            // Trunk-era assets only stored one struct per scaler whose .enabled / .name
+            // were the source of truth; install that struct as-is as the NormalMode row.
+            // The BatteryMode row is left for FindOrCreatePerMode to lazy-create from
+            // k_ScalerDefaults the first time it's read — battery settings start at the
+            // per-mode factory defaults rather than mirroring the user's normal-mode tuning.
+            void Migrate(string key, AdaptivePerformanceScalerSettingsBase normal)
+            {
+                if (normal == null)
+                    return;
+                m_PerModeSettings.Add(new PerModeScalerSettings
+                    { scalerKey = key, mode = OperationMode.NormalMode, settings = normal });
+                m_SharedScalerState.Add(new SharedScalerState
+                    { scalerKey = key, displayName = normal.name });
+            }
+
+            Migrate(ScalerKeys.AdaptiveFramerate,           m_AdaptiveFramerate);
+            Migrate(ScalerKeys.AdaptiveResolution,          m_AdaptiveResolution);
+            Migrate(ScalerKeys.AdaptiveLOD,                 m_AdaptiveLOD);
+            Migrate(ScalerKeys.AdaptiveLut,                 m_AdaptiveLut);
+            Migrate(ScalerKeys.AdaptiveMSAA,                m_AdaptiveMSAA);
+            Migrate(ScalerKeys.AdaptiveShadowCascade,       m_AdaptiveShadowCascade);
+            Migrate(ScalerKeys.AdaptiveShadowDistance,      m_AdaptiveShadowDistance);
+            Migrate(ScalerKeys.AdaptiveShadowmapResolution, m_AdaptiveShadowmapResolution);
+            Migrate(ScalerKeys.AdaptiveShadowQuality,       m_AdaptiveShadowQuality);
+            Migrate(ScalerKeys.AdaptiveSorting,             m_AdaptiveSorting);
+            Migrate(ScalerKeys.AdaptiveTransparency,        m_AdaptiveTransparency);
+            Migrate(ScalerKeys.AdaptiveViewDistance,        m_AdaptiveViewDistance);
+            Migrate(ScalerKeys.AdaptivePhysics,             m_AdaptivePhysics);
+            Migrate(ScalerKeys.AdaptiveDecals,              m_AdaptiveDecals);
+            Migrate(ScalerKeys.AdaptiveLayerCulling,        m_AdaptiveLayerCulling);
+            Migrate(ScalerKeys.AdaptiveOnDemandRendering,           m_AdaptiveOnDemandRendering);
+
+            m_PerModeLayoutMigrated = true;
         }
 
         [SerializeField, Tooltip("Settings for a scaler used by the Indexer to adjust the application update rate using Application.TargetFramerate")]
@@ -184,11 +740,12 @@ namespace UnityEngine.AdaptivePerformance
 
         /// <summary>
         /// A scaler setting used by <see cref="AdaptivePerformanceIndexer"/> to adjust the application update rate using <see cref="Application.targetFrameRate"/>.
+        /// Returns the active setting based on current OperationMode with enabled field redirected to separate storage.
         /// </summary>
-        public AdaptivePerformanceScalerSettingsBase AdaptiveFramerate
+        public virtual AdaptivePerformanceScalerSettingsBase AdaptiveFramerate
         {
-            get { return m_AdaptiveFramerate; }
-            set { m_AdaptiveFramerate = value; }
+            get => GetWrapper(ScalerKeys.AdaptiveFramerate);
+            set => AssignScaler(ScalerKeys.AdaptiveFramerate, value);
         }
 
         [SerializeField, Tooltip("Settings for a scaler used by the Indexer to adjust the resolution of all render targets that allow dynamic resolution.")]
@@ -206,21 +763,23 @@ namespace UnityEngine.AdaptivePerformance
 
         /// <summary>
         /// A scaler setting used by <see cref="AdaptivePerformanceIndexer"/> to adjust the resolution of all render targets that allow dynamic resolution.
+        /// Returns the active setting based on current OperationMode with enabled field redirected to separate storage.
         /// </summary>
-        public AdaptivePerformanceScalerSettingsBase AdaptiveResolution
+        public virtual AdaptivePerformanceScalerSettingsBase AdaptiveResolution
         {
-            get { return m_AdaptiveResolution; }
-            set { m_AdaptiveResolution = value; }
+            get => GetWrapper(ScalerKeys.AdaptiveResolution);
+            set => AssignScaler(ScalerKeys.AdaptiveResolution, value);
         }
 
         /// <summary>
         /// A scaler setting used by <see cref="AdaptivePerformanceIndexer"/> to control if dynamic batching is enabled.
+        /// Returns the active setting based on current OperationMode with enabled field redirected to separate storage.
         /// </summary>
         [System.Obsolete("AdaptiveBatching is obsolete.", true)]
-        public AdaptivePerformanceScalerSettingsBase AdaptiveBatching
+        public virtual AdaptivePerformanceScalerSettingsBase AdaptiveBatching
         {
-            get => default;
-            set { }
+            get => GetWrapper(ScalerKeys.AdaptiveBatching);
+            set => AssignScaler(ScalerKeys.AdaptiveBatching, value);
         }
 
         [SerializeField, Tooltip("Settings for a scaler used by the Indexer for adjusting at what distance LODs are switched.")]
@@ -236,14 +795,14 @@ namespace UnityEngine.AdaptivePerformance
             maxBound = 1,
         };
 
-
         /// <summary>
         /// A scaler setting used by <see cref="AdaptivePerformanceIndexer"/> for adjusting at what distance LODs are switched.
+        /// Returns the active setting based on current OperationMode with enabled field redirected to separate storage.
         /// </summary>
-        public AdaptivePerformanceScalerSettingsBase AdaptiveLOD
+        public virtual AdaptivePerformanceScalerSettingsBase AdaptiveLOD
         {
-            get { return m_AdaptiveLOD; }
-            set { m_AdaptiveLOD = value; }
+            get => GetWrapper(ScalerKeys.AdaptiveLOD);
+            set => AssignScaler(ScalerKeys.AdaptiveLOD, value);
         }
 
         [SerializeField, Tooltip("Settings for a scaler used by the Indexer to adjust the size of the palette used for color grading in URP.")]
@@ -259,14 +818,14 @@ namespace UnityEngine.AdaptivePerformance
             maxBound = 1,
         };
 
-
         /// <summary>
         /// A scaler setting used by <see cref="AdaptivePerformanceIndexer"/> to adjust the size of the palette used for color grading in URP.
+        /// Returns the active setting based on current OperationMode.
         /// </summary>
-        public AdaptivePerformanceScalerSettingsBase AdaptiveLut
+        public virtual AdaptivePerformanceScalerSettingsBase AdaptiveLut
         {
-            get { return m_AdaptiveLut; }
-            set { m_AdaptiveLut = value; }
+            get => GetWrapper(ScalerKeys.AdaptiveLut);
+            set => AssignScaler(ScalerKeys.AdaptiveLut, value);
         }
 
         [SerializeField, Tooltip("Settings for a scaler used by the Indexer to adjust the level of antialiasing.")]
@@ -282,14 +841,14 @@ namespace UnityEngine.AdaptivePerformance
             maxBound = 1,
         };
 
-
         /// <summary>
         /// A scaler setting used by <see cref="AdaptivePerformanceIndexer"/> to adjust the level of antialiasing.
+        /// Returns the active setting based on current OperationMode.
         /// </summary>
-        public AdaptivePerformanceScalerSettingsBase AdaptiveMSAA
+        public virtual AdaptivePerformanceScalerSettingsBase AdaptiveMSAA
         {
-            get { return m_AdaptiveMSAA; }
-            set { m_AdaptiveMSAA = value; }
+            get => GetWrapper(ScalerKeys.AdaptiveMSAA);
+            set => AssignScaler(ScalerKeys.AdaptiveMSAA, value);
         }
 
         [SerializeField, Tooltip("Settings for a scaler used by the Indexer to adjust the number of shadow cascades to be used.")]
@@ -314,11 +873,12 @@ namespace UnityEngine.AdaptivePerformance
 
         /// <summary>
         /// A scaler setting used by <see cref="AdaptivePerformanceIndexer"/> to adjust the number of shadow cascades to be used.
+        /// Returns the active setting based on current OperationMode.
         /// </summary>
-        public AdaptivePerformanceScalerSettingsBase AdaptiveShadowCascade
+        public virtual AdaptivePerformanceScalerSettingsBase AdaptiveShadowCascade
         {
-            get { return m_AdaptiveShadowCascade; }
-            set { m_AdaptiveShadowCascade = value; }
+            get => GetWrapper(ScalerKeys.AdaptiveShadowCascade);
+            set => AssignScaler(ScalerKeys.AdaptiveShadowCascade, value);
         }
 
         [SerializeField, Tooltip("Settings for a scaler used by the Indexer to change the distance at which shadows are rendered.")]
@@ -336,11 +896,12 @@ namespace UnityEngine.AdaptivePerformance
 
         /// <summary>
         /// A scaler setting used by <see cref="AdaptivePerformanceIndexer"/> to change the distance at which shadows are rendered.
+        /// Returns the active setting based on current OperationMode.
         /// </summary>
-        public AdaptivePerformanceScalerSettingsBase AdaptiveShadowDistance
+        public virtual AdaptivePerformanceScalerSettingsBase AdaptiveShadowDistance
         {
-            get { return m_AdaptiveShadowDistance; }
-            set { m_AdaptiveShadowDistance = value; }
+            get => GetWrapper(ScalerKeys.AdaptiveShadowDistance);
+            set => AssignScaler(ScalerKeys.AdaptiveShadowDistance, value);
         }
 
         [SerializeField, Tooltip("Settings for a scaler used by the Indexer to adjust the resolution of shadow maps.")]
@@ -358,11 +919,12 @@ namespace UnityEngine.AdaptivePerformance
 
         /// <summary>
         /// A scaler setting used by <see cref="AdaptivePerformanceIndexer"/> to adjust the resolution of shadow maps.
+        /// Returns the active setting based on current OperationMode.
         /// </summary>
-        public AdaptivePerformanceScalerSettingsBase AdaptiveShadowmapResolution
+        public virtual AdaptivePerformanceScalerSettingsBase AdaptiveShadowmapResolution
         {
-            get { return m_AdaptiveShadowmapResolution; }
-            set { m_AdaptiveShadowmapResolution = value; }
+            get => GetWrapper(ScalerKeys.AdaptiveShadowmapResolution);
+            set => AssignScaler(ScalerKeys.AdaptiveShadowmapResolution, value);
         }
 
         [SerializeField, Tooltip("Settings for a scaler used by the Indexer to adjust the quality of shadows.")]
@@ -380,11 +942,12 @@ namespace UnityEngine.AdaptivePerformance
 
         /// <summary>
         /// A scaler setting used by <see cref="AdaptivePerformanceIndexer"/> to adjust the quality of shadows.
+        /// Returns the active setting based on current OperationMode.
         /// </summary>
-        public AdaptivePerformanceScalerSettingsBase AdaptiveShadowQuality
+        public virtual AdaptivePerformanceScalerSettingsBase AdaptiveShadowQuality
         {
-            get { return m_AdaptiveShadowQuality; }
-            set { m_AdaptiveShadowQuality = value; }
+            get => GetWrapper(ScalerKeys.AdaptiveShadowQuality);
+            set => AssignScaler(ScalerKeys.AdaptiveShadowQuality, value);
         }
 
         [SerializeField, Tooltip("Settings for a scaler used by the Indexer to change if objects in the scene are sorted by depth before rendering to reduce overdraw.")]
@@ -402,11 +965,12 @@ namespace UnityEngine.AdaptivePerformance
 
         /// <summary>
         /// A scaler setting used by <see cref="AdaptivePerformanceIndexer"/> to change if objects in the scene are sorted by depth before rendering to reduce overdraw.
+        /// Returns the active setting based on current OperationMode.
         /// </summary>
-        public AdaptivePerformanceScalerSettingsBase AdaptiveSorting
+        public virtual AdaptivePerformanceScalerSettingsBase AdaptiveSorting
         {
-            get { return m_AdaptiveSorting; }
-            set { m_AdaptiveSorting = value; }
+            get => GetWrapper(ScalerKeys.AdaptiveSorting);
+            set => AssignScaler(ScalerKeys.AdaptiveSorting, value);
         }
 
         [SerializeField, Tooltip("Settings for a scaler used by the Indexer to disable transparent objects rendering")]
@@ -424,11 +988,12 @@ namespace UnityEngine.AdaptivePerformance
 
         /// <summary>
         /// A scaler setting used by <see cref="AdaptivePerformanceIndexer"/> to disable transparent objects rendering.
+        /// Returns the active setting based on current OperationMode.
         /// </summary>
-        public AdaptivePerformanceScalerSettingsBase AdaptiveTransparency
+        public virtual AdaptivePerformanceScalerSettingsBase AdaptiveTransparency
         {
-            get { return m_AdaptiveTransparency; }
-            set { m_AdaptiveTransparency = value; }
+            get => GetWrapper(ScalerKeys.AdaptiveTransparency);
+            set => AssignScaler(ScalerKeys.AdaptiveTransparency, value);
         }
 
         [SerializeField, Tooltip("Settings for a scaler used by the Indexer to change the view distance")]
@@ -446,11 +1011,12 @@ namespace UnityEngine.AdaptivePerformance
 
         /// <summary>
         /// A scaler setting used by <see cref="AdaptivePerformanceIndexer"/> to change the view distance.
+        /// Returns the active setting based on current OperationMode.
         /// </summary>
-        public AdaptivePerformanceScalerSettingsBase AdaptiveViewDistance
+        public virtual AdaptivePerformanceScalerSettingsBase AdaptiveViewDistance
         {
-            get { return m_AdaptiveViewDistance; }
-            set { m_AdaptiveViewDistance = value; }
+            get => GetWrapper(ScalerKeys.AdaptiveViewDistance);
+            set => AssignScaler(ScalerKeys.AdaptiveViewDistance, value);
         }
 
         [SerializeField, Tooltip("Settings for a scaler used by the Indexer to change physics properties")]
@@ -468,20 +1034,12 @@ namespace UnityEngine.AdaptivePerformance
 
         /// <summary>
         /// A scaler setting used by <see cref="AdaptivePerformanceIndexer"/> to change physics properties.
+        /// Returns the active setting based on current OperationMode.
         /// </summary>
-        public AdaptivePerformanceScalerSettingsBase AdaptivePhysics
+        public virtual AdaptivePerformanceScalerSettingsBase AdaptivePhysics
         {
-            get { return m_AdaptivePhysics; }
-            set { m_AdaptivePhysics = value; }
-        }
-
-        /// <summary>
-        /// A scaler setting used by <see cref="AdaptivePerformanceIndexer"/> to change decal properties.
-        /// </summary>
-        public AdaptivePerformanceScalerSettingsBase AdaptiveDecals
-        {
-            get { return m_AdaptiveDecals; }
-            set { m_AdaptiveDecals = value; }
+            get => GetWrapper(ScalerKeys.AdaptivePhysics);
+            set => AssignScaler(ScalerKeys.AdaptivePhysics, value);
         }
 
         [SerializeField, Tooltip("Settings for a scaler used by the Indexer to change decal properties")]
@@ -496,6 +1054,16 @@ namespace UnityEngine.AdaptivePerformance
             minBound = 0.01f,
             maxBound = 1,
         };
+
+        /// <summary>
+        /// A scaler setting used by <see cref="AdaptivePerformanceIndexer"/> to change decal properties.
+        /// Returns the active setting based on current OperationMode.
+        /// </summary>
+        public virtual AdaptivePerformanceScalerSettingsBase AdaptiveDecals
+        {
+            get => GetWrapper(ScalerKeys.AdaptiveDecals);
+            set => AssignScaler(ScalerKeys.AdaptiveDecals, value);
+        }
 
         [SerializeField, Tooltip("Settings for a scaler used by the Indexer to change the layer culling distance")]
         AdaptivePerformanceScalerSettingsBase m_AdaptiveLayerCulling = new AdaptivePerformanceScalerSettingsBase
@@ -512,14 +1080,38 @@ namespace UnityEngine.AdaptivePerformance
 
         /// <summary>
         /// A scaler setting used by <see cref="AdaptivePerformanceIndexer"/> to change the layer culling distance.
+        /// Returns the active setting based on current OperationMode.
         /// </summary>
-        public AdaptivePerformanceScalerSettingsBase AdaptiveLayerCulling
+        public virtual AdaptivePerformanceScalerSettingsBase AdaptiveLayerCulling
         {
-            get { return m_AdaptiveLayerCulling; }
-            set { m_AdaptiveLayerCulling = value; }
+            get => GetWrapper(ScalerKeys.AdaptiveLayerCulling);
+            set => AssignScaler(ScalerKeys.AdaptiveLayerCulling, value);
         }
 
-        private AdaptivePerformanceScalerSettingsBase[] m_DefaultScalerSettings = new AdaptivePerformanceScalerSettingsBase[15];
+        [SerializeField, Tooltip("Settings for a scaler used by the Indexer to adjust the application update rate using Rendering.OnDemandRendering.renderFrameInterval")]
+        AdaptivePerformanceScalerSettingsBase m_AdaptiveOnDemandRendering = new AdaptivePerformanceScalerSettingsBase
+        {
+            name = "Adaptive On Demand Rendering",
+            enabled = false,
+            scale = 1.0f,
+            visualImpact = ScalerVisualImpact.High,
+            target =  ScalerTarget.CPU | ScalerTarget.GPU | ScalerTarget.FillRate,
+            minBound = 1,
+            maxBound = 60,
+            maxLevel = 59
+        };
+
+        /// <summary>
+        /// A scaler setting used by <see cref="AdaptivePerformanceIndexer"/> to adjust the application update rate using Rendering.OnDemandRendering.renderFrameInterval.
+        /// Returns the active setting based on current OperationMode.
+        /// </summary>
+        public virtual AdaptivePerformanceScalerSettingsBase AdaptiveOnDemandRendering
+        {
+            get => GetWrapper(ScalerKeys.AdaptiveOnDemandRendering);
+            set => AssignScaler(ScalerKeys.AdaptiveOnDemandRendering, value);
+        }
+
+        private AdaptivePerformanceScalerSettingsBase[] m_DefaultScalerSettings = new AdaptivePerformanceScalerSettingsBase[16];
         private ReadOnlyCollection<AdaptivePerformanceScalerSettingsBase> m_ReadOnlyDefaultScalerSettings;
 
         void SyncDefaultScalerSettings()
@@ -539,6 +1131,7 @@ namespace UnityEngine.AdaptivePerformance
             m_DefaultScalerSettings[12] = AdaptivePhysics;
             m_DefaultScalerSettings[13] = AdaptiveLayerCulling;
             m_DefaultScalerSettings[14] = AdaptiveDecals;
+            m_DefaultScalerSettings[15] = AdaptiveOnDemandRendering;
         }
 
         /// <summary>
@@ -573,7 +1166,9 @@ namespace UnityEngine.AdaptivePerformance
             typeof(UnityEngine.AdaptivePerformance.AdaptiveViewDistance),
             typeof(UnityEngine.AdaptivePerformance.AdaptivePhysics),
             typeof(UnityEngine.AdaptivePerformance.AdaptiveLayerCulling),
-            typeof(UnityEngine.AdaptivePerformance.AdaptiveDecals)
+            typeof(UnityEngine.AdaptivePerformance.AdaptiveDecals),
+            typeof(UnityEngine.AdaptivePerformance.AdaptiveOnDemandRendering)
+
         };
 
 
@@ -584,19 +1179,16 @@ namespace UnityEngine.AdaptivePerformance
     [System.Serializable]
     public class AdaptivePerformanceScalerSettingsBase
     {
-        [SerializeField, Tooltip("Name of the scaler.")]
+        [SerializeField]
         string m_Name = "Base Scaler";
 
         /// <summary>
         /// Returns the name of the scaler.
         /// </summary>
-        public string name
+        public virtual string name
         {
             get { return m_Name; }
-            set
-            {
-                m_Name = value;
-            }
+            set { m_Name = value; }
         }
 
         [SerializeField, Tooltip("Active")]
@@ -605,7 +1197,7 @@ namespace UnityEngine.AdaptivePerformance
         /// <summary>
         /// Returns true if Indexer was active, false otherwise.
         /// </summary>
-        public bool enabled
+        public virtual bool enabled
         {
             get { return m_Enabled; }
             set { m_Enabled = value; }
@@ -617,7 +1209,7 @@ namespace UnityEngine.AdaptivePerformance
         /// <summary>
         /// Scale to control the quality impact for the scaler. No quality change when 1, improved quality when bigger 1, and lowered quality when smaller 1.
         /// </summary>
-        public float scale
+        public virtual float scale
         {
             get { return m_Scale; }
             set { m_Scale = value; }
@@ -629,7 +1221,7 @@ namespace UnityEngine.AdaptivePerformance
         /// <summary>
         /// Visual impact the scaler has on the application. The higher the value, the more impact the scaler has on the visuals.
         /// </summary>
-        public ScalerVisualImpact visualImpact
+        public virtual ScalerVisualImpact visualImpact
         {
             get { return m_VisualImpact; }
             set { m_VisualImpact = value; }
@@ -641,7 +1233,7 @@ namespace UnityEngine.AdaptivePerformance
         /// <summary>
         /// Application bottleneck that the scaler targets. The target selected has the most impact on the quality control of this scaler.
         /// </summary>
-        public ScalerTarget target
+        public virtual ScalerTarget target
         {
             get { return m_Target; }
             set { m_Target = value; }
@@ -653,7 +1245,7 @@ namespace UnityEngine.AdaptivePerformance
         /// <summary>
         /// Maximum level for the scaler. This is tied to the implementation of the scaler to divide the levels into concrete steps.
         /// </summary>
-        public int maxLevel
+        public virtual int maxLevel
         {
             get { return m_MaxLevel; }
             set { m_MaxLevel = value; }
@@ -665,7 +1257,7 @@ namespace UnityEngine.AdaptivePerformance
         /// <summary>
         /// Minimum value for the scale boundary.
         /// </summary>
-        public float minBound
+        public virtual float minBound
         {
             get { return m_MinBound; }
             set { m_MinBound = value; }
@@ -677,11 +1269,47 @@ namespace UnityEngine.AdaptivePerformance
         /// <summary>
         /// Maximum value for the scale boundary.
         /// </summary>
-        public float maxBound
+        public virtual float maxBound
         {
             get { return m_MaxBound; }
             set { m_MaxBound = value; }
         }
+        /// <summary>
+        /// Creates a deepcopy of the current scaler settings.
+        /// </summary>
+        public AdaptivePerformanceScalerSettingsBase Clone()
+        {
+            return new AdaptivePerformanceScalerSettingsBase
+            {
+                name = name,
+                enabled = enabled,
+                scale = scale,
+                visualImpact = visualImpact,
+                target = target,
+                maxLevel = maxLevel,
+                minBound = minBound,
+                maxBound = maxBound,
+            };
+        }
+
+        /// <summary>
+        /// Gets the normal mode settings. For wrappers, this returns the underlying normal mode field.
+        /// For regular settings objects, this returns itself.
+        /// </summary>
+        public virtual AdaptivePerformanceScalerSettingsBase GetNormalModeSetting()
+        {
+            return this;
+        }
+
+        /// <summary>
+        /// Gets the battery mode settings. For wrappers, this returns the underlying battery mode field.
+        /// For regular settings objects, this returns itself.
+        /// </summary>
+        public virtual AdaptivePerformanceScalerSettingsBase GetBatteryModeSetting()
+        {
+            return this;
+        }
+
     }
 
     /// <summary>
@@ -689,6 +1317,20 @@ namespace UnityEngine.AdaptivePerformance
     /// </summary>
     public class IAdaptivePerformanceSettings : ScriptableObject
     {
+        // Migrate every loaded scaler profile to the per-mode m_PerModeSettings layout.
+        // Lives on the base class so every provider subclass inherits the migration —
+        // without this, upgraded user projects on providers that don't explicitly call
+        // it would silently lose their legacy scaler tuning. MigrateToPerModeLayout is
+        // idempotent via its m_PerModeLayoutMigrated flag, so calling it on every load
+        // is safe.
+        protected virtual void Awake()
+        {
+            if (ScalerProfiles == null)
+                return;
+            foreach (var profile in ScalerProfiles)
+                profile?.MigrateToPerModeLayout();
+        }
+
         [SerializeField, Tooltip("Enable Logging in Devmode")]
         bool m_Logging = true;
 
@@ -769,17 +1411,36 @@ namespace UnityEngine.AdaptivePerformance
             set { m_IndexerSettings = value; }
         }
 
-
-        [SerializeField, Tooltip("Scaler Settings")]
-        AdaptivePerformanceScalerSettings m_ScalerSettings;
-
         /// <summary>
         /// Settings of scaler system.
         /// </summary>
         public AdaptivePerformanceScalerSettings scalerSettings
         {
-            get { return m_ScalerSettings; }
-            set { m_ScalerSettings = value; }
+            get { return ActiveScalerProfile; }
+            set
+            {
+                // Support backward compatibility - if a base type is assigned, wrap it in a profile
+                if (value is AdaptivePerformanceScalerProfile profile)
+                {
+                    ActiveScalerProfile = profile;
+                }
+                else if (value != null)
+                {
+                    // Legacy code assigning AdaptivePerformanceScalerSettings - migrate to profile
+                    if (ActiveScalerProfile == null && m_scalerProfileList != null && m_scalerProfileList.Length > 0)
+                    {
+                        ActiveScalerProfile = m_scalerProfileList[0];
+                    }
+                    if (ActiveScalerProfile != null)
+                    {
+                        ActiveScalerProfile.ApplySettings(value);
+                    }
+                }
+                else
+                {
+                    ActiveScalerProfile = null;
+                }
+            }
         }
         /// <summary>
         /// List of created scaler profiles for this provider.
@@ -790,18 +1451,34 @@ namespace UnityEngine.AdaptivePerformance
         }
 
         /// <summary>
-        /// The currently active scaler profile.
-        /// Only one scaler profile is active at a time.
+        /// The currently active scaler profile, or <c>null</c> if no profile has been loaded.
+        /// Only one scaler profile is active at a time. Call <see cref="LoadScalerProfile"/> to
+        /// activate one. The getter does not auto-bind to the default profile: a previous lazy
+        /// initialization here ran before the scalers were actually bound to the profile, which
+        /// caused LoadScalerProfile's "already loaded" early-out (a Name comparison against
+        /// ActiveScalerProfile) to short-circuit on first call and skip ApplyScalerProfileToAllScalers,
+        /// leaving every default scaler with its inline-default settings (base names, default bounds,
+        /// disabled) until something else triggered a re-apply. Returning null until LoadScalerProfile
+        /// runs makes "no profile loaded" an honest, observable state and lets the early-out work.
         /// </summary>
         public AdaptivePerformanceScalerProfile ActiveScalerProfile
         {
+            get => m_ActiveScalerProfile;
+            set => m_ActiveScalerProfile = value;
+        }
+
+        /// <summary>
+        /// The currently active mode provider, or <c>null</c> if no provider has been set.
+        /// </summary>
+        public IAdaptivePerformanceModeProvider ActiveModeProvider
+        {
             get
             {
-                return m_ActiveScalerProfile;
+                return m_ActiveModeProvider;
             }
             set
             {
-                m_ActiveScalerProfile = value;
+                m_ActiveModeProvider = value;
             }
         }
 
@@ -818,11 +1495,52 @@ namespace UnityEngine.AdaptivePerformance
         [SerializeField]
         List<AdaptivePerformanceScaler> m_AddedScalerViaScan = new List<AdaptivePerformanceScaler>();
 
-
-        [SerializeReference]
         AdaptivePerformanceScalerProfile m_ActiveScalerProfile = null;
+
+        [SerializeField]
+        AdaptivePerformanceBatteryModeProvider m_BatteryModeProvider = new AdaptivePerformanceBatteryModeProvider();
+        [SerializeField]
+        AdaptivePerformanceNormalModeProvider m_NormalModeProvider = new AdaptivePerformanceNormalModeProvider();
+
+        IAdaptivePerformanceModeProvider m_ActiveModeProvider;
+
+        [SerializeField]
+        OperationMode m_IndexerOperationMode = OperationMode.NormalMode;
+
         /// <summary>
-        /// Add a new scaler profile with default scaler settings.
+        /// Returns the default battery mode provider, which is used to control the behavior of the indexer in battery mode.
+        /// </summary>
+        public AdaptivePerformanceBatteryModeProvider BatteryModeProvider
+        {
+            get => m_BatteryModeProvider;
+        }
+        /// <summary>
+        /// Returns the default normal mode provider, which is used to control the behavior of the indexer in normal mode.
+        /// </summary>
+        public AdaptivePerformanceNormalModeProvider NormalModeProvider
+        {
+            get => m_NormalModeProvider;
+        }
+
+        /// <summary>
+        /// Returns the current operation mode of the indexer.
+        /// Setting this also propagates the value to <see cref="ActiveScalerProfile"/>'s
+        /// <see cref="AdaptivePerformanceScalerSettings.OperationMode"/> so scaler getters
+        /// reflect the active mode at runtime.
+        /// </summary>
+        public OperationMode IndexerOperationMode
+        {
+            get => m_IndexerOperationMode;
+            internal set
+            {
+                m_IndexerOperationMode = value;
+                if (ActiveScalerProfile != null)
+                    ActiveScalerProfile.OperationMode = value;
+            }
+        }
+
+        /// <summary>
+        /// Add a new scaler profile.
         /// </summary>
         /// <param name="name"></param>
         public void AddScalerProfileWithDefaultScalers(string name = "")
@@ -864,7 +1582,7 @@ namespace UnityEngine.AdaptivePerformance
 
         /// <summary>
         /// Load a scaler profile from the settings. Unity update the values of all scalers in the profile to new ones.
-        /// This is a heavy operation using reflection and should not be used per frame and only in load operations as it causes hitching and possible screen artifacts depending on which scalers are used in a scene.
+        /// This is a heavy operation and should not be used per frame and only in load operations as it causes hitching and possible screen artifacts depending on which scalers are used in a scene.
         /// </summary>
         /// <param name="scalerProfileName">Supply the name of the scaler. You can query a list of available scaler profiles via <see cref="IAdaptivePerformanceSettings.GetAvailableScalerProfiles"/>.</param>
         public void LoadScalerProfile(string scalerProfileName)
@@ -909,7 +1627,6 @@ namespace UnityEngine.AdaptivePerformance
                         ActiveScalerProfile.RemoveAllAddedScalersFromIndexer();
                     }
 
-                    scalerSettings.ApplySettings(scalerProfile);
                     // If a scaler profile has custom scaler, prioritize using them and remove the scanned ones.
                     if (scalerProfile.AddedScalers != null && scalerProfile.AddedScalers.Count > 0)
                     {
@@ -920,11 +1637,23 @@ namespace UnityEngine.AdaptivePerformance
                         }
                     }
                     ActiveScalerProfile = scalerProfile;
+                    // Sync the new profile's mode to the indexer's current mode so that
+                    // scalerSettings reads/writes target the correct mode's settings.
+                    // Without this, the new profile retains its serialized OperationMode
+                    // (typically NormalMode), which can cause subsequent runtime mutations
+                    // through scalerSettings to silently modify the wrong mode.
+                    ActiveScalerProfile.OperationMode = m_IndexerOperationMode;
                     break;
                 }
             }
             if (ApplyScalerProfileToAllScalers())
                 APLog.Debug($"Scaler profile {scalerProfileName} loaded.");
+
+            // Battery Mode force-enables scalers at runtime; a profile switch wipes that.
+            // Gate on the mode (not the active provider instance, which callers may replace)
+            // and let the battery provider re-force its scalers from the freshly-applied profile.
+            if (IndexerOperationMode == OperationMode.BatteryMode)
+                BatteryModeProvider?.OnScalerProfileChanged();
         }
 
         bool ApplyScalerProfileToAllScalers()
@@ -958,10 +1687,21 @@ namespace UnityEngine.AdaptivePerformance
                 {
                     System.Reflection.PropertyInfo prop = typeof(AdaptivePerformanceScalerSettings).GetProperty(property.Name);
                     var value = prop.GetValue(scalerSettings);
-                    aScaler.Deactivate();
-                    aScaler.ApplyDefaultSetting((AdaptivePerformanceScalerSettingsBase)value);
-                    aScaler.Activate();
-                    success = true;
+                    if (value is AdaptivePerformanceScalerSettingsBase settingsBase)
+                    {
+                        aScaler.Deactivate();
+                        // Apply normal mode settings
+                        aScaler.ApplyDefaultSetting(settingsBase.GetNormalModeSetting());
+                        // Apply battery mode settings
+                        aScaler.ApplyBatteryModeSetting(settingsBase.GetBatteryModeSetting());
+                        // Pull the profile's enabled intent into the scaler instance.
+                        // Without this, default scalers created via ScriptableObject.CreateInstance
+                        // retain their m_ScalerEnabled = false default and remain permanently
+                        // disabled regardless of what the profile specifies.
+                        aScaler.Enabled = settingsBase.enabled;
+                        aScaler.Activate();
+                        success = true;
+                    }
                 }
             }
             return success;

@@ -5,6 +5,7 @@
 using System;
 using Unity.GraphToolkit.Editor;
 using Unity.GraphToolkit.InternalBridge;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -15,7 +16,7 @@ namespace Unity.GraphToolkit.ItemLibrary.Editor
     /// Editor Window for the Item Library.
     /// </summary>
     [UnityRestricted]
-    internal class ItemLibraryWindow : EditorWindow
+    internal partial class ItemLibraryWindow : EditorWindow
     {
         // TODO VladN remove when moving this to editor module and use actual ShowMode enum
         enum ShowMode
@@ -55,6 +56,7 @@ namespace Unity.GraphToolkit.ItemLibrary.Editor
         /// <remarks>Doesn't prevent closing when an item is chosen or escape is pressed.</remarks>
         public bool CloseOnFocusLost { get; set; } = true;
 
+        [AutoStaticsCleanupOnCodeReload]
         static Vector2 s_DefaultSize = new Vector2(300, 300);
 
         /// <summary>

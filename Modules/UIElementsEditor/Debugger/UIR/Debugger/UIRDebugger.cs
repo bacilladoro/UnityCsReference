@@ -133,9 +133,9 @@ namespace UnityEditor.UIElements.Debugger
             var it = UIElementsUtility.GetPanelsIterator();
             while (it.MoveNext())
             {
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 HostView view = guiViews.FirstOrDefault(v => v.GetEntityId() == it.Current.Key) as HostView;
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
                 // Skip this window
                 if (view != null && view.actualView == this)

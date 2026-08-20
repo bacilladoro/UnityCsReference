@@ -44,7 +44,7 @@ namespace UnityEngine.Rendering
 namespace UnityEngine
 {
     [NativeHeader("Runtime/Graphics/ShaderScriptBindings.h")]
-    partial class Shader
+    public partial class Shader
     {
         [FreeFunction("ShaderScripting::GetPropertyName")]
         extern private static string GetPropertyName([NotNull] Shader shader, int propertyIndex);

@@ -106,9 +106,9 @@ namespace Unity.ProjectAuditor.Editor.UI
             if (string.IsNullOrEmpty(logFilename))
                 return;
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var variants = m_Issues.Where(i => i.Category == IssueCategory.ShaderVariant).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             var result = ShadersModule.ParsePlayerLog(logFilename, variants);
             switch (result)
             {
@@ -171,9 +171,9 @@ namespace Unity.ProjectAuditor.Editor.UI
                     else
                     {
                         // check if they are all the same
-                        #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                        #pragma warning disable UAC2001 // Avoid Linq
                         var props = selectedIssues.Select(issue =>
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                             issue.GetCustomProperty(m_PropertyFoldouts[i].id)).Distinct().ToArray();
                         if (props.Length > 1)
                             GUILayout.TextArea("<Multiple values>", SharedStyles.TextAreaWithDynamicSize, GUILayout.ExpandHeight(true));
@@ -241,9 +241,9 @@ namespace Unity.ProjectAuditor.Editor.UI
                     case EventType.DragExited:
                         break;
                     case EventType.DragUpdated:
-                        #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                        #pragma warning disable UAC2001 // Avoid Linq
                         var valid = 1 == DragAndDrop.paths.Count(path => Path.HasExtension(path) && Path.GetExtension(path).Equals(".log"));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                         DragAndDrop.visualMode = valid ? DragAndDropVisualMode.Generic : DragAndDropVisualMode.Rejected;
                         evt.Use();
                         break;
@@ -281,7 +281,7 @@ namespace Unity.ProjectAuditor.Editor.UI
             var svcName = Path.GetFileNameWithoutExtension(path);
             if (path.Length != 0)
             {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 var variants = m_Issues.Where(issue =>
                 {
                     if (!Match(issue))
@@ -290,7 +290,7 @@ namespace Unity.ProjectAuditor.Editor.UI
                         return false;
                     return true;
                 });
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
                 ShadersModule.ExportVariantsToSvc(svcName, path, variants);
                 EditorUtility.RevealInFinder(path);

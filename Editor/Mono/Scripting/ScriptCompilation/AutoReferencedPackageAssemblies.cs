@@ -5,18 +5,21 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.Scripting.LifecycleManagement;
 using static UnityEditor.Scripting.ScriptCompilation.EditorBuildRules;
 
 namespace UnityEditor.Scripting.ScriptCompilation
 {
     static class AutoReferencedPackageAssemblies
     {
+        [NoAutoStaticsCleanup] // fixed set of assembly-name strings, safe to persist across reload
         static HashSet<string> runtimeAssemblyNames = new HashSet<string>(new[]
         {
             "UnityEngine.UI.dll",
         },
             StringComparer.Ordinal);
 
+        [NoAutoStaticsCleanup] // fixed set of assembly-name strings, safe to persist across reload
         static HashSet<string> editorAssemblyNames = new HashSet<string>(new[]
         {
             "UnityEditor.UI.dll",
@@ -25,6 +28,7 @@ namespace UnityEditor.Scripting.ScriptCompilation
 
         // Do not add automatic package references to these assemblies,
         // as they also add themselves to all .asmdefs
+        [NoAutoStaticsCleanup] // fixed set of assembly-name strings, safe to persist across reload
         static HashSet<string> ignoreAssemblies = new HashSet<string>(new[]
         {
             "UnityEngine.TestRunner.dll",
@@ -85,9 +89,9 @@ namespace UnityEditor.Scripting.ScriptCompilation
                     continue;
 
                 // Add the automatic references.
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 var newReferences = assembly.References.Concat(additionalReferences).Distinct().ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 assembly.References = newReferences;
             }
         }

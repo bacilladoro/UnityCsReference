@@ -395,9 +395,9 @@ namespace UnityEditor.SceneTemplate
             snapshotHeaderRowElement.Add(snapshotHeaderLabel);
 
             // Snapshot button with dropdown
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var cameraNames = Camera.allCameras.Select(c => new SnapshotTargetInfo { Name = c.name, OnSnapshotAction = TakeSnapshotFromCamera }).ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             cameraNames.Add(new SnapshotTargetInfo()); // Separator
             cameraNames.Add(new SnapshotTargetInfo { Name = L10n.Tr("Game View"), OnSnapshotAction = (info, callback) => TakeSnapshotFromGameView(callback) });
             var snapshotTargetPopup = new PopupField<SnapshotTargetInfo>(L10n.Tr("View"), cameraNames, Camera.allCameras.Length == 0 ? 1 : 0);
@@ -431,9 +431,9 @@ namespace UnityEditor.SceneTemplate
         internal void TakeSnapshot(string targetName, Action onFinishedCallback)
         {
             var snapshotTargetPopup = Root.Q<PopupField<SnapshotTargetInfo>>(k_SnapshotTargetPopupName);
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var targetInfo = snapshotTargetPopup.choices.FirstOrDefault((info => info.Name == targetName));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             targetInfo?.OnSnapshotAction?.Invoke(targetInfo, onFinishedCallback);
         }
 
@@ -443,9 +443,9 @@ namespace UnityEditor.SceneTemplate
             if (!sceneTemplateAsset)
                 return;
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var camera = Camera.allCameras.FirstOrDefault(c => c.name == targetInfo.Name);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             if (!camera)
             {

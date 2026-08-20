@@ -421,6 +421,7 @@ namespace UnityEditor
         {
             //Toolbar
             var toolbar = new VisualElement();
+            toolbar.style.flexShrink = 0;
             m_Toolbar = new ToolBarContainer();
 
             if (m_Toolbar.options.toolbar == null)
@@ -694,9 +695,9 @@ namespace UnityEditor
                 return revisions;
 
             //filter out preview importers
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             return revisions.Where(revision => revision.artifactKey.importerType == null || !revision.artifactKey.importerType.ToString().EndsWith("PreviewImporter", StringComparison.Ordinal));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         private void CreateSelectedItemRightSideContainers(Rect windowPosition)
@@ -1849,9 +1850,9 @@ namespace UnityEditor
         private static MultiColumnHeaderState.Column[] CreateColumns(params Column[] columns)
         {
             var colCount = columns.Length;
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             return columns.Select(col =>
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 return new MultiColumnHeaderState.Column
                 {
@@ -1936,9 +1937,9 @@ namespace UnityEditor
             var previousVersions = GatherPreviousRevisionsForSelectedArtifact(selectedArtifactInfo);
 
             m_PreviousRevisionsList.AddRange(
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 previousVersions.Select(
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     previousInfo => new ArtifactInfoTreeViewItem() { artifactInfo = previousInfo }));
 
             m_ItemContainers.previousRevisions.treeView.Reload();
@@ -1962,9 +1963,9 @@ namespace UnityEditor
 
             UpdateItemContainers(selectedArtifactInfo, previousArtifactInfo);
             m_DependenciesList.Clear();
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             m_DependenciesList.AddRange(selectedArtifactInfo.dependencies.Select(pair => (pair.Key, pair.Value))); //TODO: Make helper functions
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             m_ProducedFilesList.Clear();
             var producedFiles = selectedArtifactInfo.producedFiles;
@@ -2304,13 +2305,13 @@ namespace UnityEditor
 
         private List<ArtifactInfo> GetAllCurrentRevisions(IEnumerable<string> allAssetPaths)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var allGUIDs = allAssetPaths.Select(AssetDatabase.GUIDFromAssetPath).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             var currentRevisions = AssetDatabase.GetCurrentRevisions(allGUIDs);
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             return currentRevisions.ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         private void ReloadAndSortListViews()
@@ -2940,16 +2941,16 @@ namespace UnityEditor
         public void NotifyAssetImported(string[] importedAssets, string[] assetPathsGone, string[] renamedAssets)
         {
             // Building dictionary for faster asset lookup
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var allAssetsDictionary = m_AllAssetsList
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 .Select((asset, index) => (asset, index)) // enclosing asset index within a tuple
                 .ToDictionary(t => t.asset.artifactInfo.importStats.assetPath, t => t); // producing dictionary: asset path -> tuple
 
             // Collect guids and update entries of assets which are already in the tree list view
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var guids = importedAssets
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 .Where(allAssetsDictionary.ContainsKey) // Select existing assets which were reimported
                 .Select(AssetDatabase.GUIDFromAssetPath)
                 .ToArray();
@@ -2970,9 +2971,9 @@ namespace UnityEditor
             m_AllAssetsList.RemoveAll(asset => assetsToRemove.Contains(asset.artifactInfo.importStats.assetPath));
 
             var revisions = AssetDatabase.GetCurrentRevisions(
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 importedAssets
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     .Where(path =>
                     !allAssetsDictionary
                         .ContainsKey(path))     // Existing assets were already updated above, thus excluding
@@ -3024,9 +3025,9 @@ namespace UnityEditor
             // Handle imported assets
             if (ImportActivityWindow.m_Instance != null)
             {
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 string[] assetPathsGone = deletedAssets.Union(movedFromAssetPaths).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
                 // Create a lambda expression that captures the desired variables and calls the method with parameters
                 EditorApplication.delayCall += () => UpdateImportedAssetsNextTick(importedAssets, assetPathsGone, movedAssets);

@@ -13,8 +13,8 @@ namespace UnityEditor.Search
     {
         static class Calculator
         {
-            internal static string type = "calculator";
-            internal static string displayName = "Calculator";
+            internal static readonly string type = "calculator";
+            internal static readonly string displayName = "Calculator";
 
             [SearchItemProvider]
             internal static SearchProvider CreateProvider()

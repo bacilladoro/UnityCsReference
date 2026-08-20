@@ -11,7 +11,7 @@ namespace UnityEngine.UIElements.UIR
     /// <summary>
     /// This class allows to queue blit commands and apply them up to 8 at a time later on.
     /// </summary>
-    class TextureBlitter : IDisposable
+    partial class TextureBlitter : IDisposable
     {
         const int k_TextureSlotCount = 8;
         // Shader property IDs are stable and re-resolve lazily on first access after a code

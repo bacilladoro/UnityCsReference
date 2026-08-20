@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
 using Unity.Collections;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Search.Providers
 {
@@ -39,6 +40,7 @@ namespace UnityEditor.Search.Providers
 
         private static readonly char[] s_EntrySeparators = { '/', ' ', '_', '-', '.' };
 
+        [NoAutoStaticsCleanup]
         private static readonly SearchProposition[] s_FixedPropositions = new SearchProposition[]
         {
             new SearchProposition(label: "id:", null, "Search object by ID"),
@@ -117,9 +119,9 @@ namespace UnityEditor.Search.Providers
 
         public ObjectQueryEngine(IEnumerable<T> objects)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             m_Objects = objects.ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             var filter = m_QueryEngine.SetFilter<EntityId>("id", GetId);
             filter.AddTypeParser(EntityIdTypeParser);
 
@@ -171,9 +173,9 @@ namespace UnityEditor.Search.Providers
                     continue;
                 types.Add(o.GetType());
                 if (o is GameObject go)
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2001 // Avoid Linq
                     types.UnionWith(go.GetComponents<Component>().Where(c => c).Select(c => c.GetType()));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             }
 
             return types;
@@ -184,9 +186,9 @@ namespace UnityEditor.Search.Providers
             if (m_TypePropositions == null && m_Objects != null)
             {
                 var types = FetchPropositionTypes();
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 m_TypePropositions = new HashSet<SearchProposition>(types.Select(t => CreateTypeProposition(t, prefixFilterId)));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             }
 
             return m_TypePropositions ?? (IEnumerable<SearchProposition>)Array.Empty<SearchProposition>();
@@ -213,9 +215,9 @@ namespace UnityEditor.Search.Providers
             if (!query.valid)
             {
                 if (reportError)
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2001 // Avoid Linq
                     context.AddSearchQueryErrors(query.errors.Select(e => new SearchQueryError(e, context, provider)));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 return Array.Empty<T>();
             }
 
@@ -375,9 +377,9 @@ namespace UnityEditor.Search.Providers
                 }
 
                 IndexTypes(obj.GetType(), types, isPrefab);
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 god.types = types.ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             }
 
             return CompareWords(op, value.ToLowerInvariant(), god.types);
@@ -534,9 +536,9 @@ namespace UnityEditor.Search.Providers
 
             if (god.words == null)
             {
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 god.words = SplitName(go.name, s_EntrySeparators)
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     .Select(w => w.ToLowerInvariant())
                     .Where(w => w.Length > 1)
                     .ToArray();
@@ -563,12 +565,12 @@ namespace UnityEditor.Search.Providers
             yield return entry;
             var cleanName = CleanName(entry);
             var nameTokens = cleanName.Split(entrySeparators);
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var scc = nameTokens.SelectMany(s => SearchUtils.SplitCamelCase(s)).Where(s => s.Length > 0);
-#pragma warning restore UA2001
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+            #pragma warning disable UAC2001 // Avoid Linq
             var fcc = scc.Aggregate("", (current, s) => current + s[0]);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             yield return fcc;
         }
 

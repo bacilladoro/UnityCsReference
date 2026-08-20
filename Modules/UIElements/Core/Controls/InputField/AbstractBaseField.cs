@@ -2,7 +2,9 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
 using System;
+using Unity.Scripting.LifecycleManagement;
 using Unity.Properties;
 using UnityEngine.Bindings;
 
@@ -94,9 +96,12 @@ namespace UnityEngine.UIElements
 
         protected internal static readonly PropertyName serializedPropertyCopyName = "SerializedPropertyCopyName";
 
-        static CustomStyleProperty<float> s_LabelWidthRatioProperty = new CustomStyleProperty<float>("--unity-property-field-label-width-ratio");
-        static CustomStyleProperty<float> s_LabelExtraPaddingProperty = new CustomStyleProperty<float>("--unity-property-field-label-extra-padding");
-        static CustomStyleProperty<float> s_LabelBaseMinWidthProperty = new CustomStyleProperty<float>("--unity-property-field-label-base-min-width");
+        [NoAutoStaticsCleanup]
+        static readonly CustomStyleProperty<float> s_LabelWidthRatioProperty = new("--unity-property-field-label-width-ratio");
+        [NoAutoStaticsCleanup]
+        static readonly CustomStyleProperty<float> s_LabelExtraPaddingProperty = new("--unity-property-field-label-extra-padding");
+        [NoAutoStaticsCleanup]
+        static readonly CustomStyleProperty<float> s_LabelBaseMinWidthProperty = new("--unity-property-field-label-base-min-width");
 
         private float m_LabelWidthRatio;
         private float m_LabelExtraPadding;
@@ -458,18 +463,25 @@ namespace UnityEngine.UIElements
 
         private static class Callbacks
         {
+            [NoAutoStaticsCleanup]
             public static readonly EventCallbackDefinition<AbstractBaseField> OnAttachToPanel =
                 EventCallback.Create<AttachToPanelEvent, AbstractBaseField>(static (e, self) => self.OnAttachToPanel(e));
+            [NoAutoStaticsCleanup]
             public static readonly EventCallbackDefinition<AbstractBaseField> OnDetachFromPanel =
                 EventCallback.Create<DetachFromPanelEvent, AbstractBaseField>(static (e, self) => self.OnDetachFromPanel(e));
+            [NoAutoStaticsCleanup]
             public static readonly EventCallbackDefinition<AbstractBaseField> OnCustomStyleResolved =
                 EventCallback.Create<CustomStyleResolvedEvent, AbstractBaseField>(static (e, self) => self.OnCustomStyleResolved(e));
+            [NoAutoStaticsCleanup]
             public static readonly EventCallbackDefinition<AbstractBaseField> OnInspectorFieldGeometryChanged =
                 EventCallback.Create<GeometryChangedEvent, AbstractBaseField>(static (e, self) => self.OnInspectorFieldGeometryChanged(e));
+            [NoAutoStaticsCleanup]
             public static readonly EventCallbackDefinition<AbstractBaseField> OnFocusInStartEditing =
                 EventCallback.Create<FocusInEvent, AbstractBaseField>(static (e, self) => self.StartEditing(e));
+            [NoAutoStaticsCleanup]
             public static readonly EventCallbackDefinition<AbstractBaseField> OnFocusOutEndEditing =
                 EventCallback.Create<FocusOutEvent, AbstractBaseField>(static (e, self) => self.EndEditing(e));
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

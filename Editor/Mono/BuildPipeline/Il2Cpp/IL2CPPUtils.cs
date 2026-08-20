@@ -325,9 +325,9 @@ namespace UnityEditorInternal
             "UNICODE",
         };
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
         private static readonly string[] BaseDefines20 = new[]
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         {
             "ALL_INTERIOR_POINTERS=1",
             "GC_GCJ_SUPPORT=1",
@@ -344,9 +344,9 @@ namespace UnityEditorInternal
             "USE_MUNMAP=1",
         }.ToArray();
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
         private static readonly string[] BaseDefines46 = BaseDefines20.Concat(new[]
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         {
             "NET_4_0=1",
             "UNITY_AOT=1",
@@ -415,34 +415,7 @@ namespace UnityEditorInternal
             }
 
             result.Add(BCLExtensions.CoreCLRRuntimeDirectory());
-            var libDirectory =
-                Path.Combine(GetIl2CppBclDistributionDirectory(target, namedTarget, buildOptions), "lib");
-            if (Directory.Exists(libDirectory))
-                result.Add(libDirectory);
-            else
-                Debug.LogError($"Unable to find il2cpp bcl directory: {libDirectory}");
             return result;
-        }
-
-        internal static string GetIl2CppBclDistributionDirectory(BuildTarget target, BuildOptions buildOptions)
-        {
-            var namedTarget = NamedBuildTarget.FromActiveSettings(target);
-            return GetIl2CppBclDistributionDirectory(target, namedTarget, buildOptions);
-        }
-
-        static string GetIl2CppBclDistributionDirectory(BuildTarget target, NamedBuildTarget namedTarget, BuildOptions buildOptions)
-        {
-#pragma warning disable CS0618
-            if (PlayerSettings.GetApiCompatibilityLevel(namedTarget) != ApiCompatibilityLevel.NET)
-                throw new NotSupportedException($"{nameof(GetIl2CppBclDistributionDirectory)} is only supported for IL2CPP with the NET profile.");
-#pragma warning restore CS0618
-
-            var gotBuildTarget = BuildTargetDiscovery.TryGetBuildTarget(target, out var ibuildTarget);
-            if (!gotBuildTarget || ibuildTarget.ScriptingPlatformProperties == null)
-            {
-                return null;
-            }
-            return Path.Combine(BuildPipeline.GetPlaybackEngineDirectory(target, buildOptions, false), ibuildTarget.ScriptingPlatformProperties.IL2CPPBCLDirectory);
         }
 
         internal static string[] GetBuilderDefinedDefines(BuildTarget target, ApiCompatibilityLevel apiCompatibilityLevel, bool enableIl2CppDebugger)
@@ -579,9 +552,9 @@ namespace UnityEditorInternal
                 // the most robust and maintainable approach.
 
                 var toolBinDirectory = Path.Combine(il2CppFolder, toolName, "bin").ToNPath();
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 var candidates = toolBinDirectory.Files($"*{expectedToolExecutableName}", recurse: true)
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     .OrderByDescending(f => f.GetLastWriteTimeUtc())
                     .ToArray();
 
@@ -638,9 +611,9 @@ namespace UnityEditorInternal
                     topLevel = Path.Combine(topLevel, customRoot);
 
                 var toolBinDirectory = Path.Combine(topLevel, name, "bin").ToNPath();
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 var candidates = toolBinDirectory.Files($"*{expectedToolExecutableName}", recurse: true)
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     .Where(f => f.Parent.FileName == tfm)
                     .OrderByDescending(f => f.GetLastWriteTimeUtc())
                     .ToArray();
@@ -670,9 +643,9 @@ namespace UnityEditorInternal
                 GetExePath("il2cpp-compile").ToNPath().Parent
             };
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return projectBinDirs.Aggregate(string.Empty, (accum, next) => $"{accum}{Path.PathSeparator}{next}");
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         internal static string GetAdditionalArguments()
@@ -694,9 +667,9 @@ namespace UnityEditorInternal
                 arguments.Add(additionalArgs.Trim('\''));
             }
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             return arguments.Aggregate(String.Empty, (current, arg) => current + arg + " ");
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         private static string BinaryDirectoryForPlatform(RuntimePlatform platform)

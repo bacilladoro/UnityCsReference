@@ -60,18 +60,18 @@ namespace UnityEditor.Scripting.ScriptCompilation
             Console.WriteLine("[API Updater] Updated Files:");
             if (immutablePackageUpdates.Count > 0)
             {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 var immutablePackageFiles = immutablePackageUpdates.Select(u => u.originalFileWithError).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 APIUpdaterHelper.HandlePackageFilePaths(immutablePackageFiles);
                 ExecuteUpdates(immutablePackageUpdates);
             }
 
             if (nonImmutableUpdates.Count > 0)
             {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 var nonImmutableTargetFiles = nonImmutableUpdates.Select(u => u.originalFileWithError).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
                 if (MayOverwrite(nonImmutableTargetFiles) && PrepareForOverwritingUpdatedFiles(nonImmutableTargetFiles))
                     ExecuteUpdates(nonImmutableUpdates);

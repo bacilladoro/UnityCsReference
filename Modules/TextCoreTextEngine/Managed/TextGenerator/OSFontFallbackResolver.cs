@@ -4,15 +4,18 @@
 
 using System;
 using System.Collections.Generic;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Bindings;
 
 namespace UnityEngine.TextCore.Text
 {
     [VisibleToOtherModules("UnityEngine.UIElementsModule", "UnityEngine.IMGUIModule")]
-    internal static class OSFontFallbackResolver
+    internal static partial class OSFontFallbackResolver
     {
         // Maps a native OS fallback font (created during itemization on job threads) to the managed FontAsset.
+        [AutoStaticsCleanupOnCodeReload]
         static Dictionary<IntPtr, FontAsset> s_PtrToManaged = new Dictionary<IntPtr, FontAsset>();
+        [NoAutoStaticsCleanup] // Reusable single-element scratch buffer of value-type NativeTextInfo, cleared at the start of every Resolve; safe to persist across reload
         static List<NativeTextInfo> s_SingleTextInfoBuffer = new(1);
 
         [VisibleToOtherModules("UnityEngine.UIElementsModule", "UnityEngine.IMGUIModule")]

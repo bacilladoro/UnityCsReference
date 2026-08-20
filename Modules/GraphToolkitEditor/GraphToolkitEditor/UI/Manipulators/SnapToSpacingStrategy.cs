@@ -5,12 +5,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace Unity.GraphToolkit.Editor
 {
-    class SnapToSpacingStrategy : SnapStrategy
+    partial class SnapToSpacingStrategy : SnapStrategy
     {
         class SnapToSpacingResult
         {
@@ -92,9 +93,9 @@ namespace Unity.GraphToolkit.Editor
             List<SnapToSpacingResult> results = GetClosestSpacingPositions(sourceRect);
 
             snapDirection = SnapDirection.SnapNone;
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             foreach (var result in results.Where(result => result != null))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 ApplySnapToSpacingResult(ref snapDirection, sourceRect.position, ref snappedPosition, result);
 
@@ -157,7 +158,8 @@ namespace Unity.GraphToolkit.Editor
             ComputeSpacingPositions(m_HorizontalReferenceRects, sourceRect);
         }
 
-        static readonly List<ChildView> k_GetRectsToConsiderInViewAllUIs = new();
+        [AutoStaticsCleanupOnCodeReload]
+        static List<ChildView> k_GetRectsToConsiderInViewAllUIs = new();
         void GetRectsToConsiderInView(GraphElement selectedElement)
         {
             var graphView = selectedElement.GraphView;
@@ -165,9 +167,9 @@ namespace Unity.GraphToolkit.Editor
             Rect rectToFit = graphView.layout;
 
             graphView.GraphModel.GetGraphElementModels().GetAllViews(graphView, null, k_GetRectsToConsiderInViewAllUIs);
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             foreach (GraphElement element in k_GetRectsToConsiderInViewAllUIs.OfType<GraphElement>())
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 if (!IsIgnoredElement(selectedElement, element, rectToFit))
                 {
@@ -344,9 +346,9 @@ namespace Unity.GraphToolkit.Editor
             SnapToSpacingResult minResult = null;
             float minDistance = float.MaxValue;
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             foreach (var spacingPos in m_SpacingPositions.Where(spacingPos => spacingPos.Value.Orientation == orientation))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 SnapToSpacingResult result = GetSnapToSpacingResult(sourceRect, spacingPos.Key, spacingPos.Value);
                 if (result != null && minDistance > result.Distance)
@@ -424,9 +426,9 @@ namespace Unity.GraphToolkit.Editor
             SnapReference startReference = orientation == PortOrientation.Vertical ? SnapReference.BottomWire : SnapReference.RightWire;
             SnapReference endReference = orientation == PortOrientation.Vertical ? SnapReference.TopWire : SnapReference.LeftWire;
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             float maxCoordinate = rects.Max(rect => orientation == PortOrientation.Vertical ? rect.xMax : rect.yMax) + SpacingLine.DefaultSpacingLineSideLength;
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             float spacingLineSideLength = SpacingLine.DefaultSpacingLineSideLength;
 
             Vector2 firstSidePos = GetMaxPos(rects[0], startReference);

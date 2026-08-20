@@ -159,9 +159,9 @@ namespace UnityEditor.Experimental.GraphView
             if (m_Active && !m_Dragging && selectionContainer != null)
             {
                 // Keep a copy of the selection
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 var selection = selectionContainer.selection.ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
                 if (selection.Count > 0)
                 {

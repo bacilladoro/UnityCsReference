@@ -29,7 +29,7 @@ internal sealed class UnsetAllStyleSheetPropertiesCommand : Command<UnsetAllStyl
     public StyleRule Rule { get; private set; }
 
     public override string UndoName => CommandUndoName;
-    public override CommandCategory Category => CommandCategory.Styling;
+    public override CommandCategory Category => CommandCategory.Styling | CommandCategory.Variables;
 
     protected override void Init()
     {

@@ -8,4 +8,5 @@ enum LayoutDisplay
 {
     Flex,
     None,
+    Grid,
 }

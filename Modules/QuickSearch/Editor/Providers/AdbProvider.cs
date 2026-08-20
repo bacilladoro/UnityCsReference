@@ -8,10 +8,11 @@ using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
 using Unity.Collections;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Search.Providers
 {
-    static class AdbProvider
+    static partial class AdbProvider
     {
         public const string type = "adb";
         public const string filterId = "adb:";
@@ -28,14 +29,17 @@ namespace UnityEditor.Search.Providers
         internal const string k_DefaultResources = "library/unity default resources";
         internal const string k_EditorResources = "library/unity editor resources";
         internal const string k_BuiltinExtraResources = "resources/unity_builtin_extra";
-        static string[] s_ResourcePaths = new string[] {
+        static readonly string[] s_ResourcePaths = new string[] {
              k_DefaultResources,
              k_EditorResources,
              k_BuiltinExtraResources
         };
 
+        [AutoStaticsCleanupOnCodeReload]
         static QueryEngine<UnityEngine.Object> m_AdbExplicitQueryEngine;
+        [AutoStaticsCleanupOnCodeReload]
         static QueryEngine<UnityEngine.Object> m_AdbImplicitQueryEngine;
+        [AutoStaticsCleanupOnCodeReload]
         static ObjectQueryEngine<UnityEngine.Object> m_ResourcesQueryEngine;
 
         static readonly string[] k_Operators = [":", "="];
@@ -82,11 +86,11 @@ namespace UnityEditor.Search.Providers
 
         internal static bool IsExplicitQuery(SearchContext context)
         {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
-#pragma warning disable UA2005 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
+#pragma warning disable UAC2005 // Avoid Linq
             return (context.searchQuery.StartsWith(filterId) || context.providers.Count() == 1 || context.searchWords.Contains(explicitToggle)) && !context.searchWords.Contains(implicitToggle);
-#pragma warning restore UA2001
-#pragma warning restore UA2005
+#pragma warning restore UAC2001
+#pragma warning restore UAC2005
         }
 
         internal static string ConvertProjectQueryToAdb(string query, ref bool filterByTypeIntersection)
@@ -278,15 +282,16 @@ namespace UnityEditor.Search.Providers
             }
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         static Dictionary<string, UnityEngine.Object[]> s_BundleResourceObjects = new Dictionary<string, UnityEngine.Object[]>();
         static IEnumerable<UnityEngine.Object> GetAllResourcesAtPath(in string path)
         {
             if (s_BundleResourceObjects.TryGetValue(path, out var objects))
                 return objects;
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             objects = AssetDatabase.LoadAllAssetsAtPath(path).ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             s_BundleResourceObjects[path] = objects;
             return objects;
         }
@@ -313,9 +318,9 @@ namespace UnityEditor.Search.Providers
 
             if (!parsedQuery.valid)
             {
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 context.AddSearchQueryErrors(parsedQuery.errors.Select(e => new SearchQueryError(e, context, provider)));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 yield break;
             }
 
@@ -356,14 +361,14 @@ namespace UnityEditor.Search.Providers
             var resources = GetAllResourcesAtPath(k_BuiltinExtraResources);
             // Add editorResources and defaultResources if needed.
             if (context.wantsMore)
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 resources = resources.Concat(GetAllResourcesAtPath(k_EditorResources)).Concat(GetAllResourcesAtPath(k_DefaultResources));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             if (context.filterType != null)
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 resources = resources.Where(r => context.filterType.IsAssignableFrom(r.GetType()));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             if (!string.IsNullOrEmpty(searchQuery))
                 resources = resourcesQueryEngine.Search(searchQuery, context, provider, resources);

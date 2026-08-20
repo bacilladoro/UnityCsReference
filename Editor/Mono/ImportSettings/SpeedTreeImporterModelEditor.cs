@@ -500,9 +500,9 @@ namespace UnityEditor
                         {
                             var menuText = String.Format("{0}: {1}",
                                 Path.GetFileNameWithoutExtension(importer.assetPath),
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                                 string.Join(" | ", importer.LODHeights.Select(height => string.Format("{0:0}%", height * 100))));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                             dropDownMenu.AddItem(new GUIContent(menuText), false, OnResetLODMenuClick, importer);
                         }
                         dropDownMenu.DropDown(buttonRect);
@@ -546,12 +546,12 @@ namespace UnityEditor
                         var clickedButton = false;
 
                         // case:464019 have to re-sort the LOD array for these buttons to get the overlaps in the right order...
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                         var lodsLeft = lods.Where(lod => lod.ScreenPercent > 0.5f).OrderByDescending(x => x.LODIndex);
-#pragma warning restore UA2001
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+#pragma warning disable UAC2001 // Avoid Linq
                         var lodsRight = lods.Where(lod => lod.ScreenPercent <= 0.5f).OrderBy(x => x.LODIndex);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
                         var lodButtonOrder = new List<LODGUI.LODInfo>();
                         lodButtonOrder.AddRange(lodsLeft);
@@ -663,13 +663,13 @@ namespace UnityEditor
             }
 
             int totalTriCount = (primitiveCounts.Length > 0 && primitiveCounts[lodGroupIndex] != null)
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 ? primitiveCounts[lodGroupIndex].Sum()
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 : 0;
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             int lod0TriCount = primitiveCounts[0].Sum();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             var triCountChange = lod0TriCount != 0 ? (float)totalTriCount / lod0TriCount * 100 : 0;
             string triangleChangeLabel = lodGroupIndex > 0 && lod0TriCount != 0 ? $"({triCountChange.ToString("f2")}% LOD0)" : "";
 
@@ -788,9 +788,9 @@ namespace UnityEditor
                 EditorGUILayout.LabelField("Wind", EditorStyles.boldLabel);
                 EditorGUILayout.Popup(
                     selectedLODProp.FindPropertyRelative("windQuality"),
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                     SpeedTreeImporter.windQualityNames.Take(windQuality + 1).Select(s => new GUIContent(s)).ToArray(),
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     Styles.WindQuality);
 
 

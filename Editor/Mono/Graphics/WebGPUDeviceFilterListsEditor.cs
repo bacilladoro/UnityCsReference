@@ -18,7 +18,7 @@ namespace UnityEditor
         internal static class Styles
         {
             public const uint kNumStaticItemsInFilter = 2;
-            public const uint kNumDeviceIdItemsInFilter = 3;
+            public const uint kNumDeviceIdItemsInFilter = 5;
             public const uint kNumCapabilityItemsInFilter = 4;
             public const float kHeightBetweenFields = 3.0f;
             public const float kHeightBetweenRows = 10.0f;
@@ -29,6 +29,10 @@ namespace UnityEditor
             public static readonly GUIContent browserName = EditorGUIUtility.TrTextContent("Browser Name", "Use a regular expression to specify the name of a browser");
             public static readonly GUIContent browserVersion =
                 EditorGUIUtility.TrTextContent("Browser Version", "Specify the browser version using the format MajorVersion.MinorVersion(optional).PatchVersion(optional).PatchMinorVersion(optional)");
+            public static readonly GUIContent browserEngineFlavor =
+                EditorGUIUtility.TrTextContent("Browser Engine", "The browser engine (WebGPU backend) to match: Chromium-based (Blink), Safari-based (WebKit), or Firefox-based (Gecko)");
+            public static readonly GUIContent engineVersion =
+                EditorGUIUtility.TrTextContent("Engine Version", "Specify the engine version using the format MajorVersion.MinorVersion(optional).PatchVersion(optional).PatchMinorVersion(optional)");
             public static readonly GUIContent featureLevel =
                 EditorGUIUtility.TrTextContent("WebGPU Feature Level", "Specify the WebGPU feature level for a device using the format MajorVersion.MinorVersion(optional)");
             public static readonly GUIContent graphicsMemory =
@@ -46,6 +50,9 @@ namespace UnityEditor
             public static readonly string browserNameText = "browserName";
             public static readonly string browserVersionComparatorText = "browserVersionComparator";
             public static readonly string browserVersionText = "browserVersion";
+            public static readonly string browserEngineFlavorText = "browserEngineFlavor";
+            public static readonly string engineVersionComparatorText = "engineVersionComparator";
+            public static readonly string engineVersionText = "engineVersion";
             public static readonly string featureLevelComparatorText = "featureLevelComparator";
             public static readonly string featureLevelText = "featureLevel";
             public static readonly string graphicsMemoryComparatorText = "graphicsMemoryComparator";
@@ -148,6 +155,9 @@ namespace UnityEditor
                 var browserNameProp = filterListProp.FindPropertyRelative(Styles.browserNameText);
                 var browserVersionComparatorProp = filterListProp.FindPropertyRelative(Styles.browserVersionComparatorText);
                 var browserVersionProp = filterListProp.FindPropertyRelative(Styles.browserVersionText);
+                var browserEngineFlavorProp = filterListProp.FindPropertyRelative(Styles.browserEngineFlavorText);
+                var engineVersionComparatorProp = filterListProp.FindPropertyRelative(Styles.engineVersionComparatorText);
+                var engineVersionProp = filterListProp.FindPropertyRelative(Styles.engineVersionText);
                 var featureLevelComparatorProp = filterListProp.FindPropertyRelative(Styles.featureLevelComparatorText);
                 var featureLevelProp = filterListProp.FindPropertyRelative(Styles.featureLevelText);
                 var graphicsMemoryComparatorProp = filterListProp.FindPropertyRelative(Styles.graphicsMemoryComparatorText);
@@ -175,6 +185,14 @@ namespace UnityEditor
                     elementRect.y += Styles.kElementHeighWithSpace;
 
                     result &= DrawPopupAndVersionWithErrorCheck("Browser Version", browserVersionComparatorProp, browserVersionProp, Styles.browserVersion, Styles.browserVersionText, ref elementRect, errorBuilder);
+                    elementRect.y += Styles.kElementHeighWithSpace;
+
+                    WebGPUBrowserEngineFlavor engineFlavor = (WebGPUBrowserEngineFlavor)browserEngineFlavorProp.enumValueFlag;
+                    engineFlavor = (WebGPUBrowserEngineFlavor)EditorGUI.EnumPopup(elementRect, Styles.browserEngineFlavor, engineFlavor);
+                    browserEngineFlavorProp.intValue = (int)engineFlavor;
+                    elementRect.y += Styles.kElementHeighWithSpace;
+
+                    result &= DrawPopupAndVersionWithErrorCheck("Engine Version", engineVersionComparatorProp, engineVersionProp, Styles.engineVersion, Styles.engineVersionText, ref elementRect, errorBuilder);
                     elementRect.y += Styles.kElementHeighWithSpace;
 
                     type = (WebGPUDeviceType)EditorGUI.EnumPopup(elementRect, Styles.deviceType, type);
@@ -296,6 +314,7 @@ namespace UnityEditor
             public static void ClearNewElement(SerializedProperty filterListProp, int defaultComparator)
             {
                 filterListProp.FindPropertyRelative(Styles.browserVersionComparatorText).enumValueFlag = defaultComparator;
+                filterListProp.FindPropertyRelative(Styles.engineVersionComparatorText).enumValueFlag = defaultComparator;
             }
         }
     }

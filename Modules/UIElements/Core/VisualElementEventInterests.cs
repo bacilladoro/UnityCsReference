@@ -2,6 +2,8 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
+using Unity.Scripting.LifecycleManagement;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -33,6 +35,7 @@ namespace UnityEngine.UIElements
         private int m_EventInterestSelfCategories = 0;
         private int m_CachedEventInterestParentCategories = 0;
 
+        [NoAutoStaticsCleanup] // monotonic version counter; safe to persist
         private static uint s_NextParentVersion;
 
         // The version with which this element's m_CachedNextParentWithEventInterests was computed.
@@ -279,7 +282,7 @@ namespace UnityEngine.UIElements
             0 != (m_BubbleUpHandleEventCategories & eventCategories);
     }
 
-    internal static class EventInterestReflectionUtils
+    internal static partial class EventInterestReflectionUtils
     {
         // Initialize this VisualElement's default categories according to its fully-resolved Type.
         internal static void GetDefaultEventInterests(Type elementType,
@@ -343,6 +346,7 @@ namespace UnityEngine.UIElements
             return found ? categories : -1;
         }
 
+        [NoAutoStaticsCleanup]
         private static readonly Dictionary<Type, EventCategory> s_EventCategories =
             new Dictionary<Type, EventCategory>();
 
@@ -540,3 +544,4 @@ namespace UnityEngine.UIElements
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

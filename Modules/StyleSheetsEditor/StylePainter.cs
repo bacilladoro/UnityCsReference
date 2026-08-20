@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: StyleSheetsEditor not yet converted
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -70,9 +71,9 @@ namespace UnityEditor.StyleSheets
             StyleState[] states;
             if (!s_StatesCache.TryGetValue(stateFlags, out states))
             {
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 states = new[] { stateFlags,
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                                  stateFlags & StyleState.disabled,
                                  stateFlags & StyleState.active,
                                  stateFlags & StyleState.@checked,
@@ -468,3 +469,4 @@ namespace UnityEditor.StyleSheets
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

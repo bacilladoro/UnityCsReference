@@ -786,6 +786,11 @@ namespace Unity.UI.Builder
             {
                 pickedElement = m_LastHoverElement.GetProperty(BuilderConstants.ExplorerItemElementLinkVEPropertyName) as VisualElement;
             }
+
+            // CSS Grid: dropping onto/within a grid appends to the grid container; grid places its
+            // items by grid-column/row, not by sibling order, so reorder-zone positioning is ignored.
+            if (BuilderStyleUtilities.IsGridContainer(pickedElement))
+                index = -1;
         }
 
         protected void OnEsc(KeyUpEvent evt)

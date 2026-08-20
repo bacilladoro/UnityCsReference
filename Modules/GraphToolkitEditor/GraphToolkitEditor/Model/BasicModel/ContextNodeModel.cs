@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using Unity.GraphToolkit.Editor.ContextualMenuItems;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor;
 using UnityEngine;
 
@@ -15,7 +16,7 @@ namespace Unity.GraphToolkit.Editor
     /// </summary>
     [Serializable]
     [UnityRestricted]
-    internal class ContextNodeModel : NodeModel, IGraphElementContainer
+    internal partial class ContextNodeModel : NodeModel, IGraphElementContainer
     {
         [SerializeReference]
         protected List<BlockNodeModel> m_Blocks = new();
@@ -23,7 +24,7 @@ namespace Unity.GraphToolkit.Editor
         [SerializeField, HideInInspector]
         List<Hash128> m_BlockGuids = new();
 
-        internal static string blocksFieldName = nameof(m_Blocks);
+        internal const string blocksFieldName = nameof(m_Blocks);
 
         [NonSerialized]
         List<BlockNodePlaceholder> m_BlockPlaceholders = new List<BlockNodePlaceholder>();
@@ -373,7 +374,8 @@ namespace Unity.GraphToolkit.Editor
             }
         }
 
-        static readonly List<ContextualMenuItem> k_ContextualMenuItems = new() {
+        [AutoStaticsCleanupOnCodeReload]
+        static List<ContextualMenuItem> k_ContextualMenuItems = new() {
             new ContextualMenuItem(ContextualMenuHelpers.addBlockItem, 0)
         };
     }

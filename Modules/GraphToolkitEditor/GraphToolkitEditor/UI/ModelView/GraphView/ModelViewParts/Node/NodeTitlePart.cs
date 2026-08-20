@@ -200,17 +200,12 @@ namespace Unity.GraphToolkit.Editor
             TitleContainer.AddToClassList(m_ParentClassName.WithUssElement(GraphElementHelper.titleContainerName));
             m_Root.Add(TitleContainer);
 
-            if ((m_Options & Options.HasIcon) != 0)
+            if ((m_Options & Options.HasIcon) != 0 || IsNodeDefinitionValid())
             {
                 m_Icon = new Image();
                 m_Icon.AddToClassList(ussClassName.WithUssElement(GraphElementHelper.iconName));
                 m_Icon.AddToClassList(m_ParentClassName.WithUssElement(GraphElementHelper.iconName));
                 TitleContainer.Add(m_Icon);
-            }
-
-            if (IsNodeDefinitionValid())
-            {
-                TitleContainer.Add(CreateMissingWarningIcon());
             }
 
             CreateTitleLabel();
@@ -310,10 +305,15 @@ namespace Unity.GraphToolkit.Editor
                 }
                 m_PreviousIconClasses.Clear();
 
-                // If an icon path is specified, it takes precedence over the icon type string.
-                if (!string.IsNullOrEmpty(iconPath))
+                if (IsNodeDefinitionValid())
                 {
-                    var iconTexture = EditorGUIUtility.IconContent(nodeModel.IconPath).image as Texture2D;
+                    m_Icon.image = null;
+                    m_PreviousIconClasses.Add(ussClassName.WithUssElement(missingWarningIconName));
+                }
+                // If an icon path is specified, it takes precedence over the icon type string.
+                else if (!string.IsNullOrEmpty(iconPath))
+                {
+                    var iconTexture = EditorGUIUtility.LoadIcon(nodeModel.IconPath);
                     if (iconTexture == null)
                     {
                         Debug.LogWarning($"Could not load icon at path '{nodeModel.IconPath}' for node {nodeModel.Title}");
@@ -324,14 +324,20 @@ namespace Unity.GraphToolkit.Editor
                         m_Icon.image = iconTexture;
                     }
                 }
-                else if (!string.IsNullOrEmpty(iconTypeString))
+                else
                 {
-                    m_PreviousIconClasses.Add(ussClassName.WithUssElement(GraphElementHelper.iconName).WithUssModifier(iconTypeString));
-                    m_PreviousIconClasses.Add(m_ParentClassName.WithUssElement(GraphElementHelper.iconName).WithUssModifier(iconTypeString));
-                    m_PreviousIconClasses.Add(GraphElementHelper.iconUssClassName.WithUssModifier(iconTypeString));
+                    // No icon path: clear any previously set icon texture and revert to the icon defined in the stylesheet.
+                    m_Icon.image = null;
+
+                    if (!string.IsNullOrEmpty(iconTypeString))
+                    {
+                        m_PreviousIconClasses.Add(ussClassName.WithUssElement(GraphElementHelper.iconName).WithUssModifier(iconTypeString));
+                        m_PreviousIconClasses.Add(m_ParentClassName.WithUssElement(GraphElementHelper.iconName).WithUssModifier(iconTypeString));
+                        m_PreviousIconClasses.Add(GraphElementHelper.iconUssClassName.WithUssModifier(iconTypeString));
+                    }
                 }
 
-                if ((m_Options & Options.HasIcon) == 0)
+                if ((m_Options & Options.HasIcon) == 0 && !IsNodeDefinitionValid())
                 {
                     m_PreviousIconClasses.Add(ussClassName.WithUssElement(GraphElementHelper.iconName).WithUssModifier(noIconModifier));
                     m_PreviousIconClasses.Add(m_ParentClassName.WithUssElement(GraphElementHelper.iconName).WithUssModifier(noIconModifier));

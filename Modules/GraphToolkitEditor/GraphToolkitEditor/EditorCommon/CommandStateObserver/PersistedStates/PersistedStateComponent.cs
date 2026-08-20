@@ -39,7 +39,7 @@ namespace Unity.GraphToolkit.Editor
         }
 
         /// <inheritdoc />
-        public override void OnRemovedFromState(IState state)
+        public override void OnRemovedFromState(CSO.IState state)
         {
             base.OnRemovedFromState(state);
             PersistedState.StoreStateComponent(this, ComponentName, ViewGuid, GraphKey);

@@ -55,9 +55,9 @@ namespace UnityEditor
 
             m_Modules = CreateUIModules(this, m_ParticleSystemSerializedObject);
 
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             bool anyWithoutRenderers = m_ParticleSystems.FirstOrDefault(o => o.GetComponent<ParticleSystemRenderer>() == null) != null;
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             if (!anyWithoutRenderers)
                 InitRendererUI();
 
@@ -437,9 +437,9 @@ namespace UnityEditor
                 {
                     if (child != ps)
                     {
-                        #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                        #pragma warning disable UAC2001 // Avoid Linq
                         bool alreadySelected = m_ParticleSystems.FirstOrDefault(o => ParticleSystemEditorUtils.GetRoot(o) == child) != null;
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                         if (!alreadySelected)
                             ShowBounds(child);
                     }

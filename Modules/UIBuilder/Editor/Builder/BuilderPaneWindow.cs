@@ -205,6 +205,7 @@ namespace Unity.UI.Builder
             ClearUI();
             rootVisualElement.Clear();
 
+            m_CommandHandler?.OnDisable();
             m_CommandHandler = null;
 
             var viewportWindow = document.primaryViewportWindow;

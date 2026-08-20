@@ -798,7 +798,7 @@ internal abstract class VisualElementNodeTypeHandler :
 
     DragVisualMode IHierarchyEditorNodeTypeHandler.CanReorder(in HierarchyViewDragAndDropHandlingData data) => HandleDrop(in data, false);
 
-    void IHierarchyEditorNodeTypeHandler.OnReorder(in HierarchyViewDragAndDropHandlingData data) => HandleDrop(in data, true);
+    DragVisualMode IHierarchyEditorNodeTypeHandler.OnReorder(in HierarchyViewDragAndDropHandlingData data) => HandleDrop(in data, true);
 
     DragVisualMode IHierarchyEditorNodeTypeHandler.CanAcceptDrop(in HierarchyViewDragAndDropHandlingData data) => HandleDrop(in data, false);
 
@@ -1591,6 +1591,10 @@ internal abstract class VisualElementNodeTypeHandler :
 
     private void ClearSingle(VisualElement element)
     {
+        // PointerLeaveEvent is not fired for virtualized items, so clear the hover state here.
+        if (element == m_HoveredElement)
+            HoveredElement = null;
+
         if (!m_Mappings.TryGetValue(element, out var removedNode))
             return;
 

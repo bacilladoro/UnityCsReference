@@ -2,10 +2,12 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
 using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.UIElements.Bindings;
 
@@ -15,6 +17,7 @@ abstract class SerializedObjectBindingToBaseField<TValue, TField> : SerializedOb
 
     EventCallback<ChangeEvent<TValue>> m_FieldValueChanged;
 
+    [NoAutoStaticsCleanup]
     private static EqualityComparer<TValue> s_EqualityComparer = EqualityComparer<TValue>.Default;
 
     protected override string bindingId { get; } = BindingExtensions.s_SerializedBindingId;
@@ -285,3 +288,4 @@ abstract class SerializedObjectBindingToBaseField<TValue, TField> : SerializedOb
         field.SetValueWithoutNotify(value);
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

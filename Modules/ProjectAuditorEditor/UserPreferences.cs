@@ -43,7 +43,6 @@ namespace Unity.ProjectAuditor.Editor
             public static readonly GUIContent PlatformSelection = EditorGUIUtility.TrTextContent("Platform", "Select the target platform.");
             public static readonly GUIContent CodeAnalysisFlagsSelection = EditorGUIUtility.TrTextContent("Code Analysis Areas", "Select which code Project Auditor analyzes.");
             public static readonly GUIContent CodeOwnersSelection = EditorGUIUtility.TrTextContent("Code Owners", "Select whose code Project Auditor analyzes.");
-            public static readonly GUIContent UseRoslynAnalyzers = EditorGUIUtility.TrTextContent("Use Roslyn Analyzers");
             public static readonly GUIContent LogTimingsInfo = EditorGUIUtility.TrTextContent("Log timing information");
             public static readonly GUIContent Build = EditorGUIUtility.TrTextContent("Build");
             public static readonly GUIContent AfterBuild = EditorGUIUtility.TrTextContent("Log number of issues after Build", "Enabling this option will mean that after running a build, Project Auditor will analyze the project and output the total number of issues found to the console.");
@@ -56,7 +55,6 @@ namespace Unity.ProjectAuditor.Editor
             public static readonly GUIContent ManageDisabled = EditorGUIUtility.TrTextContent("Manage", "Open the Project Auditor window to enable browsing.");
         }
 
-        const bool k_UseRoslynAnalyzersDefault = false;
         const bool k_LogTimingsInfoDefault = false;
         const bool k_AnalyzeAfterBuildDefault = false;
         const bool k_FailBuildOnIssuesDefault = false;
@@ -142,12 +140,6 @@ namespace Unity.ProjectAuditor.Editor
         /// </summary>
         [NoAutoStaticsCleanup] // Pref: persists editor preference value across code reload
         public static BoolPref AnalyzeAfterBuild = new BoolPref(nameof(AnalyzeAfterBuild), k_AnalyzeAfterBuildDefault);
-
-        /// <summary>
-        /// If enabled, ProjectAuditor will use Roslyn Analyzer DLLs that are present in the project
-        /// </summary>
-        [NoAutoStaticsCleanup]
-        public static BoolPref UseRoslynAnalyzers = new BoolPref(nameof(UseRoslynAnalyzers), k_UseRoslynAnalyzersDefault);
 
         /// <summary>
         /// If enabled, any issue reported by ProjectAuditor will cause the build to fail.
@@ -265,7 +257,6 @@ namespace Unity.ProjectAuditor.Editor
             GUILayout.Space(10f);
 
             SuppressedDiagnosticsGUI();
-            UseRoslynAnalyzers.Set(EditorGUILayout.Toggle(Styles.UseRoslynAnalyzers, UseRoslynAnalyzers));
             LogTimingsInfo.Set(EditorGUILayout.Toggle(Styles.LogTimingsInfo, LogTimingsInfo));
 
             EditorGUI.indentLevel--;

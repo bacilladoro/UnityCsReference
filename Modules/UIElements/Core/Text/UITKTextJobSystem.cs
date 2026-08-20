@@ -2,6 +2,8 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
+using Unity.Scripting.LifecycleManagement;
 using System;
 using System.Runtime.InteropServices;
 using Unity.Collections;
@@ -16,7 +18,7 @@ using Unity.Profiling;
 
 namespace UnityEngine.UIElements
 {
-    class UITKTextJobSystem
+    partial class UITKTextJobSystem
     {
         class ManagedJobData
         {
@@ -50,30 +52,35 @@ namespace UnityEngine.UIElements
         List<ManagedJobData> textJobDatas = new List<ManagedJobData>();
         bool hasPendingTextWork;
 
+        [NoAutoStaticsCleanup]
         static UnityEngine.Pool.ObjectPool<ManagedJobData> s_JobDataPool = new(() =>
         {
             var inst = new ManagedJobData();
             return inst;
         }, OnGetManagedJob, inst => { inst.visualElement = null; }, null, false);
 
+        [NoAutoStaticsCleanup]
         static UnityEngine.Pool.ObjectPool<List<Material>> s_MaterialsPool = new(() =>
         {
             var inst = new List<Material>();
             return inst;
         }, null, list => list.Clear(), null, false);
 
+        [NoAutoStaticsCleanup]
         static UnityEngine.Pool.ObjectPool<List<GlyphRenderMode>> s_RenderModesPool = new(() =>
         {
             var inst = new List<GlyphRenderMode>();
             return inst;
         }, null, list => list.Clear(), null, false);
 
+        [NoAutoStaticsCleanup]
         static UnityEngine.Pool.ObjectPool<List<NativeSlice<Vertex>>> s_VerticesPool = new(() =>
         {
             var inst = new List<NativeSlice<Vertex>>();
             return inst;
         }, null, list => list.Clear(), null, false);
 
+        [NoAutoStaticsCleanup]
         static UnityEngine.Pool.ObjectPool<List<NativeSlice<ushort>>> s_IndicesPool = new(() =>
         {
             var inst = new List<NativeSlice<ushort>>();
@@ -350,3 +357,4 @@ namespace UnityEngine.UIElements
 }
 
 #pragma warning restore CS0618
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

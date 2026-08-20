@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitAuthoringFramework not yet converted
 using Unity.Properties;
 using UnityEditor;
 using UnityEditor.UIElements;
@@ -137,3 +138,4 @@ sealed partial class VisualElementAttributesInspectorElement : VisualElement
         m_RootPropertyField.bindingPath = bindingPath;
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

@@ -27,15 +27,7 @@ namespace UnityEditor.PackageManager.UI.Internal
         private bool m_IsDiscoverable;
         public bool isDiscoverable => m_IsDiscoverable;
 
-        public string displayName
-        {
-            get
-            {
-                if (!string.IsNullOrEmpty(m_Product?.displayName))
-                    return m_Product.displayName;
-                return m_VersionList?.primary.displayName ?? string.Empty;
-            }
-        }
+        public string displayName => m_VersionList?.primary.displayName ?? string.Empty;
 
         public PackageState state
         {
@@ -70,6 +62,7 @@ namespace UnityEditor.PackageManager.UI.Internal
                     case TrustAndSignature.UntrustedInvalidSignature:
                         return PackageState.Error;
                     case TrustAndSignature.UntrustedNoSignature:
+                    case TrustAndSignature.LimitedTrust when !primary.meetsTrustPolicy:
                         return PackageState.Warning;
                 }
 

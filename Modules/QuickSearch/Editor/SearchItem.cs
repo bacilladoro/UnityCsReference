@@ -9,6 +9,7 @@ using System.Diagnostics;
 using UnityEngine;
 using UnityEngine.Bindings;
 using UnityEngine.Pool;
+using Unity.Scripting.LifecycleManagement;
 
 namespace UnityEditor.Search
 {
@@ -55,7 +56,7 @@ namespace UnityEditor.Search
     /// The search item holds all the data that will be used to sort and present the search results.
     /// </summary>
     [DebuggerDisplay("{id} | {label} | {score}")]
-    public class SearchItem : IEquatable<SearchItem>, IComparable<SearchItem>, IComparable
+    public partial class SearchItem : IEquatable<SearchItem>, IComparable<SearchItem>, IComparable
     {
         private Dictionary<Type, UnityEngine.Object> m_Objects;
 
@@ -122,7 +123,8 @@ namespace UnityEditor.Search
         /// </summary>
         public SearchContext context;
 
-        private static readonly SearchProvider defaultProvider = new SearchProvider("default", "Default")
+        [AutoStaticsCleanupOnCodeReload]
+        private static SearchProvider defaultProvider = new SearchProvider("default", "Default")
         {
             priority = int.MinValue,
             toObject = (item, type) => null,
@@ -131,18 +133,10 @@ namespace UnityEditor.Search
             actions = new List<SearchAction> { new SearchAction("select", "select", null, null, (SearchItem item) => {}) }
         };
 
-        [Obsolete("Use SearchItem.clear instead.", error: false)] // 2022.2
-        public static readonly SearchItem none = new SearchItem(Guid.NewGuid().ToString())
-        {
-            label = "None",
-            score = int.MinValue,
-            provider = defaultProvider,
-            options = SearchItemOptions.CustomAction
-        };
-
         /// <summary>
         /// A search item representing none, usually used to clear the selection.
         /// </summary>
+        [AutoStaticsCleanupOnCodeReload]
         private static SearchItem s_ClearItem;
         public static SearchItem clear
         {
@@ -150,9 +144,13 @@ namespace UnityEditor.Search
             {
                 if (s_ClearItem == null)
                 {
-                    #pragma warning disable CS0618 // Type or member is obsolete
-                    s_ClearItem = none;
-                    #pragma warning restore CS0618 // Type or member is obsolete
+                    s_ClearItem = new SearchItem(Guid.NewGuid().ToString())
+                    {
+                        label = "None",
+                        score = int.MinValue,
+                        provider = defaultProvider,
+                        options = SearchItemOptions.CustomAction
+                    };
                 }
                 if (s_ClearItem.thumbnail == null && UnityEditorInternal.InternalEditorUtility.CurrentThreadIsMainThread())
                     s_ClearItem.thumbnail = Icons.clear;
@@ -668,9 +666,9 @@ namespace UnityEditor.Search
         {
             if (m_Fields == null)
                 return Array.Empty<string>();
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             return m_Fields.Keys.ToArray();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         public IEnumerable<SearchField> GetFields()

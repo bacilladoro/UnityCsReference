@@ -28,6 +28,11 @@ namespace Unity.U2D.Physics
         public static float TAU => PhysicsMath_TAU();
 
         /// <summary>
+        /// A small tolerance value used to test whether a value is close enough to zero to be treated as zero.
+        /// </summary>
+        public const float Epsilon = 1e-5f;
+
+        /// <summary>
         /// Convert radians to degrees.
         /// This operates as deterministically as possible across platforms.
         /// See <see cref="PhysicsMath.ToRadians(float)"/>.
@@ -130,6 +135,14 @@ namespace Unity.U2D.Physics
         {
             return Math.Max(Math.Max(Math.Abs(vector.x), Math.Abs(vector.y)), Math.Abs(vector.z));
         }
+
+        /// <summary>
+        /// Get whether both components of the specified vector are finite i.e. neither NaN nor infinite.
+        /// </summary>
+        /// <param name="value">The vector to check.</param>
+        /// <returns>Whether the vector is finite.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool IsFinite(Vector2 value) => float.IsFinite(value.x) && float.IsFinite(value.y);
 
         /// <summary>
         /// Get the used translation axes, given the specified transform plane.
@@ -348,6 +361,72 @@ namespace Unity.U2D.Physics
             translation = ToPosition2D(relativePos, transformPlane);
             rotation = ToRotation2D(relativeRot, transformPlane);
             scale = Swizzle(toMatrix.lossyScale, transformPlane);
+        }
+
+        /// <summary>
+        /// Try to get the relative transformation matrix between the two specified transform matrix using the specified transform plane to transform into 2D space, the same as <see cref="GetRelativeMatrix2D"/> but never returning a NaN result.
+        /// Each matrix is checked first: if its scale on the plane's ignored axis is at or near zero, such as a matrix built from flattened 2D data, that axis is treated as one instead of leaving the matrix singular.
+        /// Returns false, instead of a matrix with a NaN rotation, when either matrix has too small an in-plane scale to work with, or the relative transform itself is too close to singular to invert cleanly.
+        /// </summary>
+        /// <param name="transformFrom">The transform used as a reference to transform from.</param>
+        /// <param name="transformTo">The transform used as a reference to transform to.</param>
+        /// <param name="transformPlane">The transform plane to use.</param>
+        /// <param name="transformPlaneCustom">The custom transform plane to use (if required).</param>
+        /// <param name="relative">The calculated relative transformation matrix, or the identity matrix if this returns false.</param>
+        /// <returns>Whether a valid relative transformation matrix was calculated.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool TryGetRelativeMatrix2D(in Matrix4x4 transformFrom, in Matrix4x4 transformTo, PhysicsWorld.TransformPlane transformPlane, in PhysicsWorld.TransformPlaneCustom transformPlaneCustom, out Matrix4x4 relative)
+        {
+            relative = Matrix4x4.identity;
+
+            // Build a usable matrix for each side, tolerating a flattened out-of-plane scale on either one.
+            if (!TryGetPlaneMatrix2D(transformFrom, transformPlane, out var fromMatrix) ||
+                !TryGetPlaneMatrix2D(transformTo, transformPlane, out var toMatrix))
+                return false;
+
+            // Reject a relative transform that is too close to singular, which would otherwise produce a NaN rotation.
+            GetRelativePose2D(fromMatrix, toMatrix, transformPlane, transformPlaneCustom,
+                out var relativeTranslation, out var relativeRotation, out var relativeScale);
+            if (!IsFinite(relativeTranslation) || !float.IsFinite(relativeRotation) || !IsFinite(relativeScale))
+                return false;
+
+            // Both matrices are valid, so calculate and return the actual relative matrix.
+            relative = GetRelativeMatrix2D(fromMatrix, toMatrix, transformPlane, transformPlaneCustom);
+            return true;
+        }
+
+        /// <summary>
+        /// Try to get a matrix suitable for use with <see cref="GetRelativeMatrix2D"/> or <see cref="GetRelativePose2D"/> from the specified matrix, ignoring its scale on the transform plane's out-of-plane axis.
+        /// </summary>
+        /// <remarks>
+        /// A matrix whose out-of-plane scale is at or near zero, such as one built from flattened 2D data, is rebuilt with that axis treated as one; left as zero it makes the whole matrix singular, and inverting it later would produce a NaN result.
+        /// A negative out-of-plane scale is treated the same way, since its sign and magnitude have no meaning in 2D and left as-is it turns the extracted rotation into NaN instead.
+        /// </remarks>
+        /// <param name="matrix">The matrix to build from.</param>
+        /// <param name="transformPlane">The transform plane to use.</param>
+        /// <param name="planeMatrix">The resulting matrix, or the default matrix if this returns false.</param>
+        /// <returns>Whether a valid matrix was calculated. Returns false when the matrix has an in-plane axis too small to build from.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool TryGetPlaneMatrix2D(Matrix4x4 matrix, PhysicsWorld.TransformPlane transformPlane, out Matrix4x4 planeMatrix)
+        {
+            planeMatrix = default;
+
+            // Swizzle the scale onto the transform plane, then reject it if either in-plane axis is too small to build from.
+            var swizzled = Swizzle(matrix.lossyScale, transformPlane);
+            if (Mathf.Abs(swizzled.x) < Epsilon || Mathf.Abs(swizzled.y) < Epsilon)
+                return false;
+
+            // A safely non-zero out-of-plane scale leaves the matrix invertible as-is, so it can be used directly.
+            if (swizzled.z >= Epsilon)
+            {
+                planeMatrix = matrix;
+                return planeMatrix.ValidTRS();
+            }
+
+            // A near-zero or negative out-of-plane scale is rebuilt as one, keeping the real position and rotation.
+            var adjusted = Swizzle(new Vector3(swizzled.x, swizzled.y, 1f), transformPlane);
+            planeMatrix = Matrix4x4.TRS(matrix.GetPosition(), matrix.rotation, adjusted);
+            return true;
         }
 
         /// <summary>

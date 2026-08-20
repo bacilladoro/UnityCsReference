@@ -2,6 +2,7 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: TimelineFoundation not yet converted
 using System;
 using System.Collections.Generic;
 using Unity.Timeline.Foundation.ViewModel;
@@ -144,9 +145,9 @@ namespace Unity.Timeline.Foundation.View.Debugger
 
             foreach (Type componentType in m_ComponentPriority)
             {
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
                 Component component = m_ShownVm.GetAllComponents().FirstOrDefault(componentType.IsInstanceOfType);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 if (component != null)
                 {
                     DrawComponent(m_Manager, m_ShownVm, component);
@@ -154,9 +155,9 @@ namespace Unity.Timeline.Foundation.View.Debugger
                 }
             }
 
-#pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning disable UAC2001 // Avoid Linq
             foreach (Component component in m_ShownVm.GetAllComponents().Except(prioritizedComponents))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             {
                 DrawComponent(m_Manager, m_ShownVm, component);
             }
@@ -218,3 +219,4 @@ namespace Unity.Timeline.Foundation.View.Debugger
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014

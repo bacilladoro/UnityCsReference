@@ -3,6 +3,7 @@
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
 using System;
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.TextCore.Text;
 
 #pragma warning disable CS0618 // TextCoreShaderGUIBitmap, TextCoreShaderGUI, TextShaderUtilities are obsolete; handled natively by Advanced Text Generator (ATG)
@@ -12,6 +13,7 @@ namespace UnityEditor.TextCore.Text
     [Obsolete("Advanced Text Generator (ATG) is moving away from the material-per-font approach. This type is no longer required.", false)]
     public class TextCoreShaderGUIBitmap : TextCoreShaderGUI
     {
+        [NoAutoStaticsCleanup] // UI panel expand/collapse state; safe to persist across code reload.
         static bool s_Face = true;
 
         protected override void DoGUI()

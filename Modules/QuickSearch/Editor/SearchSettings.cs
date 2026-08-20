@@ -7,6 +7,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Unity.Scripting.LifecycleManagement;
 using UnityEditor.SearchService;
 using UnityEngine;
 
@@ -285,15 +286,15 @@ namespace UnityEditor.Search
 
 
             var searches = ReadSetting<object[]>(settings, nameof(recentSearches));
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             recentSearches = searches != null ? searches.Cast<string>().ToList() : new List<string>();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             var favoriteItems = ReadSetting<object[]>(settings, nameof(searchItemFavorites));
             if (favoriteItems != null)
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 searchItemFavorites.UnionWith(favoriteItems.Cast<string>());
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
 
             var expandedObjects = ReadSetting<object[]>(settings, nameof(expandedQueries));
             expandedQueries = expandedObjects != null ? Array.ConvertAll(expandedObjects, Convert.ToInt32) : Array.Empty<int>();
@@ -329,9 +330,9 @@ namespace UnityEditor.Search
                 [nameof(providers)] = providers,
                 [nameof(objectSelectors)] = objectSelectors,
                 [nameof(recentSearches)] = recentSearches,
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 [nameof(searchItemFavorites)] = searchItemFavorites.ToList(),
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                 [nameof(savedSearchesSortOrder)] = (int)savedSearchesSortOrder,
                 [nameof(showSavedSearchPanel)] = showSavedSearchPanel,
                 [nameof(hideTabs)] = hideTabs,
@@ -370,18 +371,18 @@ namespace UnityEditor.Search
         internal static string ConvertIgnoredProperties(string currentIgnoredPropertiesStr)
         {
             var currentIgnored = currentIgnoredPropertiesStr.Split(";");
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var newIgnored = GetIgnoredPropertiesStr(k_IgnoredProperties.Concat(currentIgnored));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             return newIgnored;
         }
 
         internal static string GetIgnoredPropertiesStr(IEnumerable<string> properties = null)
         {
             properties = properties ?? k_IgnoredProperties;
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             return string.Join(";", properties.Distinct().OrderBy(prop => prop));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         public void RegisterIgnoredPropertiesCustomDependencies()
@@ -463,9 +464,9 @@ namespace UnityEditor.Search
         {
             recentSearches.Insert(0, search);
             ApplyRecentSearchCapacity();
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             recentSearches = recentSearches.Distinct().ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         void ApplyRecentSearchCapacity()
@@ -630,17 +631,30 @@ namespace UnityEditor.Search
         }
     }
 
-    public static class SearchSettings
+    public static partial class SearchSettings
     {
         internal static readonly string projectLocalSettingsFolder = Utils.CleanPath(new DirectoryInfo("UserSettings").FullName);
         internal static readonly string projectLocalSettingsPath = $"{projectLocalSettingsFolder}/Search.settings";
         internal const string settingsPreferencesKey = "Preferences/Search";
 
+        [AutoStaticsCleanupOnCodeReload]
         static SearchSettingsStorage s_SettingsStorage;
 
         internal static SearchSettingsStorage settingsStorage {
             get
             {
+                if (s_SettingsStorage == null)
+                {
+                    s_SettingsStorage = new SearchSettingsStorage()
+                    {
+                        settingsFolder = projectLocalSettingsFolder,
+                        settingsPath = projectLocalSettingsPath,
+                        recentSearchMaxCount = k_RecentSearchMaxCount,
+                        itemIconSize = (float)DisplayMode.List,
+                        expandedQueries = Array.Empty<int>()
+                    };
+                    Load();
+                }
                 return s_SettingsStorage;
             }
 
@@ -651,186 +665,176 @@ namespace UnityEditor.Search
             }
         }
 
+        [NoAutoStaticsCleanup] // int cache using -1 as "needs recompute" sentinel; cleanup would reset to 0 (a valid count) and break the sentinel. Stale value is harmless and recomputed lazily.
         private static int s_KeywordCount { get; set; } = -1;
 
         // Per project settings
         internal static bool trackSelection
         {
-            get => s_SettingsStorage.trackSelection;
-            set => s_SettingsStorage.trackSelection = value;
+            get => settingsStorage.trackSelection;
+            set => settingsStorage.trackSelection = value;
         }
 
         internal static bool fetchPreview
         {
-            get => s_SettingsStorage.fetchPreview;
-            set => s_SettingsStorage.fetchPreview = value;
+            get => settingsStorage.fetchPreview;
+            set => settingsStorage.fetchPreview = value;
         }
 
         internal static SearchFlags defaultFlags
         {
-            get => s_SettingsStorage.defaultFlags;
-            set => s_SettingsStorage.defaultFlags = value;
+            get => settingsStorage.defaultFlags;
+            set => settingsStorage.defaultFlags = value;
         }
 
         internal static bool keepOpen
         {
-            get => s_SettingsStorage.keepOpen;
-            set => s_SettingsStorage.keepOpen = value;
+            get => settingsStorage.keepOpen;
+            set => settingsStorage.keepOpen = value;
         }
 
         internal static string queryFolder
         {
-            get => s_SettingsStorage.queryFolder;
-            set => s_SettingsStorage.queryFolder = value;
+            get => settingsStorage.queryFolder;
+            set => settingsStorage.queryFolder = value;
         }
 
         internal static bool onBoardingDoNotAskAgain
         {
-            get => s_SettingsStorage.onBoardingDoNotAskAgain;
-            set => s_SettingsStorage.onBoardingDoNotAskAgain = value;
+            get => settingsStorage.onBoardingDoNotAskAgain;
+            set => settingsStorage.onBoardingDoNotAskAgain = value;
         }
 
         internal static bool showPackageIndexes
         {
-            get => s_SettingsStorage.showPackageIndexes;
-            set => s_SettingsStorage.showPackageIndexes = value;
+            get => settingsStorage.showPackageIndexes;
+            set => settingsStorage.showPackageIndexes = value;
         }
 
         internal static bool showStatusBar
         {
-            get => s_SettingsStorage.showStatusBar;
-            set => s_SettingsStorage.showStatusBar = value;
+            get => settingsStorage.showStatusBar;
+            set => settingsStorage.showStatusBar = value;
         }
 
         internal static bool hideTabs
         {
-            get => s_SettingsStorage.hideTabs;
-            set => s_SettingsStorage.hideTabs = value;
+            get => settingsStorage.hideTabs;
+            set => settingsStorage.hideTabs = value;
         }
 
         internal static bool indexOnEditorStartup
         {
-            get => s_SettingsStorage.indexOnEditorStartup;
-            set => s_SettingsStorage.indexOnEditorStartup = value;
+            get => settingsStorage.indexOnEditorStartup;
+            set => settingsStorage.indexOnEditorStartup = value;
         }
 
         internal static bool logIndexingPerformanceReport
         {
-            get => s_SettingsStorage.logIndexingPerformanceReport;
-            set => s_SettingsStorage.logIndexingPerformanceReport = value;
+            get => settingsStorage.logIndexingPerformanceReport;
+            set => settingsStorage.logIndexingPerformanceReport = value;
         }
 
         internal static SearchQuerySortOrder savedSearchesSortOrder
         {
-            get => s_SettingsStorage.savedSearchesSortOrder;
-            set => s_SettingsStorage.savedSearchesSortOrder = value;
+            get => settingsStorage.savedSearchesSortOrder;
+            set => settingsStorage.savedSearchesSortOrder = value;
         }
 
         internal static bool showSavedSearchPanel
         {
-            get => s_SettingsStorage.showSavedSearchPanel;
-            set => s_SettingsStorage.showSavedSearchPanel = value;
+            get => settingsStorage.showSavedSearchPanel;
+            set => settingsStorage.showSavedSearchPanel = value;
         }
 
-        internal static Dictionary<string, string> scopes => s_SettingsStorage.scopes;
-        internal static Dictionary<string, SearchProviderSettings> providers => s_SettingsStorage.providers;
-        internal static Dictionary<string, ObjectSelectorsSettings> objectSelectors => s_SettingsStorage.objectSelectors;
+        internal static Dictionary<string, string> scopes => settingsStorage.scopes;
+        internal static Dictionary<string, SearchProviderSettings> providers => settingsStorage.providers;
+        internal static Dictionary<string, ObjectSelectorsSettings> objectSelectors => settingsStorage.objectSelectors;
 
         internal static bool queryBuilder
         {
-            get => s_SettingsStorage.queryBuilder;
-            set => s_SettingsStorage.queryBuilder = value;
+            get => settingsStorage.queryBuilder;
+            set => settingsStorage.queryBuilder = value;
         }
 
         internal static string ignoredProperties
         {
-            get => s_SettingsStorage.ignoredProperties;
-            set => s_SettingsStorage.ignoredProperties = value;
+            get => settingsStorage.ignoredProperties;
+            set => settingsStorage.ignoredProperties = value;
         }
 
         internal static string helperWidgetCurrentArea
         {
-            get => s_SettingsStorage.helperWidgetCurrentArea;
-            set => s_SettingsStorage.helperWidgetCurrentArea = value;
+            get => settingsStorage.helperWidgetCurrentArea;
+            set => settingsStorage.helperWidgetCurrentArea = value;
         }
 
         internal static bool refreshSearchWindowsInPlayMode
         {
-            get => s_SettingsStorage.refreshSearchWindowsInPlayMode;
-            set => s_SettingsStorage.refreshSearchWindowsInPlayMode = value;
+            get => settingsStorage.refreshSearchWindowsInPlayMode;
+            set => settingsStorage.refreshSearchWindowsInPlayMode = value;
         }
 
         internal static bool pickerAdvancedUI
         {
-            get => s_SettingsStorage.pickerAdvancedUI;
-            set => s_SettingsStorage.pickerAdvancedUI = value;
+            get => settingsStorage.pickerAdvancedUI;
+            set => settingsStorage.pickerAdvancedUI = value;
         }
 
         internal static int minIndexVariations
         {
-            get => s_SettingsStorage.minIndexVariations;
-            set => s_SettingsStorage.minIndexVariations = value;
+            get => settingsStorage.minIndexVariations;
+            set => settingsStorage.minIndexVariations = value;
         }
 
         internal static bool findProviderIndexHelper
         {
-            get => s_SettingsStorage.findProviderIndexHelper;
-            set => s_SettingsStorage.findProviderIndexHelper = value;
+            get => settingsStorage.findProviderIndexHelper;
+            set => settingsStorage.findProviderIndexHelper = value;
         }
 
         internal static int[] expandedQueries
         {
-            get => s_SettingsStorage.expandedQueries;
-            set => s_SettingsStorage.expandedQueries = value;
+            get => settingsStorage.expandedQueries;
+            set => settingsStorage.expandedQueries = value;
         }
 
         internal static bool wantsMore
         {
-            get => s_SettingsStorage.wantsMore;
-            set => s_SettingsStorage.wantsMore = value;
+            get => settingsStorage.wantsMore;
+            set => settingsStorage.wantsMore = value;
         }
 
         const int k_RecentSearchMaxCount = 20;
-        internal static IReadOnlyList<string> recentSearches => s_SettingsStorage.recentSearches;
+        internal static IReadOnlyList<string> recentSearches => settingsStorage.recentSearches;
 
         // User editor pref
         internal static float itemIconSize
         {
-            get => s_SettingsStorage.itemIconSize;
-            set => s_SettingsStorage.itemIconSize = value;
+            get => settingsStorage.itemIconSize;
+            set => settingsStorage.itemIconSize = value;
         }
 
-        internal static HashSet<string> disabledIndexers => s_SettingsStorage.disabledIndexers;
+        internal static HashSet<string> disabledIndexers => settingsStorage.disabledIndexers;
 
         // TODO: That's not good that it is public like that. Should have been a property.
+        [AutoStaticsCleanupOnCodeReload]
         public static HashSet<string> searchItemFavorites = new();
 
         internal static int debounceMs
         {
-            get => s_SettingsStorage.debounceMs;
-            set => s_SettingsStorage.debounceMs = value;
-        }
-
-        static SearchSettings()
-        {
-            settingsStorage = new SearchSettingsStorage()
-            {
-                settingsFolder = projectLocalSettingsFolder,
-                settingsPath = projectLocalSettingsPath,
-                recentSearchMaxCount = k_RecentSearchMaxCount,
-                itemIconSize = (float)DisplayMode.List,
-                expandedQueries = Array.Empty<int>()
-            };
+            get => settingsStorage.debounceMs;
+            set => settingsStorage.debounceMs = value;
         }
 
         internal static void Load()
         {
-            if (Application.HasARGV("cleanTestPrefs") || !File.Exists(s_SettingsStorage.settingsPath))
+            if (Application.HasARGV("cleanTestPrefs") || !File.Exists(settingsStorage.settingsPath))
             {
-                s_SettingsStorage.ClearSettingsFile();
+                settingsStorage.ClearSettingsFile();
             }
-            s_SettingsStorage.Load();
-            searchItemFavorites = s_SettingsStorage.searchItemFavorites;
+            settingsStorage.Load();
+            searchItemFavorites = settingsStorage.searchItemFavorites;
         }
 
         internal static void Save()
@@ -840,42 +844,42 @@ namespace UnityEditor.Search
 
         internal static void SetScopeValue(string prefix, int hash, string value)
         {
-            s_SettingsStorage.SetScopeValue(prefix, hash, value);
+            settingsStorage.SetScopeValue(prefix, hash, value);
         }
 
         internal static void SetScopeValue(string prefix, int hash, int value)
         {
-            s_SettingsStorage.SetScopeValue(prefix, hash, value);
+            settingsStorage.SetScopeValue(prefix, hash, value);
         }
 
         internal static void SetScopeValue(string prefix, int hash, float value)
         {
-            s_SettingsStorage.SetScopeValue(prefix, hash, value);
+            settingsStorage.SetScopeValue(prefix, hash, value);
         }
 
         internal static void SetScopeValue(string prefix, int hash, Rect rect)
         {
-            s_SettingsStorage.SetScopeValue(prefix, hash, rect);
+            settingsStorage.SetScopeValue(prefix, hash, rect);
         }
 
         internal static string GetScopeValue(string prefix, int hash, string defaultValue)
         {
-            return s_SettingsStorage.GetScopeValue(prefix, hash, defaultValue);
+            return settingsStorage.GetScopeValue(prefix, hash, defaultValue);
         }
 
         internal static int GetScopeValue(string prefix, int hash, int defaultValue)
         {
-            return s_SettingsStorage.GetScopeValue(prefix, hash, defaultValue);
+            return settingsStorage.GetScopeValue(prefix, hash, defaultValue);
         }
 
         internal static float GetScopeValue(string prefix, int hash, float defaultValue)
         {
-            return s_SettingsStorage.GetScopeValue(prefix, hash, defaultValue);
+            return settingsStorage.GetScopeValue(prefix, hash, defaultValue);
         }
 
         internal static Rect GetScopeValue(string prefix, int hash, Rect defaultValue)
         {
-            return s_SettingsStorage.GetScopeValue(prefix, hash, defaultValue);
+            return settingsStorage.GetScopeValue(prefix, hash, defaultValue);
         }
 
         internal static SearchFlags GetContextOptions()
@@ -895,7 +899,7 @@ namespace UnityEditor.Search
 
         internal static void AddRecentSearch(string search)
         {
-            s_SettingsStorage.AddRecentSearch(search);
+            settingsStorage.AddRecentSearch(search);
         }
 
         [SettingsProvider]
@@ -904,23 +908,24 @@ namespace UnityEditor.Search
             var settings = new SettingsProvider(settingsPreferencesKey, SettingsScope.User)
             {
                 guiHandler = DrawSearchSettings,
-                #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                #pragma warning disable UAC2001 // Avoid Linq
                 keywords = new[] { "quick", "search",  }
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                     .Concat(SettingsProvider.GetSearchKeywordsFromGUIContentProperties<Content>()) // If you change this or add a new class, please update the test SearchSettingsTests.ContentClass_OnlyHasGUIContent
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2001 // Avoid Linq
                     .Concat(SearchService.OrderedObjectSelectors.Select(s => s.displayName))
-#pragma warning restore UA2001
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+                    #pragma warning disable UAC2001 // Avoid Linq
                     .Concat(SearchService.OrderedProviders.Select(p => p.name))
-#pragma warning restore UA2001
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+                    #pragma warning disable UAC2001 // Avoid Linq
                     .Concat(GetOrderedApis().Select(api => api.displayName))
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             };
             return settings;
         }
 
+        [AutoStaticsCleanupOnCodeReload]
         static Action s_OffSearchReady;
 
         [SettingsProvider]
@@ -975,9 +980,9 @@ namespace UnityEditor.Search
                 {
                     try
                     {
-                        #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                        #pragma warning disable UAC2001 // Avoid Linq
                         var items = searchEngines.Select(se => new GUIContent(se.name,
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                             searchEngines.Count == 1 ?
                             $"Search engine for {searchContextName}" :
                             $"Set search engine for {searchContextName}")).ToArray();
@@ -1015,9 +1020,9 @@ namespace UnityEditor.Search
 
         static IEnumerable<ISearchApi> GetOrderedApis()
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             return UnityEditor.SearchService.SearchService.searchApis.OrderBy(api => api.displayName);
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
         }
 
         static void DrawAdvancedObjectSelectorsSettings()
@@ -1059,7 +1064,7 @@ namespace UnityEditor.Search
 
         internal static ObjectSelectorsSettings GetObjectSelectorSettings(AdvancedObjectSelector selector)
         {
-            return s_SettingsStorage.GetObjectSelectorSettings(selector.id, selector.active, selector.priority);
+            return settingsStorage.GetObjectSelectorSettings(selector.id, selector.active, selector.priority);
         }
 
         internal static ObjectSelectorsSettings GetObjectSelectorSettings(string selectorId)
@@ -1073,7 +1078,7 @@ namespace UnityEditor.Search
         static void ResetObjectSelectorSettings()
         {
             SearchAnalytics.SendEvent(null, SearchAnalytics.GenericEventType.ObjectSelectorSettingsReset);
-            s_SettingsStorage.ResetObjectSelectorSettings();
+            settingsStorage.ResetObjectSelectorSettings();
             SearchService.RefreshObjectSelectors();
         }
 
@@ -1088,9 +1093,9 @@ namespace UnityEditor.Search
 
         internal static void DecreaseObjectSelectorPriority(AdvancedObjectSelector selector, IEnumerable<AdvancedObjectSelector> allSelectors)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var sortedPickers = allSelectors.OrderBy(p => p.priority).ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             for (int i = 1, end = sortedPickers.Count; i < end; ++i)
             {
                 var cp = sortedPickers[i];
@@ -1113,9 +1118,9 @@ namespace UnityEditor.Search
 
         internal static void IncreaseObjectSelectorPriority(AdvancedObjectSelector selector, IEnumerable<AdvancedObjectSelector> allSelectors)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var sortedPickers = allSelectors.OrderBy(p => p.priority).ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             for (int i = 0, end = sortedPickers.Count - 1; i < end; ++i)
             {
                 var cp = sortedPickers[i];
@@ -1138,12 +1143,12 @@ namespace UnityEditor.Search
 
         static List<UnityEditor.SearchService.ISearchEngineBase> OrderSearchEngines(IEnumerable<UnityEditor.SearchService.ISearchEngineBase> engines)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var defaultEngine = engines.First(engine => engine is UnityEditor.SearchService.LegacySearchEngineBase);
-#pragma warning restore UA2001
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+#pragma warning restore UAC2001
+            #pragma warning disable UAC2001 // Avoid Linq
             var overrides = engines.Where(engine => !(engine is UnityEditor.SearchService.LegacySearchEngineBase));
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             var orderedSearchEngines = new List<UnityEditor.SearchService.ISearchEngineBase> { defaultEngine };
             orderedSearchEngines.AddRange(overrides);
             return orderedSearchEngines;
@@ -1152,7 +1157,7 @@ namespace UnityEditor.Search
 
         internal static bool TryGetObjectSelectorSettings(string selectorId, out ObjectSelectorsSettings settings)
         {
-            return s_SettingsStorage.TryGetObjectSelectorSettings(selectorId, out settings);
+            return settingsStorage.TryGetObjectSelectorSettings(selectorId, out settings);
         }
 
         private static void DrawSearchSettings(string searchContext)
@@ -1309,7 +1314,7 @@ namespace UnityEditor.Search
 
         private static void ToggleCustomIndexer(string name, bool enable)
         {
-            s_SettingsStorage.ToggleCustomIndexer(name, enable);
+            settingsStorage.ToggleCustomIndexer(name, enable);
         }
 
         private static bool Toggle(GUIContent content, string propertyName, bool value)
@@ -1353,9 +1358,9 @@ namespace UnityEditor.Search
                 using (new EditorGUI.DisabledScope(p.actions.Count < 2))
                 {
                     EditorGUI.BeginChangeCheck();
-                    #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+                    #pragma warning disable UAC2001 // Avoid Linq
                     var items = p.actions.Select(a => new GUIContent(
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
                         string.IsNullOrEmpty(a.displayName) ? a.content.text : a.displayName,
                         a.content.image,
                         p.actions.Count == 1 ?
@@ -1386,30 +1391,35 @@ namespace UnityEditor.Search
         internal static SearchProviderSettings GetProviderSettings(string providerId)
         {
             var provider = SearchService.GetProvider(providerId);
+            return GetProviderSettings(providerId, provider);
+        }
+
+        internal static SearchProviderSettings GetProviderSettings(string providerId, SearchProvider provider)
+        {
             SearchProviderSettings defaultSettings = null;
             if (provider == null)
                 defaultSettings = new SearchProviderSettings();
 
-            return s_SettingsStorage.GetProviderSettings(providerId, provider?.active ?? defaultSettings.active, provider?.priority ?? defaultSettings.priority, null, provider != null);
+            return settingsStorage.GetProviderSettings(providerId, provider?.active ?? defaultSettings.active, provider?.priority ?? defaultSettings.priority, null, provider != null);
         }
 
         internal static bool TryGetProviderSettings(string providerId, out SearchProviderSettings settings)
         {
-            return s_SettingsStorage.TryGetProviderSettings(providerId, out settings);
+            return settingsStorage.TryGetProviderSettings(providerId, out settings);
         }
 
         internal static void ResetProviderSettings()
         {
             SearchAnalytics.SendEvent(null, SearchAnalytics.GenericEventType.PreferenceReset);
-            s_SettingsStorage.ResetProviderSettings();
+            settingsStorage.ResetProviderSettings();
             SearchService.Refresh();
         }
 
         private static void LowerProviderPriority(SearchProvider provider)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var sortedProviderList = SearchService.Providers.Where(p => !p.isExplicitProvider).OrderBy(p => p.priority).ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             for (int i = 1, end = sortedProviderList.Count; i < end; ++i)
             {
                 var cp = sortedProviderList[i];
@@ -1432,9 +1442,9 @@ namespace UnityEditor.Search
 
         private static void UpperProviderPriority(SearchProvider provider)
         {
-            #pragma warning disable UA2001 // The Banned API Analyzer produces compile errors for any new Linq code. This pre-existing usage has been suppressed, but should be rewritten if possible.
+            #pragma warning disable UAC2001 // Avoid Linq
             var sortedProviderList = SearchService.Providers.Where(p => !p.isExplicitProvider).OrderBy(p => p.priority).ToList();
-#pragma warning restore UA2001
+#pragma warning restore UAC2001
             for (int i = 0, end = sortedProviderList.Count - 1; i < end; ++i)
             {
                 var cp = sortedProviderList[i];
@@ -1471,12 +1481,18 @@ namespace UnityEditor.Search
                 SortActionsPriority(searchProvider);
         }
 
+        internal static void SortActionsPriority(ReadOnlySpan<SearchProvider> providers)
+        {
+            foreach (var searchProvider in providers)
+                SortActionsPriority(searchProvider);
+        }
+
         private static void SortActionsPriority(SearchProvider searchProvider)
         {
             if (searchProvider.actions.Count == 1)
                 return;
 
-            var defaultActionId = GetProviderSettings(searchProvider.id).defaultAction;
+            var defaultActionId = GetProviderSettings(searchProvider.id, searchProvider).defaultAction;
             if (string.IsNullOrEmpty(defaultActionId))
                 return;
             if (searchProvider.actions.Count == 0 || defaultActionId == searchProvider.actions[0].id)
@@ -1504,6 +1520,7 @@ namespace UnityEditor.Search
 
         class Styles
         {
+            [NoAutoStaticsCleanup]
             public static GUIStyle priorityButton = new GUIStyle("Button")
             {
                 fixedHeight = 20,
@@ -1518,36 +1535,36 @@ namespace UnityEditor.Search
 
         internal class Content
         {
-            public static GUIContent toggleProviderActiveContent = EditorGUIUtility.TrTextContent("", "Enable or disable this provider. Disabled search provider will be completely ignored by the search service.");
-            public static GUIContent resetProvidersContent = EditorGUIUtility.TrTextContent("Reset Providers Settings", "All search providers will restore their initial preferences (priority, active, default action)");
-            public static GUIContent increaseProviderPriorityContent = EditorGUIUtility.TrTextContent("\u2191", "Increase the provider's priority");
-            public static GUIContent decreaseProviderPriorityContent = EditorGUIUtility.TrTextContent("\u2193", "Decrease the provider's priority");
-            public static GUIContent trackSelectionContent = EditorGUIUtility.TrTextContent(
+            public static readonly GUIContent toggleProviderActiveContent = EditorGUIUtility.TrTextContent("", "Enable or disable this provider. Disabled search provider will be completely ignored by the search service.");
+            public static readonly GUIContent resetProvidersContent = EditorGUIUtility.TrTextContent("Reset Providers Settings", "All search providers will restore their initial preferences (priority, active, default action)");
+            public static readonly GUIContent increaseProviderPriorityContent = EditorGUIUtility.TrTextContent("\u2191", "Increase the provider's priority");
+            public static readonly GUIContent decreaseProviderPriorityContent = EditorGUIUtility.TrTextContent("\u2193", "Decrease the provider's priority");
+            public static readonly GUIContent trackSelectionContent = EditorGUIUtility.TrTextContent(
                 "Track the current selection in the search view.",
                 "Tracking the current selection can alter other window state, such as pinging the project browser or the scene hierarchy window. This setting does not apply to the Advanced Object Selector.");
-            public static GUIContent fetchPreviewContent = EditorGUIUtility.TrTextContent(
+            public static readonly GUIContent fetchPreviewContent = EditorGUIUtility.TrTextContent(
                 "Generate an asset preview thumbnail for found items",
                 "Fetching the preview of the items can consume more memory and make searches within very large project slower.");
-            public static GUIContent refreshSearchWindowsInPlayModeContent = EditorGUIUtility.TrTextContent(
+            public static readonly GUIContent refreshSearchWindowsInPlayModeContent = EditorGUIUtility.TrTextContent(
                 "Refresh Search views in Play Mode",
                 "Automatically refresh search views when hierarchy changes happened in Play Mode");
-            public static GUIContent pickerAdvancedUIContent = EditorGUIUtility.TrTextContent(
+            public static readonly GUIContent pickerAdvancedUIContent = EditorGUIUtility.TrTextContent(
                 "Object Selector has Advanced UI",
                 "Object Selector has Advanced UI");
-            public static GUIContent dockableContent = EditorGUIUtility.TrTextContent("Open Search as dockable window");
-            public static GUIContent debugContent = EditorGUIUtility.TrTextContent("[DEV] Display additional debugging information");
-            public static GUIContent debounceThreshold = EditorGUIUtility.TrTextContent("Select the typing debounce threshold (ms)");
+            public static readonly GUIContent dockableContent = EditorGUIUtility.TrTextContent("Open Search as dockable window");
+            public static readonly GUIContent debugContent = EditorGUIUtility.TrTextContent("[DEV] Display additional debugging information");
+            public static readonly GUIContent debounceThreshold = EditorGUIUtility.TrTextContent("Select the typing debounce threshold (ms)");
 
-            public static GUIContent toggleObjectSelectorActiveContent = EditorGUIUtility.TrTextContent("", "Enable or disable this object selector. Disabled object selectors will be completely ignored.");
-            public static GUIContent resetObjectSelectorContent = EditorGUIUtility.TrTextContent("Reset Selector Settings", "All object selectors will restore their initial preferences (priority, active)");
-            public static GUIContent increaseObjectSelectorPriorityContent = EditorGUIUtility.TrTextContent("\u2191", "Increase the object selector's priority");
-            public static GUIContent decreaseObjectSelectorPriorityContent = EditorGUIUtility.TrTextContent("\u2193", "Decrease the object selector's priority");
+            public static readonly GUIContent toggleObjectSelectorActiveContent = EditorGUIUtility.TrTextContent("", "Enable or disable this object selector. Disabled object selectors will be completely ignored.");
+            public static readonly GUIContent resetObjectSelectorContent = EditorGUIUtility.TrTextContent("Reset Selector Settings", "All object selectors will restore their initial preferences (priority, active)");
+            public static readonly GUIContent increaseObjectSelectorPriorityContent = EditorGUIUtility.TrTextContent("\u2191", "Increase the object selector's priority");
+            public static readonly GUIContent decreaseObjectSelectorPriorityContent = EditorGUIUtility.TrTextContent("\u2193", "Decrease the object selector's priority");
         }
 
         public static void AddItemFavorite(SearchItem item)
         {
             searchItemFavorites.Add(item.id);
-            s_SettingsStorage.AddItemFavorite(item.id);
+            settingsStorage.AddItemFavorite(item.id);
             Dispatcher.Emit(SearchEvent.ItemFavoriteStateChanged, new SearchEventPayload(item.context, item.id));
             SearchAnalytics.SendEvent(null, SearchAnalytics.GenericEventType.QuickSearchAddFavoriteItem, item.provider.id);
         }
@@ -1555,7 +1572,7 @@ namespace UnityEditor.Search
         public static void RemoveItemFavorite(SearchItem item)
         {
             searchItemFavorites.Remove(item.id);
-            s_SettingsStorage.RemoveItemFavorite(item.id);
+            settingsStorage.RemoveItemFavorite(item.id);
             Dispatcher.Emit(SearchEvent.ItemFavoriteStateChanged, new SearchEventPayload(item.context, item.id));
             SearchAnalytics.SendEvent(null, SearchAnalytics.GenericEventType.QuickSearchRemoveFavoriteItem, item.provider.id);
         }

@@ -2,6 +2,8 @@
 // Copyright (c) Unity Technologies. For terms of use, see
 // https://unity3d.com/legal/licenses/Unity_Reference_Only_License
 
+#pragma warning disable UAL0010,UAL0011,UAL0012,UAL0013,UAL0014 // AutoStaticsCleanup: UIToolkitFramework not yet converted
+using Unity.Scripting.LifecycleManagement;
 using System;
 using System.Collections.Generic;
 using Unity.Profiling;
@@ -13,7 +15,7 @@ namespace UnityEngine.UIElements
     /// <summary>
     /// Element that draws IMGUI content in the editor. For more information, refer to [[wiki:UIE-uxml-element-IMGUIContainer|UXML element IMGUIContainer]].
     /// </summary>
-    [UxmlElement]
+    [UxmlElement(visibility = LibraryVisibility.Hidden)]
     [Icon("UIToolkit/Icons/IMGUIContainer.png")]
     public partial class IMGUIContainer : VisualElement, IDisposable
     {
@@ -163,6 +165,8 @@ namespace UnityEngine.UIElements
         internal static readonly string ussFoldoutChildDepthClassName = $"{FoldoutConstants.ussClassName}__{ussClassName}--depth-";
         internal static readonly int ussFoldoutMaxDepth = FoldoutConstants.ussFoldoutMaxDepth;
 
+
+        [NoAutoStaticsCleanup]
         internal static readonly List<UniqueStyleString> ussFoldoutChildDepthClassNames;
 
         internal struct UITKScope : IDisposable { private bool wasUITK; public UITKScope() { wasUITK = GUIUtility.isUITK; GUIUtility.isUITK = true; } public void Dispose() { GUIUtility.isUITK = wasUITK; } }
@@ -680,9 +684,11 @@ namespace UnityEngine.UIElements
         }
 
         // Pooled backups of the shared, process-wide Event.current so a nested HandleIMGUIEvent can restore it.
+        [AutoStaticsCleanupOnCodeReload]
         static Stack<Event> s_EventCurrentBackupPool;
 
         // Nesting depth of HandleIMGUIEvent so a nested call knows to hand the enclosing event back on exit.
+        [AutoStaticsCleanupOnCodeReload] // dispatch nesting depth; a reload cannot happen mid-dispatch
         static int s_HandleIMGUIEventDepth;
 
         private bool HandleIMGUIEvent(Event e, Matrix4x4 worldTransform, Rect clippingRect, Action onGUIHandler, bool canAffectFocus)
@@ -904,8 +910,12 @@ namespace UnityEngine.UIElements
             AddToClassList(ussFoldoutChildDepthClassNames[depth]);
         }
 
+
+        [NoAutoStaticsCleanup]
         static Event s_DefaultMeasureEvent = new Event() { type = EventType.Layout };
+        [NoAutoStaticsCleanup]
         static Event s_MeasureEvent = new Event() { type = EventType.Layout };
+        [NoAutoStaticsCleanup]
         static Event s_CurrentEvent = new Event() { type = EventType.Layout };
         protected internal override Vector2 DoMeasure(float desiredWidth, MeasureMode widthMode, float desiredHeight, MeasureMode heightMode)
         {
@@ -964,6 +974,9 @@ namespace UnityEngine.UIElements
                 case MeasureMode.AtMost:
                     measuredWidth = Mathf.Min(measuredWidth, desiredWidth);
                     break;
+                // IMGUI content does not reflow, so min-content == max-content (the natural size).
+                case MeasureMode.MinContent:
+                    break;
             }
 
             switch (heightMode)
@@ -973,6 +986,8 @@ namespace UnityEngine.UIElements
                     break;
                 case MeasureMode.AtMost:
                     measuredHeight = Mathf.Min(measuredHeight, desiredHeight);
+                    break;
+                case MeasureMode.MinContent:
                     break;
             }
 
@@ -1016,6 +1031,8 @@ namespace UnityEngine.UIElements
             }
         }
 
+
+        [NoAutoStaticsCleanup]
         private static Stack<IMGUIContainer> s_ContainerStack = new Stack<IMGUIContainer>();
 
 
@@ -1127,3 +1144,4 @@ namespace UnityEngine.UIElements
         }
     }
 }
+#pragma warning restore UAL0010,UAL0011,UAL0012,UAL0013,UAL0014
